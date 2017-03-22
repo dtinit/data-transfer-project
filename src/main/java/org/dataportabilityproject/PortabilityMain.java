@@ -1,15 +1,14 @@
 package org.dataportabilityproject;
 
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.Collection;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
-
-import java.io.IOException;
-import java.util.Collection;
 
 public class PortabilityMain {
     private static final IOInterface IO_INTERFACE = new ConsoleIO();
