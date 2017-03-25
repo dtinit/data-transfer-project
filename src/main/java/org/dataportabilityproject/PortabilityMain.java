@@ -32,7 +32,7 @@ public class PortabilityMain {
                 "What service do you want to export from",
                 registry.getServiceProvidersThatCanExport(type));
         String importerName = IO_INTERFACE.ask(
-                "What service do you want to export from",
+                "What service do you want to import to",
                 registry.getServiceProvidersThatCanImport(type));
 
         Importer<T> importer = registry.getImporter(importerName, type);
