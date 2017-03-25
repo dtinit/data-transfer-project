@@ -78,10 +78,11 @@ chooses.
 
 ## Development
 
-### Building
+### Building/Running
  * Add a secrets.csv file to src/main/resources, this should contain
    all your API keys, see secrets_template.csv for an example.
  * "mvn compile" will build the project.
+ * "mvn exec:java" will run the project.
 
 ### Contributing
 TBD
