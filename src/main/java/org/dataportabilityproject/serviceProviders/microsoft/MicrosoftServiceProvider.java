@@ -1,14 +1,13 @@
 package org.dataportabilityproject.serviceProviders.microsoft;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.function.Supplier;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.serviceProviders.microsoft.calendar.MicrosoftCalendarService;
+import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -19,9 +18,10 @@ import org.dataportabilityproject.shared.ServiceProvider;
 public final class MicrosoftServiceProvider implements ServiceProvider {
     private final Supplier<MicrosoftCalendarService> calendarService;
 
-    public MicrosoftServiceProvider(Secrets secrets) throws IOException {
+    public MicrosoftServiceProvider(Secrets secrets, IOInterface consoleIO) throws IOException {
         MicrosoftAuth auth = new MicrosoftAuth(secrets);
-        this.calendarService = Suppliers.memoize(() -> new MicrosoftCalendarService(auth));
+        // NB: this isn't memoized so that you can do a round trip with different accounts.
+        this.calendarService = () -> new MicrosoftCalendarService(getToken(auth, consoleIO));
     }
 
     @Override public String getName() {
@@ -56,5 +56,18 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
+    }
+
+    private String getToken(MicrosoftAuth auth, IOInterface consoleIO) {
+        String token;
+        try {
+            String account = consoleIO.ask("Enter Microsoft email account");
+            token = auth.getToken(account);
+        } catch (IOException e) {
+            System.out.println("Error obtaining token");
+            e.printStackTrace();
+            throw new IllegalStateException("Error obtaining token", e);
+        }
+        return token;
     }
 }

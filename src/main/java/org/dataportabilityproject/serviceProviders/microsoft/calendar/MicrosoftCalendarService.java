@@ -3,7 +3,6 @@ package org.dataportabilityproject.serviceProviders.microsoft.calendar;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -20,7 +19,6 @@ import java.util.List;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.calendar.CalendarModel;
-import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftAuth;
 
 /**
  * Stub for the Microsoft calendar service.
@@ -28,9 +26,9 @@ import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftAuth;
 public class MicrosoftCalendarService implements Importer<CalendarModel>, Exporter<CalendarModel> {
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     private static final String HEADER_PREFIX = "Bearer ";
-    private MicrosoftAuth auth;
-    public MicrosoftCalendarService(MicrosoftAuth auth) {
-        this.auth = auth;
+    private String token;
+    public MicrosoftCalendarService(String token) {
+        this.token = token;
     }
 
     @Override public void importItem(CalendarModel object) throws IOException {
@@ -38,39 +36,22 @@ public class MicrosoftCalendarService implements Importer<CalendarModel>, Export
     }
 
     @Override public Collection<CalendarModel> export() throws IOException {
-      // TODO(chuy): Remove hack and parameterize account id
-      String token = getToken("jchavezbaz@live.com");
-      return getCalendars(token);
-    }
-    
-    private String getToken(String account) throws IOException {
-      String token;
-      try {
-        token = auth.getToken(account);
-      } catch (Exception e) {
-        System.out.println("Error obtaining token");
-        e.printStackTrace();
-        throw new IOException("Error obtaining token", e);
-      }
-      return token;
+      return getCalendars();
     }
 
-    private final Collection<CalendarModel> getCalendars(String token) throws IOException {
+    private Collection<CalendarModel> getCalendars() throws IOException {
       URL url = new URL("https://outlook.office.com/api/v2.0/me/calendars");
   
       HttpRequestFactory requestFactory =
           HTTP_TRANSPORT.createRequestFactory(
-              new HttpRequestInitializer() {
-                @Override
-                public void initialize(HttpRequest request) throws IOException {
-                  String headerValue = HEADER_PREFIX + token;
-                  request.getHeaders().setAuthorization(headerValue);
-                  request.getHeaders().setAccept("application/json");
-                }
+              request -> {
+                String headerValue = HEADER_PREFIX + token;
+                request.getHeaders().setAuthorization(headerValue);
+                request.getHeaders().setAccept("application/json");
               });
       HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(url));
       getRequest.setParser(new JsonObjectParser(new JacksonFactory()));
-      HttpResponse response = null;
+      HttpResponse response;
       try {
         response = getRequest.execute();
       } catch (HttpResponseException e) {

@@ -18,7 +18,7 @@ import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecur
 /**
  * A work in progress to try to get authentication to MS working.
  */
-public class MicrosoftAuth {
+class MicrosoftAuth {
     /** Port in the "Callback URL". */
     private static final int PORT = 12345;
 
@@ -33,11 +33,11 @@ public class MicrosoftAuth {
         this.secrets = secrets;
     }
 
-    public String getToken(String account) throws Exception {
+    public String getToken(String account) throws IOException {
         // set up authorization code flow
         AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(
                 BearerToken.authorizationHeaderAccessMethod(), // Access Method
-                org.dataportabilityproject.serviceProviders.microsoft.MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
+                MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
                 JSON_FACTORY, // JsonFactory
                 new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
                 new ClientParametersAuthentication(
@@ -46,19 +46,26 @@ public class MicrosoftAuth {
                 secrets.get("MICROSOFT_APP_ID"), // clientId
                 AUTHORIZATION_SERVER_URL) // encoded url
             .setScopes(ImmutableList.of("wl.offline_access", "wl.calendars", "office.onenote")) // scopes
-            .setDataStoreFactory(org.dataportabilityproject.serviceProviders.microsoft.MicrosoftStaticObjects.getDataStoreFactory()).build();
+            .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
         
         // authorize
-        // NOTE: This requires an https endpoint wired to forward requests to http://domain:port/Callback
-        VerificationCodeReceiver receiver = new LocalServerReceiver.Builder().setHost(DOMAIN).setPort(PORT).build();
-        Credential result =  new AuthorizationCodeInstalledAppSecureOverride(flow, receiver).authorize(account);
-        return result.getAccessToken();
+        // NOTE: This requires an https endpoint wired to
+        // forward requests to http://domain:port/Callback
+        VerificationCodeReceiver receiver = new LocalServerReceiver.Builder()
+            .setHost(DOMAIN).setPort(PORT).build();
+        try {
+          Credential result = new AuthorizationCodeInstalledAppSecureOverride(flow, receiver)
+              .authorize(account);
+          return result.getAccessToken();
+        } catch (Exception e) {
+          throw new IOException("Couldn't authorize", e);
+        }
    }
 
 
     // TODO(chuy): Make clearing the data store an option
     private static void clearDataStore() throws IOException {
       System.out.println("Clearing data store");
-      StoredCredential.getDefaultDataStore(org.dataportabilityproject.serviceProviders.microsoft.MicrosoftStaticObjects.getDataStoreFactory()).clear();
+      StoredCredential.getDefaultDataStore(MicrosoftStaticObjects.getDataStoreFactory()).clear();
     }
 }

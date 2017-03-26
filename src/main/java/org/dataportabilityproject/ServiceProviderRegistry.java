@@ -28,7 +28,7 @@ public class ServiceProviderRegistry {
 
         addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
         addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new MicrosoftServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new MicrosoftServiceProvider(secrets, ioInterface), providerBuilder);
         addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
