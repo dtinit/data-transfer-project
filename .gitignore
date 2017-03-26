@@ -1,9 +1,11 @@
-src/main/resources/secets.csv
+src/main/resources/secrets.csv
 
 workspace.xml
 tasks.xml
+*.iml
 
 lib/
 target/
+.idea/
 
-.*~
+*~
