@@ -22,12 +22,12 @@
                 </configuration>
             </plugin>
             <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <version>1.2.1</version>
-                    <configuration>
-                            <mainClass>org.dataportabilityproject.PortabilityMain</mainClass>
-                    </configuration>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                        <mainClass>org.dataportabilityproject.PortabilityMain</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -58,6 +58,11 @@
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-calendar</artifactId>
             <version>v3-rev236-1.22.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-gmail</artifactId>
+            <version>v1-rev62-1.22.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
