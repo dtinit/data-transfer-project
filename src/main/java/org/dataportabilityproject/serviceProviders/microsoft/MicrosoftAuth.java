@@ -45,9 +45,9 @@ class MicrosoftAuth {
                         secrets.get("MICROSOFT_PASSWORD")), // HttpExecuteInterceptor 
                 secrets.get("MICROSOFT_APP_ID"), // clientId
                 AUTHORIZATION_SERVER_URL) // encoded url
-            .setScopes(ImmutableList.of("wl.offline_access", "wl.calendars", "office.onenote")) // scopes
+            .setScopes(ImmutableList.of("wl.offline_access", "wl.calendars", "wl.contacts_calendars", "office.onenote", "openid offline_access profile")) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
-        
+
         // authorize
         // NOTE: This requires an https endpoint wired to
         // forward requests to http://domain:port/Callback
