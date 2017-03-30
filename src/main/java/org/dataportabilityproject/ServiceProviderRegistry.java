@@ -6,6 +6,7 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.serviceProviders.flickr.FlickrServiceProvider;
 import org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider;
+import org.dataportabilityproject.serviceProviders.instagram.InstagramServiceProvider;
 import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkProvider;
 import org.dataportabilityproject.shared.IOInterface;
@@ -30,6 +31,7 @@ public class ServiceProviderRegistry {
         addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
         addServiceProvider(new MicrosoftServiceProvider(secrets, ioInterface), providerBuilder);
         addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
+        addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
     }
