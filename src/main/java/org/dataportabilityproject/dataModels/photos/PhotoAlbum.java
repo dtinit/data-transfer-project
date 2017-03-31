@@ -1,10 +1,8 @@
 package org.dataportabilityproject.dataModels.photos;
 
 
-import org.dataportabilityproject.dataModels.DataModel;
-import org.dataportabilityproject.shared.PortableDataType;
-
 import java.util.Collection;
+import org.dataportabilityproject.dataModels.DataModel;
 
 public class PhotoAlbum implements DataModel {
     private final String name;
@@ -27,9 +25,5 @@ public class PhotoAlbum implements DataModel {
 
     public String getDescription() {
         return description;
-    }
-
-    @Override public PortableDataType getDataType() {
-        return PortableDataType.PHOTOS;
     }
 }

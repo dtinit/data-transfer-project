@@ -1,7 +1,6 @@
 package org.dataportabilityproject.dataModels.photos;
 
 import org.dataportabilityproject.dataModels.DataModel;
-import org.dataportabilityproject.shared.PortableDataType;
 
 
 public class Photo implements DataModel {
@@ -31,9 +30,5 @@ public class Photo implements DataModel {
 
     public String getMediaType() {
         return mediaType;
-    }
-
-    @Override public PortableDataType getDataType() {
-        return PortableDataType.PHOTOS;
     }
 }

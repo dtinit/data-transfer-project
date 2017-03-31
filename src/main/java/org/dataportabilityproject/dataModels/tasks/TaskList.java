@@ -1,10 +1,8 @@
 package org.dataportabilityproject.dataModels.tasks;
 
 import com.google.common.collect.ImmutableList;
-import org.dataportabilityproject.dataModels.DataModel;
-import org.dataportabilityproject.shared.PortableDataType;
-
 import java.util.List;
+import org.dataportabilityproject.dataModels.DataModel;
 
 public class TaskList implements DataModel {
     private final String name;
@@ -22,9 +20,5 @@ public class TaskList implements DataModel {
 
     public List<Task> getTasks() {
         return tasks;
-    }
-
-    @Override public PortableDataType getDataType() {
-        return PortableDataType.TASKS;
     }
 }
