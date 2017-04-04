@@ -1,17 +1,14 @@
 package org.dataportabilityproject.dataModels.calendar;
 
-import java.util.Collection;
-import org.dataportabilityproject.dataModels.DataModel;
-
-public class CalendarModel implements DataModel {
+public class CalendarModel {
+    private final String id;
     private final String name;
     private final String description;
-    private final Collection<CalendarEventModel> events;
 
-    public CalendarModel(String name, String description, Collection<CalendarEventModel> events) {
+    public CalendarModel(String id, String name, String description) {
+        this.id = id;
         this.name = name;
         this.description = description;
-        this.events = events;
     }
 
     public String getName() {
@@ -22,7 +19,7 @@ public class CalendarModel implements DataModel {
         return description;
     }
 
-    public Collection<CalendarEventModel> getEvents() {
-        return events;
+    public String getId() {
+        return id;
     }
 }

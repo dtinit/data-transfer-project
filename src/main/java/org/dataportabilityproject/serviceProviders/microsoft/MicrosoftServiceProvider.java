@@ -21,7 +21,14 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     public MicrosoftServiceProvider(Secrets secrets, IOInterface consoleIO) throws IOException {
         MicrosoftAuth auth = new MicrosoftAuth(secrets);
         // NB: this isn't memoized so that you can do a round trip with different accounts.
-        this.calendarService = () -> new MicrosoftCalendarService(getToken(auth, consoleIO));
+        this.calendarService = () -> {
+            try {
+                String account = consoleIO.ask("Enter Microsoft email account");
+                return new MicrosoftCalendarService(getToken(auth, account), account);
+            } catch (IOException e) {
+                throw new IllegalStateException("Couldn't fetch account info", e);
+            }
+        };
     }
 
     @Override public String getName() {
@@ -58,10 +65,9 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
         }
     }
 
-    private String getToken(MicrosoftAuth auth, IOInterface consoleIO) {
+    private String getToken(MicrosoftAuth auth, String account) {
         String token;
         try {
-            String account = consoleIO.ask("Enter Microsoft email account");
             token = auth.getToken(account);
         } catch (IOException e) {
             System.out.println("Error obtaining token");

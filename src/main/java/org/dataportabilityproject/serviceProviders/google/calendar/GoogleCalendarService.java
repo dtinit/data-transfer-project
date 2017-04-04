@@ -1,7 +1,6 @@
 package org.dataportabilityproject.serviceProviders.google.calendar;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
@@ -10,107 +9,134 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
-import com.google.common.collect.ImmutableList;
-import org.dataportabilityproject.dataModels.Exporter;
-import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.dataModels.calendar.CalendarAttendeeModel;
-import org.dataportabilityproject.dataModels.calendar.CalendarEventModel;
-import org.dataportabilityproject.dataModels.calendar.CalendarModel;
-import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.dataModels.ContinuationInformation;
+import org.dataportabilityproject.dataModels.ExportInformation;
+import org.dataportabilityproject.dataModels.Exporter;
+import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.dataModels.PaginationInformation;
+import org.dataportabilityproject.dataModels.Resource;
+import org.dataportabilityproject.dataModels.calendar.CalendarAttendeeModel;
+import org.dataportabilityproject.dataModels.calendar.CalendarEventModel;
+import org.dataportabilityproject.dataModels.calendar.CalendarModel;
+import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
+import org.dataportabilityproject.jobDataCache.JobDataCache;
+import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
+import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.StringPaginationToken;
 
 //TODO(repeated events are ignored)
-public class GoogleCalendarService implements Exporter<CalendarModel>, Importer<CalendarModel> {
+public class GoogleCalendarService
+    implements Exporter<CalendarModelWrapper>, Importer<CalendarModelWrapper> {
     private final Calendar calendarClient;
+    private final JobDataCache jobDataCache;
 
-    public GoogleCalendarService(Credential credential) {
+    public GoogleCalendarService(Credential credential, JobDataCache jobDataCache) {
         this.calendarClient = new Calendar.Builder(
                 GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
                 .setApplicationName(GoogleStaticObjects.APP_NAME)
                 .build();
+        this.jobDataCache = jobDataCache;
     }
 
     @Override
-    public Collection<CalendarModel> export() throws IOException {
-        ImmutableList.Builder<CalendarModel> results = ImmutableList.builder();
-
-        String pageToken = null;
-        do {
-            Calendar.CalendarList.List listRequest  = calendarClient.calendarList().list();
-            if (pageToken != null) {
-                listRequest.setPageToken(pageToken);
-            }
-            CalendarList listResult = listRequest.execute();
-            if (listResult.getItems().isEmpty()) {
-                pageToken = null;
-            } else {
-                for (CalendarListEntry calendarData : listResult.getItems()) {
-                    CalendarModel model = new CalendarModel(
-                            calendarData.getSummary(),
-                            calendarData.getDescription(),
-                            getCalendarEvents(calendarData.getId()));
-
-                    results.add(model);
-                }
-
-                pageToken = listResult.getNextPageToken();
-            }
-        } while (!Strings.isNullOrEmpty(pageToken));
-
-        return results.build();
+    public CalendarModelWrapper export(ExportInformation exportInformation) throws IOException {
+        if (exportInformation.getResource().isPresent()) {
+            String calendarId = ((IdOnlyResource) exportInformation.getResource().get()).getId();
+            return getCalendarEvents(calendarId, exportInformation.getPaginationInformation());
+        } else {
+            return exportCalendars(exportInformation.getPaginationInformation());
+        }
     }
 
-    private List<CalendarEventModel> getCalendarEvents(String id) throws IOException {
-        ImmutableList.Builder<CalendarEventModel> results = ImmutableList.builder();
+    private CalendarModelWrapper exportCalendars(Optional<PaginationInformation> pageInfo)
+            throws IOException {
+        Calendar.CalendarList.List listRequest  = calendarClient.calendarList().list();
 
-        String pageToken = null;
-        do {
-            Calendar.Events.List listRequest  = calendarClient.events().list(id).setMaxAttendees(100);
-            if (pageToken != null) {
-                listRequest.setPageToken(pageToken);
-            }
-            Events listResult = listRequest.execute();
-            if (listResult.getItems().isEmpty()) {
-                pageToken = null;
-            } else {
-                for (Event eventData : listResult.getItems()) {
-                    List<EventAttendee> attendees = eventData.getAttendees();
-                    CalendarEventModel model = new CalendarEventModel(
-                            eventData.getDescription(),
-                            eventData.getSummary(),
-                            attendees == null ? null : attendees.stream()
-                                    .map(GoogleCalendarService::transformToModelAttendee)
-                                    .collect(Collectors.toList()),
-                            eventData.getLocation(),
-                            getEventTime(eventData.getStart()),
-                            getEventTime(eventData.getEnd()));
-                    results.add(model);
-                }
+        if(pageInfo.isPresent()) {
+            listRequest.setPageToken(((StringPaginationToken) pageInfo.get()).getId());
+        }
 
-                pageToken = listResult.getNextPageToken();
-            }
-        } while (!Strings.isNullOrEmpty(pageToken));
+        CalendarList listResult = listRequest.execute();
+        List<CalendarModel> calendarModels = new ArrayList<>(listResult.getItems().size());
+        List<Resource> resources = new ArrayList<>(listResult.getItems().size());
+        for (CalendarListEntry calendarData : listResult.getItems()) {
+            CalendarModel model = new CalendarModel(
+                calendarData.getId(),
+                calendarData.getSummary(),
+                calendarData.getDescription());
+            resources.add(new IdOnlyResource(calendarData.getId()));
+            calendarModels.add(model);
+        }
 
+        PaginationInformation newPageInfo = null;
+        if (listResult.getNextPageToken() != null) {
+            newPageInfo = new StringPaginationToken(listResult.getNextPageToken());
+        }
 
-        return results.build();
+        return new CalendarModelWrapper(
+            calendarModels,
+            null,
+            new ContinuationInformation(resources,newPageInfo));
+    }
+
+    private CalendarModelWrapper getCalendarEvents(
+            String id, Optional<PaginationInformation> pageInfo) throws IOException {
+
+        Calendar.Events.List listRequest  = calendarClient.events().list(id).setMaxAttendees(100);
+        if(pageInfo.isPresent()) {
+            listRequest.setPageToken(((StringPaginationToken) pageInfo.get()).getId());
+        }
+        Events listResult = listRequest.execute();
+        List<CalendarEventModel> results = new ArrayList<>(listResult.getItems().size());
+        for (Event eventData : listResult.getItems()) {
+            List<EventAttendee> attendees = eventData.getAttendees();
+            CalendarEventModel model = new CalendarEventModel(
+                    id,
+                    eventData.getDescription(),
+                    eventData.getSummary(),
+                    attendees == null ? null : attendees.stream()
+                            .map(GoogleCalendarService::transformToModelAttendee)
+                            .collect(Collectors.toList()),
+                    eventData.getLocation(),
+                    getEventTime(eventData.getStart()),
+                    getEventTime(eventData.getEnd()));
+            results.add(model);
+        }
+
+        PaginationInformation newPageInfo = null;
+        if (listResult.getNextPageToken() != null) {
+            newPageInfo = new StringPaginationToken(listResult.getNextPageToken());
+        }
+
+        return new CalendarModelWrapper(
+            null,
+            results,
+            new ContinuationInformation(null, newPageInfo));
+
     }
 
     @Override
-    public void importItem(CalendarModel model) throws IOException {
-        com.google.api.services.calendar.model.Calendar toInsert = new com.google.api.services.calendar.model.Calendar()
-                .setSummary("Copy of - " + model.getName())
-                .setDescription(model.getDescription());
-        com.google.api.services.calendar.model.Calendar calendarResult =
+    public void importItem(CalendarModelWrapper wrapper) throws IOException {
+        for (CalendarModel calendar : wrapper.getCalendars()) {
+            com.google.api.services.calendar.model.Calendar toInsert =
+                new com.google.api.services.calendar.model.Calendar()
+                        .setSummary("Copy of - " + calendar.getName())
+                        .setDescription(calendar.getDescription());
+            com.google.api.services.calendar.model.Calendar calendarResult =
                 calendarClient.calendars().insert(toInsert).execute();
+            jobDataCache.store(calendar.getId(), calendarResult.getId());
+        }
 
-        for (CalendarEventModel eventModel : model.getEvents()) {
+
+        for (CalendarEventModel eventModel : wrapper.getEvents()) {
             Event event = new Event()
                     .setLocation(eventModel.getLocation())
                     .setDescription(eventModel.getTitle())
@@ -122,8 +148,8 @@ public class GoogleCalendarService implements Exporter<CalendarModel>, Importer<
                         .map(GoogleCalendarService::transformToEventAttendee)
                         .collect(Collectors.toList()));
             }
-
-            calendarClient.events().insert(calendarResult.getId(), event).execute();
+            String newCalendarId = jobDataCache.getData(eventModel.getCalendarId(), String.class);
+            calendarClient.events().insert(newCalendarId, event).execute();
         }
     }
 

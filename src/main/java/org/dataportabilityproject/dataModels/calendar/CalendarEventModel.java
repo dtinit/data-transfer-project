@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public class CalendarEventModel {
+
+    private final String calendarId;
     private final String title;
     private final String notes;
     private final List<CalendarAttendeeModel> attendees;
@@ -12,12 +14,15 @@ public class CalendarEventModel {
     private final CalendarEventTime startTime;
     private final CalendarEventTime endTime;
 
-    public CalendarEventModel(String title,
-                              String notes,
-                              List<CalendarAttendeeModel> attendees,
-                              String location,
-                              CalendarEventTime startTime,
-                              CalendarEventTime endTime) {
+    public CalendarEventModel(
+            String calendarId,
+            String title,
+            String notes,
+            List<CalendarAttendeeModel> attendees,
+            String location,
+            CalendarEventTime startTime,
+            CalendarEventTime endTime) {
+        this.calendarId = calendarId;
         this.title = title;
         this.notes = notes;
         this.attendees = attendees;
@@ -48,6 +53,10 @@ public class CalendarEventModel {
 
     public String getNotes() {
         return notes;
+    }
+
+    public String getCalendarId() {
+        return calendarId;
     }
 
     public static class CalendarEventTime {

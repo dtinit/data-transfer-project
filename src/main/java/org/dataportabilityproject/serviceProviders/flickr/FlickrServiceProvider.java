@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -55,7 +56,8 @@ public final class FlickrServiceProvider implements ServiceProvider {
             photoService = new FlickrPhotoService(
                     secrets.get("FLICKR_API_KEY"),
                     secrets.get("FLICKR_SECRET"),
-                    secrets.get("FLICKR_NSID")
+                    secrets.get("FLICKR_NSID"),
+                    new JobDataCacheImpl()
             );
         }
         return photoService;

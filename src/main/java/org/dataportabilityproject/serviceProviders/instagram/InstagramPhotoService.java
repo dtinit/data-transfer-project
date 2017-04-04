@@ -22,16 +22,21 @@ import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
-import org.dataportabilityproject.dataModels.photos.Photo;
+import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
+import org.dataportabilityproject.dataModels.photos.PhotoModel;
+import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.serviceProviders.instagram.model.MediaFeedData;
 import org.dataportabilityproject.serviceProviders.instagram.model.MediaResponse;
 
-final class InstagramPhotoService implements Exporter<Photo> {
+final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);;
   private static final JacksonFactory JSON_FACTORY = new JacksonFactory();
+  private static final String FAKE_ALBUM_ID = "instagramAlbum";
 
   private final String token;
   private final HttpTransport httpTransport;
@@ -46,21 +51,33 @@ final class InstagramPhotoService implements Exporter<Photo> {
   }
 
   @Override
-  public Collection<Photo> export() throws IOException {
+  public PhotosModelWrapper export(ExportInformation exportInformation) throws IOException {
     MediaResponse response = makeRequest(
         "https://api.instagram.com/v1/users/self/media/recent",
         MediaResponse.class);
 
-    ImmutableList.Builder<Photo> results = ImmutableList.builder();
+    List<PhotoModel> photos = new ArrayList<>();
 
+    // TODO: check out paging.
     for (MediaFeedData photo : response.getData()) {
-      results.add(new Photo("Instagram photo: " + photo.getId(),
+      // TODO json mapping is broken.
+      photos.add(new PhotoModel("Instagram photo: " + photo.getId(),
           photo.getImages().getStandardResolution().getUrl(),
           photo.getCaption().getText(),
-          null));
+          null,
+          FAKE_ALBUM_ID));
     }
 
-    return results.build();
+    List<PhotoAlbum> albums = new ArrayList<>();
+
+    if (!photos.isEmpty() && !exportInformation.getPaginationInformation().isPresent()) {
+      albums.add(new PhotoAlbum(
+          FAKE_ALBUM_ID,
+          "Imported Instagram Photos",
+          "Photos imported from instagram"));
+    }
+
+    return new PhotosModelWrapper(albums, photos, null);
   }
 
   private String getToken(String clientId, String clientSecret)

@@ -2,20 +2,27 @@ package org.dataportabilityproject.serviceProviders.google.mail;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.Gmail.Users.Messages;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import org.dataportabilityproject.dataModels.ContinuationInformation;
+import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.dataModels.PaginationInformation;
 import org.dataportabilityproject.dataModels.mail.MailMessageModel;
+import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
+import org.dataportabilityproject.shared.StringPaginationToken;
 
 public final class GoogleMailService
-    implements Exporter<MailMessageModel>, Importer<MailMessageModel> {
+    implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
   private static final String USER = "me";
   private static final String LABEL = "WT-migrated";
   private final Gmail gmail;
@@ -30,29 +37,44 @@ public final class GoogleMailService
   }
 
   @Override
-  public void importItem(MailMessageModel model) throws IOException {
-    String labelId = getMigratedLabelId();
-    Message message = new Message()
-        .setRaw(model.getRawString())
-        .setLabelIds(ImmutableList.of(labelId));
-    gmail.users().messages().insert(USER, message).execute();
+  public void importItem(MailModelWrapper model) throws IOException {
+    for (MailMessageModel message : model.getMessages()) {
+      String labelId = getMigratedLabelId();
+      Message newMessage = new Message()
+          .setRaw(message.getRawString())
+          .setLabelIds(ImmutableList.of(labelId));
+      gmail.users().messages().insert(USER, newMessage).execute();
+    }
   }
 
   @Override
-  public Collection<MailMessageModel> export() throws IOException {
-    ListMessagesResponse listMessages = gmail.users().messages()
-        .list(USER).setMaxResults(10L).execute();
-    ImmutableList.Builder<MailMessageModel> results = ImmutableList.builder();
+  public MailModelWrapper export(ExportInformation exportInformation) throws IOException {
+    Messages.List request = gmail.users().messages()
+        .list(USER).setMaxResults(10L);
+
+    if (exportInformation.getPaginationInformation().isPresent()) {
+      request.setPageToken(
+          ((StringPaginationToken)exportInformation.getPaginationInformation().get()).getId());
+    }
+
+    ListMessagesResponse response = request.execute();
+
+    List<MailMessageModel> results = new ArrayList<>(response.getMessages().size());
     // TODO: this is a good indication we need to swap the interface
     // as we can't store all the mail messagess in memory at once.
-    for (Message listMessage : listMessages.getMessages()) {
+    for (Message listMessage : response.getMessages()) {
       Message getResponse = gmail.users().messages()
           .get(USER, listMessage.getId()).setFormat("raw").execute();
       // TODO: note this doesn't transfer things like labels
       results.add(new MailMessageModel(getResponse.getRaw()));
     }
 
-    return results.build();
+    PaginationInformation pageInfo = null;
+    if (response.getNextPageToken() != null) {
+      pageInfo = new StringPaginationToken(response.getNextPageToken());
+    }
+
+    return new MailModelWrapper(results, new ContinuationInformation(null, pageInfo));
   }
 
   private String getMigratedLabelId() throws IOException {

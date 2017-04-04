@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -57,7 +58,8 @@ public final class RememberTheMilkProvider implements ServiceProvider {
             taskService = new RememberTheMilkTaskService(
                     secrets.get("RTM_SECRET"),
                     secrets.get("RTM_API_KEY"),
-                    secrets.get("RTM_AUTH_CODE"));
+                    secrets.get("RTM_AUTH_CODE"),
+                    new JobDataCacheImpl());
         }
         return taskService;
     }

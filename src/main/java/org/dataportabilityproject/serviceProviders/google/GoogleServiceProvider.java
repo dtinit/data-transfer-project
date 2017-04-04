@@ -18,6 +18,7 @@ import java.util.List;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.serviceProviders.google.calendar.GoogleCalendarService;
 import org.dataportabilityproject.serviceProviders.google.mail.GoogleMailService;
 import org.dataportabilityproject.serviceProviders.google.piccasa.GooglePhotosService;
@@ -31,7 +32,7 @@ import org.dataportabilityproject.shared.ServiceProvider;
  */
 public final class GoogleServiceProvider implements ServiceProvider {
     private final static  List<String> SCOPES = Arrays.asList(TasksScopes.TASKS,
-            //"https://picasaweb.serviceProviders.google.com/data/",
+            "https://picasaweb.google.com/data/",
             CalendarScopes.CALENDAR,
             GmailScopes.GMAIL_READONLY,
             GmailScopes.GMAIL_MODIFY,
@@ -60,9 +61,12 @@ public final class GoogleServiceProvider implements ServiceProvider {
             }
         });
 
-        this.calendarService = Suppliers.memoize(() -> new GoogleCalendarService(creds.get()));
-        this.photoService = Suppliers.memoize(() -> new GooglePhotosService(creds.get()));
-        this.taskService = Suppliers.memoize(() -> new GoogleTaskService(creds.get()));
+        this.calendarService = Suppliers.memoize(() -> new GoogleCalendarService(
+            creds.get(), new JobDataCacheImpl()));
+        this.photoService = Suppliers.memoize(() -> new GooglePhotosService(
+            creds.get(), new JobDataCacheImpl()));
+        this.taskService = Suppliers.memoize(() -> new GoogleTaskService(
+            creds.get(), new JobDataCacheImpl()));
         this.mailService = Suppliers.memoize(() -> new GoogleMailService(creds.get()));
     }
 

@@ -1,29 +1,29 @@
 package org.dataportabilityproject.dataModels.photos;
 
 
-import java.util.Collection;
-import org.dataportabilityproject.dataModels.DataModel;
+import java.io.Serializable;
 
-public class PhotoAlbum implements DataModel {
+public class PhotoAlbum implements Serializable {
+    private final String id;
     private final String name;
     private final String description;
-    private final Collection<Photo> photos;
 
-    public PhotoAlbum(String name, String description, Collection<Photo> photos) {
+    /** The {@code id} is used to associate photos with this album. **/
+    public PhotoAlbum(String id, String name, String description) {
+        this.id = id;
         this.name = name;
         this.description = description;
-        this.photos = photos;
     }
 
     public String getName() {
         return name;
     }
 
-    public Collection<Photo> getPhotos() {
-        return photos;
-    }
-
     public String getDescription() {
         return description;
+    }
+
+    public String getId() {
+        return id;
     }
 }

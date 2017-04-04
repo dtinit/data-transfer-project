@@ -1,8 +1,6 @@
 package org.dataportabilityproject.dataModels.mail;
 
-import org.dataportabilityproject.dataModels.DataModel;
-
-public final class MailMessageModel implements DataModel {
+public final class MailMessageModel {
   private final String rawString;
 
   public MailMessageModel(String rawString) {
