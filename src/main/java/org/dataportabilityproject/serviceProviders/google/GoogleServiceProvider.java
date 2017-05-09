@@ -6,6 +6,9 @@ import static org.dataportabilityproject.shared.PortableDataType.PHOTOS;
 import static org.dataportabilityproject.shared.PortableDataType.TASKS;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.CredentialRefreshListener;
+import com.google.api.client.auth.oauth2.TokenErrorResponse;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.tasks.TasksScopes;

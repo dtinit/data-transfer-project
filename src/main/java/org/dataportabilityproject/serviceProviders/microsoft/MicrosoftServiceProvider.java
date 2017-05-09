@@ -7,6 +7,7 @@ import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.serviceProviders.microsoft.calendar.MicrosoftCalendarService;
+import org.dataportabilityproject.serviceProviders.microsoft.mail.MicrosoftMailService;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
@@ -17,8 +18,9 @@ import org.dataportabilityproject.shared.ServiceProvider;
  */
 public final class MicrosoftServiceProvider implements ServiceProvider {
     private final Supplier<MicrosoftCalendarService> calendarService;
+    private final Supplier<MicrosoftMailService> mailService;
 
-    public MicrosoftServiceProvider(Secrets secrets, IOInterface consoleIO) throws IOException {
+    public MicrosoftServiceProvider(Secrets secrets, IOInterface consoleIO) {
         MicrosoftAuth auth = new MicrosoftAuth(secrets);
         // NB: this isn't memoized so that you can do a round trip with different accounts.
         this.calendarService = () -> {
@@ -29,6 +31,15 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
                 throw new IllegalStateException("Couldn't fetch account info", e);
             }
         };
+        this.mailService = () -> {
+            try {
+              String account = consoleIO.ask("Enter Microsoft email account");
+              String password = consoleIO.ask("Enter Microsoft email account password");
+              return new MicrosoftMailService(account, password);
+            } catch (IOException e) {
+              throw new IllegalStateException("Couldn't fetch account info", e);
+            }
+        };
     }
 
     @Override public String getName() {
@@ -37,7 +48,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
 
     @Override
     public ImmutableList<PortableDataType> getExportTypes() {
-        return ImmutableList.of(PortableDataType.CALENDAR);
+        return ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL);
     }
 
     @Override
@@ -50,6 +61,8 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
        switch (type) {
             case CALENDAR:
                 return calendarService.get();
+            case MAIL:
+                return mailService.get();
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
@@ -65,6 +78,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
         }
     }
 
+    /** Obtains an oauth token for the given account. */
     private String getToken(MicrosoftAuth auth, String account) {
         String token;
         try {

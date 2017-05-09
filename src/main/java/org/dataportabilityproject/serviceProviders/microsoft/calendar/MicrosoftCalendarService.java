@@ -36,6 +36,7 @@ public class MicrosoftCalendarService
       implements Importer<CalendarModelWrapper>, Exporter<CalendarModelWrapper> {
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     private static final String HEADER_PREFIX = "Bearer ";
+
     private final HttpRequestFactory requestFactory;
     public MicrosoftCalendarService(String token, String account) {
         this.requestFactory =

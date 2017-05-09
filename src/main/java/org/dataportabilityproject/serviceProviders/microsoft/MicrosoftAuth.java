@@ -6,7 +6,6 @@ import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.StoredCredential;
 import com.google.api.client.extensions.java6.auth.oauth2.VerificationCodeReceiver;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.http.GenericUrl;
@@ -18,7 +17,7 @@ import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecur
 /**
  * A work in progress to try to get authentication to MS working.
  */
-class MicrosoftAuth {
+public class MicrosoftAuth {
     /** Port in the "Callback URL". */
     private static final int PORT = 12345;
 
@@ -27,12 +26,18 @@ class MicrosoftAuth {
 
     private static final String AUTHORIZATION_SERVER_URL = "https://login.live.com/oauth20_authorize.srf";
     private static final String TOKEN_SERVER_URL = "https://login.live.com/oauth20_token.srf";
+    private static final ImmutableList<String> SCOPES = ImmutableList.of(
+        "wl.imap", // outlook export via IMAP
+        "wl.offline_access", // provides for refresh tokens
+        "wl.calendars", "wl.contacts_calendars"); // calendar export
+    
     private final Secrets secrets;
 
     public MicrosoftAuth(Secrets secrets) {
         this.secrets = secrets;
     }
 
+    /** Initiates the auth flow and obtains the access token. */
     public String getToken(String account) throws IOException {
         // set up authorization code flow
         AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(
@@ -45,7 +50,7 @@ class MicrosoftAuth {
                         secrets.get("MICROSOFT_PASSWORD")), // HttpExecuteInterceptor 
                 secrets.get("MICROSOFT_APP_ID"), // clientId
                 AUTHORIZATION_SERVER_URL) // encoded url
-            .setScopes(ImmutableList.of("wl.offline_access", "wl.calendars", "wl.contacts_calendars", "office.onenote", "openid offline_access profile")) // scopes
+            .setScopes(SCOPES) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
 
         // authorize
@@ -61,11 +66,4 @@ class MicrosoftAuth {
           throw new IOException("Couldn't authorize", e);
         }
    }
-
-
-    // TODO(chuy): Make clearing the data store an option
-    private static void clearDataStore() throws IOException {
-      System.out.println("Clearing data store");
-      StoredCredential.getDefaultDataStore(MicrosoftStaticObjects.getDataStoreFactory()).clear();
-    }
 }

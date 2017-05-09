@@ -1,4 +1,4 @@
-package org.dataportabilityproject.dataModels.calendar;
+package org.dataportabilityproject.serviceProviders.microsoft.calendar;
 
 /**
  * Created by willard on 4/2/17.

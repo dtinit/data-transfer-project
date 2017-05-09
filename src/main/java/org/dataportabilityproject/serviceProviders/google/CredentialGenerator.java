@@ -33,6 +33,7 @@ public class CredentialGenerator {
           GoogleStaticObjects.getHttpTransport(), JSON_FACTORY, clientId, apiSecret, scopes)
               .setAccessType("offline")
               .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
+              .setApprovalPrompt("force")
               .build();
         // authorize
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost(DOMAIN).setPort(PORT).build();
