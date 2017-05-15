@@ -9,6 +9,7 @@
 
     <groupId>org.dataportabilityproject</groupId>
     <artifactId>Portability</artifactId>
+    <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
     <build>
         <plugins>
@@ -27,6 +28,20 @@
                 <version>1.2.1</version>
                 <configuration>
                         <mainClass>org.dataportabilityproject.PortabilityMain</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>maven-jetty-plugin</artifactId>
+                <version>6.1.10</version>
+                <configuration>
+                    <scanIntervalSeconds>10</scanIntervalSeconds>
+                    <connectors>
+                        <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
+                            <port>8080</port>
+                            <maxIdleTime>60000</maxIdleTime>
+                        </connector>
+                    </connectors>
                 </configuration>
             </plugin>
         </plugins>
