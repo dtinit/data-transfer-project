@@ -1,0 +1,14 @@
+<div>
+  <form name="dataTypeSelection" #configureTransfer="ngForm">
+    <label for="selectedDataType"> Choose a data type </label>
+    <select id="selectedDataType" [(ngModel)]="selectedDataType" name="selectedDataType"
+                #dataTypeSelection="ngModel">
+      <option *ngFor="let item of availableOptions" [ngValue]="item.name">
+          {{item.description}}
+      </option>
+    </select>
+    <button (click)="listServicesForDataType(dataTypeSelection.value);">Go</button>
+  </form>
+</div>
+<p>selected item is : {{selectedDataType}}</p>
+<p style="color:red;">{{ error_text }}</p>

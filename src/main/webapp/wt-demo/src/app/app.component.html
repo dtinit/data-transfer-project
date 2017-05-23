@@ -1,0 +1,5 @@
+<!-- List services component with a binding for listenting to service description updates -->
+<app-list-services (onDataTypeSelection)="onDataTypeSelection($event)"></app-list-services>
+
+<!-- Export configuration component binding the current service descriptions. -->
+<app-export-configuration [services]="currentServiceDescriptions">/<app-export-configuration>

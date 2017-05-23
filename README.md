@@ -85,7 +85,7 @@ chooses.
  * "mvn exec:java" will run the project.
 
 ### Running webapp
- * "mvn jetty:run" will build and run the webapp 
+ * "mvn jetty:run" will build and run the webapp
 
 ### Contributing
 TBD
