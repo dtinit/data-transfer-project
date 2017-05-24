@@ -1,0 +1,15 @@
+*~
+target/**
+.project
+.classpath
+src/.project
+src/.classpath
+src/main/resources/secrets.csv
+workspace.xml
+tasks.xml
+*.iml
+lib/
+target/
+.idea/
+/webapp/wt-demo/node_modules/**
+

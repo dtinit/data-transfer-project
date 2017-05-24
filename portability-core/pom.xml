@@ -9,7 +9,7 @@
 
     <groupId>org.dataportabilityproject</groupId>
     <artifactId>Portability</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
     <build>
         <plugins>
