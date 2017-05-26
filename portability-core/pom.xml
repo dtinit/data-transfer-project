@@ -5,13 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
     </properties>
 
     <groupId>org.dataportabilityproject</groupId>
-    <artifactId>Portability</artifactId>
+    <artifactId>portability-core</artifactId>
     <packaging>jar</packaging>
+    <name>Portability Core Library</name>
     <version>1.0-SNAPSHOT</version>
+
     <build>
+        <resources>
+          <resource>
+            <directory>resources/</directory>
+          </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -30,29 +38,9 @@
                         <mainClass>org.dataportabilityproject.PortabilityMain</mainClass>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>maven-jetty-plugin</artifactId>
-                <version>6.1.10</version>
-                <configuration>
-                    <scanIntervalSeconds>10</scanIntervalSeconds>
-                    <connectors>
-                        <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-                            <port>8080</port>
-                            <maxIdleTime>60000</maxIdleTime>
-                        </connector>
-                    </connectors>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>com.google.truth</groupId>
             <artifactId>truth</artifactId>
@@ -88,6 +76,16 @@
             <groupId>com.google.gdata</groupId>
             <artifactId>core</artifactId>
             <version>1.47.1</version>
+          <exclusions>
+            <exclusion>
+              <groupId>org.mortbay.jetty</groupId>
+              <artifactId>jetty-util</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.mortbay.jetty</groupId>
+              <artifactId>servlet-api</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -97,6 +95,11 @@
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
+            <version>1.22.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-jetty</artifactId>
             <version>1.22.0</version>
         </dependency>
         <dependency>
@@ -119,17 +122,18 @@
             <artifactId>jackson-annotations</artifactId>
             <version>2.8.7</version>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-            <version>9.2.5.v20141112</version>
-        </dependency>
         <!--  Gson: Java to Json conversion -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.2.4</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.jayway.jsonpath</groupId>
+          <artifactId>json-path</artifactId>
+          <version>2.2.0</version>
+          <scope>test</scope>
         </dependency>
     </dependencies>
+
 </project>
