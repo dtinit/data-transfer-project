@@ -85,11 +85,11 @@ chooses.
  * "mvn compile" will build the project.
  * "mvn exec:java -pl portability-core" will run the command line tool.
 
-### Running webapp
-* "mvn -e spring-boot:run -pl portability-web" will run the webapp.
+### Building/Running webapp
+* nvm run node --version
+* [optional] npm install #required first time through
+* "mvn -e spring-boot:run -pl portability-web" will run the app server.
+* "ng serve --port 3000" will run the Angular frontend
 
 ### Contributing
-TBD
-
-### Running
 TBD

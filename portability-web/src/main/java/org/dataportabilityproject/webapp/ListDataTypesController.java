@@ -11,6 +11,7 @@ import org.dataportabilityproject.shared.Secrets;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 /** Controller for the list data types service. */
 @RestController
@@ -19,6 +20,7 @@ public class ListDataTypesController {
   private volatile ServiceProviderRegistry registry = null; // TODO: Consider Dependecy Injection
 
   /** Returns of the list of data types allowed for inmport and export. */
+  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping("/_/listDataTypes")
   public List<PortableDataType> listDataTypes() throws Exception {
     ImmutableList.Builder<PortableDataType> types = ImmutableList.builder();

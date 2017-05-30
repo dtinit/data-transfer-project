@@ -11,4 +11,5 @@ tasks.xml
 lib/
 target/
 .idea/
+/webapp/wt-demo/node_modules/**
 

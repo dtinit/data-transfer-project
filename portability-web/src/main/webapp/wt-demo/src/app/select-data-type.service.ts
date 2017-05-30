@@ -8,7 +8,7 @@ import 'rxjs/add/operator/map';
 
 @Injectable()
 export class SelectDataTypeService {
-  private baseEndpoint = "http://localhost:8080/Portability/demo/";
+  private baseEndpoint = "http://localhost:8080/_/";
   constructor(private http: Http) { }
 
   listDataTypes() {
