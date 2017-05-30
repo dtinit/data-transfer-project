@@ -14,17 +14,16 @@
     </properties>
 
     <groupId>org.dataportabilityproject</groupId>
-    <artifactId>portability-core</artifactId>
+    <artifactId>portability-web</artifactId>
     <packaging>jar</packaging>
-    <name>Portability Core Library</name>
+    <name>Portability Web Application</name>
     <version>1.0-SNAPSHOT</version>
-
     <build>
-      <resources>
-        <resource>
-          <directory>src/main/resources/</directory>
-        </resource>
-      </resources>
+        <resources>
+          <resource>
+            <directory>src/main/resources/</directory>
+          </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -43,9 +42,49 @@
                         <mainClass>org.dataportabilityproject.PortabilityMain</mainClass>
                 </configuration>
             </plugin>
+            <plugin>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+    <repositories>
+      <repository>
+        <id>spring-releases</id>
+        <url>https://repo.spring.io/libs-release</url>
+      </repository>
+    </repositories>
+    <pluginRepositories>
+      <pluginRepository>
+        <id>spring-releases</id>
+        <url>https://repo.spring.io/libs-release</url>
+      </pluginRepository>
+    </pluginRepositories>
+    <dependencyManagement>
+         <dependencies>
+             <dependency>
+                 <!-- Import dependency management from Spring Boot -->
+                 <groupId>org.springframework.boot</groupId>
+                 <artifactId>spring-boot-dependencies</artifactId>
+                 <version>1.4.1.RELEASE</version>
+                 <type>pom</type>
+                 <scope>import</scope>
+             </dependency>
+         </dependencies>
+     </dependencyManagement>
     <dependencies>
+        <!-- library module -->
+        <dependency>
+            <groupId>org.dataportabilityproject</groupId>
+            <artifactId>portability-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.google.truth</groupId>
             <artifactId>truth</artifactId>
@@ -103,11 +142,6 @@
             <version>1.22.0</version>
         </dependency>
         <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client-jetty</artifactId>
-            <version>1.22.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
             <version>1.22.0</version>
@@ -132,13 +166,26 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.2.4</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>com.jayway.jsonpath</groupId>
           <artifactId>json-path</artifactId>
-          <version>2.2.0</version>
           <scope>test</scope>
         </dependency>
+
+      <!-- This is a web application -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+      </dependency>
+
+      <!-- Tomcat embedded container-->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-tomcat</artifactId>
+        <scope>compile</scope>
+      </dependency>
     </dependencies>
 
 </project>

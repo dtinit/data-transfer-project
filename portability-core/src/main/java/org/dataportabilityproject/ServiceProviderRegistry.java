@@ -24,7 +24,21 @@ import java.util.stream.Collectors;
 public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
 
+
+    public ServiceProviderRegistry(Secrets secrets) throws Exception {
+        this(secrets, new IOInterface() {
+            @Override public void print(String text) { /* no-op */ }
+            @Override public String ask(String prompt) throws IOException {
+                return null; // no-op
+            }
+            @Override public <T> T ask(String prompt, List<T> choices) throws IOException {
+                return null; // no-op
+            }
+        });
+    }
+
     public ServiceProviderRegistry(Secrets secrets, IOInterface ioInterface) throws Exception {
+
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
 
         addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);

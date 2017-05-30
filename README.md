@@ -1,18 +1,18 @@
 # World Takeout
 
 ## Overview
-The goal of World Takeout (name is a work in progress) is to make it easy to transfer data 
+The goal of World Takeout (name is a work in progress) is to make it easy to transfer data
 from one service provider (e.g. Google) to another (e.g. Microsoft).
 
 This document focuses on the technical approaches and aspects of the project.
 For a higher level overview of the goals and principals please see:
 (coming soon).
 
-You can think of World Takeout as 
+You can think of World Takeout as
  * Adapters/Model
  * Workflow Engine
  * Auth Plugins
- 
+
 ### Current State
 This is very much in it infancy.  Currently we are working on building out
 a base set of adapters and models.  The goal isn't to achieve 100% fidelity
@@ -62,10 +62,10 @@ like rate limiting and retries.
 *None of this is implemented yet*
 
 Goals:
- * be written in a platform independent way (i.e. it is able to 
+ * be written in a platform independent way (i.e. it is able to
    run in GCP, AWS or Azure)
  * Be secure
- 
+
 ## Auth Plugins
 
 World Takeout aims to be auth agnostic.  Service providers should
@@ -79,13 +79,14 @@ chooses.
 ## Development
 
 ### Building/Running
- * Add a secrets.csv file to src/main/resources, this should contain
+ * Add a secrets.csv file to src/main/resources in portability-core and/or
+   in portability-web, this should contain
    all your API keys, see secrets_template.csv for an example.
  * "mvn compile" will build the project.
- * "mvn exec:java" will run the project.
+ * "mvn exec:java -pl portability-core" will run the command line tool.
 
 ### Running webapp
- * "mvn jetty:run" will build and run the webapp
+* "mvn -e spring-boot:run -pl portability-web" will run the webapp.
 
 ### Contributing
 TBD
