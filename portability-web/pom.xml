@@ -78,6 +78,16 @@
             <groupId>org.dataportabilityproject</groupId>
             <artifactId>portability-core</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+              <exclusion>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>servlet-api</artifactId>
+              </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
