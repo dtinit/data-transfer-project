@@ -1,5 +1,6 @@
 package org.dataportabilityproject;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
@@ -25,8 +26,8 @@ public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
 
 
-    public ServiceProviderRegistry(Secrets secrets) throws Exception {
-        this(secrets, new IOInterface() {
+    public ServiceProviderRegistry(Supplier<Secrets> secrets) throws Exception {
+        this(secrets.get(), new IOInterface() {
             @Override public void print(String text) { /* no-op */ }
             @Override public String ask(String prompt) throws IOException {
                 return null; // no-op

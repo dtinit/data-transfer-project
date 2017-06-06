@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, Headers, Response } from '@angular/http';
+import { Http, Headers, Response, RequestOptions, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
@@ -19,10 +19,11 @@ export class SelectDataTypeService {
   }
 
   listServices(dataType: string) {
-    let params = new URLSearchParams();
-    params.set('search', dataType);
+    let myParams = new URLSearchParams();
+    myParams.append('dataType', dataType);
+    let options = new RequestOptions({ params: myParams });
     let url = `${this.baseEndpoint}listServices`;
-    return this.http.get(url, params)
+    return this.http.get(url, options)
       .map(this.listServicesSuccess)
       .catch(this.handleError);
   }
@@ -33,7 +34,7 @@ export class SelectDataTypeService {
     console.log('listDataTypesSuccess, body: ' + JSON.stringify(body));
     let dataTypes: PortableDataType[] = [];
     for (var prop in body) {
-      dataTypes.push(new PortableDataType(prop, body[prop]));
+      dataTypes.push(new PortableDataType(body[prop], body[prop]));
     }
     console.log('listDataTypesSuccess, dataTypes: ' + JSON.stringify(dataTypes));
     return dataTypes;

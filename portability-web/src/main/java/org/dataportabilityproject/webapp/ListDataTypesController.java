@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 public class ListDataTypesController {
   private final AtomicLong counter = new AtomicLong();
   private volatile ServiceProviderRegistry registry = null; // TODO: Consider Dependecy Injection
+
+  @Autowired
+  private ServiceProviderRegistry serviceProviderRegistry;
 
   /** Returns of the list of data types allowed for inmport and export. */
   @CrossOrigin(origins = "http://localhost:3000")
@@ -38,23 +42,8 @@ public class ListDataTypesController {
    */
   private boolean hasImportAndExport(PortableDataType type) throws Exception {
     return
-        (ServiceProviderRegistryHolder.INSTANCE.getServiceProvidersThatCanExport(type).size() > 0)
+        (serviceProviderRegistry.getServiceProvidersThatCanExport(type).size() > 0)
             &&
-            (ServiceProviderRegistryHolder.INSTANCE.getServiceProvidersThatCanImport(type).size()
-                > 0);
-  }
-
-  /** Lazy init the ServiceProviderRegistry. */
-  private static class ServiceProviderRegistryHolder {
-    static final ServiceProviderRegistry INSTANCE;
-    static {
-      try {
-        INSTANCE = new ServiceProviderRegistry(
-            // TODO: Secrets should not be required to list data types
-            new Secrets("secrets.csv"));
-      } catch (Exception e) {
-        throw new ExceptionInInitializerError(e);
-      }
-    }
+            (serviceProviderRegistry.getServiceProvidersThatCanImport(type).size() > 0);
   }
 }

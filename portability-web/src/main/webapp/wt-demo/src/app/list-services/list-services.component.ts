@@ -9,7 +9,7 @@ import { ServiceDescriptions } from '../service-description';
   styleUrls: ['./list-services.component.css']
 })
 export class ListServicesComponent implements OnInit {
-  selectedDataType: string = 'Please make a selection';
+  selectedDataType: string = '';
   availableOptions: PortableDataType[] = [];
   @Output() onDataTypeSelection = new EventEmitter<ServiceDescriptions>();
   dataTypeSelect: any;
@@ -27,6 +27,7 @@ export class ListServicesComponent implements OnInit {
     this.selectDataTypeService.listDataTypes().subscribe(
       data => {
         this.availableOptions = data;
+        this.selectedDataType = data[0].name;
         console.log('updated availableOptions: ' + JSON.stringify(this.availableOptions));
       },
       error => {
