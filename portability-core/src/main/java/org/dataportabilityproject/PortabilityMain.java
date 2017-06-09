@@ -38,8 +38,9 @@ public class PortabilityMain {
                 "What service do you want to import to",
                 registry.getServiceProvidersThatCanImport(type));
 
-        Importer<T> importer = registry.getImporter(importerName, type);
         Exporter<T> exporter = registry.getExporter(exporterName, type);
+
+        Importer<T> importer = registry.getImporter(importerName, type);
         ExportInformation emptyExportInfo =
             new ExportInformation(Optional.empty(), Optional.empty());
         copy(exporter, importer, emptyExportInfo);
@@ -66,11 +67,13 @@ public class PortabilityMain {
                         Optional.of(continuationInfo.getPaginationInformation())));
             }
 
-            for (Resource resource : continuationInfo.getSubResources()) {
-                copy(
-                    exporter,
-                    importer,
-                    new ExportInformation(Optional.of(resource), Optional.empty()));
+            if (continuationInfo.getSubResources() != null) {
+                for (Resource resource : continuationInfo.getSubResources()) {
+                    copy(
+                        exporter,
+                        importer,
+                        new ExportInformation(Optional.of(resource), Optional.empty()));
+                }
             }
         }
     }

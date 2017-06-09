@@ -2,6 +2,9 @@ package org.dataportabilityproject;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
@@ -10,14 +13,11 @@ import org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider;
 import org.dataportabilityproject.serviceProviders.instagram.InstagramServiceProvider;
 import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkProvider;
+import org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * A registry of all the supported {@link org.dataportabilityproject.shared.ServiceProvider}
@@ -47,6 +47,7 @@ public class ServiceProviderRegistry {
         addServiceProvider(new MicrosoftServiceProvider(secrets, ioInterface), providerBuilder);
         addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
         addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new SmugMugServiceProvider(secrets, ioInterface), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
     }

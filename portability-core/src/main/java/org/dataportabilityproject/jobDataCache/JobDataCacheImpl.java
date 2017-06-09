@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 public final class JobDataCacheImpl implements JobDataCache {
-  private HashMap<String, byte[]> map = new HashMap<>();
+  private static HashMap<String, byte[]> map = new HashMap<>();
 
   @Override
   public boolean hasKey(String key) {
@@ -18,7 +18,7 @@ public final class JobDataCacheImpl implements JobDataCache {
 
   @Override
   public <T extends Serializable> T getData(String key, Class<T> clazz) throws IOException {
-    if (map.containsKey(key)) {
+    if (!map.containsKey(key)) {
       throw new IllegalArgumentException("Can't get key: " + key);
     }
 
@@ -38,7 +38,7 @@ public final class JobDataCacheImpl implements JobDataCache {
     }
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
-      out.writeObject(this);
+      out.writeObject(data);
     }
     map.put(key, bos.toByteArray());
   }
