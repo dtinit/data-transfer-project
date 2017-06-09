@@ -44,18 +44,21 @@ export class SelectDataTypeService {
     console.log('listServicesSuccess, res: ' +  JSON.stringify(res));
     let body = res.json();
     console.log('listServicesSuccess, json from backend:' + JSON.stringify(body));
-    let importServices: ServiceDescription[] = [];
-    let importData = body['import'];
-    for (var name in importData) {
-      importServices.push(new ServiceDescription(name, importData[name]));
-    }
-    console.log('listServicesSuccess, importServices: ' + JSON.stringify(importServices));
+
     let exportServices: ServiceDescription[] = [];
     let exportData = body['export'];
     for (var name in exportData) {
-      exportServices.push(new ServiceDescription(name, exportData[name]));
+      exportServices.push(new ServiceDescription(exportData[name], exportData[name]));
     }
     console.log('listServicesSuccess, exportServices: ' + JSON.stringify(exportServices));
+
+    let importServices: ServiceDescription[] = [];
+    let importData = body['import'];
+    for (var name in importData) {
+      importServices.push(new ServiceDescription(importData[name], importData[name]));
+    }
+    console.log('listServicesSuccess, importServices: ' + JSON.stringify(importServices));
+
     return new ServiceDescriptions(importServices, exportServices);
   }
 

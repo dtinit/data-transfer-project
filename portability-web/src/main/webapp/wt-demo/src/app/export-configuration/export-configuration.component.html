@@ -1,21 +1,14 @@
 <div>
   <form name="exportConfiguration" #configureTransfer="ngForm">
-    <label for="exportService"> Choose a service to export from </label>
-    <select id="exportService" [(ngModel)]="exportService" name="exportService"
+    <label for="selectedExportService"> Choose a service to export from </label>
+    <select id="selectedExportService" [(ngModel)]="selectedExportService" name="selectedExportService"
                 #exportServiceSelection="ngModel">
       <option *ngFor="let item of exportServices" [ngValue]="item.name">
         {{item.description}}
       </option>
     </select>
-    <br />
-    <label for="importService"> Choose a service to import from </label>
-    <select id="importService" [(ngModel)]="importService" name="importService"
-               #importServiceSelection="ngModel">
-      <option *ngFor="let item of importServices" [ngValue]="item.name">
-        {{item.description}}
-      </option>
-      </select>
-    <br />
-    <button (click)="authorizeExport(exportServiceSelection.value, importServiceSelection.value);">Go</button>
+    <button (click)="onSelect(exportServiceSelection.value);">Go</button>
   </form>
 </div>
+<p>Selected service to export from : {{selectedExportService}}</p>
+<p style="color:red;">{{ error_text }}</p>

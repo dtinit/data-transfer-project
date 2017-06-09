@@ -3,11 +3,11 @@
     <label for="selectedDataType"> Choose a data type </label>
     <select id="selectedDataType" [(ngModel)]="selectedDataType" name="selectedDataType"
                 #dataTypeSelection="ngModel">
-      <option *ngFor="let item of availableOptions" [ngValue]="item.name">
+      <option *ngFor="let item of dataTypes" [ngValue]="item.name">
           {{item.description}}
       </option>
     </select>
-    <button (click)="listServicesForDataType(dataTypeSelection.value);">Go</button>
+    <button (click)="onSelect(dataTypeSelection.value);">Go</button>
   </form>
 </div>
 <p>Selected data type to migrate is : {{selectedDataType}}</p>

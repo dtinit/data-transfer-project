@@ -1,55 +1,47 @@
-import { Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, Input, OnInit} from '@angular/core';
+import { Router }  from '@angular/router';
 import { SelectDataTypeService } from '../select-data-type.service';
 import { PortableDataType } from '../portable-data-type';
-import { ServiceDescriptions } from '../service-description';
 
 @Component({
-  selector: 'app-list-services',
   templateUrl: './list-services.component.html',
   styleUrls: ['./list-services.component.css']
 })
 export class ListServicesComponent implements OnInit {
   selectedDataType: string = '';
-  availableOptions: PortableDataType[] = [];
-  @Output() onDataTypeSelection = new EventEmitter<ServiceDescriptions>();
+  dataTypes: PortableDataType[] = [];
   dataTypeSelect: any;
   error_text: string = "";
 
-  constructor(private selectDataTypeService : SelectDataTypeService) { }
+  constructor(private router: Router,
+    private service : SelectDataTypeService) { }
 
   ngOnInit() {
-    this.listDataTypes();
+    // Populate the initial page with available data types
+    // TODO: Consider caching list
+    this.fetchAvailableDataTypes();
   }
 
   // List data types available for export and import
-  listDataTypes() {
+  fetchAvailableDataTypes() {
     // TODO: Fetch the data types from the backend
-    this.selectDataTypeService.listDataTypes().subscribe(
+    this.service.listDataTypes().subscribe(
       data => {
-        this.availableOptions = data;
+        this.dataTypes = data;
         this.selectedDataType = data[0].name;
-        console.log('updated availableOptions: ' + JSON.stringify(this.availableOptions));
+        console.log('updated dataTypes: ' + JSON.stringify(this.dataTypes));
       },
       error => {
-        this.availableOptions = [];
+        this.dataTypes = [];
         this.error_text = 'There was an error';
         console.error(error);
       }
     );
   }
 
-  // List services available for export and import
-  listServicesForDataType(dataType: string) {
+  // Handles selection of data types
+  onSelect(dataType: string) {
     console.log('incoming dataType: ' + dataType);
-    // TODO: Fetch the data types from the backend
-    this.selectDataTypeService.listServices(dataType).subscribe(
-      data => {
-        this.onDataTypeSelection.emit(new ServiceDescriptions(data.exportServices, data.importServices))
-      },
-      error => {
-        this.error_text = 'There was an error';
-        console.error(error);
-      }
-    );
+    this.router.navigate(['/export-configuration', dataType]);
   }
 }
