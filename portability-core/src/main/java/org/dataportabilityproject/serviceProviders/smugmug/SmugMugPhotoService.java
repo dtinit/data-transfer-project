@@ -1,5 +1,7 @@
 package org.dataportabilityproject.serviceProviders.smugmug;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +63,7 @@ import org.dataportabilityproject.serviceProviders.smugmug.model.SmugmugAlbumsRe
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;
+import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
 
 final class SmugMugPhotoService implements
     Exporter<PhotosModelWrapper>,
@@ -128,13 +131,18 @@ final class SmugMugPhotoService implements
         content,
         ImmutableMap.of(),
         new TypeReference<SmugMugResponse<SmugmugAlbumResponse>>() {});
+    checkState(response.getResponse() != null, "Response is null");
+    checkState(response.getResponse().getAlbum() != null, "Album is null");
     jobDataCache.store(album.getId(), response.getResponse().getAlbum().getAlbumKey());
   }
 
   private void uploadPhoto(PhotoModel photo) throws IOException {
     String newAlbumKey = jobDataCache.getData(photo.getAlbumId(), String.class);
+    checkState(!Strings.isNullOrEmpty(newAlbumKey),
+        "Cached album key for %s is null", photo.getAlbumId());
 
-    InputStreamContent content = new InputStreamContent(null, getImageAsStream(photo.getFetchableUrl()));
+    InputStreamContent content = new InputStreamContent(null,
+        getImageAsStream(photo.getFetchableUrl()));
 
     postRequest("http://upload.smugmug.com/",
         content,
@@ -150,10 +158,12 @@ final class SmugMugPhotoService implements
       Optional<PaginationInformation> paginationInformation) throws IOException {
     List<PhotoModel> photos = new ArrayList<>();
 
-    String id = resource.getId();
-    String url = "/api/v2/album/" + id + "!images";
+    String url;
     if (paginationInformation.isPresent()) {
       url = ((StringPaginationToken) paginationInformation.get()).getId();
+    } else {
+      String id = resource.getId();
+      url = "/api/v2/album/" + id + "!images";
     }
 
     StringPaginationToken pageToken = null;
@@ -325,7 +335,7 @@ final class SmugMugPhotoService implements
       throw new IOException("Couldn't generate authUrl", e);
     }
 
-    String code = ioInterface.ask("Please visit: " + authUrl + " end enter code:");
+    String code = ioInterface.ask("Please visit: " + authUrl + " and enter code:");
 
     try {
       provider.retrieveAccessToken(consumer, code.trim());

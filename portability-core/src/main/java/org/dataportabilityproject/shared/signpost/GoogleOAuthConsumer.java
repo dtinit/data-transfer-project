@@ -1,4 +1,4 @@
-package org.dataportabilityproject.serviceProviders.smugmug;
+package org.dataportabilityproject.shared.signpost;
 
 
 import oauth.signpost.AbstractOAuthConsumer;
@@ -7,9 +7,12 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.http.HttpRequest;
 import oauth.signpost.signature.QueryStringSigningStrategy;
-import org.dataportabilityproject.shared.GoogleConnectionRequestAdapter;
 
-final class GoogleOAuthConsumer extends AbstractOAuthConsumer {
+/**
+ * Implements a SingPost {@link AbstractOAuthConsumer} that knows how to interact
+ * with a a Google {@link com.google.api.client.http.HttpRequest}.
+ */
+public final class GoogleOAuthConsumer extends AbstractOAuthConsumer {
 
   public GoogleOAuthConsumer(String consumerKey, String consumerSecret) {
     super(consumerKey, consumerSecret);

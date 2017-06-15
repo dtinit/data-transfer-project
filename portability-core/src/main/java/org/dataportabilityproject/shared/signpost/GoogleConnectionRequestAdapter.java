@@ -1,4 +1,4 @@
-package org.dataportabilityproject.shared;
+package org.dataportabilityproject.shared.signpost;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
@@ -16,10 +16,10 @@ import java.util.Map;
  * Implements a SingPost {@link oauth.signpost.http.HttpRequest} that knows how to interact
  * with a a Google {@link HttpRequest}.
  */
-public final class GoogleConnectionRequestAdapter implements oauth.signpost.http.HttpRequest {
+final class GoogleConnectionRequestAdapter implements oauth.signpost.http.HttpRequest {
   private final HttpRequest httpRequest;
 
-  public GoogleConnectionRequestAdapter(HttpRequest httpRequest) {
+  GoogleConnectionRequestAdapter(HttpRequest httpRequest) {
     this.httpRequest = httpRequest;
   }
 

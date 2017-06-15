@@ -9,7 +9,7 @@
   <packaging>pom</packaging>
   <name>Portability Parent Project</name>
   <version>1.0-SNAPSHOT</version>
-    
+
   <!-- subdirectories containing sub-projects -->
   <modules>
     <module>portability-core</module>

@@ -13,7 +13,6 @@
         <java.version>1.8</java.version>
     </properties>
 
-    <groupId>org.dataportabilityproject</groupId>
     <artifactId>portability-core</artifactId>
     <packaging>jar</packaging>
     <name>Portability Core Library</name>
