@@ -36,10 +36,10 @@ public final class InstagramServiceProvider implements ServiceProvider {
   @Override
   public Exporter<? extends DataModel> getExporter(PortableDataType type) throws IOException {
     if (type == PortableDataType.PHOTOS) {
-      InatagramAuth inatagramAuth = new InatagramAuth(
+      InastagramAuth inastagramAuth = new InastagramAuth(
           secrets.get("INSTAGRAM_CLIENT_ID"),
           secrets.get("INSTAGRAM_CLIENT_SECRET"));
-      SecretAuthData authData = (SecretAuthData) inatagramAuth.generateAuthData(null);
+      SecretAuthData authData = (SecretAuthData) inastagramAuth.generateAuthData(null);
       return new InstagramPhotoService(authData.secret());
     }
     throw new IllegalStateException("Instagram doesn't support exporting: " + type);
