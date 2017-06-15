@@ -1,5 +1,8 @@
 package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
@@ -9,56 +12,54 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.api.client.xml.XmlNamespaceDictionary;
 import com.google.api.client.xml.XmlObjectParser;
+import java.io.IOException;
+import java.net.URL;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.AuthElement;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.Frob;
 import org.dataportabilityproject.shared.IOInterface;
-
-import java.io.IOException;
-import java.net.URL;
-
-import static com.google.common.base.Preconditions.checkState;
+import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.SecretAuthData;
 
 /**
  * Generates a token using the flow described: https://www.rememberthemilk.com/services/api/authentication.rtm
  */
-public class TokenGenerator {
+public class TokenGenerator implements OfflineAuthDataGenerator {
     private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     private final RememberTheMilkSignatureGenerator signatureGenerator;
-    private final IOInterface ioInterface;
-    private final String apiKey;
 
     private AuthElement authElement;
 
-    public TokenGenerator(
-            RememberTheMilkSignatureGenerator signatureGenerator,
-            IOInterface ioInterface,
-            String apiKey) {
+    TokenGenerator(RememberTheMilkSignatureGenerator signatureGenerator) {
         this.signatureGenerator = signatureGenerator;
-        this.ioInterface = ioInterface;
-        this.apiKey = apiKey;
     }
 
-    public String getToken() throws IOException {
-        return getToken(false);
+    @Override
+    public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
+        return SecretAuthData.create(getToken(false, ioInterface));
     }
 
-    public String getToken(boolean force) throws IOException {
+    String getToken(AuthData authData) {
+        checkArgument(authData instanceof SecretAuthData,
+            "authData expected to be SecretAuthData not %s",
+            authData.getClass().getCanonicalName());
+        return ((SecretAuthData) authData).secret();
+    }
+
+    private String getToken(boolean force, IOInterface ioInterface) throws IOException {
         if (authElement == null || force) {
             String frob = getFrob();
-            presentLinkToUser(frob);
+            presentLinkToUser(frob, ioInterface);
             authElement = getAuthToken(frob);
         }
 
         return authElement.auth.token;
     }
 
-    public AuthElement validateToken(String auth_token) throws IOException {
-        URL url = new URL(RememberTheMilkMethods.CHECK_TOKEN.getUrl()
-                + "&api_key=" + apiKey
-                + "&auth_token=" + auth_token);
-        String signature = signatureGenerator.getSignature(url);
-        URL signedUrl = new URL(url + "&api_sig=" + signature);
+    private AuthElement validateToken(String auth_token) throws IOException {
+        URL url = new URL(RememberTheMilkMethods.CHECK_TOKEN.getUrl());
+        URL signedUrl = signatureGenerator.getSignature(url);
 
         HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
         HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
@@ -76,9 +77,8 @@ public class TokenGenerator {
     }
 
     private String getFrob() throws IOException{
-        URL url = new URL(RememberTheMilkMethods.GET_FROB.getUrl() + "&api_key=" + apiKey);
-        String signature = signatureGenerator.getSignature(url);
-        URL signedUrl = new URL(url + "&api_sig=" + signature);
+        URL url = new URL(RememberTheMilkMethods.GET_FROB.getUrl());
+        URL signedUrl = signatureGenerator.getSignature(url);
 
         HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
         HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
@@ -95,20 +95,16 @@ public class TokenGenerator {
         return frob.frob;
     }
 
-    private void presentLinkToUser(String frob) throws IOException {
-        URL authUrlUnsigned = new URL(AUTH_URL + "?api_key=" + apiKey + "&perms=write&frob=" + frob);
-        String authSignature = signatureGenerator.getSignature(authUrlUnsigned);
-        URL authUrlSigned = new URL(authUrlUnsigned + "&api_sig=" + authSignature);
+    private void presentLinkToUser(String frob, IOInterface ioInterface) throws IOException {
+        URL authUrlUnsigned = new URL(AUTH_URL + "?perms=write&frob=" + frob);
+        URL authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
 
         ioInterface.ask("Please visit " + authUrlSigned + " and flow the flow there then hit return/enter");
     }
 
     private AuthElement getAuthToken(String frob) throws IOException {
-        URL url = new URL(RememberTheMilkMethods.GET_TOKEN.getUrl()
-                + "&api_key=" + apiKey
-                + "&frob=" + frob);
-        String signature = signatureGenerator.getSignature(url);
-        URL signedUrl = new URL(url + "&api_sig=" + signature);
+        URL url = new URL(RememberTheMilkMethods.GET_TOKEN.getUrl() + "&frob=" + frob);
+        URL signedUrl = signatureGenerator.getSignature(url);
 
         HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
         HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));

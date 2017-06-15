@@ -11,13 +11,16 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.http.GenericUrl;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.Secrets;
+import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecureOverride;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 
 /**
  * A work in progress to try to get authentication to MS working.
  */
-public class MicrosoftAuth {
+final class MicrosoftAuth implements OfflineAuthDataGenerator {
     /** Port in the "Callback URL". */
     private static final int PORT = 12345;
 
@@ -33,12 +36,19 @@ public class MicrosoftAuth {
     
     private final Secrets secrets;
 
-    public MicrosoftAuth(Secrets secrets) {
+    MicrosoftAuth(Secrets secrets) {
         this.secrets = secrets;
     }
 
+    @Override
+    public AuthData generateAuthData(IOInterface consoleIO) throws IOException {
+        String account = consoleIO.ask("Enter Microsoft email account");
+        String token = getToken(account);
+        return MicrosoftOauthData.create(token, account);
+    }
+
     /** Initiates the auth flow and obtains the access token. */
-    public String getToken(String account) throws IOException {
+    private String getToken(String account) throws IOException {
         // set up authorization code flow
         AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(
                 BearerToken.authorizationHeaderAccessMethod(), // Access Method

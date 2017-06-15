@@ -25,8 +25,8 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
         // NB: this isn't memoized so that you can do a round trip with different accounts.
         this.calendarService = () -> {
             try {
-                String account = consoleIO.ask("Enter Microsoft email account");
-                return new MicrosoftCalendarService(getToken(auth, account), account);
+                MicrosoftOauthData authData = (MicrosoftOauthData) auth.generateAuthData(consoleIO);
+                return new MicrosoftCalendarService(authData.token(), authData.accountAddress());
             } catch (IOException e) {
                 throw new IllegalStateException("Couldn't fetch account info", e);
             }
@@ -76,18 +76,5 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
-    }
-
-    /** Obtains an oauth token for the given account. */
-    private String getToken(MicrosoftAuth auth, String account) {
-        String token;
-        try {
-            token = auth.getToken(account);
-        } catch (IOException e) {
-            System.out.println("Error obtaining token");
-            e.printStackTrace();
-            throw new IllegalStateException("Error obtaining token", e);
-        }
-        return token;
     }
 }

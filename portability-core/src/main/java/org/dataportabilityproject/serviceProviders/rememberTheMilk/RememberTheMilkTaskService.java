@@ -38,36 +38,21 @@ import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.TaskAdd
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.TaskList;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.TaskSeries;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.TimelineCreateResponse;
-import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
 /**
  * List the lists that exist in RTM.
  */
-public class RememberTheMilkTaskService implements
+final class RememberTheMilkTaskService implements
         Importer<TaskModelWrapper>,
         Exporter<TaskModelWrapper> {
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private final String authToken;
-    private final String apiKey;
     private final RememberTheMilkSignatureGenerator signatureGenerator;
     private final JobDataCache jobDataCache;
 
-    public RememberTheMilkTaskService(String secret, String apiKey, IOInterface ioInterface,
+    RememberTheMilkTaskService(RememberTheMilkSignatureGenerator signatureGenerator,
         JobDataCache jobDataCache) throws IOException {
-        this.apiKey = apiKey;
-        this.signatureGenerator = new RememberTheMilkSignatureGenerator(secret);
-        TokenGenerator tokenGenerator =
-            new TokenGenerator(this.signatureGenerator, ioInterface, apiKey);
-        this.authToken = tokenGenerator.getToken();
-        this.jobDataCache = jobDataCache;
-    }
-
-    public RememberTheMilkTaskService(String secret, String apiKey, String authToken,
-        JobDataCache jobDataCache) throws IOException {
-        this.apiKey = apiKey;
-        this.signatureGenerator = new RememberTheMilkSignatureGenerator(secret);
-        this.authToken = authToken;
+        this.signatureGenerator = signatureGenerator;
         this.jobDataCache = jobDataCache;
     }
 
@@ -90,8 +75,9 @@ public class RememberTheMilkTaskService implements
             jobDataCache.store(taskList.getId(), listInfo.id);
         }
         for (TaskModel task : wrapper.getTasks()) {
+            int newList = jobDataCache.getData(task.getTaskListId(), Integer.class);
             TaskSeries addedTask = createTask(
-                task.getText(), timeline, Long.parseLong(task.getTaskListId()));
+                task.getText(), timeline, newList);
             // TODO add note here
         }
     }
@@ -189,12 +175,8 @@ public class RememberTheMilkTaskService implements
                     .append(parameters.get(key));
         }
 
-        URL url = new URL(method.getUrl()
-                + "&api_key=" + apiKey
-                + "&auth_token=" + authToken
-                + parameterString);
-        String signature = signatureGenerator.getSignature(url);
-        URL signedUrl = new URL(url + "&api_sig=" + signature);
+        URL url = new URL(method.getUrl()  + parameterString);
+        URL signedUrl = signatureGenerator.getSignature(url);
 
         HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
         HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));

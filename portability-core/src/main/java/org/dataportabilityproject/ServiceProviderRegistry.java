@@ -42,10 +42,10 @@ public class ServiceProviderRegistry {
 
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
 
-        addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new FlickrServiceProvider(secrets, ioInterface), providerBuilder);
         addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
         addServiceProvider(new MicrosoftServiceProvider(secrets, ioInterface), providerBuilder);
-        addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
+        addServiceProvider(new RememberTheMilkProvider(secrets, ioInterface), providerBuilder);
         addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
         addServiceProvider(new SmugMugServiceProvider(secrets, ioInterface), providerBuilder);
 

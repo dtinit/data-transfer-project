@@ -5,22 +5,25 @@ import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
+import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 
 import java.io.IOException;
+import org.dataportabilityproject.shared.auth.AuthData;
 
 /**
  * The {@link ServiceProvider} for the Rembmer the Milk service (https://www.rememberthemilk.com/).
  */
 public final class RememberTheMilkProvider implements ServiceProvider {
     private final Secrets secrets;
-
+    private final IOInterface ioInterface;
     private RememberTheMilkTaskService taskService;
 
-    public RememberTheMilkProvider(Secrets secrets) throws IOException {
+    public RememberTheMilkProvider(Secrets secrets, IOInterface ioInterface) throws IOException {
         this.secrets = secrets;
+        this.ioInterface = ioInterface;
     }
 
     @Override public String getName() {
@@ -55,11 +58,19 @@ public final class RememberTheMilkProvider implements ServiceProvider {
 
     private synchronized RememberTheMilkTaskService getInstanceOfService() throws IOException {
         if (null == taskService) {
-            taskService = new RememberTheMilkTaskService(
-                    secrets.get("RTM_SECRET"),
+            TokenGenerator tokenGenerator = new TokenGenerator(
+                new RememberTheMilkSignatureGenerator(
                     secrets.get("RTM_API_KEY"),
-                    secrets.get("RTM_AUTH_CODE"),
-                    new JobDataCacheImpl());
+                    secrets.get("RTM_SECRET"),
+                    null
+                ));
+            AuthData authData = tokenGenerator.generateAuthData(ioInterface);
+            RememberTheMilkSignatureGenerator signer = new RememberTheMilkSignatureGenerator(
+                secrets.get("RTM_API_KEY"),
+                secrets.get("RTM_SECRET"),
+                tokenGenerator.getToken(authData));
+
+            taskService = new RememberTheMilkTaskService(signer, new JobDataCacheImpl());
         }
         return taskService;
     }

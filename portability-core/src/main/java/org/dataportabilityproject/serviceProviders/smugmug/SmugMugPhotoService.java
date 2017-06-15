@@ -33,15 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import oauth.signpost.OAuth;
 import oauth.signpost.OAuthConsumer;
-import oauth.signpost.OAuthProvider;
-import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
@@ -60,10 +56,8 @@ import org.dataportabilityproject.serviceProviders.smugmug.model.SmugMugResponse
 import org.dataportabilityproject.serviceProviders.smugmug.model.SmugMugUserResponse;
 import org.dataportabilityproject.serviceProviders.smugmug.model.SmugmugAlbumResponse;
 import org.dataportabilityproject.serviceProviders.smugmug.model.SmugmugAlbumsResponse;
-import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;
-import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
 
 final class SmugMugPhotoService implements
     Exporter<PhotosModelWrapper>,
@@ -77,12 +71,11 @@ final class SmugMugPhotoService implements
   private final HttpTransport httpTransport;
   private final JobDataCache jobDataCache;
 
-  SmugMugPhotoService(String apiKey, String apiSecret, IOInterface ioInterface,
-      JobDataCache jobDataCache) throws IOException {
+  SmugMugPhotoService(OAuthConsumer authConsumer, JobDataCache jobDataCache) throws IOException {
     this.jobDataCache = jobDataCache;
     try {
       this.httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-      this.authConsumer = getConsumer(apiKey, apiSecret, ioInterface);
+      this.authConsumer = authConsumer;
     } catch (GeneralSecurityException e) {
       throw new IllegalStateException("Couldn't create smugmug api", e);
     }
@@ -310,43 +303,6 @@ final class SmugMugPhotoService implements
         response.getContent(), Charsets.UTF_8));
 
     return MAPPER.readValue(result, typeReference);
-  }
-
-  // As per details: https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
-  // and example: http://stackoverflow.com/questions/15194182/examples-for-oauth1-using-google-api-java-oauth
-  // Google library puts signature in header and not in request, see https://oauth.net/1/
-  private OAuthConsumer getConsumer(String clientId, String clientSecret,
-      IOInterface ioInterface)
-      throws IOException, GeneralSecurityException {
-    OAuthConsumer consumer = new GoogleOAuthConsumer(clientId, clientSecret);
-
-    OAuthProvider provider = new DefaultOAuthProvider(
-        "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken",
-        "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken",
-        "https://secure.smugmug.com/services/oauth/1.0a/authorize?Access=Full&Permissions=Add");
-
-    String authUrl;
-    try {
-      authUrl = provider.retrieveRequestToken(consumer, OAuth.OUT_OF_BAND);
-    } catch (OAuthMessageSignerException
-        | OAuthNotAuthorizedException
-        | OAuthExpectationFailedException
-        | OAuthCommunicationException e) {
-      throw new IOException("Couldn't generate authUrl", e);
-    }
-
-    String code = ioInterface.ask("Please visit: " + authUrl + " and enter code:");
-
-    try {
-      provider.retrieveAccessToken(consumer, code.trim());
-    } catch (OAuthMessageSignerException
-        | OAuthNotAuthorizedException
-        | OAuthExpectationFailedException
-        | OAuthCommunicationException e) {
-      throw new IOException("Couldn't authorize", e);
-    }
-
-    return consumer;
   }
 
   private static InputStream getImageAsStream(String urlStr) throws IOException {

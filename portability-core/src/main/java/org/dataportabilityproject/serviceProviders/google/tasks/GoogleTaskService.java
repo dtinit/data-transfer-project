@@ -67,7 +67,7 @@ public class GoogleTaskService implements
 
     private TaskModelWrapper getTasks(String taskListId, Optional<PaginationInformation> pageInfo)
             throws IOException {
-        com.google.api.services.tasks.model.Tasks result = null;
+        com.google.api.services.tasks.model.Tasks result;
 
         Tasks.TasksOperations.List query = taskClient.tasks()
                 .list(taskListId).setMaxResults(PAGE_SIZE);
@@ -76,7 +76,7 @@ public class GoogleTaskService implements
         }
         result = query.execute();
         List<TaskModel> newTasks = result.getItems().stream()
-            .map(t -> new TaskModel(t.getId(), t.getTitle(), t.getNotes()))
+            .map(t -> new TaskModel(taskListId, t.getTitle(), t.getNotes()))
             .collect(Collectors.toList());
 
 
@@ -97,6 +97,7 @@ public class GoogleTaskService implements
             TaskList newTaskList = new TaskList()
                 .setTitle("Imported copy - " + taskList.getName());
             TaskList insertedTaskList = taskClient.tasklists().insert(newTaskList).execute();
+            System.out.println("Storing " + taskList.getId() + " as " + insertedTaskList.getId());
             jobDataCache.store(taskList.getId(), insertedTaskList.getId());
         }
         for (TaskModel oldTask : wrapper.getTasks()) {

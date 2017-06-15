@@ -7,8 +7,6 @@ import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.REST;
 import com.flickr4java.flickr.RequestContext;
 import com.flickr4java.flickr.auth.Auth;
-import com.flickr4java.flickr.auth.AuthInterface;
-import com.flickr4java.flickr.auth.Permission;
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.PhotoList;
 import com.flickr4java.flickr.photos.PhotosInterface;
@@ -17,8 +15,6 @@ import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
-import com.flickr4java.flickr.util.AuthStore;
-import com.flickr4java.flickr.util.FileAuthStore;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -42,10 +38,7 @@ import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.jobDataCache.JobDataCache;
-import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.IdOnlyResource;
-import org.scribe.model.Token;
-import org.scribe.model.Verifier;
 
 public class FlickrPhotoService implements
     Exporter<PhotosModelWrapper>,
@@ -53,8 +46,6 @@ public class FlickrPhotoService implements
     private static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
     private static final int PHOTO_SETS_PER_PAGE = 500;
     private static final int PHOTO_PER_PAGE = 50;
-    private static final java.io.File DATA_STORE_DIR =
-            new java.io.File(System.getProperty("user.home"), ".store/flickr_creds");
     private static final List<String> EXTRAS =
         ImmutableList.of("url_o", "o_dims", "original_format");
     private static final String PHOTOSET_EXTRAS = "";
@@ -64,50 +55,17 @@ public class FlickrPhotoService implements
     private final PhotosInterface photosInterface;
     private final Uploader uploader;
     private Auth auth;
-    private final AuthStore authStore;
     private final JobDataCache jobDataCache;
 
-    public FlickrPhotoService(String apiKey, String apiSecret, IOInterface ioInterface,
+    FlickrPhotoService(String apiKey, String apiSecret, Auth auth,
         JobDataCache jobDataCache) throws IOException {
-        this(apiKey, apiSecret, jobDataCache);
-        this.auth = authorizeUser(ioInterface);
-    }
-
-    public FlickrPhotoService(String apiKey, String apiSecret, String nsid,
-        JobDataCache jobDataCache)  throws IOException {
-        this(apiKey, apiSecret, jobDataCache);
-        this.auth = authStore.retrieve(nsid);
-        RequestContext.getRequestContext().setAuth(auth);
-    }
-
-    private FlickrPhotoService(String apiKey, String apiSecret, JobDataCache jobDataCache)
-            throws IOException {
         this.flickr = new Flickr(apiKey, apiSecret, new REST());
         this.photosetsInterface = flickr.getPhotosetsInterface();
         this.photosInterface = flickr.getPhotosInterface();
         this.uploader = flickr.getUploader();
         this.jobDataCache = jobDataCache;
-        try {
-            this.authStore = new FileAuthStore(DATA_STORE_DIR);
-        } catch (FlickrException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private Auth authorizeUser(IOInterface ioInterface) throws IOException {
-        AuthInterface authInterface = flickr.getAuthInterface();
-        Token token = authInterface.getRequestToken();
-        String url = authInterface.getAuthorizationUrl(token, Permission.WRITE);
-        String tokenKey = ioInterface.ask("Please enter the code from this url: " + url);
-        Token requestToken = authInterface.getAccessToken(token, new Verifier(tokenKey));
-        try {
-            Auth auth = authInterface.checkToken(requestToken);
-            RequestContext.getRequestContext().setAuth(auth);
-            authStore.store(auth);
-            return auth;
-        } catch (FlickrException e) {
-            throw new IOException("Problem verifying auth token", e);
-        }
+        this.auth = auth;
+        RequestContext.getRequestContext().setAuth(auth);
     }
 
     @Override

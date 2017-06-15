@@ -2,6 +2,7 @@ package org.dataportabilityproject.serviceProviders.smugmug;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import oauth.signpost.OAuthConsumer;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
@@ -10,6 +11,7 @@ import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
+import org.dataportabilityproject.shared.auth.AuthData;
 
 /**
  * The {@link ServiceProvider} for the SmugMub service (https://www.smugmug.com/).
@@ -57,10 +59,12 @@ public final class SmugMugServiceProvider implements ServiceProvider {
 
     private synchronized SmugMugPhotoService getInstanceOfService() throws IOException {
         if (hack == null) {
+            SmugMugAuth auth = new SmugMugAuth(secrets.get("SMUGMUG_API_KEY"),
+                secrets.get("SMUGMUG_SECRET"));
+            AuthData authData = auth.generateAuthData(consoleIO);
+            OAuthConsumer consumer = auth.generateConsumer(authData);
             hack = new SmugMugPhotoService(
-                secrets.get("SMUGMUG_API_KEY"),
-                secrets.get("SMUGMUG_SECRET"),
-                consoleIO,
+                consumer,
                 new JobDataCacheImpl());
         }
 

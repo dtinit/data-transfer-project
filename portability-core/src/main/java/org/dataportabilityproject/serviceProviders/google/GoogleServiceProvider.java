@@ -6,9 +6,6 @@ import static org.dataportabilityproject.shared.PortableDataType.PHOTOS;
 import static org.dataportabilityproject.shared.PortableDataType.TASKS;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.CredentialRefreshListener;
-import com.google.api.client.auth.oauth2.TokenErrorResponse;
-import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.tasks.TasksScopes;
@@ -29,6 +26,7 @@ import org.dataportabilityproject.serviceProviders.google.tasks.GoogleTaskServic
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
+import org.dataportabilityproject.shared.auth.AuthData;
 
 /**
  * The {@link ServiceProvider} for Google (http://www.google.com/).
@@ -51,10 +49,13 @@ public final class GoogleServiceProvider implements ServiceProvider {
     public GoogleServiceProvider(Secrets secrets) throws Exception {
         final CredentialGenerator credentialGenerator = new CredentialGenerator(
                 secrets.get("GOOGLE_CLIENT_ID"),
-                secrets.get("GOOGLE_SECRET"));
+                secrets.get("GOOGLE_SECRET"),
+                // TODO: only use scopes from the products we are accessing.
+                SCOPES);
         this.creds = Suppliers.memoize(() -> {
             try {
-                Credential cred = credentialGenerator.authorize(SCOPES);
+                AuthData authData = credentialGenerator.generateAuthData(null);
+                Credential cred = credentialGenerator.getCredential(authData);
                 if (!cred.refreshToken()) {
                     throw new IOException("Couldn't refresh token");
                 }
