@@ -89,7 +89,7 @@ chooses.
 * nvm run node --version
 * [optional] npm install #required first time through
 * "mvn -e spring-boot:run -pl portability-web" will run the app server.
-* "ng serve --port 3000" will run the Angular frontend
+* "ng serve --port 3000 --proxy-config proxy.conf.json" will run the Angular frontend
 
 ### Contributing
 TBD

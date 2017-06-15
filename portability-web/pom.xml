@@ -27,10 +27,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.3</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <useIncrementalCompilation>false</useIncrementalCompilation>
                 </configuration>
             </plugin>
             <plugin>
@@ -45,6 +46,11 @@
               <groupId>org.springframework.boot</groupId>
               <artifactId>spring-boot-maven-plugin</artifactId>
               <version>1.5.4.RELEASE</version>
+              <configuration>
+                <jvmArguments>
+                  -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005
+                </jvmArguments>
+              </configuration>
             </plugin>
         </plugins>
     </build>
@@ -196,6 +202,11 @@
         <artifactId>spring-boot-starter-tomcat</artifactId>
         <scope>compile</scope>
       </dependency>
+      <!-- JSON Web Token support -->
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>3.2.0</version>
+      </dependency>
     </dependencies>
-
 </project>

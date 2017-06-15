@@ -22,10 +22,11 @@
       <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.2</version>
+          <version>3.3</version>
           <configuration>
               <source>1.8</source>
               <target>1.8</target>
+              <useIncrementalCompilation>false</useIncrementalCompilation>
           </configuration>
       </plugin>
     </plugins>
@@ -38,6 +39,12 @@
       <artifactId>junit</artifactId>
       <version>4.12</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value</artifactId>
+      <version>1.2</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

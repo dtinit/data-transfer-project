@@ -17,8 +17,6 @@ export class ListServicesComponent implements OnInit {
     private service : SelectDataTypeService) { }
 
   ngOnInit() {
-    // Populate the initial page with available data types
-    // TODO: Consider caching list
     this.fetchAvailableDataTypes();
   }
 
@@ -26,15 +24,15 @@ export class ListServicesComponent implements OnInit {
   fetchAvailableDataTypes() {
     // TODO: Fetch the data types from the backend
     this.service.listDataTypes().subscribe(
-      data => {
-        this.dataTypes = data;
-        this.selectedDataType = data[0].name;
+      res => {
+        this.dataTypes = res;
+        this.selectedDataType = res[0].name;
         console.log('updated dataTypes: ' + JSON.stringify(this.dataTypes));
       },
-      error => {
+      err => {
         this.dataTypes = [];
         this.error_text = 'There was an error';
-        console.error(error);
+        console.error(err);
       }
     );
   }

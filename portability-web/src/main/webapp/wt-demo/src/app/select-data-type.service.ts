@@ -8,24 +8,24 @@ import 'rxjs/add/operator/map';
 
 @Injectable()
 export class SelectDataTypeService {
-  private baseEndpoint = "http://localhost:8080/_/";
+  private baseEndpoint = "http://localhost:3000/_/";
   constructor(private http: Http) { }
 
   listDataTypes() {
     let url = `${this.baseEndpoint}listDataTypes`;
     return this.http.get(url)
-      .map(this.listDataTypesSuccess)
-      .catch(this.handleError);
+      .map(res => this.listDataTypesSuccess(res))
+      .catch(err => this.handleError(err));
   }
 
   listServices(dataType: string) {
     let myParams = new URLSearchParams();
     myParams.append('dataType', dataType);
-    let options = new RequestOptions({ params: myParams });
+    let options = new RequestOptions({ params: myParams});
     let url = `${this.baseEndpoint}listServices`;
     return this.http.get(url, options)
-      .map(this.listServicesSuccess)
-      .catch(this.handleError);
+      .map(res => this.listServicesSuccess(res))
+      .catch(err => this.handleError(err));
   }
 
   private listDataTypesSuccess(res: Response) {

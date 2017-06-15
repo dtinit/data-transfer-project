@@ -4,6 +4,7 @@
     "outDir": "../out-tsc/app",
     "module": "es2015",
     "baseUrl": "",
+    "sourceMap": true, // for debugging
     "types": []
   },
   "exclude": [
