@@ -12,13 +12,14 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
+import org.dataportabilityproject.shared.auth.AuthData;
 
 public class PortabilityMain {
     private static final IOInterface IO_INTERFACE = new ConsoleIO();
 
     public static void main(String[] args) throws Exception {
         Secrets secrets = new Secrets("secrets.csv");
-        ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, IO_INTERFACE);
+        ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets);
 
         PortableDataType type = IO_INTERFACE.ask(
                 "What data type would you like to export",
@@ -38,9 +39,20 @@ public class PortabilityMain {
                 "What service do you want to import to",
                 registry.getServiceProvidersThatCanImport(type));
 
-        Exporter<T> exporter = registry.getExporter(exporterName, type);
+        AuthData exportAuthData = registry.getOfflineAuth(exporterName, type)
+            .generateAuthData(IO_INTERFACE);
+        Exporter<T> exporter = registry.getExporter(exporterName, type, exportAuthData);
 
-        Importer<T> importer = registry.getImporter(importerName, type);
+        // This is a hack to allow round tripping to the same account while only doing one auth.
+        AuthData importAuthData;
+        if (exporterName.equals(importerName)) {
+            importAuthData = exportAuthData;
+        } else {
+            importAuthData = registry.getOfflineAuth(importerName, type)
+                .generateAuthData(IO_INTERFACE);
+        }
+
+        Importer<T> importer = registry.getImporter(importerName, type, importAuthData);
         ExportInformation emptyExportInfo =
             new ExportInformation(Optional.empty(), Optional.empty());
         copy(exporter, importer, emptyExportInfo);

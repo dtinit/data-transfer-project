@@ -1,6 +1,5 @@
 package org.dataportabilityproject.webapp;
 
-import com.google.common.base.Supplier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.webapp.auth.IdProvider;
@@ -9,8 +8,6 @@ import org.dataportabilityproject.webapp.auth.TokenManager;
 import org.dataportabilityproject.webapp.auth.UUIDProvider;
 import org.dataportabilityproject.webapp.storage.InMemoryStorage;
 import org.dataportabilityproject.webapp.storage.Storage;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,23 +34,18 @@ public class PortabilityConfiguration {
   @Bean
   public ServiceProviderRegistry getServiceProviderRegistry() {
     try {
-      return new ServiceProviderRegistry(getSecretsSupplier());
+      return new ServiceProviderRegistry(getSecrets());
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
   }
 
   /** Provide file-backed implementation of secrets supplier. */
-  private static Supplier<Secrets> getSecretsSupplier() {
-    return new Supplier<Secrets>() {
-      @Override
-      public Secrets get() {
-        try {
-          return new Secrets("secrets.csv");
-        } catch (Exception e) {
-          throw new ExceptionInInitializerError(e);
-        }
-      }
-    };
+  private static Secrets getSecrets() {
+    try {
+      return new Secrets("secrets.csv");
+    } catch (Exception e) {
+      throw new ExceptionInInitializerError(e);
+    }
   }
 }

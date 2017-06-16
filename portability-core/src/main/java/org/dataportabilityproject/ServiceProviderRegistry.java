@@ -1,6 +1,5 @@
 package org.dataportabilityproject;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.List;
@@ -14,10 +13,11 @@ import org.dataportabilityproject.serviceProviders.instagram.InstagramServicePro
 import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkProvider;
 import org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider;
-import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
+import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 
 /**
  * A registry of all the supported {@link org.dataportabilityproject.shared.ServiceProvider}
@@ -26,28 +26,14 @@ public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
 
 
-    public ServiceProviderRegistry(Supplier<Secrets> secrets) throws Exception {
-        this(secrets.get(), new IOInterface() {
-            @Override public void print(String text) { /* no-op */ }
-            @Override public String ask(String prompt) throws IOException {
-                return null; // no-op
-            }
-            @Override public <T> T ask(String prompt, List<T> choices) throws IOException {
-                return null; // no-op
-            }
-        });
-    }
-
-    public ServiceProviderRegistry(Secrets secrets, IOInterface ioInterface) throws Exception {
-
+    public ServiceProviderRegistry(Secrets secrets) throws Exception {
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
-
-        addServiceProvider(new FlickrServiceProvider(secrets, ioInterface), providerBuilder);
+        addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
         addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new MicrosoftServiceProvider(secrets, ioInterface), providerBuilder);
-        addServiceProvider(new RememberTheMilkProvider(secrets, ioInterface), providerBuilder);
+        addServiceProvider(new MicrosoftServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
         addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new SmugMugServiceProvider(secrets, ioInterface), providerBuilder);
+        addServiceProvider(new SmugMugServiceProvider(secrets), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
     }
@@ -66,18 +52,29 @@ public class ServiceProviderRegistry {
                 .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends DataModel> Exporter<T> getExporter(
             String serviceProvider,
-            PortableDataType portableDataType) throws IOException {
-        Exporter<? extends DataModel> exporter = serviceProviders.get(serviceProvider).getExporter(portableDataType);
+            PortableDataType portableDataType,
+            AuthData authData) throws IOException {
+        Exporter<? extends DataModel> exporter = serviceProviders.get(serviceProvider)
+            .getExporter(portableDataType, authData);
         return (Exporter<T>) exporter;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends DataModel> Importer<T> getImporter(
             String serviceProvider,
-            PortableDataType portableDataType) throws IOException {
-        Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider).getImporter(portableDataType);
+            PortableDataType portableDataType,
+            AuthData authData) throws IOException {
+        Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider)
+            .getImporter(portableDataType, authData);
         return (Importer<T>) importer;
+    }
+
+    public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,
+            PortableDataType dataType) {
+        return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType);
     }
 
     private static void addServiceProvider(ServiceProvider serviceProvider,

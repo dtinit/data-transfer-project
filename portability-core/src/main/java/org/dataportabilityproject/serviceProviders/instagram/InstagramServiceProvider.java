@@ -8,13 +8,17 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
+import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
 
 public final class InstagramServiceProvider implements ServiceProvider {
-  private final Secrets secrets;
+  private final InastagramAuth inastagramAuth;
 
   public InstagramServiceProvider(Secrets secrets) {
-    this.secrets = secrets;
+    this.inastagramAuth = new InastagramAuth(
+        secrets.get("INSTAGRAM_CLIENT_ID"),
+        secrets.get("INSTAGRAM_CLIENT_SECRET"));
   }
 
   @Override
@@ -34,19 +38,22 @@ public final class InstagramServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public Exporter<? extends DataModel> getExporter(PortableDataType type) throws IOException {
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
+    return inastagramAuth;
+  }
+
+  @Override
+  public Exporter<? extends DataModel> getExporter(PortableDataType type, AuthData authData)
+      throws IOException {
     if (type == PortableDataType.PHOTOS) {
-      InastagramAuth inastagramAuth = new InastagramAuth(
-          secrets.get("INSTAGRAM_CLIENT_ID"),
-          secrets.get("INSTAGRAM_CLIENT_SECRET"));
-      SecretAuthData authData = (SecretAuthData) inastagramAuth.generateAuthData(null);
-      return new InstagramPhotoService(authData.secret());
+      return new InstagramPhotoService(((SecretAuthData) authData).secret());
     }
     throw new IllegalStateException("Instagram doesn't support exporting: " + type);
   }
 
   @Override
-  public Importer<? extends DataModel> getImporter(PortableDataType type) throws IOException {
+  public Importer<? extends DataModel> getImporter(PortableDataType type, AuthData authData)
+      throws IOException {
     throw new IllegalStateException("Instagram doesn't support importing anything");
   }
 }

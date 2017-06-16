@@ -6,6 +6,8 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 
 import java.io.IOException;
+import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 
 /**
  * A service provider that supports importing and export different data types.
@@ -17,6 +19,10 @@ public interface ServiceProvider {
 
     ImmutableList<PortableDataType> getImportTypes();
 
-    Exporter<? extends DataModel> getExporter(PortableDataType type) throws IOException;
-    Importer<? extends DataModel> getImporter(PortableDataType type) throws IOException;
+    OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType);
+
+    Exporter<? extends DataModel> getExporter(PortableDataType type, AuthData authData)
+        throws IOException;
+    Importer<? extends DataModel> getImporter(PortableDataType type, AuthData authData)
+        throws IOException;
 }

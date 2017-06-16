@@ -9,8 +9,6 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.tasks.TasksScopes;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,6 +25,7 @@ import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 
 /**
  * The {@link ServiceProvider} for Google (http://www.google.com/).
@@ -39,39 +38,15 @@ public final class GoogleServiceProvider implements ServiceProvider {
             GmailScopes.GMAIL_MODIFY,
             GmailScopes.GMAIL_LABELS);
 
-    private final Supplier<Credential> creds;
-
-    private final Supplier<GoogleCalendarService> calendarService;
-    private final Supplier<GooglePhotosService> photoService;
-    private final Supplier<GoogleTaskService> taskService;
-    private final Supplier<GoogleMailService> mailService;
+    private final CredentialGenerator credentialGenerator;
+    private final JobDataCacheImpl jobDataCache = new JobDataCacheImpl();
 
     public GoogleServiceProvider(Secrets secrets) throws Exception {
-        final CredentialGenerator credentialGenerator = new CredentialGenerator(
+         this.credentialGenerator = new CredentialGenerator(
                 secrets.get("GOOGLE_CLIENT_ID"),
                 secrets.get("GOOGLE_SECRET"),
                 // TODO: only use scopes from the products we are accessing.
                 SCOPES);
-        this.creds = Suppliers.memoize(() -> {
-            try {
-                AuthData authData = credentialGenerator.generateAuthData(null);
-                Credential cred = credentialGenerator.getCredential(authData);
-                if (!cred.refreshToken()) {
-                    throw new IOException("Couldn't refresh token");
-                }
-                return cred;
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        });
-
-        this.calendarService = Suppliers.memoize(() -> new GoogleCalendarService(
-            creds.get(), new JobDataCacheImpl()));
-        this.photoService = Suppliers.memoize(() -> new GooglePhotosService(
-            creds.get(), new JobDataCacheImpl()));
-        this.taskService = Suppliers.memoize(() -> new GoogleTaskService(
-            creds.get(), new JobDataCacheImpl()));
-        this.mailService = Suppliers.memoize(() -> new GoogleMailService(creds.get()));
     }
 
 
@@ -90,32 +65,47 @@ public final class GoogleServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public Exporter<? extends DataModel> getExporter(PortableDataType type) throws IOException {
+    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
+        return credentialGenerator;
+    }
+
+    @Override
+    public Exporter<? extends DataModel> getExporter(PortableDataType type, AuthData authData)
+            throws IOException {
+        Credential cred = credentialGenerator.getCredential(authData);
+        if (!cred.refreshToken()) {
+            throw new IOException("Couldn't refresh token");
+        }
         switch (type) {
             case CALENDAR:
-                return calendarService.get();
+                return new GoogleCalendarService(cred, jobDataCache);
             case MAIL:
-                return mailService.get();
+                return new GoogleMailService(cred);
             case PHOTOS:
-                return photoService.get();
+                return new GooglePhotosService(cred, jobDataCache);
             case TASKS:
-                return taskService.get();
+                return new GoogleTaskService(cred, jobDataCache);
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
     }
 
     @Override
-    public Importer<? extends DataModel> getImporter(PortableDataType type) throws IOException {
+    public Importer<? extends DataModel> getImporter(PortableDataType type, AuthData authData)
+            throws IOException {
+        Credential cred = credentialGenerator.getCredential(authData);
+        if (!cred.refreshToken()) {
+            throw new IOException("Couldn't refresh token");
+        }
         switch (type) {
             case CALENDAR:
-                return calendarService.get();
+                return new GoogleCalendarService(cred, jobDataCache);
             case MAIL:
-                return mailService.get();
+                return new GoogleMailService(cred);
             case PHOTOS:
-                return photoService.get();
+                return new GooglePhotosService(cred, jobDataCache);
             case TASKS:
-                return taskService.get();
+                return new GoogleTaskService(cred, jobDataCache);
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
