@@ -19,10 +19,10 @@ export class ImportConfigurationComponent implements OnInit {
     private router: Router,) { }
 
   ngOnInit() {
-    console.log('incoming route param, dataType: ' + this.route.params['type']);
+    console.log('incoming route param, dataType: ' + this.route.params['dataType']);
 
     this.route.params
-      .switchMap((params: Params) => this.service.listServices(params['type']))
+      .switchMap((params: Params) => this.service.listServices(params['dataType']))
       .subscribe(
         data => {
           this.importServices = data.importServices;

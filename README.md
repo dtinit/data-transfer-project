@@ -87,7 +87,8 @@ chooses.
 
 ### Building/Running webapp
 * nvm run node --version
-* [optional] npm install #required first time through
+* [optional] "npm install" #required first time through
+* "mvn clean install"
 * "mvn -e spring-boot:run -pl portability-web" will run the app server.
 * "ng serve --port 3000 --proxy-config proxy.conf.json" will run the Angular frontend
 

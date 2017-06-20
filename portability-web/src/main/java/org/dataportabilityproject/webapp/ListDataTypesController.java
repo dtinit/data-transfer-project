@@ -32,13 +32,13 @@ public class ListDataTypesController {
   @RequestMapping("/_/listDataTypes")
   public List<PortableDataType> listDataTypes(@CookieValue(value = "jobToken", required = false) String token,
       HttpServletResponse response) throws Exception {
+
+    // Set a cookie the first time through
     // TODO: Move to interceptor
-    System.out.println("listDataTypes, token: " + token);
     if (Strings.isNullOrEmpty(token)) {
       String newToken = jobManager.createNewUserjob();
       Cookie cookie = new Cookie("jobToken", newToken);
        response.addCookie(cookie);
-       System.out.println("Added cookie: " + cookie);
     }
 
     ImmutableList.Builder<PortableDataType> types = ImmutableList.builder();

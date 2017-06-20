@@ -40,7 +40,7 @@ public class PortabilityConfiguration {
     }
   }
 
-  /** Provide file-backed implementation of secrets supplier. */
+  /** Provide file-backed implementation of secrets. */
   private static Secrets getSecrets() {
     try {
       return new Secrets("secrets.csv");

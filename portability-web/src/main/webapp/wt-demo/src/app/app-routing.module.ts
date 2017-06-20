@@ -6,15 +6,15 @@ import { ExportConfigurationComponent } from './export-configuration/export-conf
 import { ImportConfigurationComponent } from './import-configuration/import-configuration.component';
 
 const appRoutes: Routes = [
-  { path: 'list-services', component: ListServicesComponent },
-  { path: 'export-configuration/:type', component: ExportConfigurationComponent },
-  { path: 'import-configuration/:type', component: ImportConfigurationComponent },
+  { path: 'home', component: ListServicesComponent },
+  { path: 'export/:dataType', component: ExportConfigurationComponent },
+  { path: 'import', component: ImportConfigurationComponent },
   { path: '',
-    redirectTo: '/list-services',
+    redirectTo: '/home',
     pathMatch: 'full'
   },
   { path: '**', // TODO: Perhaps choose not found
-    redirectTo: '/list-services',
+    redirectTo: '/home',
     pathMatch: 'full'
   },
 ];

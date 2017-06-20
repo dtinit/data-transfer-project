@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.webapp.job.JobManager;
@@ -33,9 +34,9 @@ public class ListServicesController {
   @RequestMapping("/_/listServices")
   @ResponseBody
   public Map<String, List<String>> listServices(HttpServletRequest request,
-      @RequestParam("dataType") String type,
-      @CookieValue(value = "jobToken", required = true) String token) throws Exception {
-    System.out.println("listServicesForExport, token: " + token);
+      @RequestParam(value = "dataType", required = false) final String dataTypeParam,
+      @CookieValue(value = "jobToken", required = true) final String token,
+      HttpServletResponse response) throws Exception {
 
     // TODO: move to interceptor to redirect
     Preconditions.checkArgument(!Strings.isNullOrEmpty(token), "Token required");
@@ -44,17 +45,37 @@ public class ListServicesController {
     PortabilityJob job = jobManager.findExistingJob(token);
     Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
 
-    Optional<PortableDataType> dataType = Enums.getIfPresent(PortableDataType.class, type);
-    Preconditions.checkArgument(dataType.isPresent(), "Data type required");
+    PortableDataType dataType = null;
+    if(!Strings.isNullOrEmpty(dataTypeParam)) {
+      // Process and persist the incoming data type parameter
+      dataType = getDataType(dataTypeParam);
+      // Update the database to set this data type as the selected
+      PortabilityJob updatedJob = job.toBuilder().setDataType(dataType.name()).build();
+      jobManager.updateJob(updatedJob);
+    } else {
+      // Data type not provided in param, attempt to lookup the data type from storage
+      if(!Strings.isNullOrEmpty(job.dataType())) {
+        dataType = getDataType(job.dataType());
+      }
+    }
 
-    PortabilityJob updatedJob = job.toBuilder().setDataType(dataType.get().name()).build();
-    jobManager.updateJob(updatedJob);
+    // Arrived at this page without data type in param or persisted,
+    Preconditions.checkNotNull(dataType, "Data type not found in param or storage");
 
-    List<String> exportServices = serviceProviderRegistry.getServiceProvidersThatCanExport(dataType.get());
-    List<String> importServices = serviceProviderRegistry.getServiceProvidersThatCanImport(dataType.get());
+    // Return services for the given data type
+    List<String> exportServices = serviceProviderRegistry.getServiceProvidersThatCanExport(dataType);
+    // TODO: Remove import if not needed
+    List<String> importServices = serviceProviderRegistry.getServiceProvidersThatCanImport(dataType);
     if (exportServices.isEmpty() || importServices.isEmpty()) {
       // TODO: log a warning
     }
     return ImmutableMap.<String, List<String>>of(JsonKeys.EXPORT, exportServices, JsonKeys.IMPORT, importServices);
+  }
+
+  /** Parse the data type .*/
+  private static PortableDataType getDataType(String dataType) {
+    Optional<PortableDataType> dataTypeOption = Enums.getIfPresent(PortableDataType.class, dataType);
+    Preconditions.checkArgument(dataTypeOption.isPresent(), "Data type required");
+    return dataTypeOption.get();
   }
 }

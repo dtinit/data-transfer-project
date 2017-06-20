@@ -19,12 +19,24 @@ export class SelectDataTypeService {
   }
 
   listServices(dataType: string) {
+    console.log('listServices, dataType: '  + dataType);
     let myParams = new URLSearchParams();
     myParams.append('dataType', dataType);
     let options = new RequestOptions({ params: myParams});
     let url = `${this.baseEndpoint}listServices`;
     return this.http.get(url, options)
       .map(res => this.listServicesSuccess(res))
+      .catch(err => this.handleError(err));
+  }
+
+  selectExportService(exportService: string) {
+    console.log('selectExportService, exportService: '  + exportService);
+    let myParams = new URLSearchParams();
+    myParams.append('exportService', exportService);
+    let options = new RequestOptions({ params: myParams});
+    let url = `${this.baseEndpoint}selectExportService`;
+    return this.http.get(url, options)
+      .map(res => this.selectExportServiceSuccess(res))
       .catch(err => this.handleError(err));
   }
 
@@ -60,6 +72,12 @@ export class SelectDataTypeService {
     console.log('listServicesSuccess, importServices: ' + JSON.stringify(importServices));
 
     return new ServiceDescriptions(importServices, exportServices);
+  }
+
+  private selectExportServiceSuccess(res: Response) {
+    let body = res.text();
+    console.log('selectExportServiceSuccess, res: ' + JSON.stringify(res));
+    return body;
   }
 
   private handleError(error: Response | any) {

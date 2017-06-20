@@ -40,6 +40,6 @@ export class ListServicesComponent implements OnInit {
   // Handles selection of data types
   onSelect(dataType: string) {
     console.log('incoming dataType: ' + dataType);
-    this.router.navigate(['/export-configuration', dataType]);
+    this.router.navigate(['/export', dataType]);
   }
 }

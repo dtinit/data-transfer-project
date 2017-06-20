@@ -6,20 +6,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** In-memory implementation of backend storage. */
 public class InMemoryStorage implements Storage {
-  private final ConcurrentHashMap<String, Map<String, String>> map;
+  private final ConcurrentHashMap<String, Map<String, Object>> map;
 
   public InMemoryStorage() {
     map = new ConcurrentHashMap<>();
   }
 
   @Override
-  public void put(String key, Map<String, String> data) {
+  public void put(String key, Map<String, Object> data) {
     System.out.println("InMemoryStorage: put: key: " + key);
     map.put(key, data);
   }
 
   @Override
-  public Map<String, String> get(String key) {
+  public Map<String, Object> get(String key) {
     System.out.println("InMemoryStorage: get: key: " + key);
     return map.get(key);
   }

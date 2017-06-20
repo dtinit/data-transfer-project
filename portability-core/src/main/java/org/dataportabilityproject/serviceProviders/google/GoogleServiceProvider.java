@@ -26,6 +26,7 @@ import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 /**
  * The {@link ServiceProvider} for Google (http://www.google.com/).
@@ -66,6 +67,11 @@ public final class GoogleServiceProvider implements ServiceProvider {
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
+        return credentialGenerator;
+    }
+
+    @Override
+    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
         return credentialGenerator;
     }
 

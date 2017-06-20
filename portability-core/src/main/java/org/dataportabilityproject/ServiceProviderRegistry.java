@@ -18,6 +18,7 @@ import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 /**
  * A registry of all the supported {@link org.dataportabilityproject.shared.ServiceProvider}
@@ -70,6 +71,11 @@ public class ServiceProviderRegistry {
         Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider)
             .getImporter(portableDataType, authData);
         return (Importer<T>) importer;
+    }
+
+    public OnlineAuthDataGenerator getOnlineAuth(String serviceProvider,
+        PortableDataType dataType) {
+        return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType);
     }
 
     public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,

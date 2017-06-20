@@ -19,14 +19,18 @@ export class ExportConfigurationComponent implements OnInit {
     private router: Router,) { }
 
   ngOnInit() {
-    console.log('incoming route param, dataType: ' + this.route.params['type']);
+    console.log('incoming route param, dataType: ' + this.route.params['dataType']);
 
     this.route.params
-      .switchMap((params: Params) => this.service.listServices(params['type']))
+      .switchMap((params: Params) => this.service.listServices(params['dataType']))
       .subscribe(
         data => {
           this.exportServices = data.exportServices;
-          this.selectedExportService = data.exportServices[0].name;
+          if (data.selectedExportService) {
+            this.selectedExportService = data.selectedExportService;
+          } else {
+            this.selectedExportService = data.exportServices[0].name;
+          }
           console.log('setting exportServices: ' + JSON.stringify(this.exportServices));
         },
         error => {
@@ -39,7 +43,16 @@ export class ExportConfigurationComponent implements OnInit {
   // Handles selection of data types
   onSelect(exportService: string) {
     console.log('incoming exportService: ' + exportService);
-    // TODO: Send to auth
-    this.router.navigate(['/import-configuration', exportService]);
+    // TODO: Fetch the data types from the backend
+    this.service.selectExportService(exportService).subscribe(
+      data => {
+        console.log('successfully called selectExportService, data: ' + data);
+        window.location.href = data;
+      },
+      err => {
+        this.error_text = 'There was an error calling selectExportService';
+        console.error(err);
+      }
+    );
   }
 }
