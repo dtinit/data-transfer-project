@@ -62,9 +62,11 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   @Override
   public AuthData generateAuthData(String authCode, String id) throws IOException {
     AuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
+    String redirectAfterToken = "http://localhost:8080/callback/google";
+    System.out.println("redirectAfterToken: " + redirectAfterToken);
     TokenResponse response = flow
         .newTokenRequest(authCode)
-        .setRedirectUri("http://localhost:3000/import") //TODO(chuy): Parameterize
+        .setRedirectUri(redirectAfterToken) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, id);
