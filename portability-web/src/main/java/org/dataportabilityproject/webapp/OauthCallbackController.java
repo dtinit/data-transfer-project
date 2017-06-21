@@ -28,7 +28,7 @@ public class OauthCallbackController {
 
   /** Returns of the list of data types allowed for inmport and export. */
   @CrossOrigin(origins = "http://localhost:3000")
-  @RequestMapping("/callback/.*")
+  @RequestMapping("/callback/**")
   public void handleOauthResponse(HttpServletRequest request,
       HttpServletResponse response) throws Exception {
 
