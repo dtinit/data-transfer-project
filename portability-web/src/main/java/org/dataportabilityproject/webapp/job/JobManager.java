@@ -22,10 +22,10 @@ public class JobManager {
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
   private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
-  private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_TOKEN";
+  private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
   private static final String IMPORT_SERVICE_DATA_KEY = "IMPORT_SERVICE";
   private static final String IMPORT_ACCOUNT_DATA_KEY = "IMPORT_ACCOUNT";
-  private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_TOKEN";
+  private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
 
   @Autowired
   private Storage storage;

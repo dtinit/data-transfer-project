@@ -26,7 +26,7 @@ public class OauthCallbackController {
   @Autowired
   private JobManager jobManager;
 
-  /** Returns of the list of data types allowed for inmport and export. */
+  /** Handle oauth callback requests. */
   @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping("/callback/**")
   public void handleOauthResponse(HttpServletRequest request,
@@ -54,23 +54,43 @@ public class OauthCallbackController {
     PortableDataType dataType = getDataType(job.dataType());
     log("dataType: %s", dataType);
 
-    // TODO: Determine export service from job or from url path?
-    String exportService = job.exportService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "exportService not found for token: %s", token);
-    log("exportService: %s", exportService);
+    // TODO: Support import and export service
+    // Hack! For now, if we don't have export auth data, assume it's for export.
+    boolean isExport = (null == job.exportAuthData());
+    System.out.println("\n\n*****\nOauth callback, job:\n\n" + job + "\n\n*****\n");
+
+    // TODO: Determine service from job or from url path?
+    String service = isExport ? job.exportService() : job.importService();
+    Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, token: %s", service, isExport, token);
+    log("service: %s, isExport: %b", service, isExport);
 
     // Obtain the ServiceProvider from the registry
-    OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(exportService, dataType);
+    OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
 
     // Generate and store auth data
     AuthData authData = generator.generateAuthData(authResponse.getCode(), token);
 
     // Update the job
-    PortabilityJob updatedJob = job.toBuilder().setExportAuthData(authData).build();
+    PortabilityJob updatedJob = setAuthData(job, authData, isExport);
     jobManager.updateJob(updatedJob);
 
-    response.sendRedirect("http://localhost:3000/import");
+    if(isExport) {
+      response.sendRedirect("http://localhost:3000/import");  // TODO: parameterize
+    } else {
+      response.sendRedirect("http://localhost:3000/copy");
+    }
 
+  }
+
+  // Sets the service in the correct field of the PortabilityJob
+  private PortabilityJob setAuthData(PortabilityJob job, AuthData authData, boolean isExportService) {
+    PortabilityJob.Builder updatedJob = job.toBuilder();
+    if (isExportService) {
+      updatedJob.setExportAuthData(authData);
+    } else {
+      updatedJob.setImportAuthData(authData);
+    }
+    return updatedJob.build();
   }
 
   private static AuthorizationCodeResponseUrl getResponseUrl(HttpServletRequest request) {

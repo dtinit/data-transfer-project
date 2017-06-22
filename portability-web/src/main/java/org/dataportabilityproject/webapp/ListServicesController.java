@@ -47,6 +47,7 @@ public class ListServicesController {
 
     PortableDataType dataType = null;
     if(!Strings.isNullOrEmpty(dataTypeParam)) {
+      System.out.println("ListServicesController: using data type param: " + dataTypeParam);
       // Process and persist the incoming data type parameter
       dataType = getDataType(dataTypeParam);
       // Update the database to set this data type as the selected
@@ -57,6 +58,7 @@ public class ListServicesController {
       if(!Strings.isNullOrEmpty(job.dataType())) {
         dataType = getDataType(job.dataType());
       }
+      System.out.println("ListServicesController: using persisted data type: " + dataType);
     }
 
     // Arrived at this page without data type in param or persisted,

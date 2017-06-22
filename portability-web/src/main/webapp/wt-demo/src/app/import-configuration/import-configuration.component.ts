@@ -36,9 +36,19 @@ export class ImportConfigurationComponent implements OnInit {
       );
   }
 
-  // Handles selection of data types
+  // Handles selection of the service to import to
   onSelect(importService: string) {
     console.log('incoming importService: ' + importService);
-    // Send to auth
+    // Fetch the redirect url for authentication from the backend
+    this.service.selectImportService(importService).subscribe(
+      data => {
+        console.log('successfully called selectImportService, data: ' + data);
+        window.location.href = data;
+      },
+      err => {
+        this.error_text = 'There was an error calling selectImportService';
+        console.error(err);
+      }
+    );
   }
 }

@@ -21,6 +21,8 @@ export class ExportConfigurationComponent implements OnInit {
   ngOnInit() {
     console.log('incoming route param, dataType: ' + this.route.params['dataType']);
 
+    // TODO: Currently supports incoming from the previous page only. Consider
+    // supporting preloading information from the backend lookup
     this.route.params
       .switchMap((params: Params) => this.service.listServices(params['dataType']))
       .subscribe(
@@ -40,10 +42,10 @@ export class ExportConfigurationComponent implements OnInit {
       );
   }
 
-  // Handles selection of data types
+  // Handles selection of the service to export from
   onSelect(exportService: string) {
     console.log('incoming exportService: ' + exportService);
-    // TODO: Fetch the data types from the backend
+    // Fetch the redirect url for authentication from the backend
     this.service.selectExportService(exportService).subscribe(
       data => {
         console.log('successfully called selectExportService, data: ' + data);

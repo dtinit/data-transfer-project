@@ -9,13 +9,15 @@ import { ListServicesComponent } from './list-services/list-services.component';
 import { SelectDataTypeService } from './select-data-type.service';
 import { ExportConfigurationComponent } from './export-configuration/export-configuration.component';
 import { ImportConfigurationComponent } from './import-configuration/import-configuration.component';
+import { StartCopyComponent } from './start-copy/start-copy.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     ListServicesComponent,
     ExportConfigurationComponent,
-    ImportConfigurationComponent
+    ImportConfigurationComponent,
+    StartCopyComponent
   ],
   imports: [
     AppRoutingModule,

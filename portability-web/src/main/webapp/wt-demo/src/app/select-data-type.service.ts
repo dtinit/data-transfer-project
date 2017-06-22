@@ -31,12 +31,37 @@ export class SelectDataTypeService {
 
   selectExportService(exportService: string) {
     console.log('selectExportService, exportService: '  + exportService);
+    return this.selectService(exportService, true);
+  }
+
+  selectImportService(importService: string) {
+    console.log('selectImportService, importService: '  + importService);
+    return this.selectService(importService, false);
+  }
+
+  fetchCopyConfiguration() {
+    let url = `${this.baseEndpoint}fetchCopyConfiguration`;
+    return this.http.get(url)
+      .map(res => this.fetchCopyConfigurationSuccess(res))
+      .catch(err => this.handleError(err));
+  }
+
+  startCopy() {
+    let url = `${this.baseEndpoint}startCopy`;
+    return this.http.get(url)
+      .map(res => this.startCopySuccess(res))
+      .catch(err => this.handleError(err));
+  }
+
+  private selectService(serviceName: string, isExport: boolean) {
     let myParams = new URLSearchParams();
-    myParams.append('exportService', exportService);
+    myParams.append('serviceName', serviceName);
+    let isExportStr = isExport ? "true" :  "false";
+    myParams.append('isExport', isExportStr);
     let options = new RequestOptions({ params: myParams});
-    let url = `${this.baseEndpoint}selectExportService`;
+    let url = `${this.baseEndpoint}selectService`;
     return this.http.get(url, options)
-      .map(res => this.selectExportServiceSuccess(res))
+      .map(res => this.selectServiceSuccess(res))
       .catch(err => this.handleError(err));
   }
 
@@ -74,9 +99,23 @@ export class SelectDataTypeService {
     return new ServiceDescriptions(importServices, exportServices);
   }
 
-  private selectExportServiceSuccess(res: Response) {
+  private selectServiceSuccess(res: Response) {
     let body = res.text();
-    console.log('selectExportServiceSuccess, res: ' + JSON.stringify(res));
+    console.log('selectServiceSuccess, res: ' + JSON.stringify(res));
+    return body;
+  }
+
+  private fetchCopyConfigurationSuccess(res: Response) {
+    console.log('fetchCopyConfigurationSuccess, res: ' + JSON.stringify(res));
+    let body = res.json();
+    console.log('fetchCopyConfigurationSuccess, body: ' + JSON.stringify(body));
+    return body;
+  }
+
+  private startCopySuccess(res: Response) {
+    console.log('startCopySuccess, res: ' + JSON.stringify(res));
+    let body = res.json();
+    console.log('startCopySuccess, body: ' + JSON.stringify(body));
     return body;
   }
 

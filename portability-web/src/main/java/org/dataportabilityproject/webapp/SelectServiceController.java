@@ -26,18 +26,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Controller to process the selection of a service to export from. */
 @RestController
-public class SelectExportServiceController {
+public class SelectServiceController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
   private JobManager jobManager;
 
-  /** Returns of the list of data types allowed for inmport and export. */
+  /** Sets the selected service for import or export and kicks off the auth flow. */
   @CrossOrigin(origins = "http://localhost:3000")
-  @RequestMapping("/_/selectExportService")
+  @RequestMapping("/_/selectService")
   @ResponseBody
-  public String selectExportService(HttpServletRequest request,
-      @RequestParam(value = "exportService", required = false) String exportServiceParam,
+  public String selectService(HttpServletRequest request,
+      @RequestParam(value = "serviceName", required = true) String serviceNameParam,
+      @RequestParam(value = "isExport", required = true) Boolean isExportServiceParam,
       @CookieValue(value = "jobToken", required = true) String token) throws Exception {
 
     // TODO: move to interceptor to redirect
@@ -47,29 +48,30 @@ public class SelectExportServiceController {
     PortabilityJob job = jobManager.findExistingJob(token);
     Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
 
+    System.out.println("SelectServiceController: incoming, service: " + serviceNameParam + ", isExport: " + isExportServiceParam);
+    System.out.println("SelectServiceController, existing job:\n\n" + job + "\n\n*****\n");
+
     // Valid data type is required to be set in the job by this point
     PortableDataType dataType = getDataType(job.dataType());
 
-    String selectedExportService = null;
-    if(!Strings.isNullOrEmpty(exportServiceParam)) {
-      // Process and persist the incoming export service parameter
-      selectedExportService = isValidService(exportServiceParam) ? exportServiceParam : null;
-      // Update the database to set this export service as the selected
-      PortabilityJob updatedJob = job.toBuilder().setExportService(selectedExportService).build();
+    String serviceName = null;
+    if (isValidService(serviceNameParam, isExportServiceParam)) {
+      serviceName = serviceNameParam;
+      System.out.println("SelectServiceController: handling params, service: " + serviceNameParam + ", isExport: " + isExportServiceParam);
+      // Process the param provided
+      PortabilityJob updatedJob = setService(job, serviceName, isExportServiceParam);
+      System.out.println("\n\n*****\nSelectServiceController, updatedJob:\n\n" + updatedJob + "\n\n*****\n");
+
       jobManager.updateJob(updatedJob);
     } else {
-      // Data type not provided in param, attempt to lookup the data type from storage
-      if(!Strings.isNullOrEmpty(job.exportService())) {
-        selectedExportService = isValidService(job.exportService()) ? job.exportService() : null;
-      }
+      System.out.println("SelectServiceController: handling persisted, service: " + serviceName + ", isExport: " + isExportServiceParam);
+      // If no valid param, attempt to continue with persisted service name
+      serviceName = getPersistedServiceName(job, isExportServiceParam);
+      Preconditions.checkState(isValidService(serviceName, isExportServiceParam));
     }
 
-    // Arrived at this page without data type in param or persisted,
-    Preconditions.checkNotNull(selectedExportService, "Export service not found in param or storage");
-
     // Obtain the ServiceProvider from the registry
-    OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(selectedExportService, dataType);
-
+    OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(serviceName, dataType);
 
     Preconditions.checkState(!Strings.isNullOrEmpty(job.token()), "Job token not set");
     String authUrl = generator.generateAuthUrl(job.token());
@@ -81,12 +83,31 @@ public class SelectExportServiceController {
     return authUrl;
   }
 
-  /** Determines whether the current service is a valid export service */
-  private static boolean isValidService(String exportService) {
-    // TODO: Use service registry to math
-    return true;
+  // Sets the service in the correct field of the PortabilityJob
+  private PortabilityJob setService(PortabilityJob job, String serviceName, boolean isExportService) {
+    System.out.println("SelectServiceController: setting service: " + serviceName + ", isExport: " + isExportService);
+    PortabilityJob.Builder updatedJob = job.toBuilder();
+    if (isExportService) {
+      updatedJob.setExportService(serviceName);
+    } else {
+      updatedJob.setImportService(serviceName);
+    }
+    return updatedJob.build();
   }
 
+  private static String getPersistedServiceName(PortabilityJob job, boolean isExport) {
+    // Data type not provided in param, attempt to lookup the data type from storage
+    return isExport ? job.exportService() : job.importService();
+  }
+
+  /** Determines whether the current service is a valid service */
+  private static boolean isValidService(String serviceName, boolean isExport) {
+    if(!Strings.isNullOrEmpty(serviceName)) {
+      // TODO: Use service registry to validate the serice is valid for import or export
+      return true;
+    }
+    return false;
+  }
 
   /** Parse the data type .*/
   private static PortableDataType getDataType(String dataType) {

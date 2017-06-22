@@ -1,0 +1,8 @@
+<div>
+  <form name="startCopy" #configureTransfer="ngForm">
+    <label for="startCopyButton">Copy</label>
+    <button (click)="onSelect();">Copy</button>
+  </form>
+</div>
+<p>Copy from: <b>{{exportService}}</b> to: <b>{{importService}}</b></p>
+<p style="color:red;">{{ error_text }}</p>
