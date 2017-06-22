@@ -55,38 +55,8 @@ public class PortabilityMain {
         Importer<T> importer = registry.getImporter(importerName, type, importAuthData);
         ExportInformation emptyExportInfo =
             new ExportInformation(Optional.empty(), Optional.empty());
-        copy(exporter, importer, emptyExportInfo);
+
+        PortabilityCopier.copyDataType(registry, type, exporterName, exportAuthData, importerName, importAuthData);;
     }
 
-    private static <T extends DataModel> void copy(
-            Exporter<T> exporter,
-            Importer<T> importer,
-            ExportInformation exportInformation) throws IOException {
-
-        // NOTE: order is important bellow, do the import of all the items, then do continuation
-        // then do sub resources, this ensures all parents are populated before children get
-        // processed.
-
-        T items = exporter.export(exportInformation);
-        importer.importItem(items);
-
-        ContinuationInformation continuationInfo = items.getContinuationInformation();
-        if (null != continuationInfo) {
-            if (null != continuationInfo.getPaginationInformation()) {
-                copy(exporter, importer,
-                    new ExportInformation(
-                        exportInformation.getResource(),
-                        Optional.of(continuationInfo.getPaginationInformation())));
-            }
-
-            if (continuationInfo.getSubResources() != null) {
-                for (Resource resource : continuationInfo.getSubResources()) {
-                    copy(
-                        exporter,
-                        importer,
-                        new ExportInformation(Optional.of(resource), Optional.empty()));
-                }
-            }
-        }
-    }
 }
