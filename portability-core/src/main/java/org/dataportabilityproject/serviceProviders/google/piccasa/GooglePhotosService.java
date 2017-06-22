@@ -57,7 +57,7 @@ public class GooglePhotosService
 
     private PhotosModelWrapper exportAlbums(Optional<PaginationInformation> pageInfo)
         throws IOException {
-        URL albumUrl = new URL("https://picasaweb.serviceProviders.google.com/data/feed/api/user/default?kind=album");
+        URL albumUrl = new URL("https://picasaweb.google.com/data/feed/api/user/default?kind=album");
 
         UserFeed albumFeed;
 
@@ -90,7 +90,7 @@ public class GooglePhotosService
             String albumId, Optional<PaginationInformation> pageInfo) throws IOException {
         // imgmax=d gets the original immage as per:
         // https://developers.google.com/picasa-web/docs/2.0/reference
-        URL photosUrl = new URL("https://picasaweb.serviceProviders.google.com/data/feed/api/user/default/albumid/"
+        URL photosUrl = new URL("https://picasaweb.google.com/data/feed/api/user/default/albumid/"
             + albumId + "?imgmax=d");
         AlbumFeed photoFeed;
         try {
