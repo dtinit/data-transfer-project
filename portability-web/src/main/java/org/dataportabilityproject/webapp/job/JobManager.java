@@ -4,10 +4,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.webapp.auth.IdProvider;
 import org.dataportabilityproject.webapp.auth.TokenManager;
-import org.dataportabilityproject.webapp.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class JobManager {
   private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
 
   @Autowired
-  private Storage storage;
+  private PersistentKeyValueStore storage;
   @Autowired
   private IdProvider idProvider;
   @Autowired

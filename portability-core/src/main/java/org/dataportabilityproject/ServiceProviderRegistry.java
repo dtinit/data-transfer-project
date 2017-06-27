@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
@@ -27,14 +29,15 @@ public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
 
 
-    public ServiceProviderRegistry(Secrets secrets) throws Exception {
+    public ServiceProviderRegistry(Secrets secrets, CloudFactory cloudFactory) throws Exception {
+        JobDataCache jobDataCache = cloudFactory.getJobDataCache();
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
-        addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new FlickrServiceProvider(secrets, jobDataCache), providerBuilder);
+        addServiceProvider(new GoogleServiceProvider(secrets, jobDataCache), providerBuilder);
         addServiceProvider(new MicrosoftServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
+        addServiceProvider(new RememberTheMilkProvider(secrets, jobDataCache), providerBuilder);
         addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new SmugMugServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new SmugMugServiceProvider(secrets, jobDataCache), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
     }
@@ -42,14 +45,14 @@ public class ServiceProviderRegistry {
     public List<String> getServiceProvidersThatCanExport(PortableDataType portableDataType) {
         return serviceProviders.values().stream()
                 .filter(sp -> sp.getExportTypes().stream().anyMatch(e -> e == portableDataType))
-                .map(sp -> sp.getName())
+                .map(ServiceProvider::getName)
                 .collect(Collectors.toList());
     }
 
     public List<String> getServiceProvidersThatCanImport(PortableDataType portableDataType) {
         return serviceProviders.values().stream()
                 .filter(sp -> sp.getImportTypes().stream().anyMatch(e -> e == portableDataType))
-                .map(sp -> sp.getName())
+                .map(ServiceProvider::getName)
                 .collect(Collectors.toList());
     }
 

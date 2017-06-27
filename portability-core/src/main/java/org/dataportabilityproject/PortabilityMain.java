@@ -3,12 +3,12 @@ package org.dataportabilityproject;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Optional;
-import org.dataportabilityproject.dataModels.ContinuationInformation;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
@@ -19,7 +19,8 @@ public class PortabilityMain {
 
     public static void main(String[] args) throws Exception {
         Secrets secrets = new Secrets("secrets.csv");
-        ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets);
+        CloudFactory cloudFactory = new LocalCloudFactory();
+        ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
 
         PortableDataType type = IO_INTERFACE.ask(
                 "What data type would you like to export",

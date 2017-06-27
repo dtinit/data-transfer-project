@@ -3,10 +3,10 @@ package org.dataportabilityproject.serviceProviders.smugmug;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import oauth.signpost.OAuthConsumer;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -18,11 +18,13 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  */
 public final class SmugMugServiceProvider implements ServiceProvider {
     private final SmugMugAuth auth;
+    private final JobDataCache jobDataCache;
 
-    public SmugMugServiceProvider(Secrets secrets)
+    public SmugMugServiceProvider(Secrets secrets, JobDataCache jobDataCache)
             throws IOException {
         this.auth = new SmugMugAuth(secrets.get("SMUGMUG_API_KEY"),
             secrets.get("SMUGMUG_SECRET"));
+        this.jobDataCache = jobDataCache;
     }
 
     @Override public String getName() {
@@ -67,7 +69,7 @@ public final class SmugMugServiceProvider implements ServiceProvider {
             OAuthConsumer consumer = auth.generateConsumer(authData);
             hack = new SmugMugPhotoService(
                 consumer,
-                new JobDataCacheImpl());
+                jobDataCache);
         }
 
         return hack;

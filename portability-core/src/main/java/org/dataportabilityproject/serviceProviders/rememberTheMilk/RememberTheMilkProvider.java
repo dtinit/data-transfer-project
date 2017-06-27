@@ -2,10 +2,10 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -18,15 +18,17 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 public final class RememberTheMilkProvider implements ServiceProvider {
     private final Secrets secrets;
     private final TokenGenerator tokenGenerator;
+    private final JobDataCache jobDataCache;
     private RememberTheMilkTaskService taskService;
 
-    public RememberTheMilkProvider(Secrets secrets) throws IOException {
+    public RememberTheMilkProvider(Secrets secrets, JobDataCache jobDataCache) throws IOException {
         this.secrets = secrets;
         this.tokenGenerator = new TokenGenerator(new RememberTheMilkSignatureGenerator(
             secrets.get("RTM_API_KEY"),
             secrets.get("RTM_SECRET"),
             null
         ));
+        this.jobDataCache = jobDataCache;
     }
 
     @Override public String getName() {
@@ -74,7 +76,7 @@ public final class RememberTheMilkProvider implements ServiceProvider {
                 secrets.get("RTM_SECRET"),
                 tokenGenerator.getToken(authData));
 
-            taskService = new RememberTheMilkTaskService(signer, new JobDataCacheImpl());
+            taskService = new RememberTheMilkTaskService(signer, jobDataCache);
         }
         return taskService;
     }

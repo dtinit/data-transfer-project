@@ -1,10 +1,10 @@
-package org.dataportabilityproject.jobDataCache;
+package org.dataportabilityproject.cloud.interfaces;
 
 import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * A cache that is specific per sevice and per job.  It is unmodifiable.
+ * A cache that is specific per service and per job.  It is unmodifiable.
  */
 public interface JobDataCache {
   boolean hasKey(String key) throws IOException;

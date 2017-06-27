@@ -19,7 +19,7 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.tasks.TaskListModel;
 import org.dataportabilityproject.dataModels.tasks.TaskModel;
 import org.dataportabilityproject.dataModels.tasks.TaskModelWrapper;
-import org.dataportabilityproject.jobDataCache.JobDataCache;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;

@@ -27,7 +27,7 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.tasks.TaskListModel;
 import org.dataportabilityproject.dataModels.tasks.TaskModel;
 import org.dataportabilityproject.dataModels.tasks.TaskModelWrapper;
-import org.dataportabilityproject.jobDataCache.JobDataCache;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.GetListResponse;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.GetListsResponse;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.ListAddResponse;

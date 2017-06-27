@@ -27,7 +27,7 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
-import org.dataportabilityproject.jobDataCache.JobDataCache;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
 public class GooglePhotosService

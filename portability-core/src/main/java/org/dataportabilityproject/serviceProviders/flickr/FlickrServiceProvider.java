@@ -3,10 +3,10 @@ package org.dataportabilityproject.serviceProviders.flickr;
 import com.flickr4java.flickr.auth.Auth;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -20,12 +20,14 @@ public final class FlickrServiceProvider implements ServiceProvider {
     private FlickrPhotoService photoService;
     private final Secrets secrets;
     private final FlickrAuth authProvider;
+    private final JobDataCache jobDataCache;
 
-    public FlickrServiceProvider(Secrets secrets) {
+    public FlickrServiceProvider(Secrets secrets, JobDataCache jobDataCache) {
         this.secrets = secrets;
         this.authProvider = new FlickrAuth(
             secrets.get("FLICKR_API_KEY"),
             secrets.get("FLICKR_SECRET"));
+        this.jobDataCache = jobDataCache;
     }
 
     @Override public String getName() {
@@ -73,8 +75,7 @@ public final class FlickrServiceProvider implements ServiceProvider {
                     secrets.get("FLICKR_API_KEY"),
                     secrets.get("FLICKR_SECRET"),
                     auth,
-                    new JobDataCacheImpl()
-            );
+                jobDataCache);
         }
         return photoService;
     }

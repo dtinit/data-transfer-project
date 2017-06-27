@@ -1,14 +1,14 @@
-package org.dataportabilityproject.webapp.storage;
+package org.dataportabilityproject.cloud.local;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 /** In-memory implementation of backend storage. */
-public class InMemoryStorage implements Storage {
+final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
-  public InMemoryStorage() {
+  public InMemoryPersistentKeyValueStore() {
     map = new ConcurrentHashMap<>();
   }
 

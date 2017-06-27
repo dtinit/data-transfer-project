@@ -27,7 +27,7 @@ import org.dataportabilityproject.dataModels.calendar.CalendarAttendeeModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarEventModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
-import org.dataportabilityproject.jobDataCache.JobDataCache;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;

@@ -13,10 +13,10 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.jobDataCache.JobDataCacheImpl;
 import org.dataportabilityproject.serviceProviders.google.calendar.GoogleCalendarService;
 import org.dataportabilityproject.serviceProviders.google.mail.GoogleMailService;
 import org.dataportabilityproject.serviceProviders.google.piccasa.GooglePhotosService;
@@ -40,14 +40,15 @@ public final class GoogleServiceProvider implements ServiceProvider {
             GmailScopes.GMAIL_LABELS);
 
     private final CredentialGenerator credentialGenerator;
-    private final JobDataCacheImpl jobDataCache = new JobDataCacheImpl();
+    private final JobDataCache jobDataCache;
 
-    public GoogleServiceProvider(Secrets secrets) throws Exception {
+    public GoogleServiceProvider(Secrets secrets, JobDataCache jobDataCache) throws Exception {
          this.credentialGenerator = new CredentialGenerator(
                 secrets.get("GOOGLE_CLIENT_ID"),
                 secrets.get("GOOGLE_SECRET"),
                 // TODO: only use scopes from the products we are accessing.
                 SCOPES);
+         this.jobDataCache = jobDataCache;
     }
 
 
