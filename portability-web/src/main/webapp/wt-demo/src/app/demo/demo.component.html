@@ -1,0 +1,41 @@
+<div class="text-center" style="width: 400px;">
+  <img class="logo" src="./assets/icon.png" style="width: 100px;"/>
+  World Takeout
+<div class="text-left">
+  <form name="configForm" #form action="http://localhost:8080/configure" method="post">
+      I want to move
+    <select id="selectedDataType" [(ngModel)]="selectedDataType" name="selectedDataType"
+                #dataTypeSelection="ngModel" (change)="onDataTypeChange()"
+                class="form-control">
+      <option *ngFor="let item of dataTypes" [ngValue]="item.name">
+          {{item.description}}
+      </option>
+    </select>
+
+    <div class="form-group">
+     from
+    <select id="exportService" [(ngModel)]="exportService" name="exportService"
+                #exportServiceSelection="ngModel" (change)="onExportServiceChange()"
+                class="form-control">
+      <option *ngFor="let item of exportServices" [ngValue]="item.name">
+          {{item.description}}
+      </option>
+    </select>
+    </div>
+
+    <div *ngIf="showImport" class="form-group">
+     to
+    <select id="importService" [(ngModel)]="importService" name="importService"
+                #importServiceSelection="ngModel" (change)="onImportServiceChange()"
+                class="form-control">
+      <option *ngFor="let item of importServices" [ngValue]="item.name">
+          {{item.description}}
+      </option>
+    </select>
+  </div>
+
+
+    <button  [disabled]="!enableNext" type="submit" (click)="form.submit()" class="btn btn-primary">NEXT</button>
+  </form>
+</div>
+</div>

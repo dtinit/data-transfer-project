@@ -1,1 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+.form-control {
+  display: inline-block !important;
+  width: auto !important;
+}

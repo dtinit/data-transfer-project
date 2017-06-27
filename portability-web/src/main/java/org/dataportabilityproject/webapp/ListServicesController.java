@@ -12,9 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.webapp.job.JobManager;
-import org.dataportabilityproject.webapp.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,34 +33,12 @@ public class ListServicesController {
   @ResponseBody
   public Map<String, List<String>> listServices(HttpServletRequest request,
       @RequestParam(value = "dataType", required = false) final String dataTypeParam,
-      @CookieValue(value = "jobToken", required = true) final String token,
       HttpServletResponse response) throws Exception {
 
-    // TODO: move to interceptor to redirect
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(token), "Token required");
-
-    // Valid job must be present
-    PortabilityJob job = jobManager.findExistingJob(token);
-    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
-
-    PortableDataType dataType = null;
-    if(!Strings.isNullOrEmpty(dataTypeParam)) {
-      System.out.println("ListServicesController: using data type param: " + dataTypeParam);
-      // Process and persist the incoming data type parameter
-      dataType = getDataType(dataTypeParam);
-      // Update the database to set this data type as the selected
-      PortabilityJob updatedJob = job.toBuilder().setDataType(dataType.name()).build();
-      jobManager.updateJob(updatedJob);
-    } else {
-      // Data type not provided in param, attempt to lookup the data type from storage
-      if(!Strings.isNullOrEmpty(job.dataType())) {
-        dataType = getDataType(job.dataType());
-      }
-      System.out.println("ListServicesController: using persisted data type: " + dataType);
-    }
-
-    // Arrived at this page without data type in param or persisted,
-    Preconditions.checkNotNull(dataType, "Data type not found in param or storage");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
+    System.out.println("ListServicesController: using data type param: " + dataTypeParam);
+    // Process and persist the incoming data type parameter
+    PortableDataType dataType = getDataType(dataTypeParam);
 
     // Return services for the given data type
     List<String> exportServices = serviceProviderRegistry.getServiceProvidersThatCanExport(dataType);
