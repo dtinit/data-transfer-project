@@ -90,7 +90,8 @@ chooses.
 * [optional] "npm install" #required first time through
 * "mvn clean install"
 * "mvn -e spring-boot:run -pl portability-web" will run the app server.
-* "ng serve --port 3000 --proxy-config proxy.conf.json" will run the Angular frontend
+* "ng serve --port 3000 --proxy-config proxy.conf.json" will run the Angular frontend 
+  (must be run from portability-web/src/main/webapp/wt-demo)
 
 ### Contributing
 TBD

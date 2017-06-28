@@ -10,7 +10,7 @@ import { PortableDataType } from '../portable-data-type';
   styleUrls: ['./demo.component.css']
 })
 export class DemoComponent implements OnInit {
-  selectedDataType: string = 'Select data';
+  selectedDataType: string = "";
   dataTypes: PortableDataType[] = [];
   exportServices: ServiceDescription[] = [];
   selectedExportService: string = "";

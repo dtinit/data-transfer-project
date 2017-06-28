@@ -1,0 +1,28 @@
+.fancy-select {
+  display: inline-block;
+  border-bottom: 1px dashed #1a0dab;
+}
+
+.form-control {
+    display: inline-block;
+    width: auto /* This hides the arrow icon */;
+    background-color:transparent /* This hides the background */;
+    background-image:none;
+    -webkit-appearance: none /* Webkit Fix */;
+    border:none;
+    box-shadow:none;
+    padding: 0px 0px 0px 0px;
+    cursor: pointer;
+    text-align: center;
+
+    font-size: 26px;
+    color: #1a0dab;
+}
+
+.form-group {
+  margin-bottom: 5px;
+}
+
+.wt-form button {
+  margin-top: 20px;
+}

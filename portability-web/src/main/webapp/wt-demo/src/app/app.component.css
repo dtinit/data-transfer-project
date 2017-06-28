@@ -1,0 +1,17 @@
+/* You can add global styles to this file, and also import other style files */
+.wt-header {
+  font-size: 48px;
+  padding-bottom: 40px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+}
+
+.wt-content {
+  width: 400px;
+  padding-top: 50px;
+  font-size: 26px;
+  font-family: Roboto, RobotoDraft, "Helvetica Neue", arial, sans-serif;
+}
