@@ -80,7 +80,7 @@ public class Oauth2CallbackController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect("http://localhost:3000/next");  // TODO: parameterize
+      response.sendRedirect("http://localhost:3000/demo");  // TODO: parameterize
     } else {
       response.sendRedirect("http://localhost:3000/copy");
     }

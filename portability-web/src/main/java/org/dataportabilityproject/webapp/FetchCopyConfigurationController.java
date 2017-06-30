@@ -37,25 +37,16 @@ public class FetchCopyConfigurationController {
     PortabilityJob job = jobManager.findExistingJob(token);
     Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
 
-    LogUtils.log("fetchCopyConfiguration, job: %s", job);
+    System.out.println("\n\n*****\nfetchCopyConfiguration, job:\n\n" + job + "\n\n*****\n");
 
     String exportService = job.exportService();
     Preconditions.checkState(!Strings.isNullOrEmpty(job.exportService()), "Export service is invalid");
     Preconditions.checkState(job.exportAuthData() != null, "Export AuthData is required");
     String importService = job.importService();
     Preconditions.checkState(!Strings.isNullOrEmpty(job.importService()), "Import service is invalid");
+    Preconditions.checkState(job.importAuthData() != null, "Import AuthData is required");
 
-    // TODO: ensure import auth data doesn't exist when this is called in the auth flow
-    //Preconditions.checkState(job.importAuthData() != null, "Import AuthData is required");
-
-    return ImmutableMap.<String, String>builder()
-        .put(JsonKeys.DATA_TYPE, job.dataType())
-        .put(JsonKeys.EXPORT_SERVICE, job.exportService())
-        .put(JsonKeys.EXPORT_SERVICE_AUTH_EXISTS, String.valueOf(job.exportAuthData() != null))
-        .put(JsonKeys.EXPORT_AUTH_URL, "TODO: Implement")
-        .put(JsonKeys.IMPORT_SERVICE, job.importService())
-        .put(JsonKeys.IMPORT_SERVICE_AUTH_EXISTS, String.valueOf(job.importAuthData() != null))
-        .put(JsonKeys.IMPORT_AUTH_URL, "TODO: Implement")
-        .build();
+    System.out.println("returning exportService: " + exportService + ", importService: " + importService);
+    return ImmutableMap.<String, String>of(JsonKeys.EXPORT, exportService, JsonKeys.IMPORT, importService);
   }
 }
