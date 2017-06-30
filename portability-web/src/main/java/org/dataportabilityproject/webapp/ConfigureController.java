@@ -1,13 +1,13 @@
 package org.dataportabilityproject.webapp;
 
-import com.google.common.base.Enums;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.auth.AuthRequest;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Controller to process the configuration submitted via the form. */
@@ -28,24 +26,92 @@ public class ConfigureController {
   @Autowired
   private JobManager jobManager;
 
-  /** Configures the job and kicks off the auth flow. */
+  /**
+   * Sets the selected service for import or export and kicks off the auth flow.
+   */
   @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping(path="/configure", method = RequestMethod.POST)
-  @ResponseBody
-  public String configure(HttpServletRequest request,
-      @CookieValue(value = "token", required = false) String token) throws Exception {
+  public void configure(HttpServletRequest request, HttpServletResponse response,
+      @CookieValue(value = "jobToken", required = false) String tokenCookie) throws Exception {
 
-    // Set a cookie the first time through
-    // TODO: Move to interceptor
-    if (Strings.isNullOrEmpty(token)) {
-      String newToken = jobManager.createNewUserjob();
-      Cookie cookie = new Cookie("token", newToken);
-      System.out.println("Set the cookie for token: " + newToken);
-      // TODO: response.addCookie(cookie);
-    } else {
-      System.out.println("Found existing cookie,  token: " + token);
+    LogUtils.log("Configure: %s", request.getRequestURI());
+    for (String key: request.getParameterMap().keySet()) {
+      LogUtils.log("Parameter key: %s, value: %s", key, request.getParameter(key));
     }
 
-    return "TO BE IMPLEMENTED";
+    // TODO: Consider what to do if previous job exists in the session
+    String existingToken = null;
+    PortabilityJob existingJob = null;
+    if (!Strings.isNullOrEmpty(tokenCookie)) {
+      existingToken = tokenCookie;
+      LogUtils.log("Found existing cookie, ignoring previous values");
+      existingJob = jobManager.findExistingJob(tokenCookie);
+      if(existingJob != null) {
+        LogUtils.log("Found existing job, ignoring previous values");
+      } else {
+        LogUtils.log("Found existing cookie but no job");
+      }
+    }
+
+    // Either token was empty or the job it represented was not found, create a new one
+    String dataTypeStr = getParam(request, "dataType");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr), "Missing valid dataTypeParam: %s", dataTypeStr);
+    PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
+
+    String exportService = getParam(request, "exportService");
+    Preconditions.checkArgument(JobUtils.isValidService(exportService, true), "Missing valid exportService: %s", exportService);
+
+    String importService = getParam(request, "importService");
+    Preconditions.checkArgument(JobUtils.isValidService(importService, false), "Missing valid importService: %s", importService);
+
+    String token = jobManager.createNewUserjob(dataType, exportService, importService);
+
+    // Set new cookie
+    Cookie cookie = new Cookie("jobToken", token);
+    LogUtils.log("Set new cookie with token: %s", token);
+    response.addCookie(cookie);
+
+
+    // Lookup job, even if just recently created
+    PortabilityJob job = lookupJob(token);
+    Preconditions.checkState(job != null, "Job required");
+    Preconditions.checkState(!Strings.isNullOrEmpty(job.token()), "Job token not set");
+
+    // TODO: Validate job before goin further
+
+    // Obtain the OnlineAuthDataGenerator
+    OnlineAuthDataGenerator generator = serviceProviderRegistry
+        .getOnlineAuth(job.exportService(), dataType);
+
+    // Auth url
+    AuthRequest authRequest = generator.generateAuthUrl(job.token());
+
+    // Store authUrl
+    if (authRequest.initialAuthData() != null) {
+      PortabilityJob jobBeforeInitialData = lookupJob(token);
+      PortabilityJob updatedJob = JobUtils
+          .setInitialAuthData(job, authRequest.initialAuthData(), true);
+      jobManager.updateJob(updatedJob);
+    }
+
+    // Send the url for the client to redirect to service authorization
+    LogUtils.log("Redirecting to: %s", authRequest.url());
+    response.sendRedirect(authRequest.url());
+  }
+
+  /** Looks up job and does checks that it exists. */
+  private PortabilityJob lookupJob(String token) {
+    PortabilityJob job = jobManager.findExistingJob(token);
+    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
+    return job;
+  }
+
+  // TODO: Determine how to get client to submit 'clean' values
+  // Hack to strip angular indexing in option values
+  private static String getParam(HttpServletRequest request, String name) {
+    String value = request.getParameterValues(name)[0];
+    String trimmed = value.substring(value.indexOf(":") + 1).trim();
+    LogUtils.log("Converted: %s , result: %s", value, trimmed);
+    return trimmed;
   }
 }

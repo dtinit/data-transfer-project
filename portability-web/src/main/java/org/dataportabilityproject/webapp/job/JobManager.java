@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.webapp.auth.IdProvider;
 import org.dataportabilityproject.webapp.auth.TokenManager;
@@ -22,9 +23,11 @@ public class JobManager {
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
   private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
+  private static final String EXPORT_INITIAL_AUTH_DATA_KEY = "EXPORT_INITIAL_AUTH_DATA";
   private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
   private static final String IMPORT_SERVICE_DATA_KEY = "IMPORT_SERVICE";
   private static final String IMPORT_ACCOUNT_DATA_KEY = "IMPORT_ACCOUNT";
+  private static final String IMPORT_INITIAL_AUTH_DATA_KEY = "IMPORT_INITIAL_AUTH_DATA";
   private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
 
   @Autowired
@@ -39,6 +42,15 @@ public class JobManager {
     String newId = idProvider.createId();
     String token = tokenManager.createNewToken(newId);
     storage.put(token, createInitialData(newId, token));
+    System.out.println("createNewUserjob, newId: " + newId + " ,token: " + token);
+    return token;
+  }
+
+  /** Creates a new user job and returns a token to identify the job. */
+  public String createNewUserjob(PortableDataType dataType, String exportService, String importService) {
+    String newId = idProvider.createId();
+    String token = tokenManager.createNewToken(newId);
+    storage.put(token, createInitialData(newId, token, dataType, exportService, importService));
     System.out.println("createNewUserjob, newId: " + newId + " ,token: " + token);
     return token;
   }
@@ -89,6 +101,9 @@ public class JobManager {
     if(isPresent(job.exportAccount())) {
       builder.put(EXPORT_ACCOUNT_DATA_KEY, job.exportAccount());
     }
+    if (null != job.exportInitialAuthData()) {
+      builder.put(EXPORT_INITIAL_AUTH_DATA_KEY, job.exportInitialAuthData());
+    }
     if (null != job.exportAuthData()) {
       builder.put(EXPORT_AUTH_DATA_KEY, job.exportAuthData());
     }
@@ -98,6 +113,9 @@ public class JobManager {
     }
     if(isPresent(job.importAccount())) {
       builder.put(IMPORT_ACCOUNT_DATA_KEY, job.importAccount());
+    }
+    if (null != job.importInitialAuthData()) {
+      builder.put(IMPORT_INITIAL_AUTH_DATA_KEY, job.importInitialAuthData());
     }
     if (null != job.importAuthData()) {
       builder.put(IMPORT_AUTH_DATA_KEY, job.importAuthData());
@@ -129,20 +147,21 @@ public class JobManager {
     if(getString(data, EXPORT_ACCOUNT_DATA_KEY) != null ) {
       builder.setExportAccount(getString(data, EXPORT_ACCOUNT_DATA_KEY));
     }
-    // Token exists but there's a chance it's not valid
+    if (data.get(EXPORT_INITIAL_AUTH_DATA_KEY) != null) {
+      builder.setExportInitialAuthData((AuthData) data.get(EXPORT_INITIAL_AUTH_DATA_KEY));
+    }
     if (data.get(EXPORT_AUTH_DATA_KEY) != null) {
       builder.setExportAuthData((AuthData) data.get(EXPORT_AUTH_DATA_KEY));
     }
-
-
-    // Return import information if exists
     if (getString(data, IMPORT_SERVICE_DATA_KEY) != null) {
       builder.setImportService(getString(data, IMPORT_SERVICE_DATA_KEY));
     }
     if (getString(data, IMPORT_ACCOUNT_DATA_KEY) != null ) {
       builder.setImportAccount(getString(data, IMPORT_ACCOUNT_DATA_KEY));
     }
-    // Token exists but there's a chance it's not valid
+    if (data.get(IMPORT_INITIAL_AUTH_DATA_KEY) != null) {
+      builder.setImportInitialAuthData((AuthData) data.get(IMPORT_INITIAL_AUTH_DATA_KEY));
+    }
     if (data.get(IMPORT_AUTH_DATA_KEY) != null) {
       builder.setImportAuthData((AuthData) data.get(IMPORT_AUTH_DATA_KEY));
     }
@@ -152,6 +171,18 @@ public class JobManager {
   /** Creates the initial data entry to persist. */
   private static Map<String, Object> createInitialData(String newId, String token) {
     return ImmutableMap.of(ID_DATA_KEY, newId, TOKEN_DATA_KEY, token);
+  }
+
+  /** Creates the initial data entry to persist. */
+  private static Map<String, Object> createInitialData(String newId, String token,
+      PortableDataType dataType, String exportService, String importService) {
+    return ImmutableMap.<String, Object>builder()
+      .put(ID_DATA_KEY, newId)
+      .put(TOKEN_DATA_KEY, token)
+      .put(DATA_TYPE_DATA_KEY, dataType.name())
+      .put(EXPORT_SERVICE_DATA_KEY, exportService)
+      .put(IMPORT_SERVICE_DATA_KEY, importService)
+      .build();
   }
 
   /** Returns true if all values are present and not empty. */

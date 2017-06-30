@@ -74,7 +74,7 @@ public class SelectServiceController {
     OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(serviceName, dataType);
 
     Preconditions.checkState(!Strings.isNullOrEmpty(job.token()), "Job token not set");
-    String authUrl = generator.generateAuthUrl(job.token());
+    String authUrl = generator.generateAuthUrl(job.token()).url();
     if (!authUrl.startsWith("https://") && ! authUrl.startsWith("http://")) {
       authUrl = "http://" + authUrl;
     }

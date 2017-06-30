@@ -12,6 +12,7 @@ import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 /**
  * The {@link ServiceProvider} for the Flickr service (http://www.flickr.com/).
@@ -46,6 +47,12 @@ public final class FlickrServiceProvider implements ServiceProvider {
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
         return authProvider;
     }
+
+    @Override
+    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+        return authProvider;
+    }
+
 
     @Override public Exporter<? extends DataModel> getExporter(
         PortableDataType type,

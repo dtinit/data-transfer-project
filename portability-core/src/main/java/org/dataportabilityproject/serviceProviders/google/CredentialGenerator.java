@@ -14,11 +14,13 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.AuthRequest;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -50,17 +52,18 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   }
 
   @Override
-  public String generateAuthUrl(String id) throws IOException {
-    return createFlow(clientId, apiSecret, scopes)
+  public AuthRequest generateAuthUrl(String id) throws IOException {
+    String url = createFlow(clientId, apiSecret, scopes)
         .newAuthorizationUrl()
         .setRedirectUri(CALLBACK_URL)
         .setState(id) // TODO: Encrypt
         .build();
-
+    return AuthRequest.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id) throws IOException {
+  public AuthData generateAuthData(String authCode, String id, @Nullable AuthData initialAuthData) throws IOException {
+    Preconditions.checkState(initialAuthData == null, "Earlier auth data not expected for Google flow");
     AuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
     String redirectAfterToken = "http://localhost:8080/callback/google";
     System.out.println("redirectAfterToken: " + redirectAfterToken);

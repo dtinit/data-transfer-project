@@ -1,8 +1,6 @@
 package org.dataportabilityproject.webapp;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeResponseUrl;
-import com.google.common.base.Enums;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
@@ -21,37 +19,44 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Controller for the list data types service. */
 @RestController
-public class OauthCallbackController {
+public class Oauth2CallbackController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
   private JobManager jobManager;
 
-  /** Handle oauth callback requests. */
+  /** Handle Oauth2 callback requests. */
   @CrossOrigin(origins = "http://localhost:3000")
-  @RequestMapping("/callback1/**")
-  public void handleOauthResponse(
+  @RequestMapping("/callback/**")
+  public void handleOauth2Response(
       @CookieValue(value = "jobToken", required = true) String token,
       HttpServletRequest request,
       HttpServletResponse response) throws Exception {
-    LogUtils.log("OauthCallbackController getRequestURI: %s", request.getRequestURI());
-    LogUtils.log("OauthCallbackController getQueryString: %s", request.getQueryString());
+    LogUtils.log("Oauth2CallbackController getRequestURI: %s", request.getRequestURI());
+    LogUtils.log("Oauth2CallbackController getQueryString: %s", request.getQueryString());
 
-    String oauthToken = request.getParameterMap().get("oauth_token")[0];
-    LogUtils.log("oauthToken: %s", oauthToken);
-    String oauthVerifier = request.getParameterMap().get("oauth_verifier")[0];
-    LogUtils.log("oauthVerifier: %s", oauthVerifier);
+    AuthorizationCodeResponseUrl authResponse = getResponseUrl(request);
 
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthToken), "Missing oauth_token");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthVerifier), "Missing oauth_verifier");
+    // check for user-denied error
+    if (authResponse.getError() != null) {
+      LogUtils.log("Authorization DENIED: %s", authResponse.getError());
+      response.sendRedirect("/error");
+      return;
+    }
 
-    // Valid job must be present
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(token), "Token required");
+
+    // TODO: Encrypt/decrypt state param with secure info
+    String state = authResponse.getState();
+
+    // TODO: Remove sanity check
+    Preconditions.checkState(state.equals(token), "Token in cookie [%s] and request [%s] should match", token, state);
+
     PortabilityJob job = lookupJob(token);
-
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
     LogUtils.log("dataType: %s", dataType);
 
-    // TODO: Support import and export service
+    // TODO: Determine import vs export mode
     // Hack! For now, if we don't have export auth data, assume it's for export.
     boolean isExport = (null == job.exportAuthData());
 
@@ -65,10 +70,9 @@ public class OauthCallbackController {
 
     // Retrieve initial auth data, if it existed
     AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
-    Preconditions.checkNotNull(initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(oauthVerifier, token, initialAuthData);
+    AuthData authData = generator.generateAuthData(authResponse.getCode(), token, initialAuthData);
 
     // Update the job
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
@@ -81,6 +85,15 @@ public class OauthCallbackController {
       response.sendRedirect("http://localhost:3000/copy");
     }
 
+  }
+
+  /* Return an AuthorizationCodeResponseUrl for the Oauth2 response. */
+  private static AuthorizationCodeResponseUrl getResponseUrl(HttpServletRequest request) {
+    StringBuffer fullUrlBuf = request.getRequestURL();
+    if (request.getQueryString() != null) {
+      fullUrlBuf.append('?').append(request.getQueryString());
+    }
+    return new AuthorizationCodeResponseUrl(fullUrlBuf.toString());
   }
 
   /** Looks up job and does checks that it exists. */

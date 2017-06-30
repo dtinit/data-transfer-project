@@ -37,7 +37,8 @@ public class ListServicesController {
 
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
     System.out.println("ListServicesController: using data type param: " + dataTypeParam);
-    // Process and persist the incoming data type parameter
+
+    // Validate incoming data type parameter
     PortableDataType dataType = getDataType(dataTypeParam);
 
     // Return services for the given data type

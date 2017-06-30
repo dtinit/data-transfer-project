@@ -14,9 +14,11 @@ public abstract class PortabilityJob {
   @Nullable public abstract String dataType();
   @Nullable public abstract String exportService();
   @Nullable public abstract String exportAccount();
+  @Nullable public abstract AuthData exportInitialAuthData();
   @Nullable public abstract AuthData exportAuthData();
   @Nullable public abstract String importService();
   @Nullable public abstract String importAccount();
+  @Nullable public abstract AuthData importInitialAuthData();
   @Nullable public abstract AuthData importAuthData();
 
   public static AutoValue_PortabilityJob.Builder builder() {
@@ -32,9 +34,11 @@ public abstract class PortabilityJob {
     public abstract Builder setDataType(String id);
     public abstract Builder setExportService(String id);
     public abstract Builder setExportAccount(String id);
+    public abstract Builder setExportInitialAuthData(AuthData id);
     public abstract Builder setExportAuthData(AuthData id);
     public abstract Builder setImportService(String id);
     public abstract Builder setImportAccount(String id);
+    public abstract Builder setImportInitialAuthData(AuthData id);
     public abstract Builder setImportAuthData(AuthData id);
 
     abstract PortabilityJob autoBuild(); // not public
