@@ -11,6 +11,7 @@ import { ExportConfigurationComponent } from './export-configuration/export-conf
 import { ImportConfigurationComponent } from './import-configuration/import-configuration.component';
 import { StartCopyComponent } from './start-copy/start-copy.component';
 import { DemoComponent } from './demo/demo.component';
+import { NextComponent } from './next/next.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { DemoComponent } from './demo/demo.component';
     ExportConfigurationComponent,
     ImportConfigurationComponent,
     StartCopyComponent,
-    DemoComponent
+    DemoComponent,
+    NextComponent
   ],
   imports: [
     AppRoutingModule,
