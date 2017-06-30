@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Headers, Response, RequestOptions, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
+import { CopyConfiguration } from './copy-configuration';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
 import 'rxjs/add/operator/catch';
@@ -107,9 +108,21 @@ export class SelectDataTypeService {
 
   private fetchCopyConfigurationSuccess(res: Response) {
     console.log('fetchCopyConfigurationSuccess, res: ' + JSON.stringify(res));
-    let body = res.json();
-    console.log('fetchCopyConfigurationSuccess, body: ' + JSON.stringify(body));
-    return body;
+    let data = res.json();
+    let dumb = data.dataType;
+    console.log('fetchCopyConfigurationSuccess, dumb: ' + JSON.stringify(dumb));
+
+    let config = new CopyConfiguration(
+      data.dataType,
+      data.exportService,
+      <boolean><Boolean>data.exportServiceAuthExists,
+      data.exportAuthUrl,
+      data.importService,
+      <boolean><Boolean>data.importServiceAuthExists,
+      data.importAuthUrl);
+
+    console.log('fetchCopyConfigurationSuccess, body: ' + JSON.stringify(data));
+    return config;
   }
 
   private startCopySuccess(res: Response) {
