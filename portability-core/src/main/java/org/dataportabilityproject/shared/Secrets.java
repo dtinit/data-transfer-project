@@ -2,10 +2,14 @@ package org.dataportabilityproject.shared;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -40,5 +44,21 @@ public final class Secrets {
 
     public String get(String key) {
         return secrets.get(key);
+    }
+
+    /**
+     * Looks up a given key in the secrets file, then uses that value to open a secondary resource
+     * file and streams that out.
+     **/
+    public InputStream getReferencedInputStream(String key) throws FileNotFoundException {
+        String path = secrets.get(key);
+        checkState(!Strings.isNullOrEmpty(path), "Key %s was not defined in secrets file", key);
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL resourceUrl = classLoader.getResource(path);
+        if (resourceUrl == null) {
+            throw new IllegalArgumentException("Resource " + path + " was not found, from key: "
+                + key);
+        }
+        return new FileInputStream(resourceUrl.getFile());
     }
 }

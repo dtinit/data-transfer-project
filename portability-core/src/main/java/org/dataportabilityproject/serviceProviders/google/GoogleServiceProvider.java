@@ -40,15 +40,13 @@ public final class GoogleServiceProvider implements ServiceProvider {
             GmailScopes.GMAIL_LABELS);
 
     private final CredentialGenerator credentialGenerator;
-    private final JobDataCache jobDataCache;
 
-    public GoogleServiceProvider(Secrets secrets, JobDataCache jobDataCache) throws Exception {
+    public GoogleServiceProvider(Secrets secrets) throws Exception {
          this.credentialGenerator = new CredentialGenerator(
                 secrets.get("GOOGLE_CLIENT_ID"),
                 secrets.get("GOOGLE_SECRET"),
                 // TODO: only use scopes from the products we are accessing.
                 SCOPES);
-         this.jobDataCache = jobDataCache;
     }
 
 
@@ -77,7 +75,10 @@ public final class GoogleServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public Exporter<? extends DataModel> getExporter(PortableDataType type, AuthData authData)
+    public Exporter<? extends DataModel> getExporter(
+        PortableDataType type,
+        AuthData authData,
+        JobDataCache jobDataCache)
             throws IOException {
         Credential cred = credentialGenerator.getCredential(authData);
         if (!cred.refreshToken()) {
@@ -98,8 +99,10 @@ public final class GoogleServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public Importer<? extends DataModel> getImporter(PortableDataType type, AuthData authData)
-            throws IOException {
+    public Importer<? extends DataModel> getImporter(
+        PortableDataType type,
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
         Credential cred = credentialGenerator.getCredential(authData);
         if (!cred.refreshToken()) {
             throw new IOException("Couldn't refresh token");

@@ -27,17 +27,18 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  */
 public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
+    private final CloudFactory cloudFactory;
 
 
     public ServiceProviderRegistry(Secrets secrets, CloudFactory cloudFactory) throws Exception {
-        JobDataCache jobDataCache = cloudFactory.getJobDataCache();
+        this.cloudFactory = cloudFactory;
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
-        addServiceProvider(new FlickrServiceProvider(secrets, jobDataCache), providerBuilder);
-        addServiceProvider(new GoogleServiceProvider(secrets, jobDataCache), providerBuilder);
+        addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
         addServiceProvider(new MicrosoftServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new RememberTheMilkProvider(secrets, jobDataCache), providerBuilder);
+        addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
         addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new SmugMugServiceProvider(secrets, jobDataCache), providerBuilder);
+        addServiceProvider(new SmugMugServiceProvider(secrets), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
     }
@@ -60,9 +61,11 @@ public class ServiceProviderRegistry {
     public <T extends DataModel> Exporter<T> getExporter(
             String serviceProvider,
             PortableDataType portableDataType,
+            String jobId,
             AuthData authData) throws IOException {
+        JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
         Exporter<? extends DataModel> exporter = serviceProviders.get(serviceProvider)
-            .getExporter(portableDataType, authData);
+            .getExporter(portableDataType, authData, jobDataCache);
         return (Exporter<T>) exporter;
     }
 
@@ -70,9 +73,11 @@ public class ServiceProviderRegistry {
     public <T extends DataModel> Importer<T> getImporter(
             String serviceProvider,
             PortableDataType portableDataType,
+            String jobId,
             AuthData authData) throws IOException {
+        JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
         Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider)
-            .getImporter(portableDataType, authData);
+            .getImporter(portableDataType, authData, jobDataCache);
         return (Importer<T>) importer;
     }
 

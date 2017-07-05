@@ -1,9 +1,10 @@
 package org.dataportabilityproject.webapp;
 
 import org.dataportabilityproject.ServiceProviderRegistry;
+import org.dataportabilityproject.cloud.CloudFactoryFactory;
+import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.webapp.auth.IdProvider;
 import org.dataportabilityproject.webapp.auth.JWTTokenManager;
@@ -19,9 +20,10 @@ public class PortabilityConfiguration {
   private static final String SECRET = "DO NOT USE IN PRODUCTION";
 
   @Bean
-  public CloudFactory getCloudFactory() {
-    // TODO(willard): Add a flag to control the cloud environment.
-    return new LocalCloudFactory();
+  public CloudFactory getCloudFactory(Secrets secrets) {
+    // TODO: add a flag to be able to switch this.
+    SupportedCloud cloud = SupportedCloud.LOCAL;
+    return CloudFactoryFactory.getCloudFactory(cloud, secrets);
   }
 
   @Bean
@@ -41,16 +43,18 @@ public class PortabilityConfiguration {
 
     /** Provides a global singleton instance of the {@link} ServiceProviderRegistry}. */
   @Bean
-  public ServiceProviderRegistry getServiceProviderRegistry(CloudFactory cloudFactory) {
+  public ServiceProviderRegistry getServiceProviderRegistry(
+      CloudFactory cloudFactory, Secrets secrets) {
     try {
-      return new ServiceProviderRegistry(getSecrets(), cloudFactory);
+      return new ServiceProviderRegistry(secrets, cloudFactory);
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
   }
 
   /** Provide file-backed implementation of secrets. */
-  private static Secrets getSecrets() {
+  @Bean
+  public Secrets getSecrets() {
     try {
       return new Secrets("secrets.csv");
     } catch (Exception e) {

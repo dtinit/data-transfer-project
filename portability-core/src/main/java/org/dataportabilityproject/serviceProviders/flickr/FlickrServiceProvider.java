@@ -17,17 +17,14 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  * The {@link ServiceProvider} for the Flickr service (http://www.flickr.com/).
  */
 public final class FlickrServiceProvider implements ServiceProvider {
-    private FlickrPhotoService photoService;
     private final Secrets secrets;
     private final FlickrAuth authProvider;
-    private final JobDataCache jobDataCache;
 
-    public FlickrServiceProvider(Secrets secrets, JobDataCache jobDataCache) {
+    public FlickrServiceProvider(Secrets secrets) {
         this.secrets = secrets;
         this.authProvider = new FlickrAuth(
             secrets.get("FLICKR_API_KEY"),
             secrets.get("FLICKR_SECRET"));
-        this.jobDataCache = jobDataCache;
     }
 
     @Override public String getName() {
@@ -49,34 +46,34 @@ public final class FlickrServiceProvider implements ServiceProvider {
 
     @Override public Exporter<? extends DataModel> getExporter(
         PortableDataType type,
-        AuthData authData) throws IOException {
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
         if (type != PortableDataType.PHOTOS) {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData);
+        return getInstanceOfService(authData, jobDataCache);
     }
 
     @Override public Importer<? extends DataModel> getImporter(
         PortableDataType type,
-        AuthData authData) throws IOException {
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
         if (type != PortableDataType.PHOTOS) {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData);
+        return getInstanceOfService(authData, jobDataCache);
     }
 
-    private synchronized FlickrPhotoService getInstanceOfService(AuthData authData)
-        throws IOException {
-        if (null == photoService) {
-            Auth auth = authProvider.getAuth(authData);
-            photoService = new FlickrPhotoService(
-                    secrets.get("FLICKR_API_KEY"),
-                    secrets.get("FLICKR_SECRET"),
-                    auth,
+    private synchronized FlickrPhotoService getInstanceOfService(
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
+        Auth auth = authProvider.getAuth(authData);
+        return new FlickrPhotoService(
+                secrets.get("FLICKR_API_KEY"),
+                secrets.get("FLICKR_SECRET"),
+                auth,
                 jobDataCache);
-        }
-        return photoService;
     }
 }

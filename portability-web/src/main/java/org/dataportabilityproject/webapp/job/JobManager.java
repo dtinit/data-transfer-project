@@ -3,6 +3,7 @@ package org.dataportabilityproject.webapp.job;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -35,7 +36,7 @@ public class JobManager {
   private TokenManager tokenManager;
 
   /** Creates a new user job and returns a token to identify the job. */
-  public String createNewUserjob() {
+  public String createNewUserjob() throws IOException {
     String newId = idProvider.createId();
     String token = tokenManager.createNewToken(newId);
     storage.put(token, createInitialData(newId, token));
@@ -55,7 +56,7 @@ public class JobManager {
   }
 
   /** Replaces the existing entry in storage with the provided {@code job}. */
-  public void updateJob(PortabilityJob job) {
+  public void updateJob(PortabilityJob job) throws IOException {
     Map<String, Object> existing = storage.get(job.token());
     Preconditions.checkArgument(existing != null, "Attempting to updatea  non-exisent job");
     // Store the updated job info
