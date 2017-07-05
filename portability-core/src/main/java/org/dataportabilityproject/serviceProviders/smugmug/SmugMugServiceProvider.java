@@ -18,13 +18,11 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  */
 public final class SmugMugServiceProvider implements ServiceProvider {
     private final SmugMugAuth auth;
-    private final JobDataCache jobDataCache;
 
-    public SmugMugServiceProvider(Secrets secrets, JobDataCache jobDataCache)
+    public SmugMugServiceProvider(Secrets secrets)
             throws IOException {
         this.auth = new SmugMugAuth(secrets.get("SMUGMUG_API_KEY"),
             secrets.get("SMUGMUG_SECRET"));
-        this.jobDataCache = jobDataCache;
     }
 
     @Override public String getName() {
@@ -45,33 +43,29 @@ public final class SmugMugServiceProvider implements ServiceProvider {
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
-            AuthData authData) throws IOException {
+            AuthData authData, JobDataCache jobDataCache) throws IOException {
         if (type != PortableDataType.PHOTOS) {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData);
+        return getInstanceOfService(authData, jobDataCache);
     }
 
     @Override public Importer<? extends DataModel> getImporter(PortableDataType type,
-            AuthData authData) throws IOException {
+            AuthData authData, JobDataCache jobDataCache) throws IOException {
         if (type != PortableDataType.PHOTOS) {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData);
+        return getInstanceOfService(authData, jobDataCache);
     }
-    private static SmugMugPhotoService hack;
 
-    private synchronized SmugMugPhotoService getInstanceOfService(AuthData authData)
-            throws IOException {
-        if (hack == null) {
-            OAuthConsumer consumer = auth.generateConsumer(authData);
-            hack = new SmugMugPhotoService(
-                consumer,
-                jobDataCache);
-        }
-
-        return hack;
+    private synchronized SmugMugPhotoService getInstanceOfService(
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
+        OAuthConsumer consumer = auth.generateConsumer(authData);
+        return new SmugMugPhotoService(
+            consumer,
+            jobDataCache);
     }
 }

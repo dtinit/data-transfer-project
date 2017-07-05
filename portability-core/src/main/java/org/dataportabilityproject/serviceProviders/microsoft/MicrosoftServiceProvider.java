@@ -2,6 +2,7 @@ package org.dataportabilityproject.serviceProviders.microsoft;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
@@ -54,8 +55,10 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public Exporter<? extends DataModel> getExporter(PortableDataType type, AuthData authData)
-            throws IOException {
+    public Exporter<? extends DataModel> getExporter(
+        PortableDataType type,
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
         switch (type) {
             case CALENDAR:
                 return getCalendarService(authData);
@@ -67,8 +70,10 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public Importer<? extends DataModel> getImporter(PortableDataType type, AuthData authData)
-            throws IOException {
+    public Importer<? extends DataModel> getImporter(
+        PortableDataType type,
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException {
         switch (type) {
             case CALENDAR:
                 return getCalendarService(authData);

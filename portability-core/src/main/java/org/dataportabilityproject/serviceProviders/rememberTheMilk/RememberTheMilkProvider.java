@@ -18,17 +18,14 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 public final class RememberTheMilkProvider implements ServiceProvider {
     private final Secrets secrets;
     private final TokenGenerator tokenGenerator;
-    private final JobDataCache jobDataCache;
-    private RememberTheMilkTaskService taskService;
 
-    public RememberTheMilkProvider(Secrets secrets, JobDataCache jobDataCache) throws IOException {
+    public RememberTheMilkProvider(Secrets secrets) throws IOException {
         this.secrets = secrets;
         this.tokenGenerator = new TokenGenerator(new RememberTheMilkSignatureGenerator(
             secrets.get("RTM_API_KEY"),
             secrets.get("RTM_SECRET"),
             null
         ));
-        this.jobDataCache = jobDataCache;
     }
 
     @Override public String getName() {
@@ -51,33 +48,31 @@ public final class RememberTheMilkProvider implements ServiceProvider {
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
-            AuthData authData) throws IOException {
+            AuthData authData, JobDataCache jobDataCache) throws IOException {
         if (type != PortableDataType.TASKS) {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData);
+        return getInstanceOfService(authData, jobDataCache);
     }
 
     @Override public Importer<? extends DataModel> getImporter(PortableDataType type,
-            AuthData authData) throws IOException {
+            AuthData authData, JobDataCache jobDataCache) throws IOException {
         if (type != PortableDataType.TASKS) {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData);
+        return getInstanceOfService(authData, jobDataCache);
     }
 
-    private synchronized RememberTheMilkTaskService getInstanceOfService(AuthData authData)
+    private synchronized RememberTheMilkTaskService getInstanceOfService(
+        AuthData authData, JobDataCache jobDataCache)
             throws IOException {
-        if (null == taskService) {
             RememberTheMilkSignatureGenerator signer = new RememberTheMilkSignatureGenerator(
                 secrets.get("RTM_API_KEY"),
                 secrets.get("RTM_SECRET"),
                 tokenGenerator.getToken(authData));
 
-            taskService = new RememberTheMilkTaskService(signer, jobDataCache);
-        }
-        return taskService;
+        return new RememberTheMilkTaskService(signer, jobDataCache);
     }
 }

@@ -1,6 +1,7 @@
 package org.dataportabilityproject.shared;
 
 import com.google.common.collect.ImmutableList;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
@@ -27,8 +28,12 @@ public interface ServiceProvider {
     return null;
   }
 
-  Exporter<? extends DataModel> getExporter(PortableDataType type, AuthData authData)
-      throws IOException;
-  Importer<? extends DataModel> getImporter(PortableDataType type, AuthData authData)
-      throws IOException;
+  Exporter<? extends DataModel> getExporter(
+      PortableDataType type,
+      AuthData authData,
+      JobDataCache jobDataCache) throws IOException;
+  Importer<? extends DataModel> getImporter(
+      PortableDataType type,
+      AuthData authData,
+      JobDataCache jobDataCache) throws IOException;
 }

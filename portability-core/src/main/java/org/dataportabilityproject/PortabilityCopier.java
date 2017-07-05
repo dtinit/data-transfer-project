@@ -19,10 +19,11 @@ public class PortabilityCopier {
         String exportService,
         AuthData exportAuthData,
         String importService,
-        AuthData importAuthData) throws IOException {
+        AuthData importAuthData,
+        String jobId) throws IOException {
 
-        Exporter<T> exporter = registry.getExporter(exportService, dataType, exportAuthData);
-        Importer<T> importer = registry.getImporter(importService, dataType, importAuthData);
+        Exporter<T> exporter = registry.getExporter(exportService, dataType, jobId, exportAuthData);
+        Importer<T> importer = registry.getImporter(importService, dataType, jobId, importAuthData);
         ExportInformation emptyExportInfo =
             new ExportInformation(Optional.empty(), Optional.empty());
         copy(exporter, importer, emptyExportInfo);

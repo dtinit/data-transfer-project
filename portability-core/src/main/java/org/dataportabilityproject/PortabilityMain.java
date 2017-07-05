@@ -2,13 +2,10 @@ package org.dataportabilityproject;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.Optional;
+import java.util.UUID;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.dataModels.DataModel;
-import org.dataportabilityproject.dataModels.ExportInformation;
-import org.dataportabilityproject.dataModels.Exporter;
-import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
@@ -16,10 +13,10 @@ import org.dataportabilityproject.shared.auth.AuthData;
 
 public class PortabilityMain {
     private static final IOInterface IO_INTERFACE = new ConsoleIO();
+    private static CloudFactory cloudFactory = new LocalCloudFactory();
 
     public static void main(String[] args) throws Exception {
         Secrets secrets = new Secrets("secrets.csv");
-        CloudFactory cloudFactory = new LocalCloudFactory();
         ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
 
         PortableDataType type = IO_INTERFACE.ask(
@@ -42,7 +39,6 @@ public class PortabilityMain {
 
         AuthData exportAuthData = registry.getOfflineAuth(exporterName, type)
             .generateAuthData(IO_INTERFACE);
-        Exporter<T> exporter = registry.getExporter(exporterName, type, exportAuthData);
 
         // This is a hack to allow round tripping to the same account while only doing one auth.
         AuthData importAuthData;
@@ -53,11 +49,14 @@ public class PortabilityMain {
                 .generateAuthData(IO_INTERFACE);
         }
 
-        Importer<T> importer = registry.getImporter(importerName, type, importAuthData);
-        ExportInformation emptyExportInfo =
-            new ExportInformation(Optional.empty(), Optional.empty());
+        String jobId = UUID.randomUUID().toString();
 
-        PortabilityCopier.copyDataType(registry, type, exporterName, exportAuthData, importerName, importAuthData);;
+        try {
+            PortabilityCopier.copyDataType(registry, type, exporterName, exportAuthData,
+                importerName, importAuthData, jobId);
+        } finally {
+            cloudFactory.clearJobData(jobId);
+        }
     }
 
 }

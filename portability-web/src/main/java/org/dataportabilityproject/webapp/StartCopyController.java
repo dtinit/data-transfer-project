@@ -3,26 +3,15 @@ package org.dataportabilityproject.webapp;
 import com.google.common.base.Enums;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.dataModels.ContinuationInformation;
-import org.dataportabilityproject.dataModels.DataModel;
-import org.dataportabilityproject.dataModels.ExportInformation;
-import org.dataportabilityproject.dataModels.Exporter;
-import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.dataModels.Resource;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +28,9 @@ public class StartCopyController {
 
   @Autowired
   private JobManager jobManager;
+
+  @Autowired
+  private CloudFactory cloudFactory;
 
   /** Starts the copy and returns any status information */
   @CrossOrigin(origins = "http://localhost:3000")
@@ -67,11 +59,13 @@ public class StartCopyController {
     Runnable r = new Runnable() {
       public void run() {
         try {
-          PortabilityCopier
-              .copyDataType(registry, type, exportService, job.exportAuthData(), importService, job.importAuthData());
+          PortabilityCopier.copyDataType(registry, type, exportService,
+              job.exportAuthData(), importService, job.importAuthData(), job.id());
         } catch (IOException e) {
           System.out.println("copyDataType failed");
           e.printStackTrace();
+        } finally {
+          cloudFactory.clearJobData(job.id());
         }
       }
     };
