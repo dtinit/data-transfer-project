@@ -1,3 +1,4 @@
+// Represents the name and description for a data type
 export class PortableDataType {
   public name: string;
   public description: string;

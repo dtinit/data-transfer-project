@@ -36,7 +36,7 @@ public class ListServicesController {
       HttpServletResponse response) throws Exception {
 
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
-    System.out.println("ListServicesController: using data type param: " + dataTypeParam);
+    LogUtils.log("ListServicesController: using data type param: %s",  dataTypeParam);
 
     // Validate incoming data type parameter
     PortableDataType dataType = getDataType(dataTypeParam);

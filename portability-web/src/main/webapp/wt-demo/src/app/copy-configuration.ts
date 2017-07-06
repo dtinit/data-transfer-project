@@ -1,3 +1,4 @@
+// Represents the configuration for a copy job
 export class CopyConfiguration {
   public dataType: string;
   public exportService: string;
