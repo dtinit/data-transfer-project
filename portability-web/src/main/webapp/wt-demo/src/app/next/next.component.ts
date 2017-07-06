@@ -13,12 +13,12 @@ export class NextComponent implements OnInit {
   constructor(private service : SelectDataTypeService) { }
 
   ngOnInit() {
-    this.fetchCopyConfiguration();
+    this.importSetup();
   }
 
   // Fetches data types available from the backend for export and import
-  fetchCopyConfiguration() {
-    this.service.fetchCopyConfiguration().subscribe(
+  importSetup() {
+    this.service.importSetup().subscribe(
       data => {
         this.config = data;
         console.log('config: ' + JSON.stringify(this.config));
@@ -29,5 +29,11 @@ export class NextComponent implements OnInit {
         console.error(err);
       }
     );
+  }
+
+  // Redirect to the import auth url to authorize
+  authorize() {
+    console.log('authorize, redirecting to: ' + this.config.importAuthUrl);
+    window.location.href=this.config.importAuthUrl;
   }
 }
