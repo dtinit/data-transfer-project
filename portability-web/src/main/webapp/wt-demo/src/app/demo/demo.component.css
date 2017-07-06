@@ -24,5 +24,64 @@
 }
 
 .wt-form button {
-  margin-top: 20px;
+  margin-top: 50px;
+}
+
+.wt-servicelist {
+  position: fixed;
+  bottom: 0;
+  width: 400px;
+  font-size: 18px;
+  text-align: center;
+  padding-bottom: 20px;
+}
+
+.wt-not-endorsed {
+  font-size: 10px;
+}
+
+.wt-rights-reserved {
+  font-size: 8px;
+}
+
+.logo-table {
+  margin-top: 15px;
+  width: 100%;
+}
+
+.logo {
+  background-size: cover;
+  height: 50px;
+}
+
+.logo-google {
+  background-image: url('../../assets/logos/google.png');
+  width: 50px;
+}
+
+.logo-microsoft {
+  background-image: url('../../assets/logos/microsoft.png');
+  width: 108.19px;
+}
+
+.logo-instagram {
+  background-image: url('../../assets/logos/instagram.jpg');
+  width: 50px;
+}
+
+.logo-flickr {
+  background-image: url('../../assets/logos/flickr.png');
+  width: 50px;
+}
+
+.logo-smugmug {
+  background-image: url('../../assets/logos/smugmug.png');
+  width: 230.77px;
+}
+
+.logo-rtm {
+  background-image: url('../../assets/logos/rememberthemilk.png');
+  background-size: cover;
+  width: 113.25px;
+  height: 50px;
 }
