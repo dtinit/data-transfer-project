@@ -40,10 +40,17 @@ export class SelectDataTypeService {
     return this.selectService(importService, false);
   }
 
-  fetchCopyConfiguration() {
-    let url = `${this.baseEndpoint}fetchCopyConfiguration`;
+  importSetup() {
+    let url = `${this.baseEndpoint}importSetup`;
     return this.http.get(url)
-      .map(res => this.fetchCopyConfigurationSuccess(res))
+      .map(res => this.importSetupSuccess(res))
+      .catch(err => this.handleError(err));
+  }
+
+  copySetup() {
+    let url = `${this.baseEndpoint}copySetup`;
+    return this.http.get(url)
+      .map(res => this.copySetupSuccess(res))
       .catch(err => this.handleError(err));
   }
 
@@ -106,22 +113,31 @@ export class SelectDataTypeService {
     return body;
   }
 
-  private fetchCopyConfigurationSuccess(res: Response) {
-    console.log('fetchCopyConfigurationSuccess, res: ' + JSON.stringify(res));
+  private importSetupSuccess(res: Response) {
+    console.log('importSetupSuccess, res: ' + JSON.stringify(res));
     let data = res.json();
-    let dumb = data.dataType;
-    console.log('fetchCopyConfigurationSuccess, dumb: ' + JSON.stringify(dumb));
-
     let config = new CopyConfiguration(
       data.dataType,
       data.exportService,
-      <boolean><Boolean>data.exportServiceAuthExists,
-      data.exportAuthUrl,
+      "", // export auth url is not required at this step
       data.importService,
-      <boolean><Boolean>data.importServiceAuthExists,
       data.importAuthUrl);
 
-    console.log('fetchCopyConfigurationSuccess, body: ' + JSON.stringify(data));
+    console.log('importSetupSuccess, body: ' + JSON.stringify(config));
+    return config;
+  }
+
+  private copySetupSuccess(res: Response) {
+    console.log('copySetupSuccess, res: ' + JSON.stringify(res));
+    let data = res.json();
+    let config = new CopyConfiguration(
+      data.dataType,
+      data.exportService,
+      "", // export auth url is not required at this step
+      data.importService,
+      ""); // import auth url is not required at this step);
+
+    console.log('copySetupSuccess, body: ' + JSON.stringify(config));
     return config;
   }
 
