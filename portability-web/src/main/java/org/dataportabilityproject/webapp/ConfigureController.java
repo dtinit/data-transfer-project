@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Controller to process the configuration submitted via the form. */
+/**
+ * Controller to process the configuration submitted via the form and responds with the redirect
+ * for the export service.
+ */
 @RestController
 public class ConfigureController {
   @Autowired
@@ -51,6 +54,7 @@ public class ConfigureController {
       } else {
         LogUtils.log("Found existing cookie but no job");
       }
+
     }
 
     // Either token was empty or the job it represented was not found, create a new one
@@ -77,7 +81,7 @@ public class ConfigureController {
     Preconditions.checkState(job != null, "Job required");
     Preconditions.checkState(!Strings.isNullOrEmpty(job.token()), "Job token not set");
 
-    // TODO: Validate job before goin further
+    // TODO: Validate job before going further
 
     // Obtain the OnlineAuthDataGenerator
     OnlineAuthDataGenerator generator = serviceProviderRegistry

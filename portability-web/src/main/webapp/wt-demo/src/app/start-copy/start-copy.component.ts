@@ -7,26 +7,31 @@ import { SelectDataTypeService } from '../select-data-type.service';
   styleUrls: ['./start-copy.component.css']
 })
 export class StartCopyComponent implements OnInit {
+  dataType: string = "";
   exportService: string = "";
   importService: string = "";
+  submitted: boolean = false;
   error_text: string = "";
   constructor(private service : SelectDataTypeService) { }
 
   ngOnInit() {
-    console.log('ngOnInit for fetchCopyConfiguration');
-    this.fetchCopyConfiguration();
+    console.log('ngOnInit for startCopySetup');
+    this.copySetup();
   }
 
   // List copy configuration, e.g. services selected for export and import
-  fetchCopyConfiguration() {
-    this.service.fetchCopyConfiguration().subscribe(
+  copySetup() {
+    this.service.copySetup().subscribe(
       data => {
-        this.exportService = data.export;
-        this.importService = data.import;
-        console.log('fetchCopyConfiguration: exportService: ' + this.exportService);
-        console.log('fetchCopyConfiguration: importService: ' + this.importService);
+        this.dataType = data.dataType;
+        this.exportService = data.exportService;
+        this.importService = data.importService;
+        console.log('copySetup: dataType: ' + this.dataType);
+        console.log('copySetup: exportService: ' + this.exportService);
+        console.log('copySetup: importService: ' + this.importService);
       },
       err => {
+        this.dataType = '';
         this.exportService = '';
         this.importService = '';
         this.error_text = 'There was an error';
@@ -41,6 +46,7 @@ export class StartCopyComponent implements OnInit {
     // Initiate the copy
     this.service.startCopy().subscribe(
       data => {
+        this.submitted = true;
         console.log('successfully called startCopy, data: ' + data);
       },
       err => {

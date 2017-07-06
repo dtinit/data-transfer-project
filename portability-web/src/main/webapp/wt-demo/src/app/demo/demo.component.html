@@ -65,6 +65,10 @@
   </form>
 </div>
 
+<div *ngIf="error_text" class="alert alert-danger" role="alert">
+  <strong>Oh snap!</strong> {{ error_text }}
+</div>
+
 <div class="wt-servicelist">
   <div>Transferring data between</div>
   <div class="wt-not-endorsed">Although in no way endorsed or sponsored by</div>
