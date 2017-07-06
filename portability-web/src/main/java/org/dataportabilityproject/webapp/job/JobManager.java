@@ -48,7 +48,8 @@ public class JobManager {
   }
 
   /** Creates a new user job and returns a token to identify the job. */
-  public String createNewUserjob(PortableDataType dataType, String exportService, String importService) {
+  public String createNewUserjob(PortableDataType dataType, String exportService,
+      String importService) throws IOException {
     String newId = idProvider.createId();
     String token = tokenManager.createNewToken(newId);
     storage.put(token, createInitialData(newId, token, dataType, exportService, importService));
