@@ -78,7 +78,7 @@ chooses.
 
 ## Development
 
-### Building/Running
+### Building/Running CLI
  * Add a secrets.csv file to src/main/resources in portability-core and/or
    in portability-web, this should contain
    all your API keys, see secrets_template.csv for an example.
@@ -86,12 +86,22 @@ chooses.
  * "mvn exec:java -pl portability-core" will run the command line tool.
 
 ### Building/Running webapp
+
+#### Running angular in dev mode locally
+
+The following commands will run the angular frontend in dev mode locally proxying requests to the local webserver.
+
+* cd portability-web/src/main/webapp/wt-demo/
 * nvm run node --version
 * [optional] "npm install" #required first time through
-* "mvn clean install"
-* "mvn -e spring-boot:run -pl portability-web" will run the app server.
-* "ng serve --port 3000 --proxy-config proxy.conf.json" will run the Angular frontend 
-  (must be run from portability-web/src/main/webapp/wt-demo)
+* ng serve --port 3000 --proxy-config proxy.conf.json
+
+#### Running web server in dev mode locally
+
+The following builds and run the web server on port 8080
+
+* mvn clean install
+* mvn -e spring-boot:run -pl portability-web
 
 ### Contributing
 TBD

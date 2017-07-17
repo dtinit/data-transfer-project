@@ -39,22 +39,14 @@ public class ListServicesController {
     LogUtils.log("ListServicesController: using data type param: %s",  dataTypeParam);
 
     // Validate incoming data type parameter
-    PortableDataType dataType = getDataType(dataTypeParam);
+    PortableDataType dataType = JobUtils.getDataType(dataTypeParam);
 
     // Return services for the given data type
     List<String> exportServices = serviceProviderRegistry.getServiceProvidersThatCanExport(dataType);
-    // TODO: Remove import if not needed
     List<String> importServices = serviceProviderRegistry.getServiceProvidersThatCanImport(dataType);
     if (exportServices.isEmpty() || importServices.isEmpty()) {
-      // TODO: log a warning
+      LogUtils.log("Empty service list found, export size: %d, import size: %d", exportServices.size(), importServices.size());
     }
     return ImmutableMap.<String, List<String>>of(JsonKeys.EXPORT, exportServices, JsonKeys.IMPORT, importServices);
-  }
-
-  /** Parse the data type .*/
-  private static PortableDataType getDataType(String dataType) {
-    Optional<PortableDataType> dataTypeOption = Enums.getIfPresent(PortableDataType.class, dataType);
-    Preconditions.checkArgument(dataTypeOption.isPresent(), "Data type required");
-    return dataTypeOption.get();
   }
 }
