@@ -1,66 +1,102 @@
 package org.dataportabilityproject.serviceProviders.microsoft;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects.JSON_FACTORY;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.extensions.java6.auth.oauth2.VerificationCodeReceiver;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.http.GenericUrl;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.List;
 import org.dataportabilityproject.shared.IOInterface;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.AuthRequest;
 import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecureOverride;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 /**
- * A work in progress to try to get authentication to MS working.
+ * Implements authorization flow for Microsoft
  */
-final class MicrosoftAuth implements OfflineAuthDataGenerator {
+final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     /** Port in the "Callback URL". */
     private static final int PORT = 12345;
 
     /** Domain name in the "Callback URL". */
+    private static final String CALLBACK_URL = "https://localhost:8080/callback/microsoft";
     private static final String DOMAIN = "localwebapp.com"; // Edit /etc/hosts to map this to localhost
-
     private static final String AUTHORIZATION_SERVER_URL = "https://login.live.com/oauth20_authorize.srf";
     private static final String TOKEN_SERVER_URL = "https://login.live.com/oauth20_token.srf";
-    private static final ImmutableList<String> SCOPES = ImmutableList.of(
-        "wl.imap", // outlook export via IMAP
-        "wl.offline_access", // provides for refresh tokens
-        "wl.calendars", "wl.contacts_calendars"); // calendar export
-    
-    private final Secrets secrets;
 
-    MicrosoftAuth(Secrets secrets) {
-        this.secrets = secrets;
+    private final String clientId;
+    private final String apiSecret;
+    private final List<String> scopes;
+    
+    MicrosoftAuth(String clientId, String apiSecret, List<String> scopes) {
+        this.clientId = checkNotNull(clientId);
+        this.apiSecret = checkNotNull(apiSecret);
+        Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
+        this.scopes = scopes;
+    }
+    
+    @Override
+    public AuthRequest generateAuthUrl(String id) throws IOException {
+        String url = createFlow(clientId, apiSecret, scopes)
+            .newAuthorizationUrl()
+            .setRedirectUri(CALLBACK_URL)
+            .setState(id) // TODO: Encrypt
+            .build();
+        return AuthRequest.create(url);
+    }
+
+    @Override
+    public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData)
+        throws IOException {
+        Preconditions.checkState(initialAuthData == null, "Earlier auth data not expected for Google flow");
+        AuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
+        TokenResponse response = flow
+            .newTokenRequest(authCode)
+            .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
+            .execute();
+        // Figure out storage
+        Credential credential = flow.createAndStoreCredential(response, id);
+        // Extract the Google User ID from the ID token in the auth response
+        // GoogleIdToken.Payload payload = ((GoogleTokenResponse) response).parseIdToken().getPayload();
+        return toAuthData(credential);
+    }
+
+    private static MicrosoftOauthData toAuthData(Credential credential) {
+        return MicrosoftOauthData.create(
+            credential.getAccessToken(),
+            credential.getRefreshToken(),
+            credential.getTokenServerEncodedUrl(),
+            "TBD-account@live.com"); // TODO: Remove if not needed
     }
 
     @Override
     public AuthData generateAuthData(IOInterface consoleIO) throws IOException {
         String account = consoleIO.ask("Enter Microsoft email account");
-        String token = getToken(account);
-        return MicrosoftOauthData.create(token, account);
+        return getAuthData(account);
     }
 
     /** Initiates the auth flow and obtains the access token. */
-    private String getToken(String account) throws IOException {
+    private MicrosoftOauthData getAuthData(String account) throws IOException {
         // set up authorization code flow
         AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(
                 BearerToken.authorizationHeaderAccessMethod(), // Access Method
                 MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
                 JSON_FACTORY, // JsonFactory
                 new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
-                new ClientParametersAuthentication(
-                        secrets.get("MICROSOFT_APP_ID"),
-                        secrets.get("MICROSOFT_PASSWORD")), // HttpExecuteInterceptor 
-                secrets.get("MICROSOFT_APP_ID"), // clientId
+                new ClientParametersAuthentication(clientId, apiSecret), // HttpExecuteInterceptor
+                clientId, // clientId
                 AUTHORIZATION_SERVER_URL) // encoded url
-            .setScopes(SCOPES) // scopes
+            .setScopes(scopes) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
 
         // authorize
@@ -69,11 +105,28 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator {
         VerificationCodeReceiver receiver = new LocalServerReceiver.Builder()
             .setHost(DOMAIN).setPort(PORT).build();
         try {
-          Credential result = new AuthorizationCodeInstalledAppSecureOverride(flow, receiver)
+          Credential credential = new AuthorizationCodeInstalledAppSecureOverride(flow, receiver)
               .authorize(account);
-          return result.getAccessToken();
+          return toAuthData(credential);
         } catch (Exception e) {
           throw new IOException("Couldn't authorize", e);
         }
    }
+
+    /** Creates an AuthorizationCodeFlow for use in online and offline mode.*/
+    private static AuthorizationCodeFlow createFlow(String clientId, String apiSecret,
+        List<String> scopes)
+        throws IOException {
+        // set up authorization code flow
+        return new AuthorizationCodeFlow.Builder(
+            BearerToken.authorizationHeaderAccessMethod(), // Access Method
+            MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
+            JSON_FACTORY, // JsonFactory
+            new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
+            new ClientParametersAuthentication(clientId, apiSecret), // HttpExecuteInterceptor
+            clientId, // clientId
+            AUTHORIZATION_SERVER_URL) // encoded url
+            .setScopes(scopes) // scopes
+            .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
+    }
 }

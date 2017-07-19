@@ -45,7 +45,7 @@ public class MicrosoftCalendarService
                   String headerValue = HEADER_PREFIX + token;
                   request.getHeaders().setAuthorization(headerValue);
                   request.getHeaders().setAccept("text/*, application/xml, application/json;odata.metadata=none;odata.streaming=false");
-                  request.getHeaders().set("X-AnchorMailbox", account);
+                  // TODO: add if needed: request.getHeaders().set("X-AnchorMailbox", account);
                   request.getHeaders().setUserAgent("PlayGroundAgent/1.0");
                 });
     }

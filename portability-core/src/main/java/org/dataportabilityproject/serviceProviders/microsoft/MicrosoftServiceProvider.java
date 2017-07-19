@@ -14,18 +14,27 @@ import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OfflinePasswordAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.PasswordAuthData;
 
 /**
  * The {@link ServiceProvider} for Microsoft (http://www.microsoft.com/).
  */
 public final class MicrosoftServiceProvider implements ServiceProvider {
+    private static final ImmutableList<String> SCOPES = ImmutableList.of(
+        "wl.imap", // outlook export via IMAP
+        "wl.offline_access", // provides for refresh tokens
+        "wl.calendars", "wl.contacts_calendars"); // calendar export
     private final MicrosoftAuth oauthProvider;
     private final OfflinePasswordAuthDataGenerator passwordAuth =
         new OfflinePasswordAuthDataGenerator();
 
     public MicrosoftServiceProvider(Secrets secrets) {
-        oauthProvider = new MicrosoftAuth(secrets);
+        oauthProvider = new MicrosoftAuth(
+            secrets.get("MICROSOFT_APP_ID"),
+            secrets.get("MICROSOFT_PASSWORD"),
+            // TODO: only use scopes from the products we are accessing.
+            SCOPES);
     }
 
     @Override public String getName() {
@@ -49,6 +58,19 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
                 return oauthProvider;
             case MAIL:
                 return passwordAuth;
+            default:
+                throw new IllegalArgumentException("Type " + dataType + " is not supported");
+        }
+    }
+
+    @Override
+    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+        switch (dataType) {
+            case CALENDAR:
+                return oauthProvider;
+            // TODO: Enable mail
+            // case MAIL:
+            //    return passwordAuth;
             default:
                 throw new IllegalArgumentException("Type " + dataType + " is not supported");
         }
@@ -84,7 +106,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
 
     private MicrosoftCalendarService getCalendarService(AuthData authData) {
         MicrosoftOauthData msAuthData = (MicrosoftOauthData) authData;
-        return new MicrosoftCalendarService(msAuthData.token(), msAuthData.accountAddress());
+        return new MicrosoftCalendarService(msAuthData.accessToken(), msAuthData.accountAddress());
     }
 
     private MicrosoftMailService getMailService(AuthData authData) {

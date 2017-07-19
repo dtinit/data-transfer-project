@@ -208,5 +208,10 @@
         <artifactId>java-jwt</artifactId>
         <version>3.2.0</version>
       </dependency>
+      <!-- required for custom error page in spring -->
+      <dependency>
+        <groupId>org.apache.tomcat.embed</groupId>
+        <artifactId>tomcat-embed-jasper</artifactId>
+      </dependency>
     </dependencies>
 </project>

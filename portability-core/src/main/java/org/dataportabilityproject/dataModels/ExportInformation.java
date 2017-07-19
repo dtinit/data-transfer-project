@@ -1,5 +1,6 @@
 package org.dataportabilityproject.dataModels;
 
+import com.google.common.base.MoreObjects;
 import java.util.Optional;
 
 /**
@@ -22,5 +23,13 @@ public class ExportInformation {
   /** Information about where to start exporting item if not at the start of a set. */
   public Optional<PaginationInformation> getPaginationInformation() {
     return this.pageInfo;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this.getClass())
+        .add("resource", resource)
+        .add("pageInfo", pageInfo)
+        .toString();
   }
 }

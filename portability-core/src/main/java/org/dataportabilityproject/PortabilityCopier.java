@@ -8,6 +8,7 @@ import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.Resource;
+import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 
@@ -39,6 +40,12 @@ public class PortabilityCopier {
         // processed.
 
         T items = exporter.export(exportInformation);
+        System.out.println("copy: exportInformation: " + exportInformation);
+        if(items instanceof CalendarModelWrapper) {
+            System.out.println("copy: cals: " + ((CalendarModelWrapper)items).getCalendars().size());
+            System.out.println("copy: events: " + ((CalendarModelWrapper)items).getEvents().size());
+        }
+
         importer.importItem(items);
 
         ContinuationInformation continuationInfo = items.getContinuationInformation();

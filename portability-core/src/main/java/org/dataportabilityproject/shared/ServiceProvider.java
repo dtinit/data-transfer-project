@@ -24,7 +24,8 @@ public interface ServiceProvider {
   OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType);
 
   default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-    System.out.println("WARNING: getOnlineAuthDataGenerator not implemented");
+    System.out.println("WARNING: getOnlineAuthDataGenerator not implemented for type: "
+        + dataType + ", service: " + getName());
     return null;
   }
 

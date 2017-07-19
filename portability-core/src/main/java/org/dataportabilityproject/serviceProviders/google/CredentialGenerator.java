@@ -42,7 +42,8 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   CredentialGenerator(String clientId, String apiSecret, List<String> scopes) {
       this.clientId = checkNotNull(clientId);
       this.apiSecret = checkNotNull(apiSecret);
-    this.scopes = scopes;
+      Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
+      this.scopes = scopes;
   }
 
   @Override
@@ -65,11 +66,9 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   public AuthData generateAuthData(String authCode, String id, @Nullable AuthData initialAuthData) throws IOException {
     Preconditions.checkState(initialAuthData == null, "Earlier auth data not expected for Google flow");
     AuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
-    String redirectAfterToken = "http://localhost:8080/callback/google";
-    System.out.println("redirectAfterToken: " + redirectAfterToken);
     TokenResponse response = flow
         .newTokenRequest(authCode)
-        .setRedirectUri(redirectAfterToken) //TODO(chuy): Parameterize
+        .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, id);

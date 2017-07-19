@@ -73,6 +73,7 @@ public class Oauth2CallbackController {
 
     // Generate and store auth data
     AuthData authData = generator.generateAuthData(authResponse.getCode(), token, initialAuthData);
+    Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);

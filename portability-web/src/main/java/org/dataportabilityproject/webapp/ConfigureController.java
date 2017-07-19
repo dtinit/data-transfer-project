@@ -86,12 +86,14 @@ public class ConfigureController {
     // Obtain the OnlineAuthDataGenerator
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.exportService(), dataType);
-
     Preconditions.checkNotNull(generator,"Generator not found for type: %s, service: %s",
         dataType, job.exportService());
 
     // Auth url
     AuthRequest authRequest = generator.generateAuthUrl(job.token());
+    Preconditions.checkNotNull(authRequest,"AuthRequest not found for type: %s, service: %s",
+        dataType, job.exportService());
+
 
     // Store authUrl
     if (authRequest.initialAuthData() != null) {
