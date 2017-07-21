@@ -193,7 +193,7 @@ public class FlickrPhotoService implements
     }
 
     private static PhotoModel toCommonPhoto(Photo p, String albumId) {
-        checkState(!Strings.isNullOrEmpty(p.getOriginalSize().getSource()), "photo %s had a null url", p.getId());
+        checkState(!Strings.isNullOrEmpty(p.getOriginalSize().getSource()), "photo %s had a null authUrl", p.getId());
         return new PhotoModel(
                 p.getTitle(),
                 p.getOriginalSize().getSource(),

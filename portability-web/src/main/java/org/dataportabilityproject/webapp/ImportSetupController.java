@@ -3,15 +3,11 @@ package org.dataportabilityproject.webapp;
 import com.google.common.base.Enums;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.List;
 import java.util.Map;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthRequest;
+import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
@@ -57,25 +53,25 @@ public class ImportSetupController {
     // Obtain the OnlineAuthDataGenerator
     OnlineAuthDataGenerator generator = registry.getOnlineAuth(job.importService(), getDataType(job.dataType()));
 
-    // Auth url
-    AuthRequest authRequest = generator.generateAuthUrl(job.token());
+    // Auth authUrl
+    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(job.token());
 
     // Store authUrl
-    if (authRequest.initialAuthData() != null) {
+    if (authFlowInitiator.initialAuthData() != null) {
       PortabilityJob jobBeforeInitialData = lookupJob(token);
       PortabilityJob updatedJob = JobUtils
-          .setInitialAuthData(job, authRequest.initialAuthData(), true);
+          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
       jobManager.updateJob(updatedJob);
     }
 
-    // Send the url for the client to redirect to service authorization
-    LogUtils.log("Import auth url sent to client: %s", authRequest.url());
+    // Send the authUrl for the client to redirect to service authorization
+    LogUtils.log("Import auth authUrl sent to client: %s", authFlowInitiator.authUrl());
 
     return ImmutableMap.<String, String>builder()
         .put(JsonKeys.DATA_TYPE, job.dataType())
         .put(JsonKeys.EXPORT_SERVICE, job.exportService())
         .put(JsonKeys.IMPORT_SERVICE, job.importService())
-        .put(JsonKeys.IMPORT_AUTH_URL, authRequest.url())
+        .put(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl())
         .build();
   }
 

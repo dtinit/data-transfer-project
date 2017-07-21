@@ -9,10 +9,12 @@ import com.flickr4java.flickr.auth.Auth;
 import com.flickr4java.flickr.auth.AuthInterface;
 import com.flickr4java.flickr.auth.Permission;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.shared.auth.AuthRequest;
+import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
@@ -31,7 +33,7 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = authInterface.getRequestToken();
     String url = authInterface.getAuthorizationUrl(token, Permission.WRITE);
-    String tokenKey = ioInterface.ask("Please enter the code from this url: " + url);
+    String tokenKey = ioInterface.ask("Please enter the code from this authUrl: " + url);
     Token requestToken = authInterface.getAccessToken(token, new Verifier(tokenKey));
     try {
       Auth auth = authInterface.checkToken(requestToken);
@@ -55,15 +57,17 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   }
 
   @Override // online case
-  public AuthRequest generateAuthUrl(String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = authInterface.getRequestToken("http://localhost:8080/callback1/flickr");
     String url = authInterface.getAuthorizationUrl(token, Permission.WRITE);
-    return AuthRequest.create(url, toAuthData(token));
+    return AuthFlowInitiator.create(url, toAuthData(token));
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData) throws IOException {
+  public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData,
+      @Nullable String extra) throws IOException {
+    Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions
         .checkNotNull(initialAuthData, "Earlier auth data not expected for Google flow");
     AuthInterface authInterface = flickr.getAuthInterface();

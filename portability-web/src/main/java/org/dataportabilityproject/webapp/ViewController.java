@@ -12,7 +12,7 @@ public class ViewController {
 
   /** Maps angular routes paths back to angular */
   @CrossOrigin(origins = "http://localhost:3000")
-  @RequestMapping({ "/home", "/export.*", "/import.*", "/copy.*", "/demo.*", "/next.*"})
+  @RequestMapping({ "/home", "/export.*", "/import.*", "/copy.*", "/demo.*", "/next.*", "/simplelogin.*"})
   public String index(HttpServletRequest request) {
     System.out.println("Redirecting to home after receiving: " + request.getRequestURI());
     return "forward:/index.html";

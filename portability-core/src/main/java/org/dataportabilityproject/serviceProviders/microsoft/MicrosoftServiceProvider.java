@@ -15,6 +15,7 @@ import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OfflinePasswordAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlinePasswordAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.PasswordAuthData;
 
 /**
@@ -68,9 +69,8 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
         switch (dataType) {
             case CALENDAR:
                 return oauthProvider;
-            // TODO: Enable mail
-            // case MAIL:
-            //    return passwordAuth;
+            case MAIL:
+                return new OnlinePasswordAuthDataGenerator();
             default:
                 throw new IllegalArgumentException("Type " + dataType + " is not supported");
         }

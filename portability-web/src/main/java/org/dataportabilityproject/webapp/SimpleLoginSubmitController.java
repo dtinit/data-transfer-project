@@ -1,13 +1,14 @@
 package org.dataportabilityproject.webapp;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeResponseUrl;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
@@ -15,44 +16,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Controller for the list data types service. */
+/**
+ * Controller to process the submission of simple login credentials
+ */
 @RestController
-public class Oauth2CallbackController {
+public class SimpleLoginSubmitController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
   private JobManager jobManager;
 
-  /** Handle Oauth2 callback requests. */
+  /**
+   * Sets the selected service for import or export and kicks off the auth flow.
+   */
   @CrossOrigin(origins = "http://localhost:3000")
-  @RequestMapping("/callback/**")
-  public void handleOauth2Response(
-      @CookieValue(value = "jobToken", required = true) String token,
-      HttpServletRequest request,
-      HttpServletResponse response) throws Exception {
-    LogUtils.log("Oauth2CallbackController getRequestURI: %s", request.getRequestURI());
-    LogUtils.log("Oauth2CallbackController getQueryString: %s", request.getQueryString());
+  @RequestMapping(path="/simpleLoginSubmit", method = RequestMethod.POST)
+  public void simpleLoginSubmit(HttpServletRequest request, HttpServletResponse response,
+      @CookieValue(value = "jobToken", required = true) String token) throws Exception {
 
-    AuthorizationCodeResponseUrl authResponse = getResponseUrl(request);
+    // Valid job must be present
+    PortabilityJob job = jobManager.findExistingJob(token);
+    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
 
-    // check for user-denied error
-    if (authResponse.getError() != null) {
-      LogUtils.log("Authorization DENIED: %s", authResponse.getError());
-      response.sendRedirect("/error");
-      return;
-    }
+    LogUtils.log("simpleLoginSubmit, job: %s", job);
 
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(token), "Token required");
-
-    // TODO: Encrypt/decrypt state param with secure info
-    String state = authResponse.getState();
-
-    // TODO: Remove sanity check
-    Preconditions.checkState(state.equals(token), "Token in cookie [%s] and request [%s] should match", token, state);
-
-    PortabilityJob job = lookupJob(token);
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
     LogUtils.log("dataType: %s", dataType);
 
@@ -65,14 +55,24 @@ public class Oauth2CallbackController {
     Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, token: %s", service, isExport, token);
     LogUtils.log("service: %s, isExport: %b", service, isExport);
 
-    // Obtain the ServiceProvider from the registry
-    OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
 
-    // Retrieve initial auth data, if it existed
-    AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
+    // Username
+    String username = getParam(request, "username");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(username), "Missing valid username: %s", username);
+    // Password
+    String password = getParam(request, "password");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(password), "Password is empty");
+
+    // TODO: Validate job before going further
+
+    // Obtain the OnlineAuthDataGenerator
+    OnlineAuthDataGenerator generator = serviceProviderRegistry
+        .getOnlineAuth(job.exportService(), dataType);
+    Preconditions.checkNotNull(generator,"Generator not found for type: %s, service: %s",
+        dataType, job.exportService());
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(authResponse.getCode(), token, initialAuthData, null);
+    AuthData authData = generator.generateAuthData(username, token, null, password);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
@@ -88,19 +88,19 @@ public class Oauth2CallbackController {
 
   }
 
-  /* Return an AuthorizationCodeResponseUrl for the Oauth2 response. */
-  private static AuthorizationCodeResponseUrl getResponseUrl(HttpServletRequest request) {
-    StringBuffer fullUrlBuf = request.getRequestURL();
-    if (request.getQueryString() != null) {
-      fullUrlBuf.append('?').append(request.getQueryString());
-    }
-    return new AuthorizationCodeResponseUrl(fullUrlBuf.toString());
-  }
-
   /** Looks up job and does checks that it exists. */
   private PortabilityJob lookupJob(String token) {
     PortabilityJob job = jobManager.findExistingJob(token);
     Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
     return job;
+  }
+
+  // TODO: Determine how to get client to submit 'clean' values
+  // Hack to strip angular indexing in option values
+  private static String getParam(HttpServletRequest request, String name) {
+    String value = request.getParameterValues(name)[0];
+    String trimmed = value.substring(value.indexOf(":") + 1).trim();
+    LogUtils.log("Converted: %s , result: %s", value, trimmed);
+    return trimmed;
   }
 }

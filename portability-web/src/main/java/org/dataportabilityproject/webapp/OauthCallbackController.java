@@ -55,7 +55,7 @@ public class OauthCallbackController {
     // Hack! For now, if we don't have export auth data, assume it's for export.
     boolean isExport = (null == job.exportAuthData());
 
-    // TODO: Determine service from job or from url path?
+    // TODO: Determine service from job or from authUrl path?
     String service = isExport ? job.exportService() : job.importService();
     Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, token: %s", service, isExport, token);
     LogUtils.log("service: %s, isExport: %b", service, isExport);
@@ -68,7 +68,7 @@ public class OauthCallbackController {
     Preconditions.checkNotNull(initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(oauthVerifier, token, initialAuthData);
+    AuthData authData = generator.generateAuthData(oauthVerifier, token, initialAuthData, null);
 
     // Update the job
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
@@ -80,7 +80,6 @@ public class OauthCallbackController {
     } else {
       response.sendRedirect("http://localhost:3000/copy");
     }
-
   }
 
   /** Looks up job and does checks that it exists. */

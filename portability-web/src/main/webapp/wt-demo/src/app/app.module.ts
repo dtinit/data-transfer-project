@@ -9,13 +9,15 @@ import { SelectDataTypeService } from './select-data-type.service';
 import { StartCopyComponent } from './start-copy/start-copy.component';
 import { DemoComponent } from './demo/demo.component';
 import { NextComponent } from './next/next.component';
+import { SimpleLoginComponent } from './simplelogin/simplelogin.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     StartCopyComponent,
     DemoComponent,
-    NextComponent
+    NextComponent,
+    SimpleLoginComponent
   ],
   imports: [
     AppRoutingModule,

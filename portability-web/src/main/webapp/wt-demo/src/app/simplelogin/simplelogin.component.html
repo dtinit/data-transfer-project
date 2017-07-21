@@ -1,0 +1,33 @@
+
+<div class="text-left wt-form">
+  <form name="simpleLoginForm" #form action="http://localhost:8080/simpleLoginSubmit" method="post">
+    <div class="form-group">
+      <label for="username">username:</label>
+      <input type="text"
+            [(ngModel)]="username"
+            (change)="onInputChange()"
+            id="username"
+            name="username"
+            title="user name"
+            class="form-control"/>
+      <label for="password">password:</label>
+      <input type="password"
+            [(ngModel)]="password"
+            (change)="onInputChange()"
+            id="password"
+            name="password"
+            title="password"
+            class="form-control"/>
+      <button [disabled]="!enableSubmit"
+            type="submit" (click)="form.submit()"
+            class="btn btn-primary"
+            title="Clicking this will submit your credentials">
+        Authorize
+      </button>
+      </div>
+  </form>
+</div>
+
+<div *ngIf="error_text" class="alert alert-danger" role="alert">
+  <strong>Oh snap!</strong> {{ error_text }}
+</div>

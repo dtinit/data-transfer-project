@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthRequest;
+import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
@@ -89,23 +89,22 @@ public class ConfigureController {
     Preconditions.checkNotNull(generator,"Generator not found for type: %s, service: %s",
         dataType, job.exportService());
 
-    // Auth url
-    AuthRequest authRequest = generator.generateAuthUrl(job.token());
-    Preconditions.checkNotNull(authRequest,"AuthRequest not found for type: %s, service: %s",
+    // Auth authUrl
+    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(job.token());
+    Preconditions.checkNotNull(authFlowInitiator,"AuthFlowInitiator not found for type: %s, service: %s",
         dataType, job.exportService());
 
-
-    // Store authUrl
-    if (authRequest.initialAuthData() != null) {
+    // Store initial auth data
+    if (authFlowInitiator.initialAuthData() != null) {
       PortabilityJob jobBeforeInitialData = lookupJob(token);
       PortabilityJob updatedJob = JobUtils
-          .setInitialAuthData(job, authRequest.initialAuthData(), true);
+          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
       jobManager.updateJob(updatedJob);
     }
 
-    // Send the url for the client to redirect to service authorization
-    LogUtils.log("Redirecting to: %s", authRequest.url());
-    response.sendRedirect(authRequest.url());
+    // Send the authUrl for the client to redirect to service authorization
+    LogUtils.log("Redirecting to: %s", authFlowInitiator.authUrl());
+    response.sendRedirect(authFlowInitiator.authUrl());
   }
 
   /** Looks up job and does checks that it exists. */

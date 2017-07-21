@@ -8,7 +8,7 @@ import { CopyConfiguration } from '../copy-configuration';
   styleUrls: ['./next.component.css']
 })
 export class NextComponent implements OnInit {
-  config: CopyConfiguration;
+  config: CopyConfiguration = new CopyConfiguration("", "", "", "", "");
   error_text: string = "";
   constructor(private service : SelectDataTypeService) { }
 

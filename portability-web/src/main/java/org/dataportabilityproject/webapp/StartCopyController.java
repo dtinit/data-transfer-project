@@ -76,7 +76,6 @@ public class StartCopyController {
     return ImmutableMap.<String, String>of("status", "started");
   }
 
-
     /** Parse the data type .*/
   private static PortableDataType getDataType(String dataType) {
     com.google.common.base.Optional<PortableDataType> dataTypeOption = Enums
@@ -84,5 +83,4 @@ public class StartCopyController {
     Preconditions.checkState(dataTypeOption.isPresent(), "Data type required");
     return dataTypeOption.get();
   }
-
 }

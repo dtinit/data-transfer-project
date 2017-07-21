@@ -12,11 +12,12 @@ import com.google.api.client.extensions.java6.auth.oauth2.VerificationCodeReceiv
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.http.GenericUrl;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.shared.auth.AuthRequest;
+import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecureOverride;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
@@ -46,19 +47,20 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
     }
     
     @Override
-    public AuthRequest generateAuthUrl(String id) throws IOException {
+    public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
         String url = createFlow(clientId, apiSecret, scopes)
             .newAuthorizationUrl()
             .setRedirectUri(CALLBACK_URL)
             .setState(id) // TODO: Encrypt
             .build();
-        return AuthRequest.create(url);
+        return AuthFlowInitiator.create(url);
     }
 
     @Override
-    public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData)
+    public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData, String extra)
         throws IOException {
-        Preconditions.checkState(initialAuthData == null, "Earlier auth data not expected for Google flow");
+        Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for MS oauth flow");
+        Preconditions.checkArgument(initialAuthData == null, "Earlier auth data not expected for MS oauth flow");
         AuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
         TokenResponse response = flow
             .newTokenRequest(authCode)
@@ -95,7 +97,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
                 new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
                 new ClientParametersAuthentication(clientId, apiSecret), // HttpExecuteInterceptor
                 clientId, // clientId
-                AUTHORIZATION_SERVER_URL) // encoded url
+                AUTHORIZATION_SERVER_URL) // encoded authUrl
             .setScopes(scopes) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
 
@@ -125,7 +127,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
             new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
             new ClientParametersAuthentication(clientId, apiSecret), // HttpExecuteInterceptor
             clientId, // clientId
-            AUTHORIZATION_SERVER_URL) // encoded url
+            AUTHORIZATION_SERVER_URL) // encoded authUrl
             .setScopes(scopes) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
     }

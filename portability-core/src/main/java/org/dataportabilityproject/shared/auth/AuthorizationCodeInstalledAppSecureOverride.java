@@ -106,7 +106,7 @@ public class AuthorizationCodeInstalledAppSecureOverride {
       Desktop desktop = Desktop.getDesktop();
       if (desktop.isSupported(Action.BROWSE)) {
         try {
-          System.out.println("Browse, url: " + url);
+          System.out.println("Browse, authUrl: " + url);
           desktop.browse(URI.create(url));
           return;
         } catch (IOException e) {

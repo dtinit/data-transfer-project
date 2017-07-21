@@ -64,7 +64,7 @@ final class RememberTheMilkSignatureGenerator {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Couldn't find MD5 hash", e);
         } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Couldn't parse url", e);
+            throw new IllegalArgumentException("Couldn't parse authUrl", e);
         }
     }
 }

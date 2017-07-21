@@ -42,7 +42,7 @@ final class InastagramAuth implements OfflineAuthDataGenerator {
               clientId,
               clientSecret),
           clientId, // clientId
-          "https://api.instagram.com/oauth/authorize/") // encoded url
+          "https://api.instagram.com/oauth/authorize/") // encoded authUrl
           .setScopes(ImmutableList.of("basic", "public_content")) // scopes
           .build();
 

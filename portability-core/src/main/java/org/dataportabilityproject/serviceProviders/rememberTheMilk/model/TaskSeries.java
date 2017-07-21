@@ -24,7 +24,7 @@ public class TaskSeries {
     @Key("@source")
     public String source;
 
-    @Key("@url")
+    @Key("@authUrl")
     public String url;
 
     @Key("@location_id")
@@ -44,7 +44,7 @@ public class TaskSeries {
 
     @Override
     public String toString() {
-        return String.format("TaskSeries(id=%d created=%s modified=%s name=%s source=%s url=%s, notes=%s tasks:%s)",
+        return String.format("TaskSeries(id=%d created=%s modified=%s name=%s source=%s authUrl=%s, notes=%s tasks:%s)",
                 id, created, modified, name, source, url, notes,
                 (tasks == null || tasks.isEmpty()) ? "" : Joiner.on('\n').join(tasks));
     }
