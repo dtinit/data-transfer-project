@@ -38,7 +38,9 @@ public final class GoogleMailService
 
   @Override
   public void importItem(MailModelWrapper model) throws IOException {
+    log("importItem, model: %s", model);
     for (MailMessageModel message : model.getMessages()) {
+      // TODO: Avoid re-looking up lable on each fetch
       String labelId = getMigratedLabelId();
       Message newMessage = new Message()
           .setRaw(message.getRawString())
@@ -47,6 +49,7 @@ public final class GoogleMailService
     }
   }
 
+  // This currently exports each message with associated labels
   @Override
   public MailModelWrapper export(ExportInformation exportInformation) throws IOException {
     Messages.List request = gmail.users().messages()
@@ -66,7 +69,7 @@ public final class GoogleMailService
       Message getResponse = gmail.users().messages()
           .get(USER, listMessage.getId()).setFormat("raw").execute();
       // TODO: note this doesn't transfer things like labels
-      results.add(new MailMessageModel(getResponse.getRaw()));
+      results.add(new MailMessageModel(getResponse.getRaw(), getResponse.getLabelIds()));
     }
 
     PaginationInformation pageInfo = null;
@@ -74,7 +77,8 @@ public final class GoogleMailService
       pageInfo = new StringPaginationToken(response.getNextPageToken());
     }
 
-    return new MailModelWrapper(results, new ContinuationInformation(null, pageInfo));
+    // TODO: export by label or by message?
+    return new MailModelWrapper(null, results, new ContinuationInformation(null, pageInfo));
   }
 
   private String getMigratedLabelId() throws IOException {
@@ -90,5 +94,10 @@ public final class GoogleMailService
         .setLabelListVisibility("labelShow")
         .setMessageListVisibility("show");
     return gmail.users().labels().create(USER, newLabel).execute().getId();
+  }
+
+  // TODO: Replace with logging framework
+  private static void log (String fmt, Object... args) {
+    System.out.println(String.format("GoogleMailService: " + fmt, args));
   }
 }

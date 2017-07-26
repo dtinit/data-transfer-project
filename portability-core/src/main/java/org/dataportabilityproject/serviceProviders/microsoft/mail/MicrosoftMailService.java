@@ -2,13 +2,16 @@ package org.dataportabilityproject.serviceProviders.microsoft.mail;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Optional;
 import javax.mail.MessagingException;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.mail.MailMessageModel;
 import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.serviceProviders.common.mail.ImapMailHelper;
+import org.dataportabilityproject.shared.IdOnlyResource;
 
 public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
 
@@ -28,14 +31,18 @@ public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importe
   }
 
   @Override
-  public MailModelWrapper export(ExportInformation exportInformation) throws IOException {
+  public MailModelWrapper export(ExportInformation exportInformation)
+      throws IOException {
+    ImapMailHelper helper = new ImapMailHelper();
+    Optional<Resource> resource = exportInformation.getResource();
     try {
-      ImapMailHelper imapService = new ImapMailHelper();
-      Collection<MailMessageModel> messages = imapService.getAllMessages(HOST, account, password);
-      System.out.println("Exported messages: " + messages.size());
-      return new MailModelWrapper(messages, null);
+      if (resource.isPresent()) {
+        IdOnlyResource folder = (IdOnlyResource) resource.get();
+        return helper.getFolderContents(HOST, account, password, folder.getId());
+      } else {
+        return helper.getFolderContents(HOST, account, password, null);
+      }
     } catch (MessagingException e) {
-      e.printStackTrace();
       throw new IOException(e);
     }
   }

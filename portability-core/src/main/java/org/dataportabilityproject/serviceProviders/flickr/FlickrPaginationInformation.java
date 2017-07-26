@@ -1,5 +1,6 @@
 package org.dataportabilityproject.serviceProviders.flickr;
 
+import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 
 final class FlickrPaginationInformation implements PaginationInformation {
@@ -11,5 +12,12 @@ final class FlickrPaginationInformation implements PaginationInformation {
 
   public int getPage() {
     return page;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("page", page)
+        .toString();
   }
 }

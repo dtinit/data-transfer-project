@@ -1,5 +1,6 @@
 package org.dataportabilityproject.shared;
 
+import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 
 public class StringPaginationToken  implements PaginationInformation {
@@ -11,5 +12,12 @@ public class StringPaginationToken  implements PaginationInformation {
 
   public String getId() {
     return id;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .toString();
   }
 }

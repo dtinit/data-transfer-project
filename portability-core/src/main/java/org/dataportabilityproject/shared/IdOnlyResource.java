@@ -1,5 +1,6 @@
 package org.dataportabilityproject.shared;
 
+import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.Resource;
 
 /**
@@ -14,5 +15,12 @@ public class IdOnlyResource implements Resource {
 
   public String getId() {
     return id;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .toString();
   }
 }

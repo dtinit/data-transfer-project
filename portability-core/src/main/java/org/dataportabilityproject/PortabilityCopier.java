@@ -46,26 +46,29 @@ public class PortabilityCopier {
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
 
-    log("Starting export: %s", exportInformation);
+    log("Starting export, exportInformation: %s", exportInformation);
     T items = exporter.export(exportInformation);
-    log("Finished export");
-    logExportResults(items);
+    log("Finished export, results: %s", items);
 
-    log("Starting import: %s", exportInformation);
+    log("Starting import");
+    // The collection of items can be both containers and items
     importer.importItem(items);
     log("Finished import");
 
     ContinuationInformation continuationInfo = items.getContinuationInformation();
     if (null != continuationInfo) {
+
+      // Process the next page of items for the resource
       if (null != continuationInfo.getPaginationInformation()) {
         log("start off a new copy iteration with pagination info");
         copy(exporter, importer,
             new ExportInformation(
-                exportInformation.getResource(),
+                exportInformation.getResource(), // Resource with additional pages to fetch
                 Optional.of(continuationInfo.getPaginationInformation())));
       }
 
-      if (continuationInfo.getSubResources() != null) {
+      // Start processing sub-resources
+      if (continuationInfo.getSubResources() != null && !continuationInfo.getSubResources().isEmpty()) {
         log("start off a new copy iterations with a sub resource, size: %d",
             continuationInfo.getSubResources().size());
         for (Resource resource : continuationInfo.getSubResources()) {
@@ -78,25 +81,8 @@ public class PortabilityCopier {
     }
   }
 
-  private static <T extends DataModel> void logExportResults(T items) {
-    ContinuationInformation continuationInfo = items.getContinuationInformation();
-    boolean hasContinuationInfo = (continuationInfo != null);
-    boolean hasPaginationInfo = hasContinuationInfo && (null != continuationInfo.getPaginationInformation());
-    boolean hasSubResources = hasContinuationInfo && (continuationInfo.getSubResources() != null);
-    int subResourceSize = hasSubResources ? continuationInfo.getSubResources().size() : -1;
-    log("export results, hasContinuationInfo: %b, hasPaginationInfo: %b, hasSubResources: %b, subResourceSize: %d",
-        hasContinuationInfo, hasPaginationInfo,hasSubResources, subResourceSize);
-    if(items instanceof CalendarModelWrapper) {
-      CalendarModelWrapper model = (CalendarModelWrapper)items;
-      log("export results for calendar, cals: %s, events: %s", model.getCalendars().size(), model.getEvents().size());
-    } else if (items instanceof MailModelWrapper) {
-      MailModelWrapper model = (MailModelWrapper)items;
-      log("export results for mail, messages: %s", model.getMessages().size());
-    }
-  }
-
   // TODO: Replace with logging framework
   private static void log (String fmt, Object... args) {
-    System.out.println(String.format(fmt, args));
+    System.out.println(String.format("PortabilityCopier: " + fmt, args));
   }
 }

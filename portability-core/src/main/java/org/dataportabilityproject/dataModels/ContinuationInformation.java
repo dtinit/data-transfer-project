@@ -1,5 +1,7 @@
 package org.dataportabilityproject.dataModels;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 
 /**
@@ -15,14 +17,23 @@ public class ContinuationInformation {
       Collection<? extends Resource> resources,
       PaginationInformation paginationInformation) {
 
-    this.resources = resources;
+    this.resources = (resources == null) ? ImmutableList.of() : resources;
     this.paginationInformation = paginationInformation;
   }
 
   public Collection<? extends Resource> getSubResources() {
     return resources;
   }
+
   public PaginationInformation getPaginationInformation() {
     return paginationInformation;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("resources", resources.size())
+        .add("paginationInformation", paginationInformation)
+        .toString();
   }
 }

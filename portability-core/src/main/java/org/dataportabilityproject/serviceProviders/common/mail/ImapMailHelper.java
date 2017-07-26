@@ -2,16 +2,23 @@ package org.dataportabilityproject.serviceProviders.common.mail;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Properties;
+import javax.annotation.Nullable;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
+import org.dataportabilityproject.dataModels.ContinuationInformation;
+import org.dataportabilityproject.dataModels.Resource;
+import org.dataportabilityproject.dataModels.mail.MailContainerModel;
 import org.dataportabilityproject.dataModels.mail.MailMessageModel;
+import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
+import org.dataportabilityproject.shared.IdOnlyResource;
 
 /**
  * Interfaces with an imap server, authenticating using name and password
@@ -19,6 +26,9 @@ import org.dataportabilityproject.dataModels.mail.MailMessageModel;
 public class ImapMailHelper {
 
   public static final String PROTOCOL = "imaps";
+
+  private static final BaseEncoding BASE_ENCODER = BaseEncoding.base64Url();
+
   /** Whether to enable imap debugging. */
   private final boolean debug;
 
@@ -30,44 +40,90 @@ public class ImapMailHelper {
     this.debug = debug;
   }
 
-  public Collection<MailMessageModel> getAllMessages(String host, String account, String password)
-      throws MessagingException, IOException {
 
+  public MailModelWrapper getFolderContents(String host,
+      String account, String password, @Nullable String folderName)  throws MessagingException, IOException {
     Properties props = createProperties(host, account, debug);
 
     Session session = Session.getInstance(props);
     Store store = session.getStore(PROTOCOL);
-    
+
+    log("getFolderContents connecting to store");
     try {
       store.connect(host, account, password);
     } catch (MessagingException e) {
-      System.out.println("Exception connecting to: " + host + ", error: " + e.getMessage());
+      log("Exception connecting to: %s, error: %s", host, e.getMessage());
       throw e;
     }
 
-    Folder defaultFolder;
-    try {
-      defaultFolder = store.getDefaultFolder();
-    } catch (MessagingException e) {
-      System.out.println("Exception getting default folder: " + e.getMessage());
-      throw e;
-    }
-
-    // Process each subfolder
-    Folder[] folders = defaultFolder.list();
-    ImmutableCollection.Builder<MailMessageModel> results = ImmutableList.builder();
-    for (Folder folder : folders) {
-      results.add(new MailMessageModel(folder.getName()));
-      folder.open(Folder.READ_ONLY);
-      // TODO: Process nested folders
-      Message[] messages = folder.getMessages(1, folder.getMessageCount());
-      for (Message message : messages) {
-        results.add(new MailMessageModel(createRawMessage(message)));
+    // If no folder specified, return the default folder
+    if (folderName == null) {
+      log("getMessages from default folder");
+      Folder defaultFolder;
+      try {
+        defaultFolder = store.getDefaultFolder();
+      } catch (MessagingException e) {
+        log("Exception getting default folder: %s", e.getMessage());
+        throw e;
       }
-      folder.close(false);
+      return getMessages(host, account, password, defaultFolder, false);
     }
-    store.close();
-    return results.build();
+
+    log("getMessages for specific folder: %s", folderName);
+    // Fetch the contents of the specified folder
+    Folder folder = store.getFolder(folderName);
+    if (folder == null || !folder.exists()) {
+      throw new IOException("Folder not found, name: " + folderName);
+    }
+
+    return getMessages(host, account, password, folder, true);
+  }
+
+  // TODO: Move to hierarchical model
+  /** Get all messages in an account. */
+  private MailModelWrapper getMessages(String host, String account, String password,
+      Folder parentFolder, boolean fetchMessages)
+      throws MessagingException, IOException {
+
+    int foldersSize = 0;
+    // Find containers to and be imported
+    ImmutableCollection.Builder<MailContainerModel> folders = ImmutableList.builder();
+    ImmutableCollection.Builder<Resource> folderIds = ImmutableList.builder();
+    log("Calling list for folder: %s", parentFolder.getName());
+    Folder[] subFolders = parentFolder.list();
+    log("Folder: %s, subFolders: %d", parentFolder.getName(), subFolders.length);
+    for (Folder folder : subFolders) {
+      // This will tell the framework to create this folder on import
+      folders.add(new MailContainerModel(folder.getName(), folder.getFullName()));
+      // Content for these resources will be 'fetched' by the framework
+      folderIds.add(new IdOnlyResource(folder.getName()));
+      foldersSize++;
+    }
+    log("foldersSize: %d", foldersSize);
+
+    // Get messages in the default folder
+    ImmutableCollection.Builder<MailMessageModel> resources = ImmutableList.builder();
+    log("fetchMessages: %b", fetchMessages);
+    if (fetchMessages) {
+      parentFolder.open(Folder.READ_ONLY);
+      Message[] messages = parentFolder.getMessages(1, parentFolder.getMessageCount());
+      log("Fetched message for folder: %s, messages: %s", parentFolder.getFullName(), messages.length);
+      int current = 0;
+      for (Message message : messages) {
+        if (current++ == 10) { // TODO: add pagination and remove this test limit
+          break;
+        }
+        log("Message, contentType: %s ,size: %s", message.getContentType(), message.getSize());
+        ImmutableList<String> folderId = ImmutableList.of(parentFolder.getName());
+        resources.add(new MailMessageModel(createRawMessage(message), folderId));
+      }
+      parentFolder.close(false);
+    }
+
+    // TODO: add pagination below
+    return new MailModelWrapper(folders.build(), resources.build(),
+        new ContinuationInformation(folderIds.build(), null));
+
   }
 
   private static Properties createProperties(String host, String user, boolean debug) {
@@ -111,6 +167,11 @@ public class ImapMailHelper {
   private static String createRawMessage(Message message) throws MessagingException, IOException {
     ByteArrayOutputStream outstream = new ByteArrayOutputStream();
     message.writeTo(outstream);
-    return outstream.toString(); // TODO: This assumes platform encoding of the string
+    return BASE_ENCODER.encode(outstream.toByteArray());
+  }
+
+  // TODO: Replace with logging framework
+  private static void log (String fmt, Object... args) {
+    System.out.println(String.format("ImapMailHelper: " + fmt, args));
   }
 }
