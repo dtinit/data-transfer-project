@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 
 @Component({
@@ -6,6 +7,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./simplelogin.component.css']
 })
 export class SimpleLoginComponent implements OnInit {
+  url = environment.apiPostUrl;
   username: string = "";
   password: string = "";
   enableSubmit: boolean = false;

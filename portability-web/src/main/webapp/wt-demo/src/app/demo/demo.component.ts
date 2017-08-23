@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { SelectDataTypeService } from '../select-data-type.service';
 import { ServiceDescription, ServiceDescriptions } from '../service-description';
@@ -10,6 +11,7 @@ import { PortableDataType } from '../portable-data-type';
   styleUrls: ['./demo.component.css']
 })
 export class DemoComponent implements OnInit {
+  url = environment.apiPostUrl;
   selectedDataType: string = "";
   dataTypes: PortableDataType[] = [];
   exportServices: ServiceDescription[] = [];
