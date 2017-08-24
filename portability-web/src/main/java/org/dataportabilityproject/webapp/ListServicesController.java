@@ -1,7 +1,5 @@
 package org.dataportabilityproject.webapp;
 
-import com.google.common.base.Enums;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -13,7 +11,6 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -28,7 +25,6 @@ public class ListServicesController {
   private JobManager jobManager;
 
   /** Returns of the list of data types allowed for inmport and export. */
-  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping("/_/listServices")
   @ResponseBody
   public Map<String, List<String>> listServices(HttpServletRequest request,

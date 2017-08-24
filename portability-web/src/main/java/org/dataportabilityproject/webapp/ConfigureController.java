@@ -13,7 +13,6 @@ import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +31,6 @@ public class ConfigureController {
   /**
    * Sets the selected service for import or export and kicks off the auth flow.
    */
-  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping(path="/configure", method = RequestMethod.POST)
   public void configure(HttpServletRequest request, HttpServletResponse response,
       @CookieValue(value = "jobToken", required = false) String tokenCookie) throws Exception {

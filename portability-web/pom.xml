@@ -50,6 +50,9 @@
                 <jvmArguments>
                   -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005
                 </jvmArguments>
+                <profiles>
+                  <profile>local</profile>
+                </profiles>
               </configuration>
             </plugin>
         </plugins>

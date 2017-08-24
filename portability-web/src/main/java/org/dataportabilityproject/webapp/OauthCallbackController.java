@@ -1,8 +1,5 @@
 package org.dataportabilityproject.webapp;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeResponseUrl;
-import com.google.common.base.Enums;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +12,6 @@ import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,7 +24,6 @@ public class OauthCallbackController {
   private JobManager jobManager;
 
   /** Handle oauth callback requests. */
-  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping("/callback1/**")
   public void handleOauthResponse(
       @CookieValue(value = "jobToken", required = true) String token,

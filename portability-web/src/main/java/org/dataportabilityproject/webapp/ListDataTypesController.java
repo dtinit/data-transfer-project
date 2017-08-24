@@ -7,7 +7,6 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +17,6 @@ public class ListDataTypesController {
   private ServiceProviderRegistry serviceProviderRegistry;
 
   /** Returns of the list of data types allowed for inmport and export. */
-  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping("/_/listDataTypes")
   public List<PortableDataType> listDataTypes(@CookieValue(value = "jobToken", required = false) String token,
       HttpServletResponse response) throws Exception {

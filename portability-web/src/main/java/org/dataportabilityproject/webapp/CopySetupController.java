@@ -13,7 +13,6 @@ import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,7 +26,6 @@ public class CopySetupController {
   private JobManager jobManager;
 
 
-  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping("/_/copySetup")
   public Map<String, String> importSetup(
       @CookieValue(value = "jobToken", required = true) String token) throws Exception {

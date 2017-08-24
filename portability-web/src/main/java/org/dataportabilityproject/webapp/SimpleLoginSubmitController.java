@@ -2,19 +2,16 @@ package org.dataportabilityproject.webapp;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.webapp.job.JobManager;
 import org.dataportabilityproject.webapp.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +29,6 @@ public class SimpleLoginSubmitController {
   /**
    * Sets the selected service for import or export and kicks off the auth flow.
    */
-  @CrossOrigin(origins = "http://localhost:3000")
   @RequestMapping(path="/simpleLoginSubmit", method = RequestMethod.POST)
   public void simpleLoginSubmit(HttpServletRequest request, HttpServletResponse response,
       @CookieValue(value = "jobToken", required = true) String token) throws Exception {
