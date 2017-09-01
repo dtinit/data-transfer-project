@@ -23,6 +23,8 @@ import org.dataportabilityproject.shared.StringPaginationToken;
 
 public final class GoogleMailService
     implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
+  // Max results to fetch on each request for more mail messages
+  private static final long MAX_RESULTS_PER_REQUEST = 10L;
   private static final String USER = "me";
   private static final String LABEL = "WT-migrated";
   private final Gmail gmail;
@@ -53,7 +55,7 @@ public final class GoogleMailService
   @Override
   public MailModelWrapper export(ExportInformation exportInformation) throws IOException {
     Messages.List request = gmail.users().messages()
-        .list(USER).setMaxResults(10L);
+        .list(USER).setMaxResults(MAX_RESULTS_PER_REQUEST);
 
     if (exportInformation.getPaginationInformation().isPresent()) {
       request.setPageToken(

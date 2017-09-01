@@ -14,11 +14,13 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
+import org.dataportabilityproject.dataModels.PaginationInformation;
 import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.mail.MailContainerModel;
 import org.dataportabilityproject.dataModels.mail.MailMessageModel;
 import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.IntPaginationToken;
 
 /**
  * Interfaces with an imap server, authenticating using name and password
@@ -28,6 +30,8 @@ public class ImapMailHelper {
   public static final String PROTOCOL = "imaps";
 
   private static final BaseEncoding BASE_ENCODER = BaseEncoding.base64Url();
+  // Max results to fetch on each request for more mail messages
+  private static final int MAX_RESULTS_PER_REQUEST = 10;
 
   /** Whether to enable imap debugging. */
   private final boolean debug;
@@ -42,7 +46,8 @@ public class ImapMailHelper {
 
 
   public MailModelWrapper getFolderContents(String host,
-      String account, String password, @Nullable String folderName)  throws MessagingException, IOException {
+      String account, String password, @Nullable String folderName, PaginationInformation paginationInformation)
+      throws MessagingException, IOException {
     Properties props = createProperties(host, account, debug);
 
     Session session = Session.getInstance(props);
@@ -66,7 +71,7 @@ public class ImapMailHelper {
         log("Exception getting default folder: %s", e.getMessage());
         throw e;
       }
-      return getMessages(host, account, password, defaultFolder, false);
+      return getMessages(host, account, password, defaultFolder, false, paginationInformation);
     }
 
     log("getMessages for specific folder: %s", folderName);
@@ -76,13 +81,13 @@ public class ImapMailHelper {
       throw new IOException("Folder not found, name: " + folderName);
     }
 
-    return getMessages(host, account, password, folder, true);
+    return getMessages(host, account, password, folder, true, paginationInformation);
   }
 
   // TODO: Move to hierarchical model
   /** Get all messages in an account. */
   private MailModelWrapper getMessages(String host, String account, String password,
-      Folder parentFolder, boolean fetchMessages)
+      Folder parentFolder, boolean fetchMessages, PaginationInformation paginationInformation)
       throws MessagingException, IOException {
 
     int foldersSize = 0;
@@ -101,18 +106,22 @@ public class ImapMailHelper {
     }
     log("foldersSize: %d", foldersSize);
 
-    // Get messages in the default folder
+    // Get messages in the folder
     ImmutableCollection.Builder<MailMessageModel> resources = ImmutableList.builder();
     log("fetchMessages: %b", fetchMessages);
+    PaginationInformation nextPaginationInformation = null;
     if (fetchMessages) {
       parentFolder.open(Folder.READ_ONLY);
-      Message[] messages = parentFolder.getMessages(1, parentFolder.getMessageCount());
+      int start = getStart(paginationInformation);
+      int end = getEnd(start, parentFolder.getMessageCount());
+      if (end < parentFolder.getMessageCount()) {
+        // Indicates page to be fetched on next request
+        nextPaginationInformation = new IntPaginationToken(end + 1 /* the start index for next iteration */);
+      }
+      log("Fetching messages for foder: %s, start: %d, end: %d", parentFolder.getFullName(), start, end);
+      Message[] messages = parentFolder.getMessages(start, end);
       log("Fetched message for folder: %s, messages: %s", parentFolder.getFullName(), messages.length);
-      int current = 0;
       for (Message message : messages) {
-        if (current++ == 10) { // TODO: add pagination and remove this test limit
-          break;
-        }
         log("Message, contentType: %s ,size: %s", message.getContentType(), message.getSize());
         ImmutableList<String> folderId = ImmutableList.of(parentFolder.getName());
         resources.add(new MailMessageModel(createRawMessage(message), folderId));
@@ -122,8 +131,20 @@ public class ImapMailHelper {
 
     // TODO: add pagination below
     return new MailModelWrapper(folders.build(), resources.build(),
-        new ContinuationInformation(folderIds.build(), null));
+        new ContinuationInformation(folderIds.build(), nextPaginationInformation));
 
+  }
+
+  private static int getStart(PaginationInformation paginationInformation) {
+    int start = 1;
+    if (paginationInformation != null) {
+      start = Math.max(((IntPaginationToken)paginationInformation).getStart(), start);
+    }
+    return start;
+  }
+
+  private static int getEnd(int start, int totalNumMessages) {
+    return Math.min(((start + MAX_RESULTS_PER_REQUEST) - 1)  , totalNumMessages);
   }
 
   private static Properties createProperties(String host, String user, boolean debug) {
