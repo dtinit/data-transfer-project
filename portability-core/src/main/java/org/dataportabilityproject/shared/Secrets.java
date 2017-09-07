@@ -5,11 +5,13 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -21,16 +23,14 @@ public final class Secrets {
     private final ImmutableMap<String, String> secrets;
 
     public Secrets(String filePath) throws IOException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        URL resourceUrl = classLoader.getResource(filePath);
-        if (resourceUrl == null) {
-            throw new IllegalArgumentException("Resource " + filePath + " was not found");
+        InputStream in = getClass().getClassLoader().getResourceAsStream(filePath);
+        if (in == null) {
+            throw new IOException("Could not create input stream, filePath: " + filePath);
         }
-        File file = new File(resourceUrl.getFile());
-
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        List<String> lines = Files.readLines(file, Charset.forName("UTF-8"));
-        for(String line : lines){
+        String line;
+        while ((line = reader.readLine()) != null) {
             // allow for comments
             String trimmedLine = line.trim();
             if (!trimmedLine.startsWith("//") && !trimmedLine.startsWith("#") && !trimmedLine.isEmpty()) {

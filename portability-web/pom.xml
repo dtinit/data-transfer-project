@@ -50,6 +50,7 @@
                 <jvmArguments>
                   -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005
                 </jvmArguments>
+                <mainClass>org.dataportabilityproject.webapp.PortabilityServer</mainClass>
                 <profiles>
                   <profile>local</profile>
                 </profiles>

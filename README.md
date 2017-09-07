@@ -103,5 +103,22 @@ The following builds and run the web server on port 8080
 * mvn clean install
 * mvn -e spring-boot:run -pl portability-web
 
-### Contributing
+### Docker creation and testing
+
+Steps for packaging the application for docker.
+Note: Assumes you already have a project id for Google Cloud.
+
+#### Building docker image
+
+* mvn clean install
+* copy secrets.csv to googleplex-portability/portability-web/src/main/resources/
+* Build jar:  mvn package
+* Build docker image: docker build -t gcr.io/${PROJECT_ID}/portability-web:v1 .
+
+#### Local testing
+
+* Run docker image locally: docker run -ti --rm -p 8080:8080 gcr.io/${PROJECT_ID}/portability-web:v1
+* Run angular client per instructions above
+
+## Contributing
 TBD
