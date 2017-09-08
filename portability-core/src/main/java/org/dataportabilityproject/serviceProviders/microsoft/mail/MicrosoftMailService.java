@@ -1,7 +1,6 @@
 package org.dataportabilityproject.serviceProviders.microsoft.mail;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.mail.MessagingException;
@@ -10,11 +9,9 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 import org.dataportabilityproject.dataModels.Resource;
-import org.dataportabilityproject.dataModels.mail.MailMessageModel;
 import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.serviceProviders.common.mail.ImapMailHelper;
 import org.dataportabilityproject.shared.IdOnlyResource;
-import org.dataportabilityproject.shared.IntPaginationToken;
 
 public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
 
