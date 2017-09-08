@@ -30,6 +30,7 @@ public class ImapMailHelper {
   public static final String PROTOCOL = "imaps";
 
   private static final BaseEncoding BASE_ENCODER = BaseEncoding.base64Url();
+  // TODO: Configure MAX_RESULTS_PER_REQUEST to a reasonable number of messages to process in memory
   // Max results to fetch on each request for more mail messages
   private static final int MAX_RESULTS_PER_REQUEST = 10;
 

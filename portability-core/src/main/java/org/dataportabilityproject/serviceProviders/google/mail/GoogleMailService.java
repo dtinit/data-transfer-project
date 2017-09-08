@@ -23,6 +23,7 @@ import org.dataportabilityproject.shared.StringPaginationToken;
 
 public final class GoogleMailService
     implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
+  // TODO: Configure MAX_RESULTS_PER_REQUEST to a reasonable number of messages to process in memory
   // Max results to fetch on each request for more mail messages
   private static final long MAX_RESULTS_PER_REQUEST = 10L;
   private static final String USER = "me";

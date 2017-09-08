@@ -50,6 +50,6 @@ public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importe
 
   @Nullable
   private static PaginationInformation getPaginationInformation(ExportInformation exportInformation) {
-    return exportInformation.getPaginationInformation().isPresent() ? exportInformation.getPaginationInformation().get() : null;
+    return exportInformation.getPaginationInformation().orElse(null);
   }
 }
