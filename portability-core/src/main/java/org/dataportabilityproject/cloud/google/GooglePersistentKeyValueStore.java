@@ -3,19 +3,26 @@ package org.dataportabilityproject.cloud.google;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
+import com.google.cloud.datastore.BooleanValue;
 import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DoubleValue;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.LongValue;
+import com.google.cloud.datastore.StringValue;
+import com.google.cloud.datastore.TimestampValue;
 import com.google.common.collect.ImmutableMap;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
-  private static final String KIND = "persistantKey";
+  private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
@@ -31,19 +38,21 @@ final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
 
     for (Entry<String, Object> entry : data.entrySet()) {
       if (entry.getValue() instanceof String) {
-        builder.set(entry.getKey(), (String) entry.getValue());
+        builder.set(entry.getKey(), (String) entry.getValue()); // StringValue
       } else if (entry.getValue() instanceof Integer) {
-        builder.set(entry.getKey(), (Integer) entry.getValue());
+        builder.set(entry.getKey(), (Integer) entry.getValue()); // LongValue
       } else if (entry.getValue() instanceof Double) {
-        builder.set(entry.getKey(), (Double) entry.getValue());
+        builder.set(entry.getKey(), (Double) entry.getValue()); // DoubleValue
       } else if (entry.getValue() instanceof Boolean) {
-        builder.set(entry.getKey(), (Boolean) entry.getValue());
+        builder.set(entry.getKey(), (Boolean) entry.getValue()); // BooleanValue
+      } else if (entry.getValue() instanceof Timestamp) {
+        builder.set(entry.getKey(), (Timestamp) entry.getValue()); // TimestampValue
       } else {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
-          out.writeObject(data);
+          out.writeObject(entry.getValue());
         }
-        builder.set(entry.getKey(), Blob.copyFrom(bos.toByteArray()));
+        builder.set(entry.getKey(), Blob.copyFrom(bos.toByteArray())); // BlobValue
       }
     }
 
@@ -55,7 +64,34 @@ final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
     ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
     Entity entity = datastore.get(getKey(key));
     for (String property : entity.getNames()) {
-      builder.put(property, entity.getValue(property));
+      // builder.put(property, entity.getValue(property));
+      if (entity.getValue(property) instanceof StringValue) {
+        builder.put(property, (String) entity.getString(property));
+      } else if (entity.getValue(property) instanceof LongValue) {
+        // This conversion is safe because of integer to long conversion above
+        builder.put(property, new Long(entity.getLong(property)).intValue());
+      } else if (entity.getValue(property) instanceof DoubleValue) {
+        builder.put(property, (Double) entity.getDouble(property));
+      } else if (entity.getValue(property) instanceof BooleanValue) {
+        builder.put(property, (Boolean) entity.getBoolean(property));
+      } else if (entity.getValue(property) instanceof TimestampValue) {
+        builder.put(property, (Timestamp) entity.getTimestamp(property));
+      } else {
+        Blob blob = entity.getBlob(property);
+        Object obj = null;
+        try {
+          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+            try {
+              obj = in.readObject();
+            } catch (ClassNotFoundException e) {
+              e.printStackTrace();
+            }
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        builder.put(property, obj); // BlobValue
+      }
     }
 
     return builder.build();
