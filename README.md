@@ -112,6 +112,7 @@ Note: Assumes you already have a project id for Google Cloud.
 
 * mvn clean install
 * copy secrets.csv to googleplex-portability/portability-web/src/main/resources/
+* copy application_default_credentials to googleplex-portability/portability-web/src/main/resources/
 * Build jar:  mvn package
 * Build docker image: docker build -t gcr.io/${PROJECT_ID}/portability-web:v1 .
 
@@ -119,6 +120,10 @@ Note: Assumes you already have a project id for Google Cloud.
 
 * Run docker image locally: docker run -ti --rm -p 8080:8080 gcr.io/${PROJECT_ID}/portability-web:v1
 * Run angular client per instructions above
+
+#### Pushing to Cloud
+* docker tag gcr.io/dataliberation-portability/portability:v1 gcr.io/dataliberation-portability/portability:v1
+* gcloud docker -- push gcr.io/dataliberation-portability/portability:v1
 
 ## Contributing
 TBD

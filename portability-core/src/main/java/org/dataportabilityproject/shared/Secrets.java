@@ -23,11 +23,7 @@ public final class Secrets {
     private final ImmutableMap<String, String> secrets;
 
     public Secrets(String filePath) throws IOException {
-        InputStream in = getClass().getClassLoader().getResourceAsStream(filePath);
-        if (in == null) {
-            throw new IOException("Could not create input stream, filePath: " + filePath);
-        }
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(getStream(filePath)));
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         String line;
         while ((line = reader.readLine()) != null) {
@@ -50,15 +46,18 @@ public final class Secrets {
      * Looks up a given key in the secrets file, then uses that value to open a secondary resource
      * file and streams that out.
      **/
-    public InputStream getReferencedInputStream(String key) throws FileNotFoundException {
+    public InputStream getReferencedInputStream(String key) throws IOException {
         String path = secrets.get(key);
         checkState(!Strings.isNullOrEmpty(path), "Key %s was not defined in secrets file", key);
-        ClassLoader classLoader = getClass().getClassLoader();
-        URL resourceUrl = classLoader.getResource(path);
-        if (resourceUrl == null) {
-            throw new IllegalArgumentException("Resource " + path + " was not found, from key: "
-                + key);
+        return getStream(path);
+    }
+
+    /** Reads the path as a stream from file system or jar. */
+    private InputStream getStream(String filePath) throws IOException {
+        InputStream in = getClass().getClassLoader().getResourceAsStream(filePath);
+        if (in == null) {
+            throw new IOException("Could not create input stream, filePath: " + filePath);
         }
-        return new FileInputStream(resourceUrl.getFile());
+        return in;
     }
 }
