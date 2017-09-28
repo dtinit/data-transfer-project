@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
+import org.dataportabilityproject.shared.Config;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
@@ -77,9 +78,9 @@ public class SimpleLoginSubmitController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect("http://localhost:3000/next");  // TODO: parameterize
+      response.sendRedirect(Config.BASE_URL + "/next");  // TODO: parameterize
     } else {
-      response.sendRedirect("http://localhost:3000/copy");
+      response.sendRedirect(Config.BASE_URL + "/copy");
     }
 
   }

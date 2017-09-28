@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://www.dataportabilityproject.com/_/',
-  apiPostUrl: 'https://www.dataportabilityproject.com'
+  apiUrl: 'http://35.193.13.205/_/',
+  apiPostUrl: 'http://35.193.13.205'
 };
