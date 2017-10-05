@@ -8,11 +8,6 @@ import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.webapp.auth.IdProvider;
-import org.dataportabilityproject.webapp.auth.TokenManager;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 /** Provides functionality to manage the lifecycle of a data portability job. */
 public class JobManager {

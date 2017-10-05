@@ -1,4 +1,4 @@
-package org.dataportabilityproject.webapp.auth;
+package org.dataportabilityproject.job;
 
 import java.util.UUID;
 

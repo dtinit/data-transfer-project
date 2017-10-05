@@ -7,10 +7,10 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.shared.Secrets;
-import org.dataportabilityproject.webapp.auth.IdProvider;
-import org.dataportabilityproject.webapp.auth.JWTTokenManager;
-import org.dataportabilityproject.webapp.auth.TokenManager;
-import org.dataportabilityproject.webapp.auth.UUIDProvider;
+import org.dataportabilityproject.job.IdProvider;
+import org.dataportabilityproject.job.JWTTokenManager;
+import org.dataportabilityproject.job.TokenManager;
+import org.dataportabilityproject.job.UUIDProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
