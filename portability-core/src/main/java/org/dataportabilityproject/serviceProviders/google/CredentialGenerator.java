@@ -16,6 +16,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.dataportabilityproject.shared.Config;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -28,7 +29,7 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   /** Port in the "Callback URL". */
   private static final int PORT = 8080;
-  private static final String CALLBACK_URL = "http://localhost:8080/callback/google";
+  private static final String CALLBACK_URL = Config.BASE_API_URL + "/callback/google";
 
   /** Domain name in the "Callback URL". */
   private static final String DOMAIN = "127.0.0.1";

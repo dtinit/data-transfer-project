@@ -15,6 +15,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
+import org.dataportabilityproject.shared.Config;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -30,7 +31,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
     private static final int PORT = 12345;
 
     /** Domain name in the "Callback URL". */
-    private static final String CALLBACK_URL = "https://localhost:8080/callback/microsoft";
+    private static final String CALLBACK_URL = Config.BASE_API_URL + "/callback/microsoft";
     private static final String DOMAIN = "localwebapp.com"; // Edit /etc/hosts to map this to localhost
     private static final String AUTHORIZATION_SERVER_URL = "https://login.live.com/oauth20_authorize.srf";
     private static final String TOKEN_SERVER_URL = "https://login.live.com/oauth20_token.srf";
