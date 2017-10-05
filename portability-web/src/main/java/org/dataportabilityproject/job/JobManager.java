@@ -1,4 +1,4 @@
-package org.dataportabilityproject.webapp.job;
+package org.dataportabilityproject.job;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -14,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-@Scope(value = "singleton")
-@Component
-/** Controller for identifying and managing the unique 'user' */
+/** Provides functionality to manage the lifecycle of a data portability job. */
 public class JobManager {
   // Keys for specific values in data store
   private static final String ID_DATA_KEY = "UUID";
@@ -31,12 +29,19 @@ public class JobManager {
   private static final String IMPORT_INITIAL_AUTH_DATA_KEY = "IMPORT_INITIAL_AUTH_DATA";
   private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
 
-  @Autowired
-  private PersistentKeyValueStore storage;
-  @Autowired
-  private IdProvider idProvider;
-  @Autowired
-  private TokenManager tokenManager;
+
+  private final PersistentKeyValueStore storage;
+
+  private final IdProvider idProvider;
+
+  private final TokenManager tokenManager;
+
+  public JobManager(PersistentKeyValueStore storage, IdProvider idProvider,
+      TokenManager tokenManager) {
+    this.storage = storage;
+    this.idProvider = idProvider;
+    this.tokenManager = tokenManager;
+  }
 
   /** Creates a new user job and returns a token to identify the job. */
   public String createNewUserjob() throws IOException {

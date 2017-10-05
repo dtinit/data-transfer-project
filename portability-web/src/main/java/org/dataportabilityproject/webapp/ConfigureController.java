@@ -9,8 +9,8 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.webapp.job.JobManager;
-import org.dataportabilityproject.webapp.job.PortabilityJob;
+import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,7 +40,7 @@ public class ConfigureController {
       LogUtils.log("Parameter key: %s, value: %s", key, request.getParameter(key));
     }
 
-    // TODO: Consider what to do if previous job exists in the session
+    // TODO: Consider what to do if previous job exists in the session or remove this code
     String existingToken = null;
     PortabilityJob existingJob = null;
     if (!Strings.isNullOrEmpty(tokenCookie)) {
@@ -52,7 +52,6 @@ public class ConfigureController {
       } else {
         LogUtils.log("Found existing cookie but no job");
       }
-
     }
 
     // Either token was empty or the job it represented was not found, create a new one

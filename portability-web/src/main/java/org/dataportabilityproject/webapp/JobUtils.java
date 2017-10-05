@@ -6,7 +6,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.webapp.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJob;
 
 /** Utility methods for handling data in the related to jobss. */
 public class JobUtils {

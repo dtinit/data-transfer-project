@@ -1,4 +1,4 @@
-package org.dataportabilityproject.webapp.job;
+package org.dataportabilityproject.job;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
