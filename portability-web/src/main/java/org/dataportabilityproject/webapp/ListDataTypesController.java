@@ -16,10 +16,13 @@ public class ListDataTypesController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
 
-  /** Returns of the list of data types allowed for inmport and export. */
+  /** Returns of the list of data types allowed for import and export. */
   @RequestMapping("/_/listDataTypes")
-  public List<PortableDataType> listDataTypes(@CookieValue(value = "jobToken", required = false) String token,
+  public List<PortableDataType> listDataTypes(
+      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = false) String encodedIdCookie,
       HttpServletResponse response) throws Exception {
+
+    // Determine what to do if an encodedIdCookie exists
 
     ImmutableList.Builder<PortableDataType> types = ImmutableList.builder();
     for (PortableDataType type : PortableDataType.values()) {

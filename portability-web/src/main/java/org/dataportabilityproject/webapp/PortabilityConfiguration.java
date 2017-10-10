@@ -5,12 +5,13 @@ import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.job.JobManager;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.job.IdProvider;
 import org.dataportabilityproject.job.JWTTokenManager;
+import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.job.UUIDProvider;
+import org.dataportabilityproject.shared.Secrets;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -44,7 +45,12 @@ public class PortabilityConfiguration {
 
   @Bean
   public JobManager getJobManager() {
-    return new JobManager(getStorage(getCloudFactory(getSecrets())), getIdProvider(), getTokenManager());
+    return new JobManager(getStorage(getCloudFactory(getSecrets())));
+  }
+
+  @Bean
+  public PortabilityJobFactory getJobFactory() {
+    return new PortabilityJobFactory(getIdProvider());
   }
 
     /** Provides a global singleton instance of the {@link} ServiceProviderRegistry}. */

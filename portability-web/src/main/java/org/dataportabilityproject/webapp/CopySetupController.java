@@ -28,13 +28,14 @@ public class CopySetupController {
 
   @RequestMapping("/_/copySetup")
   public Map<String, String> importSetup(
-      @CookieValue(value = "jobToken", required = true) String token) throws Exception {
+      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = true) String encodedIdCookie) throws Exception {
     // TODO: move to interceptor to redirect
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(token), "Token required");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
 
     // Valid job must be present
-    PortabilityJob job = jobManager.findExistingJob(token);
-    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
+    String id = JobUtils.decodeId(encodedIdCookie);
+    PortabilityJob job = jobManager.findExistingJob(id);
+    Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
 
     LogUtils.log("importSetup, job: %s", job);
 
@@ -51,11 +52,11 @@ public class CopySetupController {
     OnlineAuthDataGenerator generator = registry.getOnlineAuth(job.importService(), getDataType(job.dataType()));
 
     // Auth authUrl
-    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(job.token());
+    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(job));
 
     // Store authUrl
     if (authFlowInitiator.initialAuthData() != null) {
-      PortabilityJob jobBeforeInitialData = lookupJob(token);
+      PortabilityJob jobBeforeInitialData = lookupJob(id);
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
       jobManager.updateJob(updatedJob);
@@ -73,9 +74,9 @@ public class CopySetupController {
   }
 
   /** Looks up job and does checks that it exists. */
-  private PortabilityJob lookupJob(String token) {
-    PortabilityJob job = jobManager.findExistingJob(token);
-    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
+  private PortabilityJob lookupJob(String id) {
+    PortabilityJob job = jobManager.findExistingJob(id);
+    Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
     return job;
   }
 

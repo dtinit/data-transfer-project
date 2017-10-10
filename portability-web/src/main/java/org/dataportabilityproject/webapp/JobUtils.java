@@ -1,16 +1,28 @@
 package org.dataportabilityproject.webapp;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Enums;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.BaseEncoding;
+import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.job.PortabilityJob;
 
 /** Utility methods for handling data in the related to jobss. */
 public class JobUtils {
 
+
+  static String decodeId(String encoded) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
+    return new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8);
+  }
+
+  static String encodeId(PortabilityJob job) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
+    return BaseEncoding.base64Url().encode(job.id().getBytes(Charsets.UTF_8));
+  }
 
   /* Returns the initial auth data for export or import determined by the {@code isExport} param. */
   static String getService(PortabilityJob job, boolean isExport) {

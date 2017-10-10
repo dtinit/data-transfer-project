@@ -27,7 +27,7 @@ public class OauthCallbackController {
   /** Handle oauth callback requests. */
   @RequestMapping("/callback1/**")
   public void handleOauthResponse(
-      @CookieValue(value = "jobToken", required = true) String token,
+      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = true) String encodedIdCookie,
       HttpServletRequest request,
       HttpServletResponse response) throws Exception {
     LogUtils.log("OauthCallbackController getRequestURI: %s", request.getRequestURI());
@@ -42,7 +42,9 @@ public class OauthCallbackController {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthVerifier), "Missing oauth_verifier");
 
     // Valid job must be present
-    PortabilityJob job = lookupJob(token);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+    String jobId = JobUtils.decodeId(encodedIdCookie);
+    PortabilityJob job = lookupJob(jobId);
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
     LogUtils.log("dataType: %s", dataType);
@@ -53,7 +55,7 @@ public class OauthCallbackController {
 
     // TODO: Determine service from job or from authUrl path?
     String service = isExport ? job.exportService() : job.importService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, token: %s", service, isExport, token);
+    Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, job id: %s", service, isExport, jobId);
     LogUtils.log("service: %s, isExport: %b", service, isExport);
 
     // Obtain the ServiceProvider from the registry
@@ -64,7 +66,7 @@ public class OauthCallbackController {
     Preconditions.checkNotNull(initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(oauthVerifier, token, initialAuthData, null);
+    AuthData authData = generator.generateAuthData(oauthVerifier, jobId, initialAuthData, null);
 
     // Update the job
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
