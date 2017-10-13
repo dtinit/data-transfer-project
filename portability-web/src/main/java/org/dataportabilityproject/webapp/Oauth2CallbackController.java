@@ -24,6 +24,8 @@ public class Oauth2CallbackController {
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
   private JobManager jobManager;
+  @Autowired
+  private CryptoHelper cryptoHelper;
 
   /** Handle Oauth2 callback requests. */
   @RequestMapping("/callback/**")
@@ -77,8 +79,13 @@ public class Oauth2CallbackController {
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
+    // TODO: Remove persistence of auth data in storage at this point. The data will be passed
+    // thru to the client via the cookie.
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
     jobManager.updateJob(updatedJob);
+
+    // Set new cookie
+    cryptoHelper.encryptAndSetCookie(response, isExport, authData);
 
     if(isExport) {
       // TODO: Send to auth intermediary page

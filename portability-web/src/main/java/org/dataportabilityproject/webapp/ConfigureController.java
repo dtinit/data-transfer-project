@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class ConfigureController {
+
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
@@ -35,12 +36,13 @@ public class ConfigureController {
   /**
    * Sets the selected service for import or export and kicks off the auth flow.
    */
-  @RequestMapping(path="/configure", method = RequestMethod.POST)
+  @RequestMapping(path = "/configure", method = RequestMethod.POST)
   public void configure(HttpServletRequest request, HttpServletResponse response,
-      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = false) String encodedIdCookie) throws Exception {
+      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = false) String encodedIdCookie)
+      throws Exception {
 
     LogUtils.log("Configure: %s", request.getRequestURI());
-    for (String key: request.getParameterMap().keySet()) {
+    for (String key : request.getParameterMap().keySet()) {
       LogUtils.log("Parameter key: %s, value: %s", key, request.getParameter(key));
     }
 
@@ -60,14 +62,18 @@ public class ConfigureController {
 
     // Either encodedId in cookie was empty or the job it represented was not found, create a new one
     String dataTypeStr = getParam(request, "dataType");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr), "Missing valid dataTypeParam: %s", dataTypeStr);
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(dataTypeStr), "Missing valid dataTypeParam: %s",
+            dataTypeStr);
     PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
 
     String exportService = getParam(request, "exportService");
-    Preconditions.checkArgument(JobUtils.isValidService(exportService, true), "Missing valid exportService: %s", exportService);
+    Preconditions.checkArgument(JobUtils.isValidService(exportService, true),
+        "Missing valid exportService: %s", exportService);
 
     String importService = getParam(request, "importService");
-    Preconditions.checkArgument(JobUtils.isValidService(importService, false), "Missing valid importService: %s", importService);
+    Preconditions.checkArgument(JobUtils.isValidService(importService, false),
+        "Missing valid importService: %s", importService);
 
     PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
     jobManager.insertJob(newJob);
@@ -76,7 +82,6 @@ public class ConfigureController {
     Cookie cookie = new Cookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
     LogUtils.log("Set new cookie with key: %s, value: %s", JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
     response.addCookie(cookie);
-
 
     // Lookup job, even if just recently created
     PortabilityJob job = lookupJob(newJob.id());
@@ -87,7 +92,7 @@ public class ConfigureController {
     // Obtain the OnlineAuthDataGenerator
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.exportService(), dataType);
-    Preconditions.checkNotNull(generator,"Generator not found for type: %s, service: %s",
+    Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
         dataType, job.exportService());
 
     // Auth authUrl
@@ -108,7 +113,9 @@ public class ConfigureController {
     response.sendRedirect(authFlowInitiator.authUrl());
   }
 
-  /** Looks up job and does checks that it exists. */
+  /**
+   * Looks up job and does checks that it exists.
+   */
   private PortabilityJob lookupJob(String id) {
     PortabilityJob job = jobManager.findExistingJob(id);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", id);

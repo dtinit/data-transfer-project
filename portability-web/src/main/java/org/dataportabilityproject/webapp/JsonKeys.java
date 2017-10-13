@@ -5,7 +5,9 @@ public class JsonKeys {
 
   private JsonKeys(){} /** no instantiation */
 
-  public static final String ID_COOKIE_KEY = "encodedId";
+  public static final String ID_COOKIE_KEY = "e_id";
+  public static final String EXPORT_AUTH_DATA_COOKIE_KEY = "ead_id";
+  public static final String IMPORT_AUTH_DATA_COOKIE_KEY = "iad_id";
 
   public static final String DATA_TYPE = "dataType";
   public static final String EXPORT = "export";

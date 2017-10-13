@@ -1,13 +1,9 @@
 package org.dataportabilityproject.job;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthData;
 
 /** Provides functionality to manage the lifecycle of a data portability job. */
 public class JobManager {
@@ -22,7 +18,6 @@ public class JobManager {
   private static final String IMPORT_ACCOUNT_DATA_KEY = "IMPORT_ACCOUNT";
   private static final String IMPORT_INITIAL_AUTH_DATA_KEY = "IMPORT_INITIAL_AUTH_DATA";
   private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
-
 
   private final PersistentKeyValueStore storage;
 
@@ -40,13 +35,19 @@ public class JobManager {
     return PortabilityJob.mapToJob(data);
   }
 
+  /** Returns a job in unassigned state. */
+  public String findUnassignedJob() {
+    // TODO: Implement selecting a job in unassigned state for jobs
+    // TODO: Update job to assigned state so no other worker grabs it
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
   /** Replaces the existing entry in storage with the provided {@code job}. */
   public void insertJob(PortabilityJob job) throws IOException {
     Map<String, Object> existing = storage.get(job.id());
     Preconditions.checkArgument(existing != null, "Attempting to updatea  non-exisent job");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
-
     storage.put(getString(data, ID_DATA_KEY), data);
   }
 
@@ -56,7 +57,6 @@ public class JobManager {
     Preconditions.checkArgument(existing != null, "Attempting to updatea  non-exisent job");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
-
     storage.put(getString(data, ID_DATA_KEY), data);
   }
 

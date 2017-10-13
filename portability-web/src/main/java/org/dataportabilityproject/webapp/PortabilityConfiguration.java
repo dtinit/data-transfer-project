@@ -5,6 +5,7 @@ import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.IdProvider;
 import org.dataportabilityproject.job.JWTTokenManager;
 import org.dataportabilityproject.job.JobManager;
@@ -51,6 +52,11 @@ public class PortabilityConfiguration {
   @Bean
   public PortabilityJobFactory getJobFactory() {
     return new PortabilityJobFactory(getIdProvider());
+  }
+
+  @Bean
+  public CryptoHelper getCryptoHelper() {
+    return new CryptoHelper(new Crypter(){}); // TODO: Wire up correct Crypter
   }
 
     /** Provides a global singleton instance of the {@link} ServiceProviderRegistry}. */

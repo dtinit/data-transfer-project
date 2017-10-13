@@ -22,7 +22,7 @@ public class ListDataTypesController {
       @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = false) String encodedIdCookie,
       HttpServletResponse response) throws Exception {
 
-    // Determine what to do if an encodedIdCookie exists
+    // TODO: Determine what to do if an encodedIdCookie exists
 
     ImmutableList.Builder<PortableDataType> types = ImmutableList.builder();
     for (PortableDataType type : PortableDataType.values()) {

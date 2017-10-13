@@ -23,6 +23,8 @@ public class OauthCallbackController {
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
   private JobManager jobManager;
+  @Autowired
+  private CryptoHelper cryptoHelper;
 
   /** Handle oauth callback requests. */
   @RequestMapping("/callback1/**")
@@ -44,6 +46,7 @@ public class OauthCallbackController {
     // Valid job must be present
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
     String jobId = JobUtils.decodeId(encodedIdCookie);
+
     PortabilityJob job = lookupJob(jobId);
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
@@ -69,8 +72,13 @@ public class OauthCallbackController {
     AuthData authData = generator.generateAuthData(oauthVerifier, jobId, initialAuthData, null);
 
     // Update the job
+    // TODO: Remove persistence of auth data in storage at this point. The data will be passed
+    // thru to the client via the cookie.
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
     jobManager.updateJob(updatedJob);
+
+    // Set new cookie
+    cryptoHelper.encryptAndSetCookie(response, isExport, authData);
 
     if(isExport) {
       // TODO: Send to auth intermediary page

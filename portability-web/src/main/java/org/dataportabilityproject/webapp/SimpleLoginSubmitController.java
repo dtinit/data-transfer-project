@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sound.sampled.Port;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.Config;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -27,6 +26,8 @@ public class SimpleLoginSubmitController {
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
   private JobManager jobManager;
+  @Autowired
+  private CryptoHelper cryptoHelper;
 
   /**
    * Sets the selected service for import or export and kicks off the auth flow.
@@ -76,8 +77,12 @@ public class SimpleLoginSubmitController {
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
+    // TODO: Remove persistence of auth data in storage at this point
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
     jobManager.updateJob(updatedJob);
+
+    // Set new cookie
+    cryptoHelper.encryptAndSetCookie(response, isExport, authData);
 
     if(isExport) {
       // TODO: Send to auth intermediary page
