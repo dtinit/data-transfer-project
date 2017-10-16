@@ -28,7 +28,7 @@ public class Oauth2CallbackController {
   /** Handle Oauth2 callback requests. */
   @RequestMapping("/callback/**")
   public void handleOauth2Response(
-      @CookieValue(value = "jobToken", required = true) String token,
+      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = true) String encodedIdCookie,
       HttpServletRequest request,
       HttpServletResponse response) throws Exception {
     LogUtils.log("Oauth2CallbackController getRequestURI: %s", request.getRequestURI());
@@ -43,15 +43,16 @@ public class Oauth2CallbackController {
       return;
     }
 
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(token), "Token required");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+    String jobId = JobUtils.decodeId(encodedIdCookie);
 
     // TODO: Encrypt/decrypt state param with secure info
     String state = authResponse.getState();
 
     // TODO: Remove sanity check
-    Preconditions.checkState(state.equals(token), "Token in cookie [%s] and request [%s] should match", token, state);
+    Preconditions.checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match", jobId, state);
 
-    PortabilityJob job = lookupJob(token);
+    PortabilityJob job = lookupJob(jobId);
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
     LogUtils.log("dataType: %s", dataType);
 
@@ -61,7 +62,8 @@ public class Oauth2CallbackController {
 
     // TODO: Determine service from job or from authUrl path?
     String service = isExport ? job.exportService() : job.importService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, token: %s", service, isExport, token);
+    Preconditions.checkState(!Strings.isNullOrEmpty(service),
+        "service not found, service: %s isExport: %b, jobId: %s", service, isExport, jobId);
     LogUtils.log("service: %s, isExport: %b", service, isExport);
 
     // Obtain the ServiceProvider from the registry
@@ -71,7 +73,7 @@ public class Oauth2CallbackController {
     AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(authResponse.getCode(), token, initialAuthData, null);
+    AuthData authData = generator.generateAuthData(authResponse.getCode(), jobId, initialAuthData, null);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
@@ -97,9 +99,9 @@ public class Oauth2CallbackController {
   }
 
   /** Looks up job and does checks that it exists. */
-  private PortabilityJob lookupJob(String token) {
-    PortabilityJob job = jobManager.findExistingJob(token);
-    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
+  private PortabilityJob lookupJob(String id) {
+    PortabilityJob job = jobManager.findExistingJob(id);
+    Preconditions.checkState(null != job, "existingJob not found for job id: %s", id);
     return job;
   }
 }

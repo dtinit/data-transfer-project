@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sound.sampled.Port;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.Config;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -32,11 +33,13 @@ public class SimpleLoginSubmitController {
    */
   @RequestMapping(path="/simpleLoginSubmit", method = RequestMethod.POST)
   public void simpleLoginSubmit(HttpServletRequest request, HttpServletResponse response,
-      @CookieValue(value = "jobToken", required = true) String token) throws Exception {
+      @CookieValue(value = JsonKeys.ID_COOKIE_KEY, required = true) String encodedIdCookie) throws Exception {
 
     // Valid job must be present
-    PortabilityJob job = jobManager.findExistingJob(token);
-    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
+    String jobId = JobUtils.decodeId(encodedIdCookie);
+    PortabilityJob job = jobManager.findExistingJob(jobId);
+    Preconditions.checkState(null != job, "existingJob not found for job id: %s", jobId);
 
     LogUtils.log("simpleLoginSubmit, job: %s", job);
 
@@ -49,7 +52,7 @@ public class SimpleLoginSubmitController {
 
     // TODO: Determine service from job or from authUrl path?
     String service = isExport ? job.exportService() : job.importService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, token: %s", service, isExport, token);
+    Preconditions.checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b, job id: %s", service, isExport, jobId);
     LogUtils.log("service: %s, isExport: %b", service, isExport);
 
 
@@ -69,7 +72,7 @@ public class SimpleLoginSubmitController {
         dataType, job.exportService());
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(username, token, null, password);
+    AuthData authData = generator.generateAuthData(username, jobId, null, password);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
@@ -86,9 +89,9 @@ public class SimpleLoginSubmitController {
   }
 
   /** Looks up job and does checks that it exists. */
-  private PortabilityJob lookupJob(String token) {
-    PortabilityJob job = jobManager.findExistingJob(token);
-    Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
+  private PortabilityJob lookupJob(String id) {
+    PortabilityJob job = jobManager.findExistingJob(id);
+    Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
     return job;
   }
 

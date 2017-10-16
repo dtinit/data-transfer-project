@@ -1,8 +1,10 @@
 package org.dataportabilityproject.job;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Converter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.auth.AuthData;
 
@@ -10,7 +12,6 @@ import org.dataportabilityproject.shared.auth.AuthData;
 @AutoValue
 public abstract class PortabilityJob {
   public abstract String id();
-  public abstract String token();
   @Nullable public abstract String dataType();
   @Nullable public abstract String exportService();
   @Nullable public abstract String exportAccount();
@@ -22,7 +23,7 @@ public abstract class PortabilityJob {
   @Nullable public abstract AuthData importAuthData();
 
   public static AutoValue_PortabilityJob.Builder builder() {
-    return new AutoValue_PortabilityJob.Builder();
+     return new AutoValue_PortabilityJob.Builder();
   }
 
   public abstract Builder toBuilder();
@@ -30,7 +31,6 @@ public abstract class PortabilityJob {
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setId(String id);
-    public abstract Builder setToken(String id);
     public abstract Builder setDataType(String id);
     public abstract Builder setExportService(String id);
     public abstract Builder setExportAccount(String id);
@@ -46,8 +46,18 @@ public abstract class PortabilityJob {
     /** Validates required values on build. */
     public PortabilityJob build() {
       PortabilityJob job = autoBuild();
-      Preconditions.checkState(!Strings.isNullOrEmpty(job.token()), "Invalid token value");
+      Preconditions.checkState(!Strings.isNullOrEmpty(job.id()), "Invalid id value");
       return job;
     }
+  }
+
+  /** Represents this job as Map of key value pairs. */
+  public Map<String, Object> asMap() {
+    return new PortabilityJobConverter().doForward(this);
+  }
+
+  /** Creates a {@link PortabilityJob} from the data in the given {@code map}. */
+  public static PortabilityJob mapToJob(Map<String, Object> map) {
+    return new PortabilityJobConverter().doBackward(map);
   }
 }
