@@ -34,7 +34,7 @@ public final class InstagramServiceProvider implements ServiceProvider {
   public InstagramServiceProvider(Secrets secrets) {
     this.inastagramAuth = new InastagramAuth(
         secrets.get("INSTAGRAM_CLIENT_ID"),
-        secrets.get("INSTAGRAM_CLIENT_SECRET"));
+        secrets.get("INSTAGRAM_SECRET"));
   }
 
   @Override

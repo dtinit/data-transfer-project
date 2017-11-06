@@ -48,7 +48,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     public MicrosoftServiceProvider(Secrets secrets) {
         oauthProvider = new MicrosoftAuth(
             secrets.get("MICROSOFT_APP_ID"),
-            secrets.get("MICROSOFT_PASSWORD"),
+            secrets.get("MICROSOFT_SECRET"),
             // TODO: only use scopes from the products we are accessing.
             SCOPES);
     }

@@ -63,8 +63,8 @@ public class Oauth2CallbackController {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
     String jobId = JobUtils.decodeId(encodedIdCookie);
 
-    // TODO: Encrypt/decrypt state param with secure info
-    String state = authResponse.getState();
+    // State token includes only ID for now. Might want to add more info.
+    String state = JobUtils.decodeId(authResponse.getState());
 
     // TODO: Remove sanity check
     Preconditions.checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match", jobId, state);

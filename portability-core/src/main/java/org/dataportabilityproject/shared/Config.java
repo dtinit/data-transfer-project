@@ -29,17 +29,17 @@ public final class Config {
   }
 
   // Indicates whether the app is in prod
-  private static final Environment ENV = Environment.PROD;
+  private static final Environment ENV = Environment.TEST;
 
   /**
    * Base url for all calls within the application.
    */
   public static final String BASE_URL =
-      (ENV == Environment.PROD) ? "http://35.193.13.205" : "http://localhost:3000";
+      (ENV =! Environment.TEST) ? "https://gardenswithoutwalls-test.net" : "http://localhost:3000";
 
   /**
    * Base url for direct to api calls within the application.
    */
   public static final String BASE_API_URL =
-      (ENV == Environment.PROD) ? "http://35.193.13.205" : "http://localhost:8080";
+      (ENV == Environment.TEST) ? "https://gardenswithoutwalls-test.net" : "http://localhost:8080";
 }

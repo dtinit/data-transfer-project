@@ -60,7 +60,7 @@ public class JobManager {
   /** Replaces the existing entry in storage with the provided {@code job}. */
   public void insertJob(PortabilityJob job) throws IOException {
     Map<String, Object> existing = storage.get(job.id());
-    Preconditions.checkArgument(existing != null, "Attempting to updatea  non-exisent job");
+    Preconditions.checkArgument(existing == null, "Attempting to insert an already existing job");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
     storage.put(getString(data, ID_DATA_KEY), data);
@@ -69,7 +69,7 @@ public class JobManager {
   /** Replaces the existing entry in storage with the provided {@code job}. */
   public void updateJob(PortabilityJob job) throws IOException {
     Map<String, Object> existing = storage.get(job.id());
-    Preconditions.checkArgument(existing != null, "Attempting to updatea  non-exisent job");
+    Preconditions.checkArgument(existing != null, "Attempting to update a non-existent job");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
     storage.put(getString(data, ID_DATA_KEY), data);

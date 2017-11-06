@@ -56,9 +56,9 @@ public class PortabilityJobFactory {
   /** Creates the initial data entry to persist. */
   private static PortabilityJob createInitialJob(String id, PortableDataType dataType,
       String exportService, String importService) {
-    Preconditions.checkArgument(Strings.isNullOrEmpty(id), "id missing");
-    Preconditions.checkArgument(Strings.isNullOrEmpty(exportService), "exportService missing");
-    Preconditions.checkArgument(Strings.isNullOrEmpty(importService), "importService missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
     return PortabilityJob.builder()
       .setId(id)

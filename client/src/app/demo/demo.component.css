@@ -70,32 +70,32 @@
 }
 
 .logo-google {
-  background-image: url('../../assets/logos/google.png');
+  background-image: url('/v2/assets/logos/google.png');
   width: 50px;
 }
 
 .logo-microsoft {
-  background-image: url('../../assets/logos/microsoft.png');
+  background-image: url('/v2/assets/logos/microsoft.png');
   width: 108.19px;
 }
 
 .logo-instagram {
-  background-image: url('../../assets/logos/instagram.jpg');
+  background-image: url('/v2/assets/logos/instagram.jpg');
   width: 50px;
 }
 
 .logo-flickr {
-  background-image: url('../../assets/logos/flickr.png');
+  background-image: url('/v2/assets/logos/flickr.png');
   width: 50px;
 }
 
 .logo-smugmug {
-  background-image: url('../../assets/logos/smugmug.png');
+  background-image: url('/v2/assets/logos/smugmug.png');
   width: 230.77px;
 }
 
 .logo-rtm {
-  background-image: url('../../assets/logos/rememberthemilk.png');
+  background-image: url('/v2/assets/logos/rememberthemilk.png');
   background-size: cover;
   width: 113.25px;
   height: 50px;

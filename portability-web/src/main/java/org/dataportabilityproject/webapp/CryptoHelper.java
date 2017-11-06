@@ -45,7 +45,9 @@ class CryptoHelper {
   /** Serialize and encrypt the given {@code authData} with the session key. */
   private String encryptAuthData(AuthData authData) {
     String serialized = authData.toString(); // Implement auth data serialization
-    byte[] encrypted = crypter.encryptWithSessionKey(serialized);
-    return new String(encrypted, DEFAULT_CHARSET);
+    return serialized;
+    // TODO: reenable
+    // byte[] encrypted = crypter.encryptWithSessionKey(serialized);
+    // return new String(encrypted, DEFAULT_CHARSET);
   }
 }
