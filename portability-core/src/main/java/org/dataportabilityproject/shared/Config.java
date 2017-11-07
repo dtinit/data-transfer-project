@@ -35,7 +35,7 @@ public final class Config {
    * Base url for all calls within the application.
    */
   public static final String BASE_URL =
-      (ENV =! Environment.TEST) ? "https://gardenswithoutwalls-test.net" : "http://localhost:3000";
+      (ENV == Environment.TEST) ? "https://gardenswithoutwalls-test.net" : "http://localhost:3000";
 
   /**
    * Base url for direct to api calls within the application.
