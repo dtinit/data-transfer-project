@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
+// TODO: Rename to JobDao
 /** Provides functionality to manage the lifecycle of a data portability job. */
 public class JobManager {
   // Keys for specific values in data store
