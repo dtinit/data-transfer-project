@@ -15,54 +15,82 @@
  */
 package org.dataportabilityproject.worker;
 
-import org.dataportabilityproject.job.*;
-
-import com.google.common.base.Enums;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import org.dataportabilityproject.ConsoleIO;
+import javax.annotation.Nullable;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
+import org.dataportabilityproject.cloud.CloudFactoryFactory;
+import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
-import org.dataportabilityproject.dataModels.DataModel;
-import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
-import org.dataportabilityproject.shared.auth.AuthData;
 
-/** Main class to bootstrap a portabilty worker that will operate on a single job. */
+/**
+ * Main class to bootstrap a portabilty worker that will operate on a single job whose state
+ * is held in WorkerJobMetadata.
+ */
 public class WorkerMain {
   private static CloudFactory cloudFactory = new LocalCloudFactory();
 
   public static void main(String[] args) throws Exception {
 
+    // TODO: Make this configurable
+    SupportedCloud cloud = SupportedCloud.LOCAL;
+
     // TODO: Worker should only request secrets for the services it needs
     Secrets secrets = new Secrets("secrets.csv");
+
+    // Initialize all global objects
+    PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();
+    JobManager jobDao = new JobManager(storage);
     ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
 
-    // Pick up session id and session public key from custom value in startup script
+    // Start the polling service to poll for an unassigned job and when it's ready.
+    pollForJob(jobDao);
 
-    // Create instance key
+    // Start the processing
+    processJob(jobDao, registry);
 
-    // Encrypt instance key with session public key
-
-    // Store encrypted instance key in DB
-
-    // Poll data store session id for updated encrypted creds
+    System.out.println("Successfully processed jobId: " + WorkerJobMetadata.getInstance().getJobId());
+    System.exit(0);
   }
 
-  /** Parse the data type .*/
-  private static PortableDataType getDataType(String dataType) {
-    com.google.common.base.Optional<PortableDataType> dataTypeOption = Enums
-        .getIfPresent(PortableDataType.class, dataType);
-    Preconditions.checkState(dataTypeOption.isPresent(), "Data type required");
-    return dataTypeOption.get();
+  private static void pollForJob(JobManager jobDao) {
+    JobPollingService poller = new JobPollingService(jobDao);
+    poller.startAsync();
+    poller.awaitTerminated();
+  }
+
+  private static void processJob(JobManager jobDao, ServiceProviderRegistry registry) {
+    System.out.println("Begin processing jobId: " + WorkerJobMetadata.getInstance().getJobId());
+    String jobId = WorkerJobMetadata.getInstance().getJobId();
+    PortabilityJob job = jobDao.findExistingJob(jobId);
+    Preconditions.checkNotNull(job, "Job not found, id: %s");
+    PortableDataType dataType = PortableDataType.valueOf(job.dataType());
+    try {
+      try {
+        PortabilityCopier
+            .copyDataType(registry, dataType, job.exportService(), job.exportAuthData(),
+                job.importService(), job.importAuthData(), jobId);
+      } catch (IOException e) {
+        System.err.println("Error processing jobId: " + WorkerJobMetadata.getInstance().getJobId()
+            + ", error: " + e.getMessage());
+        e.printStackTrace();
+
+        System.exit(1);
+      }
+    } finally {
+      cloudFactory.clearJobData(jobId);
+    }
   }
 }
