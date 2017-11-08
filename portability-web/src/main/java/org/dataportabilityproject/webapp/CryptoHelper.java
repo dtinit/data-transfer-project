@@ -39,7 +39,8 @@ class CryptoHelper {
     String cookieKey = isExport ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
     Cookie authCookie = new Cookie(cookieKey, encrypted);
     LogUtils.log("Set new cookie with key: %s, length: %s", cookieKey, encrypted.length());
-    response.addCookie(authCookie);
+    // TODO: reenable. Currently doesn't like the cookie, has a bad value.
+    // response.addCookie(authCookie);
   }
 
   /** Serialize and encrypt the given {@code authData} with the session key. */

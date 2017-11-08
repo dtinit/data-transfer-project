@@ -78,6 +78,7 @@ final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
   public Map<String, Object> get(String key) {
     ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
     Entity entity = datastore.get(getKey(key));
+    if (entity == null) return null;
     for (String property : entity.getNames()) {
       // builder.put(property, entity.getValue(property));
       if (entity.getValue(property) instanceof StringValue) {

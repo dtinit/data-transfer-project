@@ -45,7 +45,7 @@ public class WorkerMain {
   public static void main(String[] args) throws Exception {
 
     // TODO: Make this configurable
-    SupportedCloud cloud = SupportedCloud.LOCAL;
+    SupportedCloud cloud = SupportedCloud.GOOGLE;
 
     // TODO: Worker should only request secrets for the services it needs
     Secrets secrets = new Secrets("secrets.csv");
