@@ -26,15 +26,19 @@ import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
 
 public final class InstagramServiceProvider implements ServiceProvider {
-  private final InastagramAuth inastagramAuth;
+  private static final ImmutableList<String> SCOPES = ImmutableList.of(
+      "basic"); // See https://www.instagram.com/developer/authorization/
+  private final InstagramAuth instagramAuth;
 
   public InstagramServiceProvider(Secrets secrets) {
-    this.inastagramAuth = new InastagramAuth(
+    this.instagramAuth = new InstagramAuth(
         secrets.get("INSTAGRAM_CLIENT_ID"),
-        secrets.get("INSTAGRAM_SECRET"));
+        secrets.get("INSTAGRAM_SECRET"),
+        SCOPES);
   }
 
   @Override
@@ -55,7 +59,12 @@ public final class InstagramServiceProvider implements ServiceProvider {
 
   @Override
   public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-    return inastagramAuth;
+    return instagramAuth;
+  }
+
+  @Override
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+    return instagramAuth;
   }
 
   @Override

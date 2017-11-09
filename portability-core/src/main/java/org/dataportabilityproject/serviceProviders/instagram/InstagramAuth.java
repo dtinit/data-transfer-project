@@ -15,10 +15,13 @@
  */
 package org.dataportabilityproject.serviceProviders.instagram;
 
+import static org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects.JSON_FACTORY;
+
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.java6.auth.oauth2.VerificationCodeReceiver;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -26,24 +29,38 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.List;
+import org.dataportabilityproject.shared.Config;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
 
 
-final class InastagramAuth implements OfflineAuthDataGenerator {
+final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   private static final JacksonFactory JSON_FACTORY = new JacksonFactory();
+
+  /** Domain name in the "Callback URL". */
+  private static final String CALLBACK_URL = Config.BASE_API_URL + "/callback/instagram";
+  private static final String AUTHORIZATION_SERVER_URL = "https://api.instagram.com/oauth/authorize";
+  private static final String TOKEN_SERVER_URL = "https://api.instagram.com/oauth/access_token";
 
   private final String clientId;
   private final String clientSecret;
+  private final List<String> scopes;
 
-  InastagramAuth(String clientId, String clientSecret) {
+  InstagramAuth(String clientId, String clientSecret, List<String> scopes) {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
+    Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
+    this.scopes = scopes;
   }
 
   @Override
@@ -78,5 +95,54 @@ final class InastagramAuth implements OfflineAuthDataGenerator {
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalStateException("Problem getting token", e);
     }
+  }
+
+  @Override
+  public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
+    String url = createFlow(clientId, clientSecret, scopes)
+        .newAuthorizationUrl()
+        .setRedirectUri(CALLBACK_URL)
+        .setState(id) // TODO: Encrypt
+        .build();
+    return AuthFlowInitiator.create(url);
+  }
+
+  @Override
+  public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData,
+      String extra) throws IOException {
+    Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for Instagram oauth flow");
+    Preconditions.checkArgument(initialAuthData == null, "Earlier auth data not expected for Instagram oauth flow");
+    AuthorizationCodeFlow flow = createFlow(clientId, clientSecret, scopes);
+    TokenResponse response = flow
+        .newTokenRequest(authCode)
+        .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
+        .execute();
+    // Figure out storage
+    Credential credential = flow.createAndStoreCredential(response, id);
+    return toAuthData(credential);
+  }
+
+  private static InstagramOauthData toAuthData(Credential credential) {
+    return InstagramOauthData.create(
+        credential.getAccessToken(),
+        credential.getRefreshToken(),
+        credential.getTokenServerEncodedUrl());
+  }
+
+  /** Creates an AuthorizationCodeFlow for use in online and offline mode.*/
+  private static AuthorizationCodeFlow createFlow(String clientId, String clientSecret,
+      List<String> scopes)
+      throws IOException {
+    // set up authorization code flow
+    return new AuthorizationCodeFlow.Builder(
+        BearerToken.authorizationHeaderAccessMethod(), // Access Method
+        InstagramStaticObjects.getHttpTransport(), // HttpTransport
+        JSON_FACTORY, // JsonFactory
+        new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
+        new ClientParametersAuthentication(clientId, clientSecret), // HttpExecuteInterceptor
+        clientId, // clientId
+        AUTHORIZATION_SERVER_URL) // encoded authUrl
+        .setScopes(scopes) // scopes
+        .setDataStoreFactory(InstagramStaticObjects.getDataStoreFactory()).build();
   }
 }
