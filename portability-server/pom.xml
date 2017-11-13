@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>portability-parent</artifactId>
+    <groupId>org.dataportabilityproject</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>portability-server</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.dataportabilityproject</groupId>
+      <artifactId>portability-core</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.dataportabilityproject</groupId>
+      <artifactId>portability-web</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <!-- For JSON library-->
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.json</artifactId>
+      <version>1.0.4</version>
+    </dependency>
+
+    <!-- for URL library -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.2</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources/</directory>
+      </resource>
+    </resources>
+
+    <plugins>
+      <!-- To be able to run mvn exec:java -pl portability-server -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <configuration>
+          <mainClass>org.dataportabilityproject.webapp.PortabilityServerMain</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
