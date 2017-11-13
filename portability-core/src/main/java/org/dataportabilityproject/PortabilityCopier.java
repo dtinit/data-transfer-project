@@ -24,8 +24,6 @@ import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.Resource;
-import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
-import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 
