@@ -73,7 +73,7 @@ public final class InstagramServiceProvider implements ServiceProvider {
       AuthData authData,
       JobDataCache jobDataCache) throws IOException {
     if (type == PortableDataType.PHOTOS) {
-      return new InstagramPhotoService(((SecretAuthData) authData).secret());
+      return new InstagramPhotoService(((InstagramOauthData) authData));
     }
     throw new IllegalStateException("Instagram doesn't support exporting: " + type);
   }

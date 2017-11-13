@@ -16,6 +16,7 @@
 package org.dataportabilityproject.serviceProviders.instagram;
 
 import com.google.auto.value.AutoValue;
+import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 @AutoValue
@@ -28,6 +29,6 @@ abstract class InstagramOauthData extends AuthData {
   }
 
   abstract String accessToken();
-  abstract String refreshToken();
+  @Nullable abstract String refreshToken(); // TODO: Determine if we can get refresh token in non-Sandbox mode
   abstract String tokenServerEncodedUrl();
 }

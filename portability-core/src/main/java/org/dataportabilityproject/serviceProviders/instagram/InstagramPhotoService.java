@@ -44,13 +44,13 @@ final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
 
   private static final String FAKE_ALBUM_ID = "instagramAlbum";
 
-  private final String token;
   private final HttpTransport httpTransport;
+  private final InstagramOauthData authData;
 
-  InstagramPhotoService(String token) {
+  InstagramPhotoService(InstagramOauthData authData) {
     try {
       this.httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-      this.token = token;
+      this.authData = authData;
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalStateException("Problem getting token", e);
     }
@@ -67,9 +67,12 @@ final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
     // TODO: check out paging.
     for (MediaFeedData photo : response.getData()) {
       // TODO json mapping is broken.
-      photos.add(new PhotoModel("Instagram photo: " + photo.getId(),
-          photo.getImages().getStandardResolution().getUrl(),
-          photo.getCaption().getText(),
+      String photoId = photo.getId();
+      String url = photo.getImages().getStandardResolution().getUrl();
+      String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
+      photos.add(new PhotoModel("Instagram photo: " + photoId,
+          url,
+          text,
           null,
           FAKE_ALBUM_ID));
     }
@@ -89,7 +92,7 @@ final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
   private <T> T makeRequest(String url, Class<T> clazz) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest = requestFactory.buildGetRequest(
-        new GenericUrl(url + "?access_token=" + token));
+        new GenericUrl(url + "?access_token=" + authData.accessToken()));
     HttpResponse response = getRequest
         .execute();
     int statusCode = response.getStatusCode();
