@@ -14,7 +14,6 @@
   <modules>
     <module>portability-core</module>
     <module>portability-web</module>
-    <module>portability-server</module>
   </modules>
 
   <build>
