@@ -31,7 +31,7 @@ public class PortabilityMain {
     private static CloudFactory cloudFactory = new LocalCloudFactory();
 
     public static void main(String[] args) throws Exception {
-        Secrets secrets = new Secrets("secrets.csv");
+        Secrets secrets = new Secrets(PortabilityFlags.secretsFile());
         ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
 
         PortableDataType type = IO_INTERFACE.ask(

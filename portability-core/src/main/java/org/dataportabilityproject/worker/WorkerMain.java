@@ -44,11 +44,11 @@ public class WorkerMain {
 
   public static void main(String[] args) throws Exception {
 
-    // TODO: Make this configurable
+    // TODO: Get cloud and secrets from PortabilityFlags
     SupportedCloud cloud = SupportedCloud.GOOGLE;
 
     // TODO: Worker should only request secrets for the services it needs
-    Secrets secrets = new Secrets("secrets.csv");
+    Secrets secrets = new Secrets("secrets_local.csv");
 
     // Initialize all global objects
     PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();

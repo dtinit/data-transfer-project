@@ -17,14 +17,13 @@ package org.dataportabilityproject.shared.auth;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import org.dataportabilityproject.shared.Config;
-import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.PortabilityFlags;
 
 public final class OnlinePasswordAuthDataGenerator implements OnlineAuthDataGenerator {
 
   @Override
   public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
-    return AuthFlowInitiator.create(Config.BASE_URL + "/simplelogin");
+    return AuthFlowInitiator.create(PortabilityFlags.baseUrl() + "/simplelogin");
   }
 
   @Override

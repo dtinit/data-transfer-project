@@ -15,8 +15,6 @@
  */
 package org.dataportabilityproject.serviceProviders.instagram;
 
-import static org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects.JSON_FACTORY;
-
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
@@ -35,7 +33,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import org.dataportabilityproject.shared.Config;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -48,7 +46,7 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   private static final JacksonFactory JSON_FACTORY = new JacksonFactory();
 
   /** Domain name in the "Callback URL". */
-  private static final String CALLBACK_URL = Config.BASE_API_URL + "/callback/instagram";
+  private static final String CALLBACK_URL = PortabilityFlags.baseApiUrl() + "/callback/instagram";
   private static final String AUTHORIZATION_SERVER_URL = "https://api.instagram.com/oauth/authorize";
   private static final String TOKEN_SERVER_URL = "https://api.instagram.com/oauth/access_token";
 

@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.webapp;
 
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
@@ -89,7 +90,7 @@ public class PortabilityConfiguration {
   @Bean
   public Secrets getSecrets() {
     try {
-      return new Secrets("secrets.csv");
+      return new Secrets(PortabilityFlags.secretsFile());
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }

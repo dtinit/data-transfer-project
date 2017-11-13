@@ -19,13 +19,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.shared.Config;
+import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.job.JobManager;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -101,9 +101,9 @@ public class SimpleLoginSubmitController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect(Config.BASE_URL + "/next");  // TODO: parameterize
+      response.sendRedirect(PortabilityFlags.baseUrl() + "/next");  // TODO: parameterize
     } else {
-      response.sendRedirect(Config.BASE_URL + "/copy");
+      response.sendRedirect(PortabilityFlags.baseUrl() + "/copy");
     }
 
   }
