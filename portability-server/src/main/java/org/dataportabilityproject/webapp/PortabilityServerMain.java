@@ -3,6 +3,7 @@ package org.dataportabilityproject.webapp;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
@@ -17,8 +18,9 @@ public class PortabilityServerMain {
     // TODO: use Config.java from core library for the initialization stuff
     // Can probably make serviceProviderRegistry a singleton/factory class so that we don't
     // need to init here and pass along.
-    secrets = new Secrets("secrets.csv");
-    cloudFactory = CloudFactoryFactory.getCloudFactory(SupportedCloud.LOCAL, secrets);
+    PortabilityFlags.parseArgs(args);
+    secrets = new Secrets(PortabilityFlags.secretsFile());
+    cloudFactory = CloudFactoryFactory.getCloudFactory(PortabilityFlags.cloud(), secrets);
     serviceProviderRegistry = new ServiceProviderRegistry(secrets, cloudFactory);
     InetSocketAddress addr = new InetSocketAddress(8080);
     HttpServer server = HttpServer.create(addr, 0);

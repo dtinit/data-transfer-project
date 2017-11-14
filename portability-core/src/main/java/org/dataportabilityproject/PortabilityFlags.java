@@ -1,6 +1,13 @@
 package org.dataportabilityproject;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.shared.Config.Environment;
 
@@ -20,12 +27,55 @@ public class PortabilityFlags {
     this.environment = environment;
   }
 
-  public synchronized static void init(SupportedCloud supportedCloud, Environment environment) {
+  /** Parse arguments and initialize the PortabilityFlags global configuration parameters. */
+  public static void parseArgs(String[] args) {
+    // create Options object
+    Options options = new Options();
+    // TODO set & get "cloud" and "environment" from annotation on flag in PortabilityFlags
+    options.addOption("cloud", true, PortabilityFlags.cloudFlagDesc());
+    options.addOption("environment", true, PortabilityFlags.environmentFlagDesc());
+    CommandLineParser parser = new DefaultParser();
+    CommandLine cmd = null;
+    try {
+      cmd = parser.parse(options, args);
+    } catch (ParseException e) {
+      System.out.println("Unable to parse commandline args: " + e);
+      System.exit(1);
+    }
+    String cloud = cmd.getOptionValue("cloud");
+    String environment = cmd.getOptionValue("environment");
+
+    boolean hasAllFlags = true;
+    hasAllFlags &= !Strings.isNullOrEmpty(cloud);
+    if (Strings.isNullOrEmpty(cloud)) {
+      System.out.println("missing -cloud");
+    } else {
+      System.out.println("Parsed command line arg cloud = " + cloud);
+    }
+    hasAllFlags &= !Strings.isNullOrEmpty(environment);
+    if (Strings.isNullOrEmpty(environment)) {
+      System.out.println("missing -environment");
+    } else {
+      System.out.println("Parsed command line arg environment = " + environment);
+    }
+    if (!hasAllFlags) {
+      help(options);
+    }
+    init(SupportedCloud.valueOf(cloud), Environment.valueOf(environment));
+  }
+
+  private synchronized static void init(SupportedCloud supportedCloud, Environment environment) {
     if (INSTANCE != null) {
       throw new IllegalStateException("Trying to initialize flags a second time");
     }
 
     INSTANCE = new PortabilityFlags(supportedCloud, environment);
+  }
+
+  private static void help(Options options) {
+    HelpFormatter formater = new HelpFormatter();
+    formater.printHelp("Main", options);
+    System.exit(0);
   }
 
   public static SupportedCloud cloud() {

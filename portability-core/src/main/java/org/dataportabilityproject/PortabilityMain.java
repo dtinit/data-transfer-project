@@ -31,6 +31,7 @@ public class PortabilityMain {
     private static CloudFactory cloudFactory = new LocalCloudFactory();
 
     public static void main(String[] args) throws Exception {
+        PortabilityFlags.parseArgs(args);
         Secrets secrets = new Secrets(PortabilityFlags.secretsFile());
         ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
 

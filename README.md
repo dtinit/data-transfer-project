@@ -79,11 +79,11 @@ chooses.
 ## Development
 
 ### Building/Running CLI
- * Add a secrets.csv file to src/main/resources in portability-core and/or
+ * Add a secrets_[environment].csv file to src/main/resources in portability-core and/or
    in portability-web, this should contain
    all your API keys, see secrets_template.csv for an example.
  * "mvn compile" will build the project.
- * "mvn exec:java -pl portability-core" will run the command line tool.
+ * "mvn exec:java -pl portability-core -Dexec.args="-cloud LOCAL -environment LOCAL"" will run the command line tool.
 
 ### Building/Running webapp
 

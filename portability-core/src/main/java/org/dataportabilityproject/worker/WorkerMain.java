@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.PortabilityCopier;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
@@ -43,12 +44,9 @@ public class WorkerMain {
   private static CloudFactory cloudFactory = new LocalCloudFactory();
 
   public static void main(String[] args) throws Exception {
-
-    // TODO: Get cloud and secrets from PortabilityFlags
-    SupportedCloud cloud = SupportedCloud.GOOGLE;
-
-    // TODO: Worker should only request secrets for the services it needs
-    Secrets secrets = new Secrets("secrets_local.csv");
+    PortabilityFlags.parseArgs(args);
+    SupportedCloud cloud = PortabilityFlags.cloud();
+    Secrets secrets = new Secrets(PortabilityFlags.secretsFile());
 
     // Initialize all global objects
     PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();
@@ -79,6 +77,7 @@ public class WorkerMain {
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       try {
+        if(true) return;
         PortabilityCopier
             .copyDataType(registry, dataType, job.exportService(), job.exportAuthData(),
                 job.importService(), job.importAuthData(), jobId);
