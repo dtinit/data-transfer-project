@@ -10,19 +10,14 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 
@@ -37,16 +32,14 @@ public class ListServicesHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    // This handler only supports the GET method.
-    if(!PortabilityServerUtils.ValidateGetRequest(exchange)){
-      return;
-    }
+    Preconditions.checkArgument(PortabilityServerUtils.ValidateGetRequest(exchange),
+        "This resource only supports GET.");
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();
     headers.set(HEADER_CONTENT_TYPE, "application/json; charset="+ StandardCharsets.UTF_8.name());
 
-    String dataTypeParam = getDataTypeParam(exchange);
+    String dataTypeParam = PortabilityServerUtils.GetRequestParams(exchange).get(JsonKeys.DATA_TYPE);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
 
     JsonObject response = generateGetResponse(dataTypeParam);
@@ -70,13 +63,12 @@ public class ListServicesHandler implements HttpHandler {
       exportServices = serviceProviderRegistry.getServiceProvidersThatCanExport(dataType);
       importServices = serviceProviderRegistry.getServiceProvidersThatCanImport(dataType);
     } catch (Exception e) {
-      System.err.println("Encountered error with getServiceProviders...() " + e);
+      LogUtils.log("Encountered error with getServiceProviders...() " + e);
     }
 
     if (exportServices.isEmpty() || importServices.isEmpty()) {
-      System.err.println(
-          "Empty service list found, export size: " + exportServices.size() + ", import size: "
-              + importServices.size());
+      LogUtils.log("Empty service list found, export size: %d, import size: %d",
+          exportServices.size(), importServices.size());
     }
 
     // Construct Json.
@@ -102,16 +94,4 @@ public class ListServicesHandler implements HttpHandler {
     return dataTypeOption.get();
   }
 
-  /**
-   * Returns the dataType param from the request parameters provided in exchange
-   */
-  private String getDataTypeParam(HttpExchange exchange) {
-    URIBuilder builder = new URIBuilder(exchange.getRequestURI());
-    List<NameValuePair> queryParamPairs= builder.getQueryParams();
-    Map<String, String> params = new HashMap<String, String>();
-    for(NameValuePair pair : queryParamPairs){
-      params.put(pair.getName(), pair.getValue());
-    }
-    return params.get(JsonKeys.DATA_TYPE);
-  }
 }

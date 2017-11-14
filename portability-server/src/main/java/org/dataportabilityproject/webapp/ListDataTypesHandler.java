@@ -2,11 +2,11 @@ package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
+import com.google.common.base.Preconditions;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -25,10 +25,8 @@ public class ListDataTypesHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    // This handler only supports the GET method.
-    if(!PortabilityServerUtils.ValidateGetRequest(exchange)){
-      return;
-    }
+    Preconditions.checkArgument(PortabilityServerUtils.ValidateGetRequest(exchange),
+        "This resource only supports GET.");
 
     // Mark the response as type Json
     Headers headers = exchange.getResponseHeaders();
@@ -42,7 +40,7 @@ public class ListDataTypesHandler implements HttpHandler {
           builder.add(data_type.name());
         }
       } catch (Exception e) {
-        System.err.println("hasImportAndExport for datatype failed");
+        LogUtils.log("hasImportAndExport for datatype %s failed", data_type.name());
       }
     }
 
