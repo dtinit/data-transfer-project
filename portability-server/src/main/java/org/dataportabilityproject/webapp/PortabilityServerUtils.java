@@ -30,6 +30,21 @@ public class PortabilityServerUtils {
   }
 
   /**
+   * Returns whether or not the exchange is a HTTP POST request.
+   * If not, it will close the client connection.
+   */
+  public static boolean ValidatePostRequest(HttpExchange exchange) throws IOException{
+    if(!exchange.getRequestMethod().equalsIgnoreCase("POST")){
+      exchange.sendResponseHeaders(404, 0);
+      OutputStream writer = exchange.getResponseBody();
+      writer.write("Not supported\n".getBytes());
+      writer.close();
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Returns map of request parameters from the provided HttpExchange.
    */
   public static Map<String, String> GetRequestParams(HttpExchange exchange) {
