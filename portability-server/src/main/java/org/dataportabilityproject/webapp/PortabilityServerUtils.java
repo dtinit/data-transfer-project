@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpExchange;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -15,29 +16,25 @@ import org.apache.http.client.utils.URIBuilder;
 public class PortabilityServerUtils {
 
   /**
-   * Returns whether or not the exchange is a HTTP GET request.
+   * Returns whether or not the exchange is a valid request for the provided
+   * http method and resource.
    * If not, it will close the client connection.
    */
-  public static boolean ValidateGetRequest(HttpExchange exchange) throws IOException{
-    if(!exchange.getRequestMethod().equalsIgnoreCase("GET")){
+  public static boolean ValidateRequest(HttpExchange exchange, HttpMethods supportedMethod,
+      String resourceRegex) throws IOException{
+    String path = exchange.getRequestURI().getPath();
+
+    if (!exchange.getRequestMethod().equalsIgnoreCase(supportedMethod.name())) {
       exchange.sendResponseHeaders(404, 0);
       OutputStream writer = exchange.getResponseBody();
-      writer.write("Not supported\n".getBytes());
+      writer.write("Method not supported\n".getBytes());
       writer.close();
       return false;
-    }
-    return true;
-  }
-
-  /**
-   * Returns whether or not the exchange is a HTTP POST request.
-   * If not, it will close the client connection.
-   */
-  public static boolean ValidatePostRequest(HttpExchange exchange) throws IOException{
-    if(!exchange.getRequestMethod().equalsIgnoreCase("POST")){
+    } else if (!Pattern.compile(resourceRegex).matcher(path).matches()) {
+      LogUtils.log("Path: %s, pattern: %s", path, resourceRegex);
       exchange.sendResponseHeaders(404, 0);
       OutputStream writer = exchange.getResponseBody();
-      writer.write("Not supported\n".getBytes());
+      writer.write("Not found\n".getBytes());
       writer.close();
       return false;
     }

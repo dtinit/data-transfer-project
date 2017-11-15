@@ -44,7 +44,8 @@ public class ConfigureHandler implements HttpHandler {
    * invalid params or incorrect method, no error is present and the response is empty.
    */
   public void  handle(HttpExchange exchange) throws IOException {
-   Preconditions.checkArgument(PortabilityServerUtils.ValidatePostRequest(exchange),
+   Preconditions.checkArgument(
+       PortabilityServerUtils.ValidateRequest(exchange, HttpMethods.POST, "/configure"),
        "/configure only supports POST.");
 
     Map<String, String> requestParameters = PortabilityServerUtils.GetRequestParams(exchange);

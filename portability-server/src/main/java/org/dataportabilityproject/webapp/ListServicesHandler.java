@@ -32,8 +32,8 @@ public class ListServicesHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(PortabilityServerUtils.ValidateGetRequest(exchange),
-        "This resource only supports GET.");
+    Preconditions.checkArgument(
+        PortabilityServerUtils.ValidateRequest(exchange, HttpMethods.GET, "/_/listServices"));
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();

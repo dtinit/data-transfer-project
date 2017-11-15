@@ -25,7 +25,8 @@ public class ListDataTypesHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(PortabilityServerUtils.ValidateGetRequest(exchange),
+    Preconditions.checkArgument(
+        PortabilityServerUtils.ValidateRequest(exchange, HttpMethods.GET, "/_/listDataTypes"),
         "This resource only supports GET.");
 
     // Mark the response as type Json
