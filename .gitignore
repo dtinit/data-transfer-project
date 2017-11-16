@@ -1,3 +1,7 @@
 .idea
 *.iml
 *.log
+config/local/secrets.csv
+config/test/secrets.csv
+# Dockerfile is generated each time we run build.sh
+Dockerfile

@@ -90,7 +90,7 @@ public class PortabilityConfiguration {
   @Bean
   public Secrets getSecrets() {
     try {
-      return new Secrets(PortabilityFlags.secretsFile());
+      return new Secrets("secrets.csv");
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }

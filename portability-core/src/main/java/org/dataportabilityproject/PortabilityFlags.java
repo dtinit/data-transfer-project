@@ -102,6 +102,8 @@ public class PortabilityFlags {
 
   /**
    * Base url for all calls within the application.
+   *
+   * TODO: Parse this from secrets.csv.
    */
   public static String baseUrl() {
     switch (environment()) {
@@ -116,27 +118,9 @@ public class PortabilityFlags {
   }
 
   /**
-   * Secrets file to use for this environment.
-   *
-   * TODO: Change how we store secrets, see https://cloud.google.com/kms/docs/secret-management.
-   * For now, whoever is building the binary must have the proper secrets files stored locally
-   * to be built into the binary. We do NOT check these in as they contain sensitive creds; this
-   * is enforced via .gitignore.
-   */
-  public static String secretsFile() {
-    switch (environment()) {
-      case TEST:
-        return "secrets_test.csv";
-      case LOCAL:
-        return "secrets_local.csv";
-      default:
-        throw new UnsupportedOperationException(
-            "Environment " + environment() + " not implemented yet");
-    }
-  }
-
-  /**
    * Base url for direct to api calls within the application.
+   *
+   * TODO: Parse this from secrets.csv.
    */
   public static String baseApiUrl() {
     switch (environment()) {

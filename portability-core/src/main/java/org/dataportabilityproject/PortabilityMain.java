@@ -32,7 +32,7 @@ public class PortabilityMain {
 
     public static void main(String[] args) throws Exception {
         PortabilityFlags.parseArgs(args);
-        Secrets secrets = new Secrets(PortabilityFlags.secretsFile());
+        Secrets secrets = new Secrets("secrets.csv");
         ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
 
         PortableDataType type = IO_INTERFACE.ask(

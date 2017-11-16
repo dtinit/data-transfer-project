@@ -4,7 +4,12 @@ target/**
 .classpath
 src/.project
 src/.classpath
+# Note: secrets_*.csv is deprecated and engineers should now store secrets files in
+# config/<env>/secrets.csv. Our build script will now copy the correct secrets.csv file into
+# src/main/resources when we build. Keep secrets_* in our .gitignore so any old secrets files
+# are not accidentally checked in.
 src/main/resources/secrets_*.csv
+src/main/resources/secrets.csv
 src/main/resources/*.json
 workspace.xml
 tasks.xml

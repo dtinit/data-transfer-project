@@ -25,7 +25,7 @@ public class PortabilityServerMain {
     // TODO: use Config.java from core library for the initialization stuff
     // Can probably make serviceProviderRegistry a singleton/factory class so that we don't
     // need to init here and pass along.
-    secrets = new Secrets(PortabilityFlags.secretsFile());
+    secrets = new Secrets("secrets.csv");
     cloudFactory = CloudFactoryFactory.getCloudFactory(PortabilityFlags.cloud(), secrets);
     serviceProviderRegistry = new ServiceProviderRegistry(secrets, cloudFactory);
     jobManager = new JobManager(cloudFactory.getPersistentKeyValueStore());

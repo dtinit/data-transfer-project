@@ -39,7 +39,7 @@ public class WorkerMain {
   public static void main(String[] args) throws Exception {
     PortabilityFlags.parseArgs(args);
     SupportedCloud cloud = PortabilityFlags.cloud();
-    Secrets secrets = new Secrets(PortabilityFlags.secretsFile());
+    Secrets secrets = new Secrets("secrets.csv");
 
     // Initialize all global objects
     PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();
