@@ -7,8 +7,28 @@ fi
 ENV=$1
 SETTINGS_FILE="config/$ENV/settings.yaml"
 
+# Parse settings file
+echo -e "\nParsing settings file $SETTINGS_FILE"
 if [[ ! -e ${SETTINGS_FILE} ]]; then
   echo "Invalid environment $ENV entered. No settings file found at $SETTINGS_FILE. Aborting."
+  exit 1
+fi
+PARSED_ALL_FLAGS=true
+FLAG_ENV=$(grep -o 'env: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+FLAG_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+if [[ -z ${FLAG_ENV} ]]; then
+  PARSED_ALL_FLAGS=false
+  echo "Could not parse setting 'env' in $SETTINGS_FILE"
+else
+  echo -e "FLAG_ENV: $FLAG_ENV"
+fi
+if [[ -z ${FLAG_CLOUD} ]]; then
+  PARSED_ALL_FLAGS=false
+  echo "Could not parse setting 'cloud' in $SETTINGS_FILE"
+else
+  echo -e "FLAG_CLOUD: $FLAG_CLOUD"
+fi
+if !(${PARSED_ALL_FLAGS}) ; then
   exit 1
 fi
 
@@ -45,10 +65,6 @@ echo -e "\nPackaging...\n"
 # TODO: Remove when spring is replaced
 mvn package -e spring-boot:repackage -pl portability-web
 
-# TODO: parse settings file
-FLAG_ENV="LOCAL"
-FLAG_CLOUD="GOOGLE"
-
 # Generate Dockerfile based on env/settings.yaml.
 # For now all flags will be passed to binary at run time via ENTRYPOINT but still in "image compile
 # time". In the future, should look into ways of compiling these settings into the binary itself
@@ -63,4 +79,3 @@ echo -e "\nGenerated Dockerfile:\n"
 cat Dockerfile
 
 # TODO: Build image with 'docker build'
-
