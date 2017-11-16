@@ -103,6 +103,13 @@ The following builds and run the web server on port 8080
 * mvn clean install
 * mvn -e spring-boot:run -pl portability-web
 
+### Building/Running Worker App
+ * Add a secrets_[environment].csv file to src/main/resources in portability-core and/or
+   in portability-worker, this should contain
+   all your API keys, see secrets_template.csv for an example.
+ * "mvn compile" will build the project.
+ * "mvn exec:java -pl portability-worker -Dexec.args="-cloud LOCAL -environment LOCAL"" will run the command line tool.
+
 ### Docker creation and testing
 
 Steps for packaging the application for docker.

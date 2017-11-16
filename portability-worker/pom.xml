@@ -13,9 +13,9 @@
         <java.version>1.8</java.version>
     </properties>
 
-    <artifactId>portability-web</artifactId>
+    <artifactId>portability-worker</artifactId>
     <packaging>jar</packaging>
-    <name>Portability Web Application</name>
+    <name>Portability Worker</name>
     <version>1.0-SNAPSHOT</version>
     <build>
         <resources>
@@ -39,62 +39,17 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.2.1</version>
                 <configuration>
-                        <mainClass>org.dataportabilityproject.PortabilityMain</mainClass>
+                        <mainClass>org.dataportabilityproject.worker.WorkerMain</mainClass>
                 </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.springframework.boot</groupId>
-              <artifactId>spring-boot-maven-plugin</artifactId>
-              <version>1.5.4.RELEASE</version>
-              <configuration>
-                <jvmArguments>
-                  -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005
-                </jvmArguments>
-                <mainClass>org.dataportabilityproject.webapp.PortabilityServer</mainClass>
-              </configuration>
             </plugin>
         </plugins>
     </build>
-    <repositories>
-      <repository>
-        <id>spring-releases</id>
-        <url>https://repo.spring.io/libs-release</url>
-      </repository>
-    </repositories>
-    <pluginRepositories>
-      <pluginRepository>
-        <id>spring-releases</id>
-        <url>https://repo.spring.io/libs-release</url>
-      </pluginRepository>
-    </pluginRepositories>
-    <dependencyManagement>
-         <dependencies>
-             <dependency>
-                 <!-- Import dependency management from Spring Boot -->
-                 <groupId>org.springframework.boot</groupId>
-                 <artifactId>spring-boot-dependencies</artifactId>
-                 <version>1.4.1.RELEASE</version>
-                 <type>pom</type>
-                 <scope>import</scope>
-             </dependency>
-         </dependencies>
-     </dependencyManagement>
     <dependencies>
         <!-- library module -->
         <dependency>
             <groupId>org.dataportabilityproject</groupId>
             <artifactId>portability-core</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <exclusions>
-              <exclusion>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>jetty-util</artifactId>
-              </exclusion>
-              <exclusion>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>servlet-api</artifactId>
-              </exclusion>
-          </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -185,34 +140,5 @@
             <version>2.2.4</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-          <groupId>com.jayway.jsonpath</groupId>
-          <artifactId>json-path</artifactId>
-          <scope>test</scope>
-        </dependency>
-
-      <!-- This is a web application -->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-      </dependency>
-
-      <!-- Tomcat embedded container-->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-tomcat</artifactId>
-        <scope>compile</scope>
-      </dependency>
-      <!-- JSON Web Token support -->
-      <dependency>
-        <groupId>com.auth0</groupId>
-        <artifactId>java-jwt</artifactId>
-        <version>3.2.0</version>
-      </dependency>
-      <!-- required for custom error page in spring -->
-      <dependency>
-        <groupId>org.apache.tomcat.embed</groupId>
-        <artifactId>tomcat-embed-jasper</artifactId>
-      </dependency>
     </dependencies>
 </project>

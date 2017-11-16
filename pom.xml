@@ -13,8 +13,9 @@
   <!-- subdirectories containing sub-projects -->
   <modules>
     <module>portability-core</module>
-    <module>portability-web</module>
     <module>portability-server</module>
+    <module>portability-web</module>
+    <module>portability-worker</module>
   </modules>
 
   <build>
