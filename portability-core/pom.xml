@@ -14,7 +14,6 @@
     </properties>
 
     <artifactId>portability-core</artifactId>
-    <packaging>jar</packaging>
     <name>Portability Core Library</name>
     <version>1.0-SNAPSHOT</version>
 

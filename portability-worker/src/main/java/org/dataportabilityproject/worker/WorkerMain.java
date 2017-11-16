@@ -16,17 +16,10 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import javax.annotation.Nullable;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
