@@ -77,7 +77,7 @@ public class ConfigureHandler implements HttpHandler {
         JobUtils.encodeId(newJob));
 
     // Lookup job, even if just recently created
-    PortabilityJob job = lookupJob(newJob.id());
+    PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobManager);
     Preconditions.checkState(job != null, "Job required");
 
     // TODO: Validate job before going further
@@ -106,15 +106,6 @@ public class ConfigureHandler implements HttpHandler {
     LogUtils.log("Redirecting to: %s", authFlowInitiator.authUrl());
     headers.set(HEADER_LOCATION, authFlowInitiator.authUrl());
     exchange.sendResponseHeaders(303, -1);
-  }
-
-  /**
-   * Looks up job and does checks that it exists.
-   */
-  private PortabilityJob lookupJob(String id) {
-    PortabilityJob job = jobManager.findExistingJob(id);
-    Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
-    return job;
   }
 
 }

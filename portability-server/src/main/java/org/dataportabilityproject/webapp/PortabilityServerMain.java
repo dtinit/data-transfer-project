@@ -7,17 +7,20 @@ import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
 import org.dataportabilityproject.shared.Secrets;
 
 public class PortabilityServerMain {
+
   private static Secrets secrets;
   private static CloudFactory cloudFactory;
   private static ServiceProviderRegistry serviceProviderRegistry;
   private static PortabilityJobFactory portabilityJobFactory;
   private static JobManager jobManager;
+  private static CryptoHelper cryptoHelper;
 
   public static void main(String args[]) throws Exception {
     PortabilityFlags.parseArgs(args);
@@ -30,18 +33,25 @@ public class PortabilityServerMain {
     serviceProviderRegistry = new ServiceProviderRegistry(secrets, cloudFactory);
     jobManager = new JobManager(cloudFactory.getPersistentKeyValueStore());
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
+    cryptoHelper = new CryptoHelper(new Crypter() {}); // TODO: Wire up the correct Crypter.
 
     // TODO: backlog and port should be command line args
     HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
+    // HttpServer does exact longest matching prefix for context matching. This means
+    // /_/listServices, /_/listServicesthisshouldnotwork and /_/listServices/path/to/resource will
+    // all be handled by the ListServicesHandler below. To prevent this, each handler below should
+    // validate the request URI that it is getting passed in.
     server.createContext("/_/listServices", new ListServicesHandler(serviceProviderRegistry));
     server.createContext("/_/listDataTypes", new ListDataTypesHandler(serviceProviderRegistry));
     server.createContext("/configure", new ConfigureHandler(serviceProviderRegistry,
         jobManager, portabilityJobFactory));
+    server.createContext("/callback/",
+        new Oauth2CallbackHandler(serviceProviderRegistry, jobManager, cryptoHelper));
 
     server.setExecutor(Executors.newCachedThreadPool());
     server.start();
 
-    System.out.println("Server is listening on port 8080" );
+    System.out.println("Server is listening on port 8080");
   }
 }

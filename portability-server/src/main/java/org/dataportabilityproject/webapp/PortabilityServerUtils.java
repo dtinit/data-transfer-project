@@ -1,10 +1,16 @@
 package org.dataportabilityproject.webapp;
 
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
+
+import com.google.common.base.Preconditions;
+import com.sun.net.httpserver.Headers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import com.sun.net.httpserver.HttpExchange;
+import java.net.HttpCookie;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +19,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
+import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.PortabilityJob;
 
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers
@@ -76,6 +84,32 @@ public class PortabilityServerUtils {
     }
 
     return requestParameters;
+  }
+
+  /**
+   * Returns a Map of HttpCookies provided from the headers.
+   */
+  public static Map<String, HttpCookie> getCookies(Headers headers) {
+    List<String> cookies = headers.get(HEADER_COOKIE);
+    Map<String, HttpCookie> cookieMap = new HashMap<>();
+
+    for (String cookieStr : cookies) {
+      for(HttpCookie httpCookie : HttpCookie.parse(cookieStr)) {
+        cookieMap.put(httpCookie.getName(), httpCookie);
+        LogUtils.log("Cookie name: %s, value: %s", httpCookie.getName(), httpCookie.getValue());
+      }
+    }
+
+    return cookieMap;
+  }
+
+  /**
+   * Looks up job and checks that it exists in the provided jobManager.
+   */
+  public static PortabilityJob lookupJob(String id, JobManager jobManager) {
+    PortabilityJob job = jobManager.findExistingJob(id);
+    Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
+    return job;
   }
 
   // TODO: figure out how to get the client to submit "clean" values
