@@ -22,6 +22,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -33,14 +34,12 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  * The {@link ServiceProvider} for the Flickr service (http://www.flickr.com/).
  */
 public final class FlickrServiceProvider implements ServiceProvider {
-    private final Secrets secrets;
-    private final FlickrAuth authProvider;
+    private final AppCredentials appCredentials;
+    private final FlickrAuth flickrAuth;
 
     public FlickrServiceProvider(Secrets secrets) {
-        this.secrets = secrets;
-        this.authProvider = new FlickrAuth(
-            secrets.get("FLICKR_API_KEY"),
-            secrets.get("FLICKR_SECRET"));
+        this.appCredentials = AppCredentials.create(secrets, "FLICKR_KEY", "FLICKR_SECRET");
+        this.flickrAuth = new FlickrAuth(appCredentials);
     }
 
     @Override public String getName() {
@@ -57,12 +56,12 @@ public final class FlickrServiceProvider implements ServiceProvider {
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return authProvider;
+        return flickrAuth;
     }
 
     @Override
     public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-        return authProvider;
+        return flickrAuth;
     }
 
 
@@ -91,10 +90,9 @@ public final class FlickrServiceProvider implements ServiceProvider {
     private synchronized FlickrPhotoService getInstanceOfService(
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
-        Auth auth = authProvider.getAuth(authData);
+        Auth auth = flickrAuth.getAuth(authData);
         return new FlickrPhotoService(
-                secrets.get("FLICKR_API_KEY"),
-                secrets.get("FLICKR_SECRET"),
+                appCredentials,
                 auth,
                 jobDataCache);
     }

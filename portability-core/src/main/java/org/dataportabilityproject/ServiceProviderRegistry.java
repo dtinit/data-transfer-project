@@ -28,7 +28,7 @@ import org.dataportabilityproject.serviceProviders.flickr.FlickrServiceProvider;
 import org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider;
 import org.dataportabilityproject.serviceProviders.instagram.InstagramServiceProvider;
 import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider;
-import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkProvider;
+import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkServiceProvider;
 import org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
@@ -51,7 +51,7 @@ public class ServiceProviderRegistry {
         addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
         addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
         addServiceProvider(new MicrosoftServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new RememberTheMilkProvider(secrets), providerBuilder);
+        addServiceProvider(new RememberTheMilkServiceProvider(secrets), providerBuilder);
         addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
         addServiceProvider(new SmugMugServiceProvider(secrets), providerBuilder);
 

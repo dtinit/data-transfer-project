@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.serviceProviders.microsoft;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects.JSON_FACTORY;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
@@ -31,6 +30,7 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
 import org.dataportabilityproject.PortabilityFlags;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -51,20 +51,18 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
     private static final String AUTHORIZATION_SERVER_URL = "https://login.live.com/oauth20_authorize.srf";
     private static final String TOKEN_SERVER_URL = "https://login.live.com/oauth20_token.srf";
 
-    private final String clientId;
-    private final String clientSecret;
+    private final AppCredentials appCredentials;
     private final List<String> scopes;
     
-    MicrosoftAuth(String clientId, String apiSecret, List<String> scopes) {
-        this.clientId = checkNotNull(clientId);
-        this.clientSecret = checkNotNull(apiSecret);
+    MicrosoftAuth(AppCredentials appCredentials, List<String> scopes) {
+        this.appCredentials = Preconditions.checkNotNull(appCredentials);
         Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
         this.scopes = scopes;
     }
     
     @Override
     public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
-        String url = createFlow(clientId, clientSecret, scopes)
+        String url = createFlow()
             .newAuthorizationUrl()
             .setRedirectUri(CALLBACK_URL)
             .setState(id) // TODO: Encrypt
@@ -77,7 +75,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
         throws IOException {
         Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for MS oauth flow");
         Preconditions.checkArgument(initialAuthData == null, "Earlier auth data not expected for MS oauth flow");
-        AuthorizationCodeFlow flow = createFlow(clientId, clientSecret, scopes);
+        AuthorizationCodeFlow flow = createFlow();
         TokenResponse response = flow
             .newTokenRequest(authCode)
             .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
@@ -111,8 +109,8 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
                 MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
                 JSON_FACTORY, // JsonFactory
                 new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
-                new ClientParametersAuthentication(clientId, clientSecret), // HttpExecuteInterceptor
-                clientId, // clientId
+                new ClientParametersAuthentication(appCredentials.key(), appCredentials.secret()), // HttpExecuteInterceptor
+                appCredentials.key(), // clientId
                 AUTHORIZATION_SERVER_URL) // encoded authUrl
             .setScopes(scopes) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
@@ -132,8 +130,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
    }
 
     /** Creates an AuthorizationCodeFlow for use in online and offline mode.*/
-    private static AuthorizationCodeFlow createFlow(String clientId, String clientSecret,
-        List<String> scopes)
+    private AuthorizationCodeFlow createFlow()
         throws IOException {
         // set up authorization code flow
         return new AuthorizationCodeFlow.Builder(
@@ -141,8 +138,9 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
             MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
             JSON_FACTORY, // JsonFactory
             new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
-            new ClientParametersAuthentication(clientId, clientSecret), // HttpExecuteInterceptor
-            clientId, // clientId
+            new ClientParametersAuthentication(appCredentials.key(),
+                appCredentials.secret()), // HttpExecuteInterceptor
+            appCredentials.key(), // clientId
             AUTHORIZATION_SERVER_URL) // encoded authUrl
             .setScopes(scopes) // scopes
             .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();

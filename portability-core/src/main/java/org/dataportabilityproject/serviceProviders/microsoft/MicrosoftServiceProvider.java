@@ -23,6 +23,7 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.serviceProviders.microsoft.calendar.MicrosoftCalendarService;
 import org.dataportabilityproject.serviceProviders.microsoft.mail.MicrosoftMailService;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -41,14 +42,15 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
         "wl.imap", // outlook export via IMAP
         "wl.offline_access", // provides for refresh tokens
         "wl.calendars", "wl.contacts_calendars"); // calendar export
-    private final MicrosoftAuth oauthProvider;
+    private final MicrosoftAuth microsoftAuth;
     private final OfflinePasswordAuthDataGenerator passwordAuth =
         new OfflinePasswordAuthDataGenerator();
 
     public MicrosoftServiceProvider(Secrets secrets) {
-        oauthProvider = new MicrosoftAuth(
-            secrets.get("MICROSOFT_APP_ID"),
-            secrets.get("MICROSOFT_SECRET"),
+        AppCredentials appCredentials =
+            AppCredentials.create(secrets, "MICROSOFT_KEY", "MICROSOFT_SECRET");
+        microsoftAuth = new MicrosoftAuth(
+            appCredentials,
             // TODO: only use scopes from the products we are accessing.
             SCOPES);
     }
@@ -71,7 +73,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
         switch (dataType) {
             case CALENDAR:
-                return oauthProvider;
+                return microsoftAuth;
             case MAIL:
                 return passwordAuth;
             default:
@@ -83,7 +85,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
         switch (dataType) {
             case CALENDAR:
-                return oauthProvider;
+                return microsoftAuth;
             case MAIL:
                 return new OnlinePasswordAuthDataGenerator();
             default:

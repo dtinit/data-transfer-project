@@ -39,14 +39,14 @@ import org.dataportabilityproject.shared.auth.SecretAuthData;
 /**
  * Generates a token using the flow described: https://www.rememberthemilk.com/services/api/authentication.rtm
  */
-public class TokenGenerator implements OfflineAuthDataGenerator {
+public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
     private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     private final RememberTheMilkSignatureGenerator signatureGenerator;
 
     private AuthElement authElement;
 
-    TokenGenerator(RememberTheMilkSignatureGenerator signatureGenerator) {
+    RememberTheMilkAuth(RememberTheMilkSignatureGenerator signatureGenerator) {
         this.signatureGenerator = signatureGenerator;
     }
 

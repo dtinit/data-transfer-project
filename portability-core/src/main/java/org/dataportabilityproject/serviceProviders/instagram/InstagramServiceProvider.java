@@ -21,13 +21,13 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.shared.auth.SecretAuthData;
 
 public final class InstagramServiceProvider implements ServiceProvider {
   private static final ImmutableList<String> SCOPES = ImmutableList.of(
@@ -35,10 +35,9 @@ public final class InstagramServiceProvider implements ServiceProvider {
   private final InstagramAuth instagramAuth;
 
   public InstagramServiceProvider(Secrets secrets) {
-    this.instagramAuth = new InstagramAuth(
-        secrets.get("INSTAGRAM_CLIENT_ID"),
-        secrets.get("INSTAGRAM_SECRET"),
-        SCOPES);
+    AppCredentials appCredentials =
+        AppCredentials.create(secrets, "INSTAGRAM_KEY", "INSTAGRAM_SECRET");
+    this.instagramAuth = new InstagramAuth(appCredentials, SCOPES);
   }
 
   @Override

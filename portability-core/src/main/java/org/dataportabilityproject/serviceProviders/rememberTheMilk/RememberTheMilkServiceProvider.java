@@ -21,6 +21,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -28,17 +29,17 @@ import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 
 /**
- * The {@link ServiceProvider} for the Rembmer the Milk service (https://www.rememberthemilk.com/).
+ * The {@link ServiceProvider} for the Remember the Milk service (https://www.rememberthemilk.com/).
  */
-public final class RememberTheMilkProvider implements ServiceProvider {
-    private final Secrets secrets;
-    private final TokenGenerator tokenGenerator;
+public final class RememberTheMilkServiceProvider implements ServiceProvider {
+    private final AppCredentials appCredentials;
+    private final RememberTheMilkAuth rememberTheMilkAuth;
 
-    public RememberTheMilkProvider(Secrets secrets) throws IOException {
-        this.secrets = secrets;
-        this.tokenGenerator = new TokenGenerator(new RememberTheMilkSignatureGenerator(
-            secrets.get("RTM_API_KEY"),
-            secrets.get("RTM_SECRET"),
+    public RememberTheMilkServiceProvider(Secrets secrets) throws IOException {
+        this.appCredentials = AppCredentials.create(secrets, "RTM_KEY", "RTM_SECRET");
+        this.rememberTheMilkAuth = new RememberTheMilkAuth(
+            new RememberTheMilkSignatureGenerator(
+            appCredentials,
             null
         ));
     }
@@ -59,7 +60,7 @@ public final class RememberTheMilkProvider implements ServiceProvider {
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return tokenGenerator;
+        return rememberTheMilkAuth;
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
@@ -84,9 +85,8 @@ public final class RememberTheMilkProvider implements ServiceProvider {
         AuthData authData, JobDataCache jobDataCache)
             throws IOException {
             RememberTheMilkSignatureGenerator signer = new RememberTheMilkSignatureGenerator(
-                secrets.get("RTM_API_KEY"),
-                secrets.get("RTM_SECRET"),
-                tokenGenerator.getToken(authData));
+                appCredentials,
+                rememberTheMilkAuth.getToken(authData));
 
         return new RememberTheMilkTaskService(signer, jobDataCache);
     }

@@ -30,26 +30,26 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  * A service provider that supports importing and export different data types.
  */
 public interface ServiceProvider {
-  String getName();
+    String getName();
 
-  ImmutableList<PortableDataType> getExportTypes();
+    ImmutableList<PortableDataType> getExportTypes();
 
-  ImmutableList<PortableDataType> getImportTypes();
+    ImmutableList<PortableDataType> getImportTypes();
 
-  OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType);
+    OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType);
 
-  default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-    System.out.println("WARNING: getOnlineAuthDataGenerator not implemented for type: "
-        + dataType + ", service: " + getName());
-    return null;
-  }
+    default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+        System.out.println("WARNING: getOnlineAuthDataGenerator not implemented for type: "
+            + dataType + ", service: " + getName());
+        return null;
+    }
 
-  Exporter<? extends DataModel> getExporter(
-      PortableDataType type,
-      AuthData authData,
-      JobDataCache jobDataCache) throws IOException;
-  Importer<? extends DataModel> getImporter(
-      PortableDataType type,
-      AuthData authData,
-      JobDataCache jobDataCache) throws IOException;
+    Exporter<? extends DataModel> getExporter(
+        PortableDataType type,
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException;
+    Importer<? extends DataModel> getImporter(
+        PortableDataType type,
+        AuthData authData,
+        JobDataCache jobDataCache) throws IOException;
 }

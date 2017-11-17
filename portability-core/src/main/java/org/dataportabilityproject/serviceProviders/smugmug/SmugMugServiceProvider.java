@@ -22,6 +22,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -32,12 +33,12 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  * The {@link ServiceProvider} for the SmugMub service (https://www.smugmug.com/).
  */
 public final class SmugMugServiceProvider implements ServiceProvider {
-    private final SmugMugAuth auth;
+    private final SmugMugAuth smugMugAuth;
 
-    public SmugMugServiceProvider(Secrets secrets)
-            throws IOException {
-        this.auth = new SmugMugAuth(secrets.get("SMUGMUG_API_KEY"),
-            secrets.get("SMUGMUG_SECRET"));
+    public SmugMugServiceProvider(Secrets secrets) {
+        AppCredentials appCredentials =
+            AppCredentials.create(secrets, "SMUGMUG_KEY", "SMUGMUG_SECRET");
+        this.smugMugAuth = new SmugMugAuth(appCredentials);
     }
 
     @Override public String getName() {
@@ -54,7 +55,7 @@ public final class SmugMugServiceProvider implements ServiceProvider {
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return auth;
+        return smugMugAuth;
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
@@ -78,7 +79,7 @@ public final class SmugMugServiceProvider implements ServiceProvider {
     private synchronized SmugMugPhotoService getInstanceOfService(
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
-        OAuthConsumer consumer = auth.generateConsumer(authData);
+        OAuthConsumer consumer = smugMugAuth.generateConsumer(authData);
         return new SmugMugPhotoService(
             consumer,
             jobDataCache);

@@ -28,6 +28,7 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.PortabilityFlags;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -40,8 +41,9 @@ import org.scribe.model.Verifier;
 final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   private final Flickr flickr;
 
-  FlickrAuth(String apiKey, String apiSecret) {
-    this.flickr = new Flickr(apiKey, apiSecret, new REST());
+  FlickrAuth(AppCredentials appCredentials) {
+    Preconditions.checkNotNull(appCredentials);
+    this.flickr = new Flickr(appCredentials.key(), appCredentials.secret(), new REST());
   }
 
   @Override

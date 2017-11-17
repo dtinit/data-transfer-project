@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import org.dataportabilityproject.PortabilityFlags;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -50,13 +51,11 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   private static final String AUTHORIZATION_SERVER_URL = "https://api.instagram.com/oauth/authorize";
   private static final String TOKEN_SERVER_URL = "https://api.instagram.com/oauth/access_token";
 
-  private final String clientId;
-  private final String clientSecret;
+  private final AppCredentials appCredentials;
   private final List<String> scopes;
 
-  InstagramAuth(String clientId, String clientSecret, List<String> scopes) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+  InstagramAuth(AppCredentials appCredentials, List<String> scopes) {
+    this.appCredentials = Preconditions.checkNotNull(appCredentials);
     Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
     this.scopes = scopes;
   }
@@ -68,10 +67,8 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
           getTransport(),
           JSON_FACTORY,
           new GenericUrl("https://api.instagram.com/oauth/access_token"), // GenericUrl
-          new ClientParametersAuthentication(
-              clientId,
-              clientSecret),
-          clientId, // clientId
+          new ClientParametersAuthentication(appCredentials.key(), appCredentials.secret()),
+          appCredentials.key(), // clientId
           "https://api.instagram.com/oauth/authorize/") // encoded authUrl
           .setScopes(ImmutableList.of("basic", "public_content")) // scopes
           .build();
@@ -97,7 +94,7 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
 
   @Override
   public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
-    String url = createFlow(clientId, clientSecret, scopes)
+    String url = createFlow()
         .newAuthorizationUrl()
         .setRedirectUri(CALLBACK_URL)
         .setState(id) // TODO: Encrypt
@@ -110,7 +107,7 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
       String extra) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for Instagram oauth flow");
     Preconditions.checkArgument(initialAuthData == null, "Earlier auth data not expected for Instagram oauth flow");
-    AuthorizationCodeFlow flow = createFlow(clientId, clientSecret, scopes);
+    AuthorizationCodeFlow flow = createFlow();
     TokenResponse response = flow
         .newTokenRequest(authCode)
         .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
@@ -128,17 +125,16 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   }
 
   /** Creates an AuthorizationCodeFlow for use in online and offline mode.*/
-  private static AuthorizationCodeFlow createFlow(String clientId, String clientSecret,
-      List<String> scopes)
-      throws IOException {
+  private AuthorizationCodeFlow createFlow() throws IOException {
     // set up authorization code flow
     return new AuthorizationCodeFlow.Builder(
         BearerToken.authorizationHeaderAccessMethod(), // Access Method
         InstagramStaticObjects.getHttpTransport(), // HttpTransport
         JSON_FACTORY, // JsonFactory
         new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
-        new ClientParametersAuthentication(clientId, clientSecret), // HttpExecuteInterceptor
-        clientId, // clientId
+        new ClientParametersAuthentication(appCredentials.key(),
+            appCredentials.secret()), // HttpExecuteInterceptor
+        appCredentials.key(), // clientId
         AUTHORIZATION_SERVER_URL) // encoded authUrl
         .setScopes(scopes) // scopes
         .setDataStoreFactory(InstagramStaticObjects.getDataStoreFactory()).build();

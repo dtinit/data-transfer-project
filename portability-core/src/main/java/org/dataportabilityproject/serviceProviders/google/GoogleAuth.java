@@ -16,7 +16,6 @@
 package org.dataportabilityproject.serviceProviders.google;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects.JSON_FACTORY;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
@@ -32,6 +31,7 @@ import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.PortabilityFlags;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -41,7 +41,7 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 /**
  * A generator of Google {@link Credential}
  */
-class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
+class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   /** Port in the "Callback URL". */
   private static final int PORT = 8080;
   private static final String CALLBACK_URL = PortabilityFlags.baseApiUrl() + "/callback/google";
@@ -49,13 +49,11 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   /** Domain name in the "Callback URL". */
   private static final String DOMAIN = "127.0.0.1";
 
-  private final String clientId;
-  private final String apiSecret;
+  private final AppCredentials appCredentials;
   private final List<String> scopes;
 
-  CredentialGenerator(String clientId, String apiSecret, List<String> scopes) {
-      this.clientId = checkNotNull(clientId);
-      this.apiSecret = checkNotNull(apiSecret);
+  GoogleAuth(AppCredentials appCredentials, List<String> scopes) {
+      this.appCredentials = Preconditions.checkNotNull(appCredentials);
       Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
       this.scopes = scopes;
   }
@@ -68,7 +66,7 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
 
   @Override
   public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
-    String url = createFlow(clientId, apiSecret, scopes)
+    String url = createFlow()
         .newAuthorizationUrl()
         .setRedirectUri(CALLBACK_URL)
         .setState(id) // TODO: Encrypt
@@ -77,9 +75,11 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id, @Nullable AuthData initialAuthData, @Nullable String extra) throws IOException {
-    Preconditions.checkState(initialAuthData == null, "Earlier auth data not expected for Google flow");
-    AuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
+  public AuthData generateAuthData(String authCode, String id, @Nullable AuthData initialAuthData,
+      @Nullable String extra) throws IOException {
+    Preconditions.checkState(initialAuthData == null,
+        "Earlier auth data not expected for Google flow");
+    AuthorizationCodeFlow flow = createFlow();
     TokenResponse response = flow
         .newTokenRequest(authCode)
         .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
@@ -102,7 +102,8 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
     return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
         .setTransport(GoogleStaticObjects.getHttpTransport())
         .setJsonFactory(JSON_FACTORY)
-        .setClientAuthentication(new ClientParametersAuthentication(clientId, apiSecret))
+        .setClientAuthentication(new ClientParametersAuthentication(appCredentials.key(),
+            appCredentials.secret()))
         .setTokenServerEncodedUrl(tokenData.tokenServerEncodedUrl())
         .build()
         .setAccessToken(tokenData.accessToken())
@@ -119,7 +120,7 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
 
   private Credential authorize() throws IOException {
     // set up authorization code flow
-    GoogleAuthorizationCodeFlow flow = createFlow(clientId, apiSecret, scopes);
+    GoogleAuthorizationCodeFlow flow = createFlow();
 
     // authorize
     LocalServerReceiver receiver = new LocalServerReceiver.Builder()
@@ -130,11 +131,14 @@ class CredentialGenerator implements OfflineAuthDataGenerator, OnlineAuthDataGen
   }
 
   /** Creates an AuthorizationCodeFlow for use in online and offline mode.*/
-  private static GoogleAuthorizationCodeFlow createFlow(String clientId, String secret,
-      List<String> scopes)
+  private GoogleAuthorizationCodeFlow createFlow()
       throws IOException {
     return new GoogleAuthorizationCodeFlow.Builder(
-        GoogleStaticObjects.getHttpTransport(), JSON_FACTORY, clientId, secret, scopes)
+        GoogleStaticObjects.getHttpTransport(),
+        JSON_FACTORY,
+        appCredentials.key(),
+        appCredentials.secret(),
+        scopes)
         .setAccessType("offline")
         .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
         .setApprovalPrompt("force")

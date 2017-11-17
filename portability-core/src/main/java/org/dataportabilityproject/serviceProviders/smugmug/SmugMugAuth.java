@@ -17,6 +17,7 @@ package org.dataportabilityproject.serviceProviders.smugmug;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import oauth.signpost.OAuth;
 import oauth.signpost.OAuthConsumer;
@@ -26,6 +27,7 @@ import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -33,12 +35,10 @@ import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
 import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
 
 final class SmugMugAuth implements OfflineAuthDataGenerator {
-  private final String clientId;
-  private final String clientSecret;
+  private final AppCredentials appCredentials;
 
-  SmugMugAuth(String clientId, String clientSecret) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+  SmugMugAuth(AppCredentials appCredentials) {
+    this.appCredentials = Preconditions.checkNotNull(appCredentials);
   }
 
   @Override
@@ -46,7 +46,7 @@ final class SmugMugAuth implements OfflineAuthDataGenerator {
     // As per details: https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
     // and example: http://stackoverflow.com/questions/15194182/examples-for-oauth1-using-google-api-java-oauth
     // Google library puts signature in header and not in request, see https://oauth.net/1/
-    OAuthConsumer consumer = new GoogleOAuthConsumer(clientId, clientSecret);
+    OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
 
     OAuthProvider provider = new DefaultOAuthProvider(
         "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken",
@@ -82,7 +82,7 @@ final class SmugMugAuth implements OfflineAuthDataGenerator {
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenSecretAuthData = (TokenSecretAuthData) authData;
-    OAuthConsumer consumer = new GoogleOAuthConsumer(clientId, clientSecret);
+    OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
     consumer.setTokenWithSecret(tokenSecretAuthData.token(), tokenSecretAuthData.secret());
     return consumer;
   }

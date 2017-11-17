@@ -15,18 +15,19 @@
  */
 package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 
-import org.junit.Test;
-
-import java.net.URL;
-
 import static com.google.common.truth.Truth.assertThat;
 
+import java.net.URL;
+import org.dataportabilityproject.shared.AppCredentials;
+import org.junit.Test;
+
 public class RememberTheMilkSignatureGeneratorTest {
-    private static final String KEY = "BANANAS1";
-    private static final String SECRET = "BANANAS2";
+    private static final AppCredentials APP_CREDENTIALS =
+        AppCredentials.create("BANANAS1", "BANANAS2");
     private static final String TOKEN = "BANANAS3";
 
-    private final RememberTheMilkSignatureGenerator signatureGenerator = new RememberTheMilkSignatureGenerator(KEY, SECRET, TOKEN);
+    private final RememberTheMilkSignatureGenerator signatureGenerator =
+        new RememberTheMilkSignatureGenerator(APP_CREDENTIALS, TOKEN);
 
     @Test
     public void signatureTest() throws Exception {

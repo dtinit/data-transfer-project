@@ -36,6 +36,7 @@ import org.dataportabilityproject.serviceProviders.google.calendar.GoogleCalenda
 import org.dataportabilityproject.serviceProviders.google.mail.GoogleMailService;
 import org.dataportabilityproject.serviceProviders.google.piccasa.GooglePhotosService;
 import org.dataportabilityproject.serviceProviders.google.tasks.GoogleTaskService;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -47,19 +48,21 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  * The {@link ServiceProvider} for Google (http://www.google.com/).
  */
 public final class GoogleServiceProvider implements ServiceProvider {
-    private final static  List<String> SCOPES = Arrays.asList(TasksScopes.TASKS,
-            "https://picasaweb.google.com/data/",
-            CalendarScopes.CALENDAR,
-            GmailScopes.GMAIL_READONLY,
-            GmailScopes.GMAIL_MODIFY,
-            GmailScopes.GMAIL_LABELS);
+    private final static  List<String> SCOPES = Arrays.asList(
+        TasksScopes.TASKS,
+        "https://picasaweb.google.com/data/",
+        CalendarScopes.CALENDAR,
+        GmailScopes.GMAIL_READONLY,
+        GmailScopes.GMAIL_MODIFY,
+        GmailScopes.GMAIL_LABELS);
 
-    private final CredentialGenerator credentialGenerator;
+    private final GoogleAuth googleAuth;
 
     public GoogleServiceProvider(Secrets secrets) throws Exception {
-         this.credentialGenerator = new CredentialGenerator(
-                secrets.get("GOOGLE_CLIENT_ID"),
-                secrets.get("GOOGLE_SECRET"),
+        AppCredentials appCredentials =
+            AppCredentials.create(secrets, "GOOGLE_KEY", "GOOGLE_SECRET");
+        this.googleAuth = new GoogleAuth(
+                appCredentials,
                 // TODO: only use scopes from the products we are accessing.
                 SCOPES);
     }
@@ -81,12 +84,12 @@ public final class GoogleServiceProvider implements ServiceProvider {
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return credentialGenerator;
+        return googleAuth;
     }
 
     @Override
     public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-        return credentialGenerator;
+        return googleAuth;
     }
 
     @Override
@@ -95,7 +98,7 @@ public final class GoogleServiceProvider implements ServiceProvider {
         AuthData authData,
         JobDataCache jobDataCache)
             throws IOException {
-        Credential cred = credentialGenerator.getCredential(authData);
+        Credential cred = googleAuth.getCredential(authData);
         if (!cred.refreshToken()) {
             throw new IOException("Couldn't refresh token");
         }
@@ -118,7 +121,7 @@ public final class GoogleServiceProvider implements ServiceProvider {
         PortableDataType type,
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
-        Credential cred = credentialGenerator.getCredential(authData);
+        Credential cred = googleAuth.getCredential(authData);
         if (!cred.refreshToken()) {
             throw new IOException("Couldn't refresh token");
         }

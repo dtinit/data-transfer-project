@@ -53,6 +53,7 @@ import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
+import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
 public class FlickrPhotoService implements
@@ -72,9 +73,9 @@ public class FlickrPhotoService implements
     private Auth auth;
     private final JobDataCache jobDataCache;
 
-    FlickrPhotoService(String apiKey, String apiSecret, Auth auth,
+    FlickrPhotoService(AppCredentials appCredentials, Auth auth,
         JobDataCache jobDataCache) throws IOException {
-        this.flickr = new Flickr(apiKey, apiSecret, new REST());
+        this.flickr = new Flickr(appCredentials.key(), appCredentials.secret(), new REST());
         this.photosetsInterface = flickr.getPhotosetsInterface();
         this.photosInterface = flickr.getPhotosInterface();
         this.uploader = flickr.getUploader();

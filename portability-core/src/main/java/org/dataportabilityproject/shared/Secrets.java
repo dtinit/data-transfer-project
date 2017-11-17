@@ -17,24 +17,23 @@ package org.dataportabilityproject.shared;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.List;
 
 /**
  * Holds Api keys and secrets for the various services.
  */
 public final class Secrets {
+    // Base url for all calls within the application
+    private static final String BASE_URL_NAME = "BASE_URL";
+    // Base url for direct to api calls within the application
+    private static final String BASE_API_URL_NAME = "BASE_API_URL";
+
     private final ImmutableMap<String, String> secrets;
 
     public Secrets(String filePath) throws IOException {
@@ -51,6 +50,10 @@ public final class Secrets {
             }
         }
         this.secrets = builder.build();
+        Preconditions.checkNotNull(secrets.get(BASE_URL_NAME),
+            "Invalid secrets file, must specify " + BASE_URL_NAME);
+        Preconditions.checkNotNull(secrets.get(BASE_API_URL_NAME),
+            "Invalid secrets file, must specify " + BASE_API_URL_NAME);
     }
 
     public String get(String key) {

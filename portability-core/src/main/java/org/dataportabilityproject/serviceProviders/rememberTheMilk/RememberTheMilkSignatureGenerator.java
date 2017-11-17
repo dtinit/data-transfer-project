@@ -17,9 +17,7 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -31,21 +29,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.dataportabilityproject.shared.AppCredentials;
 
 /**
  * Generates signatures hash based on the algorithm described:
  * https://www.rememberthemilk.com/services/api/authentication.rtm
  */
 final class RememberTheMilkSignatureGenerator {
-    private final String secret;
-    private final String apiKey;
+    private final AppCredentials appCredentials;
     private final String authToken;
 
-    RememberTheMilkSignatureGenerator(String apiKey, String secret, @Nullable String authToken) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(apiKey), "apiKey can't be null");
-        this.apiKey = apiKey;
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(secret), "secret can't be null");
-        this.secret = secret;
+    RememberTheMilkSignatureGenerator(AppCredentials appCredentials, @Nullable String authToken) {
+        this.appCredentials = Preconditions.checkNotNull(appCredentials);
         this.authToken = authToken;
     }
 
@@ -55,6 +50,10 @@ final class RememberTheMilkSignatureGenerator {
             .trimResults()
             .withKeyValueSeparator("=")
             .split(query));
+
+        String apiKey = appCredentials.key();
+        String secret = appCredentials.secret();
+
         map.put("api_key", apiKey);
         if (null != authToken) {
             map.put("auth_token", authToken);
