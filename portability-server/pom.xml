@@ -31,7 +31,7 @@
       <version>1.0.4</version>
     </dependency>
 
-    <!-- for URL library -->
+    <!-- For URL library -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>

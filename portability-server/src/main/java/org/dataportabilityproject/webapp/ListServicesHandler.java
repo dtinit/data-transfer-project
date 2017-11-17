@@ -33,13 +33,13 @@ public class ListServicesHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityServerUtils.ValidateRequest(exchange, HttpMethods.GET, "/_/listServices"));
+        PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/_/listServices"));
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();
     headers.set(HEADER_CONTENT_TYPE, "application/json; charset="+ StandardCharsets.UTF_8.name());
 
-    String dataTypeParam = PortabilityServerUtils.GetRequestParams(exchange).get(JsonKeys.DATA_TYPE);
+    String dataTypeParam = PortabilityServerUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
 
     JsonObject response = generateGetResponse(dataTypeParam);

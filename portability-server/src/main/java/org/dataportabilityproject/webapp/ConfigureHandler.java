@@ -23,13 +23,14 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  * HttpHandler for the Configure service
  */
 public class ConfigureHandler implements HttpHandler {
+
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobManager jobManager;
   private final PortabilityJobFactory jobFactory;
 
   public ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
-                          JobManager jobManager,
-                          PortabilityJobFactory jobFactory) {
+      JobManager jobManager,
+      PortabilityJobFactory jobFactory) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobManager = jobManager;
     this.jobFactory = jobFactory;
@@ -37,18 +38,19 @@ public class ConfigureHandler implements HttpHandler {
 
   /**
    * Given a set of job configuration parameters, this will create a new job and kick off auth flows
-   * for the specified configuration.
-   * TODO: Determine what to do if previous job exists in the session instead of creating a new job
-   * every time.
-   * TODO: Preconditions doesn't return an error code or page. So if a page is requested with
-   * invalid params or incorrect method, no error is present and the response is empty.
+   * for the specified configuration. TODO: Determine what to do if previous job exists in the
+   * session instead of creating a new job every time. TODO: Preconditions doesn't return an error
+   * code or page. So if a page is requested with invalid params or incorrect method, no error is
+   * present and the response is empty.
    */
-  public void  handle(HttpExchange exchange) throws IOException {
-   Preconditions.checkArgument(
-       PortabilityServerUtils.ValidateRequest(exchange, HttpMethods.POST, "/configure"),
-       "/configure only supports POST.");
+  public void handle(HttpExchange exchange) throws IOException {
+    Preconditions.checkArgument(
+        PortabilityServerUtils.validateRequest(exchange, HttpMethods.POST, "/configure"),
+        "/configure only supports POST.");
 
-    Map<String, String> requestParameters = PortabilityServerUtils.GetRequestParams(exchange);
+    Map<String, String> requestParameters = PortabilityServerUtils.getRequestParams(exchange);
+    requestParameters.putAll(PortabilityServerUtils.getPostParams(exchange));
+
     Headers headers = exchange.getResponseHeaders();
 
     String dataTypeStr = requestParameters.get(JsonKeys.DATA_TYPE);
@@ -71,7 +73,8 @@ public class ConfigureHandler implements HttpHandler {
     // Set new cookie
     HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
     headers.add(HEADER_SET_COOKIE, cookie.toString());
-    LogUtils.log("Set new cookie with key: %s, value: %s", JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
+    LogUtils.log("Set new cookie with key: %s, value: %s", JsonKeys.ID_COOKIE_KEY,
+        JobUtils.encodeId(newJob));
 
     // Lookup job, even if just recently created
     PortabilityJob job = lookupJob(newJob.id());
@@ -87,8 +90,9 @@ public class ConfigureHandler implements HttpHandler {
 
     // Auth authUrl
     AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(newJob));
-    Preconditions.checkNotNull(authFlowInitiator,"AuthFlowInitiator not found for type: %s, service: %s",
-        dataType, job.exportService());
+    Preconditions
+        .checkNotNull(authFlowInitiator, "AuthFlowInitiator not found for type: %s, service: %s",
+            dataType, job.exportService());
 
     // Store initial auth data
     if (authFlowInitiator.initialAuthData() != null) {
@@ -112,4 +116,5 @@ public class ConfigureHandler implements HttpHandler {
     Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
     return job;
   }
+
 }
