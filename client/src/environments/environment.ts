@@ -21,5 +21,5 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000/_/',
-  apiPostUrl: 'http://localhost:8080/'
+  apiPostUrl: 'http://localhost:8080'
 };
