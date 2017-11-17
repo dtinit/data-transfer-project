@@ -40,8 +40,7 @@ public class PortabilityConfiguration {
 
   @Bean
   public CloudFactory getCloudFactory(Secrets secrets) {
-    // TODO: add a flag to be able to switch this.
-    SupportedCloud cloud = SupportedCloud.GOOGLE;
+    SupportedCloud cloud = PortabilityFlags.cloud();
     return CloudFactoryFactory.getCloudFactory(cloud, secrets);
   }
 
