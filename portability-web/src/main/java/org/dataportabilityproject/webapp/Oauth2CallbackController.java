@@ -20,11 +20,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,9 +105,9 @@ public class Oauth2CallbackController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/next");  // TODO: parameterize
+      response.sendRedirect(Secrets.getInstance().baseUrl() + "/next");  // TODO: parameterize
     } else {
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/copy");
+      response.sendRedirect(Secrets.getInstance().baseUrl() + "/copy");
     }
   }
 

@@ -27,9 +27,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import javax.annotation.Nullable;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -77,7 +77,8 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   @Override // online case
   public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
     AuthInterface authInterface = flickr.getAuthInterface();
-    Token token = authInterface.getRequestToken(PortabilityFlags.baseApiUrl() + "/callback1/flickr");
+    Token token = authInterface.getRequestToken(
+        Secrets.getInstance().baseApiUrl() + "/callback1/flickr");
     String url = authInterface.getAuthorizationUrl(token, Permission.WRITE);
     return AuthFlowInitiator.create(url, toAuthData(token));
   }

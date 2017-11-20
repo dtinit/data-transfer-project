@@ -22,6 +22,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers

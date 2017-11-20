@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.webapp;
+package org.dataportabilityproject.shared;
 
 /** Utility methods for logging. */
 public class LogUtils {
 
   // TODO: Replace with logging framework
-  public static void log (String fmt, Object... args) {
+  public static void log(String fmt, Object... args) {
     System.out.println(String.format(fmt, args));
   }
 }

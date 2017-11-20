@@ -20,27 +20,26 @@ import java.util.Map;
 import org.dataportabilityproject.cloud.google.GoogleCloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
-import org.dataportabilityproject.shared.Secrets;
 
 public final class CloudFactoryFactory {
   private static Map<SupportedCloud, CloudFactory> cachedFactories = new HashMap<>();
 
-  public static synchronized  CloudFactory getCloudFactory(SupportedCloud cloud, Secrets secrets) {
+  public static synchronized CloudFactory getCloudFactory(SupportedCloud cloud) {
     if (cachedFactories.containsKey(cloud)) {
       return cachedFactories.get(cloud);
     }
 
-    CloudFactory factory = create(cloud, secrets);
+    CloudFactory factory = create(cloud);
     cachedFactories.put(cloud, factory);
     return factory;
   }
 
-  private static CloudFactory create(SupportedCloud cloud, Secrets secrets) {
+  private static CloudFactory create(SupportedCloud cloud) {
     switch (cloud) {
       case LOCAL:
         return new LocalCloudFactory();
       case GOOGLE:
-        return new GoogleCloudFactory(secrets);
+        return new GoogleCloudFactory();
       default:
         throw new IllegalArgumentException("Don't know how to create cloud: " + cloud);
     }

@@ -15,6 +15,7 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobFactory;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;

@@ -12,6 +12,7 @@ import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 
 /**

@@ -23,7 +23,6 @@ import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 public class PortabilityMain {
@@ -31,9 +30,8 @@ public class PortabilityMain {
     private static CloudFactory cloudFactory = new LocalCloudFactory();
 
     public static void main(String[] args) throws Exception {
-        PortabilityFlags.parseArgs(args);
-        Secrets secrets = new Secrets("secrets.csv");
-        ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
+        PortabilityFlags.parse(args);
+        ServiceProviderRegistry registry = new ServiceProviderRegistry(cloudFactory);
 
         PortableDataType type = IO_INTERFACE.ask(
                 "What data type would you like to export",

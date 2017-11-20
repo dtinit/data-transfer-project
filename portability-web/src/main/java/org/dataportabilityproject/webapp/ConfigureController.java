@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.webapp;
 
-import com.google.api.client.json.Json;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.servlet.http.Cookie;
@@ -23,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.PortabilityJobFactory;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;

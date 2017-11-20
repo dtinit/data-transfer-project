@@ -25,7 +25,6 @@ import org.dataportabilityproject.serviceProviders.microsoft.calendar.MicrosoftC
 import org.dataportabilityproject.serviceProviders.microsoft.mail.MicrosoftMailService;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -46,9 +45,9 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     private final OfflinePasswordAuthDataGenerator passwordAuth =
         new OfflinePasswordAuthDataGenerator();
 
-    public MicrosoftServiceProvider(Secrets secrets) {
+    public MicrosoftServiceProvider() {
         AppCredentials appCredentials =
-            AppCredentials.create(secrets, "MICROSOFT_KEY", "MICROSOFT_SECRET");
+            AppCredentials.createFromSecrets("MICROSOFT_KEY", "MICROSOFT_SECRET");
         microsoftAuth = new MicrosoftAuth(
             appCredentials,
             // TODO: only use scopes from the products we are accessing.

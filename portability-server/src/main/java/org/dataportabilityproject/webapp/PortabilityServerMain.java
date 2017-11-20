@@ -11,11 +11,8 @@ import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
-import org.dataportabilityproject.shared.Secrets;
 
 public class PortabilityServerMain {
-
-  private static Secrets secrets;
   private static CloudFactory cloudFactory;
   private static ServiceProviderRegistry serviceProviderRegistry;
   private static PortabilityJobFactory portabilityJobFactory;
@@ -23,14 +20,13 @@ public class PortabilityServerMain {
   private static CryptoHelper cryptoHelper;
 
   public static void main(String args[]) throws Exception {
-    PortabilityFlags.parseArgs(args);
+    PortabilityFlags.parse(args);
 
     // TODO: use Config.java from core library for the initialization stuff
     // Can probably make serviceProviderRegistry a singleton/factory class so that we don't
-    // need to init here and pass along.
-    secrets = new Secrets("secrets.csv");
-    cloudFactory = CloudFactoryFactory.getCloudFactory(PortabilityFlags.cloud(), secrets);
-    serviceProviderRegistry = new ServiceProviderRegistry(secrets, cloudFactory);
+    // need to initFlagsAndSecrets here and pass along.
+    cloudFactory = CloudFactoryFactory.getCloudFactory(PortabilityFlags.cloud());
+    serviceProviderRegistry = new ServiceProviderRegistry(cloudFactory);
     jobManager = new JobManager(cloudFactory.getPersistentKeyValueStore());
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
     // TODO: Wire up the correct Crypter.

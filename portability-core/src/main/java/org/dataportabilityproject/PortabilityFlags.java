@@ -2,6 +2,7 @@ package org.dataportabilityproject;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -28,7 +29,7 @@ public class PortabilityFlags {
   }
 
   /** Parse arguments and initialize the PortabilityFlags global configuration parameters. */
-  public static void parseArgs(String[] args) {
+  public static void parse(String[] args) {
     // create Options object
     Options options = new Options();
     // TODO set & get "cloud" and "environment" from annotation on flag in PortabilityFlags
@@ -39,7 +40,7 @@ public class PortabilityFlags {
     try {
       cmd = parser.parse(options, args);
     } catch (ParseException e) {
-      System.out.println("Unable to parse commandline args: " + e);
+      System.out.println("Fatal: Unable to parse commandline args: " + e);
       System.exit(1);
     }
     String cloud = cmd.getOptionValue("cloud");
@@ -98,39 +99,5 @@ public class PortabilityFlags {
   // TODO move to annotation on flag variable
   public static String environmentFlagDesc() {
     return "The deployment environment. One of LOCAL, TEST, QA, or PROD.";
-  }
-
-  /**
-   * Base url for all calls within the application.
-   *
-   * TODO: Parse this from secrets.csv.
-   */
-  public static String baseUrl() {
-    switch (environment()) {
-      case TEST:
-        return "https://gardenswithoutwalls-test.net";
-      case LOCAL:
-        return "http://localhost:3000";
-      default:
-        throw new UnsupportedOperationException(
-            "Environment " + environment() + " not implemented yet");
-    }
-  }
-
-  /**
-   * Base url for direct to api calls within the application.
-   *
-   * TODO: Parse this from secrets.csv.
-   */
-  public static String baseApiUrl() {
-    switch (environment()) {
-      case TEST:
-        return "https://gardenswithoutwalls-test.net";
-      case LOCAL:
-        return "http://localhost:8080";
-      default:
-        throw new UnsupportedOperationException(
-            "Environment " + environment() + " not implemented yet");
-    }
   }
 }

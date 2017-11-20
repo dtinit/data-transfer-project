@@ -28,7 +28,6 @@ import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.job.UUIDProvider;
-import org.dataportabilityproject.shared.Secrets;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,9 +38,9 @@ public class PortabilityConfiguration {
   private static final String SECRET = "DO NOT USE IN PRODUCTION";
 
   @Bean
-  public CloudFactory getCloudFactory(Secrets secrets) {
+  public CloudFactory getCloudFactory() {
     SupportedCloud cloud = PortabilityFlags.cloud();
-    return CloudFactoryFactory.getCloudFactory(cloud, secrets);
+    return CloudFactoryFactory.getCloudFactory(cloud);
   }
 
   @Bean
@@ -61,7 +60,7 @@ public class PortabilityConfiguration {
 
   @Bean
   public JobManager getJobManager() {
-    return new JobManager(getStorage(getCloudFactory(getSecrets())));
+    return new JobManager(getStorage(getCloudFactory()));
   }
 
   @Bean
@@ -76,20 +75,9 @@ public class PortabilityConfiguration {
 
     /** Provides a global singleton instance of the {@link} ServiceProviderRegistry}. */
   @Bean
-  public ServiceProviderRegistry getServiceProviderRegistry(
-      CloudFactory cloudFactory, Secrets secrets) {
+  public ServiceProviderRegistry getServiceProviderRegistry(CloudFactory cloudFactory) {
     try {
-      return new ServiceProviderRegistry(secrets, cloudFactory);
-    } catch (Exception e) {
-      throw new ExceptionInInitializerError(e);
-    }
-  }
-
-  /** Provide file-backed implementation of secrets. */
-  @Bean
-  public Secrets getSecrets() {
-    try {
-      return new Secrets("secrets.csv");
+      return new ServiceProviderRegistry(cloudFactory);
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }

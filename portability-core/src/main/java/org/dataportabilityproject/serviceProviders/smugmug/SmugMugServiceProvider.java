@@ -24,7 +24,6 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -35,9 +34,9 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 public final class SmugMugServiceProvider implements ServiceProvider {
     private final SmugMugAuth smugMugAuth;
 
-    public SmugMugServiceProvider(Secrets secrets) {
+    public SmugMugServiceProvider() {
         AppCredentials appCredentials =
-            AppCredentials.create(secrets, "SMUGMUG_KEY", "SMUGMUG_SECRET");
+            AppCredentials.createFromSecrets("SMUGMUG_KEY", "SMUGMUG_SECRET");
         this.smugMugAuth = new SmugMugAuth(appCredentials);
     }
 

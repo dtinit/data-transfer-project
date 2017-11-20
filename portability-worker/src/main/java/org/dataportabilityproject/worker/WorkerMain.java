@@ -27,7 +27,6 @@ import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 
 /**
  * Main class to bootstrap a portabilty worker that will operate on a single job whose state
@@ -37,14 +36,13 @@ public class WorkerMain {
   private static CloudFactory cloudFactory = new LocalCloudFactory();
 
   public static void main(String[] args) throws Exception {
-    PortabilityFlags.parseArgs(args);
+    PortabilityFlags.parse(args);
     SupportedCloud cloud = PortabilityFlags.cloud();
-    Secrets secrets = new Secrets("secrets.csv");
 
     // Initialize all global objects
     PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();
     JobManager jobDao = new JobManager(storage);
-    ServiceProviderRegistry registry = new ServiceProviderRegistry(secrets, cloudFactory);
+    ServiceProviderRegistry registry = new ServiceProviderRegistry(cloudFactory);
 
     // Start the polling service to poll for an unassigned job and when it's ready.
     pollForJob(jobDao);

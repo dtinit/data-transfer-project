@@ -29,6 +29,9 @@ import java.io.InputStreamReader;
  * Holds Api keys and secrets for the various services.
  */
 public final class Secrets {
+    private static final Secrets INSTANCE = new Secrets();
+
+    private static final String SECRETS_FILENAME = "secrets.csv";
     // Base url for all calls within the application
     private static final String BASE_URL_NAME = "BASE_URL";
     // Base url for direct to api calls within the application
@@ -36,28 +39,20 @@ public final class Secrets {
 
     private final ImmutableMap<String, String> secrets;
 
-    public Secrets(String filePath) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(getStream(filePath)));
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            // allow for comments
-            String trimmedLine = line.trim();
-            if (!trimmedLine.startsWith("//") && !trimmedLine.startsWith("#") && !trimmedLine.isEmpty()) {
-                String[] parts = trimmedLine.split(",");
-                checkState(parts.length == 2, "Each line should have exactly 2 string seperated by a ,: %s", line);
-                builder.put(parts[0].trim(), parts[1].trim());
-            }
-        }
-        this.secrets = builder.build();
-        Preconditions.checkNotNull(secrets.get(BASE_URL_NAME),
-            "Invalid secrets file, must specify " + BASE_URL_NAME);
-        Preconditions.checkNotNull(secrets.get(BASE_API_URL_NAME),
-            "Invalid secrets file, must specify " + BASE_API_URL_NAME);
+    public static Secrets getInstance() {
+        return INSTANCE;
     }
 
     public String get(String key) {
         return secrets.get(key);
+    }
+
+    public String baseUrl() {
+        return secrets.get(BASE_URL_NAME);
+    }
+
+    public String baseApiUrl() {
+        return secrets.get(BASE_API_URL_NAME);
     }
 
     /**
@@ -70,9 +65,38 @@ public final class Secrets {
         return getStream(path);
     }
 
+    private Secrets() {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        try {
+            BufferedReader reader =
+                new BufferedReader(new InputStreamReader(getStream(SECRETS_FILENAME)));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // allow for comments
+                String trimmedLine = line.trim();
+                if (!trimmedLine.startsWith("//") && !trimmedLine.startsWith("#")
+                    && !trimmedLine.isEmpty()) {
+                    String[] parts = trimmedLine.split(",");
+                    checkState(parts.length == 2,
+                        "Each line should have exactly 2 string seperated by a ,: %s", line);
+                    builder.put(parts[0].trim(), parts[1].trim());
+                }
+            }
+        } catch (IOException e) {
+            LogUtils.log("Fatal: Problem parsing secrets file %s: %s", SECRETS_FILENAME, e);
+            System.exit(1);
+        }
+        this.secrets = builder.build();
+
+        Preconditions.checkNotNull(secrets.get(BASE_URL_NAME),
+            "Invalid secrets file, must specify " + BASE_URL_NAME);
+        Preconditions.checkNotNull(secrets.get(BASE_API_URL_NAME),
+            "Invalid secrets file, must specify " + BASE_API_URL_NAME);
+    }
+
     /** Reads the path as a stream from file system or jar. */
-    private InputStream getStream(String filePath) throws IOException {
-        InputStream in = getClass().getClassLoader().getResourceAsStream(filePath);
+    private static InputStream getStream(String filePath) throws IOException {
+        InputStream in = Secrets.class.getClassLoader().getResourceAsStream(filePath);
         if (in == null) {
             throw new IOException("Could not create input stream, filePath: " + filePath);
         }

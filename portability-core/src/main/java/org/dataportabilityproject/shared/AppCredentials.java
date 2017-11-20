@@ -14,9 +14,10 @@ public abstract class AppCredentials {
         return new AutoValue_AppCredentials(key, secret);
     }
 
-    public static AppCredentials create(Secrets secrets, String keyName, String secretName) {
+    public static AppCredentials createFromSecrets(String keyName, String secretName) {
         try {
-            return create(secrets.get(keyName), secrets.get(secretName));
+            return create(Secrets.getInstance().get(keyName),
+                Secrets.getInstance().get(secretName));
         } catch (NullPointerException e) {
             throw new IllegalStateException(
                 String.format("Missing or incorrect values for %s or %s in secrets.csv",

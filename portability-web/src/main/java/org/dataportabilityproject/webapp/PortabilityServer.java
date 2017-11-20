@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.webapp;
 
+import java.io.IOException;
 import org.apache.commons.cli.ParseException;
 import org.dataportabilityproject.PortabilityFlags;
 import org.springframework.boot.SpringApplication;
@@ -29,8 +30,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class PortabilityServer {
 
   /** Starts the Portability web server. */
-  public static void main(String[] args) throws ParseException, InterruptedException {
-    PortabilityFlags.parseArgs(args);
+  public static void main(String[] args) throws ParseException, InterruptedException, IOException {
+    PortabilityFlags.parse(args);
     SpringApplication.run(PortabilityServer.class, args);
   }
 }

@@ -45,15 +45,15 @@ public class ServiceProviderRegistry {
     private final CloudFactory cloudFactory;
 
 
-    public ServiceProviderRegistry(Secrets secrets, CloudFactory cloudFactory) throws Exception {
+    public ServiceProviderRegistry(CloudFactory cloudFactory) throws Exception {
         this.cloudFactory = cloudFactory;
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
-        addServiceProvider(new FlickrServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new GoogleServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new MicrosoftServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new RememberTheMilkServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new InstagramServiceProvider(secrets), providerBuilder);
-        addServiceProvider(new SmugMugServiceProvider(secrets), providerBuilder);
+        addServiceProvider(new FlickrServiceProvider(), providerBuilder);
+        addServiceProvider(new GoogleServiceProvider(), providerBuilder);
+        addServiceProvider(new MicrosoftServiceProvider(), providerBuilder);
+        addServiceProvider(new RememberTheMilkServiceProvider(), providerBuilder);
+        addServiceProvider(new InstagramServiceProvider(), providerBuilder);
+        addServiceProvider(new SmugMugServiceProvider(), providerBuilder);
 
         this.serviceProviders = providerBuilder.build();
     }

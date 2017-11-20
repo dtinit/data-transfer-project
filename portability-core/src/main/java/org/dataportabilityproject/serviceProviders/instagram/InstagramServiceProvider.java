@@ -23,7 +23,6 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -34,9 +33,9 @@ public final class InstagramServiceProvider implements ServiceProvider {
       "basic"); // See https://www.instagram.com/developer/authorization/
   private final InstagramAuth instagramAuth;
 
-  public InstagramServiceProvider(Secrets secrets) {
+  public InstagramServiceProvider() {
     AppCredentials appCredentials =
-        AppCredentials.create(secrets, "INSTAGRAM_KEY", "INSTAGRAM_SECRET");
+        AppCredentials.createFromSecrets("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
     this.instagramAuth = new InstagramAuth(appCredentials, SCOPES);
   }
 

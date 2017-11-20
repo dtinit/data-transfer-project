@@ -38,7 +38,6 @@ import org.dataportabilityproject.serviceProviders.google.piccasa.GooglePhotosSe
 import org.dataportabilityproject.serviceProviders.google.tasks.GoogleTaskService;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -58,9 +57,9 @@ public final class GoogleServiceProvider implements ServiceProvider {
 
     private final GoogleAuth googleAuth;
 
-    public GoogleServiceProvider(Secrets secrets) throws Exception {
+    public GoogleServiceProvider() throws Exception {
         AppCredentials appCredentials =
-            AppCredentials.create(secrets, "GOOGLE_KEY", "GOOGLE_SECRET");
+            AppCredentials.createFromSecrets("GOOGLE_KEY", "GOOGLE_SECRET");
         this.googleAuth = new GoogleAuth(
                 appCredentials,
                 // TODO: only use scopes from the products we are accessing.

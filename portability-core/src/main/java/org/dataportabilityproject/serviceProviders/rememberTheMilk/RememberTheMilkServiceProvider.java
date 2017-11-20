@@ -23,7 +23,6 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -35,8 +34,8 @@ public final class RememberTheMilkServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
     private final RememberTheMilkAuth rememberTheMilkAuth;
 
-    public RememberTheMilkServiceProvider(Secrets secrets) throws IOException {
-        this.appCredentials = AppCredentials.create(secrets, "RTM_KEY", "RTM_SECRET");
+    public RememberTheMilkServiceProvider() throws IOException {
+        this.appCredentials = AppCredentials.createFromSecrets("RTM_KEY", "RTM_SECRET");
         this.rememberTheMilkAuth = new RememberTheMilkAuth(
             new RememberTheMilkSignatureGenerator(
             appCredentials,

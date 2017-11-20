@@ -30,9 +30,9 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -44,7 +44,8 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   /** Port in the "Callback URL". */
   private static final int PORT = 8080;
-  private static final String CALLBACK_URL = PortabilityFlags.baseApiUrl() + "/callback/google";
+  private static final String CALLBACK_URL =
+      Secrets.getInstance().baseApiUrl() + "/callback/google";
 
   /** Domain name in the "Callback URL". */
   private static final String DOMAIN = "127.0.0.1";

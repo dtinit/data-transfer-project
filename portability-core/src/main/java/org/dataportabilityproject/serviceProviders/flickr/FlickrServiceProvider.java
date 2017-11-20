@@ -24,7 +24,6 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -37,8 +36,8 @@ public final class FlickrServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
     private final FlickrAuth flickrAuth;
 
-    public FlickrServiceProvider(Secrets secrets) {
-        this.appCredentials = AppCredentials.create(secrets, "FLICKR_KEY", "FLICKR_SECRET");
+    public FlickrServiceProvider() {
+        this.appCredentials = AppCredentials.createFromSecrets("FLICKR_KEY", "FLICKR_SECRET");
         this.flickrAuth = new FlickrAuth(appCredentials);
     }
 

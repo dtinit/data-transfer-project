@@ -23,6 +23,7 @@ import java.nio.charset.Charset;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 /**

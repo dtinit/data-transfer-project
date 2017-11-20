@@ -33,13 +33,13 @@ public final class GoogleCloudFactory implements CloudFactory {
 
   private final Datastore datastore;
 
-  public GoogleCloudFactory(Secrets secrets) {
+  public GoogleCloudFactory() {
     try {
       this.datastore = DatastoreOptions
           .newBuilder()
-          .setProjectId(secrets.get("GOOGLE_PROJECT_ID"))
+          .setProjectId(Secrets.getInstance().get("GOOGLE_PROJECT_ID"))
           .setCredentials(GoogleCredentials.fromStream(
-              secrets.getReferencedInputStream("GOOGLE_DATASTORE_CREDS_FILE")
+              Secrets.getInstance().getReferencedInputStream("GOOGLE_DATASTORE_CREDS_FILE")
           ))
           .build()
           .getService();
