@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ public class StartCopyController {
   private ServiceProviderRegistry registry;
 
   @Autowired
-  private JobManager jobManager;
+  private JobDao jobDao;
 
   @Autowired
   private CloudFactory cloudFactory;
@@ -55,7 +55,7 @@ public class StartCopyController {
 
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
-    PortabilityJob job = jobManager.findExistingJob(jobId);
+    PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkState(null != job, "existingJob not found for token: %s", jobId);
 
     String exportService = job.exportService();

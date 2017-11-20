@@ -18,7 +18,7 @@ package org.dataportabilityproject.worker;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import java.util.concurrent.TimeUnit;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 
 /**
@@ -29,9 +29,9 @@ import org.dataportabilityproject.job.PortabilityJob;
  *   (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
-  private final JobManager jobDao;
+  private final JobDao jobDao;
 
-  JobPollingService(JobManager jobDao) {
+  JobPollingService(JobDao jobDao) {
     this.jobDao = jobDao;
   }
 
@@ -60,13 +60,14 @@ class JobPollingService extends AbstractScheduledService {
     Preconditions.checkNotNull(job);
     // Validate job has auth data
     if ((job.exportAuthData() != null) && (job.importAuthData() != null)) {
-      // Stop polling now that we have completed data
+      // Stop polling now that we have all the data ready to start the job
       this.stopAsync();
     }
   }
 
   /**
-   * Polls for an unassigned job, and once found, initializes it.
+   * Polls for an unassigned job, and once found, initializes the global singleton job metadata
+   * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() {
     String id = jobDao.findUnassignedJob();

@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,7 +38,7 @@ public class ListServicesController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
-  private JobManager jobManager;
+  private JobDao jobDao;
 
   /** Returns of the list of data types allowed for inmport and export. */
   @RequestMapping("/_/listServices")

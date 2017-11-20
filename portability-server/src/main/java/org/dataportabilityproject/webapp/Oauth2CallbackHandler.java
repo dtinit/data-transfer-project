@@ -14,7 +14,7 @@ import java.net.HttpCookie;
 import java.util.Map;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.LogUtils;
@@ -29,14 +29,14 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 public class Oauth2CallbackHandler implements HttpHandler {
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobManager jobManager;
+  private final JobDao jobDao;
   private final CryptoHelper cryptoHelper;
 
   public Oauth2CallbackHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobManager jobManager,
+      JobDao jobDao,
       CryptoHelper cryptoHelper) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobManager = jobManager;
+    this.jobDao = jobDao;
     this.cryptoHelper = cryptoHelper;
   }
 
@@ -81,7 +81,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
             jobId, state);
 
     LogUtils.log("Looking up the job by jobID");
-    PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobManager);
+    PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobDao);
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
     LogUtils.log("dataType: %s", dataType);
 
@@ -110,7 +110,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
     // TODO: Remove persistence of auth data in storage at this point. The data will be passed
     // thru to the client via the cookie.
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-    jobManager.updateJob(updatedJob);
+    jobDao.updateJob(updatedJob);
 
     // Set new cookie
     cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);

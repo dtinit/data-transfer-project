@@ -26,7 +26,7 @@ import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -44,7 +44,7 @@ public class ConfigureController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
-  private JobManager jobManager;
+  private JobDao jobDao;
   @Autowired
   private PortabilityJobFactory jobFactory;
 
@@ -67,7 +67,7 @@ public class ConfigureController {
     if (!Strings.isNullOrEmpty(encodedIdCookie)) {
       existingJobId = JobUtils.decodeId(encodedIdCookie);
       LogUtils.log("Found existing cookie, ignoring previous values");
-      existingJob = jobManager.findExistingJob(existingJobId);
+      existingJob = jobDao.findExistingJob(existingJobId);
       if(existingJob != null) {
         LogUtils.log("Found existing job, ignoring previous values");
       } else {
@@ -91,7 +91,7 @@ public class ConfigureController {
         "Missing valid importService: %s", importService);
 
     PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
-    jobManager.insertJob(newJob);
+    jobDao.insertJob(newJob);
 
     // Set new cookie
     Cookie cookie = new Cookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
@@ -120,7 +120,7 @@ public class ConfigureController {
       PortabilityJob jobBeforeInitialData = lookupJob(job.id());
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
-      jobManager.updateJob(updatedJob);
+      jobDao.updateJob(updatedJob);
     }
 
     // Send the authUrl for the client to redirect to service authorization
@@ -132,7 +132,7 @@ public class ConfigureController {
    * Looks up job and does checks that it exists.
    */
   private PortabilityJob lookupJob(String id) {
-    PortabilityJob job = jobManager.findExistingJob(id);
+    PortabilityJob job = jobDao.findExistingJob(id);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
     return job;
   }

@@ -17,6 +17,8 @@ package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 /**
  * A class that contains the value of the job and key for a worker instance. This classes uses
@@ -64,6 +66,37 @@ class WorkerJobMetadata {
    * Creates the public/private instance key pair.
    */
   private KeyPair createKey() {
-    return null; // TODO: Implement
+    // TODO: Implement
+    return new KeyPair(new PublicKey() {
+      @Override
+      public String getAlgorithm() {
+        return null;
+      }
+
+      @Override
+      public String getFormat() {
+        return null;
+      }
+
+      @Override
+      public byte[] getEncoded() {
+        return new byte[0];
+      }
+    }, new PrivateKey() {
+      @Override
+      public String getAlgorithm() {
+        return null;
+      }
+
+      @Override
+      public String getFormat() {
+        return null;
+      }
+
+      @Override
+      public byte[] getEncoded() {
+        return new byte[0];
+      }
+    }); // TODO: Implement
   }
 }

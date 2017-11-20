@@ -37,7 +37,7 @@ public abstract class PortabilityJob {
   @Nullable public abstract AuthData importInitialAuthData();
   @Nullable public abstract AuthData importAuthData();
 
-  public static AutoValue_PortabilityJob.Builder builder() {
+  public static Builder builder() {
      return new AutoValue_PortabilityJob.Builder();
   }
 

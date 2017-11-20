@@ -25,7 +25,7 @@ import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -39,7 +39,7 @@ public class CopySetupController {
   private ServiceProviderRegistry registry;
 
   @Autowired
-  private JobManager jobManager;
+  private JobDao jobDao;
 
 
   @RequestMapping("/_/copySetup")
@@ -50,7 +50,7 @@ public class CopySetupController {
 
     // Valid job must be present
     String id = JobUtils.decodeId(encodedIdCookie);
-    PortabilityJob job = jobManager.findExistingJob(id);
+    PortabilityJob job = jobDao.findExistingJob(id);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
 
     LogUtils.log("importSetup, job: %s", job);
@@ -75,7 +75,7 @@ public class CopySetupController {
       PortabilityJob jobBeforeInitialData = lookupJob(id);
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
-      jobManager.updateJob(updatedJob);
+      jobDao.updateJob(updatedJob);
     }
 
     // Send the authUrl for the client to redirect to service authorization
@@ -91,7 +91,7 @@ public class CopySetupController {
 
   /** Looks up job and does checks that it exists. */
   private PortabilityJob lookupJob(String id) {
-    PortabilityJob job = jobManager.findExistingJob(id);
+    PortabilityJob job = jobDao.findExistingJob(id);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
     return job;
   }

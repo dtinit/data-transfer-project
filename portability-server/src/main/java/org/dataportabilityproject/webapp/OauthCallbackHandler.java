@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.util.Map;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -24,13 +26,13 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 public class OauthCallbackHandler implements HttpHandler {
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobManager jobManager;
+  private final JobDao jobDao;
   private final CryptoHelper cryptoHelper;
 
   public OauthCallbackHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobManager jobManager, CryptoHelper cryptoHelper) {
+      JobDao jobDao, CryptoHelper cryptoHelper) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobManager = jobManager;
+    this.jobDao = jobDao;
     this.cryptoHelper = cryptoHelper;
   }
 
@@ -76,7 +78,7 @@ public class OauthCallbackHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
-      PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobManager);
+      PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobDao);
 
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
@@ -105,12 +107,12 @@ public class OauthCallbackHandler implements HttpHandler {
       // TODO: Remove persistence of auth data in storage at this point. The data will be passed
       // thru to the client via the cookie.
       PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-      jobManager.updateJob(updatedJob);
+      jobDao.updateJob(updatedJob);
 
       // Get responseHeaders to set redirect and new cookie
       Headers responseHeaders = exchange.getResponseHeaders();
       cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);
-      redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
+      redirect = Secrets.getInstance().baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
       LogUtils.log("Error while handling request: %s", e);
       LogUtils.log("StackTrace: %s", e.getStackTrace());

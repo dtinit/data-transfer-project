@@ -29,14 +29,23 @@ final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
 
   @Override
   public void put(String key, Map<String, Object> data) {
-    System.out.println("InMemoryStorage: put: key: " + key);
     map.put(key, data);
   }
 
   @Override
   public Map<String, Object> get(String key) {
-    System.out.println("InMemoryStorage: get: key: " + key);
     return map.get(key);
+  }
+
+  @Override
+  public String getFirst(String prefix) {
+    // Mimic an index lookup
+    for(String key : map.keySet()) {
+      if(key.startsWith(prefix)) {
+        return key;
+      }
+    }
+    return null;
   }
 
   @Override

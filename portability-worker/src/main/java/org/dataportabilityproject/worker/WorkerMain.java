@@ -24,7 +24,7 @@ import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 
@@ -41,7 +41,7 @@ public class WorkerMain {
 
     // Initialize all global objects
     PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();
-    JobManager jobDao = new JobManager(storage);
+    JobDao jobDao = new JobDao(storage);
     ServiceProviderRegistry registry = new ServiceProviderRegistry(cloudFactory);
 
     // Start the polling service to poll for an unassigned job and when it's ready.
@@ -54,13 +54,13 @@ public class WorkerMain {
     System.exit(0);
   }
 
-  private static void pollForJob(JobManager jobDao) {
+  private static void pollForJob(JobDao jobDao) {
     JobPollingService poller = new JobPollingService(jobDao);
     poller.startAsync();
     poller.awaitTerminated();
   }
 
-  private static void processJob(JobManager jobDao, ServiceProviderRegistry registry) {
+  private static void processJob(JobDao jobDao, ServiceProviderRegistry registry) {
     System.out.println("Begin processing jobId: " + WorkerJobMetadata.getInstance().getJobId());
     String jobId = WorkerJobMetadata.getInstance().getJobId();
     PortabilityJob job = jobDao.findExistingJob(jobId);

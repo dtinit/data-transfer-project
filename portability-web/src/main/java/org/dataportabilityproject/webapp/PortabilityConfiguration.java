@@ -24,7 +24,7 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.IdProvider;
 import org.dataportabilityproject.job.JWTTokenManager;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.job.UUIDProvider;
@@ -59,8 +59,8 @@ public class PortabilityConfiguration {
   }
 
   @Bean
-  public JobManager getJobManager() {
-    return new JobManager(getStorage(getCloudFactory()));
+  public JobDao getJobDao() {
+    return new JobDao(getStorage(getCloudFactory()));
   }
 
   @Bean

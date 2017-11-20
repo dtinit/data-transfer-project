@@ -12,19 +12,20 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 public class CopySetupHandler implements HttpHandler {
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobManager jobManager;
+  private final JobDao jobDao;
 
-  public CopySetupHandler(ServiceProviderRegistry serviceProviderRegistry, JobManager jobManager) {
+  public CopySetupHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobManager = jobManager;
+    this.jobDao = jobDao;
   }
 
   public void handle(HttpExchange exchange) throws IOException {
@@ -38,7 +39,7 @@ public class CopySetupHandler implements HttpHandler {
 
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
-    PortabilityJob job = jobManager.findExistingJob(jobId);
+    PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", jobId);
 
     String exportService = job.exportService();
@@ -60,7 +61,7 @@ public class CopySetupHandler implements HttpHandler {
     if (authFlowInitiator.initialAuthData() != null) {
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
-      jobManager.updateJob(updatedJob);
+      jobDao.updateJob(updatedJob);
     }
     LogUtils.log("copySetup, import auth authUrl sent to client: %s", authFlowInitiator.authUrl());
 

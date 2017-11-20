@@ -20,7 +20,7 @@ import com.google.common.base.Strings;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -38,7 +38,7 @@ public class OauthCallbackController {
   @Autowired
   private ServiceProviderRegistry serviceProviderRegistry;
   @Autowired
-  private JobManager jobManager;
+  private JobDao jobDao;
   @Autowired
   private CryptoHelper cryptoHelper;
 
@@ -91,7 +91,7 @@ public class OauthCallbackController {
     // TODO: Remove persistence of auth data in storage at this point. The data will be passed
     // thru to the client via the cookie.
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-    jobManager.updateJob(updatedJob);
+    jobDao.updateJob(updatedJob);
 
     // Set new cookie
     cryptoHelper.encryptAndSetCookie(response, isExport, authData);
@@ -106,7 +106,7 @@ public class OauthCallbackController {
 
   /** Looks up job and does checks that it exists. */
   private PortabilityJob lookupJob(String token) {
-    PortabilityJob job = jobManager.findExistingJob(token);
+    PortabilityJob job = jobDao.findExistingJob(token);
     Preconditions.checkState(null != job, "existingJob not found for token: %s", token);
     return job;
   }

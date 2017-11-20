@@ -22,7 +22,8 @@ import javax.json.JsonObject;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.PortabilityFlags;
-import org.dataportabilityproject.job.JobManager;
+
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.Config.Environment;
@@ -124,10 +125,10 @@ public class PortabilityServerUtils {
   }
 
   /**
-   * Looks up job and checks that it exists in the provided jobManager.
+   * Looks up job and checks that it exists in the provided jobDao.
    */
-  public static PortabilityJob lookupJob(String id, JobManager jobManager) {
-    PortabilityJob job = jobManager.findExistingJob(id);
+  public static PortabilityJob lookupJob(String id, JobDao jobDao) {
+    PortabilityJob job = jobDao.findExistingJob(id);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
     return job;
   }

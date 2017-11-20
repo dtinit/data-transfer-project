@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.shared.LogUtils;
@@ -26,14 +26,14 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 public class ConfigureHandler implements HttpHandler {
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobManager jobManager;
+  private final JobDao jobDao;
   private final PortabilityJobFactory jobFactory;
 
   public ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobManager jobManager,
-      PortabilityJobFactory jobFactory) {
+                          JobDao jobDao,
+                          PortabilityJobFactory jobFactory) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobManager = jobManager;
+    this.jobDao = jobDao;
     this.jobFactory = jobFactory;
   }
 
@@ -69,7 +69,7 @@ public class ConfigureHandler implements HttpHandler {
         "Missing valid importService: %s", importService);
 
     PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
-    jobManager.insertJob(newJob);
+    jobDao.insertJob(newJob);
 
     // Set new cookie
     HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
@@ -78,7 +78,7 @@ public class ConfigureHandler implements HttpHandler {
         JobUtils.encodeId(newJob));
 
     // Lookup job, even if just recently created
-    PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobManager);
+    PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobDao);
     Preconditions.checkState(job != null, "Job required");
 
     // TODO: Validate job before going further
@@ -99,7 +99,7 @@ public class ConfigureHandler implements HttpHandler {
     if (authFlowInitiator.initialAuthData() != null) {
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
-      jobManager.updateJob(updatedJob);
+      jobDao.updateJob(updatedJob);
     }
 
     // Send the authUrl for the client to redirect to service authorization
@@ -108,5 +108,4 @@ public class ConfigureHandler implements HttpHandler {
     headers.set(HEADER_LOCATION, authFlowInitiator.authUrl());
     exchange.sendResponseHeaders(303, -1);
   }
-
 }

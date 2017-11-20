@@ -25,7 +25,7 @@ import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -41,7 +41,7 @@ public class ImportSetupController {
   private ServiceProviderRegistry registry;
 
   @Autowired
-  private JobManager jobManager;
+  private JobDao jobDao;
 
   @RequestMapping("/_/importSetup")
   public Map<String, String> importSetup(
@@ -51,7 +51,7 @@ public class ImportSetupController {
 
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
-    PortabilityJob job = jobManager.findExistingJob(jobId);
+    PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkState(null != job, "existingJob not found for jobId: %s", jobId);
 
     LogUtils.log("importSetup, job: %s", job);
@@ -78,7 +78,8 @@ public class ImportSetupController {
       PortabilityJob jobBeforeInitialData = lookupJob(jobId);
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), false);
-      jobManager.updateJob(updatedJob);
+      jobDao.updateJob(updatedJob);
+
     }
 
     // Send the authUrl for the client to redirect to service authorization
@@ -94,7 +95,7 @@ public class ImportSetupController {
 
   /** Looks up job and does checks that it exists. */
   private PortabilityJob lookupJob(String jobId) {
-    PortabilityJob job = jobManager.findExistingJob(jobId);
+    PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkState(null != job, "existingJob not found for jobId: %s", jobId);
     return job;
   }

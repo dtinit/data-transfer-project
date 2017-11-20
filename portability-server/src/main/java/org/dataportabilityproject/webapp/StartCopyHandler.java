@@ -16,21 +16,22 @@ import javax.json.JsonWriter;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.job.JobManager;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.LogUtils;
 
 public class StartCopyHandler implements HttpHandler {
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobManager jobManager;
+  private final JobDao jobDao;
   private final CloudFactory cloudFactory;
 
-  public StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobManager jobManager,
+  public StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
       CloudFactory cloudFactory) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobManager = jobManager;
+    this.jobDao = jobDao;
     this.cloudFactory = cloudFactory;
   }
 
@@ -45,7 +46,7 @@ public class StartCopyHandler implements HttpHandler {
 
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
-    PortabilityJob job = jobManager.findExistingJob(jobId);
+    PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkState(null != job, "existingJob not found for id: %s", jobId);
 
     String exportService = job.exportService();

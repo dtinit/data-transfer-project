@@ -40,6 +40,11 @@ final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
+  @Override
+  public String getFirst(String prefix) {
+    throw new UnsupportedOperationException();
+  }
+
   private final Datastore datastore;
 
   GooglePersistentKeyValueStore(Datastore datastore) {
