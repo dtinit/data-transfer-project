@@ -33,7 +33,8 @@ public class PortabilityServerMain {
     serviceProviderRegistry = new ServiceProviderRegistry(secrets, cloudFactory);
     jobManager = new JobManager(cloudFactory.getPersistentKeyValueStore());
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
-    cryptoHelper = new CryptoHelper(new Crypter() {}); // TODO: Wire up the correct Crypter.
+    // TODO: Wire up the correct Crypter.
+    cryptoHelper = new CryptoHelper(new Crypter() {});
 
     // TODO: backlog and port should be command line args
     HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -48,6 +49,8 @@ public class PortabilityServerMain {
         jobManager, portabilityJobFactory));
     server.createContext("/callback/",
         new Oauth2CallbackHandler(serviceProviderRegistry, jobManager, cryptoHelper));
+    server.createContext("/_/importSetup",
+        new ImportSetupHandler(serviceProviderRegistry, jobManager));
 
     server.setExecutor(Executors.newCachedThreadPool());
     server.start();
