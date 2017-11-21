@@ -2,16 +2,19 @@
 
 # Interactive script to generate a Dockerfile for the given environment.
 # Can optionally build a new jar and docker image based on the command prompts.
-# Usage: ./build.sh <env>
-
-if [ -z $1 ]; then
-  echo "ERROR: Must provide an environment, e.g. 'test' or 'prod'"
-  exit 1
-fi
-ENV=$1
+# Usage: ./build.sh <env> [project-suffix]
+# project-suffix is required except for env=local
+# ex: ./build.sh qa qa8 # Will use config/qa/settings.yaml & project dataliberation-portability-qa8
 
 # Constants
 BASE_PROJECT_ID="dataliberation-portability"
+
+if [ -z $1 ]; then
+  echo "ERROR: Must provide an environment, e.g. 'local', 'test', 'qa', or 'prod'"
+  exit 1
+fi
+ENV=$1
+PROJECT_ID_SUFFIX=$2
 
 # Parse settings file
 SETTINGS_FILE="config/$ENV/settings.yaml"
@@ -99,13 +102,6 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   echo "Exiting"
   exit 0
 else
-  PROJECT_ID="$BASE_PROJECT_ID-$ENV"
-  if [[ ${ENV} == "test" ]]; then
-    # Special override for our "test" environment since this was our initial cloud setup and
-    # don't want to break it for our demo. Everything else, i.e. qa and prod, will use the new
-    # convention dataliberation-portability-$ENV.
-    PROJECT_ID=${BASE_PROJECT_ID}
-  fi
   if [[ ${ENV} == "local" ]]; then
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
@@ -115,9 +111,23 @@ else
       VERSION_TAG=v1
       echo "Using version tag v1"
     fi
+    PROJECT_ID="${BASE_PROJECT_ID}-${ENV}"
   else
+    if [ -z $PROJECT_ID_SUFFIX ]; then
+      echo -e "ERROR: Since env=${ENV} (!= local), you must provide a project ID suffix, i.e. 'qa8'
+      for project ID dataliberation-portability-qa8"
+      exit 1
+    fi
+    PROJECT_ID="${BASE_PROJECT_ID}-${PROJECT_ID_SUFFIX}"
+    read -p "Changing your default project to ${PROJECT_ID}. OK? (Y/n) " response
+    if [[ ${response} =~ ^(no|n| ) ]]; then
+      echo "Aborting"
+      exit 0
+    else
+      gcloud config set project ${PROJECT_ID}
+    fi
     echo -e "\nChoosing a version tag. Trying first to find latest image from GCP."
-    IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID gcr.io/$PROJECT_ID/portability)
+    IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID gcr.io/$PROJECT_ID/portability-api)
     if [[ -z ${IMAGE_TAGS} ]] ; then
       echo "Couldn't find images on GCP"
     else
@@ -163,12 +173,25 @@ else
   fi
 fi
 
+DOCKER_IMAGE="gcr.io/$PROJECT_ID/portability-api:$VERSION_TAG"
 echo ""
-read -p "Confirm building docker image gcr.io/$PROJECT_ID/portability:$VERSION_TAG? (Y/n): " response
+read -p "Build docker image $DOCKER_IMAGE? (Y/n): " response
 if [[ ${response} =~ ^(no|n| ) ]]; then
   echo "Exiting"
   exit 0
 else
-  docker build -t gcr.io/$PROJECT_ID/portability:$VERSION_TAG .
+  docker build -t gcr.io/$PROJECT_ID/portability-api:$VERSION_TAG .
 fi
+
+if [[ ${ENV} != "local" ]]; then
+  echo ""
+  read -p "Push docker image to cloud? (Y/n): " response
+  if [[ ${response} =~ ^(no|n| ) ]]; then
+    echo "Exiting"
+    exit 0
+  else
+    gcloud docker -- push gcr.io/$PROJECT_ID/portability-api:$VERSION_TAG
+  fi
+fi
+
 echo "Done"

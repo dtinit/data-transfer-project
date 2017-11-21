@@ -37,6 +37,7 @@ fi
 ENV=$1
 PROJECT_ID="dataliberation-portability-$ENV"
 gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit 1; }
+gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 kubectl=$(which kubectl)|| { echo "Kubernetes CLI (kubectl) not found." >&2; exit 1; }
 
 read -p "This script will install an SSL certificate on the project from your local filesystem soon.
@@ -115,7 +116,10 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:sihamh@google
 gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:willard@google.com --role roles/owner
 
 print_step "Enabling APIs"
-gcloud services --project ${PROJECT_ID} enable compute.googleapis.com #Needed for 'gcloud compute'
+# Needed for 'gcloud compute'
+gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
+# Needed for managing container images
+gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 
 print_step "Enabling billing" # Needed for installing SSL cert
 gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$GOOGLE_BILLING_ACCOUNT

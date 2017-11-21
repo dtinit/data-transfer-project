@@ -3,5 +3,6 @@
 *.log
 config/local/secrets.csv
 config/test/secrets.csv
+config/qa/secrets.csv
 # Dockerfile is generated each time we run build.sh
 Dockerfile
