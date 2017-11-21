@@ -20,12 +20,15 @@ public class PortabilityFlags {
 
   private final SupportedCloud cloud;
   private final Environment environment;
+  private final boolean encryptedFlow;  // default is off until flow is completed
 
   private PortabilityFlags(
       SupportedCloud cloud,
-      Environment environment) {
+      Environment environment,
+      boolean encryptedFlow) {
     this.cloud = cloud;
     this.environment = environment;
+    this.encryptedFlow = encryptedFlow;
   }
 
   /** Parse arguments and initialize the PortabilityFlags global configuration parameters. */
@@ -45,6 +48,8 @@ public class PortabilityFlags {
     }
     String cloud = cmd.getOptionValue("cloud");
     String environment = cmd.getOptionValue("environment");
+    boolean encryptedFlow = false;
+    String encryptedFlowStr = cmd.getOptionValue("encryptedFlow");
 
     boolean hasAllFlags = true;
     hasAllFlags &= !Strings.isNullOrEmpty(cloud);
@@ -59,18 +64,23 @@ public class PortabilityFlags {
     } else {
       System.out.println("Parsed command line arg environment = " + environment);
     }
+    // Encrypted flow is optional
+    if(!Strings.isNullOrEmpty(encryptedFlowStr)) {
+      encryptedFlow = Boolean.parseBoolean(encryptedFlowStr);
+    }
     if (!hasAllFlags) {
       help(options);
     }
-    init(SupportedCloud.valueOf(cloud), Environment.valueOf(environment));
+    init(SupportedCloud.valueOf(cloud), Environment.valueOf(environment), encryptedFlow);
   }
 
-  private synchronized static void init(SupportedCloud supportedCloud, Environment environment) {
+  private synchronized static void init(SupportedCloud supportedCloud, Environment environment,
+      boolean encryptedFlow) {
     if (INSTANCE != null) {
       throw new IllegalStateException("Trying to initialize flags a second time");
     }
 
-    INSTANCE = new PortabilityFlags(supportedCloud, environment);
+    INSTANCE = new PortabilityFlags(supportedCloud, environment, encryptedFlow);
   }
 
   private static void help(Options options) {
@@ -94,6 +104,12 @@ public class PortabilityFlags {
     Preconditions.checkNotNull(INSTANCE,
         "Trying to get 'environment' before flags have been initialized");
     return INSTANCE.environment;
+  }
+
+  public static boolean encryptedFlow() {
+    Preconditions.checkNotNull(INSTANCE,
+        "Trying to get 'encryptedFlow' before flags have been initialized");
+    return INSTANCE.encryptedFlow;
   }
 
   // TODO move to annotation on flag variable

@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
@@ -68,8 +69,14 @@ public class ConfigureHandler implements HttpHandler {
     Preconditions.checkArgument(JobUtils.isValidService(importService, false),
         "Missing valid importService: %s", importService);
 
+    // TODO: Remove job creation in case of encrypted flow
     PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
-    jobDao.insertJob(newJob);
+
+    if (PortabilityFlags.encryptedFlow()) {
+      jobDao.insertJobInUnassignedState(newJob.id());
+    } else {
+      jobDao.insertJob(newJob);
+    }
 
     // Set new cookie
     HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
