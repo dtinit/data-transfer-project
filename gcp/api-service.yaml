@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+ # This service is associated with the 'portability' app, so can be thought of as 'portability.api'
+metadata:
+  name: api
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - nodePort: 30580
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: portability
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
