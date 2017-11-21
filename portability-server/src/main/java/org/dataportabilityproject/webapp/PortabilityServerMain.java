@@ -49,6 +49,8 @@ public class PortabilityServerMain {
         new StartCopyHandler(serviceProviderRegistry, jobManager, cloudFactory));
     server.createContext("/callback/",
         new Oauth2CallbackHandler(serviceProviderRegistry, jobManager, cryptoHelper));
+    server.createContext("/callback1/",
+        new OauthCallbackHandler(serviceProviderRegistry, jobManager, cryptoHelper));
     server.createContext("/configure", new ConfigureHandler(serviceProviderRegistry,
         jobManager, portabilityJobFactory));
 

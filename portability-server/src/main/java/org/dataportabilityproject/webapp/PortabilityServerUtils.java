@@ -3,6 +3,7 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.BufferedReader;
@@ -20,15 +21,42 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.job.JobManager;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.LogUtils;
+import org.dataportabilityproject.shared.Config.Environment;
 
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers
  */
 public class PortabilityServerUtils {
 
+  /* Populates a JsonObject with the provided authorization data. */
+  public static JsonObject createImportAuthJobResponse(String dataType, String exportService,
+      String importService,
+      String importAuthURL) {
+    return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, dataType)
+        .add(JsonKeys.EXPORT_SERVICE, exportService)
+        .add(JsonKeys.IMPORT_SERVICE, importService)
+        .add(JsonKeys.IMPORT_AUTH_URL, importAuthURL).build();
+  }
+
+  /* Returns a URL representing the resource provided.
+   * TODO: remove hardcoded protocol - find a better way to do this from the HttpExchange.
+   */
+  public static String createURL(String protocol, String host, String URI) {
+    String url = "";
+
+    if (protocol.contains("HTTP/") && PortabilityFlags.environment() == Environment.LOCAL) {
+      url = "http://" + host + URI;
+    } else if (protocol.contains("HTTPS/")) {
+      url = "https://" + host + URI;
+    }
+
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "Unsupported protocol");
+    return url;
+  }
   /**
    * Returns the cookie specified in headers for the provided {@code} key.
    */
@@ -61,15 +89,6 @@ public class PortabilityServerUtils {
     return cookieMap;
   }
 
-  public static JsonObject createImportAuthJobResponse(String dataType, String exportService,
-      String importService,
-      String importAuthURL) {
-    return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, dataType)
-        .add(JsonKeys.EXPORT_SERVICE, exportService)
-        .add(JsonKeys.IMPORT_SERVICE, importService)
-        .add(JsonKeys.IMPORT_AUTH_URL, importAuthURL).build();
-  }
-
   /**
    * Returns map of request parameters from the RequestBody of HttpExchange.
    */
@@ -98,6 +117,7 @@ public class PortabilityServerUtils {
     List<NameValuePair> queryParamPairs = builder.getQueryParams();
     Map<String, String> params = new HashMap<String, String>();
     for (NameValuePair pair : queryParamPairs) {
+      LogUtils.log("queryparam, name: %s, value: %s", pair.getName(), pair.getValue());
       params.put(pair.getName(), pair.getValue());
     }
     return params;

@@ -23,6 +23,9 @@ import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
+/**
+ * HttpHandler for callbacks from Oauth2 authorization flow.
+ */
 public class Oauth2CallbackHandler implements HttpHandler {
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -43,7 +46,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
     Headers responseHeaders = exchange.getResponseHeaders();
     Headers requestHeaders = exchange.getRequestHeaders();
 
-    String requestURL = getURL(exchange.getProtocol(), requestHeaders.getFirst(HEADER_HOST),
+    String requestURL = PortabilityServerUtils.createURL(exchange.getProtocol(), requestHeaders.getFirst(HEADER_HOST),
         exchange.getRequestURI().toString());
     LogUtils.log("Oauth2CallbackHandler getURL: %s", requestURL);
 
@@ -116,21 +119,5 @@ public class Oauth2CallbackHandler implements HttpHandler {
     LogUtils.log("Redirecting to %s", redirect);
     responseHeaders.set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
-  }
-
-  /* Returns a URL representing the resource provided in the HttpExchange.
-   * TODO: remove hardcoded protocol - find a better way to do this from the given HttpExchange.
-   */
-  private String getURL(String protocol, String host, String URI) {
-    String url = "";
-
-    if (protocol.contains("HTTP/") && PortabilityFlags.environment() == Environment.LOCAL) {
-      url = "http://" + host + URI;
-    } else if (protocol.contains("HTTPS/")) {
-      url = "https://" + host + URI;
-    }
-
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "Unsupported protocol");
-    return url;
   }
 }
