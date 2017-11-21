@@ -13,6 +13,7 @@ import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
 
 public class PortabilityServerMain {
+
   private static CloudFactory cloudFactory;
   private static ServiceProviderRegistry serviceProviderRegistry;
   private static PortabilityJobFactory portabilityJobFactory;
@@ -51,9 +52,10 @@ public class PortabilityServerMain {
         new Oauth2CallbackHandler(serviceProviderRegistry, jobDao, cryptoHelper));
     server.createContext("/callback1/",
         new OauthCallbackHandler(serviceProviderRegistry, jobDao, cryptoHelper));
-
     server.createContext("/configure", new ConfigureHandler(serviceProviderRegistry,
         jobDao, portabilityJobFactory));
+    server.createContext("/simpleLoginSubmit",
+        new SimpleLoginSubmitHandler(serviceProviderRegistry, jobDao, cryptoHelper));
 
     server.setExecutor(Executors.newCachedThreadPool());
     server.start();
