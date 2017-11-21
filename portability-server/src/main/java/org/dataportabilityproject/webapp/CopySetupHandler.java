@@ -17,24 +17,19 @@ import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
-/**
- * HttpHandler for ImportSetup service
- */
-public class ImportSetupHandler implements HttpHandler {
+public class CopySetupHandler implements HttpHandler {
 
-  private final JobManager jobManager;
   private final ServiceProviderRegistry serviceProviderRegistry;
+  private final JobManager jobManager;
 
-  public ImportSetupHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobManager jobManager) {
-    this.jobManager = jobManager;
+  public CopySetupHandler(ServiceProviderRegistry serviceProviderRegistry, JobManager jobManager) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-
+    this.jobManager = jobManager;
   }
 
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/_/importSetup"));
+        PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/_/copySetup"));
 
     String encodedIdCookie = PortabilityServerUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
@@ -44,22 +39,19 @@ public class ImportSetupHandler implements HttpHandler {
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
     PortabilityJob job = jobManager.findExistingJob(jobId);
-    Preconditions.checkState(null != job, "existingJob not found for jobId: %s", jobId);
-
-    LogUtils.log("importSetup, job: %s", job);
+    Preconditions.checkState(null != job, "existingJob not found for id: %s", jobId);
 
     String exportService = job.exportService();
-    String importService = job.importService();
-
     Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");
     Preconditions.checkState(job.exportAuthData() != null, "Export AuthData is required");
 
+    String importService = job.importService();
     Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
-    // TODO: ensure import auth data doesn't exist when this is called in the auth flow
-    Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
+    Preconditions.checkState(job.importAuthData() != null, "Import AuthData is required");
 
-    LogUtils.log("importSetup, importService: %s, exportService: %s", importService, exportService);
+    LogUtils.log("copySetup, importService: %s, exportService %s", importService, exportService);
 
+    // Obtain the OnlineAuthDataGenerator
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
     AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(job));
@@ -70,11 +62,12 @@ public class ImportSetupHandler implements HttpHandler {
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
       jobManager.updateJob(updatedJob);
     }
+    LogUtils.log("copySetup, import auth authUrl sent to client: %s", authFlowInitiator.authUrl());
 
     JsonObject response = PortabilityServerUtils
-        .createImportAuthJobResponse(job.dataType(), job.exportService(),
-            job.importService(), authFlowInitiator.authUrl());
-    LogUtils.log("importSetup, response: %s", response.toString());
+        .createImportAuthJobResponse(job.dataType(), exportService,
+            importService, authFlowInitiator.authUrl());
+    LogUtils.log("copySetup, response: %s", response.toString());
 
     // Mark the response as type Json and send
     exchange.getResponseHeaders()

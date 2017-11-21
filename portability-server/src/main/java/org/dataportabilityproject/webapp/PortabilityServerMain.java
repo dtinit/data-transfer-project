@@ -34,7 +34,8 @@ public class PortabilityServerMain {
     jobManager = new JobManager(cloudFactory.getPersistentKeyValueStore());
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
     // TODO: Wire up the correct Crypter.
-    cryptoHelper = new CryptoHelper(new Crypter() {});
+    cryptoHelper = new CryptoHelper(new Crypter() {
+    });
 
     // TODO: backlog and port should be command line args
     HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -43,14 +44,17 @@ public class PortabilityServerMain {
     // /_/listServices, /_/listServicesthisshouldnotwork and /_/listServices/path/to/resource will
     // all be handled by the ListServicesHandler below. To prevent this, each handler below should
     // validate the request URI that it is getting passed in.
-    server.createContext("/_/listServices", new ListServicesHandler(serviceProviderRegistry));
-    server.createContext("/_/listDataTypes", new ListDataTypesHandler(serviceProviderRegistry));
-    server.createContext("/configure", new ConfigureHandler(serviceProviderRegistry,
-        jobManager, portabilityJobFactory));
-    server.createContext("/callback/",
-        new Oauth2CallbackHandler(serviceProviderRegistry, jobManager, cryptoHelper));
+    server.createContext("/_/copySetup", new CopySetupHandler(serviceProviderRegistry, jobManager));
     server.createContext("/_/importSetup",
         new ImportSetupHandler(serviceProviderRegistry, jobManager));
+    server.createContext("/_/listDataTypes", new ListDataTypesHandler(serviceProviderRegistry));
+    server.createContext("/_/listServices", new ListServicesHandler(serviceProviderRegistry));
+    server.createContext("/_/startCopy",
+        new StartCopyHandler(serviceProviderRegistry, jobManager, cloudFactory));
+    server.createContext("/callback/",
+        new Oauth2CallbackHandler(serviceProviderRegistry, jobManager, cryptoHelper));
+    server.createContext("/configure", new ConfigureHandler(serviceProviderRegistry,
+        jobManager, portabilityJobFactory));
 
     server.setExecutor(Executors.newCachedThreadPool());
     server.start();
