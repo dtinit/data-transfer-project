@@ -71,11 +71,13 @@ public class ImportSetupController {
     // Auth authUrl
     AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(job));
 
-    // Store authUrl
+    // Store authUrl - this page is only valid for Import Authorization flow, so isExport needs to
+    // be set to false to store initialImportAuthData
+    // TODO: support both import and export.
     if (authFlowInitiator.initialAuthData() != null) {
       PortabilityJob jobBeforeInitialData = lookupJob(jobId);
       PortabilityJob updatedJob = JobUtils
-          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
+          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), false);
       jobManager.updateJob(updatedJob);
     }
 
