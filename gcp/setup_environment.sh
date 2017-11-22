@@ -208,6 +208,20 @@ gcloud compute forwarding-rules create ${LB_FORWARDING_RULE_NAME} \
     --address ${EXTERNAL_IP_ADDRESS} --ip-protocol TCP --ports=443 \
     --global --target-https-proxy ${LB_HTTPS_PROXY_NAME}
 
+print_step "Creating a Kubernetes deployment"
+echo -e "\nChoose a version tag. The latest image versions deployed to GCP are as follows."
+IMAGE_NAME="gcr.io/$PROJECT_ID/portability-api"
+IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID $IMAGE_NAME)
+echo $IMAGE_TAGS
+read -p "Please enter the version tag to use (e.g. v1): " VERSION_TAG
+IMAGE="$IMAGE_NAME:$VERSION_TAG"
+# Substitute in the current image to our deployment yaml
+sed -i "s|IMAGE|$IMAGE|g" "api-deployment.yaml"
+kubectl create -f api-deployment.yaml
+# Restore deployment yaml file to previous state so we don't check in an image
+# that will become stale, and so the substitution works again next time
+sed -i "s|$IMAGE|IMAGE|g" "api-deployment.yaml"
+
 # TODO:
 # - IAP on backend-service (whitelist select users). Might make more sense to do manually.
 # - Firewall

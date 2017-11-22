@@ -49,7 +49,8 @@ docker=$(which docker)|| { echo "docker not found. Please install it and try aga
 echo -e "Checking that you have gcloud installed"
 gcloud=$(which gcloud)|| { echo "gcloud not found. Please install it and try again." >&2; exit 1; }
 
-read -p "Compile and package jar at this time? (Y/n): " response
+read -p "You should compile a new jar if there are java OR secrets changes.
+Compile and package jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
   # Note: WT engineers should store copies of secrets.csv locally in each environment's directory,
   # e.g. local/secrets.csv and test/secrets.csv. See secrets_template.csv for more info on secrets.
@@ -103,6 +104,7 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   exit 0
 else
   if [[ ${ENV} == "local" ]]; then
+    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/portability-api"
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Exiting"
@@ -112,6 +114,7 @@ else
       echo "Using version tag v1"
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${ENV}"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/portability-api"
   else
     if [ -z $PROJECT_ID_SUFFIX ]; then
       echo -e "ERROR: Since env=${ENV} (!= local), you must provide a project ID suffix, i.e. 'qa8'
@@ -119,6 +122,7 @@ else
       exit 1
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${PROJECT_ID_SUFFIX}"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/portability-api"
     read -p "Changing your default project to ${PROJECT_ID}. OK? (Y/n) " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Aborting"
@@ -127,7 +131,7 @@ else
       gcloud config set project ${PROJECT_ID}
     fi
     echo -e "\nChoosing a version tag. Trying first to find latest image from GCP."
-    IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID gcr.io/$PROJECT_ID/portability-api)
+    IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID $IMAGE_NAME)
     if [[ -z ${IMAGE_TAGS} ]] ; then
       echo "Couldn't find images on GCP"
     else
@@ -135,7 +139,6 @@ else
       IFS=" "
       IMAGE_TAGS_ARRAY=(${IMAGE_TAGS})
       LATEST_IMAGE_TAGS=${IMAGE_TAGS_ARRAY[3]}
-      echo -e "\nLatest image tags: $LATEST_IMAGE_TAGS"
       if [[ ! -z ${LATEST_IMAGE_TAGS} ]] ; then
         IFS=","
         LATEST_IMAGE_TAGS_ARRAY=($LATEST_IMAGE_TAGS)
@@ -173,24 +176,24 @@ else
   fi
 fi
 
-DOCKER_IMAGE="gcr.io/$PROJECT_ID/portability-api:$VERSION_TAG"
+IMAGE="$IMAGE_NAME:$VERSION_TAG"
 echo ""
-read -p "Build docker image $DOCKER_IMAGE? (Y/n): " response
+read -p "Build docker image $IMAGE? (Y/n): " response
 if [[ ${response} =~ ^(no|n| ) ]]; then
   echo "Exiting"
   exit 0
 else
-  docker build -t gcr.io/$PROJECT_ID/portability-api:$VERSION_TAG .
+  docker build -t $IMAGE .
 fi
 
 if [[ ${ENV} != "local" ]]; then
   echo ""
-  read -p "Push docker image to cloud? (Y/n): " response
+  read -p "Push docker image $IMAGE to cloud? (Y/n): " response
   if [[ ${response} =~ ^(no|n| ) ]]; then
     echo "Exiting"
     exit 0
   else
-    gcloud docker -- push gcr.io/$PROJECT_ID/portability-api:$VERSION_TAG
+    gcloud docker -- push $IMAGE
   fi
 fi
 
