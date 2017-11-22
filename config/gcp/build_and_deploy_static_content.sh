@@ -25,7 +25,7 @@ gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >
 
 GCP_DIR=$(pwd)
 
-print_and_exec "cd ../client"
+print_and_exec "cd ../../client"
 print_and_exec "pwd"
 print_and_exec "ng build --prod"
 print_and_exec "cd ../../resources/"

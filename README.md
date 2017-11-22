@@ -85,9 +85,9 @@ chooses.
  * "mvn compile" will build the project.
  * "mvn exec:java -pl portability-core -Dexec.args="-cloud LOCAL -environment LOCAL"" will run the command line tool.
 
-### Building/Running webapp
+### Building/Running webapp locally
 
-#### Running angular in dev mode locally
+#### Running angular in dev mode
 
 The following commands will run the angular frontend in dev mode locally proxying requests to the local webserver.
 
@@ -96,41 +96,23 @@ The following commands will run the angular frontend in dev mode locally proxyin
 * [optional] "npm install" #required first time through
 * ng serve --port 3000 --proxy-config proxy.conf.json
 
-#### Running web server in dev mode locally
+#### Running web server in dev mode
 
 The following builds and run the web server on port 8080
 
 * mvn clean install
 * mvn -e spring-boot:run -pl portability-web
 
-### Building/Running Worker App
+#### Building/Running Worker App
  * Add a secrets_[environment].csv file to src/main/resources in portability-core and/or
    in portability-worker, this should contain
    all your API keys, see secrets_template.csv for an example.
  * "mvn compile" will build the project.
  * "mvn exec:java -pl portability-worker -Dexec.args="-cloud LOCAL -environment LOCAL"" will run the command line tool.
 
-### Docker creation and testing
+### Deploying in production
 
-Steps for packaging the application for docker.
-Note: Assumes you already have a project id for Google Cloud or another cloud provider.
-
-#### Building docker image
-
-* mvn clean install
-* copy secrets.csv to client/src/main/resources/
-* copy application_default_credentials to client/src/main/resources/
-* Build jar:  mvn package
-* Build docker image: docker build -t gcr.io/${PROJECT_ID}/portability-web:v1 .
-
-#### Local testing
-
-* Run docker image locally: docker run -ti --rm -p 8080:8080 gcr.io/${PROJECT_ID}/portability-web:v1
-* Run angular client per instructions above
-
-#### Pushing to Google Cloud
-* docker tag gcr.io/${PROJECT_ID}/portability:v1 gcr.io/${PROJECT_ID}/portability:v1
-* gcloud docker -- push gcr.io/${PROJECT_ID}/portability:v1
+See config/README.md.
 
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute to this project.

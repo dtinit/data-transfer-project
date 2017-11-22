@@ -2,12 +2,26 @@
 
 # Interactive script to generate a Dockerfile for the given environment.
 # Can optionally build a new jar and docker image based on the command prompts.
-# Usage: ./build.sh <env> [project-suffix]
-# project-suffix is required except for env=local
-# ex: ./build.sh qa qa8 # Will use config/qa/settings.yaml & project dataliberation-portability-qa8
+#
+# Usage: ./config/gcp/build_and_deploy_api.sh <env> [project-suffix]
+# - project-suffix is required except for env=local
+#
+# Must be run from the root source directory googleplex-portability/
+#
+# ex: build_and_deploy_api.sh qa qa2
+# Will use config/environments/qa/settings.yaml and project BASE_PROJECT_ID-qa2
+
+if [[ $(pwd) != */googleplex-portability ]]; then
+  echo "Please run out of /gcp directory. Aborting."
+  exit 1
+fi
 
 # Constants
-BASE_PROJECT_ID="dataliberation-portability"
+# script below sets env variables BASE_PROJECT_ID
+source config/gcp/init_hidden_vars.sh
+
+echo -e "Set hidden var:
+BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
 
 if [ -z $1 ]; then
   echo "ERROR: Must provide an environment, e.g. 'local', 'test', 'qa', or 'prod'"
@@ -17,7 +31,7 @@ ENV=$1
 PROJECT_ID_SUFFIX=$2
 
 # Parse settings file
-SETTINGS_FILE="config/$ENV/settings.yaml"
+SETTINGS_FILE="config/environments/$ENV/settings.yaml"
 echo -e "\nParsing settings file $SETTINGS_FILE"
 if [[ ! -e ${SETTINGS_FILE} ]]; then
   echo "Invalid environment $ENV entered. No settings file found at $SETTINGS_FILE. Aborting."
@@ -65,7 +79,7 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
       exit 1
     fi
   fi
-  SECRETS_CSV_SRC_PATH="config/$ENV/secrets.csv"
+  SECRETS_CSV_SRC_PATH="config/environments/$ENV/secrets.csv"
   echo -e "Copying secrets.csv from $SECRETS_CSV_SRC_PATH to $SECRETS_CSV_DEST_PATH"
   cp $SECRETS_CSV_SRC_PATH $SECRETS_CSV_DEST_PATH
   if [[ ! -e ${SECRETS_CSV_DEST_PATH} ]]; then
@@ -118,7 +132,7 @@ else
   else
     if [ -z $PROJECT_ID_SUFFIX ]; then
       echo -e "ERROR: Since env=${ENV} (!= local), you must provide a project ID suffix, i.e. 'qa8'
-      for project ID dataliberation-portability-qa8"
+      for project ID ${BASE_PROJECT_ID}-qa8"
       exit 1
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${PROJECT_ID_SUFFIX}"

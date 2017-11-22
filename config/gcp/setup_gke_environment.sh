@@ -1,12 +1,17 @@
 #!/bin/sh
 
-# Script to set up a new GCP environment based on the passed in name
-# Must run from gcp/ directory
-# Usage: ./setup_environment <ENV_NAME>
+# Script to set up a new GKE (Kubernetes on Google Cloud Platform) environment based on the passed
+# in ENV_NAME. Sets up associated GCP project as well. Must run from scripts/ directory.
+# Usage: ./setup_gke_environment <ENV_NAME>
+
+source config/gcp/init_hidden_vars.sh
+
+echo -e "Set hidden vars:
+BASE_PROJECT_ID: ${BASE_PROJECT_ID}
+ORGANIZATION_ID: ${ORGANIZATION_ID}
+BILLING_ACCOUNT_ID: ${BILLING_ACCOUNT_ID}"
 
 # Constants
-GOOGLE_BILLING_ACCOUNT=0072FE-A63213-1B46B7
-GOOGLE_ORGANIZATION=433637338589 #ID for google.com organization in GCP project
 GCE_ENFORCER_REASON=pre-launch
 INSTANCE_GROUP_SIZE=2 #Number of VMs to run for our GKE jobs
 ZONE=us-central1-a
@@ -35,7 +40,7 @@ if [ -z $1 ]; then
   exit 1
 fi
 ENV=$1
-PROJECT_ID="dataliberation-portability-$ENV"
+PROJECT_ID="${BASE_PROJECT_ID}-$ENV"
 gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit 1; }
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 kubectl=$(which kubectl)|| { echo "Kubernetes CLI (kubectl) not found." >&2; exit 1; }
@@ -86,7 +91,7 @@ else
   echo "Aborting"
   exit 0
 fi
-gcloud projects create ${PROJECT_ID} --name=${PROJECT_ID} --organization=$GOOGLE_ORGANIZATION
+gcloud projects create ${PROJECT_ID} --name=${PROJECT_ID} --organization=$ORGANIZATION_ID
 
 print_step
 read -p "Changing your default project for gcloud to ${PROJECT_ID}. Continue (y/N)? " response
@@ -109,6 +114,7 @@ gcloud iam --project ${PROJECT_ID} service-accounts describe ${SERVICE_ACCOUNT}
 print_step "Granting permissions to service account and team members"
 # Note: Don't see an easy way to pass multiple members in one command. Can use a json file but
 # would have to do some manipulation to get variables in it.
+# TODO: move members to hidden file/vars
 gcloud projects add-iam-policy-binding ${PROJECT_ID} --member serviceAccount:${SERVICE_ACCOUNT} --role roles/editor
 gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:chuy@google.com --role roles/owner
 gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:rtannenbaum@google.com --role roles/owner
@@ -122,7 +128,7 @@ gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
 gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 
 print_step "Enabling billing" # Needed for installing SSL cert
-gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$GOOGLE_BILLING_ACCOUNT
+gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$BILLING_ACCOUNT_ID
 
 print_step "Installing SSL certificate"
 gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
@@ -165,7 +171,7 @@ gcloud compute instance-groups set-named-ports ${INSTANCE_GROUP_NAME} \
 --named-ports=http:${NODE_PORT} --zone=${ZONE}
 
 print_step "Creating Kubernetes service portability.api"
-kubectl create -f api-service.yaml
+kubectl create -f ../k8s/api-service.yaml
 
 print_step "Creating health check for backend service"
 gcloud compute http-health-checks create portability-health-check --port=${NODE_PORT}
@@ -217,7 +223,7 @@ read -p "Please enter the version tag to use (e.g. v1): " VERSION_TAG
 IMAGE="$IMAGE_NAME:$VERSION_TAG"
 # Substitute in the current image to our deployment yaml
 sed -i "s|IMAGE|$IMAGE|g" "api-deployment.yaml"
-kubectl create -f api-deployment.yaml
+kubectl create -f ../k8s/api-deployment.yaml
 # Restore deployment yaml file to previous state so we don't check in an image
 # that will become stale, and so the substitution works again next time
 sed -i "s|$IMAGE|IMAGE|g" "api-deployment.yaml"
