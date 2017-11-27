@@ -146,6 +146,12 @@ else
     fi
     echo -e "\nChoosing a version tag. Trying first to find latest image from GCP."
     IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID $IMAGE_NAME)
+    # Sample response:
+    # gcloud container images list-tags gcr.io/foo/portability-api
+    # DIGEST        TAGS                    TIMESTAMP
+    # bar           baz                      2017-11-26T19:50:06
+    # bar           v9                      2017-11-26T19:50:06
+    # TODO: Consider using HTTP API for a cleaner response than parsing from gcloud
     if [[ -z ${IMAGE_TAGS} ]] ; then
       echo "Couldn't find images on GCP"
     else
@@ -154,11 +160,15 @@ else
       IMAGE_TAGS_ARRAY=(${IMAGE_TAGS})
       LATEST_IMAGE_TAGS=${IMAGE_TAGS_ARRAY[3]}
       if [[ ! -z ${LATEST_IMAGE_TAGS} ]] ; then
+        # Split image tags response. The array is evaluated using the delimiters stored in IFS.
+        # Restore IFS to its original state when done.
+        OIFS=$IFS
         IFS=","
         LATEST_IMAGE_TAGS_ARRAY=($LATEST_IMAGE_TAGS)
+        IFS=${OIFS}
         for key in "${!LATEST_IMAGE_TAGS_ARRAY[@]}"; do
           if [[ ${LATEST_IMAGE_TAGS_ARRAY[$key]} =~ v[0-9] ]] ; then
-            LATEST_VERSION_TAG=${LATEST_IMAGE_TAGS_ARRAY[$key]}
+            LATEST_VERSION_TAG=${LATEST_IMAGE_TAGS_ARRAY[$key]} # Finds 'v9' in sample response
           fi
         done
         if [[ ! -z ${LATEST_VERSION_TAG} ]] ; then
