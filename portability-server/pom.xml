@@ -57,7 +57,51 @@
           <mainClass>org.dataportabilityproject.webapp.PortabilityServerMain</mainClass>
         </configuration>
       </plugin>
+
+      <!--To build runnable java jar when running mvn package -->
+      <!--See: https://maven.apache.org/plugins/maven-shade-plugin/usage.html -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <!-- Run shade goal on package phase -->
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <!-- filters to write valid manifest file and avoid the following error:
+                   Exception in thread "main" java.lang.SecurityException:
+                      Invalid signature file digest for Manifest main attributes
+                  See: https://stackoverflow.com/a/6743609
+              -->
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+
+              <transformers>
+                <!-- add Main-Class to manifest file -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.dataportabilityproject.webapp.PortabilityServerMain</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
+
+
   </build>
 
 </project>
