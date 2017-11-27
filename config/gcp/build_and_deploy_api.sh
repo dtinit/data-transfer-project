@@ -12,7 +12,7 @@
 # Will use config/environments/qa/settings.yaml and project BASE_PROJECT_ID-qa2
 
 if [[ $(pwd) != */googleplex-portability ]]; then
-  echo "Please run out of /gcp directory. Aborting."
+  echo "Please run out of /googleplex-portability directory. Aborting."
   exit 1
 fi
 
@@ -63,7 +63,7 @@ docker=$(which docker)|| { echo "docker not found. Please install it and try aga
 echo -e "Checking that you have gcloud installed"
 gcloud=$(which gcloud)|| { echo "gcloud not found. Please install it and try again." >&2; exit 1; }
 
-read -p "You should compile a new jar if there are java OR secrets changes.
+read -p "You should compile a new jar if there are java, secrets, or index.html changes.
 Compile and package jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
   # Note: WT engineers should store copies of secrets.csv locally in each environment's directory,

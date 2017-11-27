@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 export const environment = {
-  production: true,
+  production: false,
   apiUrl: 'https://gardenswithoutwalls-test.net/_/',
   apiPostUrl: 'https://gardenswithoutwalls-test.net'
 };
