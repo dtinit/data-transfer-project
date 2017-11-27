@@ -24,7 +24,7 @@ if [ -z $2 ]; then
   exit 1
 fi
 # script below sets env variables BASE_PROJECT_ID
-source ./init_hidden_vars.sh
+source ./init_project_vars.sh
 
 echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"

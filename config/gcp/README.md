@@ -18,6 +18,11 @@ qa/, and test/. Each environment subdirectory contains a
 settings.yaml for PortabilityFlags values and secrets.csv for
 application secrets.
 
+## Project-specific settings
+Project-specific settings, such as billing account, and project owners,
+should be configured in a hidden file init_project_vars.sh which is
+gitignore'd. An example is provided at init_project_vars_example.sh.
+
 ## Docker
 We use the scripts/build_and_deploy_api.sh to build our Docker images.
 Given an environment name, the script copies the appropriate

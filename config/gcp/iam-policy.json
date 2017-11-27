@@ -1,0 +1,11 @@
+{
+  "bindings": [
+    {
+      "members": ["serviceAccount:SERVICE_ACCOUNT"],
+      "role": "roles/editor"
+    }, {
+      "members": ["OWNERS"],
+      "role": "roles/owner"
+    }
+  ]
+}

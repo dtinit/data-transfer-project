@@ -18,7 +18,7 @@ fi
 
 # Constants
 # script below sets env variables BASE_PROJECT_ID
-source config/gcp/init_hidden_vars.sh
+source config/gcp/init_project_vars.sh
 
 echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"

@@ -4,11 +4,30 @@
 # in ENV_NAME. Sets up associated GCP project as well. Must run from scripts/ directory.
 # Usage: ./setup_gke_environment <ENV_NAME>
 
-source ./init_hidden_vars.sh
-echo -e "Set hidden vars:
+if [[ $(pwd) != */gcp ]]; then
+  echo "Please run out of /gcp directory. Aborting."
+  exit 1
+fi
+
+source ./init_project_vars.sh
+echo -e "Set project vars:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}
+  Prefix to use for all project IDs. Used with -ENV_NAME (e.g. dev, prod) as suffix.
 ORGANIZATION_ID: ${ORGANIZATION_ID}
-BILLING_ACCOUNT_ID: ${BILLING_ACCOUNT_ID}"
+  ID of GCP organization
+BILLING_ACCOUNT_ID: ${BILLING_ACCOUNT_ID}
+  ID of GCP billing account
+OWNERS: ${OWNERS}
+  Project owners.
+  Should be a comma separated list e.g. 'user:foo@foo.com,group:bar-group@baz.com'
+"
+if [[ -z ${BASE_PROJECT_ID} || \
+      -z ${ORGANIZATION_ID} || \
+      -z ${BILLING_ACCOUNT_ID} || \
+      -z ${OWNERS} ]]; then
+  echo "ERROR: Please make sure all variables for your project are set in init_project_vars.sh.
+  See init_project_vars_example.sh."
+fi
 
 # Constants
 GCE_ENFORCER_REASON=pre-launch
@@ -29,11 +48,6 @@ CURR_STEP=0
 print_step() {
   echo -e "\n$((++CURR_STEP))/${NUM_STEPS}. $1"
 }
-
-if [[ $(pwd) != */gcp ]]; then
-  echo "Please run out of /gcp directory. Aborting."
-  exit 1
-fi
 
 if [ -z $1 ]; then
   echo "ERROR: Must provide an environment, e.g. 'qa', 'test', or 'prod'"
@@ -112,15 +126,25 @@ SERVICE_ACCOUNT="${PROJECT_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 echo -e "\nCreated service account:"
 gcloud iam --project ${PROJECT_ID} service-accounts describe ${SERVICE_ACCOUNT}
 
-print_step "Granting permissions to service account and team members"
-# Note: Don't see an easy way to pass multiple members in one command. Can use a json file but
-# would have to do some manipulation to get variables in it.
-# TODO: move members to hidden file/vars
-gcloud projects add-iam-policy-binding ${PROJECT_ID} --member serviceAccount:${SERVICE_ACCOUNT} --role roles/editor
-gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:chuy@google.com --role roles/owner
-gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:rtannenbaum@google.com --role roles/owner
-gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:sihamh@google.com --role roles/owner
-gcloud projects add-iam-policy-binding ${PROJECT_ID} --member user:willard@google.com --role roles/owner
+print_step "Setting up IAM policy and ownership permissions"
+# Save a copy of iam-policy.json before we substitute in our vars
+cp iam-policy.json temp-iam-policy.json
+# Substitute in the appropriate users/groups for our iam policy
+sed -i "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" "iam-policy.json"
+sed -i "s|\"OWNERS\"|${OWNERS}|g" "iam-policy.json"
+print_step "Setting the following IAM policy \n"
+cat iam-policy.json
+read -p "
+Continue (Y/n)? " response
+if [[ ${response} =~ ^(no|n| ) ]]; then
+  # Restore IAM policy to previous state
+  mv temp-iam-policy.json iam-policy.json
+  echo "Aborting"
+  exit 0
+fi
+gcloud projects set-iam-policy ${PROJECT_ID} iam-policy.json
+# Restore IAM policy to previous state
+mv temp-iam-policy.json iam-policy.json
 
 print_step "Enabling APIs"
 # Needed for 'gcloud compute'
@@ -242,18 +266,14 @@ gcloud compute forwarding-rules create ${LB_FORWARDING_RULE_NAME} \
     --global --target-https-proxy ${LB_HTTPS_PROXY_NAME}
 
 print_step "Creating a Kubernetes deployment"
-echo -e "\nChoose a version tag. The latest image versions deployed to GCP are as follows."
-IMAGE_NAME="gcr.io/$PROJECT_ID/portability-api"
-IMAGE_TAGS=$(gcloud container images list-tags --project $PROJECT_ID $IMAGE_NAME)
-echo $IMAGE_TAGS
-read -p "Please enter the version tag to use (e.g. v1): " VERSION_TAG
-IMAGE="$IMAGE_NAME:$VERSION_TAG"
+IMAGE="gcr.io/$PROJECT_ID/portability-api:v1"
+# Save a copy of api-deployment.yaml before we substitute in our vars
+cp ../k8s/api-deployment.yaml ../k8s/temp-api-deployment.yaml
 # Substitute in the current image to our deployment yaml
-sed -i "s|IMAGE|$IMAGE|g" "api-deployment.yaml"
+sed -i "s|IMAGE # Replaced by script|$IMAGE|g" "../k8s/api-deployment.yaml"
 kubectl create -f ../k8s/api-deployment.yaml
-# Restore deployment yaml file to previous state so we don't check in an image
-# that will become stale, and so the substitution works again next time
-sed -i "s|$IMAGE|IMAGE|g" "api-deployment.yaml"
+# Restore api-deployment.yaml to previous state
+mv ../k8s/temp-api-deployment.yaml ../k8s/api-deployment.yaml
 
 print_step "Opening up VM firewall rule to allow requests from load balancer and health checkers"
 # This is actually easier than creating a new firewall rule because it's difficult to get the
@@ -289,14 +309,12 @@ if !(${UPDATED_FIREWALL_RULE}); then
   exit 1
 fi
 
-# TODO:
-# - IAP on backend-service (whitelist select users). Might make more sense to do manually.
-
 echo -e "\nDone creating project ${PROJECT_ID}!
 Next steps, not done by this script, are:
 1. Set the health check on the instance group. This can't be scripted yet!
    See note in this script. :(
 2. Point the domain to our external IP ${EXTERNAL_IP_ADDRESS}
 3. Deploy the latest docker image to our GKE cluster
-4. Upload the latest static content to our bucket"
-
+4. Upload the latest static content to our bucket
+5. (Optional) Enable IAP if you want to whitelist only select users to view the app
+"
