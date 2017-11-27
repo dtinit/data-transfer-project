@@ -3,13 +3,19 @@
 # Interactive script to generate a Dockerfile for the given environment.
 # Can optionally build a new jar and docker image based on the command prompts.
 #
-# Usage: ./config/gcp/build_and_deploy_api.sh <env> [project-suffix]
+# Usage: ./config/gcp/build_and_deploy.sh <binary> <env> [project-suffix]
+# - binary is required and specifies which server to build.
+#     This should be one of: api, web, worker
+#     ex: api will build the portability-api binary
+# - env is the environment you would like to build in. This should correspond to an environment dir
+#     in config/environments.
 # - project-suffix is required except for env=local
 #
 # Must be run from the root source directory googleplex-portability/
 #
-# ex: build_and_deploy_api.sh qa qa2
-# Will use config/environments/qa/settings.yaml and project BASE_PROJECT_ID-qa2
+# ex: build_and_deploy.sh web qa qa2
+# Will package and deploy portability-web using config/environments/qa/settings.yaml and
+# project BASE_PROJECT_ID-qa2
 
 if [[ $(pwd) != */googleplex-portability ]]; then
   echo "Please run out of /googleplex-portability directory. Aborting."
@@ -24,11 +30,19 @@ echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
 
 if [ -z $1 ]; then
+  echo "ERROR: Must provide a binary, e.g. 'api', 'web', 'worker'"
+  exit 1
+fi
+
+if [ -z $2 ]; then
   echo "ERROR: Must provide an environment, e.g. 'local', 'test', 'qa', or 'prod'"
   exit 1
 fi
-ENV=$1
-PROJECT_ID_SUFFIX=$2
+
+BINARY=$1
+ENV=$2
+PROJECT_ID_SUFFIX=$3
+SRC_DIR="portability-$BINARY"
 
 # Parse settings file
 SETTINGS_FILE="config/environments/$ENV/settings.yaml"
@@ -69,8 +83,8 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
   # Note: WT engineers should store copies of secrets.csv locally in each environment's directory,
   # e.g. local/secrets.csv and test/secrets.csv. See secrets_template.csv for more info on secrets.
 
-  # Copy secrets.csv from local/ or test/ into portability-web/src/main/resources/secrets.csv
-  SECRETS_CSV_DEST_PATH="portability-web/src/main/resources/secrets.csv"
+  # Copy secrets.csv from local/ or test/ into $SRC_DIR/src/main/resources/secrets.csv
+  SECRETS_CSV_DEST_PATH="$SRC_DIR/src/main/resources/secrets.csv"
   if [[ -e ${SECRETS_CSV_DEST_PATH} ]]; then
     echo -e "\nRemoving old secrets.csv"
     rm ${SECRETS_CSV_DEST_PATH}
@@ -92,8 +106,20 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
   echo -e "\nCompiling and installing...\n"
   mvn clean install
   echo -e "Packaging...\n"
+
   # TODO: Remove when spring is replaced
-  mvn package -e spring-boot:repackage -pl portability-web
+  if [[ $BINARY == "web" ]]; then
+    mvn package -e spring-boot:repackage -pl portability-web
+  else
+    mvn package -pl $SRC_DIR
+  fi
+fi
+
+read -p "Would you like to run the app jar at this time? (Y/n): " response
+if [[ ! ${response} =~ ^(no|n| ) ]]; then
+  COMMAND="java -jar $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar -cloud $FLAG_CLOUD -environment $FLAG_ENV"
+  echo -e "running $COMMAND"
+  $COMMAND
 fi
 
 # Generate Dockerfile based on env/settings.yaml.
@@ -102,9 +128,9 @@ fi
 # rather than the image.
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
-COPY portability-web/target/portability-web-1.0-SNAPSHOT.jar /app.jar
+COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
 EXPOSE 8080/tcp
-ENTRYPOINT ["java", "-jar", "/app.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV"]
+ENTRYPOINT ["java", "-jar", "/$BINARY.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV"]
 EOF
 echo -e "\nGenerated Dockerfile:\n"
 cat Dockerfile
@@ -117,8 +143,18 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   echo "Exiting"
   exit 0
 else
+  # we only have 2 gcp services: the api-server and the worker-server. Both the portability-api and
+  # portability-web binary map to the api-server (this will be removed once we deprecate
+  # portability-web) and the portability-worker maps to the worker-server.
+  # TODO: remove this and use $SRC_DIR once portability-web is deprecated.
+  if [[ $BINARY == "worker" ]]; then
+    IMAGE_SUFFIX="portability-worker"
+  else
+    IMAGE_SUFFIX="portability-api"
+  fi
+
   if [[ ${ENV} == "local" ]]; then
-    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/portability-api"
+    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$IMAGE_SUFFIX"
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Exiting"
@@ -128,7 +164,7 @@ else
       echo "Using version tag v1"
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${ENV}"
-    IMAGE_NAME="gcr.io/$PROJECT_ID/portability-api"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/$IMAGE_SUFFIX"
   else
     if [ -z $PROJECT_ID_SUFFIX ]; then
       echo -e "ERROR: Since env=${ENV} (!= local), you must provide a project ID suffix, i.e. 'qa8'
@@ -136,7 +172,7 @@ else
       exit 1
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${PROJECT_ID_SUFFIX}"
-    IMAGE_NAME="gcr.io/$PROJECT_ID/portability-api"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/$IMAGE_SUFFIX"
     read -p "Changing your default project to ${PROJECT_ID}. OK? (Y/n) " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Aborting"
