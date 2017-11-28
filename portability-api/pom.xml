@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>portability-server</artifactId>
+  <artifactId>portability-api</artifactId>
   <name>Portability API Server</name>
 
   <dependencies>
@@ -54,7 +54,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>1.2.1</version>
         <configuration>
-          <mainClass>org.dataportabilityproject.webapp.PortabilityServerMain</mainClass>
+          <mainClass>org.dataportabilityproject.webapp.PortabilityApiMain</mainClass>
         </configuration>
       </plugin>
 
@@ -91,7 +91,7 @@
               <transformers>
                 <!-- add Main-Class to manifest file -->
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>org.dataportabilityproject.webapp.PortabilityServerMain</mainClass>
+                  <mainClass>org.dataportabilityproject.webapp.PortabilityApiMain</mainClass>
                 </transformer>
               </transformers>
             </configuration>
