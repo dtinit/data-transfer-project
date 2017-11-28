@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Script to set up a new GKE (Kubernetes on Google Cloud Platform) environment based on the passed
-# in ENV_NAME. Sets up associated GCP project as well. Must run from scripts/ directory.
+# in ENV_NAME. Sets up associated GCP project as well. Must run from gcp/ directory.
 # Usage: ./setup_gke_environment <ENV_NAME>
 
 if [[ $(pwd) != */gcp ]]; then
@@ -30,7 +30,6 @@ if [[ -z ${BASE_PROJECT_ID} || \
 fi
 
 # Constants
-GCE_ENFORCER_REASON=pre-launch
 INSTANCE_GROUP_SIZE=2 #Number of VMs to run for our GKE jobs
 ZONE=us-central1-a
 STATIC_BUCKET_NAME=static-bucket
@@ -159,9 +158,6 @@ print_step "Installing SSL certificate"
 gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
     --certificate ${CRT_FILE_PATH} --private-key ${KEY_FILE_PATH}
 
-print_step "Enabling GCE Enforcer"
-gcloud alpha projects update ${PROJECT_ID}  --update-labels="gce-enforcer-fw-opt-in=$GCE_ENFORCER_REASON"
-
 print_step "Creating GCS bucket"
 BUCKET_NAME="static-$PROJECT_ID"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
@@ -276,11 +272,9 @@ kubectl create -f ../k8s/api-deployment.yaml
 mv ../k8s/temp-api-deployment.yaml ../k8s/api-deployment.yaml
 
 print_step "Opening up VM firewall rule to allow requests from load balancer and health checkers"
-# This is actually easier than creating a new firewall rule because it's difficult to get the
-# network tag applied to the VMs. We need to use the network tag for this firewall rule or else
-# GCE Enforcer will remove the rule. We can't apply a custom network tag to our instance group.
-# It's not feasible to apply one to individual VMs since it won't necessarily automatically
-# apply to any new autoscale VMs.
+# Find the firewall rule that is already applied to our VMs (it's the rule ending in "-vms").
+# The rule is applied to our VMs via a network tag. Then open it up to LB and health checkers via
+# allowed protocols/ports and source ranges.
 HEALTH_CHECKER_IP_RANGES=209.85.152.0/22,209.85.204.0/22,35.191.0.0/16
 LB_IP_RANGE=130.211.0.0/22
 NETWORK_IP_RANGE=10.128.0.0/9
@@ -309,12 +303,20 @@ if !(${UPDATED_FIREWALL_RULE}); then
   exit 1
 fi
 
+POSTPROCESS_SCRIPT="postprocess_project.sh"
+print_step "Checking if there are any project-specific post processing steps"
+if [[ -e ${POSTPROCESS_SCRIPT} ]]; then
+  echo -e "Found ${POSTPROCESS_SCRIPT}. Running it..."
+  ./${POSTPROCESS_SCRIPT}
+  echo "Done"
+fi
+
 echo -e "\nDone creating project ${PROJECT_ID}!
 Next steps, not done by this script, are:
 1. Set the health check on the instance group. This can't be scripted yet!
    See note in this script. :(
-2. Point the domain to our external IP ${EXTERNAL_IP_ADDRESS}
-3. Deploy the latest docker image to our GKE cluster
-4. Upload the latest static content to our bucket
-5. (Optional) Enable IAP if you want to whitelist only select users to view the app
+2. Point the domain to the external IP ${EXTERNAL_IP_ADDRESS}
+3. Deploy the latest docker image to the GKE cluster
+4. Upload the latest static content to the bucket
+5. (Optional) Enable IAP to whitelist only select users to view the app
 "
