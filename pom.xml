@@ -13,7 +13,8 @@
   <!-- subdirectories containing sub-projects -->
   <modules>
     <module>portability-core</module>
-    <module>portability-server</module>
+    <module>portability-api</module>
+    <!--TODO: deprecate in favor of portability-api-->
     <module>portability-web</module>
     <module>portability-worker</module>
   </modules>

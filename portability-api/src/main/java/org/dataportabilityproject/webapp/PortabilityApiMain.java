@@ -12,7 +12,7 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
 
-public class PortabilityServerMain {
+public class PortabilityApiMain {
 
   private static CloudFactory cloudFactory;
   private static ServiceProviderRegistry serviceProviderRegistry;
