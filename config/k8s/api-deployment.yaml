@@ -21,7 +21,7 @@ spec:
         app: portability
     spec:
       containers:
-      - image: IMAGE # value will be substituted in by script
+      - image: IMAGE # Replaced by script
         imagePullPolicy: IfNotPresent
         name: portability-api
         resources: {}
