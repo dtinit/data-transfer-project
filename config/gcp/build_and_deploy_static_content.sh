@@ -37,7 +37,6 @@ gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 
 GCP_DIR=$(pwd)
-
 echo -e "\nCleaning up old resources"
 print_and_exec "cd ../../../"
 if [[ -e "resources/" ]]; then
@@ -59,6 +58,23 @@ print_and_exec "cp -r resources/* static/"
 print_and_exec "gsutil cp -r static ${GCS_BUCKET}"
 echo -e "\nMaking folder public"
 print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
-echo -e "Done!
-Please check ../portability-web/src/main/resources/static.index.html to see if any bundle references
-need to be updated. If so, update index.html and build and deploy a new portability-api image"
+print_and_exec "cd static/"
+print_and_exec "pwd"
+print_and_exec "cp ../googleplex-portability/config/environments/$ENV/index.html index.html"
+echo -e "\nUpdating index.html to reflect new bundle versions...\n"
+echo -e "index.html before\n"
+cat index.html
+main_new=$(ls | grep main.*.bundle.js)
+styles_new=$(ls | grep styles.*.bundle.js)
+inline_new=$(ls | grep inline.*.bundle.js)
+vendor_new=$(ls | grep vendor.*.bundle.js)
+polyfills_new=$(ls | grep polyfills.*.bundle.js)
+echo -e "\nnew bundles:\n$main_new\n$styles_new\n$inline_new\n$vendor_new\n$polyfills_new"
+sed -i "s|main.*.bundle.js|$main_new|g" "index.html"
+sed -i "s|styles.*.bundle.js|$styles_new|g" "index.html"
+sed -i "s|inline.*.bundle.js|$inline_new|g" "index.html"
+sed -i "s|vendor.*.bundle.js|$vendor_new|g" "index.html"
+sed -i "s|polyfills.*.bundle.js|$polyfills_new|g" "index.html"
+echo -e "index.html after\n"
+cat index.html
+print_and_exec "mv index.html ../googleplex-portability/config/environments/$ENV/index.html"

@@ -28,7 +28,8 @@
       "environments": {
         "local": "environments/environment.ts",
         "test": "environments/environment.test.ts",
-        "qa": "environments/environment.qa.ts"
+        "qa": "environments/environment.qa.ts",
+        "prod": "environments/environment.prod.ts"
       }
     }
   ],

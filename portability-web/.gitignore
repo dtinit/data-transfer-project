@@ -11,6 +11,11 @@ src/.classpath
 src/main/resources/secrets_*.csv
 src/main/resources/secrets.csv
 src/main/resources/*.json
+# This index.html location should not be checked in because it is configured differently for
+# our different environments. We have a different index.html for each environment in
+# ../config/environments. When we build a jar, we copy in the correct index.html to the location
+# below to be served by the jar.
+src/main/resources/static/index.html
 workspace.xml
 tasks.xml
 *.iml

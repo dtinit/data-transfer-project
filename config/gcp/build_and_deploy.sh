@@ -102,6 +102,25 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
   fi
   echo -e "Copied secrets\n"
 
+  # Copy index.html from local/ or test/ into $SRC_DIR/src/main/resources/static/index.html
+  INDEX_HTML_DEST_PATH="$SRC_DIR/src/main/resources/static/index.html"
+  if [[ -e ${INDEX_HTML_DEST_PATH} ]]; then
+    echo -e "\nRemoving old index.html"
+    rm ${INDEX_HTML_DEST_PATH}
+    if [[ -e ${INDEX_HTML_DEST_PATH} ]]; then
+      echo "Problem removing old index.html. Aborting."
+      exit 1
+    fi
+  fi
+  INDEX_HTML_SRC_PATH="config/environments/$ENV/index.html"
+  echo -e "Copying index.html from $INDEX_HTML_SRC_PATH to $INDEX_HTML_DEST_PATH"
+  cp $INDEX_HTML_SRC_PATH $INDEX_HTML_DEST_PATH
+  if [[ ! -e ${INDEX_HTML_DEST_PATH} ]]; then
+    echo "Problem copying index.html. Aborting."
+    exit 1
+  fi
+  echo -e "Copied index.html\n"
+
   # Compile jar with maven.
   echo -e "\nCompiling and installing...\n"
   mvn clean install

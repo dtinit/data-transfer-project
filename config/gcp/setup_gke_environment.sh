@@ -316,7 +316,7 @@ Next steps, not done by this script, are:
 1. Set the health check on the instance group. This can't be scripted yet!
    See note in this script. :(
 2. Point the domain to the external IP ${EXTERNAL_IP_ADDRESS}
-3. Deploy the latest docker image to the GKE cluster
-4. Upload the latest static content to the bucket
+3. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
+4. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh (depends on index.html generated in step 3)
 5. (Optional) Enable IAP to whitelist only select users to view the app
 "
