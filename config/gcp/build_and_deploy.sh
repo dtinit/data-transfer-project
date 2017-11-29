@@ -206,7 +206,8 @@ else
     # DIGEST        TAGS                    TIMESTAMP
     # bar           baz                      2017-11-26T19:50:06
     # bar           v9                      2017-11-26T19:50:06
-    # TODO: Consider using HTTP API for a cleaner response than parsing from gcloud
+    # TODO: Consider using HTTP API for a cleaner response than parsing from gcloud. However this
+    # would require prompting for an API key which might be too much hassle.
     if [[ -z ${IMAGE_TAGS} ]] ; then
       echo "Couldn't find images on GCP"
     else

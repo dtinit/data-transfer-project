@@ -4,6 +4,12 @@
 # in ENV_NAME. Sets up associated GCP project as well. Must run from gcp/ directory.
 # Usage: ./setup_gke_environment <ENV_NAME>
 
+# Note: This script uses gcloud for all commands because many are not supported by the HTTP API,
+# which would be preferable as we'd be able to easily check for OK status (200) for all calls, and
+# be able to easily parse info from structured responses in json.
+# Also, using the HTTP API requires creating an API key which cannot be scripted; it has to be done
+# manually in Google Cloud Console (API -> Credentials).
+
 if [[ $(pwd) != */gcp ]]; then
   echo "Please run out of /gcp directory. Aborting."
   exit 1
@@ -185,7 +191,7 @@ INSTANCE_GROUPS=$(gcloud compute instance-groups list)
 # gcloud compute instance-groups list
 # NAME                           LOCATION       SCOPE  NETWORK  MANAGED  INSTANCES
 # foo-clus-default-pool-bar-grp  us-central1-a  zone   default  Yes      2
-# TODO: Consider using HTTP API for a cleaner response than parsing from gcloud
+# Note: Response parsing is messy; see note at top for why we use gcloud and not HTTP API for this.
 echo -e "Instance groups: \n${INSTANCE_GROUPS}"
 if [[ -z ${INSTANCE_GROUPS} ]] ; then
   echo "Cluster did not create instance group as expected"
@@ -237,7 +243,7 @@ EXTERNAL_IPS=$(gcloud compute addresses list)
 # gcloud compute addresses list
 # NAME                       REGION  ADDRESS         STATUS
 # load-balancer-external-ip          35.201.127.254  IN_USE
-# TODO: Consider using HTTP API for a cleaner response than parsing from gcloud
+# Note: Response parsing is messy; see note at top for why we use gcloud and not HTTP API for this.
 if [[ -z ${EXTERNAL_IPS} ]] ; then
   echo "Could not reserve external IP"
   exit 1
