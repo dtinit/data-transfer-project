@@ -72,6 +72,11 @@ public class PortabilityApiMain {
     server.createContext("/simpleLoginSubmit",
         new SimpleLoginSubmitHandler(serviceProviderRegistry, jobDao, cryptoHelper));
 
+    // Redirect anything that doesn't match to the ViewHandler. The view handler serves index.html
+    // which should reference static content served by our bucket. The angular app then routes requests
+    // client side via angular.
+    server.createContext("/", new ViewHandler());
+
     server.setExecutor(Executors.newCachedThreadPool());
     server.start();
 
