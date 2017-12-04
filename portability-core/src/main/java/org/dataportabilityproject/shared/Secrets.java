@@ -32,10 +32,6 @@ public final class Secrets {
     private static final Secrets INSTANCE = new Secrets();
 
     private static final String SECRETS_FILENAME = "secrets.csv";
-    // Base url for all calls within the application
-    private static final String BASE_URL_NAME = "BASE_URL";
-    // Base url for direct to api calls within the application
-    private static final String BASE_API_URL_NAME = "BASE_API_URL";
 
     private final ImmutableMap<String, String> secrets;
 
@@ -46,15 +42,6 @@ public final class Secrets {
     public String get(String key) {
         return secrets.get(key);
     }
-
-    public String baseUrl() {
-        return secrets.get(BASE_URL_NAME);
-    }
-
-    public String baseApiUrl() {
-        return secrets.get(BASE_API_URL_NAME);
-    }
-
     /**
      * Looks up a given key in the secrets file, then uses that value to open a secondary resource
      * file and streams that out.
@@ -87,11 +74,6 @@ public final class Secrets {
             System.exit(1);
         }
         this.secrets = builder.build();
-
-        Preconditions.checkNotNull(secrets.get(BASE_URL_NAME),
-            "Invalid secrets file, must specify " + BASE_URL_NAME);
-        Preconditions.checkNotNull(secrets.get(BASE_API_URL_NAME),
-            "Invalid secrets file, must specify " + BASE_API_URL_NAME);
     }
 
     /** Reads the path as a stream from file system or jar. */

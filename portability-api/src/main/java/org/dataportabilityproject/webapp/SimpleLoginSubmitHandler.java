@@ -24,12 +24,12 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -97,7 +97,7 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
     jobDao.updateJob(updatedJob);
 
-    String redirect = Secrets.getInstance().baseUrl() + (isExport ? "/next" : "/copy");
+    String redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
     // Set new cookie and redirect to the next page
     LogUtils.log("simpleLoginSubmit, redirecting to: %s", redirect);
     Headers responseHeaders = exchange.getResponseHeaders();

@@ -31,10 +31,8 @@ import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -130,7 +128,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
     // Set new cookie
     cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);
 
-    String redirect = Secrets.getInstance().baseUrl() + (isExport ? "/next" : "/copy");
+    String redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
     LogUtils.log("Redirecting to %s", redirect);
     responseHeaders.set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);

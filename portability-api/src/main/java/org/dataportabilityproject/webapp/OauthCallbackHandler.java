@@ -31,7 +31,6 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -127,7 +126,7 @@ public class OauthCallbackHandler implements HttpHandler {
       // Get responseHeaders to set redirect and new cookie
       Headers responseHeaders = exchange.getResponseHeaders();
       cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);
-      redirect = Secrets.getInstance().baseUrl() + (isExport ? "/next" : "/copy");
+      redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
       LogUtils.log("Error while handling request: %s", e);
       LogUtils.log("StackTrace: %s", e.getStackTrace());

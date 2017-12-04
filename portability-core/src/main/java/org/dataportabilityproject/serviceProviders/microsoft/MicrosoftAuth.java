@@ -29,9 +29,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecureOverride;
@@ -47,7 +47,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
 
     /** Domain name in the "Callback URL". */
     private static final String CALLBACK_URL =
-        Secrets.getInstance().baseApiUrl() + "/callback/microsoft";
+        PortabilityFlags.baseApiUrl() + "/callback/microsoft";
     // Edit /etc/hosts to map this to localhost
     private static final String DOMAIN = "localwebapp.com";
     private static final String AUTHORIZATION_SERVER_URL =
