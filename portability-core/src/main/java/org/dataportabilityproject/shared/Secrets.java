@@ -17,8 +17,6 @@ package org.dataportabilityproject.shared;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,15 +39,6 @@ public final class Secrets {
 
     public String get(String key) {
         return secrets.get(key);
-    }
-    /**
-     * Looks up a given key in the secrets file, then uses that value to open a secondary resource
-     * file and streams that out.
-     **/
-    public InputStream getReferencedInputStream(String key) throws IOException {
-        String path = secrets.get(key);
-        checkState(!Strings.isNullOrEmpty(path), "Key %s was not defined in secrets file", key);
-        return getStream(path);
     }
 
     private Secrets() {

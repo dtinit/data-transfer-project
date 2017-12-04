@@ -27,7 +27,6 @@ import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.shared.Secrets;
 
 public final class GoogleCloudFactory implements CloudFactory {
 
@@ -37,10 +36,8 @@ public final class GoogleCloudFactory implements CloudFactory {
     try {
       this.datastore = DatastoreOptions
           .newBuilder()
-          .setProjectId(Secrets.getInstance().get("GOOGLE_PROJECT_ID"))
-          .setCredentials(GoogleCredentials.fromStream(
-              Secrets.getInstance().getReferencedInputStream("GOOGLE_DATASTORE_CREDS_FILE")
-          ))
+          .setProjectId(System.getenv("GOOGLE_PROJECT_ID"))
+          .setCredentials(GoogleCredentials.getApplicationDefault())
           .build()
           .getService();
     } catch (IOException e) {

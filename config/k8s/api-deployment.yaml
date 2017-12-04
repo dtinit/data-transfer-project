@@ -20,10 +20,22 @@ spec:
       labels:
         app: portability
     spec:
+      volumes:
+      - name: portability-service-account-key
+        secret:
+          secretName: portability-service-account-creds
       containers:
-      - image: IMAGE # Replaced by script
+      - name: portability-api
+        image: IMAGE # Replaced by script
         imagePullPolicy: IfNotPresent
-        name: portability-api
+        volumeMounts:
+        - name: portability-service-account-key
+          mountPath: /var/secrets/portability-service-account-key
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/portability-service-account-key/key.json
+        - name: GOOGLE_PROJECT_ID
+          value: PROJECT-ID # Replaced by script
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File

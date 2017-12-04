@@ -47,7 +47,7 @@ LB_EXTERNAL_IP_NAME=load-balancer-external-ip
 LB_HTTPS_PROXY_NAME=load-balancer-https-proxy
 LB_FORWARDING_RULE_NAME=portability-forwarding-rule
 SSL_CERT_NAME=portability-cert
-NUM_STEPS=20
+NUM_STEPS=27
 CURR_STEP=0
 
 print_step() {
@@ -156,6 +156,8 @@ print_step "Enabling APIs"
 gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
 # Needed for managing container images
 gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
+# Needed for storing job state in Cloud DataStore
+gcloud services --project ${PROJECT_ID} enable datastore.googleapis.com
 
 print_step "Enabling billing" # Needed for installing SSL cert
 gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$BILLING_ACCOUNT_ID
@@ -179,6 +181,21 @@ print_step "Creating GKE cluster. This will create a VM instance group automatic
 gcloud container clusters create portability-api-cluster --zone ${ZONE} \
 --num-nodes=${INSTANCE_GROUP_SIZE} --image-type=COS \
 --cluster-ipv4-cidr=10.4.0.0/14
+
+KUBECTL_CONTEXT=$(kubectl config current-context)
+print_step
+read -p "Confirm we are using the correct Kubernetes context for ${PROJECT_ID}. It should have been
+set by the 'gcloud container clusters create' step above. Please double check it.
+Current context is:
+${KUBECTL_CONTEXT}.
+Continue (y/N)? " response
+response=${response,,} # to lower
+if [[ ${response} =~ ^(yes|y| ) ]]; then
+  echo "Continuing"
+else
+  echo "Aborting"
+  exit 0
+fi
 
 print_step "Creating health check for backend service and instance group"
 gcloud compute http-health-checks create portability-health-check --port=${NODE_PORT} \
@@ -225,6 +242,15 @@ print_step "Adding instance group ${INSTANCE_GROUP_NAME} as a backend to ${BACKE
 gcloud compute backend-services add-backend ${BACKEND_SERVICE_NAME} \
 --instance-group=${INSTANCE_GROUP_NAME} --balancing-mode=UTILIZATION --global \
 --instance-group-zone=${ZONE}
+
+print_step "Creating credentials for service account to access GCP APIs"
+gcloud iam service-accounts keys create \
+    /tmp/key.json \
+    --iam-account ${SERVICE_ACCOUNT}
+
+print_step "Importing the credentials as a Kubernetes Secret"
+kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/key.json
+rm /tmk/key.json
 
 print_step "Creating Kubernetes service portability.api"
 kubectl create -f ../k8s/api-service.yaml
@@ -273,6 +299,7 @@ IMAGE="gcr.io/$PROJECT_ID/portability-api:v1"
 cp ../k8s/api-deployment.yaml ../k8s/temp-api-deployment.yaml
 # Substitute in the current image to our deployment yaml
 sed -i "s|IMAGE # Replaced by script|$IMAGE|g" "../k8s/api-deployment.yaml"
+sed -i "s|PROJECT-ID # Replaced by script|$PROJECT_ID|g" "../k8s/api-deployment.yaml"
 kubectl create -f ../k8s/api-deployment.yaml
 # Restore api-deployment.yaml to previous state
 mv ../k8s/temp-api-deployment.yaml ../k8s/api-deployment.yaml
@@ -322,7 +349,9 @@ Next steps, not done by this script, are:
 1. Set the health check on the instance group. This can't be scripted yet!
    See note in this script. :(
 2. Point the domain to the external IP ${EXTERNAL_IP_ADDRESS}
-3. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
-4. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh (depends on index.html generated in step 3)
-5. (Optional) Enable IAP to whitelist only select users to view the app
+3. Select a region for DataStore at https://pantheon.corp.google.com/datastore/setup
+4. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
+5. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh
+   (This depends on index.html generated in step 4)
+6. (Optional) Enable IAP to whitelist only select users to view the app
 "
