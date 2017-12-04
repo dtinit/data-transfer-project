@@ -33,9 +33,9 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -48,7 +48,7 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
 
   /** Domain name in the "Callback URL". */
   private static final String CALLBACK_URL =
-      Secrets.getInstance().baseApiUrl() + "/callback/instagram";
+      PortabilityFlags.baseApiUrl() + "/callback/instagram";
   private static final String AUTHORIZATION_SERVER_URL =
       "https://api.instagram.com/oauth/authorize";
   private static final String TOKEN_SERVER_URL = "https://api.instagram.com/oauth/access_token";

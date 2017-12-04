@@ -1,2 +1,4 @@
 env: PROD
 cloud: GOOGLE
+baseUrl: https://gardenswithoutwalls.net
+baseApiUrl: https://gardenswithoutwalls.net

@@ -54,17 +54,31 @@ fi
 PARSED_ALL_FLAGS=true
 FLAG_ENV=$(grep -o 'env: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
 FLAG_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+FLAG_BASE_URL=$(grep -o 'baseUrl: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+FLAG_BASE_API_URL=$(grep -o 'baseApiUrl: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
 if [[ -z ${FLAG_ENV} ]]; then
   PARSED_ALL_FLAGS=false
   echo "Could not parse setting 'env' in $SETTINGS_FILE"
 else
-  echo -e "FLAG_ENV: $FLAG_ENV"
+  echo -e "env: $FLAG_ENV"
 fi
 if [[ -z ${FLAG_CLOUD} ]]; then
   PARSED_ALL_FLAGS=false
   echo "Could not parse setting 'cloud' in $SETTINGS_FILE"
 else
-  echo -e "FLAG_CLOUD: $FLAG_CLOUD"
+  echo -e "cloud: $FLAG_CLOUD"
+fi
+if [[ -z ${FLAG_BASE_URL} ]]; then
+  PARSED_ALL_FLAGS=false
+  echo "Could not parse setting 'baseUrl' in $SETTINGS_FILE"
+else
+  echo -e "baseUrl: $FLAG_BASE_URL"
+fi
+if [[ -z ${FLAG_BASE_API_URL} ]]; then
+  PARSED_ALL_FLAGS=false
+  echo "Could not parse setting 'baseApiUrl' in FLAG_BASE_API_URL"
+else
+  echo -e "baseApiUrl: $FLAG_BASE_API_URL"
 fi
 if !(${PARSED_ALL_FLAGS}) ; then
   exit 1
@@ -82,7 +96,6 @@ Compile and package jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
   # Note: WT engineers should store copies of secrets.csv locally in each environment's directory,
   # e.g. local/secrets.csv and test/secrets.csv. See secrets_template.csv for more info on secrets.
-
   # Copy secrets.csv from local/ or test/ into $SRC_DIR/src/main/resources/secrets.csv
   SECRETS_CSV_DEST_PATH="$SRC_DIR/src/main/resources/secrets.csv"
   if [[ -e ${SECRETS_CSV_DEST_PATH} ]]; then
@@ -102,24 +115,28 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
   fi
   echo -e "Copied secrets\n"
 
-  # Copy index.html from local/ or test/ into $SRC_DIR/src/main/resources/static/index.html
-  INDEX_HTML_DEST_PATH="$SRC_DIR/src/main/resources/static/index.html"
-  if [[ -e ${INDEX_HTML_DEST_PATH} ]]; then
-    echo -e "\nRemoving old index.html"
-    rm ${INDEX_HTML_DEST_PATH}
+  # Local uses index from ng serve, everything else uses index built from
+  # build_and_deploy_static_content.sh
+  if [[ ${ENV} != "local" ]]; then
+    # Copy index.html from local/ or test/ into $SRC_DIR/src/main/resources/static/index.html
+    INDEX_HTML_DEST_PATH="$SRC_DIR/src/main/resources/static/index.html"
     if [[ -e ${INDEX_HTML_DEST_PATH} ]]; then
-      echo "Problem removing old index.html. Aborting."
+      echo -e "\nRemoving old index.html"
+      rm ${INDEX_HTML_DEST_PATH}
+      if [[ -e ${INDEX_HTML_DEST_PATH} ]]; then
+        echo "Problem removing old index.html. Aborting."
+        exit 1
+      fi
+    fi
+    INDEX_HTML_SRC_PATH="config/environments/$ENV/index.html"
+    echo -e "Copying index.html from $INDEX_HTML_SRC_PATH to $INDEX_HTML_DEST_PATH"
+    cp $INDEX_HTML_SRC_PATH $INDEX_HTML_DEST_PATH
+    if [[ ! -e ${INDEX_HTML_DEST_PATH} ]]; then
+      echo "Problem copying index.html. Aborting."
       exit 1
     fi
+    echo -e "Copied index.html\n"
   fi
-  INDEX_HTML_SRC_PATH="config/environments/$ENV/index.html"
-  echo -e "Copying index.html from $INDEX_HTML_SRC_PATH to $INDEX_HTML_DEST_PATH"
-  cp $INDEX_HTML_SRC_PATH $INDEX_HTML_DEST_PATH
-  if [[ ! -e ${INDEX_HTML_DEST_PATH} ]]; then
-    echo "Problem copying index.html. Aborting."
-    exit 1
-  fi
-  echo -e "Copied index.html\n"
 
   # Compile jar with maven.
   echo -e "\nCompiling and installing...\n"
@@ -136,7 +153,7 @@ fi
 
 read -p "Would you like to run the app jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  COMMAND="java -jar $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar -cloud $FLAG_CLOUD -environment $FLAG_ENV"
+  COMMAND="java -jar $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar -cloud $FLAG_CLOUD -environment $FLAG_ENV -baseUrl $FLAG_BASE_URL -baseApiUrl $FLAG_BASE_API_URL"
   echo -e "running $COMMAND"
   $COMMAND
 fi
@@ -144,12 +161,13 @@ fi
 # Generate Dockerfile based on env/settings.yaml.
 # For now all flags will be passed to binary at run time via ENTRYPOINT but still in "image compile
 # time". In the future, should look into ways of compiling these settings into the binary itself
-# rather than the image.
+# rather than the image. Also, it would be cleaner to pass settings.yaml directly rather than
+# individual flags.
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
 COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
 EXPOSE 8080/tcp
-ENTRYPOINT ["java", "-jar", "/$BINARY.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV"]
+ENTRYPOINT ["java", "-jar", "/$BINARY.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV", "-baseUrl", "$FLAG_BASE_URL", "-baseApiUrl", "$FLAG_BASE_API_URL"]
 EOF
 echo -e "\nGenerated Dockerfile:\n"
 cat Dockerfile

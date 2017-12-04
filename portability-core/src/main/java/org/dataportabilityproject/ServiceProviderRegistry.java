@@ -31,7 +31,6 @@ import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServicePro
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkServiceProvider;
 import org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.Secrets;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -43,7 +42,6 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
     private final CloudFactory cloudFactory;
-
 
     public ServiceProviderRegistry(CloudFactory cloudFactory) throws Exception {
         this.cloudFactory = cloudFactory;
