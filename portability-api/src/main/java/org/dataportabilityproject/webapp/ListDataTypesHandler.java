@@ -34,6 +34,7 @@ import org.dataportabilityproject.shared.PortableDataType;
  * HTTP Handler for the listDataTypes service
  */
 public class ListDataTypesHandler implements HttpHandler {
+
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   public ListDataTypesHandler(ServiceProviderRegistry serviceProviderRegistry) {
@@ -47,7 +48,7 @@ public class ListDataTypesHandler implements HttpHandler {
 
     // Mark the response as type Json
     Headers headers = exchange.getResponseHeaders();
-    headers.set(HEADER_CONTENT_TYPE, "application/json; charset="+ StandardCharsets.UTF_8.name());
+    headers.set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
 
     JsonArrayBuilder builder = Json.createArrayBuilder();
 

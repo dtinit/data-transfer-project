@@ -46,8 +46,8 @@ public class ConfigureHandler implements HttpHandler {
   private final PortabilityJobFactory jobFactory;
 
   public ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
-                          JobDao jobDao,
-                          PortabilityJobFactory jobFactory) {
+      JobDao jobDao,
+      PortabilityJobFactory jobFactory) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobDao = jobDao;
     this.jobFactory = jobFactory;

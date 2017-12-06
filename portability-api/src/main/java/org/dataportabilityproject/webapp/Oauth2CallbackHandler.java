@@ -27,11 +27,9 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.Secrets;
@@ -61,8 +59,9 @@ public class Oauth2CallbackHandler implements HttpHandler {
     Headers responseHeaders = exchange.getResponseHeaders();
     Headers requestHeaders = exchange.getRequestHeaders();
 
-    String requestURL = PortabilityServerUtils.createURL(exchange.getProtocol(), requestHeaders.getFirst(HEADER_HOST),
-        exchange.getRequestURI().toString());
+    String requestURL = PortabilityServerUtils
+        .createURL(exchange.getProtocol(), requestHeaders.getFirst(HEADER_HOST),
+            exchange.getRequestURI().toString());
     LogUtils.log("Oauth2CallbackHandler getURL: %s", requestURL);
 
     AuthorizationCodeResponseUrl authResponse = new AuthorizationCodeResponseUrl(requestURL);
