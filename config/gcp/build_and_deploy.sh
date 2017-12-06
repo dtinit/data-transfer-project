@@ -163,15 +163,60 @@ fi
 # time". In the future, should look into ways of compiling these settings into the binary itself
 # rather than the image. Also, it would be cleaner to pass settings.yaml directly rather than
 # individual flags.
+
+# LOCAL_DEBUG_SETTINGS are only set for env=LOCAL. They should not be used for prod environments.
+LOCAL_DEBUG_SETTINGS=""
+OPTIONAL_DEBUG_FLAG=""
+if [[ ${FLAG_ENV} == "LOCAL" ]]; then
+  LOCAL_DEBUG_SETTINGS="EXPOSE 5005/tcp"
+  OPTIONAL_DEBUG_FLAG="\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005\","
+  # Setup for allowing local instance to talk to GCP. This is useful for debugging as well as
+  # avoiding the need for a local impl for each service we use.
+  if [[ ${FLAG_CLOUD} == "GOOGLE" ]]; then
+    CREDS_FILE=config/gcp/service_acct_creds.json
+    read -p "
+Caution!
+
+You are using --cloud=GOOGLE which is not the default for env=LOCAL. This will connect to GCP, and
+requires you download service account credentials to the following location:
+$CREDS_FILE.
+
+Continue? (Y/n): " response
+    if [[ ${response} =~ ^(no|n| ) ]]; then
+      echo "Aborting"
+      exit 0
+    fi
+    # This is a test project. Only use test projects here!
+    LOCAL_GCP_PROJECT="world-takeout-test"
+    LOCAL_DEBUG_SETTINGS=$LOCAL_DEBUG_SETTINGS"
+COPY $CREDS_FILE /service_acct_creds.json
+ENV GOOGLE_PROJECT_ID=$LOCAL_GCP_PROJECT
+ENV GOOGLE_APPLICATION_CREDENTIALS=/service_acct_creds.json
+EXPOSE 5005/tcp"
+  fi
+fi
+
+# And onto generating the dockerfile...
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
 COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
+$LOCAL_DEBUG_SETTINGS
 EXPOSE 8080/tcp
-ENTRYPOINT ["java", "-jar", "/$BINARY.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV", "-baseUrl", "$FLAG_BASE_URL", "-baseApiUrl", "$FLAG_BASE_API_URL"]
+ENTRYPOINT ["java", $OPTIONAL_DEBUG_FLAG "-jar", "/$BINARY.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV", "-baseUrl", "$FLAG_BASE_URL", "-baseApiUrl", "$FLAG_BASE_API_URL"]
 EOF
 echo -e "\nGenerated Dockerfile:\n"
 cat Dockerfile
 echo -e ""
+
+if [[  ${FLAG_ENV} != "LOCAL" ]]; then
+  if grep -q GOOGLE_APPLICATION_CREDENTIALS Dockerfile; then
+  echo -e "\nProblem found in Dockerfile. Did you edit LOCAL_DEBUG_SETTINGS above?
+
+You are setting GOOGLE_APPLICATION_CREDENTIALS in a non-local environment. This should be done for
+local development only. Please fix this and try again."
+  exit 1
+  fi
+fi
 
 # Option to build a docker image. For non-local, the script will find the latest version tag for
 # you or allow you to enter one manually.
@@ -190,7 +235,7 @@ else
     IMAGE_SUFFIX="portability-api"
   fi
 
-  if [[ ${ENV} == "local" ]]; then
+  if [[ ${FLAG_ENV} == "LOCAL" ]]; then
     IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$IMAGE_SUFFIX"
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
@@ -282,6 +327,16 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   exit 0
 else
   docker build -t $IMAGE .
+fi
+
+echo ""
+if [[ ${ENV} == "local" ]]; then
+  read -p "Run docker image $IMAGE locally? (Y/n): " response
+  if [[ ${response} =~ ^(no|n| ) ]]; then
+    echo "Continuing"
+  else
+    docker run -ti --rm -p 8080:8080 -p 5005:5005 $IMAGE
+  fi
 fi
 
 if [[ ${ENV} != "local" ]]; then
