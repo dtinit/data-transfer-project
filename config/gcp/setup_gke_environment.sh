@@ -185,7 +185,10 @@ gcloud container clusters create portability-api-cluster --zone ${ZONE} \
 KUBECTL_CONTEXT=$(kubectl config current-context)
 print_step
 read -p "Confirm we are using the correct Kubernetes context for ${PROJECT_ID}. It should have been
-set by the 'gcloud container clusters create' step above. Please double check it.
+set by the 'gcloud container clusters create' step above. Please double check it. If this is not
+correct, or you are modifying an existing project, you must get credentials for the cluster from
+gcloud. Run: $gcloud container clusters get-credentials ${PROJECT_ID}
+
 Current context is:
 ${KUBECTL_CONTEXT}.
 Continue (y/N)? " response
@@ -250,7 +253,7 @@ gcloud iam service-accounts keys create \
 
 print_step "Importing the credentials as a Kubernetes Secret"
 kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/key.json
-rm /tmk/key.json
+rm /tmp/key.json
 
 print_step "Creating Kubernetes service portability.api"
 kubectl create -f ../k8s/api-service.yaml
