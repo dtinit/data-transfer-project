@@ -37,11 +37,10 @@ import javax.json.JsonObject;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.PortabilityFlags;
-
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.Config.Environment;
+import org.dataportabilityproject.shared.LogUtils;
 
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers
@@ -73,6 +72,7 @@ public class PortabilityServerUtils {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "Unsupported protocol");
     return url;
   }
+
   /**
    * Returns the cookie specified in headers for the provided {@code} key.
    */

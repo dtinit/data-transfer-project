@@ -41,6 +41,7 @@ import org.dataportabilityproject.shared.PortableDataType;
  * HttpHandler for the ListServices service
  */
 public class ListServicesHandler implements HttpHandler {
+
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   public ListServicesHandler(ServiceProviderRegistry serviceProviderRegistry) {
@@ -53,9 +54,10 @@ public class ListServicesHandler implements HttpHandler {
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();
-    headers.set(HEADER_CONTENT_TYPE, "application/json; charset="+ StandardCharsets.UTF_8.name());
+    headers.set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
 
-    String dataTypeParam = PortabilityServerUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
+    String dataTypeParam = PortabilityServerUtils.getRequestParams(exchange)
+        .get(JsonKeys.DATA_TYPE);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
 
     JsonObject response = generateGetResponse(dataTypeParam);
@@ -67,7 +69,7 @@ public class ListServicesHandler implements HttpHandler {
     writer.close();
   }
 
-  private JsonObject generateGetResponse(String dataTypeParam){
+  private JsonObject generateGetResponse(String dataTypeParam) {
     // Validate incoming data type parameter
     PortableDataType dataType = getDataType(dataTypeParam);
     JsonObjectBuilder builder = Json.createObjectBuilder();
@@ -89,11 +91,11 @@ public class ListServicesHandler implements HttpHandler {
 
     // Construct Json.
     JsonArrayBuilder exportBuilder = Json.createArrayBuilder();
-    for(String s : exportServices) {
+    for (String s : exportServices) {
       exportBuilder.add(s);
     }
     JsonArrayBuilder importBuilder = Json.createArrayBuilder();
-    for(String s : importServices) {
+    for (String s : importServices) {
       importBuilder.add(s);
     }
 

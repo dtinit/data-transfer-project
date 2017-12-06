@@ -26,12 +26,14 @@ import org.dataportabilityproject.shared.LogUtils;
  * Handler to redirect all paths to the angular view.
  */
 public class ViewHandler implements HttpHandler {
+
   private final String INDEX = "static/index.html";
+
   public void handle(HttpExchange exchange) throws IOException {
     LogUtils.log("ViewHandler got request %s", exchange.getRequestURI().toString());
     InputStream index_stream = getClass().getClassLoader().getResourceAsStream(INDEX);
 
-    if(index_stream == null) {
+    if (index_stream == null) {
       // Index file doesn't exist: reject with 404 error.
       LogUtils.log("Could not open file: %s", INDEX);
       String response = "404 (Not Found)\n";
@@ -45,7 +47,9 @@ public class ViewHandler implements HttpHandler {
       OutputStream os = exchange.getResponseBody();
       final byte[] buffer = new byte[0x10000];
       int count = 0;
-      while ((count = index_stream.read(buffer)) >= 0) { os.write(buffer, 0, count);}
+      while ((count = index_stream.read(buffer)) >= 0) {
+        os.write(buffer, 0, count);
+      }
       os.close();
       index_stream.close();
     }
