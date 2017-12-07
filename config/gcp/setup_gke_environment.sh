@@ -151,6 +151,9 @@ gcloud projects set-iam-policy ${PROJECT_ID} iam-policy.json
 # Restore IAM policy to previous state
 mv temp-iam-policy.json iam-policy.json
 
+print_step "Enabling billing" # Needed for installing SSL cert
+gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$BILLING_ACCOUNT_ID
+
 print_step "Enabling APIs"
 # Needed for 'gcloud compute'
 gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
@@ -159,8 +162,6 @@ gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 # Needed for storing job state in Cloud DataStore
 gcloud services --project ${PROJECT_ID} enable datastore.googleapis.com
 
-print_step "Enabling billing" # Needed for installing SSL cert
-gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$BILLING_ACCOUNT_ID
 
 print_step "Installing SSL certificate"
 gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
@@ -249,7 +250,7 @@ gcloud compute backend-services add-backend ${BACKEND_SERVICE_NAME} \
 print_step "Creating credentials for service account to access GCP APIs"
 gcloud iam service-accounts keys create \
     /tmp/key.json \
-    --iam-account ${SERVICE_ACCOUNT}
+    --iam-account=${SERVICE_ACCOUNT}
 
 print_step "Importing the credentials as a Kubernetes Secret"
 kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/key.json
