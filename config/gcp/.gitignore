@@ -1,2 +1,5 @@
 init_project_vars.sh
 postprocess_project.sh
+# Credentials used for connecting to GCP services for local testing only. In prod we use creds
+# stored in a Kubernetes secret rather than a file the image. (https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform)
+service_acct_creds.json
