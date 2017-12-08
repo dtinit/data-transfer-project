@@ -29,6 +29,7 @@ import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -67,9 +68,8 @@ public class OauthCallbackHandler implements HttpHandler {
 
       // Get the URL for the request - needed for the authorization.
       String requestURL = PortabilityServerUtils
-          .createURL(exchange.getProtocol(), requestHeaders.getFirst(HEADER_HOST),
-              exchange.getRequestURI().toString());
-      LogUtils.log("OauthCallbackHandler, Request URL: %s", requestURL);
+          .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
+      LogUtils.log("OauthCallbackHandler, requestURL: %s", requestURL);
 
       Map<String, String> requestParams = PortabilityServerUtils.getRequestParams(exchange);
 

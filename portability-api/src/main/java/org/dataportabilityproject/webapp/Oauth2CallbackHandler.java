@@ -60,9 +60,8 @@ public class Oauth2CallbackHandler implements HttpHandler {
     Headers requestHeaders = exchange.getRequestHeaders();
 
     String requestURL = PortabilityServerUtils
-        .createURL(exchange.getProtocol(), requestHeaders.getFirst(HEADER_HOST),
-            exchange.getRequestURI().toString());
-    LogUtils.log("Oauth2CallbackHandler getURL: %s", requestURL);
+        .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
+    LogUtils.log("Oauth2CallbackHandler, requestURL: %s", requestURL);
 
     AuthorizationCodeResponseUrl authResponse = new AuthorizationCodeResponseUrl(requestURL);
 

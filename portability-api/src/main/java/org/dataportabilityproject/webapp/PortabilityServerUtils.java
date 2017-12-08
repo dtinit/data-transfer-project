@@ -18,7 +18,6 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.BufferedReader;
@@ -57,20 +56,17 @@ public class PortabilityServerUtils {
         .add(JsonKeys.IMPORT_AUTH_URL, importAuthURL).build();
   }
 
-  /* Returns a URL representing the resource provided.
-   * TODO: remove hardcoded protocol - find a better way to do this from the HttpExchange.
+  /**
+   * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
+   * way to do this from the HttpExchange.
    */
-  public static String createURL(String protocol, String host, String URI) {
-    String url = "";
+  public static String createURL(String host, String URI) {
+    // http is only allowed if this is running a local instance, enforce https instead.
+    String scheme = PortabilityFlags.environment() == Environment.LOCAL ? "http://" : "https://";
 
-    if (protocol.contains("HTTP/") && PortabilityFlags.environment() == Environment.LOCAL) {
-      url = "http://" + host + URI;
-    } else if (protocol.contains("HTTPS/")) {
-      url = "https://" + host + URI;
-    }
+    LogUtils.log("createURL, scheme: %s, host: %s, URI: %s", scheme, host, URI);
+    return scheme + host + URI;
 
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "Unsupported protocol");
-    return url;
   }
 
   /**
