@@ -6,6 +6,10 @@
     }, {
       "members": ["OWNERS"],
       "role": "roles/owner"
-    }
+    },
+    {
+      "members": ["serviceAccount:SERVICE_ACCOUNT"],
+      "role": "roles/cloudkms.cryptoKeyDecrypter"
+    },
   ]
 }

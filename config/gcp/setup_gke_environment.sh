@@ -161,21 +161,38 @@ gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
 gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 # Needed for storing job state in Cloud DataStore
 gcloud services --project ${PROJECT_ID} enable datastore.googleapis.com
+# Needed for encrypting app secrets
+gcloud services --project ${PROJECT_ID} enable cloudkms.googleapis.com
 
 
 print_step "Installing SSL certificate"
 gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
     --certificate ${CRT_FILE_PATH} --private-key ${KEY_FILE_PATH}
 
-print_step "Creating GCS bucket"
-BUCKET_NAME="static-$PROJECT_ID"
+print_step "Creating GCS 'static' bucket"
+BUCKET_NAME="static-portability"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 gsutil mb ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
 
-print_step "Creating backend bucket"
+print_step "Creating backend 'static' bucket"
 gcloud compute --project ${PROJECT_ID} backend-buckets create ${STATIC_BUCKET_NAME} --gcs-bucket-name=${BUCKET_NAME}
 # TODO use --enable-cdn flag when we are ready to use CDN
+
+print_step "Creating GCS 'app-data' bucket for storing encrypted app secrets"
+BUCKET_NAME="app-data-portability"
+GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
+gsutil mb ${GCS_BUCKET_NAME}
+echo "Created GCS bucket $GCS_BUCKET_NAME"
+
+print_step "Granting service account ${SERVICE_ACCOUNT} viewer privileges to 'app-data' bucket"
+gsutil iam ch serviceAccount:${SERVICE_ACCOUNT}:objectViewer ${GCS_BUCKET_NAME}
+
+print_step "Creating a key to encrypt app secrets"
+gcloud kms keyrings create portability_secrets --location global
+# Currently only one purposes is supported: "encryption". Can't have separate encrypt/decrypt keys.
+gcloud kms keys create portability_secrets_key --location global --keyring portability_secrets \
+--purpose encryption
 
 # Note: May want to enable autoscaling at some point
 print_step "Creating GKE cluster. This will create a VM instance group automatically."
@@ -354,8 +371,9 @@ Next steps, not done by this script, are:
    See note in this script. :(
 2. Point the domain to the external IP ${EXTERNAL_IP_ADDRESS}
 3. Select a region for DataStore at https://pantheon.corp.google.com/datastore/setup
-4. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
-5. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh
-   (This depends on index.html generated in step 4)
-6. (Optional) Enable IAP to whitelist only select users to view the app
+4. Encrypt and upload app secrets (encrypt_and_upload_app_secrets.sh)
+5. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
+6. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh
+   (This depends on secrets from step 4 and index.html generated in step 5)
+7. (Optional) Enable IAP to whitelist only select users to view the app
 "
