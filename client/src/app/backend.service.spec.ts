@@ -15,16 +15,16 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { SelectDataTypeService } from './select-data-type.service';
+import { BackendService } from './backend.service';
 
-describe('SelectDataTypeService', () => {
+describe('BackendService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SelectDataTypeService]
+      providers: [BackendService]
     });
   });
 
-  it('should be created', inject([SelectDataTypeService], (service: SelectDataTypeService) => {
+  it('should be created', inject([BackendService], (service: BackendService) => {
     expect(service).toBeTruthy();
   }));
 });

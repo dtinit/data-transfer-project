@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { SelectDataTypeService } from '../select-data-type.service';
+import { BackendService } from '../backend.service';
 import { CopyConfiguration } from '../copy-configuration';
 
 @Component({
@@ -25,7 +25,7 @@ import { CopyConfiguration } from '../copy-configuration';
 export class NextComponent implements OnInit {
   config: CopyConfiguration = new CopyConfiguration("", "", "", "", "");
   error_text: string = "";
-  constructor(private service : SelectDataTypeService) { }
+  constructor(private service : BackendService) { }
 
   ngOnInit() {
     this.importSetup();
