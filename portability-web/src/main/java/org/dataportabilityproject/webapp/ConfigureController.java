@@ -112,7 +112,8 @@ public class ConfigureController {
         dataType, job.exportService());
 
     // Auth authUrl
-    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(newJob));
+    AuthFlowInitiator authFlowInitiator = generator
+        .generateAuthUrl(PortabilityServerFlags.baseApiUrl(), JobUtils.encodeId(newJob));
     Preconditions.checkNotNull(authFlowInitiator,"AuthFlowInitiator not found for type: %s, service: %s",
         dataType, job.exportService());
 

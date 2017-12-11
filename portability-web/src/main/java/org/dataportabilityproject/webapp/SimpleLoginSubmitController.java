@@ -90,7 +90,8 @@ public class SimpleLoginSubmitController {
         dataType, job.exportService());
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(username, jobId, null, password);
+    AuthData authData = generator
+        .generateAuthData(PortabilityServerFlags.baseApiUrl(), username, jobId, null, password);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
@@ -103,9 +104,9 @@ public class SimpleLoginSubmitController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/next");  // TODO: parameterize
+      response.sendRedirect(PortabilityServerFlags.baseUrl() + "/next");  // TODO: parameterize
     } else {
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/copy");
+      response.sendRedirect(PortabilityServerFlags.baseUrl() + "/copy");
     }
 
   }

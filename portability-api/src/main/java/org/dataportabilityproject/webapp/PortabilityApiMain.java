@@ -37,6 +37,7 @@ public class PortabilityApiMain {
 
   public static void main(String args[]) throws Exception {
     PortabilityFlags.parse(args);
+    PortabilityApiFlags.parse(args);
 
     // TODO: use Config.java from core library for the initialization stuff
     // Can probably make serviceProviderRegistry a singleton/factory class so that we don't

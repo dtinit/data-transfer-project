@@ -92,7 +92,9 @@ public class Oauth2CallbackController {
     AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(authResponse.getCode(), jobId, initialAuthData, null);
+    AuthData authData = generator
+        .generateAuthData(PortabilityServerFlags.baseApiUrl(), authResponse.getCode(), jobId,
+            initialAuthData, null);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
@@ -106,9 +108,9 @@ public class Oauth2CallbackController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/next");  // TODO: parameterize
+      response.sendRedirect(PortabilityServerFlags.baseApiUrl() + "/next");  // TODO: parameterize
     } else {
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/copy");
+      response.sendRedirect(PortabilityServerFlags.baseApiUrl() + "/copy");
     }
   }
 

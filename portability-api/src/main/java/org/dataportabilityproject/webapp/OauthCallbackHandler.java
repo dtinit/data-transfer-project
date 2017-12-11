@@ -25,7 +25,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -112,7 +111,7 @@ public class OauthCallbackHandler implements HttpHandler {
           .checkNotNull(initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
 
       // Generate and store auth data
-      AuthData authData = generator.generateAuthData(oauthVerifier, jobId, initialAuthData, null);
+      AuthData authData = generator.generateAuthData(PortabilityApiFlags.baseApiUrl(), oauthVerifier, jobId, initialAuthData, null);
 
       // Update the job
       // TODO: Remove persistence of auth data in storage at this point. The data will be passed
@@ -122,7 +121,7 @@ public class OauthCallbackHandler implements HttpHandler {
 
       // Get responseHeaders to set redirect and new cookie
       cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
-      redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
+      redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
       LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
       throw e;

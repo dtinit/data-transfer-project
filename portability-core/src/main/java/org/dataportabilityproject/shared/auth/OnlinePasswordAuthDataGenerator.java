@@ -22,13 +22,13 @@ import org.dataportabilityproject.PortabilityFlags;
 public final class OnlinePasswordAuthDataGenerator implements OnlineAuthDataGenerator {
 
   @Override
-  public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
-    return AuthFlowInitiator.create(PortabilityFlags.baseUrl() + "/simplelogin");
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+    return AuthFlowInitiator.create(callbackBaseUrl + "/simplelogin");
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData, String extra)
-      throws IOException {
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+      AuthData initialAuthData, String extra) throws IOException {
     Preconditions.checkArgument(initialAuthData == null, "initial auth data not expected");
     return PasswordAuthData.create(authCode, extra);
   }

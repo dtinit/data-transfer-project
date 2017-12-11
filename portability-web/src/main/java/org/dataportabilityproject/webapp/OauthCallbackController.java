@@ -86,7 +86,9 @@ public class OauthCallbackController {
     Preconditions.checkNotNull(initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(oauthVerifier, jobId, initialAuthData, null);
+    AuthData authData = generator
+        .generateAuthData(PortabilityServerFlags.baseApiUrl(), oauthVerifier, jobId,
+            initialAuthData, null);
 
     // Update the job
     // TODO: Remove persistence of auth data in storage at this point. The data will be passed
@@ -99,9 +101,9 @@ public class OauthCallbackController {
 
     if(isExport) {
       // TODO: Send to auth intermediary page
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/next");  // TODO: parameterize
+      response.sendRedirect(PortabilityServerFlags.baseUrl() + "/next");  // TODO: parameterize
     } else {
-      response.sendRedirect(PortabilityFlags.baseUrl() + "/copy");
+      response.sendRedirect(PortabilityServerFlags.baseUrl() + "/copy");
     }
   }
 

@@ -120,7 +120,8 @@ public class Oauth2CallbackHandler implements HttpHandler {
 
       // Generate and store auth data
       AuthData authData = generator
-          .generateAuthData(authResponse.getCode(), jobId, initialAuthData, null);
+          .generateAuthData(PortabilityApiFlags.baseApiUrl(), authResponse.getCode(), jobId,
+              initialAuthData, null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Update the job
@@ -132,7 +133,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
       // Set new cookie - TODO: set SameSite attribute on cookie.
       cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
 
-      redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
+      redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
       LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
       throw e;

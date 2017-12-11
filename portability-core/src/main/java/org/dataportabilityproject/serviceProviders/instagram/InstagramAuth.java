@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -47,8 +46,7 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   private static final JacksonFactory JSON_FACTORY = new JacksonFactory();
 
   /** Domain name in the "Callback URL". */
-  private static final String CALLBACK_URL =
-      PortabilityFlags.baseApiUrl() + "/callback/instagram";
+  private static final String CALLBACK_PATH = "/callback/instagram";
   private static final String AUTHORIZATION_SERVER_URL =
       "https://api.instagram.com/oauth/authorize";
   private static final String TOKEN_SERVER_URL = "https://api.instagram.com/oauth/access_token";
@@ -95,24 +93,24 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   }
 
   @Override
-  public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
     String url = createFlow()
         .newAuthorizationUrl()
-        .setRedirectUri(CALLBACK_URL)
+        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
         .setState(id) // TODO: Encrypt
         .build();
     return AuthFlowInitiator.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData,
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id, AuthData initialAuthData,
       String extra) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for Instagram oauth flow");
     Preconditions.checkArgument(initialAuthData == null, "Earlier auth data not expected for Instagram oauth flow");
     AuthorizationCodeFlow flow = createFlow();
     TokenResponse response = flow
         .newTokenRequest(authCode)
-        .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
+        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, id);

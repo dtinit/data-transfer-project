@@ -86,7 +86,8 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
         dataType, job.exportService());
 
     // Generate and store auth data
-    AuthData authData = generator.generateAuthData(username, jobId, null, password);
+    AuthData authData = generator
+        .generateAuthData(PortabilityApiFlags.baseApiUrl(), username, jobId, null, password);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     // Update the job
@@ -94,7 +95,7 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
     PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
     jobDao.updateJob(updatedJob);
 
-    String redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
+    String redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     // Set new cookie and redirect to the next page
     LogUtils.log("simpleLoginSubmit, redirecting to: %s", redirect);
     Headers responseHeaders = exchange.getResponseHeaders();

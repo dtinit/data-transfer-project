@@ -68,7 +68,8 @@ public class CopySetupHandler implements HttpHandler {
     // Obtain the OnlineAuthDataGenerator
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
-    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(job));
+    AuthFlowInitiator authFlowInitiator = generator
+        .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
     // Store authUrl
     if (authFlowInitiator.initialAuthData() != null) {

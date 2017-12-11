@@ -21,13 +21,13 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.dataportabilityproject.ServiceProviderRegistry;
+import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
+import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.job.JobDao;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -70,7 +70,8 @@ public class ImportSetupController {
     OnlineAuthDataGenerator generator = registry.getOnlineAuth(job.importService(), getDataType(job.dataType()));
 
     // Auth authUrl
-    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(job));
+    AuthFlowInitiator authFlowInitiator = generator
+        .generateAuthUrl(PortabilityServerFlags.baseApiUrl(), JobUtils.encodeId(job));
 
     // Store authUrl - this page is only valid for Import Authorization flow, so isExport needs to
     // be set to false to store initialImportAuthData

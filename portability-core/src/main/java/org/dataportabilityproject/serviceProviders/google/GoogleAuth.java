@@ -30,7 +30,6 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -44,8 +43,7 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   /** Port in the "Callback URL". */
   private static final int PORT = 8080;
-  private static final String CALLBACK_URL =
-      PortabilityFlags.baseApiUrl() + "/callback/google";
+  private static final String CALLBACK_PATH = "/callback/google";
 
   /** Domain name in the "Callback URL". */
   private static final String DOMAIN = "127.0.0.1";
@@ -66,24 +64,24 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   }
 
   @Override
-  public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
     String url = createFlow()
         .newAuthorizationUrl()
-        .setRedirectUri(CALLBACK_URL)
+        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
         .setState(id) // TODO: Encrypt
         .build();
     return AuthFlowInitiator.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id, @Nullable AuthData initialAuthData,
-      @Nullable String extra) throws IOException {
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+      @Nullable AuthData initialAuthData, @Nullable String extra) throws IOException {
     Preconditions.checkState(initialAuthData == null,
         "Earlier auth data not expected for Google flow");
     AuthorizationCodeFlow flow = createFlow();
     TokenResponse response = flow
         .newTokenRequest(authCode)
-        .setRedirectUri(CALLBACK_URL) //TODO(chuy): Parameterize
+        .setRedirectUri(CALLBACK_PATH) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, id);

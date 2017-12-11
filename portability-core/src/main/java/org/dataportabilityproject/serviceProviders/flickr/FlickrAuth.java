@@ -27,7 +27,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import javax.annotation.Nullable;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -75,17 +74,17 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   }
 
   @Override // online case
-  public AuthFlowInitiator generateAuthUrl(String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = authInterface.getRequestToken(
-        PortabilityFlags.baseApiUrl() + "/callback1/flickr");
+        callbackBaseUrl + "/callback1/flickr");
     String url = authInterface.getAuthorizationUrl(token, Permission.WRITE);
     return AuthFlowInitiator.create(url, toAuthData(token));
   }
 
   @Override
-  public AuthData generateAuthData(String authCode, String id, AuthData initialAuthData,
-      @Nullable String extra) throws IOException {
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+      AuthData initialAuthData, @Nullable String extra) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions
         .checkNotNull(initialAuthData, "Earlier auth data not expected for Google flow");

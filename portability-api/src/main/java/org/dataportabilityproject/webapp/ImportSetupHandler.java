@@ -75,7 +75,8 @@ public class ImportSetupHandler implements HttpHandler {
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
-    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(job));
+    AuthFlowInitiator authFlowInitiator = generator
+        .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
     // Store initial auth data - this page only is valid for import services, so isExport is set to false.
     // TODO: support both import and export.
