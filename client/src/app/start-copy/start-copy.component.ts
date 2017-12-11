@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { SelectDataTypeService } from '../select-data-type.service';
+import { BackendService } from '../backend.service';
 
 @Component({
   selector: 'app-start-copy',
@@ -27,7 +27,7 @@ export class StartCopyComponent implements OnInit {
   importService: string = "";
   submitted: boolean = false;
   error_text: string = "";
-  constructor(private service : SelectDataTypeService) { }
+  constructor(private service : BackendService) { }
 
   ngOnInit() {
     console.log('ngOnInit for startCopySetup');
