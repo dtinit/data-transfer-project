@@ -91,12 +91,12 @@ docker=$(which docker)|| { echo "docker not found. Please install it and try aga
 echo -e "Checking that you have gcloud installed"
 gcloud=$(which gcloud)|| { echo "gcloud not found. Please install it and try again." >&2; exit 1; }
 
-read -p "You should compile a new jar if there are java, secrets, or index.html changes.
+read -p "You should compile a new jar if there are java or index.html changes.
 Compile and package jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  # Note: WT engineers should store copies of secrets.csv locally in each environment's directory,
-  # e.g. local/secrets.csv and test/secrets.csv. See secrets_template.csv for more info on secrets.
-  # Copy secrets.csv from local/ or test/ into $SRC_DIR/src/main/resources/secrets.csv
+  # secrets.csv is deprecated except for local development. Delete any old versions of this file
+  # so it doesn't make its way into our jar, even though our binary is configured to ignore it
+  # for non-local environments.
   SECRETS_CSV_DEST_PATH="$SRC_DIR/src/main/resources/secrets.csv"
   if [[ -e ${SECRETS_CSV_DEST_PATH} ]]; then
     echo -e "\nRemoving old secrets.csv"
@@ -106,14 +106,6 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
       exit 1
     fi
   fi
-  SECRETS_CSV_SRC_PATH="config/environments/$ENV/secrets.csv"
-  echo -e "Copying secrets.csv from $SECRETS_CSV_SRC_PATH to $SECRETS_CSV_DEST_PATH"
-  cp $SECRETS_CSV_SRC_PATH $SECRETS_CSV_DEST_PATH
-  if [[ ! -e ${SECRETS_CSV_DEST_PATH} ]]; then
-    echo "Problem copying secrets.csv. Aborting."
-    exit 1
-  fi
-  echo -e "Copied secrets\n"
 
   # Local uses index from ng serve, everything else uses index built from
   # build_and_deploy_static_content.sh
@@ -135,7 +127,18 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
       echo "Problem copying index.html. Aborting."
       exit 1
     fi
-    echo -e "Copied index.html\n"
+    echo -e "Copied index.html"
+  else
+    # secrets.csv in our binary is only used for local development. For prod, app keys & secrets
+    # are stored in GCS and secrets are encrypted with KMS.
+    SECRETS_CSV_SRC_PATH="config/environments/$ENV/secrets.csv"
+    echo -e "Copying secrets.csv from $SECRETS_CSV_SRC_PATH to $SECRETS_CSV_DEST_PATH"
+    cp $SECRETS_CSV_SRC_PATH $SECRETS_CSV_DEST_PATH
+    if [[ ! -e ${SECRETS_CSV_DEST_PATH} ]]; then
+      echo "Problem copying secrets.csv. Aborting."
+      exit 1
+    fi
+    echo -e "Copied secrets\n"
   fi
 
   # Compile jar with maven.

@@ -1,2 +1,3 @@
-secrets.csv
 app_data/*
+# secrets.csv is deprecated for non-local envs, but keep this around so old files aren't checked in
+secrets.csv
