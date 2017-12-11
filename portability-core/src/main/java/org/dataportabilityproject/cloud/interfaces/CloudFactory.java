@@ -21,5 +21,7 @@ package org.dataportabilityproject.cloud.interfaces;
 public interface CloudFactory {
   JobDataCache getJobDataCache(String jobId, String service);
   PersistentKeyValueStore getPersistentKeyValueStore();
+  CryptoKeyManagementSystem getCryptoKeyManagementSystem();
+  BucketStore getBucketStore();
   void clearJobData(String jobId);
 }

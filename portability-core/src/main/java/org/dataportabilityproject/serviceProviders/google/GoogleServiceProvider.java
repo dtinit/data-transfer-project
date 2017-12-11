@@ -59,7 +59,7 @@ public final class GoogleServiceProvider implements ServiceProvider {
 
     public GoogleServiceProvider() throws Exception {
         AppCredentials appCredentials =
-            AppCredentials.createFromSecrets("GOOGLE_KEY", "GOOGLE_SECRET");
+            AppCredentials.lookupAndCreate("GOOGLE_KEY", "GOOGLE_SECRET");
         this.googleAuth = new GoogleAuth(
                 appCredentials,
                 // TODO: only use scopes from the products we are accessing.

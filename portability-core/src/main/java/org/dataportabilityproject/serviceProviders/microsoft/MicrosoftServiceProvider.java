@@ -47,7 +47,7 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
 
     public MicrosoftServiceProvider() {
         AppCredentials appCredentials =
-            AppCredentials.createFromSecrets("MICROSOFT_KEY", "MICROSOFT_SECRET");
+            AppCredentials.lookupAndCreate("MICROSOFT_KEY", "MICROSOFT_SECRET");
         microsoftAuth = new MicrosoftAuth(
             appCredentials,
             // TODO: only use scopes from the products we are accessing.

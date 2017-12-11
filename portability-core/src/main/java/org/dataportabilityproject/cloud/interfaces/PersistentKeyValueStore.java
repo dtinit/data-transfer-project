@@ -35,7 +35,6 @@ public interface PersistentKeyValueStore {
   /** Retrieve the first key that begins with the given {@code prefix} */
   String getFirst(String prefix);
 
-
   /** Deletes entry with the given {@code key}*/
   void delete(String key);
 }

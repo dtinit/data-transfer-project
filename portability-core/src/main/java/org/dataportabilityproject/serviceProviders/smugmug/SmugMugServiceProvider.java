@@ -36,7 +36,7 @@ public final class SmugMugServiceProvider implements ServiceProvider {
 
     public SmugMugServiceProvider() {
         AppCredentials appCredentials =
-            AppCredentials.createFromSecrets("SMUGMUG_KEY", "SMUGMUG_SECRET");
+            AppCredentials.lookupAndCreate("SMUGMUG_KEY", "SMUGMUG_SECRET");
         this.smugMugAuth = new SmugMugAuth(appCredentials);
     }
 

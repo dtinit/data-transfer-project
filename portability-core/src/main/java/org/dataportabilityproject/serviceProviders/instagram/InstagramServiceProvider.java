@@ -35,7 +35,7 @@ public final class InstagramServiceProvider implements ServiceProvider {
 
   public InstagramServiceProvider() {
     AppCredentials appCredentials =
-        AppCredentials.createFromSecrets("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
+        AppCredentials.lookupAndCreate("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
     this.instagramAuth = new InstagramAuth(appCredentials, SCOPES);
   }
 

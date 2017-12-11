@@ -111,7 +111,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>19.0</version>
+            <version>20.0</version>
         </dependency>
         <dependency>
             <groupId>com.flickr4java</groupId>
@@ -147,11 +147,6 @@
               <artifactId>servlet-api</artifactId>
             </exclusion>
           </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client</artifactId>
-            <version>1.22.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>

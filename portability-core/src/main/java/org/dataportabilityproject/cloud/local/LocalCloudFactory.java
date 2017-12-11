@@ -21,7 +21,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.concurrent.ExecutionException;
+import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
@@ -59,6 +61,16 @@ public class LocalCloudFactory implements CloudFactory {
   @Override
   public PersistentKeyValueStore getPersistentKeyValueStore() {
     return KEY_VALUE_SUPPLIER.get();
+  }
+
+  @Override
+  public CryptoKeyManagementSystem getCryptoKeyManagementSystem() {
+    throw new UnsupportedOperationException("Local KMS not implemented yet");
+  }
+
+  @Override
+  public BucketStore getBucketStore() {
+    throw new UnsupportedOperationException("Local bucket store not implemented yet");
   }
 
   @Override

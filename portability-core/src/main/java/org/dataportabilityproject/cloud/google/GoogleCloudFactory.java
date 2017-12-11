@@ -27,13 +27,18 @@ import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import java.io.IOException;
 import org.dataportabilityproject.PortabilityFlags;
+import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 public final class GoogleCloudFactory implements CloudFactory {
 
   private final Datastore datastore;
+  private final PersistentKeyValueStore persistentKeyValueStore;
+  private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
+  private final BucketStore bucketStore;
 
   public GoogleCloudFactory() {
     try {
@@ -43,6 +48,9 @@ public final class GoogleCloudFactory implements CloudFactory {
           .setCredentials(getCredentials())
           .build()
           .getService();
+      this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore);
+      this.cryptoKeyManagementSystem = new GoogleCryptoKeyManagementSystem();
+      this.bucketStore = new GoogleBucketStore();
     } catch (CredentialsException e) {
       throw new IllegalStateException("Problem getting credentials to access GCP services", e);
     }
@@ -55,7 +63,17 @@ public final class GoogleCloudFactory implements CloudFactory {
 
   @Override
   public PersistentKeyValueStore getPersistentKeyValueStore() {
-    return new GooglePersistentKeyValueStore(datastore);
+    return persistentKeyValueStore;
+  }
+
+  @Override
+  public CryptoKeyManagementSystem getCryptoKeyManagementSystem() {
+    return cryptoKeyManagementSystem;
+  }
+
+  @Override
+  public BucketStore getBucketStore() {
+    return bucketStore;
   }
 
   @Override
@@ -94,7 +112,7 @@ public final class GoogleCloudFactory implements CloudFactory {
     }
   }
 
-  private static class CredentialsException extends Exception {
+  static class CredentialsException extends Exception {
     CredentialsException(String message) {
       super(message);
     }

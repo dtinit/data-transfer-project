@@ -35,7 +35,7 @@ public final class RememberTheMilkServiceProvider implements ServiceProvider {
     private final RememberTheMilkAuth rememberTheMilkAuth;
 
     public RememberTheMilkServiceProvider() throws IOException {
-        this.appCredentials = AppCredentials.createFromSecrets("RTM_KEY", "RTM_SECRET");
+        this.appCredentials = AppCredentials.lookupAndCreate("RTM_KEY", "RTM_SECRET");
         this.rememberTheMilkAuth = new RememberTheMilkAuth(
             new RememberTheMilkSignatureGenerator(
             appCredentials,

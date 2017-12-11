@@ -37,7 +37,7 @@ public final class FlickrServiceProvider implements ServiceProvider {
     private final FlickrAuth flickrAuth;
 
     public FlickrServiceProvider() {
-        this.appCredentials = AppCredentials.createFromSecrets("FLICKR_KEY", "FLICKR_SECRET");
+        this.appCredentials = AppCredentials.lookupAndCreate("FLICKR_KEY", "FLICKR_SECRET");
         this.flickrAuth = new FlickrAuth(appCredentials);
     }
 
