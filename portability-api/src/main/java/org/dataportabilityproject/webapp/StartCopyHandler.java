@@ -71,7 +71,6 @@ public class StartCopyHandler implements HttpHandler {
     Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
     Preconditions.checkState(job.importAuthData() != null, "Import AuthData is required");
 
-    LogUtils.log("startCopy, importService: %s, exportService %s", importService, exportService);
     PortableDataType type = JobUtils.getDataType(job.dataType());
 
     // TODO: Design better threading for new copy tasks with exception handling
@@ -81,7 +80,7 @@ public class StartCopyHandler implements HttpHandler {
           PortabilityCopier.copyDataType(serviceProviderRegistry, type, exportService,
               job.exportAuthData(), importService, job.importAuthData(), job.id());
         } catch (IOException e) {
-          System.out.println("copyDataType failed");
+          LogUtils.log("%s, copyDataType failed", this.getClass().getSimpleName());
           e.printStackTrace();
         } finally {
           cloudFactory.clearJobData(job.id());
@@ -93,7 +92,6 @@ public class StartCopyHandler implements HttpHandler {
     executor.submit(r);
 
     JsonObject response = Json.createObjectBuilder().add("status", "started").build();
-    LogUtils.log("startCopy, response: %s", response.toString());
 
     // Mark response as Json and send
     exchange.getResponseHeaders()

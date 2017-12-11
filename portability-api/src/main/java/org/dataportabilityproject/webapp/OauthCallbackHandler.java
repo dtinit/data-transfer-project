@@ -29,7 +29,6 @@ import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -53,15 +52,17 @@ public class OauthCallbackHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/callback1/.*");
-    String redirect = handleExchange(exchange);
+    LogUtils
+        .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
 
-    LogUtils.log("OauthCallbackHandler, redirecting to %s", redirect);
+    String redirect = handleExchange(exchange);
+    LogUtils.log("%s, redirecting to %s", this.getClass().getSimpleName(), redirect);
     exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
   }
 
   private String handleExchange(HttpExchange exchange) throws IOException {
-    String redirect = "";
+    String redirect = "/error";
 
     try {
       Headers requestHeaders = exchange.getRequestHeaders();
@@ -69,7 +70,6 @@ public class OauthCallbackHandler implements HttpHandler {
       // Get the URL for the request - needed for the authorization.
       String requestURL = PortabilityServerUtils
           .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
-      LogUtils.log("OauthCallbackHandler, requestURL: %s", requestURL);
 
       Map<String, String> requestParams = PortabilityServerUtils.getRequestParams(exchange);
 
@@ -77,15 +77,12 @@ public class OauthCallbackHandler implements HttpHandler {
           .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
-      LogUtils.log("OauthCallbackHandler, encodedCookieId: %s", encodedIdCookie);
 
       String oauthToken = requestParams.get("oauth_token");
       Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthToken), "Missing oauth_token");
-      LogUtils.log("OauthCallbackHandler, oauthToken: %s", oauthToken);
 
       String oauthVerifier = requestParams.get("oauth_verifier");
       Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthVerifier), "Missing oauth_verifier");
-      LogUtils.log("OauthCallbackHandler, oauthVerifier: %s", oauthVerifier);
 
       // Valid job must be present
       Preconditions
@@ -104,7 +101,6 @@ public class OauthCallbackHandler implements HttpHandler {
       String service = isExport ? job.exportService() : job.importService();
       Preconditions.checkState(!Strings.isNullOrEmpty(service),
           "service not found, service: %s isExport: %b, job id: %s", service, isExport, jobId);
-      LogUtils.log("service: %s, isExport: %b", service, isExport);
 
       // Obtain the ServiceProvider from the registry
       OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
@@ -124,12 +120,10 @@ public class OauthCallbackHandler implements HttpHandler {
       jobDao.updateJob(updatedJob);
 
       // Get responseHeaders to set redirect and new cookie
-      Headers responseHeaders = exchange.getResponseHeaders();
-      cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);
+      cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
       redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
-      LogUtils.log("Error while handling request: %s", e);
-      LogUtils.log("StackTrace: %s", e.getStackTrace());
+      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
       throw e;
     }
 

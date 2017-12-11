@@ -30,19 +30,20 @@ public class ViewHandler implements HttpHandler {
   private final String INDEX = "static/index.html";
 
   public void handle(HttpExchange exchange) throws IOException {
-    LogUtils.log("ViewHandler got request %s", exchange.getRequestURI().toString());
+    LogUtils.log("%s, got request %s", this.getClass().getSimpleName(),
+        exchange.getRequestURI().toString());
     InputStream index_stream = getClass().getClassLoader().getResourceAsStream(INDEX);
 
     if (index_stream == null) {
       // Index file doesn't exist: reject with 404 error.
-      LogUtils.log("Could not open file: %s", INDEX);
+      LogUtils.log("%s, could not open file: %s", this.getClass().getSimpleName(), INDEX);
       String response = "404 (Not Found)\n";
       exchange.sendResponseHeaders(404, response.length());
       OutputStream os = exchange.getResponseBody();
       os.write(response.getBytes());
       os.close();
     } else {
-      LogUtils.log("Found file: %s", INDEX);
+      LogUtils.log("%s, found file: %s", this.getClass().getSimpleName(), INDEX);
       exchange.sendResponseHeaders(200, 0);
       OutputStream os = exchange.getResponseBody();
       final byte[] buffer = new byte[0x10000];

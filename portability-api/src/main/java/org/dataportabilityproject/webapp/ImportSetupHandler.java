@@ -29,7 +29,6 @@ import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -63,8 +62,6 @@ public class ImportSetupHandler implements HttpHandler {
 
     Preconditions.checkState(null != job, "existingJob not found for jobId: %s", jobId);
 
-    LogUtils.log("importSetup, job: %s", job);
-
     String exportService = job.exportService();
     String importService = job.importService();
 
@@ -74,8 +71,6 @@ public class ImportSetupHandler implements HttpHandler {
     Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
     // TODO: ensure import auth data doesn't exist when this is called in the auth flow
     Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
-
-    LogUtils.log("importSetup, importService: %s, exportService: %s", importService, exportService);
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
@@ -93,7 +88,6 @@ public class ImportSetupHandler implements HttpHandler {
     JsonObject response = PortabilityServerUtils
         .createImportAuthJobResponse(job.dataType(), job.exportService(),
             job.importService(), authFlowInitiator.authUrl());
-    LogUtils.log("importSetup, response: %s", response.toString());
 
     // Mark the response as type Json and send
     exchange.getResponseHeaders()

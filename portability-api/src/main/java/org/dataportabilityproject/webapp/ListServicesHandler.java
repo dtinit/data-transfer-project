@@ -85,8 +85,8 @@ public class ListServicesHandler implements HttpHandler {
     }
 
     if (exportServices.isEmpty() || importServices.isEmpty()) {
-      LogUtils.log("Empty service list found, export size: %d, import size: %d",
-          exportServices.size(), importServices.size());
+      LogUtils.log("%s, Empty service list found, export size: %d, import size: %d",
+          this.getClass().getSimpleName(), exportServices.size(), importServices.size());
     }
 
     // Construct Json.

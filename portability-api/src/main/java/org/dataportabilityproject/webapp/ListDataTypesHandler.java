@@ -58,7 +58,9 @@ public class ListDataTypesHandler implements HttpHandler {
           builder.add(data_type.name());
         }
       } catch (Exception e) {
-        LogUtils.log("hasImportAndExport for datatype %s failed", data_type.name());
+        LogUtils
+            .log("%s, hasImportAndExport for datatype %s failed", this.getClass().getSimpleName(),
+                data_type.name());
       }
     }
 

@@ -70,10 +70,6 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-    LogUtils.log("simpleLoginSubmit, job: %s", job);
-    LogUtils.log("simpleLoginSubmit, dataType: %s", dataType);
-    LogUtils.log("service: %s, isExport: %b", service, isExport);
-
     Map<String, String> requestParams = PortabilityServerUtils.getRequestParams(exchange);
     requestParams.putAll(PortabilityServerUtils.getPostParams(exchange));
 

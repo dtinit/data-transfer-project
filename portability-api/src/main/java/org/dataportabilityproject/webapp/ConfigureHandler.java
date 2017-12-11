@@ -20,7 +20,6 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -64,70 +63,81 @@ public class ConfigureHandler implements HttpHandler {
     Preconditions.checkArgument(
         PortabilityServerUtils.validateRequest(exchange, HttpMethods.POST, "/configure"),
         "/configure only supports POST.");
+    LogUtils
+        .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
 
-    Map<String, String> requestParameters = PortabilityServerUtils.getRequestParams(exchange);
-    requestParameters.putAll(PortabilityServerUtils.getPostParams(exchange));
-
-    Headers headers = exchange.getResponseHeaders();
-
-    String dataTypeStr = requestParameters.get(JsonKeys.DATA_TYPE);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr),
-        "Missing valid dataTypeParam: %s", dataTypeStr);
-
-    PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
-
-    String exportService = requestParameters.get(JsonKeys.EXPORT_SERVICE);
-    Preconditions.checkArgument(JobUtils.isValidService(exportService, true),
-        "Missing valid exportService: %s", exportService);
-
-    String importService = requestParameters.get(JsonKeys.IMPORT_SERVICE);
-    Preconditions.checkArgument(JobUtils.isValidService(importService, false),
-        "Missing valid importService: %s", importService);
-
-    // TODO: Remove job creation in case of encrypted flow
-    PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
-
-    if (PortabilityFlags.encryptedFlow()) {
-      jobDao.insertJobInUnassignedState(newJob.id());
-    } else {
-      jobDao.insertJob(newJob);
-    }
-
-    // Set new cookie
-    HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
-    headers.add(HEADER_SET_COOKIE, cookie.toString());
-    LogUtils.log("Set new cookie with key: %s, value: %s", JsonKeys.ID_COOKIE_KEY,
-        JobUtils.encodeId(newJob));
-
-    // Lookup job, even if just recently created
-    PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobDao);
-    Preconditions.checkState(job != null, "Job required");
-
-    // TODO: Validate job before going further
-
-    // Obtain the OnlineAuthDataGenerator
-    OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.exportService(), dataType);
-    Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
-        dataType, job.exportService());
-
-    // Auth authUrl
-    AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(newJob));
-    Preconditions
-        .checkNotNull(authFlowInitiator, "AuthFlowInitiator not found for type: %s, service: %s",
-            dataType, job.exportService());
-
-    // Store initial auth data
-    if (authFlowInitiator.initialAuthData() != null) {
-      PortabilityJob updatedJob = JobUtils
-          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
-      jobDao.updateJob(updatedJob);
-    }
-
-    // Send the authUrl for the client to redirect to service authorization
-    // response.sendRedirect(authFlowInitiator.authUrl());
-    LogUtils.log("Redirecting to: %s", authFlowInitiator.authUrl());
-    headers.set(HEADER_LOCATION, authFlowInitiator.authUrl());
+    String redirect = handleExchange(exchange);
+    LogUtils.log("%s, redirecting to: %s", this.getClass().getSimpleName(), redirect);
+    exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
+  }
+
+  String handleExchange(HttpExchange exchange) throws IOException {
+    String redirect = "/error";
+
+    try {
+      Map<String, String> requestParameters = PortabilityServerUtils.getRequestParams(exchange);
+      requestParameters.putAll(PortabilityServerUtils.getPostParams(exchange));
+
+      String dataTypeStr = requestParameters.get(JsonKeys.DATA_TYPE);
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr),
+          "Missing valid dataTypeParam: %s", dataTypeStr);
+
+      PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
+
+      String exportService = requestParameters.get(JsonKeys.EXPORT_SERVICE);
+      Preconditions.checkArgument(JobUtils.isValidService(exportService, true),
+          "Missing valid exportService: %s", exportService);
+
+      String importService = requestParameters.get(JsonKeys.IMPORT_SERVICE);
+      Preconditions.checkArgument(JobUtils.isValidService(importService, false),
+          "Missing valid importService: %s", importService);
+
+      // TODO: Remove job creation in case of encrypted flow
+      PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
+
+      if (PortabilityFlags.encryptedFlow()) {
+        jobDao.insertJobInUnassignedState(newJob.id());
+      } else {
+        jobDao.insertJob(newJob);
+      }
+
+      // Set new cookie - TODO: set SameSite attribute on cookie.
+      HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
+      exchange.getResponseHeaders().add(HEADER_SET_COOKIE, cookie.toString());
+
+      // Lookup job, even if just recently created
+      PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobDao);
+      Preconditions.checkState(job != null, "Job required");
+
+      // TODO: Validate job before going further
+
+      // Obtain the OnlineAuthDataGenerator
+      OnlineAuthDataGenerator generator = serviceProviderRegistry
+          .getOnlineAuth(job.exportService(), dataType);
+      Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
+          dataType, job.exportService());
+
+      // Auth authUrl
+      AuthFlowInitiator authFlowInitiator = generator.generateAuthUrl(JobUtils.encodeId(newJob));
+      Preconditions
+          .checkNotNull(authFlowInitiator, "AuthFlowInitiator not found for type: %s, service: %s",
+              dataType, job.exportService());
+
+      // Store initial auth data
+      if (authFlowInitiator.initialAuthData() != null) {
+        PortabilityJob updatedJob = JobUtils
+            .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
+        jobDao.updateJob(updatedJob);
+      }
+
+      // Send the authUrl for the client to redirect to service authorization
+      redirect = authFlowInitiator.authUrl();
+    } catch (Exception e) {
+      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      throw e;
+    }
+
+    return redirect;
   }
 }

@@ -56,81 +56,87 @@ public class Oauth2CallbackHandler implements HttpHandler {
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/callback/.*"));
-    Headers responseHeaders = exchange.getResponseHeaders();
-    Headers requestHeaders = exchange.getRequestHeaders();
+    LogUtils
+        .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
 
-    String requestURL = PortabilityServerUtils
-        .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
-    LogUtils.log("Oauth2CallbackHandler, requestURL: %s", requestURL);
+    String redirect = handleExchange(exchange);
+    LogUtils.log("%s, redirecting to %s", this.getClass().getSimpleName(), redirect);
+    exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
+    exchange.sendResponseHeaders(303, -1);
+  }
 
-    AuthorizationCodeResponseUrl authResponse = new AuthorizationCodeResponseUrl(requestURL);
+  private String handleExchange(HttpExchange exchange) throws IOException {
+    String redirect = "/error";
 
-    // check for user-denied error
-    if (authResponse.getError() != null) {
-      LogUtils.log("Authorization DENIED: %s Redirecting to /error", authResponse.getError());
-      responseHeaders.set(HEADER_LOCATION, "/error");
-      exchange.sendResponseHeaders(303, -1);
-      return;
+    try {
+      Headers requestHeaders = exchange.getRequestHeaders();
+
+      String requestURL = PortabilityServerUtils
+          .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
+
+      AuthorizationCodeResponseUrl authResponse = new AuthorizationCodeResponseUrl(requestURL);
+
+      // check for user-denied error
+      if (authResponse.getError() != null) {
+        LogUtils.log("%s, Authorization DENIED: %s Redirecting to /error",
+            this.getClass().getSimpleName(), authResponse.getError());
+        return redirect;
+      }
+
+      // retrieve cookie from exchange
+      Map<String, HttpCookie> httpCookies = PortabilityServerUtils.getCookies(requestHeaders);
+      HttpCookie encodedIdCookie = httpCookies.get(JsonKeys.ID_COOKIE_KEY);
+      Preconditions
+          .checkArgument(
+              encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
+              "Encoded Id cookie required");
+
+      String jobId = JobUtils.decodeId(encodedIdCookie.getValue());
+      String state = JobUtils.decodeId(authResponse.getState());
+
+      // TODO: Remove sanity check
+      Preconditions
+          .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
+              jobId, state);
+
+      PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobDao);
+      PortableDataType dataType = JobUtils.getDataType(job.dataType());
+
+      // TODO: Determine import vs export mode
+      // Hack! For now, if we don't have export auth data, assume it's for export.
+      boolean isExport = (null == job.exportAuthData());
+
+      // TODO: Determine service from job or from authUrl path?
+      String service = isExport ? job.exportService() : job.importService();
+      Preconditions.checkState(!Strings.isNullOrEmpty(service),
+          "service not found, service: %s isExport: %b, jobId: %s", service, isExport, jobId);
+
+      // Obtain the ServiceProvider from the registry
+      OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
+
+      // Retrieve initial auth data, if it existed
+      AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
+
+      // Generate and store auth data
+      AuthData authData = generator
+          .generateAuthData(authResponse.getCode(), jobId, initialAuthData, null);
+      Preconditions.checkNotNull(authData, "Auth data should not be null");
+
+      // Update the job
+      // TODO: Remove persistence of auth data in storage at this point. The data will be passed
+      // thru to the client via the cookie.
+      PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
+      jobDao.updateJob(updatedJob);
+
+      // Set new cookie - TODO: set SameSite attribute on cookie.
+      cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
+
+      redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
+    } catch (Exception e) {
+      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      throw e;
     }
 
-    LogUtils.log("Got valid authorization request");
-
-    // retrieve cookie from exchange
-    Map<String, HttpCookie> httpCookies = PortabilityServerUtils.getCookies(requestHeaders);
-    HttpCookie encodedIdCookie = httpCookies.get(JsonKeys.ID_COOKIE_KEY);
-    Preconditions
-        .checkArgument(
-            encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
-            "Encoded Id cookie required");
-
-    LogUtils.log("encodedIdCookie: %s", encodedIdCookie.getValue());
-    String jobId = JobUtils.decodeId(encodedIdCookie.getValue());
-    String state = JobUtils.decodeId(authResponse.getState());
-
-    // TODO: Remove sanity check
-    LogUtils.log("Checking state of job");
-    Preconditions
-        .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
-            jobId, state);
-
-    LogUtils.log("Looking up the job by jobID");
-    PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobDao);
-    PortableDataType dataType = JobUtils.getDataType(job.dataType());
-    LogUtils.log("dataType: %s", dataType);
-
-    // TODO: Determine import vs export mode
-    // Hack! For now, if we don't have export auth data, assume it's for export.
-    boolean isExport = (null == job.exportAuthData());
-
-    // TODO: Determine service from job or from authUrl path?
-    String service = isExport ? job.exportService() : job.importService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(service),
-        "service not found, service: %s isExport: %b, jobId: %s", service, isExport, jobId);
-    LogUtils.log("service: %s, isExport: %b", service, isExport);
-
-    // Obtain the ServiceProvider from the registry
-    OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
-
-    // Retrieve initial auth data, if it existed
-    AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
-
-    // Generate and store auth data
-    AuthData authData = generator
-        .generateAuthData(authResponse.getCode(), jobId, initialAuthData, null);
-    Preconditions.checkNotNull(authData, "Auth data should not be null");
-
-    // Update the job
-    // TODO: Remove persistence of auth data in storage at this point. The data will be passed
-    // thru to the client via the cookie.
-    PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-    jobDao.updateJob(updatedJob);
-
-    // Set new cookie
-    cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);
-
-    String redirect = PortabilityFlags.baseUrl() + (isExport ? "/next" : "/copy");
-    LogUtils.log("Redirecting to %s", redirect);
-    responseHeaders.set(HEADER_LOCATION, redirect);
-    exchange.sendResponseHeaders(303, -1);
+    return redirect;
   }
 }
