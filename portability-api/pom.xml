@@ -43,7 +43,7 @@
     </resources>
 
     <plugins>
-      <!-- To be able to run mvn exec:java -pl portability-server -->
+      <!-- To be able to run mvn exec:java -pl portability-api -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>

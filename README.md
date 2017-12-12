@@ -80,7 +80,7 @@ chooses.
 
 ### Building/Running CLI
  * Add a secrets_[environment].csv file to src/main/resources in portability-core and/or
-   in portability-web, this should contain
+   in portability-api, this should contain
    all your API keys, see secrets_template.csv for an example.
  * "mvn compile" will build the project.
  * "mvn exec:java -pl portability-core -Dexec.args="-cloud LOCAL -environment LOCAL"" will run the command line tool.
@@ -101,7 +101,8 @@ The following commands will run the angular frontend in dev mode locally proxyin
 The following builds and run the web server on port 8080
 
 * mvn clean install
-* mvn -e spring-boot:run -pl portability-web
+* mvn exec:java -pl portability-api -Dexec.args="-cloud LOCAL -environment LOCAL -baseApiUrl http://localhost:8080 -baseUrl http://localhost:3000"
+* DEPRECATED: mvn -e spring-boot:run -pl portability-web
 
 #### Building/Running Worker App
  * Add a secrets_[environment].csv file to src/main/resources in portability-core and/or

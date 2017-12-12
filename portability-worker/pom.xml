@@ -17,74 +17,8 @@
     <packaging>jar</packaging>
     <name>Portability Worker</name>
     <version>1.0-SNAPSHOT</version>
-    <build>
-        <resources>
-          <resource>
-            <directory>src/main/resources/</directory>
-          </resource>
-        </resources>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <useIncrementalCompilation>false</useIncrementalCompilation>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <configuration>
-                        <mainClass>org.dataportabilityproject.worker.WorkerMain</mainClass>
-                </configuration>
-            </plugin>
 
-            <!--To build runnable java jar when running mvn package -->
-            <!--See: https://maven.apache.org/plugins/maven-shade-plugin/usage.html -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <!-- Run shade goal on package phase -->
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <!-- filters to write valid manifest file and avoid the following error:
-                                 Exception in thread "main" java.lang.SecurityException:
-                                    Invalid signature file digest for Manifest main attributes
-                                See: https://stackoverflow.com/a/6743609
-                            -->
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
 
-                            <transformers>
-                                <!-- add Main-Class to manifest file -->
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.dataportabilityproject.worker.WorkerMain</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <!-- library module -->
@@ -134,16 +68,16 @@
             <groupId>com.google.gdata</groupId>
             <artifactId>core</artifactId>
             <version>1.47.1</version>
-          <exclusions>
-            <exclusion>
-              <groupId>org.mortbay.jetty</groupId>
-              <artifactId>jetty-util</artifactId>
-            </exclusion>
-            <exclusion>
-              <groupId>org.mortbay.jetty</groupId>
-              <artifactId>servlet-api</artifactId>
-            </exclusion>
-          </exclusions>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>jetty-util</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
@@ -178,4 +112,68 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources/</directory>
+          </resource>
+        </resources>
+
+        <plugins>
+            <!-- To be able to run mvn exec:java -pl portability-worker -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                        <mainClass>org.dataportabilityproject.worker.WorkerMain</mainClass>
+                </configuration>
+            </plugin>
+
+            <!--To build runnable java jar when running mvn package -->
+            <!--See: https://maven.apache.org/plugins/maven-shade-plugin/usage.html -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <!-- Run shade goal on package phase -->
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <!-- filters to write valid manifest file and avoid the following error:
+                                 Exception in thread "main" java.lang.SecurityException:
+                                    Invalid signature file digest for Manifest main attributes
+                                See: https://stackoverflow.com/a/6743609
+                            -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+
+                            <transformers>
+                                <!-- add Main-Class to manifest file -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.dataportabilityproject.worker.WorkerMain</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
 </project>

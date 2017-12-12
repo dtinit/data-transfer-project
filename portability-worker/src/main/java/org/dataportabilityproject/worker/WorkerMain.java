@@ -26,6 +26,7 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 
 /**
@@ -50,7 +51,7 @@ public class WorkerMain {
     // Start the processing
     processJob(jobDao, registry);
 
-    System.out.println("Successfully processed jobId: " + WorkerJobMetadata.getInstance().getJobId());
+    LogUtils.log("Successfully processed jobId: %s", WorkerJobMetadata.getInstance().getJobId());
     System.exit(0);
   }
 
