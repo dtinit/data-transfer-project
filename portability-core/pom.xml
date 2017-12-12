@@ -87,6 +87,11 @@
             <version>v1-rev46-1.22.0</version>
         </dependency>
         <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-people</artifactId>
+            <version>v1-rev162-1.23.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value</artifactId>
             <version>1.2</version>
@@ -165,6 +170,12 @@
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
             <version>1.3.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.googlecode.ez-vcard/ez-vcard -->
+        <dependency>
+            <groupId>com.googlecode.ez-vcard</groupId>
+            <artifactId>ez-vcard</artifactId>
+            <version>0.10.3</version>
         </dependency>
         <!-- JSON Web Token support -->
         <dependency>
