@@ -42,7 +42,7 @@ class CryptoHelper {
     Cookie authCookie = new Cookie(cookieKey, encrypted);
     LogUtils.log("Set new cookie with key: %s, length: %s", cookieKey, encrypted.length());
     // TODO: reenable. Currently doesn't like the cookie, has a bad value.
-    // headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityServerUtils.COOKIE_ATTRIBUTES);
+    // headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
   }
 
   /** Serialize and encrypt the given {@code authData} with the session key. */

@@ -44,7 +44,7 @@ import org.dataportabilityproject.shared.LogUtils;
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers
  */
-public class PortabilityServerUtils {
+public class PortabilityApiUtils {
 
   /**
    * Attributes to attach to all cookies set by the API - Since HttpCookie doesnt support adding

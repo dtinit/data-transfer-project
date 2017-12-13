@@ -27,7 +27,6 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -56,7 +55,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/callback/.*"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/callback/.*"));
     LogUtils
         .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
 
@@ -72,7 +71,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
     try {
       Headers requestHeaders = exchange.getRequestHeaders();
 
-      String requestURL = PortabilityServerUtils
+      String requestURL = PortabilityApiUtils
           .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
 
       AuthorizationCodeResponseUrl authResponse = new AuthorizationCodeResponseUrl(requestURL);
@@ -85,7 +84,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
       }
 
       // retrieve cookie from exchange
-      Map<String, HttpCookie> httpCookies = PortabilityServerUtils.getCookies(requestHeaders);
+      Map<String, HttpCookie> httpCookies = PortabilityApiUtils.getCookies(requestHeaders);
       HttpCookie encodedIdCookie = httpCookies.get(JsonKeys.ID_COOKIE_KEY);
       Preconditions
           .checkArgument(
@@ -100,7 +99,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
           .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
               jobId, state);
 
-      PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobDao);
+      PortabilityJob job = PortabilityApiUtils.lookupJob(jobId, jobDao);
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
       // TODO: Determine import vs export mode

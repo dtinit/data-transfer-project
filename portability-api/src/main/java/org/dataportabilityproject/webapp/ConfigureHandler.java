@@ -62,7 +62,7 @@ public class ConfigureHandler implements HttpHandler {
    */
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityServerUtils.validateRequest(exchange, HttpMethods.POST, "/configure"),
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/configure"),
         "/configure only supports POST.");
     LogUtils
         .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
@@ -77,8 +77,8 @@ public class ConfigureHandler implements HttpHandler {
     String redirect = "/error";
 
     try {
-      Map<String, String> requestParameters = PortabilityServerUtils.getRequestParams(exchange);
-      requestParameters.putAll(PortabilityServerUtils.getPostParams(exchange));
+      Map<String, String> requestParameters = PortabilityApiUtils.getRequestParams(exchange);
+      requestParameters.putAll(PortabilityApiUtils.getPostParams(exchange));
 
       String dataTypeStr = requestParameters.get(JsonKeys.DATA_TYPE);
       Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr),
@@ -106,10 +106,10 @@ public class ConfigureHandler implements HttpHandler {
       // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
       exchange.getResponseHeaders()
-          .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityServerUtils.COOKIE_ATTRIBUTES);
+          .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
 
       // Lookup job, even if just recently created
-      PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobDao);
+      PortabilityJob job = PortabilityApiUtils.lookupJob(newJob.id(), jobDao);
       Preconditions.checkState(job != null, "Job required");
 
       // TODO: Validate job before going further

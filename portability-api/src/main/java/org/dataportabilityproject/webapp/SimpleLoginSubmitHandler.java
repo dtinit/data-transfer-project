@@ -24,7 +24,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -51,9 +50,9 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    PortabilityServerUtils.validateRequest(exchange, HttpMethods.POST, "/simpleLoginSubmit");
+    PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/simpleLoginSubmit");
 
-    String encodedIdCookie = PortabilityServerUtils
+    String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
@@ -71,8 +70,8 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-    Map<String, String> requestParams = PortabilityServerUtils.getRequestParams(exchange);
-    requestParams.putAll(PortabilityServerUtils.getPostParams(exchange));
+    Map<String, String> requestParams = PortabilityApiUtils.getRequestParams(exchange);
+    requestParams.putAll(PortabilityApiUtils.getPostParams(exchange));
 
     String username = requestParams.get("username");
     String password = requestParams.get("password");

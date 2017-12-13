@@ -50,9 +50,9 @@ public class ImportSetupHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/_/importSetup"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/importSetup"));
 
-    String encodedIdCookie = PortabilityServerUtils
+    String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
@@ -87,7 +87,7 @@ public class ImportSetupHandler implements HttpHandler {
 
     }
 
-    JsonObject response = PortabilityServerUtils
+    JsonObject response = PortabilityApiUtils
         .createImportAuthJobResponse(job.dataType(), job.exportService(),
             job.importService(), authFlowInitiator.authUrl());
 

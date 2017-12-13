@@ -45,9 +45,9 @@ public class CopySetupHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/_/copySetup"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/copySetup"));
 
-    String encodedIdCookie = PortabilityServerUtils
+    String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
@@ -78,7 +78,7 @@ public class CopySetupHandler implements HttpHandler {
       jobDao.updateJob(updatedJob);
     }
 
-    JsonObject response = PortabilityServerUtils
+    JsonObject response = PortabilityApiUtils
         .createImportAuthJobResponse(job.dataType(), exportService,
             importService, authFlowInitiator.authUrl());
 

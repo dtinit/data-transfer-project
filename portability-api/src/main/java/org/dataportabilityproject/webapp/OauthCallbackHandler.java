@@ -51,7 +51,7 @@ public class OauthCallbackHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    PortabilityServerUtils.validateRequest(exchange, HttpMethods.GET, "/callback1/.*");
+    PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/callback1/.*");
     LogUtils
         .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
 
@@ -68,12 +68,12 @@ public class OauthCallbackHandler implements HttpHandler {
       Headers requestHeaders = exchange.getRequestHeaders();
 
       // Get the URL for the request - needed for the authorization.
-      String requestURL = PortabilityServerUtils
+      String requestURL = PortabilityApiUtils
           .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
 
-      Map<String, String> requestParams = PortabilityServerUtils.getRequestParams(exchange);
+      Map<String, String> requestParams = PortabilityApiUtils.getRequestParams(exchange);
 
-      String encodedIdCookie = PortabilityServerUtils
+      String encodedIdCookie = PortabilityApiUtils
           .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
@@ -89,7 +89,7 @@ public class OauthCallbackHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
-      PortabilityJob job = PortabilityServerUtils.lookupJob(jobId, jobDao);
+      PortabilityJob job = PortabilityApiUtils.lookupJob(jobId, jobDao);
 
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
