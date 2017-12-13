@@ -199,14 +199,21 @@ EXPOSE 5005/tcp"
   fi
 fi
 
+if [[ ${BINARY} == "web" || ${BINARY} == "api" ]]; then
+  ENTRYPOINT_COMMAND="ENTRYPOINT [\"java\", $OPTIONAL_DEBUG_FLAG \"-jar\", \"/$BINARY.jar\", \"-cloud\", \"$FLAG_CLOUD\", \"-environment\", \"$FLAG_ENV\", \"-baseUrl\", \"$FLAG_BASE_URL\", \"-baseApiUrl\", \"$FLAG_BASE_API_URL\"]"
+elif [[ ${BINARY} == worker ]]; then
+  ENTRYPOINT_COMMAND="ENTRYPOINT [\"java\", $OPTIONAL_DEBUG_FLAG \"-jar\", \"/$BINARY.jar\", \"-cloud\", \"$FLAG_CLOUD\", \"-environment\", \"$FLAG_ENV\"]"
+fi
+
 # And onto generating the dockerfile...
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
 COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
 $LOCAL_DEBUG_SETTINGS
+$ENTRYPOINT_COMMAND
 EXPOSE 8080/tcp
-ENTRYPOINT ["java", $OPTIONAL_DEBUG_FLAG "-jar", "/$BINARY.jar", "-cloud", "$FLAG_CLOUD", "-environment", "$FLAG_ENV", "-baseUrl", "$FLAG_BASE_URL", "-baseApiUrl", "$FLAG_BASE_API_URL"]
 EOF
+
 echo -e "\nGenerated Dockerfile:\n"
 cat Dockerfile
 echo -e ""
