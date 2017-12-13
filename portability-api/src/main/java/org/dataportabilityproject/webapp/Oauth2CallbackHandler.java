@@ -130,7 +130,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
       PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
       jobDao.updateJob(updatedJob);
 
-      // Set new cookie - TODO: set SameSite attribute on cookie.
+      // Set new cookie
       cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
 
       redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");

@@ -103,9 +103,10 @@ public class ConfigureHandler implements HttpHandler {
         jobDao.insertJob(newJob);
       }
 
-      // Set new cookie - TODO: set SameSite attribute on cookie.
+      // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
-      exchange.getResponseHeaders().add(HEADER_SET_COOKIE, cookie.toString());
+      exchange.getResponseHeaders()
+          .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityServerUtils.COOKIE_ATTRIBUTES);
 
       // Lookup job, even if just recently created
       PortabilityJob job = PortabilityServerUtils.lookupJob(newJob.id(), jobDao);

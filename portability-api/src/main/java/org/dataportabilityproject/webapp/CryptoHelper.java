@@ -35,18 +35,6 @@ class CryptoHelper {
     this.crypter = crypter;
   }
 
-  /* Encrypts the given {@code authData} and stores it as a cookie in the provided response.
-   * TODO: remove once the Spring API server is  deprecated
-   */
-  void encryptAndSetCookie(HttpServletResponse response, boolean isExport, AuthData authData) {
-    String encrypted = encryptAuthData(authData);
-    String cookieKey = isExport ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
-    Cookie authCookie = new Cookie(cookieKey, encrypted);
-    LogUtils.log("Set new cookie with key: %s, length: %s", cookieKey, encrypted.length());
-    // TODO: reenable. Currently doesn't like the cookie, has a bad value.
-    // response.addCookie(authCookie);
-  }
-
   /** Encrypts the given {@code authData} and stores it as a cookie in the provided headers. */
   void encryptAndSetCookie(Headers headers, boolean isExport, AuthData authData){
     String encrypted = encryptAuthData(authData);
@@ -54,7 +42,7 @@ class CryptoHelper {
     Cookie authCookie = new Cookie(cookieKey, encrypted);
     LogUtils.log("Set new cookie with key: %s, length: %s", cookieKey, encrypted.length());
     // TODO: reenable. Currently doesn't like the cookie, has a bad value.
-    // headers.add(HEADER_SET_COOKIE, authCookie.toString());
+    // headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityServerUtils.COOKIE_ATTRIBUTES);
   }
 
   /** Serialize and encrypt the given {@code authData} with the session key. */

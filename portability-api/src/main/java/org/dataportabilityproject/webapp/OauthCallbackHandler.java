@@ -119,7 +119,7 @@ public class OauthCallbackHandler implements HttpHandler {
       PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
       jobDao.updateJob(updatedJob);
 
-      // Get responseHeaders to set redirect and new cookie
+      // Set new cookie
       cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
       redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {

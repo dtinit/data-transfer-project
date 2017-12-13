@@ -46,6 +46,15 @@ import org.dataportabilityproject.shared.LogUtils;
  */
 public class PortabilityServerUtils {
 
+  /**
+   * Attributes to attach to all cookies set by the API - Since HttpCookie doesnt support adding
+   * arbitrary attributes, we need to do this manually by concatenating to the cookie string.
+   *
+   * SameSite=lax specification allows cookies to be sent by the browser on top level GET requests
+   * and on requests from within the app.
+   */
+  public final static String COOKIE_ATTRIBUTES = "; SameSite=lax";
+
   /* Populates a JsonObject with the provided authorization data. */
   public static JsonObject createImportAuthJobResponse(String dataType, String exportService,
       String importService,
