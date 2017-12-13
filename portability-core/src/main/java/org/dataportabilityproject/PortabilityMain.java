@@ -18,9 +18,11 @@ package org.dataportabilityproject;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.UUID;
+import org.apache.commons.cli.CommandLine;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.dataModels.DataModel;
+import org.dataportabilityproject.shared.FlagUtils;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -30,7 +32,9 @@ public class PortabilityMain {
     private static CloudFactory cloudFactory = new LocalCloudFactory();
 
     public static void main(String[] args) throws Exception {
-        PortabilityFlags.parse(args);
+        CommandLine cmd = FlagUtils.parseFlags(args, PortabilityFlags.getOptions());
+        PortabilityFlags.parse(cmd);
+
         ServiceProviderRegistry registry = new ServiceProviderRegistry(cloudFactory);
 
         PortableDataType type = IO_INTERFACE.ask(

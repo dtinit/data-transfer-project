@@ -3,18 +3,18 @@ package org.dataportabilityproject.webapp;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 /**
  * A class that contains all flags exlusive to the API server.
  */
 public class PortabilityServerFlags {
-  private static PortabilityServerFlags INSTANCE = null;
 
+  private final static Options OPTIONS = new Options()
+      .addOption("baseUrl", true, PortabilityServerFlags.baseUrlDesc())
+      .addOption("baseApiUrl", true, PortabilityServerFlags.baseApiUrlDesc());
+  private static PortabilityServerFlags INSTANCE = null;
   private final String baseUrl; // TODO URL type that validates url
   private final String baseApiUrl; // TODO URL type that validates url
 
@@ -25,20 +25,11 @@ public class PortabilityServerFlags {
     this.baseApiUrl = baseApiUrl;
   }
 
-  /** Parse arguments and initialize the PortabilityFlags global configuration parameters. */
-  public static void parse(String[] args) {
-    // create Options object
-    Options options = new Options();
-    options.addOption("baseUrl", true, PortabilityServerFlags.baseUrlDesc());
-    options.addOption("baseApiUrl", true, PortabilityServerFlags.baseApiUrlDesc());
-    CommandLineParser parser = new DefaultParser();
-    CommandLine cmd = null;
-    try {
-      cmd = parser.parse(options, args);
-    } catch (ParseException e) {
-      System.out.println("Fatal: Unable to parse commandline args: " + e);
-      System.exit(1);
-    }
+  public static Options getOptions() {
+    return OPTIONS;
+  }
+
+  public static void parse(CommandLine cmd) {
     boolean encryptedFlow = false;
     String encryptedFlowStr = cmd.getOptionValue("encryptedFlow");
     String baseUrl = cmd.getOptionValue("baseUrl");
@@ -58,11 +49,11 @@ public class PortabilityServerFlags {
       System.out.println("Parsed command line arg baseApiUrl = " + baseApiUrl);
     }
     // Encrypted flow is optional
-    if(!Strings.isNullOrEmpty(encryptedFlowStr)) {
+    if (!Strings.isNullOrEmpty(encryptedFlowStr)) {
       encryptedFlow = Boolean.parseBoolean(encryptedFlowStr);
     }
     if (!hasAllFlags) {
-      help(options);
+      help(OPTIONS);
     }
     init(baseUrl, baseApiUrl, encryptedFlow);
   }
@@ -88,7 +79,7 @@ public class PortabilityServerFlags {
   }
 
   // TODO move to annotation on flag variable
-  public static String baseUrlDesc() {
+  private static String baseUrlDesc() {
     return "Base url for all calls within the application";
   }
 
@@ -99,7 +90,7 @@ public class PortabilityServerFlags {
   }
 
   // TODO move to annotation on flag variable
-  public static String baseApiUrlDesc() {
+  private static String baseApiUrlDesc() {
     return "Base url for direct to api calls within the application";
   }
 }

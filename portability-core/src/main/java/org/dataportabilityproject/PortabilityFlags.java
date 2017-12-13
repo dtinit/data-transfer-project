@@ -15,8 +15,11 @@ import org.dataportabilityproject.shared.Config.Environment;
  * A class that contains all flags passed from the commandline.
  */
 public class PortabilityFlags {
-  private static PortabilityFlags INSTANCE = null;
 
+  private final static Options OPTIONS = new Options()
+      .addOption("cloud", true, PortabilityFlags.cloudFlagDesc())
+      .addOption("environment", true, PortabilityFlags.environmentFlagDesc());
+  private static PortabilityFlags INSTANCE = null;
   private final SupportedCloud cloud;
   private final Environment environment;
   private final boolean encryptedFlow;  // default is off until flow is completed
@@ -30,26 +33,42 @@ public class PortabilityFlags {
     this.encryptedFlow = encryptedFlow;
   }
 
-  /** Parse arguments and initialize the PortabilityFlags global configuration parameters. */
-  public static void parse(String[] args) {
-    // create Options object
-    Options options = new Options();
-    // TODO set & get "cloud" and "environment" from annotation on flag in PortabilityFlags
-    options.addOption("cloud", true, PortabilityFlags.cloudFlagDesc());
-    options.addOption("environment", true, PortabilityFlags.environmentFlagDesc());
-    CommandLineParser parser = new DefaultParser();
-    CommandLine cmd = null;
-    try {
-      cmd = parser.parse(options, args);
-    } catch (ParseException e) {
-      System.out.println("Fatal: Unable to parse commandline args: " + e);
-      System.exit(1);
-    }
+  /* Returns the group of options necessary for PortabilityFlags*/
+  public static Options getOptions() {
+    return OPTIONS;
+  }
+
+  /**
+   * Initialize the PortabilityFlags global configuration parameters from provided command line.
+   */
+  public static void parse(CommandLine cmd) {
     String cloud = cmd.getOptionValue("cloud");
     String environment = cmd.getOptionValue("environment");
-    boolean encryptedFlow = false;
     String encryptedFlowStr = cmd.getOptionValue("encryptedFlow");
 
+    if (!checkRequiredArgs(cloud, environment)) {
+      help(getOptions());
+    }
+
+    // Encrypted flow is optional
+    boolean encryptedFlow = false;
+    if (!Strings.isNullOrEmpty(encryptedFlowStr)) {
+      encryptedFlow = Boolean.parseBoolean(encryptedFlowStr);
+    }
+
+    init(SupportedCloud.valueOf(cloud), Environment.valueOf(environment), encryptedFlow);
+  }
+
+  private synchronized static void init(SupportedCloud supportedCloud, Environment environment,
+      boolean encryptedFlow) {
+    if (INSTANCE != null) {
+      throw new IllegalStateException("Trying to initialize flags a second time");
+    }
+
+    INSTANCE = new PortabilityFlags(supportedCloud, environment, encryptedFlow);
+  }
+
+  private static boolean checkRequiredArgs(String cloud, String environment) {
     boolean hasAllFlags = true;
     hasAllFlags &= !Strings.isNullOrEmpty(cloud);
     if (Strings.isNullOrEmpty(cloud)) {
@@ -63,28 +82,13 @@ public class PortabilityFlags {
     } else {
       System.out.println("Parsed command line arg environment = " + environment);
     }
-    // Encrypted flow is optional
-    if(!Strings.isNullOrEmpty(encryptedFlowStr)) {
-      encryptedFlow = Boolean.parseBoolean(encryptedFlowStr);
-    }
-    if (!hasAllFlags) {
-      help(options);
-    }
-    init(SupportedCloud.valueOf(cloud), Environment.valueOf(environment), encryptedFlow);
-  }
 
-  private synchronized static void init(SupportedCloud supportedCloud, Environment environment,
-      boolean encryptedFlow) {
-    if (INSTANCE != null) {
-      throw new IllegalStateException("Trying to initialize flags a second time");
-    }
-
-    INSTANCE = new PortabilityFlags(supportedCloud, environment, encryptedFlow);
+    return hasAllFlags;
   }
 
   private static void help(Options options) {
-    HelpFormatter formater = new HelpFormatter();
-    formater.printHelp("Main", options);
+    HelpFormatter formatter = new HelpFormatter();
+    formatter.printHelp("Main", options);
     System.exit(0);
   }
 
@@ -95,7 +99,7 @@ public class PortabilityFlags {
   }
 
   // TODO move to annotation on flag variable
-  public static String cloudFlagDesc() {
+  private static String cloudFlagDesc() {
     return "Which storage to use. Can be 'LOCAL' for in memory or 'Google' for Google Cloud";
   }
 
@@ -112,7 +116,7 @@ public class PortabilityFlags {
   }
 
   // TODO move to annotation on flag variable
-  public static String environmentFlagDesc() {
+  private static String environmentFlagDesc() {
     return "The deployment environment. One of LOCAL, TEST, QA, or PROD.";
   }
 }
