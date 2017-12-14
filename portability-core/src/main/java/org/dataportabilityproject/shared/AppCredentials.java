@@ -16,7 +16,7 @@ import org.dataportabilityproject.shared.local.LocalSecrets;
  */
 @AutoValue
 public abstract class AppCredentials {
-    private static final String BUCKET_NAME = "app-data-portability";
+    private static final String BUCKET_NAME_PREFIX = "app-data-";
     private static final String KEYS_DIR = "keys/";
     private static final String KEY_EXTENSION = ".txt";
     private static final String SECRETS_DIR = "encrypted_secrets/";
@@ -56,20 +56,20 @@ public abstract class AppCredentials {
             return new Pair<>(key, secret);
         }
         CloudFactory cloudFactory = CloudFactoryFactory.getCloudFactory(PortabilityFlags.cloud());
+        String projectId = cloudFactory.getProjectId();
+        String bucketName = BUCKET_NAME_PREFIX + projectId;
         BucketStore bucketStore = cloudFactory.getBucketStore();
         CryptoKeyManagementSystem keyManagementSystem = cloudFactory.getCryptoKeyManagementSystem();
 
         String keyLocation = KEYS_DIR + keyName + KEY_EXTENSION;
-        LogUtils.log("Getting key %s (blob %s) from bucket %s", keyName, keyLocation,
-            BUCKET_NAME);
-        byte[] rawKeyBytes = bucketStore.getBlob(BUCKET_NAME, keyLocation);
+        LogUtils.log("Getting key %s (blob %s) from bucket %s", keyName, keyLocation, bucketName);
+        byte[] rawKeyBytes = bucketStore.getBlob(bucketName, keyLocation);
         String key = new String(rawKeyBytes);
         String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
         LogUtils.log("Getting secret %s (blob %s) from bucket %s", secretName, secretLocation,
-            BUCKET_NAME);
-        byte[] encryptedSecret = bucketStore.getBlob(BUCKET_NAME, secretLocation);
-        String cryptoKeyName = String.format(CRYPTO_KEY_FMT_STRING,
-            System.getenv("GOOGLE_PROJECT_ID").toLowerCase());
+            bucketName);
+        byte[] encryptedSecret = bucketStore.getBlob(bucketName, secretLocation);
+        String cryptoKeyName = String.format(CRYPTO_KEY_FMT_STRING, projectId);
         LogUtils.log("Decrypting secret with crypto key %s", cryptoKeyName);
         String secret =
             new String(keyManagementSystem.decrypt(cryptoKeyName, encryptedSecret));
