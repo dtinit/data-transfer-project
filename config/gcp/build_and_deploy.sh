@@ -44,46 +44,6 @@ ENV=$2
 PROJECT_ID_SUFFIX=$3
 SRC_DIR="portability-$BINARY"
 
-# Parse settings file
-SETTINGS_FILE="config/environments/$ENV/settings.yaml"
-echo -e "\nParsing settings file $SETTINGS_FILE"
-if [[ ! -e ${SETTINGS_FILE} ]]; then
-  echo "Invalid environment $ENV entered. No settings file found at $SETTINGS_FILE. Aborting."
-  exit 1
-fi
-PARSED_ALL_FLAGS=true
-FLAG_ENV=$(grep -o 'env: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
-FLAG_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
-FLAG_BASE_URL=$(grep -o 'baseUrl: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
-FLAG_BASE_API_URL=$(grep -o 'baseApiUrl: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
-if [[ -z ${FLAG_ENV} ]]; then
-  PARSED_ALL_FLAGS=false
-  echo "Could not parse setting 'env' in $SETTINGS_FILE"
-else
-  echo -e "env: $FLAG_ENV"
-fi
-if [[ -z ${FLAG_CLOUD} ]]; then
-  PARSED_ALL_FLAGS=false
-  echo "Could not parse setting 'cloud' in $SETTINGS_FILE"
-else
-  echo -e "cloud: $FLAG_CLOUD"
-fi
-if [[ -z ${FLAG_BASE_URL} ]]; then
-  PARSED_ALL_FLAGS=false
-  echo "Could not parse setting 'baseUrl' in $SETTINGS_FILE"
-else
-  echo -e "baseUrl: $FLAG_BASE_URL"
-fi
-if [[ -z ${FLAG_BASE_API_URL} ]]; then
-  PARSED_ALL_FLAGS=false
-  echo "Could not parse setting 'baseApiUrl' in FLAG_BASE_API_URL"
-else
-  echo -e "baseApiUrl: $FLAG_BASE_API_URL"
-fi
-if !(${PARSED_ALL_FLAGS}) ; then
-  exit 1
-fi
-
 echo -e "\nChecking that you have Maven installed"
 mvn=$(which mvn)|| { echo "Maven (mvn) not found. Please install it and try again." >&2; exit 1; }
 echo -e "Checking that you have docker installed"
@@ -94,6 +54,34 @@ gcloud=$(which gcloud)|| { echo "gcloud not found. Please install it and try aga
 read -p "You should compile a new jar if there are java or index.html changes.
 Compile and package jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
+  # Copy settings yaml files from ENV/settings/ into $SRC_DIR/src/main/resources/
+  SETTINGS_DEST_PATH="$SRC_DIR/src/main/resources/settings/"
+  if [[ -e ${SETTINGS_DEST_PATH} ]]; then
+    echo -e "\nRemoving old settings folder"
+    rm -rf ${SETTINGS_DEST_PATH}
+    if [[ -e ${SETTINGS_DEST_PATH} ]]; then
+      echo "Problem removing old settings.yaml. Aborting."
+      exit 1
+    fi
+  fi
+  mkdir $SETTINGS_DEST_PATH
+  SETTINGS_SRC_PATH="config/environments/$ENV/settings/"
+  echo -e "Copying common.yaml from $SETTINGS_SRC_PATH to $SETTINGS_DEST_PATH"
+  cp "${SETTINGS_SRC_PATH}common.yaml" "${SETTINGS_DEST_PATH}common.yaml"
+  if [[ ! -e "${SETTINGS_DEST_PATH}common.yaml" ]]; then
+    echo "Problem copying settings/common.yaml. Aborting."
+    exit 1
+  fi
+  if [[ $BINARY == "web" || $BINARY == "api" ]]; then
+    echo -e "Copying api.yaml from $SETTINGS_SRC_PATH to $SETTINGS_DEST_PATH"
+    cp "${SETTINGS_SRC_PATH}api.yaml" "${SETTINGS_DEST_PATH}api.yaml"
+    if [[ ! -e "${SETTINGS_DEST_PATH}api.yaml" ]]; then
+      echo "Problem copying settings/api.yaml. Aborting."
+      exit 1
+    fi
+  fi
+  echo -e "Copied settings/"
+
   # secrets.csv is deprecated except for local development. Delete any old versions of this file
   # so it doesn't make its way into our jar, even though our binary is configured to ignore it
   # for non-local environments.
@@ -156,10 +144,21 @@ fi
 
 read -p "Would you like to run the app jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  COMMAND="java -jar $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar -cloud $FLAG_CLOUD -environment $FLAG_ENV -baseUrl $FLAG_BASE_URL -baseApiUrl $FLAG_BASE_API_URL"
+  COMMAND="java -jar $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar"
   echo -e "running $COMMAND"
   $COMMAND
 fi
+
+# Grab env and cloud flags from settings/common.yaml
+SETTINGS_FILE="config/environments/$ENV/settings/common.yaml"
+echo -e "\nParsing settings file $SETTINGS_FILE"
+if [[ ! -e ${SETTINGS_FILE} ]]; then
+  echo "Invalid environment $ENV entered. No settings file found at $SETTINGS_FILE. Aborting."
+  exit 1
+fi
+FLAG_ENV=$(grep -o 'env: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+FLAG_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+
 
 # Generate Dockerfile based on env/settings.yaml.
 # For now all flags will be passed to binary at run time via ENTRYPOINT but still in "image compile
@@ -199,18 +198,12 @@ EXPOSE 5005/tcp"
   fi
 fi
 
-if [[ ${BINARY} == "web" || ${BINARY} == "api" ]]; then
-  ENTRYPOINT_COMMAND="ENTRYPOINT [\"java\", $OPTIONAL_DEBUG_FLAG \"-jar\", \"/$BINARY.jar\", \"-cloud\", \"$FLAG_CLOUD\", \"-environment\", \"$FLAG_ENV\", \"-baseUrl\", \"$FLAG_BASE_URL\", \"-baseApiUrl\", \"$FLAG_BASE_API_URL\"]"
-elif [[ ${BINARY} == worker ]]; then
-  ENTRYPOINT_COMMAND="ENTRYPOINT [\"java\", $OPTIONAL_DEBUG_FLAG \"-jar\", \"/$BINARY.jar\", \"-cloud\", \"$FLAG_CLOUD\", \"-environment\", \"$FLAG_ENV\"]"
-fi
-
 # And onto generating the dockerfile...
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
 COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
 $LOCAL_DEBUG_SETTINGS
-$ENTRYPOINT_COMMAND
+ENTRYPOINT ["java", $OPTIONAL_DEBUG_FLAG "-jar", "/$BINARY.jar"]
 EXPOSE 8080/tcp
 EOF
 

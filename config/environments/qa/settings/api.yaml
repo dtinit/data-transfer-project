@@ -1,4 +1,2 @@
-env: QA
-cloud: GOOGLE
 baseUrl: https://gardenswithoutwalls-qa.net
 baseApiUrl: https://gardenswithoutwalls-qa.net

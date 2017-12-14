@@ -18,7 +18,6 @@ package org.dataportabilityproject.webapp;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
-import org.apache.commons.cli.CommandLine;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.CloudFactoryFactory;
@@ -27,7 +26,6 @@ import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
-import org.dataportabilityproject.shared.FlagUtils;
 
 public class PortabilityApiMain {
 
@@ -38,10 +36,8 @@ public class PortabilityApiMain {
   private static JobDao jobDao;
 
   public static void main(String args[]) throws Exception {
-    // Init command line options
-    CommandLine cmd = FlagUtils.parseFlags(args, PortabilityFlags.getOptions(), PortabilityApiFlags.getOptions());
-    PortabilityFlags.parse(cmd);
-    PortabilityApiFlags.parse(cmd);
+    PortabilityFlags.parse();
+    PortabilityApiFlags.parse();
 
     // TODO: use Config.java from core library for the initialization stuff
     // Can probably make serviceProviderRegistry a singleton/factory class so that we don't

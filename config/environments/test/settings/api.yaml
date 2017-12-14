@@ -1,4 +1,2 @@
-env: TEST
-cloud: GOOGLE
 baseUrl: https://gardenswithoutwalls-test.net
 baseApiUrl: https://gardenswithoutwalls-test.net

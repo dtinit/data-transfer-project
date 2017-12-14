@@ -4,8 +4,7 @@ target/**
 .classpath
 src/.project
 src/.classpath
-src/main/resources/secrets_*.csv
-src/main/resources/*.json
+src/main/resources/*
 workspace.xml
 tasks.xml
 *.iml
