@@ -67,6 +67,9 @@ encrypt_secret "SHUTTERSTOCK"
 encrypt_secret "SMUGMUG"
 
 # TODO enforce one app key & secret per provider (e.g. FLICKR) in GCS to make less error prone.
+# Note: gsutil cp doesn't let you specify a project, so hope that it uses the default in gcloud
+# config... (https://stackoverflow.com/questions/45766055/gsutil-specify-project-on-copy). This has
+# worked in practice but not sure if it's 100% reliable behavior.
 echo -e "Uploading app keys and encrypted secrets to 'app-data' bucket"
 gsutil cp -r ../environments/$ENV/app_data/keys ${GCS_BUCKET_NAME}
 gsutil cp -r ../environments/$ENV/app_data/encrypted_secrets ${GCS_BUCKET_NAME}

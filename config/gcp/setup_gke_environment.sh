@@ -117,8 +117,8 @@ print_step
 read -p "Changing your default project for gcloud to ${PROJECT_ID}. Continue (y/N)? " response
 response=${response,,} # to lower
 if [[ ${response} =~ ^(yes|y| ) ]]; then
-# Need to set default project or you can't make a GCS bucket using gsutil later on. gsutil goes off
-# of gcloud's default project and doesn't accept a project flag.
+# Set default project so any gcloud or gsutil commands that don't accept a project ID flag will
+# (hopefully) use the correct one from gcloud's default config. This seems to work.
 gcloud config set project ${PROJECT_ID}
 else
   echo "Aborting"
@@ -172,7 +172,7 @@ gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
 print_step "Creating GCS 'static' bucket"
 BUCKET_NAME="static-portability"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
-gsutil mb ${GCS_BUCKET_NAME}
+gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
 
 print_step "Creating backend 'static' bucket"
@@ -182,11 +182,11 @@ gcloud compute --project ${PROJECT_ID} backend-buckets create ${STATIC_BUCKET_NA
 print_step "Creating GCS 'app-data' bucket for storing encrypted app secrets"
 BUCKET_NAME="app-data-portability"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
-gsutil mb ${GCS_BUCKET_NAME}
+gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
 
 print_step "Granting service account ${SERVICE_ACCOUNT} viewer privileges to 'app-data' bucket"
-gsutil iam ch serviceAccount:${SERVICE_ACCOUNT}:objectViewer ${GCS_BUCKET_NAME}
+gsutil acl -p ${PROJECT_ID} ch -u ${SERVICE_ACCOUNT}:R ${GCS_BUCKET_NAME}
 
 print_step "Creating a key to encrypt app secrets"
 gcloud kms keyrings create portability_secrets --location global
