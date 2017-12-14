@@ -17,7 +17,6 @@ package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import org.apache.commons.cli.CommandLine;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
@@ -27,7 +26,6 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.FlagUtils;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 
@@ -39,8 +37,7 @@ public class WorkerMain {
   private static CloudFactory cloudFactory = new LocalCloudFactory();
 
   public static void main(String[] args) throws Exception {
-    CommandLine cmd = FlagUtils.parseFlags(args, PortabilityFlags.getOptions());
-    PortabilityFlags.parse(cmd);
+    PortabilityFlags.parse();
 
     SupportedCloud cloud = PortabilityFlags.cloud();
 

@@ -4,18 +4,8 @@ target/**
 .classpath
 src/.project
 src/.classpath
-# Note: secrets_*.csv is deprecated and engineers should now store secrets files in
-# config/<env>/secrets.csv. Our build script will now copy the correct secrets.csv file into
-# src/main/resources when we build. Keep secrets_* in our .gitignore so any old secrets files
-# are not accidentally checked in.
-src/main/resources/secrets_*.csv
-src/main/resources/secrets.csv
-src/main/resources/*.json
-# This index.html location should not be checked in because it is configured differently for
-# our different environments. We have a different index.html for each environment in
-# ../config/environments. When we build a jar, we copy in the correct index.html to the location
-# below to be served by the jar.
-src/main/resources/static/index.html
+# Resources are generated at each build and copied into src/main/resources
+src/main/resources/*
 workspace.xml
 tasks.xml
 *.iml

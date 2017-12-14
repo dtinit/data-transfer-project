@@ -16,16 +16,12 @@
 package org.dataportabilityproject.webapp;
 
 import java.io.IOException;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.ParseException;
 import org.dataportabilityproject.PortabilityFlags;
-import org.dataportabilityproject.shared.FlagUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * To run: java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 \ -jar
- * portability-web/target/portability-web-1.0-SNAPSHOT.jar -cloud GOOGLE -environment LOCAL
+ * To run: build_and_deploy.sh
  */
 @SpringBootApplication
 public class PortabilityServer {
@@ -33,12 +29,11 @@ public class PortabilityServer {
   /**
    * Starts the Portability web server.
    */
-  public static void main(String[] args) throws ParseException, InterruptedException, IOException {
+  public static void main(String[] args) throws InterruptedException, IOException {
     // Initialize command line arguments for PortabilityFlags and PortabilityServerFlags
-    CommandLine cmd = FlagUtils
-        .parseFlags(args, PortabilityFlags.getOptions(), PortabilityServerFlags.getOptions());
-    PortabilityFlags.parse(cmd);
-    PortabilityServerFlags.parse(cmd);
+
+    PortabilityFlags.parse();
+    PortabilityServerFlags.parse();
 
     SpringApplication.run(PortabilityServer.class, args);
   }

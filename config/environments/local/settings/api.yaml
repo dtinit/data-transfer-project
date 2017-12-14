@@ -1,4 +1,2 @@
-env: LOCAL
-cloud: LOCAL
 baseUrl: http://localhost:3000
 baseApiUrl: http://localhost:8080
