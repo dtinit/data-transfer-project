@@ -2,11 +2,11 @@
 
 # Script to encrypt application secrets, and then upload the encrypted secrets as well as the (raw)
 # app keys to GCS.
-# Usage: ./encrypt_and_upload_secrets.sh <env>
-# Encrypts secrets in environments/<env>/raw_secrets and outputs encrypted values in
-# environments/<env>/encrypted_secrets.
-# Then uploads environments/<env>/encrypted_secrets and environments/<env>/keys to GCS.
-# Keys and secrets in app_data should NOT be checked into source control (this is enforced with
+# Usage: ./encrypt_and_upload_secrets.sh <env> <PROJECT_ID_SUFFIX>
+# Encrypts secrets in environments/<env>/app_data/raw_secrets and outputs encrypted values in
+# environments/<env>/app_data/encrypted_secrets.
+# Then uploads environments/<env>/app_data/encrypted_secrets and environments/<env>/app_data/keys to
+# GCS. Keys and secrets in app_data should NOT be checked into source control (this is enforced with
 # .gitignore) and only need to be encrypted/uploaded once per provider and GCP project.
 
 if [[ $(pwd) != */gcp ]]; then
@@ -20,7 +20,21 @@ if [ -z $1 ]; then
 fi
 
 source ./init_project_vars.sh
+echo -e "Set project vars:
+BASE_PROJECT_ID: ${BASE_PROJECT_ID}
+  Prefix to use for all project IDs. Used with -ENV_NAME (e.g. dev, prod) as suffix.
+ORGANIZATION_ID: ${ORGANIZATION_ID}
+  ID of GCP organization
+BILLING_ACCOUNT_ID: ${BILLING_ACCOUNT_ID}
+  ID of GCP billing account
+OWNERS: ${OWNERS}
+  Project owners.
+  Should be a comma separated list e.g. 'user:foo@foo.com,group:bar-group@baz.com'
+"
+
 ENV=$1
+PROJECT_ID_SUFFIX=$2
+PROJECT_ID="$BASE_PROJECT_ID-$PROJECT_ID_SUFFIX"
 
 # Encrypts the key for ${1} - a given provider, e.g. "FLICKR", and saves it in encrypted_secrets/.
 # Requires that a raw (unencrypted) secret exists in the user's local filesystem for the provider
@@ -36,7 +50,7 @@ encrypt_secret() {
     --ciphertext-file=../environments/$ENV/app_data/encrypted_secrets/${1}_SECRET.encrypted
 }
 
-BUCKET_NAME="app-data-portability"
+BUCKET_NAME="app-data-$PROJECT_ID"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 
 PROJECT_ID=$(gcloud config get-value project)

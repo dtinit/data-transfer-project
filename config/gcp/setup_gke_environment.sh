@@ -170,7 +170,7 @@ gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
     --certificate ${CRT_FILE_PATH} --private-key ${KEY_FILE_PATH}
 
 print_step "Creating GCS 'static' bucket"
-BUCKET_NAME="static-portability"
+BUCKET_NAME="static-$PROJECT_ID"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 gsutil mb ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
@@ -180,7 +180,7 @@ gcloud compute --project ${PROJECT_ID} backend-buckets create ${STATIC_BUCKET_NA
 # TODO use --enable-cdn flag when we are ready to use CDN
 
 print_step "Creating GCS 'app-data' bucket for storing encrypted app secrets"
-BUCKET_NAME="app-data-portability"
+BUCKET_NAME="app-data-$PROJECT_ID"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 gsutil mb ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
