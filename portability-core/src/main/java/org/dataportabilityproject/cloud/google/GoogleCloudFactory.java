@@ -25,6 +25,8 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
@@ -34,6 +36,9 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 public final class GoogleCloudFactory implements CloudFactory {
+  // Lazy init this in case we are running a different cloud than Google, in which case this class
+  // won't be used and the environment variable this is set from won't be available.
+  private static String PROJECT_ID;
 
   private final Datastore datastore;
   private final PersistentKeyValueStore persistentKeyValueStore;
@@ -44,7 +49,7 @@ public final class GoogleCloudFactory implements CloudFactory {
     try {
       this.datastore = DatastoreOptions
           .newBuilder()
-          .setProjectId(System.getenv("GOOGLE_PROJECT_ID"))
+          .setProjectId(getGoogleProjectId())
           .setCredentials(getCredentials())
           .build()
           .getService();
@@ -86,6 +91,15 @@ public final class GoogleCloudFactory implements CloudFactory {
     results.forEachRemaining(datastore::delete);
   }
 
+  /**
+   * Google's implementation of project ID to use in generic (non-Google-specific) code like
+   * {@code AppCredentials}.
+   */
+  @Override
+  public String getProjectId() {
+    return getGoogleProjectId();
+  }
+
   static GoogleCredentials getCredentials() throws CredentialsException {
     // TODO: Check whether we are actually running on GCP once we find out how
     boolean isRunningOnGcp = PortabilityFlags.environment() != LOCAL;
@@ -120,5 +134,33 @@ public final class GoogleCloudFactory implements CloudFactory {
     CredentialsException(String message, Exception cause) {
       super(message, cause);
     }
+  }
+
+  /**
+   * Get project ID from environment variable and validate it is set.
+   *
+   * <p>Exposed as package private so Google classes in this package may use this directly without
+   * needing to obtain a CloudFactory instance.
+   *
+   * @return project ID
+   * @throws IllegalArgumentException if project ID is unset
+   */
+  static String getGoogleProjectId() throws IllegalArgumentException {
+    if (PROJECT_ID != null) {
+      return PROJECT_ID;
+    }
+    String tempProjectId;
+    try {
+      tempProjectId = System.getenv("GOOGLE_PROJECT_ID");
+    } catch (NullPointerException e) {
+      throw new IllegalArgumentException("Need to specify a project ID when using Google Cloud. "
+          + "This should be exposed as an environment variable by Kubernetes, see "
+          + "k8s/api-deployment.yaml");
+    }
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tempProjectId), "Need to specify a project "
+        + "ID when using Google Cloud. This should be exposed as an environment variable by "
+        + "Kubernetes, see k8s/api-deployment.yaml");
+    PROJECT_ID = tempProjectId.toLowerCase();
+    return PROJECT_ID;
   }
 }
