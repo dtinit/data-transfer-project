@@ -55,16 +55,6 @@ public class PortabilityApiUtils {
    */
   public final static String COOKIE_ATTRIBUTES = "; SameSite=lax";
 
-  /* Populates a JsonObject with the provided authorization data. */
-  public static JsonObject createImportAuthJobResponse(String dataType, String exportService,
-      String importService,
-      String importAuthURL) {
-    return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, dataType)
-        .add(JsonKeys.EXPORT_SERVICE, exportService)
-        .add(JsonKeys.IMPORT_SERVICE, importService)
-        .add(JsonKeys.IMPORT_AUTH_URL, importAuthURL).build();
-  }
-
   /**
    * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
    * way to do this from the HttpExchange.

@@ -15,6 +15,9 @@
  */
 package org.dataportabilityproject.webapp;
 
+import static org.dataportabilityproject.webapp.SetupHandler.Mode.COPY;
+import static org.dataportabilityproject.webapp.SetupHandler.Mode.IMPORT;
+
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
@@ -57,9 +60,10 @@ public class PortabilityApiMain {
     // /_/listServices, /_/listServicesthisshouldnotwork and /_/listServices/path/to/resource will
     // all be handled by the ListServicesHandler below. To prevent this, each handler below should
     // validate the request URI that it is getting passed in.
-    server.createContext("/_/copySetup", new CopySetupHandler(serviceProviderRegistry, jobDao));
+    server.createContext("/_/copySetup",
+        new SetupHandler(serviceProviderRegistry, jobDao, COPY, "/_/copySetup"));
     server.createContext("/_/importSetup",
-        new ImportSetupHandler(serviceProviderRegistry, jobDao));
+        new SetupHandler(serviceProviderRegistry, jobDao, IMPORT, "/_/importSetup"));
     server.createContext("/_/listDataTypes", new ListDataTypesHandler(serviceProviderRegistry));
     server.createContext("/_/listServices", new ListServicesHandler(serviceProviderRegistry));
     server.createContext("/_/startCopy",
