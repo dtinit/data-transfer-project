@@ -135,11 +135,20 @@ public class PortabilityApiUtils {
   }
 
   /**
+   * Looks up job in pending auth data state and verifies it exists.
+   */
+  public static PortabilityJob lookupJobPendingAuthData(String id, JobDao jobDao) {
+    PortabilityJob job = jobDao.lookupJobPendingAuthData(id);
+    Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
+    return job;
+  }
+
+  /**
    * Looks up job and checks that it exists in the provided jobDao.
    */
   public static PortabilityJob lookupJob(String id, JobDao jobDao) {
     PortabilityJob job = jobDao.findExistingJob(id);
-    Preconditions.checkState(null != job, "existingJob not found for id: %s", id);
+    Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
     return job;
   }
 

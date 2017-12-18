@@ -15,42 +15,65 @@
  */
 package org.dataportabilityproject.webapp;
 
-import com.google.common.base.Charsets;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import com.sun.net.httpserver.Headers;
-import java.nio.charset.Charset;
+import java.security.PublicKey;
+import javax.crypto.SecretKey;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.job.CrypterImpl;
+import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.SessionKeyGenerator;
 import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 /**
- * Helper methods to work with encrypting data for the client.
+ * Helper methods utlized for encrypting data for the client.
  */
 class CryptoHelper {
-  private static final Charset DEFAULT_CHARSET = Charsets.UTF_8;
-  private final Crypter crypter;
+  private static final Gson GSON = new Gson();
+  private final JobDao jobDao;
 
-  CryptoHelper(Crypter crypter) {
-    this.crypter = crypter;
+  CryptoHelper(JobDao jobDao) {
+    this.jobDao = jobDao;
   }
 
   /** Encrypts the given {@code authData} and stores it as a cookie in the provided headers. */
-  void encryptAndSetCookie(Headers headers, boolean isExport, AuthData authData){
-    String encrypted = encryptAuthData(authData);
+  void encryptAndSetCookie(Headers headers, String jobId, boolean isExport, AuthData authData){
+    SecretKey sessionKey = getSessionKey(jobId);
+    String encrypted = encryptAuthData(sessionKey, authData);
     String cookieKey = isExport ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
-    Cookie authCookie = new Cookie(cookieKey, encrypted);
+    Cookie cookie = new Cookie(cookieKey, encrypted);
     LogUtils.log("Set new cookie with key: %s, length: %s", cookieKey, encrypted.length());
-    // TODO: reenable. Currently doesn't like the cookie, has a bad value.
-    // headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
+    headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
+  }
+
+  private SecretKey getSessionKey(String jobId) {
+    PortabilityJob job = jobDao.lookupJobPendingAuthData(jobId);
+    String encodedSessionKey = job.sessionKey();
+    Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey));
+    return SessionKeyGenerator.parse(encodedSessionKey);
   }
 
   /** Serialize and encrypt the given {@code authData} with the session key. */
-  private String encryptAuthData(AuthData authData) {
-    String serialized = authData.toString(); // Implement auth data serialization
-    return serialized;
-    // TODO: reenable
-    // byte[] encrypted = crypter.encryptWithSessionKey(serialized);
-    // return new String(encrypted, DEFAULT_CHARSET);
+  public static String encryptAuthData(PublicKey key, String sessionEncryptedAuthData) {
+    Crypter crypter = new CrypterImpl(key);
+    return crypter.encrypt(sessionEncryptedAuthData);
+  }
+
+  /** Serialize and encrypt the given {@code authData} with the session key. */
+  private static String encryptAuthData(SecretKey key, AuthData authData) {
+    Crypter crypter = new CrypterImpl(key);
+    String serialized = serialize(authData);
+    return crypter.encrypt(serialized);
+  }
+
+  private static String serialize(AuthData authData) {
+    return GSON.toJson(authData, AuthData.class);
   }
 }

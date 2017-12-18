@@ -17,8 +17,7 @@ package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import org.dataportabilityproject.job.PublicPrivateKeyUtils;
 
 /**
  * A class that contains the value of the job and key for a worker instance. This classes uses
@@ -37,7 +36,7 @@ class WorkerJobMetadata {
   void init(String jobId) {
     Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
     this.jobId = jobId;
-    this.keyPair = createKey();
+    this.keyPair = PublicPrivateKeyUtils.generateKeyPair();
   }
 
   public KeyPair getKeyPair() {
@@ -51,7 +50,6 @@ class WorkerJobMetadata {
   }
 
   private static class WorkerJobMetadataHolder {
-
     private static WorkerJobMetadata INSTANCE = new WorkerJobMetadata();
   }
 
@@ -60,43 +58,5 @@ class WorkerJobMetadata {
    */
   public static WorkerJobMetadata getInstance() {
     return WorkerJobMetadataHolder.INSTANCE;
-  }
-
-  /**
-   * Creates the public/private instance key pair.
-   */
-  private KeyPair createKey() {
-    // TODO: Implement
-    return new KeyPair(new PublicKey() {
-      @Override
-      public String getAlgorithm() {
-        return null;
-      }
-
-      @Override
-      public String getFormat() {
-        return null;
-      }
-
-      @Override
-      public byte[] getEncoded() {
-        return new byte[0];
-      }
-    }, new PrivateKey() {
-      @Override
-      public String getAlgorithm() {
-        return null;
-      }
-
-      @Override
-      public String getFormat() {
-        return null;
-      }
-
-      @Override
-      public byte[] getEncoded() {
-        return new byte[0];
-      }
-    }); // TODO: Implement
   }
 }

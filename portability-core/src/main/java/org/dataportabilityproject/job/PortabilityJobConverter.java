@@ -33,11 +33,16 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
   private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
   private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
   private static final String EXPORT_INITIAL_AUTH_DATA_KEY = "EXPORT_INITIAL_AUTH_DATA";
-  private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
+  @Deprecated private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
+  private static final String EXPORT_ENCRYPTED_AUTH_DATA_KEY = "EXPORT_ENCRYPTED_AUTH_DATA_KEY";
   private static final String IMPORT_SERVICE_DATA_KEY = "IMPORT_SERVICE";
   private static final String IMPORT_ACCOUNT_DATA_KEY = "IMPORT_ACCOUNT";
   private static final String IMPORT_INITIAL_AUTH_DATA_KEY = "IMPORT_INITIAL_AUTH_DATA";
-  private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
+  @Deprecated private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
+  private static final String IMPORT_ENCRYPTED_AUTH_DATA_KEY = "IMPORT_ENCRYPTED_AUTH_DATA";
+  private static final String SESSION_KEY = "SESSION_KEY";
+  private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
+  private static final String WORKER_INSTANCE_PRIVATE_KEY = "WORKER_INSTANCE_PRIVATE_KEY";
 
   /**
    * Converts a {@link PortabilityJob} to a map of key value pairs.
@@ -64,8 +69,12 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     if (null != job.exportInitialAuthData()) {
       builder.put(EXPORT_INITIAL_AUTH_DATA_KEY, job.exportInitialAuthData());
     }
+    // TODO: remove in encryptedflow
     if (null != job.exportAuthData()) {
       builder.put(EXPORT_AUTH_DATA_KEY, job.exportAuthData());
+    }
+    if (null != job.encryptedExportAuthData()) {
+      builder.put(EXPORT_ENCRYPTED_AUTH_DATA_KEY, job.encryptedExportAuthData());
     }
     // Validate and add import service information
     if(!Strings.isNullOrEmpty(job.importService())){
@@ -77,8 +86,21 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     if (null != job.importInitialAuthData()) {
       builder.put(IMPORT_INITIAL_AUTH_DATA_KEY, job.importInitialAuthData());
     }
+    // TODO: remove in encryptedflow
     if (null != job.importAuthData()) {
       builder.put(IMPORT_AUTH_DATA_KEY, job.importAuthData());
+    }
+    if (null != job.encryptedImportAuthData()) {
+      builder.put(IMPORT_ENCRYPTED_AUTH_DATA_KEY, job.encryptedImportAuthData());
+    }
+    if (null != job.sessionKey()) {
+      builder.put(SESSION_KEY, job.sessionKey());
+    }
+    if (null != job.workerInstancePublicKey()) {
+      builder.put(WORKER_INSTANCE_PUBLIC_KEY, job.workerInstancePublicKey());
+    }
+    if (null != job.workerInstancePrivateKey()) {
+      builder.put(WORKER_INSTANCE_PRIVATE_KEY, job.workerInstancePrivateKey());
     }
     return builder.build();
   }
@@ -114,6 +136,9 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     if (data.get(EXPORT_AUTH_DATA_KEY) != null) {
       builder.setExportAuthData((AuthData) data.get(EXPORT_AUTH_DATA_KEY));
     }
+    if (data.get(EXPORT_ENCRYPTED_AUTH_DATA_KEY) != null) {
+      builder.setEncryptedExportAuthData(getString(data, EXPORT_ENCRYPTED_AUTH_DATA_KEY));
+    }
     if (!isStringValueNullOrEmpty(data, IMPORT_SERVICE_DATA_KEY)) {
       builder.setImportService(getString(data, IMPORT_SERVICE_DATA_KEY));
     }
@@ -125,6 +150,18 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     }
     if (data.get(IMPORT_AUTH_DATA_KEY) != null) {
       builder.setImportAuthData((AuthData) data.get(IMPORT_AUTH_DATA_KEY));
+    }
+    if (data.get(IMPORT_ENCRYPTED_AUTH_DATA_KEY) != null) {
+      builder.setEncryptedImportAuthData(getString(data, IMPORT_ENCRYPTED_AUTH_DATA_KEY));
+    }
+    if (data.get(SESSION_KEY) != null) {
+      builder.setSessionKey(getString(data, SESSION_KEY));
+    }
+    if (data.get(WORKER_INSTANCE_PUBLIC_KEY) != null) {
+      builder.setWorkerInstancePublicKey(getString(data, WORKER_INSTANCE_PUBLIC_KEY));
+    }
+    if (data.get(WORKER_INSTANCE_PRIVATE_KEY) != null) {
+      builder.setWorkerInstancePrivateKey(getString(data, WORKER_INSTANCE_PRIVATE_KEY));
     }
     return builder.build();
   }

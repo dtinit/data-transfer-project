@@ -51,8 +51,7 @@ public class PortabilityApiMain {
     jobDao = new JobDao(cloudFactory.getPersistentKeyValueStore());
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
     // TODO: Wire up the correct Crypter.
-    cryptoHelper = new CryptoHelper(new Crypter() {
-    });
+    cryptoHelper = new CryptoHelper(jobDao);
 
     // TODO: backlog and port should be command line args
     HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -68,7 +67,7 @@ public class PortabilityApiMain {
     server.createContext("/_/listDataTypes", new ListDataTypesHandler(serviceProviderRegistry));
     server.createContext("/_/listServices", new ListServicesHandler(serviceProviderRegistry));
     server.createContext("/_/startCopy",
-        new StartCopyHandler(serviceProviderRegistry, jobDao, cloudFactory));
+        new StartCopyHandler(serviceProviderRegistry, jobDao, cloudFactory, cryptoHelper));
     server.createContext("/callback/",
         new Oauth2CallbackHandler(serviceProviderRegistry, jobDao, cryptoHelper));
     server.createContext("/callback1/",

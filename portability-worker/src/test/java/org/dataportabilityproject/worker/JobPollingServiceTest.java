@@ -23,7 +23,6 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.SecretAuthData;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,29 +52,43 @@ public class JobPollingServiceTest {
     PortabilityJob job = jobDao.findExistingJob(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
-    // Client inserts an unassigned job
-    jobDao.insertJobInUnassignedState(TEST_ID);
+    // API inserts an job pending auth data
+    jobDao.insertJobInPendingAuthDataState(PortabilityJob.builder().setId(TEST_ID)
+        .setDataType(PortableDataType.PHOTOS.name())
+        .setExportService("DummyExportService")
+        .setImportService("DummyImportService").build());
+
+    // Verify initial state
+    job = jobDao.lookupJobPendingAuthData(TEST_ID);
+    assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
+    assertThat(job.importAuthData()).isNull();// no auth data should exist yet
+
+    // API updates job to pending worker assignment
+    jobDao.updateJobStateToPendingWorkerAssignment(TEST_ID);
+
+    // Verify pending worker assignment state
+    job = jobDao.lookupJobPendingWorkerAssignment(TEST_ID);
+    assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
+    assertThat(job.importAuthData()).isNull();// no auth data should exist yet
+
+    // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
     assertThat(WorkerJobMetadata.getInstance().isInitialized()).isTrue();
     assertThat(WorkerJobMetadata.getInstance().getJobId()).isEqualTo(TEST_ID);
-    job = jobDao.lookupJob(TEST_ID);
-    assertThat(job).isNull(); // No existing ready job
+    job = jobDao.lookupAssignedWithoutAuthDataJob(TEST_ID);
 
-    // Client sends complete data for a unassigned job
-    PortabilityJob complete = PortabilityJob.builder()
-        .setId(TEST_ID)
-        .setDataType(PortableDataType.PHOTOS.name())
-        .setExportService("flickr")
-        .setExportAuthData(SecretAuthData.create("test_secret_1"))
-        .setImportService("instragram")
-        .setImportAuthData(SecretAuthData.create("test_secret_2"))
-        .build();
-    jobDao.updateJobToReady(complete);
-    assertThat(WorkerJobMetadata.getInstance().isInitialized()).isTrue();
-    assertThat(WorkerJobMetadata.getInstance().getJobId()).isEqualTo(TEST_ID);
+    // Verify assigned without auth data state
+    assertThat(job.workerInstancePublicKey()).isNotEmpty();
 
-    // Job exists in state ready to process
-    job = jobDao.lookupJob(TEST_ID);
-    assertThat(job).isEqualTo(complete);
+    // Client encrypts data and updates the job
+    jobDao.updateJobStateToAssigneWithAuthData(job.id(), "dummy export data", "dummy import data");
+
+    // Run another iteration of the polling service
+    // Worker picks up encrypted data and update job
+    jobPollingService.runOneIteration();
+
+    job = jobDao.lookupAssignedWithAuthDataJob(job.id());
+    assertThat(job.encryptedExportAuthData()).isNotEmpty();
+    assertThat(job.encryptedImportAuthData()).isNotEmpty();
   }
 }

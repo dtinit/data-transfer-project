@@ -94,14 +94,8 @@ public class ConfigureHandler implements HttpHandler {
       Preconditions.checkArgument(JobUtils.isValidService(importService, false),
           "Missing valid importService: %s", importService);
 
-      // TODO: Remove job creation in case of encrypted flow
-      PortabilityJob newJob = jobFactory.create(dataType, exportService, importService);
-
-      if (PortabilityFlags.encryptedFlow()) {
-        jobDao.insertJobInUnassignedState(newJob.id());
-      } else {
-        jobDao.insertJob(newJob);
-      }
+      // Create a new job and persist
+      PortabilityJob newJob = createJob(dataType, exportService, importService);
 
       // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
@@ -127,20 +121,37 @@ public class ConfigureHandler implements HttpHandler {
           .checkNotNull(authFlowInitiator, "AuthFlowInitiator not found for type: %s, service: %s",
               dataType, job.exportService());
 
-      // Store initial auth data
+      // Store initial auth data for export services. Any initial auth data for import
+      // is done in the SetupHandler in IMPORT mode
       if (authFlowInitiator.initialAuthData() != null) {
         PortabilityJob updatedJob = JobUtils
-            .setInitialAuthData(job, authFlowInitiator.initialAuthData(), true);
-        jobDao.updateJob(updatedJob);
+            .setInitialAuthData(job, authFlowInitiator.initialAuthData(),  /*isExport=*/ true);
+        if (PortabilityFlags.encryptedFlow()) {
+          jobDao.updatePendingAuthDataJob(job);
+        } else {
+          jobDao.updateJob(updatedJob);
+        }
       }
 
-      // Send the authUrl for the client to redirect to service authorization
+      // Send the authUrl for the client to redirect to export service authorization
       redirect = authFlowInitiator.authUrl();
     } catch (Exception e) {
       LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
       throw e;
     }
 
-    return redirect;
+    return redirect; // to the auth url for the export service
+  }
+
+  /** Create the initial job in initial state and persist in storage. */
+  private PortabilityJob createJob(PortableDataType dataType, String exportService, String importService)
+      throws IOException {
+    PortabilityJob job = jobFactory.create(dataType, exportService, importService);
+    if (PortabilityFlags.encryptedFlow()) {
+      jobDao.insertJobInPendingAuthDataState(job); // This is the initial population of the row in storage
+    } else {
+      jobDao.insertJob(job);
+    }
+    return job;
   }
 }

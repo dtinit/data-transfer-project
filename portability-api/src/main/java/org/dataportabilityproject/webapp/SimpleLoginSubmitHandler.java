@@ -24,6 +24,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -58,7 +59,12 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
     String jobId = JobUtils.decodeId(encodedIdCookie);
 
-    PortabilityJob job = jobDao.findExistingJob(jobId);
+    PortabilityJob job;
+    if (PortabilityFlags.encryptedFlow()) {
+      job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
+    }  else {
+      job = PortabilityApiUtils.lookupJob(jobId, jobDao);
+    }
     Preconditions.checkState(null != job, "existingJob not found for job id: %s", jobId);
 
     // TODO: Determine import vs export mode
@@ -89,16 +95,21 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
         .generateAuthData(PortabilityApiFlags.baseApiUrl(), username, jobId, null, password);
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
-    // Update the job
-    // TODO: Remove persistence of auth data in storage at this point
-    PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-    jobDao.updateJob(updatedJob);
+    if (!PortabilityFlags.encryptedFlow()) {
+      // Update the job
+      PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
+      jobDao.updateJob(updatedJob);
+    }
 
     String redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
+
     // Set new cookie and redirect to the next page
     LogUtils.log("simpleLoginSubmit, redirecting to: %s", redirect);
     Headers responseHeaders = exchange.getResponseHeaders();
-    cryptoHelper.encryptAndSetCookie(responseHeaders, isExport, authData);
+
+    if(PortabilityFlags.encryptedFlow()) {
+      cryptoHelper.encryptAndSetCookie(responseHeaders, job.id(), isExport, authData);
+    }
     responseHeaders.set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
   }

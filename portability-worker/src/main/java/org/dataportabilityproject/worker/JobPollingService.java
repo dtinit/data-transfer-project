@@ -17,6 +17,9 @@ package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import java.io.IOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
@@ -53,27 +56,36 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   /**
+   * Polls for an unassigned job, and once found, initializes the global singleton job metadata
+   * object for this running instance of the worker.
+   */
+  private void pollForUnassignedJob() throws IOException {
+    String id = jobDao.findNextJobPendingWorkerAssignment();
+    if (id != null) {
+      PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
+      Preconditions.checkNotNull(job);
+      Preconditions.checkState(!WorkerJobMetadata.getInstance().isInitialized());
+      WorkerJobMetadata.getInstance().init(id);
+
+      PublicKey publicKey = WorkerJobMetadata.getInstance().getKeyPair().getPublic();
+      // TODO: Move storage of private key to a different location
+      PrivateKey privateKey = WorkerJobMetadata.getInstance().getKeyPair().getPrivate();
+      // Executing Job State Transition from Unassigned to Assigned
+      jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
+    }
+  }
+
+  /**
    * Polls for job with populated auth data and stops this service when found.
    */
   private void pollUntilJobIsReady() {
-    PortabilityJob job = jobDao.findExistingJob(WorkerJobMetadata.getInstance().getJobId());
+    PortabilityJob job = jobDao
+        .lookupAssignedWithAuthDataJob(WorkerJobMetadata.getInstance().getJobId());
     Preconditions.checkNotNull(job);
     // Validate job has auth data
     if ((job.exportAuthData() != null) && (job.importAuthData() != null)) {
       // Stop polling now that we have all the data ready to start the job
       this.stopAsync();
-    }
-  }
-
-  /**
-   * Polls for an unassigned job, and once found, initializes the global singleton job metadata
-   * object for this running instance of the worker.
-   */
-  private void pollForUnassignedJob() {
-    String id = jobDao.findUnassignedJob();
-    if (id != null) {
-      Preconditions.checkState(!WorkerJobMetadata.getInstance().isInitialized());
-      WorkerJobMetadata.getInstance().init(id);
     }
   }
 }

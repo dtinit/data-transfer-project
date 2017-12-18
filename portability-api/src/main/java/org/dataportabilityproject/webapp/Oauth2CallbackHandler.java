@@ -27,6 +27,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -99,7 +100,12 @@ public class Oauth2CallbackHandler implements HttpHandler {
           .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
               jobId, state);
 
-      PortabilityJob job = PortabilityApiUtils.lookupJob(jobId, jobDao);
+      PortabilityJob job;
+      if (PortabilityFlags.encryptedFlow()) {
+        job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
+      }  else {
+        job = PortabilityApiUtils.lookupJob(jobId, jobDao);
+      }
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
       // TODO: Determine import vs export mode
@@ -123,14 +129,17 @@ public class Oauth2CallbackHandler implements HttpHandler {
               initialAuthData, null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
-      // Update the job
-      // TODO: Remove persistence of auth data in storage at this point. The data will be passed
-      // thru to the client via the cookie.
-      PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-      jobDao.updateJob(updatedJob);
+      // The data will be passed thru to the server via the cookie.
+      if (!PortabilityFlags.encryptedFlow()) {
+        // Update the job
+        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
+        jobDao.updateJob(updatedJob);
+      } else {
+        // Set new cookie
+        cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), isExport, authData);
+      }
 
-      // Set new cookie
-      cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
+
 
       redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {

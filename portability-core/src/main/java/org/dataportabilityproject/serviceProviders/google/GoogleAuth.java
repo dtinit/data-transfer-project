@@ -81,7 +81,7 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     AuthorizationCodeFlow flow = createFlow();
     TokenResponse response = flow
         .newTokenRequest(authCode)
-        .setRedirectUri(CALLBACK_PATH) //TODO(chuy): Parameterize
+        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, id);

@@ -31,17 +31,24 @@ public abstract class PortabilityJob {
   @Nullable public abstract String exportService();
   @Nullable public abstract String exportAccount();
   @Nullable public abstract AuthData exportInitialAuthData();
-  @Nullable public abstract AuthData exportAuthData();
+  /** @deprecated Use encryptedExportAuthData when encrypted flow is implemented. */
+  @Deprecated @Nullable public abstract AuthData exportAuthData();
+  @Nullable public abstract String encryptedExportAuthData();
   @Nullable public abstract String importService();
   @Nullable public abstract String importAccount();
   @Nullable public abstract AuthData importInitialAuthData();
-  @Nullable public abstract AuthData importAuthData();
+  /** @deprecated Use encryptedImportAuthData when encrypted flow is implemented. */
+  @Deprecated @Nullable public abstract AuthData importAuthData();
+  @Nullable public abstract String encryptedImportAuthData();
+  @Nullable public abstract String sessionKey();
+  @Nullable public abstract String workerInstancePublicKey();
+  @Nullable public abstract String workerInstancePrivateKey(); // TODO: Consider removing
 
   public static Builder builder() {
      return new AutoValue_PortabilityJob.Builder();
   }
 
-  public abstract Builder toBuilder();
+  abstract Builder toBuilder();
 
   @AutoValue.Builder
   public abstract static class Builder {
@@ -50,11 +57,18 @@ public abstract class PortabilityJob {
     public abstract Builder setExportService(String id);
     public abstract Builder setExportAccount(String id);
     public abstract Builder setExportInitialAuthData(AuthData id);
-    public abstract Builder setExportAuthData(AuthData id);
+    /** @deprecated Use setEncryptedExportAuthData when encrypted flow is implemented. */
+    @Deprecated public abstract Builder setExportAuthData(AuthData id);
+    public abstract Builder setEncryptedExportAuthData(String id);
     public abstract Builder setImportService(String id);
     public abstract Builder setImportAccount(String id);
     public abstract Builder setImportInitialAuthData(AuthData id);
-    public abstract Builder setImportAuthData(AuthData id);
+    /** @deprecated Use setEncryptedImportAuthData when encrypted flow is implemented. */
+    @Deprecated public abstract Builder setImportAuthData(AuthData id);
+    public abstract Builder setEncryptedImportAuthData(String id);
+    public abstract Builder setSessionKey(String id);
+    public abstract Builder setWorkerInstancePublicKey(String id);
+    public abstract Builder setWorkerInstancePrivateKey(String id);
 
     abstract PortabilityJob autoBuild(); // not public
 

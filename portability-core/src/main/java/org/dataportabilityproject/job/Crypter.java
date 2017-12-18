@@ -15,22 +15,18 @@
  */
 package org.dataportabilityproject.job;
 
+import com.google.common.base.Charsets;
+
 /** Provides functions related to encryption. */
 public interface Crypter {
 
   /**
-   * Encrypt the given {@code data} with the session key.
+   * Encrypt the given {@code data} with the key this crypter was constructed with.
    */
-  default public byte[] encryptWithSessionKey(String data) {
-    // TODO: Implementation generates and stores session key
-    throw new UnsupportedOperationException("To be implemented");
-  }
+  String encrypt(String data);
 
   /**
-   * Decrypts the given {@code encrypted} bytes with the session key
+   * Decrypts the given {@code encrypted} bytes with the key this crypter was constructed with.
    */
-  default public String decryptWithSessionKey(byte[] encrypted) {
-    // TODO: Impelementation looks up session key and decrypts bytes
-    throw new UnsupportedOperationException("To be implemented");
-  }
+  String decrypt(String encrypted);
 }

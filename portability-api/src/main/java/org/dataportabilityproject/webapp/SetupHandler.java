@@ -20,6 +20,7 @@ import static org.dataportabilityproject.webapp.SetupHandler.Mode.IMPORT;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -27,10 +28,12 @@ import java.nio.charset.StandardCharsets;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonWriter;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
@@ -53,58 +56,86 @@ public class SetupHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, handlerUrlPath));
+    try {
+      LogUtils.log("Entering setup handler, exchange: %s", exchange);
+      Preconditions.checkArgument(
+          PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, handlerUrlPath));
 
-    String encodedIdCookie = PortabilityApiUtils
-        .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+      String encodedIdCookie = PortabilityApiUtils
+          .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
+      Preconditions
+          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
-    // Valid job must be present
-    String jobId = JobUtils.decodeId(encodedIdCookie);
-    PortabilityJob job = jobDao.findExistingJob(jobId);
-    Preconditions.checkState(null != job, "existingJob not found for jobId: %s", jobId);
+      // Valid job must be present
+      String jobId = JobUtils.decodeId(encodedIdCookie);
+      PortabilityJob job;
+      if (PortabilityFlags.encryptedFlow()) {
+        job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
+      } else {
+        job = PortabilityApiUtils.lookupJob(jobId, jobDao);
+      }
 
-    // This page is only valid after the oauth of the export service - export data should exist for
-    // all setup Modes.
-    String exportService = job.exportService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");
-    Preconditions.checkState(job.exportAuthData() != null, "Export AuthData is required");
+      Preconditions.checkNotNull(job, "existingJob not found for jobId: %s", jobId);
 
-    String importService = job.importService();
-    Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
+      // This page is only valid after the oauth of the export service - export data should exist for
+      // all setup Modes.
+      String exportService = job.exportService();
+      Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");
 
-    JsonObject response;
-    if (mode == IMPORT) {
-      response = handleImportSetup(job, jobDao);
-    } else {
-      response = handleCopySetup(job);
+      if (!PortabilityFlags.encryptedFlow()) {
+        Preconditions.checkNotNull(job.exportAuthData(), "Export AuthData is required");
+      }
+
+      String importService = job.importService();
+      Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
+
+      JsonObject response;
+      if (mode == IMPORT) {
+        response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
+      } else {
+        response = handleCopySetup(exchange.getRequestHeaders(), job);
+      }
+
+      // Mark the response as type Json and send
+      exchange.getResponseHeaders()
+          .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
+      exchange.sendResponseHeaders(200, 0);
+      JsonWriter writer = Json.createWriter(exchange.getResponseBody());
+      writer.write(response);
+      writer.close();
+    } catch (Exception e) {
+      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      throw e;
     }
-
-    // Mark the response as type Json and send
-    exchange.getResponseHeaders()
-        .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
-    exchange.sendResponseHeaders(200, 0);
-    JsonWriter writer = Json.createWriter(exchange.getResponseBody());
-    writer.write(response);
-    writer.close();
   }
 
-  JsonObject handleImportSetup(PortabilityJob job, JobDao jobDao) throws IOException {
-    Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
+  JsonObject handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
+      throws IOException {
+    if (!PortabilityFlags.encryptedFlow()) {
+      Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
+    } else {
+      String exportAuthCookie = PortabilityApiUtils
+          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      Preconditions
+          .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+    }
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
+    // This is done in ConfigureHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
       // Auth data is different for import and export. This is only valid for the /_/importSetup page,
       // so isExport is set to false.
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), /*isExport=*/false);
-      jobDao.updateJob(updatedJob);
+      if (PortabilityFlags.encryptedFlow()) {
+        jobDao.updatePendingAuthDataJob(job);
+      } else {
+        jobDao.updateJob(updatedJob);
+      }
     }
     return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())
         .add(JsonKeys.EXPORT_SERVICE, job.exportService())
@@ -112,8 +143,21 @@ public class SetupHandler implements HttpHandler {
         .add(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl()).build();
   }
 
-  JsonObject handleCopySetup(PortabilityJob job) {
-    Preconditions.checkState(job.importAuthData() != null, "Import AuthData is required");
+  JsonObject handleCopySetup(Headers headers, PortabilityJob job) {
+    Preconditions.checkNotNull(job.importAuthData(), "Import AuthData is required");
+    // Make sure the data exists in the cookies before rendering copy page
+    if (PortabilityFlags.encryptedFlow()) {
+      String exportAuthCookie = PortabilityApiUtils
+          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      Preconditions
+          .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+
+      String importAuthCookie = PortabilityApiUtils
+          .getCookie(headers, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
+      Preconditions
+          .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
+    }
+
     return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())
         .add(JsonKeys.EXPORT_SERVICE, job.exportService())
         .add(JsonKeys.IMPORT_SERVICE, job.importService()).build();

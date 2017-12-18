@@ -25,6 +25,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
+import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -68,6 +69,7 @@ public class OauthCallbackHandler implements HttpHandler {
       Headers requestHeaders = exchange.getRequestHeaders();
 
       // Get the URL for the request - needed for the authorization.
+
       String requestURL = PortabilityApiUtils
           .createURL(requestHeaders.getFirst(HEADER_HOST), exchange.getRequestURI().toString());
 
@@ -89,8 +91,12 @@ public class OauthCallbackHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
-      PortabilityJob job = PortabilityApiUtils.lookupJob(jobId, jobDao);
-
+      PortabilityJob job;
+      if (PortabilityFlags.encryptedFlow()) {
+        job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
+      }  else {
+        job = PortabilityApiUtils.lookupJob(jobId, jobDao);
+      }
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
       // TODO: Support import and export service
@@ -113,14 +119,15 @@ public class OauthCallbackHandler implements HttpHandler {
       // Generate and store auth data
       AuthData authData = generator.generateAuthData(PortabilityApiFlags.baseApiUrl(), oauthVerifier, jobId, initialAuthData, null);
 
-      // Update the job
-      // TODO: Remove persistence of auth data in storage at this point. The data will be passed
-      // thru to the client via the cookie.
-      PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
-      jobDao.updateJob(updatedJob);
+      if (!PortabilityFlags.encryptedFlow()) {
+        // Update the job
+        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
+        jobDao.updateJob(updatedJob);
+      } else {
+        // Set new cookie
+        cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), isExport, authData);
+      }
 
-      // Set new cookie
-      cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), isExport, authData);
       redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
       LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);

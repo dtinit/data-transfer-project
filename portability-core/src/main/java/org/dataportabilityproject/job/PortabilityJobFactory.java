@@ -18,7 +18,7 @@ package org.dataportabilityproject.job;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 
 /**
@@ -44,16 +44,39 @@ public class PortabilityJobFactory {
     this.idProvider = idProvider;
   }
 
-  /** Creates a new user job in initial state. */
+  /**
+   * Creates a new user job in initial state with session key.
+   */
   public PortabilityJob create(PortableDataType dataType, String exportService,
       String importService) throws IOException {
     String newId = idProvider.createId();
-    PortabilityJob job = createInitialJob(newId, dataType, exportService, importService);
-    System.out.println("Creating new PortabilityJob, id: " + newId);
+    String encodedSessionKey = SessionKeyGenerator.generateKeyAndEncode();
+    PortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
+    LogUtils.log("Creating new PortabilityJob, id: %s", newId);
     return job;
   }
 
   /** Creates the initial data entry to persist. */
+  private static PortabilityJob createInitialJob(String id, String sessionKey,
+      PortableDataType dataType, String exportService, String importService) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
+    Preconditions.checkNotNull(dataType, "dataType missing");
+    return PortabilityJob.builder()
+        .setId(id)
+        .setDataType(dataType.name())
+        .setExportService(exportService)
+        .setImportService(importService)
+        .build();
+  }
+
+  /**
+   * Creates the initial data entry to persist.
+   * @deprecated Remove when encrypted flow complete.
+   */
+  @Deprecated
   private static PortabilityJob createInitialJob(String id, PortableDataType dataType,
       String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");

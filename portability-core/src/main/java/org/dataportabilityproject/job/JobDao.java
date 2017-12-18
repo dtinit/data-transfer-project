@@ -15,10 +15,11 @@
  */
 package org.dataportabilityproject.job;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
@@ -33,14 +34,16 @@ public class JobDao {
   /**
    * The current state of the job.
    * <p>
-   * The value UNASSIGNED indicates the client has sent a request for a worker to be assigned before
+   * The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to be assigned before
    * sending all the data required for the job.
-   * The value READY_TO_PROCESS indicates the client has submitted all data required, such as the
+   * The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required, such as the
    * encrypted auth data, in order to begin processing the portability job.
    */
   enum JobState {
-    UNASSIGNED,
-    READY_TO_PROCESS
+    PENDING_AUTH_DATA, // The job has not finished the authorization flows
+    PENDING_WORKER_ASSIGNMENT, // The job has all authorization information but is not assigned a worker yet
+    ASSIGNED_WITHOUT_AUTH_DATA, // The job is assigned a worker and waiting for auth data from the api
+    ASSIGNED_WITH_AUTH_DATA, // The job is assigned a worker and has encrypted auth data
   }
 
   private final PersistentKeyValueStore storage;
@@ -49,54 +52,175 @@ public class JobDao {
     this.storage = storage;
   }
 
-  /** Returns a job in unassigned state. */
-  public String findUnassignedJob() {
-    String key = storage.getFirst(JobState.UNASSIGNED.name());
+  // INDEX LOOKUP METHODS
+
+  /** Returns the next job in unassigned state. */
+  public String findNextJobPendingWorkerAssignment() {
+    String key = storage.getFirst(JobState.PENDING_WORKER_ASSIGNMENT.name());
     if (key != null) {
       return getIdFromKey(key);
     }
     return null;
   }
 
-  /** Looks up a job that is ready to be processed. */
-  public PortabilityJob lookupJob(String id) {
+
+  // LOOKUP METHODS
+
+  /** Looks up a job that is not yet completely populated with auth data. */
+  public PortabilityJob lookupJobPendingAuthData(String id) {
+    return lookupJob(id, JobState.PENDING_AUTH_DATA);
+  }
+
+  /** Looks up a job that is pending worker assignment. */
+  public PortabilityJob lookupJobPendingWorkerAssignment(String id) {
+    return lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
+  }
+
+  /** Looks up a job that is assigned to a worker and is ready to be processed. */
+  public PortabilityJob lookupAssignedWithoutAuthDataJob(String id) {
+    return lookupJob(id, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+  }
+
+  // TODO: Only expose for testing
+  /** Looks up a job that is assigned to a worker and is ready to be processed. */
+  public PortabilityJob lookupAssignedWithAuthDataJob(String id) {
+    return lookupJob(id, JobState.ASSIGNED_WITH_AUTH_DATA);
+  }
+
+  private PortabilityJob lookupJob(String id, JobState jobState) {
     Preconditions.checkNotNull(id);
-    Map<String, Object> data = storage.get(createKey(JobState.READY_TO_PROCESS, id));
+    Map<String, Object> data = storage.get(createKey(jobState, id));
     if (data == null || data.isEmpty()) {
       return null;
     }
-    return PortabilityJob.mapToJob(data);
+    PortabilityJob job = PortabilityJob.mapToJob(data);
+    return job;
   }
 
-  /** Inserts a new entry for the given {@code id} in storage in unassigned state.*/
-  public void insertJobInUnassignedState(String id) throws IOException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(id));
-    String unassignedKey = createKey(JobState.UNASSIGNED, id);
-    Map<String, Object> existing = storage.get(unassignedKey);
-    Preconditions.checkArgument(existing == null, "Attempting to insert an already existing job");
-    // Store the updated job info
-    Map<String, Object> data = PortabilityJob.builder().setId(id).build().asMap();
-    storage.put(unassignedKey, data);
+
+  // INSERT METHODS
+
+  /**
+   * Inserts a new entry for the given {@code id} in storage in incomplete state.
+   */
+  public void insertJobInPendingAuthDataState(PortabilityJob job) throws IOException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.dataType()));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.exportService()));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
+    for (JobState state : JobState.values()) {
+      String key = createKey(state, job.id());
+      Preconditions.checkArgument((storage.get(key) == null),
+          "Attempting to insert an already existing job");
+    }
+
+    String key = createKey(JobState.PENDING_AUTH_DATA, job.id());
+    storage.put(key, job.asMap());
+  }
+
+  // UPDATE METHODS
+
+  /**
+   * Updates an existing incomplete {@code job} in storage.
+   */
+  public void updatePendingAuthDataJob(PortabilityJob job) throws IOException {
+    updateJob(job, JobState.PENDING_AUTH_DATA);
   }
 
   /**
-   * Replaces a unassigned entry in storage with the provided {@code job} in ready state.
-   * TODO: Migrate updateJob() calls to use this method once the whole poll-based flow is implemented
+   * Replaces the job in PENDING_AUTH_DATA state to PENDING_WORKER_ASSIGNMENT state with
+   * encryption data included.
    */
-  public void updateJobToReady(PortabilityJob job) throws IOException {
-    String unassignedKey = createKey(JobState.UNASSIGNED, job.id());
-    Map<String, Object> existingUnassignedJob = storage.get(unassignedKey);
-    Preconditions.checkArgument(existingUnassignedJob != null,
-        "Attempting to update a non-existent unassigned job");
-    // Store the updated job info in ready state
-    String readyKey = createKey(JobState.READY_TO_PROCESS, job.id());
-    // Check that job doesn't already exist in ready state
-    Map<String, Object> existingReadyJob = storage.get(readyKey);
-    Preconditions
-        .checkArgument(existingReadyJob == null, "Attempting to insert an already existing job");
-    storage.put(readyKey, job.asMap()); // Store entry in ready state
-    storage.delete(unassignedKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
+  public void updateJobStateToPendingWorkerAssignment(String id) throws IOException {
+    // Verify job is in existing state
+    PortabilityJob existingJob = lookupJob(id, JobState.PENDING_AUTH_DATA);
+    Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
+    // No updated to the job itself, just the state
+    updateJob(existingJob, JobState.PENDING_WORKER_ASSIGNMENT);
+    // Delete the job in the previous state
+    String previousKey = createKey(JobState.PENDING_AUTH_DATA, id);
+    storage.delete(previousKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
   }
+
+  /**
+   * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
+   * data.
+   */
+  public void updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
+      PrivateKey privateKey) throws IOException {
+    // Verify job is in existing state
+    PortabilityJob existingJob = lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
+    Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
+    // Verify existing job in correct state
+    Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
+    Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
+    // Populate job with keys to persist
+    String encodedPublicKey = PublicPrivateKeyUtils.encodeKey(publicKey);
+    String encodedPrivateKey = PublicPrivateKeyUtils.encodeKey(privateKey);
+    PortabilityJob updatedJob = existingJob.toBuilder()
+        .setWorkerInstancePublicKey(encodedPublicKey)
+        .setWorkerInstancePrivateKey(encodedPrivateKey)
+        .build();
+    updateJob(updatedJob, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    // Delete the job in the previous state
+    String previousKey = createKey(JobState.PENDING_WORKER_ASSIGNMENT, id);
+    storage.delete(
+        previousKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
+  }
+
+  /**
+   * Updates an existing assigned {@code job} with encrypted auth data.
+   */
+  public void updateJobStateToAssigneWithAuthData(String id, String encryptedExportAuthData,
+      String encryptedImportAuthData) throws IOException {
+    PortabilityJob existingJob = lookupJob(id, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
+    Preconditions.checkState(existingJob.encryptedExportAuthData() == null);
+    Preconditions.checkState(existingJob.encryptedImportAuthData() == null);
+    // Populate job with encrypted auth data
+    PortabilityJob updatedJob = existingJob.toBuilder()
+        .setEncryptedExportAuthData(encryptedExportAuthData)
+        .setEncryptedImportAuthData(encryptedImportAuthData)
+        .build();
+
+    updateJob(updatedJob, JobState.ASSIGNED_WITH_AUTH_DATA);
+    // Delete the job in the previous state
+    String previousKey = createKey(JobState.ASSIGNED_WITHOUT_AUTH_DATA, id);
+    storage.delete(
+        previousKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
+  }
+
+  /**
+   * Updates an existing {@code job} in storage with the given {@code jobState}.
+   */
+  private void updateJob(PortabilityJob job, JobState jobState) throws IOException {
+    String key = createKey(jobState, job.id());
+    Map<String, Object> existing = storage.get(key);
+    Preconditions.checkArgument(existing == null, "Job exists in updated state");
+    // Store the updated job info
+    Map<String, Object> data = job.asMap();
+    storage.put(key, data);
+  }
+
+
+  // UTILITY METHODS
+
+  // TODO: come up with a better scheme for indexing state
+  private static String createKey(JobState state, String id) {
+    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR));
+    return String.format("%s%s%s", state.name(), KEY_SEPERATOR, id);
+  }
+
+  private static String getIdFromKey(String key) {
+    Preconditions.checkArgument(key.contains(KEY_SEPERATOR));
+    return key.split(KEY_SEPERATOR)[1];
+  }
+
+  private static String getString(Map<String, Object> map, String key) {
+    return (String) map.get(key);
+  }
+
+  // DEPRECATED
 
   /**
    * Inserts a new {@code job} in storage.
@@ -137,20 +261,4 @@ public class JobDao {
     Map<String, Object> data = job.asMap();
     storage.put(getString(data, ID_DATA_KEY), data);
   }
-
-  // TODO: come up with a better scheme for indexing state
-  private static String createKey(JobState state, String id) {
-    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR));
-    return String.format("%s%s%s", state.name(), KEY_SEPERATOR, id);
-  }
-
-  private static String getIdFromKey(String key) {
-    Preconditions.checkArgument(key.contains(KEY_SEPERATOR));
-    return key.split(KEY_SEPERATOR)[1];
-  }
-
-  private static String getString(Map<String, Object> map, String key) {
-    return (String) map.get(key);
-  }
-
 }
