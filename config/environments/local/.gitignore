@@ -1,4 +1,2 @@
 app_data/*
-# Don't gitignore secrets.csv, allow this to be checked in for local development convenience.
-# This should not be used in any environments besides local/.
-# secrets.csv
+secrets.csv
