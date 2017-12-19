@@ -5,7 +5,7 @@
 #
 # Usage: ./config/gcp/build_and_deploy.sh <binary> <env> [project-suffix]
 # - binary is required and specifies which server to build.
-#     This should be one of: api, web, worker
+#     This should be one of: api, worker
 #     ex: api will build the portability-api binary
 # - env is the environment you would like to build in. This should correspond to an environment dir
 #     in config/environments.
@@ -13,8 +13,8 @@
 #
 # Must be run from the root source directory googleplex-portability/
 #
-# ex: build_and_deploy.sh web qa qa2
-# Will package and deploy portability-web using config/environments/qa/settings.yaml and
+# ex: build_and_deploy.sh api qa qa2
+# Will package and deploy portability-api using config/environments/qa/settings.yaml and
 # project BASE_PROJECT_ID-qa2
 
 if [[ $(pwd) != */googleplex-portability ]]; then
@@ -30,7 +30,7 @@ echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
 
 if [ -z $1 ]; then
-  echo "ERROR: Must provide a binary, e.g. 'api', 'web', 'worker'"
+  echo "ERROR: Must provide a binary: 'api' or 'worker'"
   exit 1
 fi
 
@@ -44,6 +44,9 @@ ENV=$2
 PROJECT_ID_SUFFIX=$3
 SRC_DIR="portability-$BINARY"
 
+PROJECT_ID_SUFFIX=$3
+SRC_DIR="portability-$BINARY"
+
 echo -e "\nChecking that you have Maven installed"
 mvn=$(which mvn)|| { echo "Maven (mvn) not found. Please install it and try again." >&2; exit 1; }
 echo -e "Checking that you have docker installed"
@@ -53,6 +56,7 @@ gcloud=$(which gcloud)|| { echo "gcloud not found. Please install it and try aga
 
 read -p "You should compile a new jar if there are java or index.html changes.
 Compile and package jar at this time? (Y/n): " response
+
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
   # Copy settings yaml files from ENV/settings/ into $SRC_DIR/src/main/resources/
   SETTINGS_DEST_PATH="$SRC_DIR/src/main/resources/settings/"
@@ -134,12 +138,7 @@ if [[ ! ${response} =~ ^(no|n| ) ]]; then
   mvn clean install
   echo -e "Packaging...\n"
 
-  # TODO: Remove when spring is replaced
-  if [[ $BINARY == "web" ]]; then
-    mvn package -e spring-boot:repackage -pl portability-web
-  else
-    mvn package -pl $SRC_DIR
-  fi
+  mvn package -pl $SRC_DIR
 fi
 
 read -p "Would you like to run the app jar at this time? (Y/n): " response
@@ -228,18 +227,8 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   echo "Exiting"
   exit 0
 else
-  # we only have 2 gcp services: the api-server and the worker-server. Both the portability-api and
-  # portability-web binary map to the api-server (this will be removed once we deprecate
-  # portability-web) and the portability-worker maps to the worker-server.
-  # TODO: remove this and use $SRC_DIR once portability-web is deprecated.
-  if [[ $BINARY == "worker" ]]; then
-    IMAGE_SUFFIX="portability-worker"
-  else
-    IMAGE_SUFFIX="portability-api"
-  fi
-
   if [[ ${FLAG_ENV} == "LOCAL" ]]; then
-    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$IMAGE_SUFFIX"
+    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$SRC_DIR"
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Exiting"
@@ -249,7 +238,7 @@ else
       echo "Using version tag v1"
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${ENV}"
-    IMAGE_NAME="gcr.io/$PROJECT_ID/$IMAGE_SUFFIX"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/$SRC_DIR"
   else
     if [ -z $PROJECT_ID_SUFFIX ]; then
       echo -e "ERROR: Since env=${ENV} (!= local), you must provide a project ID suffix, i.e. 'qa8'
@@ -257,7 +246,7 @@ else
       exit 1
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${PROJECT_ID_SUFFIX}"
-    IMAGE_NAME="gcr.io/$PROJECT_ID/$IMAGE_SUFFIX"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/$SRC_DIR"
     read -p "Changing your default project to ${PROJECT_ID}. OK? (Y/n) " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Aborting"

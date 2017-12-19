@@ -14,8 +14,6 @@
   <modules>
     <module>portability-core</module>
     <module>portability-api</module>
-    <!--TODO: deprecate in favor of portability-api-->
-    <module>portability-web</module>
     <module>portability-worker</module>
   </modules>
 
