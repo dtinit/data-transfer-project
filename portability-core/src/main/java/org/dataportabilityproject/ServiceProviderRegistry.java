@@ -16,8 +16,10 @@
 package org.dataportabilityproject;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
@@ -30,6 +32,7 @@ import org.dataportabilityproject.serviceProviders.instagram.InstagramServicePro
 import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkServiceProvider;
 import org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider;
+import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
@@ -42,18 +45,26 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 public class ServiceProviderRegistry {
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
     private final CloudFactory cloudFactory;
+    private final ImmutableSet<PortableDataType> supportedTypes;
 
-    public ServiceProviderRegistry(CloudFactory cloudFactory) throws Exception {
+    public ServiceProviderRegistry(CloudFactory cloudFactory, Iterable<String> providerClasses)
+            throws Exception {
         this.cloudFactory = cloudFactory;
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
-        addServiceProvider(new FlickrServiceProvider(), providerBuilder);
-        addServiceProvider(new GoogleServiceProvider(), providerBuilder);
-        addServiceProvider(new MicrosoftServiceProvider(), providerBuilder);
-        addServiceProvider(new RememberTheMilkServiceProvider(), providerBuilder);
-        addServiceProvider(new InstagramServiceProvider(), providerBuilder);
-        addServiceProvider(new SmugMugServiceProvider(), providerBuilder);
+        ImmutableSet.Builder<PortableDataType> portableDataTypesBuilder = ImmutableSet.builder();
+
+        loadServiceProviders(providerClasses, providerBuilder, portableDataTypesBuilder);
 
         this.serviceProviders = providerBuilder.build();
+        this.supportedTypes = portableDataTypesBuilder.build();
+
+        if (this.serviceProviders.isEmpty()) {
+            throw new IllegalStateException("No service providers were provided");
+        }
+    }
+
+    public ImmutableSet<PortableDataType> getSupportedTypes() {
+        return supportedTypes;
     }
 
     public List<String> getServiceProvidersThatCanExport(PortableDataType portableDataType) {
@@ -107,5 +118,29 @@ public class ServiceProviderRegistry {
     private static void addServiceProvider(ServiceProvider serviceProvider,
                                       ImmutableMap.Builder<String, ServiceProvider> builder) {
         builder.put(serviceProvider.getName(), serviceProvider);
+    }
+
+    private void loadServiceProviders(
+        Iterable<String> providerClasses,
+        ImmutableMap.Builder<String, ServiceProvider> providerBuilder,
+        ImmutableSet.Builder<PortableDataType> portableDataTypesBuilder) {
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        for (String className : providerClasses) {
+            try {
+                Class aClass = classLoader.loadClass(className);
+                ServiceProvider serviceProvider = (ServiceProvider) aClass.newInstance();
+                addServiceProvider(serviceProvider, providerBuilder);
+                portableDataTypesBuilder.addAll(serviceProvider.getExportTypes());
+                portableDataTypesBuilder.addAll(serviceProvider.getImportTypes());
+            } catch (ClassNotFoundException e) {
+                LogUtils.log("Couldn't load class %s: %s", className, e);
+            } catch (InstantiationException e) {
+                LogUtils.log("Couldn't initialize class %s: %s", className, e);
+            } catch (SecurityException | IllegalAccessException e) {
+                LogUtils.log("Security exception loading class %s: %s", className, e);
+            } catch (ClassCastException e) {
+                LogUtils.log("Type %s is not of type ServiceProvider: %s", className, e);
+            }
+        }
     }
 }

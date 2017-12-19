@@ -32,11 +32,12 @@ public class PortabilityMain {
     public static void main(String[] args) throws Exception {
         PortabilityFlags.parse();
 
-        ServiceProviderRegistry registry = new ServiceProviderRegistry(cloudFactory);
+        ServiceProviderRegistry registry = new ServiceProviderRegistry(
+            cloudFactory, PortabilityFlags.supportedServiceProviders());
 
         PortableDataType type = IO_INTERFACE.ask(
                 "What data type would you like to export",
-                ImmutableList.copyOf(PortableDataType.values()));
+                ImmutableList.copyOf(registry.getSupportedTypes()));
 
         copyDataType(registry, type);
     }

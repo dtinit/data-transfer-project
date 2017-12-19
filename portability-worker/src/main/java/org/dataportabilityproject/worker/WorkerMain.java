@@ -44,14 +44,20 @@ public class WorkerMain {
     // Initialize all global objects
     PersistentKeyValueStore storage = cloudFactory.getPersistentKeyValueStore();
     JobDao jobDao = new JobDao(storage);
-    ServiceProviderRegistry registry = new ServiceProviderRegistry(cloudFactory);
 
     // Start the polling service to poll for an unassigned job and when it's ready.
     pollForJob(jobDao);
 
     // Start the processing
-    processJob(jobDao, registry);
+    PortabilityJob job = getJob(jobDao);
 
+    // Only load the two providers that are doing actually work.
+    // TODO(willard): Only load two needed services here, after converting service name to class
+    // name in the DAO.
+    ServiceProviderRegistry registry = new ServiceProviderRegistry(
+        cloudFactory, PortabilityFlags.supportedServiceProviders());
+
+    processJob(job, registry);
     LogUtils.log("Successfully processed jobId: %s", WorkerJobMetadata.getInstance().getJobId());
     System.exit(0);
   }
@@ -62,18 +68,23 @@ public class WorkerMain {
     poller.awaitTerminated();
   }
 
-  private static void processJob(JobDao jobDao, ServiceProviderRegistry registry) {
+  private static PortabilityJob getJob(JobDao jobDao) {
     System.out.println("Begin processing jobId: " + WorkerJobMetadata.getInstance().getJobId());
     String jobId = WorkerJobMetadata.getInstance().getJobId();
     PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkNotNull(job, "Job not found, id: %s");
+    return job;
+  }
+
+  private static void processJob(PortabilityJob job, ServiceProviderRegistry registry) {
+
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       try {
         if(true) return;
         PortabilityCopier
             .copyDataType(registry, dataType, job.exportService(), job.exportAuthData(),
-                job.importService(), job.importAuthData(), jobId);
+                job.importService(), job.importAuthData(), job.id());
       } catch (IOException e) {
         System.err.println("Error processing jobId: " + WorkerJobMetadata.getInstance().getJobId()
             + ", error: " + e.getMessage());
@@ -82,7 +93,7 @@ public class WorkerMain {
         System.exit(1);
       }
     } finally {
-      cloudFactory.clearJobData(jobId);
+      cloudFactory.clearJobData(job.id());
     }
   }
 }

@@ -3,8 +3,10 @@ package org.dataportabilityproject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -55,5 +57,11 @@ public class PortabilityFlags {
     Preconditions.checkNotNull(INSTANCE,
         "Trying to get 'encryptedFlow' before flags have been initialized");
     return INSTANCE.commonSettings.getEncryptedFlow();
+  }
+
+  public static ImmutableList<String> supportedServiceProviders() {
+    Preconditions.checkNotNull(INSTANCE,
+        "Trying to get 'supportedServiceProviders' before flags have been initialized");
+    return INSTANCE.commonSettings.getServiceProviderClasses();
   }
 }

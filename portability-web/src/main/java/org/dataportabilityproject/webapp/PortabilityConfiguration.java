@@ -77,7 +77,8 @@ public class PortabilityConfiguration {
   @Bean
   public ServiceProviderRegistry getServiceProviderRegistry(CloudFactory cloudFactory) {
     try {
-      return new ServiceProviderRegistry(cloudFactory);
+      return new ServiceProviderRegistry(
+      cloudFactory, PortabilityFlags.supportedServiceProviders());
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }

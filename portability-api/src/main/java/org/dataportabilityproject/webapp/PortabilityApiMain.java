@@ -46,7 +46,8 @@ public class PortabilityApiMain {
     // Can probably make serviceProviderRegistry a singleton/factory class so that we don't
     // need to initFlagsAndSecrets here and pass along.
     cloudFactory = CloudFactoryFactory.getCloudFactory(PortabilityFlags.cloud());
-    serviceProviderRegistry = new ServiceProviderRegistry(cloudFactory);
+    serviceProviderRegistry = new ServiceProviderRegistry(
+        cloudFactory, PortabilityFlags.supportedServiceProviders());
     jobDao = new JobDao(cloudFactory.getPersistentKeyValueStore());
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
     // TODO: Wire up the correct Crypter.
