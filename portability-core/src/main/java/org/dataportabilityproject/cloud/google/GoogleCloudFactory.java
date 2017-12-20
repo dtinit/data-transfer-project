@@ -110,7 +110,7 @@ public final class GoogleCloudFactory implements CloudFactory {
         String cause = String.format("You are attempting to obtain credentials from somewhere "
             + "other than Kubernetes secrets in prod. You may have accidentally copied creds into"
             + "your image, which we provide as a local debugging mechanism only. See GCP build "
-            + "script (config/gcp/build_and_deploy.sh) for more info. Creds location was: %s",
+            + "script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds location was: %s",
             credsLocation);
         throw new CredentialsException(cause);
       }

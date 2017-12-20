@@ -24,9 +24,9 @@ ORGANIZATION_ID: ${ORGANIZATION_ID}
 BILLING_ACCOUNT_ID: ${BILLING_ACCOUNT_ID}
   ID of GCP billing account
 OWNERS: ${OWNERS}
-  Project owners.
-  Should be a comma separated list e.g. 'user:foo@foo.com,group:bar-group@baz.com'
+  Project owners (comma separated list e.g. \"user:foo@foo.com\",\"group:bar-group@baz.com\")
 "
+
 if [[ -z ${BASE_PROJECT_ID} || \
       -z ${ORGANIZATION_ID} || \
       -z ${BILLING_ACCOUNT_ID} || \
@@ -80,7 +80,7 @@ fi
 # wget https://dl.eff.org/certbot-auto
 # chmod a+x certbot-auto
 # ./certbot-auto certonly --agree-tos --renew-by-default --manual --preferred-challenges=dns \
-# -d gardenswithoutwalls-qa.net,www.gardenswithoutwalls-qa.net
+# -d your-domain-name.net,www.your-domain-name.net
 # Enter the text records and wait 1-2 minutes and confirm
 # It should save cert as follows:
 # Your certificate and chain have been saved at:
@@ -164,7 +164,6 @@ gcloud services --project ${PROJECT_ID} enable datastore.googleapis.com
 # Needed for encrypting app secrets
 gcloud services --project ${PROJECT_ID} enable cloudkms.googleapis.com
 
-
 print_step "Installing SSL certificate"
 gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
     --certificate ${CRT_FILE_PATH} --private-key ${KEY_FILE_PATH}
@@ -200,14 +199,12 @@ gcloud container clusters create portability-api-cluster --zone ${ZONE} \
 --num-nodes=${INSTANCE_GROUP_SIZE} --image-type=COS \
 --cluster-ipv4-cidr=10.4.0.0/14
 
+print_step "Setting kubectl context for ${PROJECT_ID}"
+gcloud container clusters get-credentials portability-api-cluster --zone ${ZONE}
+
 KUBECTL_CONTEXT=$(kubectl config current-context)
 print_step
-read -p "Confirm we are using the correct Kubernetes context for ${PROJECT_ID}. It should have been
-set by the 'gcloud container clusters create' step above. Please double check it. If this is not
-correct, or you are modifying an existing project, you must get credentials for the cluster from
-gcloud. Run: $gcloud container clusters get-credentials ${PROJECT_ID}
-
-Current context is:
+read -p "Confirm we are using the correct Kubernetes context for ${PROJECT_ID}. Current context is:
 ${KUBECTL_CONTEXT}.
 Continue (y/N)? " response
 response=${response,,} # to lower
@@ -373,7 +370,9 @@ Next steps, not done by this script, are:
 3. Select a region for DataStore at https://console.cloud.google.com/datastore/setup
 4. Encrypt and upload app secrets (encrypt_and_upload_app_secrets.sh)
 5. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
-6. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh
-   (This depends on secrets from step 4 and index.html generated in step 5)
-7. (Optional) Enable IAP to whitelist only select users to view the app
+6. Upload the latest docker image to the GKE cluster with build_and_upload_docker_image.sh
+   (This depends on secrets from step 4 and index.html generated in step 5).
+7. Deploy the image you just loaded in Kubernetes Engine -> Workloads -> portability-api -> Actions
+   -> Rolling Update
+8. (Optional) Enable IAP to whitelist only select users to view the app
 "
