@@ -370,7 +370,7 @@ Next steps, not done by this script, are:
 1. Set the health check on the instance group. This can't be scripted yet!
    See note in this script. :(
 2. Point the domain to the external IP ${EXTERNAL_IP_ADDRESS}
-3. Select a region for DataStore at https://pantheon.corp.google.com/datastore/setup
+3. Select a region for DataStore at https://console.cloud.google.com/datastore/setup
 4. Encrypt and upload app secrets (encrypt_and_upload_app_secrets.sh)
 5. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
 6. Deploy the latest docker image to the GKE cluster with build_and_deploy.sh
