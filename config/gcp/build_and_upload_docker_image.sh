@@ -52,7 +52,7 @@ read -p "
 You should build a new jar if there are java or index.html changes. Build jar? (Y/n): " response
 
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  ./config/gcp/build_jar.sh $BINARY $ENV
+  ./bin/build_and_run_jar.sh $BINARY $ENV
 fi
 
 # Grab env and cloud flags from settings/common.yaml

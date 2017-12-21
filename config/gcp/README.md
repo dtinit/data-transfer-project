@@ -5,12 +5,6 @@ We run Kubernetes on Google Cloud Platform using GKE. This is scripted
 at setup_gke_environment.sh. Our Kubernetes objects are stored in the
 'k8s' directory. We use Docker as our Kubernetes container format.
 
-## Environment-specific settings
-Environment-specific settings (values for PortabilityFlags) are stored
-per environment in the environments/ directory. There is a subdirectory
-for each environment: local/, qa/, test/, and prod/. Each environment
-subdirectory contains a settings.yaml for PortabilityFlags values.
-
 ## Project-specific settings
 Project-specific settings, such as billing account, and project owners,
 should be configured in a hidden file init_project_vars.sh which is
@@ -31,6 +25,8 @@ We also provide functionality for local instances to point to a test GCP
 project by specifying cloud=GOOGLE. The project this points to, as well
 as credentials to access it, are configured in build_and_upload_docker_image.sh.
 
+For more information on running locally see Documentation/Developer.md
+
 ## Static content
 We store static content in a GCS bucket that integrates with GCP's
 CDN. We generate the content via build_and_deploy_static_content.sh,
@@ -41,10 +37,8 @@ time a bundle changes. index.html itself is served from our backend.
 This ensures that our app always fetches the newest static content.
 
 ## Docker
-We use the build_and_deploy_api.sh script to build our Docker images.
+We use the build_and_upload_docker_image.sh script to build our Docker images.
 Given an environment name, the script copies the appropriate
-resources (index.html and secrets.csv) and compiles a new jar.
-It then generates a Dockerfile which passes settings from the
-appropriate settings.yaml as flags to our jar via ENTRYPOINT in our
-Dockerfile. The script can also optionally build a new Docker image and
-upload it to GKE.
+resources (index.html and settings yaml) and compiles a new jar.
+It then generates a Dockerfile which sets our jar as the ENTRYPOINT. The script
+can also optionally build a new Docker image and upload it to GKE.

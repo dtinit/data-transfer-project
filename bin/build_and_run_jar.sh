@@ -4,7 +4,7 @@
 #
 # Usage: ./config/gcp/build_jar.sh <binary> <env>
 # - binary is required and specifies which server to build.
-#     This should be one of: api, worker
+#     This should be one of: api, worker, core
 #     ex: api will build the portability-api binary
 # - env is the environment you would like to build in. This should correspond to an environment dir
 #     in config/environments. Settings for this environment are copied into the binary.
@@ -50,7 +50,8 @@ if [[ ! -e "${SETTINGS_DEST_PATH}common.yaml" ]]; then
   echo "Problem copying settings/common.yaml. Aborting."
   exit 1
 fi
-if [[ $BINARY == "web" || $BINARY == "api" ]]; then
+
+if [[ $BINARY == "api" ]]; then
   echo -e "Copying api.yaml from $SETTINGS_SRC_PATH to $SETTINGS_DEST_PATH"
   cp "${SETTINGS_SRC_PATH}api.yaml" "${SETTINGS_DEST_PATH}api.yaml"
   if [[ ! -e "${SETTINGS_DEST_PATH}api.yaml" ]]; then
