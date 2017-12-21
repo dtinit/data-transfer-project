@@ -29,7 +29,7 @@ controlled with the cloud=LOCAL flag.
 
 We also provide functionality for local instances to point to a test GCP
 project by specifying cloud=GOOGLE. The project this points to, as well
-as credentials to access it, are configured in build_and_deploy.sh.
+as credentials to access it, are configured in build_and_upload_docker_image.sh.
 
 ## Static content
 We store static content in a GCS bucket that integrates with GCP's

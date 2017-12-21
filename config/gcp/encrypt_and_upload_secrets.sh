@@ -69,16 +69,16 @@ ENCRYPTED_SECRETS_DIR="../environments/$ENV/app_data/encrypted_secrets/"
 if [[ ! -e $ENCRYPTED_SECRETS_DIR ]]; then
   echo -e "Directory $ENCRYPTED_SECRETS_DIR does not already exist... creating it"
   mkdir $ENCRYPTED_SECRETS_DIR
+  echo -e "Encrypting secrets..."
+  encrypt_secret "FLICKR"
+  encrypt_secret "GOOGLE"
+  encrypt_secret "INSTAGRAM"
+  encrypt_secret "MICROSOFT"
+  encrypt_secret "RTM"
+  encrypt_secret "SHUTTERSTOCK"
+  encrypt_secret "SMUGMUG"
 fi
 
-echo -e "Encrypting secrets..."
-encrypt_secret "FLICKR"
-encrypt_secret "GOOGLE"
-encrypt_secret "INSTAGRAM"
-encrypt_secret "MICROSOFT"
-encrypt_secret "RTM"
-encrypt_secret "SHUTTERSTOCK"
-encrypt_secret "SMUGMUG"
 
 # TODO enforce one app key & secret per provider (e.g. FLICKR) in GCS to make less error prone.
 # Note: gsutil cp doesn't let you specify a project, so hope that it uses the default in gcloud
