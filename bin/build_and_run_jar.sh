@@ -2,7 +2,7 @@
 
 # Interactive script to build a new jar.
 #
-# Usage: ./config/gcp/build_jar.sh <binary>
+# Usage: ./config/gcp/build_jar.sh <binary> <env>
 # - binary is required and specifies which server to build.
 #     This should be one of: api, worker
 #     ex: api will build the portability-api binary
@@ -120,7 +120,7 @@ mvn package -pl $SRC_DIR
 
 read -p "Would you like to run the app jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  COMMAND="java -jar $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar"
+  COMMAND="java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar"
   echo -e "running $COMMAND"
   $COMMAND
 fi
