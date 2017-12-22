@@ -9,10 +9,10 @@
 # - env is the environment you would like to build in. This should correspond to an environment dir
 #     in config/environments. Settings for this environment are copied into the binary.
 #
-# Must be run from the root source directory googleplex-portability/
+# Must be run from the root source directory data-portability/
 
-if [[ $(pwd) != */googleplex-portability ]]; then
-  echo "Please run out of /googleplex-portability directory. Aborting."
+if [[ $(pwd) != */data-portability ]]; then
+  echo "Please run out of /data-portability directory. Aborting."
   exit 1
 fi
 
