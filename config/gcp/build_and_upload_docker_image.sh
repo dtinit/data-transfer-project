@@ -12,14 +12,14 @@
 #     in config/environments. Settings for this environment are copied into the binary.
 # - project-suffix is required except for env=local
 #
-# Must be run from the root source directory googleplex-portability/
+# Must be run from the root source directory data-portability/
 #
 # ex: build_and_upload_docker_image.sh api qa qa2
 # Will package and deploy portability-api using config/environments/qa/settings.yaml and
 # project BASE_PROJECT_ID-qa2
 
-if [[ $(pwd) != */googleplex-portability ]]; then
-  echo "Please run out of /googleplex-portability directory. Aborting."
+if [[ $(pwd) != */data-portability ]]; then
+  echo "Please run out of /data-portability directory. Aborting."
   exit 1
 fi
 

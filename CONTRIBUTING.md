@@ -19,7 +19,7 @@ again.
 
 All submissions, including submissions by project members, require review. We
 use Gerrit pull requests for this purpose. Consult
-[Portability Project website](https://portability.googlesource.com/googleplex-portability/) for more
+[Portability Project website](https://portability.googlesource.com/data-portability/) for more
 information on using pull requests.
 
 ## This is not an official Google product

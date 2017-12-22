@@ -45,7 +45,7 @@ fi
 if [[ -e "static/" ]]; then
   rm -rf static/
 fi
-print_and_exec "cd googleplex-portability/client/"
+print_and_exec "cd data-portability/client/"
 print_and_exec "ng build --prod --env=${ENV}"
 print_and_exec "cd ../../resources/"
 # Reorganize everything in a top level static/ directory. This is a hack to keep static assets
@@ -60,7 +60,7 @@ echo -e "\nMaking folder public"
 print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
 print_and_exec "cd static/"
 print_and_exec "pwd"
-print_and_exec "cp ../googleplex-portability/config/environments/$ENV/index.html index.html"
+print_and_exec "cp ../data-portability/config/environments/$ENV/index.html index.html"
 echo -e "\nUpdating index.html to reflect new bundle versions...\n"
 echo -e "index.html before\n"
 cat index.html
@@ -77,4 +77,4 @@ sed -i "s|vendor.*.bundle.js|$vendor_new|g" "index.html"
 sed -i "s|polyfills.*.bundle.js|$polyfills_new|g" "index.html"
 echo -e "index.html after\n"
 cat index.html
-print_and_exec "mv index.html ../googleplex-portability/config/environments/$ENV/index.html"
+print_and_exec "mv index.html ../data-portability/config/environments/$ENV/index.html"
