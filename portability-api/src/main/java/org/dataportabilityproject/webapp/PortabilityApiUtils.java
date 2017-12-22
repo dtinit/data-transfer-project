@@ -40,6 +40,8 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.LogUtils;
+import org.simpleframework.http.Cookie;
+import org.simpleframework.http.parse.CookieParser;
 
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers
@@ -90,10 +92,12 @@ public class PortabilityApiUtils {
 
     for (String cookieStr : cookies) {
       LogUtils.log("Cookie string: %s", cookieStr);
-      for (HttpCookie httpCookie : HttpCookie.parse(cookieStr)) {
-        cookieMap.put(httpCookie.getName(), httpCookie);
+      CookieParser parser = new CookieParser(cookieStr);
+      for (Cookie c : parser) {
+        HttpCookie httpCookie = new HttpCookie(c.getName(), c.getValue());
         LogUtils
             .log("parsed cookie, name: %s, value: %s", httpCookie.getName(), httpCookie.getValue());
+        cookieMap.put(httpCookie.getName(), httpCookie);
       }
     }
 

@@ -33,6 +33,28 @@
       <version>4.5.2</version>
     </dependency>
 
+    <!-- For Cookie parsing library -->
+    <!-- https://mvnrepository.com/artifact/org.simpleframework/simple -->
+    <dependency>
+      <groupId>org.simpleframework</groupId>
+      <artifactId>simple</artifactId>
+      <version>4.1.2</version>
+    </dependency>
+
+
+    <!-- For testing -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>0.30</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
