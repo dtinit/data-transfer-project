@@ -8,7 +8,7 @@ See [Data Portability Project Overview](Documentation/Overview.md)
 
 ## More info
 
-* Master source code repo: https://portability.googlesource.com/portability
+* [Repository master branch](https://portability.googlesource.com/data-portability/+/master)
 * [Developer documentation](Documentation/Developer.md)
 * [Contributing](CONTRIBUTING.md)
 * [Code of Conduct](CODE_OF_CONDUCT.md)
