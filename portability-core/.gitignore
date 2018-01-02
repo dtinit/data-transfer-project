@@ -11,4 +11,4 @@ tasks.xml
 lib/
 target/
 .idea/
-
+dependency-reduced-pom.xml

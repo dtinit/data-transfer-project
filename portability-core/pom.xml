@@ -105,14 +105,14 @@
             <version>0.30</version>
             <scope>test</scope>
         </dependency>
-        <!-- Spring requires guava v18+ for
-        com.google.common.util.concurrent.MoreExecutors.directExecutor()
-         TODO: Revisit this when we remove Spring. Can clean up some guava exclusions. -->
+
+        <!-- Force updated httpclient library instead of older one that is used in google http-client -->
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>20.0</version>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.2</version>
         </dependency>
+
         <dependency>
             <groupId>com.flickr4java</groupId>
             <artifactId>flickr4java</artifactId>
@@ -121,22 +121,22 @@
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-calendar</artifactId>
-            <version>v3-rev236-1.22.0</version>
+            <version>v3-rev276-1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-gmail</artifactId>
-            <version>v1-rev62-1.22.0</version>
+            <version>v1-rev76-1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-tasks</artifactId>
-            <version>v1-rev46-1.22.0</version>
+            <version>v1-rev48-1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-people</artifactId>
-            <version>v1-rev162-1.23.0</version>
+            <version>v1-rev194-1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.value</groupId>
@@ -162,22 +162,22 @@
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
-            <version>1.22.0</version>
+            <version>1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-jetty</artifactId>
-            <version>1.22.0</version>
+            <version>1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
-            <version>1.22.0</version>
+            <version>1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client-xml</artifactId>
-            <version>1.22.0</version>
+            <version>1.23.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
