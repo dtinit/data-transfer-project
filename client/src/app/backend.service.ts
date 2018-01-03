@@ -36,7 +36,6 @@ export class BackendService {
   }
 
   listServices(dataType: string) {
-    console.log('listServices, dataType: '  + dataType);
     let myParams = new URLSearchParams();
     myParams.append('dataType', dataType);
     let options = new RequestOptions({ params: myParams});
@@ -62,47 +61,41 @@ export class BackendService {
 
   startCopy() {
     let url = `${this.baseEndpoint}startCopy`;
-    return this.http.get(url)
+    let headers = new Headers({}); // request is empty as it relies on data in cookies.
+    let options = new RequestOptions({ headers : headers });
+    return this.http.post(url, '', options)
       .map(res => this.startCopySuccess(res))
       .catch(err => this.handleError(err));
   }
 
   private listDataTypesSuccess(res: Response) {
-    console.log('listDataTypesSuccess, res: ' + JSON.stringify(res));
     let body = res.json();
-    console.log('listDataTypesSuccess, body: ' + JSON.stringify(body));
     let dataTypes: PortableDataType[] = [];
     for (var prop in body) {
       dataTypes.push(new PortableDataType(body[prop], body[prop]));
     }
-    console.log('listDataTypesSuccess, dataTypes: ' + JSON.stringify(dataTypes));
     return dataTypes;
   }
 
   private listServicesSuccess(res: Response) {
-    console.log('listServicesSuccess, res: ' +  JSON.stringify(res));
     let body = res.json();
-    console.log('listServicesSuccess, json from backend:' + JSON.stringify(body));
 
     let exportServices: ServiceDescription[] = [];
     let exportData = body['export'];
     for (var name in exportData) {
       exportServices.push(new ServiceDescription(exportData[name], exportData[name]));
     }
-    console.log('listServicesSuccess, exportServices: ' + JSON.stringify(exportServices));
 
     let importServices: ServiceDescription[] = [];
     let importData = body['import'];
     for (var name in importData) {
       importServices.push(new ServiceDescription(importData[name], importData[name]));
     }
-    console.log('listServicesSuccess, importServices: ' + JSON.stringify(importServices));
 
     return new ServiceDescriptions(importServices, exportServices);
   }
 
   private importSetupSuccess(res: Response) {
-    console.log('importSetupSuccess, res: ' + JSON.stringify(res));
     let data = res.json();
     let config = new CopyConfiguration(
       data.dataType,
@@ -111,28 +104,22 @@ export class BackendService {
       data.importService,
       data.importAuthUrl);
 
-    console.log('importSetupSuccess, body: ' + JSON.stringify(config));
     return config;
   }
 
   private copySetupSuccess(res: Response) {
-    console.log('copySetupSuccess, res: ' + JSON.stringify(res));
     let data = res.json();
     let config = new CopyConfiguration(
       data.dataType,
       data.exportService,
       "", // export auth url is not required at this step
       data.importService,
-      ""); // import auth url is not required at this step);
-
-    console.log('copySetupSuccess, body: ' + JSON.stringify(config));
+      ""); // import auth url is not required at this step
     return config;
   }
 
   private startCopySuccess(res: Response) {
-    console.log('startCopySuccess, res: ' + JSON.stringify(res));
     let body = res.json();
-    console.log('startCopySuccess, body: ' + JSON.stringify(body));
     return body;
   }
 

@@ -58,7 +58,7 @@ public class StartCopyHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/startCopy"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
 
     String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
