@@ -20,7 +20,7 @@ IN PRODUCTION**, it has not had adequate security, privacy or
 productionisation testing or reviews done on it yet.
 
 ## Contact Info
-Please contact [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
+Please contact [portability-discuss@googlegroups.com](mailto:portability-discuss@googlegroups.com)
 with any questions or comments.
 
 
