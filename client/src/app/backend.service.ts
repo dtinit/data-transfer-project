@@ -15,7 +15,7 @@
  */
 import { environment } from '../environments/environment';
 import { Injectable } from '@angular/core';
-import { Http, Headers, Response, RequestOptions, URLSearchParams } from '@angular/http';
+import { HttpClient, HttpResponse, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable } from 'rxjs/Observable';
 import { CopyConfiguration } from './copy-configuration';
 import { PortableDataType } from './portable-data-type';
@@ -26,7 +26,7 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class BackendService {
   private baseEndpoint = environment.apiUrl;
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
   listDataTypes() {
     let url = `${this.baseEndpoint}listDataTypes`;
@@ -36,11 +36,9 @@ export class BackendService {
   }
 
   listServices(dataType: string) {
-    let myParams = new URLSearchParams();
-    myParams.append('dataType', dataType);
-    let options = new RequestOptions({ params: myParams});
+    let myParams = new HttpParams().set('dataType', dataType);
     let url = `${this.baseEndpoint}listServices`;
-    return this.http.get(url, options)
+    return this.http.get(url, {params : myParams})
       .map(res => this.listServicesSuccess(res))
       .catch(err => this.handleError(err));
   }
@@ -60,55 +58,48 @@ export class BackendService {
   }
 
   startCopy() {
-    let url = `${this.baseEndpoint}startCopy`;
-    let headers = new Headers({}); // request is empty as it relies on data in cookies.
-    let options = new RequestOptions({ headers : headers });
-    return this.http.post(url, '', options)
+    // startCopy needs to be a relative post call for the XSRF token to be included in the header.
+    let url = '/_/startCopy';
+    return this.http.post(url, '')
       .map(res => this.startCopySuccess(res))
       .catch(err => this.handleError(err));
   }
 
-  private listDataTypesSuccess(res: Response) {
-    let body = res.json();
+  private listDataTypesSuccess(res: any) {
     let dataTypes: PortableDataType[] = [];
-    for (var prop in body) {
-      dataTypes.push(new PortableDataType(body[prop], body[prop]));
+    for (var prop in res) {
+      dataTypes.push(new PortableDataType(res[prop], res[prop]));
     }
     return dataTypes;
   }
 
-  private listServicesSuccess(res: Response) {
-    let body = res.json();
-
+  private listServicesSuccess(res: any) {
     let exportServices: ServiceDescription[] = [];
-    let exportData = body['export'];
+    let exportData = res['export'];
     for (var name in exportData) {
       exportServices.push(new ServiceDescription(exportData[name], exportData[name]));
     }
-
     let importServices: ServiceDescription[] = [];
-    let importData = body['import'];
+    let importData = res['import'];
     for (var name in importData) {
       importServices.push(new ServiceDescription(importData[name], importData[name]));
     }
-
     return new ServiceDescriptions(importServices, exportServices);
   }
 
-  private importSetupSuccess(res: Response) {
-    let data = res.json();
+  private importSetupSuccess(res: any) {
+    let data = res;
     let config = new CopyConfiguration(
       data.dataType,
       data.exportService,
       "", // export auth url is not required at this step
       data.importService,
       data.importAuthUrl);
-
     return config;
   }
 
-  private copySetupSuccess(res: Response) {
-    let data = res.json();
+  private copySetupSuccess(res: any) {
+    let data = res;
     let config = new CopyConfiguration(
       data.dataType,
       data.exportService,
@@ -118,17 +109,16 @@ export class BackendService {
     return config;
   }
 
-  private startCopySuccess(res: Response) {
-    let body = res.json();
+  private startCopySuccess(res: any) {
+    let body = res;
     return body;
   }
 
-  private handleError(error: Response | any) {
+  private handleError(error: HttpErrorResponse | any) {
     // In a real world app, you might use a remote logging infrastructure
     let errorMessage: string;
-    if (error instanceof Response) {
-      const body = error.json() || '';
-      const err = body.error || JSON.stringify(body);
+    if (error.error instanceof Error) {
+      const err = error.error.message || JSON.stringify(error);
       errorMessage = `${error.status} - ${error.statusText || ''} ${err}`;
     } else {
       errorMessage = error.message ? error.message : error.toString();
