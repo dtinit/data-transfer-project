@@ -41,15 +41,6 @@ public class JobUtils {
   }
 
   /* Returns the initial auth data for export or import determined by the {@code isExport} param. */
-  public static String getService(PortabilityJob job, boolean isExport) {
-    String service = isExport ? job.exportService() : job.importService();
-    Preconditions
-        .checkState(!Strings.isNullOrEmpty(service), "service not found, service: %s isExport: %b",
-            service, isExport);
-    return service;
-  }
-
-  /* Returns the initial auth data for export or import determined by the {@code isExport} param. */
   public static AuthData getInitialAuthData(PortabilityJob job, boolean isExport) {
     return isExport ? job.exportInitialAuthData() : job.importInitialAuthData();
   }
@@ -67,19 +58,6 @@ public class JobUtils {
   }
 
   /* Sets the service in the correct field of the PortabilityJob */
-  public static PortabilityJob setService(PortabilityJob job, String serviceName,
-      boolean isExport) {
-    LogUtils.log("Setting service: %s, isExport:  %s", serviceName, isExport);
-    PortabilityJob.Builder updatedJob = job.toBuilder();
-    if (isExport) {
-      updatedJob.setExportService(serviceName);
-    } else {
-      updatedJob.setImportService(serviceName);
-    }
-    return updatedJob.build();
-  }
-
-  /* Sets the service in the correct field of the PortabilityJob */
   public static PortabilityJob setInitialAuthData(PortabilityJob job, AuthData initialAuthData,
       boolean isExport) {
     LogUtils.log("Setting initialAuthData: %s, isExport:  %s", initialAuthData, isExport);
@@ -90,13 +68,6 @@ public class JobUtils {
       updatedJob.setImportInitialAuthData(initialAuthData);
     }
     return updatedJob.build();
-  }
-
-
-  /* Gets the export or import service name, depending on the given {@code isExport} param. */
-  public static String getServiceName(PortabilityJob job, boolean isExport) {
-    // Data type not provided in param, attempt to lookup the data type from storage
-    return isExport ? job.exportService() : job.importService();
   }
 
   /**
