@@ -5,12 +5,12 @@
 
 Users should be able to easily transfer their data directly between online service providers.
 
-The project aims to do this by providing a common framework and ecosystem to allow service provides to contribute to to allow seamless transfer of data into and out of their service.
+The project aims to achieve this by providing a common framework and ecosystem to allow service provides to contribute and allow seamless transfer of data into and out of their service.
 
 ## Guiding Principles
 
 ### User Driven  
-Data portability tools should be easy to find, intuitive, and readily available to consumers.
+Data portability tools should be easy to find, intuitive to use, and readily available to consumers.
 
 ### Privacy and Security  
 Providers on each side of the portability transaction should have strong privacy and security measures---such as encryption in transit---to guard against unauthorized access, diversion of data, or other types of fraud.
@@ -27,21 +27,21 @@ Data portability is not, and should not be, without reasonable limits. Portabili
 Users should be able to choose the service that best meets their needs, not be stuck with the first service they used just because it holds all their data and they are afraid of losing it.
 
 ### Foster Innovation  
-If new products can  easily have access to existing user data it should lower the bar for entry into a market.
+If new products can easily have access to existing user data, it should lower the bar for entry into a market.
 
 ### Promote competition  
-Services won't be able to rest on pass successes if users can easily transfer data to new services, this should hopefully increase competition in the marketplace, both from existing services and from new services.
+Services won't be able to rest on past successes if users can easily transfer data to new services. This should hopefully increase competition in the marketplace, both from existing services and from new services.
 
 ## Example/Targeted Use Cases
 
 ### Switching to a new service  
-Users should be able to move completely from one service to another.  For example if Alice wants to move from Google Drive to Office 365 she should be able to easily move all of her documents over. And then delete all of her old data in Google Drive.
+Users should be able to move completely from one service to another.  For example, if Alice wants to move from Google Drive to Office 365 she should be able to easily move all of her documents over and then delete all of her old data in Google Drive.
 
 ### Trying out a new service  
-Users should be able to try out new services.  For example Bob hears about a new email service with an amazing new UI, but it's hard to try it out without significant amounts of real data in it.  Bob should be able to easily make a copy of all his old email in the new service and try it out.  They he can decide to delete the data in either of providers or keep using them both.
+Users should be able to try out new services.  For example, Bob hears about a new email service with an amazing new UI, but it's hard to try it out without significant amounts of real data in it.  Bob should be able to easily make a copy of all his old email in the new service and try it out.  Then he can decide to delete the data in either of providers or keep using them both.
 
 ### Moving selected data  
-Users should be able to move selected parts of their data to new companies.  For example Charlie keeps all of her Photos in Google Photos, but really wants to make a photobook service to print a photo book.  She should be able to move just the pictures from the last year over to the photobook service to create the photo book without affecting her google Drive usage at all.
+Users should be able to move selected parts of their data to new companies.  For example, Charlie keeps all of her Photos in Google Photos, but really wants to make a photobook service to print a photo book.  She should be able to move just the pictures from the last year over to the photobook service to create the photo book without affecting her Google Drive usage at all.
 
 ## Top Level Components
 
@@ -72,11 +72,11 @@ The UI layer that talks to the task management layer to manage migration jobs.
 
 ## Deployment & Use
 
-All the code for the project lives in a centralized open source repository.  Ideally the common code meets most use cases.  However other entities are free to fork and extend the project to meet their specific needs.
+All the code for the project lives in a centralized open source repository.  Ideally the common code meets most use cases.  However, other entities are free to fork and extend the project to meet their specific needs.
 
 Each organization interested in porting data runs an instance of the service (optionally with custom UI, Cloud Interface, and Task Management components).
 
-From a cost and security standpoint the ideal scenario is that the system works as a pull model: if a user is trying to move their data from service A to service B, they would initiate the transfer via service B. However it seems likely that in the case where a user wants to move from LargeCorp to TinyStartup, TinyStartup might not have yet set up a full instance to power the move, and in that case we would suggest that LargeCorp allow the transfer to be started from their service.
+From a cost and security standpoint, the ideal scenario is that the system works as a pull model: if a user is trying to move their data from service A to service B, they would initiate the transfer via service B. However it seems likely that in the case where a user wants to move from LargeCorp to TinyStartup, TinyStartup might not have yet set up a full instance to power the move, and in that case we would suggest that LargeCorp allow the transfer to be started from their service.
 
 ### Possible Alternative  
 A (not mutually exclusive) option is to have a centralized common instance/UI running that allows transfers between any two vendors in the system.  Pros: easy to brand/market with a central solution, good user experience, easy to enforce reciprocity (see below), easier to manage API keys.  Cons: requires lots of coordination, cost sharing is hard, is a security concern.
@@ -193,7 +193,7 @@ This can be accomplished in a number of ways, and there are subtle pros and cons
 -  No import-only integrations will be allowed.  For any data specification you want to import data from you must also include export functionality.
 -  Error metric-based reporting.  Each instance should publish (method TBD) error rates for import and export success ratios per service.  This allows for transparency of companies practices.
 -  Error metric-based enforcement.  Same as above, but instead of just shaming companies a blacklist is published and automatically disabled import into services with broken exports.
--  Round trip based tests to ensure comparable fidelity of import/export with known test accounts
+-  Round trip based tests to ensure comparable fidelity of import/export with known test accounts.
 
 ## V2 Features
 
