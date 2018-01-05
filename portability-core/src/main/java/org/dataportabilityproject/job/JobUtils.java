@@ -21,14 +21,16 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for handling data in the related to jobss.
  */
-public class JobUtils {
+public final class JobUtils {
+  private static final Logger logger = LoggerFactory.getLogger(JobUtils.class);
 
   public static String decodeId(String encoded) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
@@ -60,7 +62,7 @@ public class JobUtils {
   /* Sets the service in the correct field of the PortabilityJob */
   public static PortabilityJob setInitialAuthData(PortabilityJob job, AuthData initialAuthData,
       boolean isExport) {
-    LogUtils.log("Setting initialAuthData: %s, isExport:  %s", initialAuthData, isExport);
+    logger.debug("Setting initialAuthData: {}, isExport:  {}", initialAuthData, isExport);
     PortabilityJob.Builder updatedJob = job.toBuilder();
     if (isExport) {
       updatedJob.setExportInitialAuthData(initialAuthData);

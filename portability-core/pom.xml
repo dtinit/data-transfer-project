@@ -278,6 +278,19 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!--Provides compile time bindings for slf4j -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.14</version>
+        </dependency>
+        <!--Provides runtime time bindings for slf4j to use log4j-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.14</version>
+            <scope>runtime</scope>
+        </dependency>
 
     </dependencies>
 

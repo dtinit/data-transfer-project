@@ -32,15 +32,17 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for callbacks from Oauth2 authorization flow.
  */
 public class Oauth2CallbackHandler implements HttpHandler {
+  private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -57,11 +59,10 @@ public class Oauth2CallbackHandler implements HttpHandler {
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/callback/.*"));
-    LogUtils
-        .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
+    logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
-    LogUtils.log("%s, redirecting to %s", this.getClass().getSimpleName(), redirect);
+    logger.debug("redirecting to {}", redirect);
     exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
   }
@@ -79,8 +80,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
 
       // check for user-denied error
       if (authResponse.getError() != null) {
-        LogUtils.log("%s, Authorization DENIED: %s Redirecting to /error",
-            this.getClass().getSimpleName(), authResponse.getError());
+        logger.warn("Authorization DENIED: {} Redirecting to /error", authResponse.getError());
         return redirect;
       }
 
@@ -143,7 +143,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
 
       redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
-      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      logger.error("Error handling request: {}", e);
       throw e;
     }
 
