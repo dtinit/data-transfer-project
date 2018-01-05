@@ -19,30 +19,25 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.serviceProviders.flickr.FlickrServiceProvider;
-import org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider;
-import org.dataportabilityproject.serviceProviders.instagram.InstagramServiceProvider;
-import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider;
-import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkServiceProvider;
-import org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A registry of all the supported {@link org.dataportabilityproject.shared.ServiceProvider}
  */
 public class ServiceProviderRegistry {
+    private final Logger logger = LoggerFactory.getLogger(ServiceProviderRegistry.class);
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
     private final CloudFactory cloudFactory;
     private final ImmutableSet<PortableDataType> supportedTypes;
@@ -133,13 +128,13 @@ public class ServiceProviderRegistry {
                 portableDataTypesBuilder.addAll(serviceProvider.getExportTypes());
                 portableDataTypesBuilder.addAll(serviceProvider.getImportTypes());
             } catch (ClassNotFoundException e) {
-                LogUtils.log("Couldn't load class %s: %s", className, e);
+                logger.error("Couldn't load class {}", className, e);
             } catch (InstantiationException e) {
-                LogUtils.log("Couldn't initialize class %s: %s", className, e);
+                logger.error("Couldn't initialize class {}", className, e);
             } catch (SecurityException | IllegalAccessException e) {
-                LogUtils.log("Security exception loading class %s: %s", className, e);
+                logger.error("Security exception loading class {}", className, e);
             } catch (ClassCastException e) {
-                LogUtils.log("Type %s is not of type ServiceProvider: %s", className, e);
+                logger.error("Type {} is not of type ServiceProvider", className, e);
             }
         }
     }

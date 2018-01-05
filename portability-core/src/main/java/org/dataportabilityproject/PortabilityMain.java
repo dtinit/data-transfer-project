@@ -24,8 +24,11 @@ import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PortabilityMain {
+    private static Logger looger = LoggerFactory.getLogger(PortabilityMain.class);
     private static final IOInterface IO_INTERFACE = new ConsoleIO();
     private static CloudFactory cloudFactory = new LocalCloudFactory();
 
@@ -68,6 +71,7 @@ public class PortabilityMain {
         String jobId = UUID.randomUUID().toString();
 
         try {
+            looger.info("Starting job {}", jobId);
             PortabilityCopier.copyDataType(registry, type, exporterName, exportAuthData,
                 importerName, importAuthData, jobId);
         } finally {

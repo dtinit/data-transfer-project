@@ -27,14 +27,15 @@ import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HTTP Handler for the listDataTypes service
  */
 public class ListDataTypesHandler implements HttpHandler {
-
+  final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   public ListDataTypesHandler(ServiceProviderRegistry serviceProviderRegistry) {
@@ -58,9 +59,7 @@ public class ListDataTypesHandler implements HttpHandler {
           builder.add(data_type.name());
         }
       } catch (Exception e) {
-        LogUtils
-            .log("%s, hasImportAndExport for datatype %s failed", this.getClass().getSimpleName(),
-                data_type.name());
+        logger.error("hasImportAndExport for datatype %s failed", data_type.name(), e);
       }
     }
 

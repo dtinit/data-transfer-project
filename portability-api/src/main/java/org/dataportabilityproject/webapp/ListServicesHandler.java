@@ -34,14 +34,15 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for the ListServices service
  */
 public class ListServicesHandler implements HttpHandler {
-
+  final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   public ListServicesHandler(ServiceProviderRegistry serviceProviderRegistry) {
@@ -81,12 +82,12 @@ public class ListServicesHandler implements HttpHandler {
       exportServices = serviceProviderRegistry.getServiceProvidersThatCanExport(dataType);
       importServices = serviceProviderRegistry.getServiceProvidersThatCanImport(dataType);
     } catch (Exception e) {
-      LogUtils.log("Encountered error with getServiceProviders...() " + e);
+      logger.error("Encountered error with getServiceProviders ", e);
     }
 
     if (exportServices.isEmpty() || importServices.isEmpty()) {
-      LogUtils.log("%s, Empty service list found, export size: %d, import size: %d",
-          this.getClass().getSimpleName(), exportServices.size(), importServices.size());
+      logger.warn("Empty service list found, export size: {}, import size: {}",
+          exportServices.size(), importServices.size());
     }
 
     // Construct Json.

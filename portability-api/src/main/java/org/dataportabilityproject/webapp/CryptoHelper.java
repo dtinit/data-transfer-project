@@ -29,13 +29,16 @@ import org.dataportabilityproject.job.CrypterImpl;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.SessionKeyGenerator;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper methods utlized for encrypting data for the client.
  */
 class CryptoHelper {
+  final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
+
   private static final Gson GSON = new Gson();
   private final JobDao jobDao;
 
@@ -49,7 +52,8 @@ class CryptoHelper {
     String encrypted = encryptAuthData(sessionKey, authData);
     String cookieKey = isExport ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
     Cookie cookie = new Cookie(cookieKey, encrypted);
-    LogUtils.log("Set new cookie with key: %s, length: %s", cookieKey, encrypted.length());
+    logger.debug("Set new cookie with key: {}, length: {} for job: {}",
+        cookieKey, encrypted.length(), jobId);
     headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
   }
 

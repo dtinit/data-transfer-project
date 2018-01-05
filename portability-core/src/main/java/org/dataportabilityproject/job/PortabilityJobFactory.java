@@ -18,13 +18,15 @@ package org.dataportabilityproject.job;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides methods for the creation of new {@link PortabilityJob} objects in correct initial state.
  */
 public class PortabilityJobFactory {
+  private final Logger logger = LoggerFactory.getLogger(PortabilityJobFactory.class);
   // Keys for specific values in data store
   private static final String ID_DATA_KEY = "UUID";
   private static final String TOKEN_DATA_KEY = "TOKEN";
@@ -52,7 +54,7 @@ public class PortabilityJobFactory {
     String newId = idProvider.createId();
     String encodedSessionKey = SessionKeyGenerator.generateKeyAndEncode();
     PortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
-    LogUtils.log("Creating new PortabilityJob, id: %s", newId);
+    logger.info("Creating new PortabilityJob, id: {}", newId);
     return job;
   }
 

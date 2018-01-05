@@ -33,14 +33,16 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for ImportSetup service
  */
 public class SetupHandler implements HttpHandler {
+  private final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
 
   private final JobDao jobDao;
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -57,7 +59,7 @@ public class SetupHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     try {
-      LogUtils.log("Entering setup handler, exchange: %s", exchange);
+      logger.debug("Entering setup handler, exchange: {}", exchange);
       Preconditions.checkArgument(
           PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, handlerUrlPath));
 
@@ -104,7 +106,7 @@ public class SetupHandler implements HttpHandler {
       writer.write(response);
       writer.close();
     } catch (Exception e) {
-      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      logger.error("Error handling request", e);
       throw e;
     }
   }

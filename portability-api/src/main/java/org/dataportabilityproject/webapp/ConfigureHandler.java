@@ -31,16 +31,17 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobFactory;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for the Configure service
  */
 public class ConfigureHandler implements HttpHandler {
-
+  static final Logger logger = LoggerFactory.getLogger(ConfigureHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final PortabilityJobFactory jobFactory;
@@ -64,11 +65,10 @@ public class ConfigureHandler implements HttpHandler {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/configure"),
         "/configure only supports POST.");
-    LogUtils
-        .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
+    logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
-    LogUtils.log("%s, redirecting to: %s", this.getClass().getSimpleName(), redirect);
+    logger.debug("redirecting to: {}", redirect);
     exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
   }
@@ -136,7 +136,7 @@ public class ConfigureHandler implements HttpHandler {
       // Send the authUrl for the client to redirect to export service authorization
       redirect = authFlowInitiator.authUrl();
     } catch (Exception e) {
-      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      logger.error("Error handling request", e);
       throw e;
     }
 

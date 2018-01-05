@@ -29,15 +29,17 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for SimpleLoginSubmit Controller.
  */
 public class SimpleLoginSubmitHandler implements HttpHandler {
+  private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -104,7 +106,7 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
     String redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
 
     // Set new cookie and redirect to the next page
-    LogUtils.log("simpleLoginSubmit, redirecting to: %s", redirect);
+    logger.debug("simpleLoginSubmit, redirecting to: {}", redirect);
     Headers responseHeaders = exchange.getResponseHeaders();
 
     if(PortabilityFlags.encryptedFlow()) {
