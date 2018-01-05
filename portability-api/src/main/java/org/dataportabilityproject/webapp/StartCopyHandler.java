@@ -38,10 +38,12 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PublicPrivateKeyUtils;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StartCopyHandler implements HttpHandler {
+  private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -160,7 +162,7 @@ public class StartCopyHandler implements HttpHandler {
           PortabilityCopier.copyDataType(serviceProviderRegistry, type, exportService,
               job.exportAuthData(), importService, job.importAuthData(), job.id());
         } catch (IOException e) {
-          LogUtils.log("%s, copyDataType failed", this.getClass().getSimpleName());
+          logger.error("copyDataType failed", e);
           e.printStackTrace();
         } finally {
           cloudFactory.clearJobData(job.id());

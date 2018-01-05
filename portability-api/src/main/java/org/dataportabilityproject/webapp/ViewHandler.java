@@ -20,30 +20,31 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.dataportabilityproject.shared.LogUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler to redirect all paths to the angular view.
  */
 public class ViewHandler implements HttpHandler {
+  private final Logger logger = LoggerFactory.getLogger(ViewHandler.class);
 
   private final String INDEX = "static/index.html";
 
   public void handle(HttpExchange exchange) throws IOException {
-    LogUtils.log("%s, got request %s", this.getClass().getSimpleName(),
-        exchange.getRequestURI().toString());
+    logger.debug("Got request {}", exchange.getRequestURI().toString());
     InputStream index_stream = getClass().getClassLoader().getResourceAsStream(INDEX);
 
     if (index_stream == null) {
       // Index file doesn't exist: reject with 404 error.
-      LogUtils.log("%s, could not open file: %s", this.getClass().getSimpleName(), INDEX);
+      logger.error("Could not open file: {}", INDEX);
       String response = "404 (Not Found)\n";
       exchange.sendResponseHeaders(404, response.length());
       OutputStream os = exchange.getResponseBody();
       os.write(response.getBytes());
       os.close();
     } else {
-      LogUtils.log("%s, found file: %s", this.getClass().getSimpleName(), INDEX);
+      logger.debug("Found file: {}", INDEX);
       exchange.sendResponseHeaders(200, 0);
       OutputStream os = exchange.getResponseBody();
       final byte[] buffer = new byte[0x10000];

@@ -33,7 +33,8 @@ SRC_DIR="portability-$BINARY"
 mvn=$(which mvn)|| { echo "Maven (mvn) not found. Please install it and try again." >&2; exit 1; }
 
 # Copy settings yaml files from ENV/settings/ into $SRC_DIR/src/main/resources/
-SETTINGS_DEST_PATH="$SRC_DIR/src/main/resources/settings/"
+DEST_RESOURCES_PATH="$SRC_DIR/src/main/resources"
+SETTINGS_DEST_PATH="$DEST_RESOURCES_PATH/settings/"
 if [[ -e ${SETTINGS_DEST_PATH} ]]; then
   echo -e "\nRemoving old settings folder"
   rm -rf ${SETTINGS_DEST_PATH}
@@ -43,12 +44,22 @@ if [[ -e ${SETTINGS_DEST_PATH} ]]; then
   fi
 fi
 mkdir $SETTINGS_DEST_PATH
-SETTINGS_SRC_PATH="config/environments/$ENV/settings/"
+RESOURCES_SRC_PATH="config/environments/$ENV"
+SETTINGS_SRC_PATH="$RESOURCES_SRC_PATH/settings/"
 echo -e "Copying common.yaml from $SETTINGS_SRC_PATH to $SETTINGS_DEST_PATH"
 cp "${SETTINGS_SRC_PATH}common.yaml" "${SETTINGS_DEST_PATH}common.yaml"
 if [[ ! -e "${SETTINGS_DEST_PATH}common.yaml" ]]; then
   echo "Problem copying settings/common.yaml. Aborting."
   exit 1
+fi
+
+if [[ -e "${RESOURCES_SRC_PATH}/log4j.properties" ]]; then
+  echo "copying log4j.properties to ${DEST_RESOURCES_PATH}."
+  cp "${RESOURCES_SRC_PATH}/log4j.properties" "${DEST_RESOURCES_PATH}/log4j.properties"
+  if [[ ! -e "${DEST_RESOURCES_PATH}/log4j.properties" ]]; then
+    echo "Problem copying log4j.properties. Aborting."
+    exit 1
+  fi
 fi
 
 if [[ $BINARY == "api" ]]; then
