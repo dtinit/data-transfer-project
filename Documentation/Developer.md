@@ -2,13 +2,17 @@
 # Development
 
 ## First Run/Setup
- * Install Git: `sudo apt-get install git-all`
- * Install Gerrit commit ID hook: ``curl -Lo `git rev-parse --git-dir`/hooks/commit-msg https://gerrit-review.googlesource.com/tools/hooks/commit-msg ; chmod +x `git rev-parse --git-dir`/hooks/commit-msg``
- * Install Maven: `sudo apt-get install maven`
+
+###  From top level directory
+* Install Git: `sudo apt-get install git-all`
+* Install Maven: `sudo apt-get install maven`
+
+### From /client directory
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
  * Install Node: `nvm install node`
- * Install Angular: `npm install -g angular-cli`
-
+ * Install Angular: `npm install -g @angular/cli`
+ * Install modules: `npm install`
+ * Test `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored
