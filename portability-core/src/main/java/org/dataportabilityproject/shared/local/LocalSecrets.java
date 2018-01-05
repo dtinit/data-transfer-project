@@ -24,7 +24,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.Config.Environment;
-import org.dataportabilityproject.shared.LogUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Looks up app secrets from a local secrets.csv file rather than pulling from the cloud.
@@ -32,6 +33,8 @@ import org.dataportabilityproject.shared.LogUtils;
  * <p>Should only be used for local development.
  */
 public class LocalSecrets {
+  private final Logger logger = LoggerFactory.getLogger(LocalSecrets.class);
+
   private static final LocalSecrets INSTANCE = new LocalSecrets();
   private static final String SECRETS_FILENAME = "secrets.csv";
 
@@ -66,7 +69,7 @@ public class LocalSecrets {
         }
       }
     } catch (IOException e) {
-      LogUtils.log("Fatal: Problem parsing secrets file %s: %s", SECRETS_FILENAME, e);
+      logger.error("Fatal: Problem parsing secrets file {}", SECRETS_FILENAME, e);
       System.exit(1);
     }
     this.secrets = builder.build();

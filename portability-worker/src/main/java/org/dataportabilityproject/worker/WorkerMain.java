@@ -26,8 +26,9 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class to bootstrap a portabilty worker that will operate on a single job whose state
@@ -35,6 +36,7 @@ import org.dataportabilityproject.shared.PortableDataType;
  */
 public class WorkerMain {
   private static CloudFactory cloudFactory = new LocalCloudFactory();
+  private static final Logger logger = LoggerFactory.getLogger(WorkerMain.class);
 
   public static void main(String[] args) throws Exception {
     PortabilityFlags.parse();
@@ -58,7 +60,7 @@ public class WorkerMain {
         cloudFactory, PortabilityFlags.supportedServiceProviders());
 
     processJob(job, registry);
-    LogUtils.log("Successfully processed jobId: %s", WorkerJobMetadata.getInstance().getJobId());
+    logger.info("Successfully processed jobId: {}", WorkerJobMetadata.getInstance().getJobId());
     System.exit(0);
   }
 

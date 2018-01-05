@@ -33,28 +33,39 @@ SRC_DIR="portability-$BINARY"
 mvn=$(which mvn)|| { echo "Maven (mvn) not found. Please install it and try again." >&2; exit 1; }
 
 # Copy settings yaml files from ENV/settings/ into $SRC_DIR/src/main/resources/
-SETTINGS_DEST_PATH="$SRC_DIR/src/main/resources/settings/"
-if [[ -e ${SETTINGS_DEST_PATH} ]]; then
+DEST_RESOURCES_PATH="$SRC_DIR/src/main/resources"
+DEST_SETTINGS_PATH="$DEST_RESOURCES_PATH/settings/"
+if [[ -e ${DEST_SETTINGS_PATH} ]]; then
   echo -e "\nRemoving old settings folder"
-  rm -rf ${SETTINGS_DEST_PATH}
-  if [[ -e ${SETTINGS_DEST_PATH} ]]; then
+  rm -rf ${DEST_SETTINGS_PATH}
+  if [[ -e ${DEST_SETTINGS_PATH} ]]; then
     echo "Problem removing old settings.yaml. Aborting."
     exit 1
   fi
 fi
-mkdir $SETTINGS_DEST_PATH
-SETTINGS_SRC_PATH="config/environments/$ENV/settings/"
-echo -e "Copying common.yaml from $SETTINGS_SRC_PATH to $SETTINGS_DEST_PATH"
-cp "${SETTINGS_SRC_PATH}common.yaml" "${SETTINGS_DEST_PATH}common.yaml"
-if [[ ! -e "${SETTINGS_DEST_PATH}common.yaml" ]]; then
+mkdir $DEST_SETTINGS_PATH
+SRC_RESOURCES_PATH="config/environments/$ENV"
+SRC_SETTINGS_PATH="$SRC_RESOURCES_PATH/settings/"
+echo -e "Copying common.yaml from $SRC_SETTINGS_PATH to $DEST_SETTINGS_PATH"
+cp "${SRC_SETTINGS_PATH}common.yaml" "${DEST_SETTINGS_PATH}common.yaml"
+if [[ ! -e "${DEST_SETTINGS_PATH}common.yaml" ]]; then
   echo "Problem copying settings/common.yaml. Aborting."
   exit 1
 fi
 
+if [[ -e "${SRC_RESOURCES_PATH}/log4j.properties" ]]; then
+  echo "copying log4j.properties to ${DEST_RESOURCES_PATH}."
+  cp "${SRC_RESOURCES_PATH}/log4j.properties" "${DEST_RESOURCES_PATH}/log4j.properties"
+  if [[ ! -e "${DEST_RESOURCES_PATH}/log4j.properties" ]]; then
+    echo "Problem copying log4j.properties. Aborting."
+    exit 1
+  fi
+fi
+
 if [[ $BINARY == "api" ]]; then
-  echo -e "Copying api.yaml from $SETTINGS_SRC_PATH to $SETTINGS_DEST_PATH"
-  cp "${SETTINGS_SRC_PATH}api.yaml" "${SETTINGS_DEST_PATH}api.yaml"
-  if [[ ! -e "${SETTINGS_DEST_PATH}api.yaml" ]]; then
+  echo -e "Copying api.yaml from $SRC_SETTINGS_PATH to $DEST_SETTINGS_PATH"
+  cp "${SRC_SETTINGS_PATH}api.yaml" "${DEST_SETTINGS_PATH}api.yaml"
+  if [[ ! -e "${SRC_SETTINGS_PATH}api.yaml" ]]; then
     echo "Problem copying settings/api.yaml. Aborting."
     exit 1
   fi

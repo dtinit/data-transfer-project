@@ -25,12 +25,16 @@ import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.shared.local.LocalSecrets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Holder for an application key and secret.
  */
 @AutoValue
 public abstract class AppCredentials {
+    static final Logger logger = LoggerFactory.getLogger(AppCredentials.class);
+
     private static final String BUCKET_NAME_PREFIX = "app-data-";
     private static final String KEYS_DIR = "keys/";
     private static final String KEY_EXTENSION = ".txt";
@@ -77,15 +81,15 @@ public abstract class AppCredentials {
         CryptoKeyManagementSystem keyManagementSystem = cloudFactory.getCryptoKeyManagementSystem();
 
         String keyLocation = KEYS_DIR + keyName + KEY_EXTENSION;
-        LogUtils.log("Getting key %s (blob %s) from bucket %s", keyName, keyLocation, bucketName);
+        logger.debug("Getting key {} (blob {}) from bucket {}", keyName, keyLocation, bucketName);
         byte[] rawKeyBytes = bucketStore.getBlob(bucketName, keyLocation);
         String key = new String(rawKeyBytes);
         String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
-        LogUtils.log("Getting secret %s (blob %s) from bucket %s", secretName, secretLocation,
+        logger.debug("Getting secret {} (blob {}) from bucket {}", secretName, secretLocation,
             bucketName);
         byte[] encryptedSecret = bucketStore.getBlob(bucketName, secretLocation);
         String cryptoKeyName = String.format(CRYPTO_KEY_FMT_STRING, projectId);
-        LogUtils.log("Decrypting secret with crypto key %s", cryptoKeyName);
+        logger.debug("Decrypting secret with crypto key {}", cryptoKeyName);
         String secret =
             new String(keyManagementSystem.decrypt(cryptoKeyName, encryptedSecret));
         return new Pair<>(key, secret);

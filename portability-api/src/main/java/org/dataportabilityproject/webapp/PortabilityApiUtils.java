@@ -31,22 +31,22 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.json.Json;
-import javax.json.JsonObject;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.Config.Environment;
-import org.dataportabilityproject.shared.LogUtils;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Contains utility functions for use by the PortabilityServer HttpHandlers
  */
 public class PortabilityApiUtils {
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityApiUtils.class);
 
   /**
    * Attributes to attach to all cookies set by the API - Since HttpCookie doesnt support adding
@@ -65,7 +65,7 @@ public class PortabilityApiUtils {
     // http is only allowed if this is running a local instance, enforce https instead.
     String scheme = PortabilityFlags.environment() == Environment.LOCAL ? "http://" : "https://";
 
-    LogUtils.log("createURL, scheme: %s, host: %s, URI: %s", scheme, host, URI);
+    logger.debug("createURL, scheme: {}, host: {}, URI: {}", scheme, host, URI);
     return scheme + host + URI;
 
   }
@@ -91,12 +91,12 @@ public class PortabilityApiUtils {
     Map<String, HttpCookie> cookieMap = new HashMap<>();
 
     for (String cookieStr : cookies) {
-      LogUtils.log("Cookie string: %s", cookieStr);
+      logger.debug("Cookie string: {}", cookieStr);
       CookieParser parser = new CookieParser(cookieStr);
       for (Cookie c : parser) {
         HttpCookie httpCookie = new HttpCookie(c.getName(), c.getValue());
-        LogUtils
-            .log("parsed cookie, name: %s, value: %s", httpCookie.getName(), httpCookie.getValue());
+        logger.debug("parsed cookie, name: {}, value: {}",
+            httpCookie.getName(), httpCookie.getValue());
         cookieMap.put(httpCookie.getName(), httpCookie);
       }
     }
@@ -114,11 +114,11 @@ public class PortabilityApiUtils {
     // dataType=1%3A+CALENDAR&exportService=1%3A+Google&importService=2%3A+Microsoft
     String postParams = new BufferedReader(new InputStreamReader(exchange.getRequestBody()))
         .lines().collect(Collectors.joining("\n"));
-    LogUtils.log("post parameters: %s", postParams);
+    logger.debug("post parameters: {}", postParams);
 
     parsePostParams(postParams, requestParameters);
     for (Entry<String, String> param : requestParameters.entrySet()) {
-      LogUtils.log("param %s : %s", param.getKey(), param.getValue());
+      logger.debug("param {} : {}", param.getKey(), param.getValue());
     }
 
     return requestParameters;
@@ -132,7 +132,7 @@ public class PortabilityApiUtils {
     List<NameValuePair> queryParamPairs = builder.getQueryParams();
     Map<String, String> params = new HashMap<String, String>();
     for (NameValuePair pair : queryParamPairs) {
-      LogUtils.log("queryparam, name: %s, value: %s", pair.getName(), pair.getValue());
+      logger.debug("queryparam, name: {}, value: {}", pair.getName(), pair.getValue());
       params.put(pair.getName(), pair.getValue());
     }
     return params;
@@ -171,7 +171,7 @@ public class PortabilityApiUtils {
       writer.close();
       return false;
     } else if (!Pattern.compile(resourceRegex).matcher(path).matches()) {
-      LogUtils.log("Path: %s, pattern: %s", path, resourceRegex);
+      logger.debug("Path: {}, pattern: {}", path, resourceRegex);
       exchange.sendResponseHeaders(404, 0);
       OutputStream writer = exchange.getResponseBody();
       writer.write("Not found\n".getBytes());

@@ -30,15 +30,17 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.LogUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for callbacks from Oauth1 authorization flow.
  */
 public class OauthCallbackHandler implements HttpHandler {
+  private final Logger logger = LoggerFactory.getLogger(OauthCallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -53,11 +55,10 @@ public class OauthCallbackHandler implements HttpHandler {
 
   public void handle(HttpExchange exchange) throws IOException {
     PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/callback1/.*");
-    LogUtils
-        .log("%s, received request: %s", this.getClass().getSimpleName(), exchange.getRequestURI());
+    logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
-    LogUtils.log("%s, redirecting to %s", this.getClass().getSimpleName(), redirect);
+    logger.debug("redirecting to {}", redirect);
     exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);
   }
@@ -130,7 +131,7 @@ public class OauthCallbackHandler implements HttpHandler {
 
       redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
     } catch (Exception e) {
-      LogUtils.log("%s, Error handling request: %s", this.getClass().getSimpleName(), e);
+      logger.error("Error handling request", e);
       throw e;
     }
 
