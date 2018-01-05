@@ -23,6 +23,18 @@ import { ServiceDescription, ServiceDescriptions } from './service-description';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 
+interface listServicesResponse {
+ export: string[];
+ import: string[];
+}
+
+interface setupResponse {
+ dataType: string;
+ importService: string;
+ exportService: string;
+ importAuthUrl: string;
+}
+
 @Injectable()
 export class BackendService {
   private baseEndpoint = environment.apiUrl;
@@ -38,21 +50,21 @@ export class BackendService {
   listServices(dataType: string) {
     let myParams = new HttpParams().set('dataType', dataType);
     let url = `${this.baseEndpoint}listServices`;
-    return this.http.get(url, {params : myParams})
+    return this.http.get<listServicesResponse>(url, {params : myParams})
       .map(res => this.listServicesSuccess(res))
       .catch(err => this.handleError(err));
   }
 
   importSetup() {
     let url = `${this.baseEndpoint}importSetup`;
-    return this.http.get(url)
+    return this.http.get<setupResponse>(url)
       .map(res => this.importSetupSuccess(res))
       .catch(err => this.handleError(err));
   }
 
   copySetup() {
     let url = `${this.baseEndpoint}copySetup`;
-    return this.http.get(url)
+    return this.http.get<setupResponse>(url)
       .map(res => this.copySetupSuccess(res))
       .catch(err => this.handleError(err));
   }
@@ -73,38 +85,37 @@ export class BackendService {
     return dataTypes;
   }
 
-  private listServicesSuccess(res: any) {
+  private listServicesSuccess(res: listServicesResponse) {
     let exportServices: ServiceDescription[] = [];
-    let exportData = res['export'];
+    let exportData = res.export;
     for (var name in exportData) {
       exportServices.push(new ServiceDescription(exportData[name], exportData[name]));
     }
+
     let importServices: ServiceDescription[] = [];
-    let importData = res['import'];
+    let importData = res.import;
     for (var name in importData) {
       importServices.push(new ServiceDescription(importData[name], importData[name]));
     }
     return new ServiceDescriptions(importServices, exportServices);
   }
 
-  private importSetupSuccess(res: any) {
-    let data = res;
+  private importSetupSuccess(res: setupResponse) {
     let config = new CopyConfiguration(
-      data.dataType,
-      data.exportService,
+      res.dataType,
+      res.exportService,
       "", // export auth url is not required at this step
-      data.importService,
-      data.importAuthUrl);
+      res.importService,
+      res.importAuthUrl);
     return config;
   }
 
-  private copySetupSuccess(res: any) {
-    let data = res;
+  private copySetupSuccess(res: setupResponse) {
     let config = new CopyConfiguration(
-      data.dataType,
-      data.exportService,
+      res.dataType,
+      res.exportService,
       "", // export auth url is not required at this step
-      data.importService,
+      res.importService,
       ""); // import auth url is not required at this step
     return config;
   }
