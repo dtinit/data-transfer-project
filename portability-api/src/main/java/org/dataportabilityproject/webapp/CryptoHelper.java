@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * Helper methods utlized for encrypting data for the client.
  */
 class CryptoHelper {
-  final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
+  private final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
 
   private static final Gson GSON = new Gson();
   private final JobDao jobDao;

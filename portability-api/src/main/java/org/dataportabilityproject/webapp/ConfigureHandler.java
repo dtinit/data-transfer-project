@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for the Configure service
  */
 public class ConfigureHandler implements HttpHandler {
-  static final Logger logger = LoggerFactory.getLogger(ConfigureHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(ConfigureHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final PortabilityJobFactory jobFactory;

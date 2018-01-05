@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for callbacks from Oauth2 authorization flow.
  */
 public class Oauth2CallbackHandler implements HttpHandler {
-  final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
+  private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -80,7 +80,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
 
       // check for user-denied error
       if (authResponse.getError() != null) {
-        logger.warn("Authorization DENIED: %s Redirecting to /error", authResponse.getError());
+        logger.warn("Authorization DENIED: {} Redirecting to /error", authResponse.getError());
         return redirect;
       }
 

@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * HTTP Handler for the listDataTypes service
  */
 public class ListDataTypesHandler implements HttpHandler {
-  final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
+  private final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   public ListDataTypesHandler(ServiceProviderRegistry serviceProviderRegistry) {
@@ -59,7 +59,7 @@ public class ListDataTypesHandler implements HttpHandler {
           builder.add(data_type.name());
         }
       } catch (Exception e) {
-        logger.error("hasImportAndExport for datatype %s failed", data_type.name(), e);
+        logger.error("hasImportAndExport for datatype {} failed", data_type.name(), e);
       }
     }
 

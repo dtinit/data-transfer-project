@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for the ListServices service
  */
 public class ListServicesHandler implements HttpHandler {
-  final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
+  private final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   public ListServicesHandler(ServiceProviderRegistry serviceProviderRegistry) {
