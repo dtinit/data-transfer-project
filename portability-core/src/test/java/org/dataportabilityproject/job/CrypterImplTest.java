@@ -12,7 +12,7 @@ public class CrypterImplTest {
     KeyGenerator generator = KeyGenerator.getInstance("AES");
     SecretKey key = generator.generateKey();
     CrypterImpl impl = new CrypterImpl(key);
-    String data = "The lazy dog didn't jump over anything";
+    String data = "The lazy dog didn't jump over anything except \u2614, and a \u26F5";
     assertThat(impl.decrypt(impl.encrypt(data))).isEqualTo(data);
   }
 }
