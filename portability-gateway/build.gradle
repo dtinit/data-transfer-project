@@ -1,0 +1,6 @@
+
+dependencies {
+    compile project(':portability-model')
+    compile project(':portability-spi')
+
+}
