@@ -1,5 +1,6 @@
 .idea
-.gradle
+.gradle/
+build/
 *.iml
 *.log
 config/local/secrets.csv
