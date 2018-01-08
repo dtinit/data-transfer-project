@@ -1,4 +1,4 @@
-package org.dataportabilityproject.model;
+package org.dataportabilityproject.datatransfer.types;
 
 /**
  * A uniquely identifiable entity in the system.

@@ -1,4 +1,4 @@
-package org.dataportabilityproject.model;
+package org.dataportabilityproject.datatransfer.types;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
