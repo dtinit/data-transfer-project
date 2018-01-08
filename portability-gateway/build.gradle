@@ -1,4 +1,4 @@
 
 dependencies {
-    compile project(':portability-spi')
+    compile project(':portability-spi-cloud')
 }
