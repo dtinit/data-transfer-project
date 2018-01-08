@@ -1,3 +1,15 @@
+/**
+ * Gradle build script for the data portability project.
+ *
+ * Try on *Nix:
+ *
+ * ./gradlew clean jar
+ *
+ * Or on Windows:
+ *
+ *  gradlew clean jar
+ *
+ */
 buildscript {
 
     repositories {
