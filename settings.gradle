@@ -1,5 +1,5 @@
 rootProject.name = 'org.dataportabilityproject'
 
-include ':portability-model'
+include ':portability-model', ':portability-spi'
 
 
