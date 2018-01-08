@@ -4,6 +4,6 @@ include ':portability-model', ':portability-spi', ':portability-gateway', ':port
 
 include ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
 
-include ':extensions:connectivity:portability-connectivity-google', ':extensions:connectivity:portability-connectivity-microsoft'
+include ':extensions:data-transfer:portability-data-transfer-google', ':extensions:data-transfer:portability-data-transfer-microsoft'
 
 
