@@ -39,7 +39,7 @@ public class JobDao {
    * The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required, such as the
    * encrypted auth data, in order to begin processing the portability job.
    */
-  enum JobState {
+  public enum JobState {
     PENDING_AUTH_DATA, // The job has not finished the authorization flows
     PENDING_WORKER_ASSIGNMENT, // The job has all authorization information but is not assigned a worker yet
     ASSIGNED_WITHOUT_AUTH_DATA, // The job is assigned a worker and waiting for auth data from the api
@@ -134,13 +134,9 @@ public class JobDao {
   public void updateJobStateToPendingWorkerAssignment(String id) throws IOException {
     // Verify job is in existing state
     PortabilityJob existingJob = lookupJob(id, JobState.PENDING_AUTH_DATA);
-    Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
     // No updated to the job itself, just the state
-    updateJob(existingJob, JobState.PENDING_WORKER_ASSIGNMENT);
-    // Delete the job in the previous state
-    String previousKey = createKey(JobState.PENDING_AUTH_DATA, id);
-    storage.delete(previousKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
-  }
+    updateJobState(existingJob, JobState.PENDING_AUTH_DATA, JobState.PENDING_WORKER_ASSIGNMENT);
+   }
 
   /**
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
@@ -161,11 +157,8 @@ public class JobDao {
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
         .build();
-    updateJob(updatedJob, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
-    // Delete the job in the previous state
-    String previousKey = createKey(JobState.PENDING_WORKER_ASSIGNMENT, id);
-    storage.delete(
-        previousKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
+    updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT,
+        JobState.ASSIGNED_WITHOUT_AUTH_DATA);
   }
 
   /**
@@ -182,12 +175,8 @@ public class JobDao {
         .setEncryptedExportAuthData(encryptedExportAuthData)
         .setEncryptedImportAuthData(encryptedImportAuthData)
         .build();
-
-    updateJob(updatedJob, JobState.ASSIGNED_WITH_AUTH_DATA);
-    // Delete the job in the previous state
-    String previousKey = createKey(JobState.ASSIGNED_WITHOUT_AUTH_DATA, id);
-    storage.delete(
-        previousKey); // TODO: Determine whether to Tombstone or Delete from unassigned once it's entered in ready state
+    updateJobState(updatedJob, JobState.ASSIGNED_WITHOUT_AUTH_DATA,
+        JobState.ASSIGNED_WITH_AUTH_DATA);
   }
 
   /**
@@ -196,7 +185,7 @@ public class JobDao {
   public void deleteJob(String id, JobState jobState) throws IOException {
     String key = createKey(jobState, id);
     Map<String, Object> existing = storage.get(key);
-    Preconditions.checkArgument(existing != null, "Job not found with id: %s, state: %s", id, jobState);
+    Preconditions.checkArgument(existing != null, "Job not found");
     storage.delete(key);
   }
 
@@ -206,17 +195,35 @@ public class JobDao {
   private void updateJob(PortabilityJob job, JobState jobState) throws IOException {
     String key = createKey(jobState, job.id());
     Map<String, Object> existing = storage.get(key);
-    Preconditions.checkArgument(existing != null, "Job not found with id: %s, state: %s", job.id(), jobState);
+    Preconditions.checkArgument(existing != null, "Job not found");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
     storage.put(key, data);
+  }
+
+  /**
+   * Updates an existing {@code job} in storage with the given {@code jobState}.
+   */
+  private void updateJobState(PortabilityJob job, JobState previous, JobState updated) throws IOException {
+    String previousKey = createKey(previous, job.id());
+    Map<String, Object> existing = storage.get(previousKey);
+    Preconditions.checkArgument(existing != null, "Job not found");
+
+    String updatedKey = createKey(updated, job.id());
+    Map<String, Object> shouldNotExist = storage.get(updatedKey);
+    Preconditions.checkArgument(shouldNotExist == null, "Job in updated state already found");
+
+    // Store the updated job info
+    Map<String, Object> data = job.asMap();
+    storage.put(updatedKey, data);
+    storage.delete(previousKey);
   }
 
   // UTILITY METHODS
 
   // TODO: come up with a better scheme for indexing state
   private static String createKey(JobState state, String id) {
-    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR), "Invalid id: %s", id);
+    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR));
     return String.format("%s%s%s", state.name(), KEY_SEPERATOR, id);
   }
 
