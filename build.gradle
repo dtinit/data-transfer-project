@@ -1,0 +1,52 @@
+/**
+ * Gradle build script for the data portability project.
+ *
+ * Try on *Nix:
+ *
+ * ./gradlew clean jar
+ *
+ * Or on Windows:
+ *
+ *  gradlew clean jar
+ *
+ */
+buildscript {
+
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+}
+
+def sourceProjects() {
+    // define projects containing source code
+    return subprojects.findAll { new File(it.projectDir, 'src').exists() }
+}
+
+configure(sourceProjects()) {
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+
+    sourceCompatibility = 1.8
+
+    dependencies {
+        compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+        testCompile "junit:junit:${junitVersion}"
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+
+}
+
+                                                                                       

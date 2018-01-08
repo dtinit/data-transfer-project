@@ -1,0 +1,5 @@
+
+dependencies {
+    compile project(':portability-spi-data-transfer')
+    compile project(':portability-spi-cloud')
+}
