@@ -25,11 +25,14 @@ import java.util.List;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A class that contains all flags passed from the commandline.
  */
 public class PortabilityFlags {
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityFlags.class);
   private static PortabilityFlags INSTANCE = null;
   private final CommonSettings commonSettings;
 
@@ -51,6 +54,7 @@ public class PortabilityFlags {
           PortabilityFlags.class.getClassLoader().getResourceAsStream("settings/common.yaml");
       CommonSettings commonSettings = mapper.readValue(in, CommonSettings.class);
       INSTANCE = new PortabilityFlags(commonSettings);
+      logger.debug("Parsed flags: {}", commonSettings);
     } catch (IOException e) {
       throw new IllegalArgumentException("Problem parsing common settings", e);
     }

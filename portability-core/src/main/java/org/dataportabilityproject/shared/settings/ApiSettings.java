@@ -17,6 +17,7 @@ package org.dataportabilityproject.shared.settings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 
 /**
  * Settings for {@code PortabilityApiServer}.
@@ -42,5 +43,13 @@ public class ApiSettings {
 
   public String getBaseApiUrl() {
     return baseApiUrl;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("baseUrl", baseUrl)
+        .add("baseApiUrl", baseApiUrl)
+        .toString();
   }
 }
