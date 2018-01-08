@@ -29,7 +29,7 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 public class JobDao {
   // Keys for specific values in data store
   private static final String ID_DATA_KEY = "UUID";
-  private static final String KEY_SEPERATOR = "-";
+  private static final String KEY_SEPERATOR = "::";
 
   /**
    * The current state of the job.
@@ -191,23 +191,32 @@ public class JobDao {
   }
 
   /**
+   * Deletes an existing {@code job} in storage with the given {@code jobState}.
+   */
+  public void deleteJob(String id, JobState jobState) throws IOException {
+    String key = createKey(jobState, id);
+    Map<String, Object> existing = storage.get(key);
+    Preconditions.checkArgument(existing != null, "Job not found with id: %s, state: %s", id, jobState);
+    storage.delete(key);
+  }
+
+  /**
    * Updates an existing {@code job} in storage with the given {@code jobState}.
    */
   private void updateJob(PortabilityJob job, JobState jobState) throws IOException {
     String key = createKey(jobState, job.id());
     Map<String, Object> existing = storage.get(key);
-    Preconditions.checkArgument(existing == null, "Job exists in updated state");
+    Preconditions.checkArgument(existing != null, "Job not found with id: %s, state: %s", job.id(), jobState);
     // Store the updated job info
     Map<String, Object> data = job.asMap();
     storage.put(key, data);
   }
 
-
   // UTILITY METHODS
 
   // TODO: come up with a better scheme for indexing state
   private static String createKey(JobState state, String id) {
-    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR));
+    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR), "Invalid id: %s", id);
     return String.format("%s%s%s", state.name(), KEY_SEPERATOR, id);
   }
 
