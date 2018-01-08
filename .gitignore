@@ -1,6 +1,7 @@
 .idea
 .gradle/
 build/
+target/
 *.iml
 *.log
 config/local/secrets.csv
