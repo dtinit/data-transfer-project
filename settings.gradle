@@ -3,3 +3,6 @@ rootProject.name = 'org.dataportabilityproject'
 include ':portability-model', ':portability-spi', ':portability-gateway'
 
 
+include ':cloud:portability-cloud-google', ':cloud:portability-cloud-microsoft'
+
+
