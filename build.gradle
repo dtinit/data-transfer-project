@@ -18,7 +18,12 @@ buildscript {
     }
 }
 
-subprojects {
+def sourceProjects() {
+    // define projects containing source code
+    return subprojects.findAll { new File(it.projectDir, 'src').exists() }
+}
+
+configure(sourceProjects()) {
     repositories {
         jcenter()
         mavenLocal()
