@@ -156,6 +156,17 @@ public class PortabilityApiUtils {
     return job;
   }
 
+  /** Hack! For now, if we don't have export auth data, assume it's for export. */
+  public static boolean isExport(PortabilityJob job, Headers headers) {
+    if(PortabilityFlags.encryptedFlow()) {
+      String exportAuthCookie = PortabilityApiUtils
+          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      return (null == exportAuthCookie);
+    } else {
+      return (null == job.exportAuthData());
+    }
+  }
+
   /**
    * Returns whether or not the exchange is a valid request for the provided http method and
    * resource. If not, it will close the client connection.

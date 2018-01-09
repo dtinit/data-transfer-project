@@ -69,9 +69,7 @@ public class SimpleLoginSubmitHandler implements HttpHandler {
     }
     Preconditions.checkState(null != job, "existingJob not found for job id: %s", jobId);
 
-    // TODO: Determine import vs export mode
-    // Hack! For now, if we don't have export auth data, assume it's for export.
-    boolean isExport = (null == job.exportAuthData());
+    boolean isExport = PortabilityApiUtils.isExport(job, exchange.getRequestHeaders());
     String service = isExport ? job.exportService() : job.importService();
     Preconditions.checkState(!Strings.isNullOrEmpty(service),
         "service not found, service: %s isExport: %b, job id: %s", service, isExport, jobId);
