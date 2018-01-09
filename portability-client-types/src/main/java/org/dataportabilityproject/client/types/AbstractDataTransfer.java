@@ -9,7 +9,7 @@ import io.swagger.annotations.ApiModelProperty;
 public abstract class AbstractDataTransfer {
 
     private String source;        // REVIEW: corresponds to the import service
-    private String destination;   // REVIEW: corresponds to the import service
+    private String destination;   // REVIEW: corresponds to the export service
     private String contentType;   // REVIEW: replace old PortableDataType since the latter is an enum and not exctensible?
 
     @JsonCreator
