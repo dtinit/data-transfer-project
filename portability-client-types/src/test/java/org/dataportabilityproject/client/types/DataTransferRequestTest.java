@@ -15,7 +15,7 @@ public class DataTransferRequestTest {
 
         String serialized = objectMapper.writeValueAsString(new DataTransferRequest("application/json"));
 
-        DataTransferRequest deserialized = objectMapper.readValue(serialized, (DataTransferRequest.class));
+        DataTransferRequest deserialized = objectMapper.readValue(serialized, DataTransferRequest.class);
 
         Assert.assertEquals("application/json", deserialized.getContentType());
     }
