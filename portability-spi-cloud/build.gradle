@@ -15,6 +15,7 @@
  */
 
 dependencies {
+    compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile project(':portability-data-transfer-types')
 
 }
