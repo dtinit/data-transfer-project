@@ -132,7 +132,7 @@ public class ConfigureHandler implements HttpHandler {
         PortabilityJob updatedJob = JobUtils
             .setInitialAuthData(job, authFlowInitiator.initialAuthData(),  /*isExport=*/ true);
         if (PortabilityFlags.encryptedFlow()) {
-          jobDao.updatePendingAuthDataJob(job);
+          jobDao.updatePendingAuthDataJob(updatedJob);
         } else {
           jobDao.updateJob(updatedJob);
         }
