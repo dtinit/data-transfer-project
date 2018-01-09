@@ -16,6 +16,7 @@
 package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE2;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -23,7 +24,7 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.Headers;
 import java.security.PublicKey;
 import javax.crypto.SecretKey;
-import javax.servlet.http.Cookie;
+import java.net.HttpCookie;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterImpl;
 import org.dataportabilityproject.job.JobDao;
@@ -51,7 +52,7 @@ class CryptoHelper {
     SecretKey sessionKey = getSessionKey(jobId);
     String encrypted = encryptAuthData(sessionKey, authData);
     String cookieKey = isExport ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
-    Cookie cookie = new Cookie(cookieKey, encrypted);
+    HttpCookie cookie = new HttpCookie(cookieKey, encrypted);
     logger.debug("Set new cookie with key: {}, length: {} for job: {}",
         cookieKey, encrypted.length(), jobId);
     headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
@@ -60,7 +61,7 @@ class CryptoHelper {
   private SecretKey getSessionKey(String jobId) {
     PortabilityJob job = jobDao.lookupJobPendingAuthData(jobId);
     String encodedSessionKey = job.sessionKey();
-    Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey));
+    Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey), "Session key should not be null");
     return SessionKeyGenerator.parse(encodedSessionKey);
   }
 
