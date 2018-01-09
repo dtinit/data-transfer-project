@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.job;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class JobDao {
    * The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required, such as the
    * encrypted auth data, in order to begin processing the portability job.
    */
+  @VisibleForTesting // Package-Private
   public enum JobState {
     PENDING_AUTH_DATA, // The job has not finished the authorization flows
     PENDING_WORKER_ASSIGNMENT, // The job has all authorization information but is not assigned a worker yet
