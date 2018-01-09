@@ -9,7 +9,7 @@ import io.swagger.annotations.ApiModelProperty;
  * A service provider registered in the system.
  */
 @ApiModel(description = "A service provider registered in the system")
-public class ServiceProvider {
+public class RegisteredServiceProvider {
     private String id;
     private String name;
     private String description;
@@ -17,7 +17,7 @@ public class ServiceProvider {
     private String[] contentTypes;
 
     @JsonCreator
-    public ServiceProvider(
+    public RegisteredServiceProvider(
             @JsonProperty(value = "id", required = true) String id,
             @JsonProperty(value = "name", required = true) String name,
             @JsonProperty(value = "description", required = true) String description,

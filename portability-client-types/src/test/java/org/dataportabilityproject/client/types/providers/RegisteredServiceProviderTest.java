@@ -7,15 +7,15 @@ import org.junit.Test;
 /**
  *
  */
-public class ServiceProviderTest {
+public class RegisteredServiceProviderTest {
     @Test
     public void verifySerializeDeserialize() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        ServiceProvider provider = new ServiceProvider("123", "TestProvider", "Test description", new String[]{"testContent"});
+        RegisteredServiceProvider provider = new RegisteredServiceProvider("123", "TestProvider", "Test description", new String[]{"testContent"});
         String serialized = objectMapper.writeValueAsString(provider);
 
-        ServiceProvider deserialized = objectMapper.readValue(serialized, ServiceProvider.class);
+        RegisteredServiceProvider deserialized = objectMapper.readValue(serialized, RegisteredServiceProvider.class);
 
         Assert.assertEquals("123", deserialized.getId());
         Assert.assertEquals("TestProvider", deserialized.getName());
