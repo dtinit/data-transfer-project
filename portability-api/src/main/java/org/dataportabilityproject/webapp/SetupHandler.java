@@ -164,7 +164,7 @@ public class SetupHandler implements HttpHandler {
     }
 
     // Valid job is present, generate an XSRF token to pass back via cookie
-    HttpCookie token = new HttpCookie("XSRF-TOKEN","HappyToken123");
+    HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN,"HappyToken123");
     responseHeaders.add(HEADER_SET_COOKIE, token.toString() + COOKIE_ATTRIBUTES);
 
     return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())

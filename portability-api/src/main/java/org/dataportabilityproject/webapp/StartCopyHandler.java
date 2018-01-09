@@ -75,10 +75,7 @@ public class StartCopyHandler implements HttpHandler {
     String jobId = JobUtils.decodeId(encodedIdCookie);
 
     // Validate XSRF token is present in request header. strip out any quotation marks that Angular adds and remove whitespace.
-    String token = exchange.getRequestHeaders().getFirst("X-xsrf-token").replace("\""," ").trim();
-
-    logger.debug("X-xsrf-token = {}", token);
-
+    String token = exchange.getRequestHeaders().getFirst(JsonKeys.XSRF_HEADER).replace("\""," ").trim();
     Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
     Preconditions.checkArgument(token.equals("HappyToken123"));
 

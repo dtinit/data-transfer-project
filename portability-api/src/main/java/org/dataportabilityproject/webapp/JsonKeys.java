@@ -34,4 +34,6 @@ public class JsonKeys {
   public static final String IMPORT_SERVICE_AUTH_EXISTS = "importServiceAuthExists";
   public static final String IMPORT_AUTH_URL = "importAuthUrl";
   public static final String TOKEN = "token";
+  public static final String XSRF_TOKEN = "XSRF-TOKEN";
+  public static final String XSRF_HEADER = "X-xsrf-token";
 }
