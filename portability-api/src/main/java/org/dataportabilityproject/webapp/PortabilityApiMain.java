@@ -26,8 +26,10 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.job.JWTTokenManager;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJobFactory;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.job.UUIDProvider;
 
 public class PortabilityApiMain {
@@ -37,6 +39,7 @@ public class PortabilityApiMain {
   private static PortabilityJobFactory portabilityJobFactory;
   private static CryptoHelper cryptoHelper;
   private static JobDao jobDao;
+  private static TokenManager tokenManager;
 
   public static void main(String args[]) throws Exception {
     PortabilityFlags.parse();
@@ -52,6 +55,8 @@ public class PortabilityApiMain {
     portabilityJobFactory = new PortabilityJobFactory(new UUIDProvider());
     // TODO: Wire up the correct Crypter.
     cryptoHelper = new CryptoHelper(jobDao);
+    // TODO: Wire up correct secret key
+    tokenManager = new JWTTokenManager("supersecretapistring");
 
     // TODO: backlog and port should be command line args
     HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -61,13 +66,13 @@ public class PortabilityApiMain {
     // all be handled by the ListServicesHandler below. To prevent this, each handler below should
     // validate the request URI that it is getting passed in.
     server.createContext("/_/copySetup",
-        new SetupHandler(serviceProviderRegistry, jobDao, COPY, "/_/copySetup"));
+        new SetupHandler(serviceProviderRegistry, jobDao, COPY, "/_/copySetup", tokenManager));
     server.createContext("/_/importSetup",
-        new SetupHandler(serviceProviderRegistry, jobDao, IMPORT, "/_/importSetup"));
+        new SetupHandler(serviceProviderRegistry, jobDao, IMPORT, "/_/importSetup", tokenManager));
     server.createContext("/_/listDataTypes", new ListDataTypesHandler(serviceProviderRegistry));
     server.createContext("/_/listServices", new ListServicesHandler(serviceProviderRegistry));
     server.createContext("/_/startCopy",
-        new StartCopyHandler(serviceProviderRegistry, jobDao, cloudFactory, cryptoHelper));
+        new StartCopyHandler(serviceProviderRegistry, jobDao, cloudFactory, cryptoHelper, tokenManager));
     server.createContext("/callback/",
         new Oauth2CallbackHandler(serviceProviderRegistry, jobDao, cryptoHelper));
     server.createContext("/callback1/",

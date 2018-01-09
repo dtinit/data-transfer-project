@@ -53,13 +53,15 @@ public class StartCopyHandler implements HttpHandler {
   private final JobDao jobDao;
   private final CloudFactory cloudFactory;
   private final CryptoHelper cryptoHelper;
+  private final TokenManager tokenManager;
 
   public StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
-      CloudFactory cloudFactory, CryptoHelper cryptoHelper) {
+      CloudFactory cloudFactory, CryptoHelper cryptoHelper, TokenManager tokenManager) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobDao = jobDao;
     this.cloudFactory = cloudFactory;
     this.cryptoHelper = cryptoHelper;
+    this.tokenManager = tokenManager;
   }
 
   public void handle(HttpExchange exchange) throws IOException {
@@ -77,7 +79,7 @@ public class StartCopyHandler implements HttpHandler {
     // Validate XSRF token is present in request header. strip out any quotation marks that Angular adds and remove whitespace.
     String token = exchange.getRequestHeaders().getFirst(JsonKeys.XSRF_HEADER).replace("\""," ").trim();
     Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
-    Preconditions.checkArgument(token.equals("HappyToken123"));
+    Preconditions.checkArgument(tokenManager.verifyToken(token));
 
     if (PortabilityFlags.encryptedFlow()) {
       handleWorkerAssignmentFlow(exchange, jobId);

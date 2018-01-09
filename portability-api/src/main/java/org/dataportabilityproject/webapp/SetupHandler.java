@@ -36,6 +36,7 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.slf4j.Logger;
@@ -51,13 +52,15 @@ public class SetupHandler implements HttpHandler {
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final Mode mode;
   private final String handlerUrlPath;
+  private final TokenManager tokenManager;
 
   public SetupHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobDao jobDao, Mode mode, String handlerUrlPath) {
+      JobDao jobDao, Mode mode, String handlerUrlPath, TokenManager tokenManager) {
     this.jobDao = jobDao;
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.mode = mode;
     this.handlerUrlPath = handlerUrlPath;
+    this.tokenManager = tokenManager;
   }
 
   public void handle(HttpExchange exchange) throws IOException {
@@ -98,7 +101,11 @@ public class SetupHandler implements HttpHandler {
       if (mode == IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
       } else {
-        response = handleCopySetup(exchange.getRequestHeaders(), job, exchange.getResponseHeaders());
+        response = handleCopySetup(exchange.getRequestHeaders(), job);
+        // Valid job is present, generate an XSRF token to pass back via cookie
+        String tokenStr = tokenManager.createNewToken(jobId);
+        HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN,tokenStr);
+        exchange.getResponseHeaders().add(HEADER_SET_COOKIE, token.toString() + COOKIE_ATTRIBUTES);
       }
 
       // Mark the response as type Json and send
@@ -114,7 +121,7 @@ public class SetupHandler implements HttpHandler {
     }
   }
 
-  JsonObject handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
+  private JsonObject handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
       throws IOException {
     if (!PortabilityFlags.encryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
@@ -148,7 +155,7 @@ public class SetupHandler implements HttpHandler {
         .add(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl()).build();
   }
 
-  JsonObject handleCopySetup(Headers requestHeaders, PortabilityJob job, Headers responseHeaders) {
+  private JsonObject handleCopySetup(Headers requestHeaders, PortabilityJob job) {
     Preconditions.checkNotNull(job.importAuthData(), "Import AuthData is required");
     // Make sure the data exists in the cookies before rendering copy page
     if (PortabilityFlags.encryptedFlow()) {
@@ -162,10 +169,6 @@ public class SetupHandler implements HttpHandler {
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
     }
-
-    // Valid job is present, generate an XSRF token to pass back via cookie
-    HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN,"HappyToken123");
-    responseHeaders.add(HEADER_SET_COOKIE, token.toString() + COOKIE_ATTRIBUTES);
 
     return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())
         .add(JsonKeys.EXPORT_SERVICE, job.exportService())

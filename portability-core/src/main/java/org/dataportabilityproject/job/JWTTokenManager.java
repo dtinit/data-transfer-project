@@ -31,7 +31,7 @@ public class JWTTokenManager implements TokenManager {
 
   // TODO: determine proper issuer for JWT tokens
   private static final String ISSUER = "dataportabilityproject";
-  // Key for the portability id storated as a private 'claim' in the JWT
+  // Key for the portability id stored as a private 'claim' in the JWT
   private static final String ID_CLAIM_KEY = "portability-id";
 
   private final Algorithm algorithm;
