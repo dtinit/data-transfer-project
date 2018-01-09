@@ -17,9 +17,9 @@ package org.dataportabilityproject.worker;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -34,9 +34,7 @@ public class JobPollingServiceTest {
 
   @Before
   public void setUp()  throws Exception {
-    PersistentKeyValueStore persistentKeyValueStore = CloudFactoryFactory
-        .getCloudFactory(SupportedCloud.LOCAL)
-        .getPersistentKeyValueStore();
+    PersistentKeyValueStore persistentKeyValueStore = new InMemoryPersistentKeyValueStore();
     jobDao = new JobDao(persistentKeyValueStore);
     jobPollingService = new JobPollingService(jobDao);
   }

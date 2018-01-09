@@ -16,13 +16,16 @@
 package org.dataportabilityproject.serviceProviders.microsoft;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.serviceProviders.microsoft.calendar.MicrosoftCalendarService;
 import org.dataportabilityproject.serviceProviders.microsoft.mail.MicrosoftMailService;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -36,7 +39,7 @@ import org.dataportabilityproject.shared.auth.PasswordAuthData;
 /**
  * The {@link ServiceProvider} for Microsoft (http://www.microsoft.com/).
  */
-public final class MicrosoftServiceProvider implements ServiceProvider {
+final class MicrosoftServiceProvider implements ServiceProvider {
     private static final ImmutableList<String> SCOPES = ImmutableList.of(
         "wl.imap", // outlook export via IMAP
         "wl.offline_access", // provides for refresh tokens
@@ -45,9 +48,10 @@ public final class MicrosoftServiceProvider implements ServiceProvider {
     private final OfflinePasswordAuthDataGenerator passwordAuth =
         new OfflinePasswordAuthDataGenerator();
 
-    public MicrosoftServiceProvider() {
+    @Inject
+    MicrosoftServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         AppCredentials appCredentials =
-            AppCredentials.lookupAndCreate("MICROSOFT_KEY", "MICROSOFT_SECRET");
+            appCredentialFactory.lookupAndCreate("MICROSOFT_KEY", "MICROSOFT_SECRET");
         microsoftAuth = new MicrosoftAuth(
             appCredentials,
             // TODO: only use scopes from the products we are accessing.

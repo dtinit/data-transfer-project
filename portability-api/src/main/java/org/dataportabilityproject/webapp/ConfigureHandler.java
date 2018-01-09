@@ -20,12 +20,12 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -34,24 +34,29 @@ import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for the Configure service
  */
-public class ConfigureHandler implements HttpHandler {
+final class ConfigureHandler implements HttpHandler {
   private static final Logger logger = LoggerFactory.getLogger(ConfigureHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final PortabilityJobFactory jobFactory;
+  private final CommonSettings commonSettings;
 
-  public ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
+  @Inject
+  ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
       JobDao jobDao,
-      PortabilityJobFactory jobFactory) {
+      PortabilityJobFactory jobFactory,
+      CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobDao = jobDao;
     this.jobFactory = jobFactory;
+    this.commonSettings = commonSettings;
   }
 
   /**
@@ -126,7 +131,7 @@ public class ConfigureHandler implements HttpHandler {
       if (authFlowInitiator.initialAuthData() != null) {
         PortabilityJob updatedJob = JobUtils
             .setInitialAuthData(job, authFlowInitiator.initialAuthData(),  /*isExport=*/ true);
-        if (PortabilityFlags.encryptedFlow()) {
+        if (commonSettings.getEncryptedFlow()) {
           jobDao.updatePendingAuthDataJob(job);
         } else {
           jobDao.updateJob(updatedJob);
@@ -147,7 +152,7 @@ public class ConfigureHandler implements HttpHandler {
   private PortabilityJob createJob(PortableDataType dataType, String exportService, String importService)
       throws IOException {
     PortabilityJob job = jobFactory.create(dataType, exportService, importService);
-    if (PortabilityFlags.encryptedFlow()) {
+    if (commonSettings.getEncryptedFlow()) {
       jobDao.insertJobInPendingAuthDataState(job); // This is the initial population of the row in storage
     } else {
       jobDao.insertJob(job);

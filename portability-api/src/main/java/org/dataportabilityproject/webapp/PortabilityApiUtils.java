@@ -33,10 +33,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 import org.slf4j.Logger;
@@ -61,9 +59,9 @@ public class PortabilityApiUtils {
    * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
    * way to do this from the HttpExchange.
    */
-  public static String createURL(String host, String URI) {
+  public static String createURL(String host, String URI, boolean useHttps) {
     // http is only allowed if this is running a local instance, enforce https instead.
-    String scheme = PortabilityFlags.environment() == Environment.LOCAL ? "http://" : "https://";
+    String scheme = useHttps ? "https://" : "http://";
 
     logger.debug("createURL, scheme: {}, host: {}, URI: {}", scheme, host, URI);
     return scheme + host + URI;

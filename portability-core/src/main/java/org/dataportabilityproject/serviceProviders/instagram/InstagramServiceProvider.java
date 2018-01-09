@@ -16,11 +16,13 @@
 package org.dataportabilityproject.serviceProviders.instagram;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -28,14 +30,15 @@ import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
-public final class InstagramServiceProvider implements ServiceProvider {
+final class InstagramServiceProvider implements ServiceProvider {
   private static final ImmutableList<String> SCOPES = ImmutableList.of(
       "basic"); // See https://www.instagram.com/developer/authorization/
   private final InstagramAuth instagramAuth;
 
-  public InstagramServiceProvider() {
+  @Inject
+  InstagramServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
     AppCredentials appCredentials =
-        AppCredentials.lookupAndCreate("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
+        appCredentialFactory.lookupAndCreate("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
     this.instagramAuth = new InstagramAuth(appCredentials, SCOPES);
   }
 

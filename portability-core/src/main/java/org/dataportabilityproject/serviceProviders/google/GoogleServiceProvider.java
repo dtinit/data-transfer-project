@@ -25,6 +25,7 @@ import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.dataportabilityproject.serviceProviders.google.calendar.GoogleCalenda
 import org.dataportabilityproject.serviceProviders.google.mail.GoogleMailService;
 import org.dataportabilityproject.serviceProviders.google.piccasa.GooglePhotosService;
 import org.dataportabilityproject.serviceProviders.google.tasks.GoogleTaskService;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -46,7 +48,7 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 /**
  * The {@link ServiceProvider} for Google (http://www.google.com/).
  */
-public final class GoogleServiceProvider implements ServiceProvider {
+final class GoogleServiceProvider implements ServiceProvider {
     private final static  List<String> SCOPES = Arrays.asList(
         TasksScopes.TASKS,
         "https://picasaweb.google.com/data/",
@@ -57,9 +59,10 @@ public final class GoogleServiceProvider implements ServiceProvider {
 
     private final GoogleAuth googleAuth;
 
-    public GoogleServiceProvider() throws Exception {
+    @Inject
+    GoogleServiceProvider(AppCredentialFactory appCredentialFactory) throws Exception {
         AppCredentials appCredentials =
-            AppCredentials.lookupAndCreate("GOOGLE_KEY", "GOOGLE_SECRET");
+            appCredentialFactory.lookupAndCreate("GOOGLE_KEY", "GOOGLE_SECRET");
         this.googleAuth = new GoogleAuth(
                 appCredentials,
                 // TODO: only use scopes from the products we are accessing.

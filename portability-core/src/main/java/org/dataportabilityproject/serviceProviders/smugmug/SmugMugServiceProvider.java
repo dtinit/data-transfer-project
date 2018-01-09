@@ -16,12 +16,14 @@
 package org.dataportabilityproject.serviceProviders.smugmug;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
 import oauth.signpost.OAuthConsumer;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -31,12 +33,13 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 /**
  * The {@link ServiceProvider} for the SmugMub service (https://www.smugmug.com/).
  */
-public final class SmugMugServiceProvider implements ServiceProvider {
+final class SmugMugServiceProvider implements ServiceProvider {
     private final SmugMugAuth smugMugAuth;
 
-    public SmugMugServiceProvider() {
+    @Inject
+    SmugMugServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         AppCredentials appCredentials =
-            AppCredentials.lookupAndCreate("SMUGMUG_KEY", "SMUGMUG_SECRET");
+            appCredentialFactory.lookupAndCreate("SMUGMUG_KEY", "SMUGMUG_SECRET");
         this.smugMugAuth = new SmugMugAuth(appCredentials);
     }
 

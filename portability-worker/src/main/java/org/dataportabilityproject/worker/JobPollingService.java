@@ -17,6 +17,7 @@ package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -34,6 +35,7 @@ import org.dataportabilityproject.job.PortabilityJob;
 class JobPollingService extends AbstractScheduledService {
   private final JobDao jobDao;
 
+  @Inject
   JobPollingService(JobDao jobDao) {
     this.jobDao = jobDao;
   }

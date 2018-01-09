@@ -20,6 +20,7 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import java.security.PublicKey;
 import javax.crypto.SecretKey;
@@ -42,6 +43,7 @@ class CryptoHelper {
   private static final Gson GSON = new Gson();
   private final JobDao jobDao;
 
+  @Inject
   CryptoHelper(JobDao jobDao) {
     this.jobDao = jobDao;
   }
@@ -65,7 +67,7 @@ class CryptoHelper {
   }
 
   /** Serialize and encrypt the given {@code authData} with the session key. */
-  public static String encryptAuthData(PublicKey key, String sessionEncryptedAuthData) {
+  static String encryptAuthData(PublicKey key, String sessionEncryptedAuthData) {
     Crypter crypter = new CrypterImpl(key);
     return crypter.encrypt(sessionEncryptedAuthData);
   }
