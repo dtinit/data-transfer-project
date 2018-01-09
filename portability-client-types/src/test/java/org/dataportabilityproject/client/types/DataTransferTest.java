@@ -13,7 +13,8 @@ public class DataTransferTest {
     public void verifySerializeDeserialize() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        String serialized = objectMapper.writeValueAsString(new DataTransfer(DataTransfer.Status.INPROCESS));
+        DataTransfer transfer = new DataTransfer("testSource", "testDestination", "application/json", DataTransfer.Status.INPROCESS);
+        String serialized = objectMapper.writeValueAsString(transfer);
 
         DataTransfer deserialized = objectMapper.readValue(serialized, DataTransfer.class);
 

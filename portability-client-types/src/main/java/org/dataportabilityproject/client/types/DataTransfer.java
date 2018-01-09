@@ -9,7 +9,7 @@ import io.swagger.annotations.ApiModelProperty;
  * A transfer operation in the system.
  */
 @ApiModel(description = "A transfer operation in the system")
-public class DataTransfer {
+public class DataTransfer extends AbstractDataTransfer {
 
     @ApiModel
     public enum Status {
@@ -19,7 +19,12 @@ public class DataTransfer {
     private Status status;
 
     @JsonCreator
-    public DataTransfer(@JsonProperty(value = "status", required = true) Status status) {
+    public DataTransfer(
+            @JsonProperty(value = "source", required = true) String source,
+            @JsonProperty(value = "destination", required = true) String destination,
+            @JsonProperty(value = "contentType", required = true) String contentType,
+            @JsonProperty(value = "status", required = true) Status status) {
+        super(source, destination, contentType);
         this.status = status;
     }
 
