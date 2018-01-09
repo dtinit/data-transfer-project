@@ -15,6 +15,7 @@
  */
 
 dependencies {
+    compile project(':portability-client-types')
     compile project(':portability-data-transfer-types')
 
 }
