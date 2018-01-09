@@ -16,7 +16,6 @@
 package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE2;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
