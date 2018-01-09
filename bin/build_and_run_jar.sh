@@ -29,6 +29,10 @@ fi
 BINARY=$1
 ENV=$2
 SRC_DIR="portability-$BINARY"
+DEBUG_PORT=5005
+if [[ $BINARY == "worker" ]]; then
+  DEBUG_PORT=5006
+fi
 
 mvn=$(which mvn)|| { echo "Maven (mvn) not found. Please install it and try again." >&2; exit 1; }
 
@@ -132,7 +136,7 @@ mvn package -pl $SRC_DIR
 
 read -p "Would you like to run the app jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  COMMAND="java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar"
+  COMMAND="java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar"
   echo -e "running $COMMAND"
   $COMMAND
 fi

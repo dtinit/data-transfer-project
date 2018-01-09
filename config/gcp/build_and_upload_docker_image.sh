@@ -44,6 +44,10 @@ BINARY=$1
 ENV=$2
 PROJECT_ID_SUFFIX=$3
 SRC_DIR="portability-$BINARY"
+DEBUG_PORT=5005
+if [[ $BINARY == "worker" ]]; then
+  DEBUG_PORT=5006
+fi
 
 docker=$(which docker)|| { echo "docker not found. Please install it and try again." >&2; exit 1; }
 gcloud=$(which gcloud)|| { echo "gcloud not found. Please install it and try again." >&2; exit 1; }
@@ -76,8 +80,8 @@ FLAG_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
 LOCAL_DEBUG_SETTINGS=""
 OPTIONAL_DEBUG_FLAG=""
 if [[ ${FLAG_ENV} == "LOCAL" ]]; then
-  LOCAL_DEBUG_SETTINGS="EXPOSE 5005/tcp"
-  OPTIONAL_DEBUG_FLAG="\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005\","
+  LOCAL_DEBUG_SETTINGS="EXPOSE $DEBUG_PORT/tcp"
+  OPTIONAL_DEBUG_FLAG="\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT\","
   # Setup for allowing local instance to talk to GCP. This is useful for debugging as well as
   # avoiding the need for a local impl for each service we use.
   if [[ ${FLAG_CLOUD} == "GOOGLE" ]]; then
