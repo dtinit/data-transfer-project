@@ -71,6 +71,7 @@ public class PortabilityJobFactory {
         .setDataType(dataType.name())
         .setExportService(exportService)
         .setImportService(importService)
+        .setSessionKey(sessionKey)
         .build();
   }
 
