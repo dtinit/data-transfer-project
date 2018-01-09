@@ -18,6 +18,7 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.BufferedReader;
@@ -161,7 +162,7 @@ public class PortabilityApiUtils {
     if(PortabilityFlags.encryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils
           .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-      return (null == exportAuthCookie);
+      return (Strings.isNullOrEmpty(exportAuthCookie));
     } else {
       return (null == job.exportAuthData());
     }
