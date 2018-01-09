@@ -16,6 +16,8 @@
 package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
+import static org.dataportabilityproject.webapp.PortabilityApiUtils.COOKIE_ATTRIBUTES;
 import static org.dataportabilityproject.webapp.SetupHandler.Mode.IMPORT;
 
 import com.google.common.base.Preconditions;
@@ -24,6 +26,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -95,7 +98,7 @@ public class SetupHandler implements HttpHandler {
       if (mode == IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
       } else {
-        response = handleCopySetup(exchange.getRequestHeaders(), job);
+        response = handleCopySetup(exchange.getRequestHeaders(), job, exchange.getResponseHeaders());
       }
 
       // Mark the response as type Json and send
@@ -145,20 +148,24 @@ public class SetupHandler implements HttpHandler {
         .add(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl()).build();
   }
 
-  JsonObject handleCopySetup(Headers headers, PortabilityJob job) {
+  JsonObject handleCopySetup(Headers requestHeaders, PortabilityJob job, Headers responseHeaders) {
     Preconditions.checkNotNull(job.importAuthData(), "Import AuthData is required");
     // Make sure the data exists in the cookies before rendering copy page
     if (PortabilityFlags.encryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils
-          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+          .getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
 
       String importAuthCookie = PortabilityApiUtils
-          .getCookie(headers, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
+          .getCookie(requestHeaders, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
     }
+
+    // Valid job is present, generate an XSRF token to pass back via cookie
+    HttpCookie token = new HttpCookie("XSRF-TOKEN","HappyToken123");
+    responseHeaders.add(HEADER_SET_COOKIE, token.toString() + COOKIE_ATTRIBUTES);
 
     return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())
         .add(JsonKeys.EXPORT_SERVICE, job.exportService())

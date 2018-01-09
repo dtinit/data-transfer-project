@@ -25,6 +25,9 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.json.Json;
@@ -38,6 +41,7 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PublicPrivateKeyUtils;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +73,14 @@ public class StartCopyHandler implements HttpHandler {
 
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
+
+    // Validate XSRF token is present in request header. strip out any quotation marks that Angular adds and remove whitespace.
+    String token = exchange.getRequestHeaders().getFirst("X-xsrf-token").replace("\""," ").trim();
+
+    logger.debug("X-xsrf-token = {}", token);
+
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
+    Preconditions.checkArgument(token.equals("HappyToken123"));
 
     if (PortabilityFlags.encryptedFlow()) {
       handleWorkerAssignmentFlow(exchange, jobId);
