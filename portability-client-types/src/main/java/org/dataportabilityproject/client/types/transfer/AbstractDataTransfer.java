@@ -1,4 +1,4 @@
-package org.dataportabilityproject.client.types;
+package org.dataportabilityproject.client.types.transfer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModelProperty;
