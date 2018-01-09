@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Defines the gateway SPI. Extensions use this module to implement custom import/export functionality for the system.
+ */
+package org.dataportabilityproject.spi.gateway;
 
-dependencies {
-
-    compile project(':portability-data-transfer-types')
-
-}
