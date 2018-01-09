@@ -103,7 +103,12 @@ public class ConfigureHandler implements HttpHandler {
           .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
 
       // Lookup job, even if just recently created
-      PortabilityJob job = PortabilityApiUtils.lookupJob(newJob.id(), jobDao);
+      PortabilityJob job;
+      if (PortabilityFlags.encryptedFlow()) {
+        job = PortabilityApiUtils.lookupJobPendingAuthData(newJob.id(), jobDao);
+      }  else {
+        job = PortabilityApiUtils.lookupJob(newJob.id(), jobDao);
+      }
       Preconditions.checkState(job != null, "Job required");
 
       // TODO: Validate job before going further
@@ -127,7 +132,7 @@ public class ConfigureHandler implements HttpHandler {
         PortabilityJob updatedJob = JobUtils
             .setInitialAuthData(job, authFlowInitiator.initialAuthData(),  /*isExport=*/ true);
         if (PortabilityFlags.encryptedFlow()) {
-          jobDao.updatePendingAuthDataJob(job);
+          jobDao.updatePendingAuthDataJob(updatedJob);
         } else {
           jobDao.updateJob(updatedJob);
         }

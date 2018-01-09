@@ -83,7 +83,11 @@ public class WorkerMain {
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       try {
-        if(true) return;
+        if(true) {
+          logger.info("Exiting before copy, job: {}", job);
+          // TODO: Enable worker-based copying
+          return;
+        }
         PortabilityCopier
             .copyDataType(registry, dataType, job.exportService(), job.exportAuthData(),
                 job.importService(), job.importAuthData(), job.id());

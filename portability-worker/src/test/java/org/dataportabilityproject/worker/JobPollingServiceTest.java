@@ -21,6 +21,7 @@ import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.junit.Before;
@@ -90,5 +91,6 @@ public class JobPollingServiceTest {
     job = jobDao.lookupAssignedWithAuthDataJob(job.id());
     assertThat(job.encryptedExportAuthData()).isNotEmpty();
     assertThat(job.encryptedImportAuthData()).isNotEmpty();
+    jobDao.deleteJob(job.id(), JobState.ASSIGNED_WITH_AUTH_DATA);
   }
 }

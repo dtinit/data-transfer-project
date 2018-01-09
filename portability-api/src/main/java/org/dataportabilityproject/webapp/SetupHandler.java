@@ -146,7 +146,6 @@ public class SetupHandler implements HttpHandler {
   }
 
   JsonObject handleCopySetup(Headers headers, PortabilityJob job) {
-    Preconditions.checkNotNull(job.importAuthData(), "Import AuthData is required");
     // Make sure the data exists in the cookies before rendering copy page
     if (PortabilityFlags.encryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils
@@ -158,6 +157,9 @@ public class SetupHandler implements HttpHandler {
           .getCookie(headers, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
+    } else {
+      Preconditions.checkNotNull(job.importAuthData(), "Import AuthData is required");
+
     }
 
     return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())

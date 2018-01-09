@@ -108,9 +108,7 @@ public class Oauth2CallbackHandler implements HttpHandler {
       }
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-      // TODO: Determine import vs export mode
-      // Hack! For now, if we don't have export auth data, assume it's for export.
-      boolean isExport = (null == job.exportAuthData());
+      boolean isExport = PortabilityApiUtils.isExport(job, exchange.getRequestHeaders());
 
       // TODO: Determine service from job or from authUrl path?
       String service = isExport ? job.exportService() : job.importService();
