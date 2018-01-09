@@ -53,7 +53,7 @@ public class PortabilityApiUtils {
    * SameSite=lax specification allows cookies to be sent by the browser on top level GET requests
    * and on requests from within the app.
    */
-  public final static String COOKIE_ATTRIBUTES = "; SameSite=lax";
+  public final static String COOKIE_ATTRIBUTES = "; Path=/; SameSite=lax";
 
   /**
    * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
