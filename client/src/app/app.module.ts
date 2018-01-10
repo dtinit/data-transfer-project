@@ -39,7 +39,10 @@ import { SimpleLoginComponent } from './simplelogin/simplelogin.component';
     BrowserModule,
     FormsModule,
     HttpClientModule,
-    HttpClientXsrfModule,
+    HttpClientXsrfModule.withOptions({
+      cookieName: 'XSRF-TOKEN',
+      headerName: 'X-XSRF-TOKEN',
+    }),
   ],
   providers: [
     BackendService,
