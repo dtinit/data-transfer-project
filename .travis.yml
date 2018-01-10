@@ -1,1 +1,3 @@
 language: java
+notifications:
+    slack: portability:cQLXUZndgp7DcELNUwSkGUBm
