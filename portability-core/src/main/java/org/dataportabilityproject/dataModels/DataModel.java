@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.dataModels;
+package org.dataportabilityproject.dataModels;THIS_SHOULD_BREAK_THE_BUILD
 
 /**
  * Empty interface to signify an item is a Data Model.
