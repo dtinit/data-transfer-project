@@ -51,7 +51,10 @@ configure(sourceProjects()) {
 
     dependencies {
         compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+
         testCompile "junit:junit:${junitVersion}"
+        testCompile project(":portability-test-utilities")
     }
 
     publishing {

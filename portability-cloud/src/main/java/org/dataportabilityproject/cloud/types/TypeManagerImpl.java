@@ -16,6 +16,7 @@
 package org.dataportabilityproject.cloud.types;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dataportabilityproject.spi.cloud.types.TypeManager;
 
 /**
@@ -26,6 +27,7 @@ public class TypeManagerImpl implements TypeManager {
 
     public TypeManagerImpl() {
         objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());   // configure ISO 8601 time de/serialization support
     }
 
     public ObjectMapper getMapper() {
