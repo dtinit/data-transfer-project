@@ -21,6 +21,7 @@ import com.google.common.base.Enums;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -41,14 +42,16 @@ import org.slf4j.LoggerFactory;
 /**
  * HttpHandler for the ListServices service
  */
-public class ListServicesHandler implements HttpHandler {
+final class ListServicesHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
-  public ListServicesHandler(ServiceProviderRegistry serviceProviderRegistry) {
+  @Inject
+  ListServicesHandler(ServiceProviderRegistry serviceProviderRegistry) {
     this.serviceProviderRegistry = serviceProviderRegistry;
   }
 
+  @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/listServices"));

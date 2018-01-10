@@ -17,7 +17,6 @@ package org.dataportabilityproject.shared.auth;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import org.dataportabilityproject.PortabilityFlags;
 
 public final class OnlinePasswordAuthDataGenerator implements OnlineAuthDataGenerator {
 
