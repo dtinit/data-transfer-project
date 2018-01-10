@@ -4,7 +4,7 @@ include ':portability-client-types', ':portability-data-transfer-types'
 
 include ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-worker'
 
-include ':portability-gateway', ':portability-worker-service'
+include ':portability-gateway', ':portability-cloud', ':portability-worker-service'
 
 include ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
 
