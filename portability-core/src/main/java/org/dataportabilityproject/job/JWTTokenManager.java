@@ -23,11 +23,16 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.UnsupportedEncodingException;
+import javax.inject.Inject;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 
 /**
  * Utility methods for token creation and verification.
  */
 public class JWTTokenManager implements TokenManager {
+
+  public static final String JWT_KEY_NAME = "JWT_KEY";
+  public static final String JWT_SECRET_NAME = "JWT_SECRET";
 
   // TODO: determine proper issuer for JWT tokens
   private static final String ISSUER = "dataportabilityproject";
@@ -40,8 +45,7 @@ public class JWTTokenManager implements TokenManager {
   public JWTTokenManager(String secret) {
     this.algorithm = createAlgorithm(secret);
     this.verifier =  createVerifier(secret, ISSUER);
-
-  } /* no-op */
+  }
 
   @Override
   public boolean verifyToken(String token) {

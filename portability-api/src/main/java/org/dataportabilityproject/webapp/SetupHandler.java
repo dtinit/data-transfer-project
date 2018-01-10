@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
  * Common logic for job setup handlers.
  */
 abstract class SetupHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
 
   private final JobDao jobDao;
@@ -59,7 +60,7 @@ abstract class SetupHandler implements HttpHandler {
       JobDao jobDao,
       CommonSettings commonSettings,
       Mode mode,
-      String handlerUrlPath) {
+      String handlerUrlPath, TokenManager tokenManager) {
     this.jobDao = jobDao;
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.commonSettings = commonSettings;
@@ -110,7 +111,7 @@ abstract class SetupHandler implements HttpHandler {
         response = handleCopySetup(exchange.getRequestHeaders(), job);
         // Valid job is present, generate an XSRF token to pass back via cookie
         String tokenStr = tokenManager.createNewToken(jobId);
-        HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN,tokenStr);
+        HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN, tokenStr);
         exchange.getResponseHeaders().add(HEADER_SET_COOKIE, token.toString() + COOKIE_ATTRIBUTES);
       }
 
@@ -161,7 +162,7 @@ abstract class SetupHandler implements HttpHandler {
         .add(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl()).build();
   }
 
-  JsonObject handleCopySetup(Headers headers, PortabilityJob job) {
+  JsonObject handleCopySetup(Headers requestHeaders, PortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils

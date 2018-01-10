@@ -19,17 +19,22 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
-/** {@link HttpHandler} that handles starting a import job. */
+/**
+ * {@link HttpHandler} that handles starting a import job.
+ */
 final class ImportSetupHandler extends SetupHandler {
+
   static final String PATH = "/_/importSetup";
 
   @Inject
   ImportSetupHandler(
       ServiceProviderRegistry serviceProviderRegistry,
       JobDao jobDao,
-      CommonSettings commonSettings) {
-    super(serviceProviderRegistry, jobDao, commonSettings, Mode.IMPORT, PATH);
+      CommonSettings commonSettings,
+      TokenManager tokenManager) {
+    super(serviceProviderRegistry, jobDao, commonSettings, Mode.IMPORT, PATH, tokenManager);
   }
 }
