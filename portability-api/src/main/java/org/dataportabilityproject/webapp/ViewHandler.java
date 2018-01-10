@@ -31,6 +31,7 @@ public class ViewHandler implements HttpHandler {
 
   private final String INDEX = "static/index.html";
 
+  @Override
   public void handle(HttpExchange exchange) throws IOException {
     logger.debug("Got request {}", exchange.getRequestURI().toString());
     InputStream index_stream = getClass().getClassLoader().getResourceAsStream(INDEX);

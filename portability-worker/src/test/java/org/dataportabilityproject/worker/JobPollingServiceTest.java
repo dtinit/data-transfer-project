@@ -17,9 +17,9 @@ package org.dataportabilityproject.worker;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.dataportabilityproject.cloud.CloudFactoryFactory;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
@@ -32,24 +32,23 @@ public class JobPollingServiceTest {
 
   private JobDao jobDao;
   private JobPollingService jobPollingService;
+  private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
   @Before
   public void setUp()  throws Exception {
-    PersistentKeyValueStore persistentKeyValueStore = CloudFactoryFactory
-        .getCloudFactory(SupportedCloud.LOCAL)
-        .getPersistentKeyValueStore();
+    PersistentKeyValueStore persistentKeyValueStore = new InMemoryPersistentKeyValueStore();
     jobDao = new JobDao(persistentKeyValueStore);
-    jobPollingService = new JobPollingService(jobDao);
+    jobPollingService = new JobPollingService(jobDao, metadata);
   }
 
   @Test
   public void pollingLifeCycle() throws Exception {
     // Initial state
-    assertThat(WorkerJobMetadata.getInstance().isInitialized()).isFalse();
+    assertThat(metadata.isInitialized()).isFalse();
 
     // Run once with no data in the database
     jobPollingService.runOneIteration();
-    assertThat(WorkerJobMetadata.getInstance().isInitialized()).isFalse();
+    assertThat(metadata.isInitialized()).isFalse();
     PortabilityJob job = jobDao.findExistingJob(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
@@ -74,8 +73,8 @@ public class JobPollingServiceTest {
 
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
-    assertThat(WorkerJobMetadata.getInstance().isInitialized()).isTrue();
-    assertThat(WorkerJobMetadata.getInstance().getJobId()).isEqualTo(TEST_ID);
+    assertThat(metadata.isInitialized()).isTrue();
+    assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
     job = jobDao.lookupAssignedWithoutAuthDataJob(TEST_ID);
 
     // Verify assigned without auth data state

@@ -18,10 +18,12 @@ package org.dataportabilityproject.job;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Map;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 /**
@@ -50,8 +52,14 @@ public class JobDao {
 
   private final PersistentKeyValueStore storage;
 
-  public JobDao(PersistentKeyValueStore storage) {
-    this.storage = storage;
+  @Inject
+  public JobDao(CloudFactory cloudFactory) {
+    this.storage = cloudFactory.getPersistentKeyValueStore();
+  }
+
+  @VisibleForTesting
+  public JobDao(PersistentKeyValueStore persistentKeyValueStore) {
+    this.storage = persistentKeyValueStore;
   }
 
   // INDEX LOOKUP METHODS

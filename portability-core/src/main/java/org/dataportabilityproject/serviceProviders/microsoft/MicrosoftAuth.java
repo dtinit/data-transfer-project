@@ -29,7 +29,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.List;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthData;
