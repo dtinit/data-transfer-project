@@ -26,9 +26,6 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.json.Json;
@@ -48,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class StartCopyHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -84,8 +82,12 @@ final class StartCopyHandler implements HttpHandler {
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
 
-    // Validate XSRF token is present in request header. strip out any quotation marks that Angular adds and remove whitespace.
-    String token = exchange.getRequestHeaders().getFirst(JsonKeys.XSRF_HEADER).replace("\""," ").trim();
+    // Validate XSRF token is present in request header. The cookie value might be surrounded by
+    // double quotes which causes the angular cli to also surround the header with double quotes.
+    // Since the value itself may not contain quotes or whitespace, trim off the double quotes by
+    // converting them to whitespace.
+    String token = exchange.getRequestHeaders().getFirst(JsonKeys.XSRF_HEADER).replace("\"", " ")
+        .trim();
     Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
     Preconditions.checkArgument(tokenManager.verifyToken(token));
 
@@ -97,8 +99,8 @@ final class StartCopyHandler implements HttpHandler {
   }
 
   /**
-   * Handles flow for assigning a worker instance, encrypting data with the assigned worker key,
-   * and persisting the auth data, which will result in the worker starting the copy.
+   * Handles flow for assigning a worker instance, encrypting data with the assigned worker key, and
+   * persisting the auth data, which will result in the worker starting the copy.
    */
   private void handleWorkerAssignmentFlow(HttpExchange exchange, String id)
       throws IOException {
@@ -140,10 +142,10 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
-    while(jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
+    while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
       try {
         Sleeper.DEFAULT.sleep(5000);
-      } catch (InterruptedException e)  {
+      } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
@@ -152,7 +154,8 @@ final class StartCopyHandler implements HttpHandler {
     PortabilityJob assignedJob = jobDao.lookupAssignedWithoutAuthDataJob(job.id());
     Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
-    PublicKey publicKey = PublicPrivateKeyUtils.parsePublicKey(assignedJob.workerInstancePublicKey());
+    PublicKey publicKey = PublicPrivateKeyUtils
+        .parsePublicKey(assignedJob.workerInstancePublicKey());
     jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(),
         cryptoHelper.encryptAuthData(publicKey, exportAuthCookie),
         cryptoHelper.encryptAuthData(publicKey, importAuthCookie));
@@ -160,7 +163,9 @@ final class StartCopyHandler implements HttpHandler {
     writeResponse(exchange);
   }
 
-  /** Validates job information, starts the copy job inline, and returns status to the client. */
+  /**
+   * Validates job information, starts the copy job inline, and returns status to the client.
+   */
   private void handleStartCopyInApi(HttpExchange exchange, String id) throws IOException {
     // Lookup job
     PortabilityJob job = PortabilityApiUtils.lookupJob(id, jobDao);
@@ -195,7 +200,9 @@ final class StartCopyHandler implements HttpHandler {
     writeResponse(exchange);
   }
 
-  /** Write a response with status to the client. */
+  /**
+   * Write a response with status to the client.
+   */
   private void writeResponse(HttpExchange exchange) throws IOException {
     JsonObject response = Json.createObjectBuilder().add("status", "started").build();
 
