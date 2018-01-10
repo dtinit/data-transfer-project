@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Server that handles requests to API/web server. */
 final class ApiServer {
   private final Logger logger = LoggerFactory.getLogger(ApiServer.class);
 

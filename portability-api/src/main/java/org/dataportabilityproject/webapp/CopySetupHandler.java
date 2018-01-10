@@ -16,10 +16,12 @@
 package org.dataportabilityproject.webapp;
 
 import com.google.inject.Inject;
+import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
+/** {@link HttpHandler} that handles starting a copy job. */
 final class CopySetupHandler extends SetupHandler {
   static final String PATH = "/_/copySetup";
 

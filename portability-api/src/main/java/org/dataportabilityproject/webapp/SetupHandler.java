@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for ImportSetup service
+ * Common logic for job setup handlers.
  */
 abstract class SetupHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
