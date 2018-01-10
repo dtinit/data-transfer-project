@@ -15,10 +15,10 @@
  */
 package org.dataportabilityproject.datatransfer.types.models;
 
-import org.dataportabilityproject.datatransfer.types.PortableType;
+import org.dataportabilityproject.datatransfer.types.EntityType;
 
 /**
  * The base data model type.
  */
-public abstract class DataModel extends PortableType {
+public abstract class DataModel extends EntityType {
 }
