@@ -34,15 +34,17 @@ import org.dataportabilityproject.job.PortabilityJob;
  */
 class JobPollingService extends AbstractScheduledService {
   private final JobDao jobDao;
+  private final WorkerJobMetadata jobMetadata;
 
   @Inject
-  JobPollingService(JobDao jobDao) {
+  JobPollingService(JobDao jobDao, WorkerJobMetadata jobMetadata) {
     this.jobDao = jobDao;
+    this.jobMetadata = jobMetadata;
   }
 
   @Override
   protected void runOneIteration() throws Exception {
-    if (WorkerJobMetadata.getInstance().isInitialized()) {
+    if (jobMetadata.isInitialized()) {
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this worker instance.
@@ -66,12 +68,12 @@ class JobPollingService extends AbstractScheduledService {
     if (id != null) {
       PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
       Preconditions.checkNotNull(job);
-      Preconditions.checkState(!WorkerJobMetadata.getInstance().isInitialized());
-      WorkerJobMetadata.getInstance().init(id);
+      Preconditions.checkState(!jobMetadata.isInitialized());
+      jobMetadata.init(id);
 
-      PublicKey publicKey = WorkerJobMetadata.getInstance().getKeyPair().getPublic();
+      PublicKey publicKey = jobMetadata.getKeyPair().getPublic();
       // TODO: Move storage of private key to a different location
-      PrivateKey privateKey = WorkerJobMetadata.getInstance().getKeyPair().getPrivate();
+      PrivateKey privateKey = jobMetadata.getKeyPair().getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
       jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
     }
@@ -82,7 +84,7 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollUntilJobIsReady() {
     PortabilityJob job = jobDao
-        .lookupAssignedWithAuthDataJob(WorkerJobMetadata.getInstance().getJobId());
+        .lookupAssignedWithAuthDataJob(jobMetadata.getJobId());
     Preconditions.checkNotNull(job);
     // Validate job has auth data
     if ((job.exportAuthData() != null) && (job.importAuthData() != null)) {

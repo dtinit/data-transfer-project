@@ -33,17 +33,20 @@ final class WorkerImpl {
   private final JobPollingService jobPollingService;
   private final JobDao jobDao;
   private final ServiceProviderRegistry registry;
+  private final WorkerJobMetadata workerJobMetadata;
 
   @Inject
   WorkerImpl(
       CloudFactory cloudFactory,
       JobDao jobDao,
       JobPollingService jobPollingService,
-      ServiceProviderRegistry registry) {
+      ServiceProviderRegistry registry,
+      WorkerJobMetadata workerJobMetadata) {
     this.cloudFactory = cloudFactory;
     this.jobPollingService = jobPollingService;
     this.jobDao = jobDao;
     this.registry = registry;
+    this.workerJobMetadata = workerJobMetadata;
   }
 
   void processJob() {
@@ -58,7 +61,7 @@ final class WorkerImpl {
     // name in the DAO.
 
     processJob(job);
-    logger.info("Successfully processed jobId: {}", WorkerJobMetadata.getInstance().getJobId());
+    logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
   }
 
   private void pollForJob() {
@@ -67,8 +70,8 @@ final class WorkerImpl {
   }
 
   private PortabilityJob getJob(JobDao jobDao) {
-    logger.debug("Begin processing jobId: {}", WorkerJobMetadata.getInstance().getJobId());
-    String jobId = WorkerJobMetadata.getInstance().getJobId();
+    logger.debug("Begin processing jobId: {}", workerJobMetadata.getJobId());
+    String jobId = workerJobMetadata.getJobId();
     PortabilityJob job = jobDao.findExistingJob(jobId);
     Preconditions.checkNotNull(job, "Job not found, id: %s");
     return job;
@@ -84,7 +87,7 @@ final class WorkerImpl {
             .copyDataType(registry, dataType, job.exportService(), job.exportAuthData(),
                 job.importService(), job.importAuthData(), job.id());
       } catch (IOException e) {
-        System.err.println("Error processing jobId: " + WorkerJobMetadata.getInstance().getJobId()
+        System.err.println("Error processing jobId: " + workerJobMetadata.getJobId()
             + ", error: " + e.getMessage());
         e.printStackTrace();
 
