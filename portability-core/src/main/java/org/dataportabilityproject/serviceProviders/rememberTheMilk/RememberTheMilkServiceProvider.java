@@ -16,11 +16,13 @@
 package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -30,12 +32,13 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 /**
  * The {@link ServiceProvider} for the Remember the Milk service (https://www.rememberthemilk.com/).
  */
-public final class RememberTheMilkServiceProvider implements ServiceProvider {
+final class RememberTheMilkServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
     private final RememberTheMilkAuth rememberTheMilkAuth;
 
-    public RememberTheMilkServiceProvider() throws IOException {
-        this.appCredentials = AppCredentials.lookupAndCreate("RTM_KEY", "RTM_SECRET");
+    @Inject
+    RememberTheMilkServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
+        this.appCredentials = appCredentialFactory.lookupAndCreate("RTM_KEY", "RTM_SECRET");
         this.rememberTheMilkAuth = new RememberTheMilkAuth(
             new RememberTheMilkSignatureGenerator(
             appCredentials,

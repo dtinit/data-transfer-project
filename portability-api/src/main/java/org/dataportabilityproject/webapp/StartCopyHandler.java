@@ -20,6 +20,7 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 import com.google.api.client.util.Sleeper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -34,7 +35,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.PortabilityCopier;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobDao;
@@ -43,27 +43,35 @@ import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PublicPrivateKeyUtils;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StartCopyHandler implements HttpHandler {
+final class StartCopyHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final CloudFactory cloudFactory;
   private final CryptoHelper cryptoHelper;
+  private final CommonSettings commonSettings;
   private final TokenManager tokenManager;
 
-  public StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
-      CloudFactory cloudFactory, CryptoHelper cryptoHelper, TokenManager tokenManager) {
+  @Inject
+  StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
+      CloudFactory cloudFactory,
+      CryptoHelper cryptoHelper,
+      CommonSettings commonSettings,
+      TokenManager tokenManager) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobDao = jobDao;
     this.cloudFactory = cloudFactory;
     this.cryptoHelper = cryptoHelper;
+    this.commonSettings = commonSettings;
     this.tokenManager = tokenManager;
   }
 
+  @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
@@ -81,7 +89,7 @@ public class StartCopyHandler implements HttpHandler {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
     Preconditions.checkArgument(tokenManager.verifyToken(token));
 
-    if (PortabilityFlags.encryptedFlow()) {
+    if (commonSettings.getEncryptedFlow()) {
       handleWorkerAssignmentFlow(exchange, jobId);
     } else {
       handleStartCopyInApi(exchange, jobId);

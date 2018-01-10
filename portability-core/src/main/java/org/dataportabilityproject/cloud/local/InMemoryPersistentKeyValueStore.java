@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 /** In-memory implementation of backend storage. */
-final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
+public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
   public InMemoryPersistentKeyValueStore() {

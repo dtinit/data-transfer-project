@@ -18,6 +18,7 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.BufferedReader;
@@ -33,10 +34,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 import org.slf4j.Logger;
@@ -61,9 +60,9 @@ public class PortabilityApiUtils {
    * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
    * way to do this from the HttpExchange.
    */
-  public static String createURL(String host, String URI) {
+  public static String createURL(String host, String URI, boolean useHttps) {
     // http is only allowed if this is running a local instance, enforce https instead.
-    String scheme = PortabilityFlags.environment() == Environment.LOCAL ? "http://" : "https://";
+    String scheme = useHttps ? "https://" : "http://";
 
     logger.debug("createURL, scheme: {}, host: {}, URI: {}", scheme, host, URI);
     return scheme + host + URI;
@@ -154,6 +153,17 @@ public class PortabilityApiUtils {
     PortabilityJob job = jobDao.findExistingJob(id);
     Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
     return job;
+  }
+
+  /** Hack! For now, if we don't have export auth data, assume it's for export. */
+  public static boolean isExport(PortabilityJob job, Headers headers, boolean useEncryptedFlow) {
+    if(useEncryptedFlow) {
+      String exportAuthCookie = PortabilityApiUtils
+          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      return (Strings.isNullOrEmpty(exportAuthCookie));
+    } else {
+      return (null == job.exportAuthData());
+    }
   }
 
   /**

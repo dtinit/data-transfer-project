@@ -25,20 +25,19 @@ import com.google.api.services.cloudkms.v1.CloudKMSScopes;
 import com.google.api.services.cloudkms.v1.model.DecryptRequest;
 import com.google.api.services.cloudkms.v1.model.DecryptResponse;
 import java.io.IOException;
-import org.dataportabilityproject.cloud.google.GoogleCloudFactory.CredentialsException;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 
 final class GoogleCryptoKeyManagementSystem implements CryptoKeyManagementSystem {
   private CloudKMS cloudKMS;
 
-  GoogleCryptoKeyManagementSystem() throws CredentialsException {
+  GoogleCryptoKeyManagementSystem() throws GoogleCredentialException {
     HttpTransport transport = new NetHttpTransport();
     JsonFactory jsonFactory = new JacksonFactory();
     GoogleCredential credential;
     try {
       credential = GoogleCredential.getApplicationDefault(transport, jsonFactory);
     } catch (IOException e) {
-      throw new CredentialsException(
+      throw new GoogleCredentialException(
           "Problem obtaining credentials via GoogleCredential.getApplicationDefault()");
     }
     if (credential.createScopedRequired()) {

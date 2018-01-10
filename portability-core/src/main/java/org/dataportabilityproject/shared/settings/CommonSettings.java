@@ -20,6 +20,7 @@ import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -79,5 +80,15 @@ public class CommonSettings {
 
   public Boolean getEncryptedFlow() {
     return encryptedFlow != null ? encryptedFlow : false;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("env", env)
+        .add("cloud", cloud)
+        .add("encryptedFlow", encryptedFlow)
+        .add("serviceProviderClasses", serviceProviderClasses)
+        .toString();
   }
 }

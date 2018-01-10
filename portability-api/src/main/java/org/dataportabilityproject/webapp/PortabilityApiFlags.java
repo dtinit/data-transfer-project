@@ -21,11 +21,14 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import org.dataportabilityproject.shared.settings.ApiSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A class that contains all flags exlusive to the API server.
  */
 public class PortabilityApiFlags {
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityApiFlags.class);
   private static PortabilityApiFlags INSTANCE = null;
   private final ApiSettings apiSettings;
 
@@ -47,6 +50,7 @@ public class PortabilityApiFlags {
           PortabilityApiFlags.class.getClassLoader().getResourceAsStream("settings/api.yaml");
       ApiSettings apiSettings = mapper.readValue(in, ApiSettings.class);
       INSTANCE = new PortabilityApiFlags(apiSettings);
+      logger.debug("Parsed flags: {}", apiSettings);
     } catch (IOException e) {
       throw new IllegalArgumentException("Problem parsing api settings", e);
     }

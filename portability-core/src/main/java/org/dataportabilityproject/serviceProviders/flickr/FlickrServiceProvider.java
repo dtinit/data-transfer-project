@@ -17,11 +17,13 @@ package org.dataportabilityproject.serviceProviders.flickr;
 
 import com.flickr4java.flickr.auth.Auth;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
@@ -32,12 +34,13 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 /**
  * The {@link ServiceProvider} for the Flickr service (http://www.flickr.com/).
  */
-public final class FlickrServiceProvider implements ServiceProvider {
+final class FlickrServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
     private final FlickrAuth flickrAuth;
 
-    public FlickrServiceProvider() {
-        this.appCredentials = AppCredentials.lookupAndCreate("FLICKR_KEY", "FLICKR_SECRET");
+    @Inject
+    FlickrServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
+        this.appCredentials = appCredentialFactory.lookupAndCreate("FLICKR_KEY", "FLICKR_SECRET");
         this.flickrAuth = new FlickrAuth(appCredentials);
     }
 
