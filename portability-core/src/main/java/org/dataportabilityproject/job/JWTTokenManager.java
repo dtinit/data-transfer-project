@@ -23,8 +23,11 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.UnsupportedEncodingException;
+import java.util.Date;
 import javax.inject.Inject;
 import org.dataportabilityproject.shared.AppCredentialFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for token creation and verification.
@@ -38,9 +41,11 @@ public class JWTTokenManager implements TokenManager {
   private static final String ISSUER = "dataportabilityproject";
   // Key for the portability id stored as a private 'claim' in the JWT
   private static final String ID_CLAIM_KEY = "portability-id";
+  private static final int EXPIRATION_TIME_MILLIS = 1000 * 60; // 1 minute expiration
 
   private final Algorithm algorithm;
   private JWTVerifier verifier;
+  private final Logger logger = LoggerFactory.getLogger(JWTTokenManager.class);
 
   public JWTTokenManager(String secret) {
     this.algorithm = createAlgorithm(secret);
@@ -53,7 +58,8 @@ public class JWTTokenManager implements TokenManager {
       DecodedJWT jwt = verifier.verify(token);
       return true;
     } catch (JWTVerificationException exception) {
-      System.out.println("Error verifying token: " + token);
+      logger.debug("Error verifying token: {}", exception);
+      logger.debug("Token: {}", token);
       return false;
     }
   }
@@ -69,6 +75,7 @@ public class JWTTokenManager implements TokenManager {
       }
       return claim.isNull() ? null : claim.asString();
     } catch (JWTVerificationException exception) {
+
       throw new RuntimeException("Error verifying token: " + token);
     }
   }
@@ -78,7 +85,7 @@ public class JWTTokenManager implements TokenManager {
     try {
       return JWT.create()
           .withIssuer(JWTTokenManager.ISSUER)
-          .withClaim(JWTTokenManager.ID_CLAIM_KEY, uuid)
+          .withClaim(JWTTokenManager.ID_CLAIM_KEY, uuid).withExpiresAt(new Date(System.currentTimeMillis()+EXPIRATION_TIME_MILLIS))
           .sign(algorithm);
     } catch (JWTCreationException e) {
       throw new RuntimeException("Error creating token for: " + uuid);

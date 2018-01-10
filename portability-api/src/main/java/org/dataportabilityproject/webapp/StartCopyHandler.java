@@ -21,6 +21,7 @@ import com.google.api.client.util.Sleeper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -74,8 +75,21 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
 
+    String jobId = validateJobId(exchange.getRequestHeaders());
+
+    if (commonSettings.getEncryptedFlow()) {
+      handleWorkerAssignmentFlow(exchange, jobId);
+    } else {
+      handleStartCopyInApi(exchange, jobId);
+    }
+  }
+
+  /**
+   * Validates that the request coming is for a valid job and contains the correct xsrf header
+   */
+  private String validateJobId(Headers requestHeaders) {
     String encodedIdCookie = PortabilityApiUtils
-        .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
+        .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
@@ -86,16 +100,26 @@ final class StartCopyHandler implements HttpHandler {
     // double quotes which causes the angular cli to also surround the header with double quotes.
     // Since the value itself may not contain quotes or whitespace, trim off the double quotes by
     // converting them to whitespace.
-    String token = exchange.getRequestHeaders().getFirst(JsonKeys.XSRF_HEADER).replace("\"", " ")
+    String tokenHeader = requestHeaders.getFirst(JsonKeys.XSRF_HEADER)
+        .replace("\"", " ")
         .trim();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
-    Preconditions.checkArgument(tokenManager.verifyToken(token));
+    String tokenCookie = PortabilityApiUtils
+        .getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
 
-    if (commonSettings.getEncryptedFlow()) {
-      handleWorkerAssignmentFlow(exchange, jobId);
-    } else {
-      handleStartCopyInApi(exchange, jobId);
-    }
+    // Both header and token should be present
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenHeader));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenCookie));
+
+    // The token present in the header should be the same as the token present in the cookie.
+    Preconditions.checkArgument(tokenCookie.equals(tokenHeader));
+
+    // Verify that the token is actually valid in the tokenManager
+    Preconditions.checkArgument(tokenManager.verifyToken(tokenHeader));
+
+    // finally make sure the jobId present in the token is also equal to the jobId present in the cookie
+    String jobIdFromToken = tokenManager.getData(tokenHeader);
+    Preconditions.checkArgument(jobId.equals(jobIdFromToken));
+    return jobId;
   }
 
   /**
