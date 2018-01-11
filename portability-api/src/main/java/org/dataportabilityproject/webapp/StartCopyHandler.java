@@ -157,6 +157,7 @@ final class StartCopyHandler implements HttpHandler {
     logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
 
     jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
+
     logger.debug("Updated updateJobStateToAssigneWithAuthData, id: {}", job.id());
 
     writeResponse(exchange);
