@@ -15,12 +15,15 @@
  */
 package org.dataportabilityproject.cloud.local;
 
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.concurrent.ExecutionException;
+import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
@@ -46,8 +49,14 @@ public class LocalCloudFactory implements CloudFactory {
         }
       });
 
+  // DATASTORE EMULATOR
+  private static final Datastore datastore = DatastoreOptions.newBuilder()
+      .setHost("http://localhost:8081")
+      .setProjectId("local"/*getGoogleProjectId()*/)
+      .build()
+      .getService();
   private static final Supplier<PersistentKeyValueStore> KEY_VALUE_SUPPLIER =
-      Suppliers.memoize(InMemoryPersistentKeyValueStore::new);
+      Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore));
 
   @Override
   public JobDataCache getJobDataCache(String jobId, String service) {

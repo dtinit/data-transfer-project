@@ -32,7 +32,7 @@ public interface PersistentKeyValueStore {
   /** Retrieve data with the given {@code key} or null if not found. */
   Map<String, Object> get(String key);
 
-  /** Retrieve the first key that begins with the given {@code prefix} */
+  /** Retrieve the first key that begins with the given {@code prefix} or null if none found. */
   String getFirst(String prefix);
 
   /** Deletes entry with the given {@code key}*/

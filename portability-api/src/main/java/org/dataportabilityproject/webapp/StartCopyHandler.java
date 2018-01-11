@@ -123,6 +123,7 @@ final class StartCopyHandler implements HttpHandler {
     // We have the data, now update it unassigned so it can be assigned a worker
     // Set Job to state to pending worker assignment
     jobDao.updateJobStateToPendingWorkerAssignment(job.id()); // Now that job is complete unassiged
+    logger.debug("Updated updateJobStateToPendingWorkerAssignment, id: {}", job.id());
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
     // the worker instance key will be populated
@@ -130,6 +131,7 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
     while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
+      logger.debug("Found null lookupAssignedWithoutAuthDataJob, id: {}", job.id());
       try {
         Sleeper.DEFAULT.sleep(5000);
       } catch (InterruptedException e) {
@@ -146,6 +148,7 @@ final class StartCopyHandler implements HttpHandler {
     jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(),
         cryptoHelper.encryptAuthData(publicKey, exportAuthCookie),
         cryptoHelper.encryptAuthData(publicKey, importAuthCookie));
+    logger.debug("Updated updateJobStateToAssigneWithAuthData, id: {}", job.id());
 
     writeResponse(exchange);
   }
