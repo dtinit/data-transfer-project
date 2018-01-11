@@ -24,6 +24,8 @@ import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A service that polls storage for a job to process in two steps:
@@ -33,6 +35,7 @@ import org.dataportabilityproject.job.PortabilityJob;
  *   (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
+  private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
   private final JobDao jobDao;
   private final WorkerJobMetadata jobMetadata;
 
@@ -65,6 +68,7 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollForUnassignedJob() throws IOException {
     String id = jobDao.findNextJobPendingWorkerAssignment();
+    logger.debug("Polled pollForUnassignedJob, found id: {}", id);
     if (id != null) {
       PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
       Preconditions.checkNotNull(job);
@@ -85,11 +89,16 @@ class JobPollingService extends AbstractScheduledService {
   private void pollUntilJobIsReady() {
     PortabilityJob job = jobDao
         .lookupAssignedWithAuthDataJob(jobMetadata.getJobId());
+    logger.debug("Polled lookupAssignedWithAuthDataJob, found id: {}", job.id());
+
     Preconditions.checkNotNull(job);
     // Validate job has auth data
     if ((job.exportAuthData() != null) && (job.importAuthData() != null)) {
+      logger.debug("Polled lookupAssignedWithAuthDataJob, found auth data, id: {}", job.id());
       // Stop polling now that we have all the data ready to start the job
       this.stopAsync();
+    } else {
+      logger.debug("Polled lookupAssignedWithAuthDataJob, no auth data found, id: {}", job.id());
     }
   }
 }
