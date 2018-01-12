@@ -30,6 +30,7 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for SimpleLoginSubmit Controller.
  */
 final class SimpleLoginSubmitHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -70,16 +72,18 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     PortabilityJob job;
     if (commonSettings.getEncryptedFlow()) {
       job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
-    }  else {
+    } else {
       job = PortabilityApiUtils.lookupJob(jobId, jobDao);
     }
     Preconditions.checkState(null != job, "existingJob not found for job id: %s", jobId);
 
-    boolean isExport = PortabilityApiUtils.isExport(
+    ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
         job, exchange.getRequestHeaders(), commonSettings.getEncryptedFlow());
-    String service = isExport ? job.exportService() : job.importService();
+
+    String service =
+        (serviceMode == ServiceMode.EXPORT) ? job.exportService() : job.importService();
     Preconditions.checkState(!Strings.isNullOrEmpty(service),
-        "service not found, service: %s isExport: %b, job id: %s", service, isExport, jobId);
+        "service not found, service: %s serviceMode: %s, job id: %s", service, serviceMode, jobId);
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
@@ -104,18 +108,19 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     if (!commonSettings.getEncryptedFlow()) {
       // Update the job
-      PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
+      PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
       jobDao.updateJob(updatedJob);
     }
 
-    String redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
+    String redirect =
+        PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT ? "/next" : "/copy");
 
     // Set new cookie and redirect to the next page
     logger.debug("simpleLoginSubmit, redirecting to: {}", redirect);
     Headers responseHeaders = exchange.getResponseHeaders();
 
-    if(commonSettings.getEncryptedFlow()) {
-      cryptoHelper.encryptAndSetCookie(responseHeaders, job.id(), isExport, authData);
+    if (commonSettings.getEncryptedFlow()) {
+      cryptoHelper.encryptAndSetCookie(responseHeaders, job.id(), serviceMode, authData);
     }
     responseHeaders.set(HEADER_LOCATION, redirect);
     exchange.sendResponseHeaders(303, -1);

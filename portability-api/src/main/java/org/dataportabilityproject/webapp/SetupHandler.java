@@ -32,6 +32,7 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
  * Common logic for job setup handlers.
  */
 abstract class SetupHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
 
   private final JobDao jobDao;
@@ -136,9 +138,9 @@ abstract class SetupHandler implements HttpHandler {
     // This is done in ConfigureHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
       // Auth data is different for import and export. This is only valid for the /_/importSetup page,
-      // so isExport is set to false.
+      // so serviceMode is IMPORT
       PortabilityJob updatedJob = JobUtils
-          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), /*isExport=*/false);
+          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
       if (commonSettings.getEncryptedFlow()) {
         jobDao.updatePendingAuthDataJob(job);
       } else {

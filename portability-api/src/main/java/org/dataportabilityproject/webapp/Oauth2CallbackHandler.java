@@ -34,6 +34,7 @@ import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for callbacks from Oauth2 authorization flow.
  */
 final class Oauth2CallbackHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -113,26 +115,27 @@ final class Oauth2CallbackHandler implements HttpHandler {
       PortabilityJob job;
       if (commonSettings.getEncryptedFlow()) {
         job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
-      }  else {
+      } else {
         job = PortabilityApiUtils.lookupJob(jobId, jobDao);
       }
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-      boolean isExport = PortabilityApiUtils.isExport(
+      ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
           job,
           exchange.getRequestHeaders(),
           commonSettings.getEncryptedFlow());
 
       // TODO: Determine service from job or from authUrl path?
-      String service = isExport ? job.exportService() : job.importService();
+      String service =
+          serviceMode == ServiceMode.EXPORT ? job.exportService() : job.importService();
       Preconditions.checkState(!Strings.isNullOrEmpty(service),
-          "service not found, service: %s isExport: %b, jobId: %s", service, isExport, jobId);
+          "service not found, service: %s serviceMode: %s, jobId: %s", service, serviceMode, jobId);
 
       // Obtain the ServiceProvider from the registry
       OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
 
       // Retrieve initial auth data, if it existed
-      AuthData initialAuthData = JobUtils.getInitialAuthData(job, isExport);
+      AuthData initialAuthData = JobUtils.getInitialAuthData(job, serviceMode);
 
       // Generate and store auth data
       AuthData authData = generator
@@ -143,16 +146,16 @@ final class Oauth2CallbackHandler implements HttpHandler {
       // The data will be passed thru to the server via the cookie.
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
-        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, isExport);
+        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
         jobDao.updateJob(updatedJob);
       } else {
         // Set new cookie
-        cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), isExport, authData);
+        cryptoHelper
+            .encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), serviceMode, authData);
       }
 
-
-
-      redirect = PortabilityApiFlags.baseUrl() + (isExport ? "/next" : "/copy");
+      redirect =
+          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT) ? "/next" : "/copy");
     } catch (Exception e) {
       logger.error("Error handling request: {}", e);
       throw e;
