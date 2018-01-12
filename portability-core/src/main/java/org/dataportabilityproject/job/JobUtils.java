@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,32 +43,49 @@ public final class JobUtils {
     return BaseEncoding.base64Url().encode(job.id().getBytes(Charsets.UTF_8));
   }
 
-  /* Returns the initial auth data for export or import determined by the {@code isExport} param. */
-  public static AuthData getInitialAuthData(PortabilityJob job, boolean isExport) {
-    return isExport ? job.exportInitialAuthData() : job.importInitialAuthData();
+  /* Returns the initial auth data for export or import determined by the {@code serviceMode} param. */
+  public static AuthData getInitialAuthData(PortabilityJob job, ServiceMode serviceMode) {
+    switch (serviceMode) {
+      case EXPORT:
+        return job.exportInitialAuthData();
+      case IMPORT:
+        return job.importInitialAuthData();
+      default:
+        throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
+    }
   }
 
   /* Sets the service in the correct field of the PortabilityJob */
   public static PortabilityJob setAuthData(PortabilityJob job, AuthData authData,
-      boolean isExportService) {
+      ServiceMode serviceMode) {
     PortabilityJob.Builder updatedJob = job.toBuilder();
-    if (isExportService) {
-      updatedJob.setExportAuthData(authData);
-    } else {
-      updatedJob.setImportAuthData(authData);
+    switch (serviceMode) {
+      case EXPORT:
+        updatedJob.setExportAuthData(authData);
+        break;
+      case IMPORT:
+        updatedJob.setImportAuthData(authData);
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
     }
     return updatedJob.build();
   }
 
   /* Sets the service in the correct field of the PortabilityJob */
   public static PortabilityJob setInitialAuthData(PortabilityJob job, AuthData initialAuthData,
-      boolean isExport) {
-    logger.debug("Setting initialAuthData: {}, isExport:  {}", initialAuthData, isExport);
+      ServiceMode serviceMode) {
+    logger.debug("Setting initialAuthData: {}, serviceMode: {}", initialAuthData, serviceMode);
     PortabilityJob.Builder updatedJob = job.toBuilder();
-    if (isExport) {
-      updatedJob.setExportInitialAuthData(initialAuthData);
-    } else {
-      updatedJob.setImportInitialAuthData(initialAuthData);
+    switch (serviceMode) {
+      case EXPORT:
+        updatedJob.setExportInitialAuthData(initialAuthData);
+        break;
+      case IMPORT:
+        updatedJob.setImportInitialAuthData(initialAuthData);
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
     }
     return updatedJob.build();
   }
@@ -85,7 +103,7 @@ public final class JobUtils {
   /**
    * Determines whether the current service is a valid service
    */
-  public static boolean isValidService(String serviceName, boolean isExport) {
+  public static boolean isValidService(String serviceName, ServiceMode serviceMode) {
     if (!Strings.isNullOrEmpty(serviceName)) {
       // TODO: Use service registry to validate the service is valid for import or export
       return true;

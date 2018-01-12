@@ -36,6 +36,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 import org.slf4j.Logger;
@@ -45,7 +46,6 @@ import org.slf4j.LoggerFactory;
  * Contains utility functions for use by the PortabilityServer HttpHandlers
  */
 public class PortabilityApiUtils {
-  private static final Logger logger = LoggerFactory.getLogger(PortabilityApiUtils.class);
 
   /**
    * Attributes to attach to all cookies set by the API - Since HttpCookie doesnt support adding
@@ -55,6 +55,7 @@ public class PortabilityApiUtils {
    * and on requests from within the app.
    */
   public final static String COOKIE_ATTRIBUTES = "; Path=/; SameSite=lax";
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityApiUtils.class);
 
   /**
    * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
@@ -155,14 +156,17 @@ public class PortabilityApiUtils {
     return job;
   }
 
-  /** Hack! For now, if we don't have export auth data, assume it's for export. */
-  public static boolean isExport(PortabilityJob job, Headers headers, boolean useEncryptedFlow) {
-    if(useEncryptedFlow) {
+  /**
+   * Hack! For now, if we don't have export auth data, assume it's for export.
+   */
+  public static ServiceMode getServiceMode(PortabilityJob job, Headers headers,
+      boolean useEncryptedFlow) {
+    if (useEncryptedFlow) {
       String exportAuthCookie = PortabilityApiUtils
           .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-      return (Strings.isNullOrEmpty(exportAuthCookie));
+      return (Strings.isNullOrEmpty(exportAuthCookie) ? ServiceMode.EXPORT : ServiceMode.IMPORT);
     } else {
-      return (null == job.exportAuthData());
+      return (null == job.exportAuthData() ? ServiceMode.EXPORT : ServiceMode.IMPORT);
     }
   }
 
