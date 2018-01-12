@@ -206,13 +206,8 @@ public class PortabilityApiUtils {
     // Valid job must be present
     String jobId = JobUtils.decodeId(encodedIdCookie);
 
-    // Validate XSRF token is present in request header. The cookie value might be surrounded by
-    // double quotes which causes the angular cli to also surround the header with double quotes.
-    // Since the value itself may not contain quotes or whitespace, trim off the double quotes by
-    // converting them to whitespace.
-    String tokenHeader = requestHeaders.getFirst(JsonKeys.XSRF_HEADER)
-        .replace("\"", " ")
-        .trim();
+    // Validate XSRF token is present in request header and in the token.
+    String tokenHeader = parseXsrfTokenHeader(requestHeaders);
     String tokenCookie = PortabilityApiUtils
         .getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
 
@@ -230,6 +225,15 @@ public class PortabilityApiUtils {
     String jobIdFromToken = tokenManager.getData(tokenHeader);
     Preconditions.checkArgument(jobId.equals(jobIdFromToken), "encoded job id and job id token must match");
     return jobId;
+  }
+
+  //The cookie value might be surrounded by double quotes which causes the angular cli to also
+  // surround the header with double quotes. Since the value itself may not contain quotes or
+  // whitespace, trim off the double quotes by converting them to whitespace.
+  private static String parseXsrfTokenHeader(Headers requestHeaders){
+    return requestHeaders.getFirst(JsonKeys.XSRF_HEADER)
+        .replace("\"", " ")
+        .trim();
   }
 
 
