@@ -19,7 +19,7 @@ import { SimpleLoginComponent } from './simplelogin.component';
 
 describe('SimpleLoginComponent', () => {
   let component: SimpleLoginComponent;
-  let fixture: ComponentFixture<SimpleloginComponent>;
+  let fixture: ComponentFixture<SimpleLoginComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
