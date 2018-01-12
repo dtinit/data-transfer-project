@@ -15,7 +15,7 @@
  */
 import { browser, by, element } from 'protractor';
 
-export class WtDemoPage {
+export class PortabilityDemoPage {
   navigateTo() {
     return browser.get('/');
   }
