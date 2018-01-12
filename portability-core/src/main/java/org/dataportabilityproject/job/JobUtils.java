@@ -45,7 +45,14 @@ public final class JobUtils {
 
   /* Returns the initial auth data for export or import determined by the {@code serviceMode} param. */
   public static AuthData getInitialAuthData(PortabilityJob job, ServiceMode serviceMode) {
-    return serviceMode == ServiceMode.EXPORT? job.exportInitialAuthData() : job.importInitialAuthData();
+    switch (serviceMode) {
+      case EXPORT:
+        return job.exportInitialAuthData();
+      case IMPORT:
+        return job.importInitialAuthData();
+      default:
+        throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
+    }
   }
 
   /* Sets the service in the correct field of the PortabilityJob */
@@ -59,6 +66,8 @@ public final class JobUtils {
       case IMPORT:
         updatedJob.setImportAuthData(authData);
         break;
+      default:
+        throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
     }
     return updatedJob.build();
   }
@@ -75,6 +84,8 @@ public final class JobUtils {
       case IMPORT:
         updatedJob.setImportInitialAuthData(initialAuthData);
         break;
+      default:
+        throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
     }
     return updatedJob.build();
   }
