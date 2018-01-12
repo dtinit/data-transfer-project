@@ -97,7 +97,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(password), "Password is empty");
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.exportService(), dataType);
+        .getOnlineAuth(job.exportService(), dataType, serviceMode);
     Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
         dataType, job.exportService());
 

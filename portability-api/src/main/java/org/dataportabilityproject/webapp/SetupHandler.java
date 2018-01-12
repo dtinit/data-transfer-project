@@ -131,7 +131,7 @@ abstract class SetupHandler implements HttpHandler {
     }
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
+        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()), ServiceMode.IMPORT);
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
