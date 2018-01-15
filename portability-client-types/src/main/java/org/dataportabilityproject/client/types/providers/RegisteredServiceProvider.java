@@ -29,18 +29,18 @@ public class RegisteredServiceProvider {
     private String name;
     private String description;
 
-    private String[] contentTypes;
+    private String[] transferDataTypes;
 
     @JsonCreator
     public RegisteredServiceProvider(
             @JsonProperty(value = "id", required = true) String id,
             @JsonProperty(value = "name", required = true) String name,
             @JsonProperty(value = "description", required = true) String description,
-            @JsonProperty(value = "contentTypes", required = true)  String[] contentTypes) {
+            @JsonProperty(value = "transferDataTypes", required = true) String[] transferDataTypes) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.contentTypes = contentTypes;
+        this.transferDataTypes = transferDataTypes;
     }
 
     @ApiModelProperty(value = "The unique service provider id")
@@ -59,7 +59,7 @@ public class RegisteredServiceProvider {
     }
 
     @ApiModelProperty(value = "The content types supported by this service provider")
-    public String[] getContentTypes() {
-        return contentTypes;
+    public String[] getTransferDataTypes() {
+        return transferDataTypes;
     }
 }

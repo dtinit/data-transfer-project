@@ -28,9 +28,9 @@ public interface Importer<T extends DataModel> {
     String getServiceProviderId();
 
     /**
-     * Returns supported content types.
+     * Returns supported data types.
      */
-    String[] getContentTypes();
+    String[] getTransferDataTypes();
 
     /**
      * Imports data.

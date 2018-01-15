@@ -37,9 +37,9 @@ public class DataTransfer extends AbstractDataTransfer {
     public DataTransfer(
             @JsonProperty(value = "source", required = true) String source,
             @JsonProperty(value = "destination", required = true) String destination,
-            @JsonProperty(value = "contentType", required = true) String contentType,
+            @JsonProperty(value = "transferDataType", required = true) String transferDataType,
             @JsonProperty(value = "status", required = true) Status status) {
-        super(source, destination, contentType);
+        super(source, destination, transferDataType);
         this.status = status;
     }
 

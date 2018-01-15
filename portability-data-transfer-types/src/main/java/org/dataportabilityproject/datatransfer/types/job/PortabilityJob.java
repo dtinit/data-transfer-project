@@ -29,7 +29,7 @@ public class PortabilityJob extends EntityType {
     private String destination;   // REVIEW: corresponds to the export service
 
     @JsonProperty
-    private String contentType;   // REVIEW: replace old PortableDataType since the latter is an enum and not exctensible?
+    private String transferDataType;   // REVIEW: replace old PortableDataType since the latter is an enum and not extensible?
 
     @JsonProperty
     private LocalDateTime createdTimestamp; // ISO 8601 timestamp
@@ -61,12 +61,12 @@ public class PortabilityJob extends EntityType {
         this.destination = destination;
     }
 
-    public String getContentType() {
-        return contentType;
+    public String getTransferDataType() {
+        return transferDataType;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setTransferDataType(String transferDataType) {
+        this.transferDataType = transferDataType;
     }
 
     public LocalDateTime getCreatedTimestamp() {

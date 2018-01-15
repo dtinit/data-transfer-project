@@ -20,7 +20,7 @@ public class RegisteredServiceProviderTest {
         Assert.assertEquals("123", deserialized.getId());
         Assert.assertEquals("TestProvider", deserialized.getName());
         Assert.assertEquals("Test description", deserialized.getDescription());
-        Assert.assertEquals("testContent", deserialized.getContentTypes()[0]);
+        Assert.assertEquals("testContent", deserialized.getTransferDataTypes()[0]);
     }
 
 }

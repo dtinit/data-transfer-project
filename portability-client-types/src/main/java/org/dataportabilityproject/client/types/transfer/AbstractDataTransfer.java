@@ -25,13 +25,13 @@ public abstract class AbstractDataTransfer {
 
     private String source;        // REVIEW: corresponds to the import service
     private String destination;   // REVIEW: corresponds to the export service
-    private String contentType;   // REVIEW: replace old PortableDataType since the latter is an enum and not exctensible?
+    private String transferDataType;      // REVIEW: replace old PortableDataType since the latter is an enum and not extensible?
 
     @JsonCreator
-    public AbstractDataTransfer(String source, String destination, String contentType) {
+    public AbstractDataTransfer(String source, String destination, String transferDataType) {
         this.source = source;
         this.destination = destination;
-        this.contentType = contentType;
+        this.transferDataType = transferDataType;
     }
 
     @ApiModelProperty(value = "The service to transfer data from", dataType = "string", required = true)
@@ -45,8 +45,8 @@ public abstract class AbstractDataTransfer {
     }
 
     @ApiModelProperty(value = "The type of data to transfer", dataType = "string", required = true)
-    public String getContentType() {
-        return contentType;
+    public String getTransferDataType() {
+        return transferDataType;
     }
 
 }

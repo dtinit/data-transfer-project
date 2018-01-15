@@ -1,7 +1,6 @@
 package org.dataportabilityproject.client.types.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dataportabilityproject.client.types.transfer.DataTransferRequest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,6 +19,6 @@ public class DataTransferRequestTest {
 
         Assert.assertEquals("testSource", deserialized.getSource());
         Assert.assertEquals("testDestination", deserialized.getDestination());
-        Assert.assertEquals("application/json", deserialized.getContentType());
+        Assert.assertEquals("application/json", deserialized.getTransferDataType());
     }
 }
