@@ -25,10 +25,14 @@ import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
@@ -40,6 +44,7 @@ import org.dataportabilityproject.serviceProviders.google.tasks.GoogleTaskServic
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -57,16 +62,41 @@ final class GoogleServiceProvider implements ServiceProvider {
         GmailScopes.GMAIL_MODIFY,
         GmailScopes.GMAIL_LABELS);
 
-    private final GoogleAuth googleAuth;
+    private final ImmutableList<PortableDataType> dataTypes = ImmutableList
+        .of(CALENDAR, MAIL, PHOTOS, TASKS);
+
+    final private Map<PortableDataType, List<String>> dataTypeImportScopes = ImmutableMap.<PortableDataType, List<String>>builder()
+        .put(CALENDAR, Arrays.asList(CalendarScopes.CALENDAR))
+        .put(MAIL, Arrays.asList(GmailScopes.GMAIL_MODIFY))
+        .put(PHOTOS, Arrays.asList("https://picasaweb.google.com/data/"))
+        .put(TASKS, Arrays.asList(TasksScopes.TASKS))
+        .build();
+
+    // Export scopes should only contain READONLY permissions
+    final private Map<PortableDataType, List<String>> dataTypeExportScopes = ImmutableMap.<PortableDataType, List<String>>builder()
+        .put(CALENDAR, Arrays.asList(CalendarScopes.CALENDAR_READONLY))
+        .put(MAIL, Arrays.asList(GmailScopes.GMAIL_READONLY))
+        .put(PHOTOS, Arrays.asList(
+            "https://picasaweb.google.com/data/")) // Photos doesn't have a differing scope for read only.
+        .put(TASKS, Arrays.asList(TasksScopes.TASKS_READONLY))
+        .build();
+
+    private Map<PortableDataType, GoogleAuth> dataTypeImportAuths = new HashMap<>();
+    private Map<PortableDataType, GoogleAuth> dataTypeExportAuths = new HashMap<>();
+
 
     @Inject
     GoogleServiceProvider(AppCredentialFactory appCredentialFactory) throws Exception {
         AppCredentials appCredentials =
             appCredentialFactory.lookupAndCreate("GOOGLE_KEY", "GOOGLE_SECRET");
-        this.googleAuth = new GoogleAuth(
-                appCredentials,
-                // TODO: only use scopes from the products we are accessing.
-                SCOPES);
+
+        for (Entry<PortableDataType, List<String>> e : dataTypeImportScopes.entrySet()) {
+            dataTypeImportAuths.put(e.getKey(), new GoogleAuth(appCredentials, e.getValue()));
+        }
+
+        for (Entry<PortableDataType, List<String>> e : dataTypeExportScopes.entrySet()) {
+            dataTypeExportAuths.put(e.getKey(), new GoogleAuth(appCredentials, e.getValue()));
+        }
     }
 
 
@@ -76,22 +106,30 @@ final class GoogleServiceProvider implements ServiceProvider {
 
     @Override
     public ImmutableList<PortableDataType> getExportTypes() {
-        return ImmutableList.of(CALENDAR, MAIL, PHOTOS, TASKS);
+        return dataTypes;
     }
 
     @Override
     public ImmutableList<PortableDataType> getImportTypes() {
-        return ImmutableList.of(CALENDAR, MAIL, PHOTOS, TASKS);
+        return dataTypes;
     }
 
-    @Override
+    @Override // For offline mode, assume import service mode
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return googleAuth;
+        return dataTypeImportAuths.get(dataType);
     }
 
     @Override
-    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-        return googleAuth;
+    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
+        ServiceMode serviceMode) {
+        switch (serviceMode) {
+            case IMPORT:
+                return dataTypeImportAuths.get(dataType);
+            case EXPORT:
+                return dataTypeExportAuths.get(dataType);
+            default:
+                throw new IllegalArgumentException("ServiceMode not supported: " + serviceMode);
+        }
     }
 
     @Override
@@ -100,7 +138,8 @@ final class GoogleServiceProvider implements ServiceProvider {
         AuthData authData,
         JobDataCache jobDataCache)
             throws IOException {
-        Credential cred = googleAuth.getCredential(authData);
+
+        Credential cred = dataTypeExportAuths.get(type).getCredential(authData);
         if (!cred.refreshToken()) {
             throw new IOException("Couldn't refresh token");
         }
@@ -123,7 +162,7 @@ final class GoogleServiceProvider implements ServiceProvider {
         PortableDataType type,
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
-        Credential cred = googleAuth.getCredential(authData);
+        Credential cred = dataTypeImportAuths.get(type).getCredential(authData);
         if (!cred.refreshToken()) {
             throw new IOException("Couldn't refresh token");
         }
