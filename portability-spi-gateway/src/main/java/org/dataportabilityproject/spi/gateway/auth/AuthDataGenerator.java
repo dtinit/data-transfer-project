@@ -1,7 +1,7 @@
 package org.dataportabilityproject.spi.gateway.auth;
 
-import org.dataportabilityproject.datatransfer.types.auth.AuthData;
-import org.dataportabilityproject.datatransfer.types.auth.AuthFlowConfiguration;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthFlowConfiguration;
 
 /**
  * Generates data for authentication flows.

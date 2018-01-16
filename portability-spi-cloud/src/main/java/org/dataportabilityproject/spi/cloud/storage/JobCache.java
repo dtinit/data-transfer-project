@@ -1,6 +1,7 @@
 package org.dataportabilityproject.spi.cloud.storage;
 
-import org.dataportabilityproject.datatransfer.types.models.DataModel;
+
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 import java.io.InputStream;
 

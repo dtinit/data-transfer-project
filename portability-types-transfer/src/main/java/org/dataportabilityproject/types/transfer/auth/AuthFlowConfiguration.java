@@ -1,8 +1,8 @@
-package org.dataportabilityproject.datatransfer.types.auth;
+package org.dataportabilityproject.types.transfer.auth;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.dataportabilityproject.datatransfer.types.PortableType;
+import org.dataportabilityproject.types.transfer.PortableType;
 
 /**
  * Configuration for an authorization flow. A flow has an initial URL and optional initial authentication data.

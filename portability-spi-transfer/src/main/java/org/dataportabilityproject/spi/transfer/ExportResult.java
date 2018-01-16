@@ -1,6 +1,6 @@
 package org.dataportabilityproject.spi.transfer;
 
-import org.dataportabilityproject.datatransfer.types.models.DataModel;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
  * The result of an item export operation.

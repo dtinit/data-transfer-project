@@ -15,8 +15,8 @@
  */
 package org.dataportabilityproject.spi.transfer;
 
-import org.dataportabilityproject.datatransfer.types.auth.AuthData;
-import org.dataportabilityproject.datatransfer.types.models.DataModel;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
  * Imports data into a destination service.

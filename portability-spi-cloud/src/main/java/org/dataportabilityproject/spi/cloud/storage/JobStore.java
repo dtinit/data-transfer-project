@@ -1,6 +1,6 @@
 package org.dataportabilityproject.spi.cloud.storage;
 
-import org.dataportabilityproject.datatransfer.types.job.PortabilityJob;
+import org.dataportabilityproject.types.transfer.job.PortabilityJob;
 
 /**
  * Implementations handle storage and retrieval of transfer jobs.

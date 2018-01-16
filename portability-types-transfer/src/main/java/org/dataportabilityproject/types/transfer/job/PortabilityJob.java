@@ -1,7 +1,7 @@
-package org.dataportabilityproject.datatransfer.types.job;
+package org.dataportabilityproject.types.transfer.job;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.dataportabilityproject.datatransfer.types.EntityType;
+import org.dataportabilityproject.types.transfer.EntityType;
 
 import java.time.LocalDateTime;
 

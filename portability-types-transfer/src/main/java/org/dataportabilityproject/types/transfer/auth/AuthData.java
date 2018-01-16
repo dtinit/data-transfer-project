@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.datatransfer.types;
+package org.dataportabilityproject.types.transfer.auth;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.dataportabilityproject.types.transfer.PortableType;
 
 /**
- * Base model type that supports language interoperability and extensibility.
- *
- * Subtypes use {@link com.fasterxml.jackson.annotation.JsonTypeName} to define the concrete type key for de/serialization.
+ * Base type for authentication data.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "ptype")
-public abstract class PortableType {
+public abstract class AuthData extends PortableType {
 }

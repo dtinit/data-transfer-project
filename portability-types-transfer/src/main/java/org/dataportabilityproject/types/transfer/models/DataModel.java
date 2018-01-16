@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.datatransfer.types.models;
+package org.dataportabilityproject.types.transfer.models;
 
-import org.dataportabilityproject.datatransfer.types.EntityType;
+import org.dataportabilityproject.types.transfer.EntityType;
 
 /**
  * The base data model type.
