@@ -58,7 +58,7 @@ public class RegisteredServiceProvider {
         return description;
     }
 
-    @ApiModelProperty(value = "The content types supported by this service provider")
+    @ApiModelProperty(value = "The data types types supported by this service provider")
     public String[] getTransferDataTypes() {
         return transferDataTypes;
     }

@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.gateway;
-
-import org.dataportabilityproject.client.types.providers.RegisteredServiceProvider;
+package org.dataportabilityproject.spi.gateway.provider;
 
 import java.util.List;
 
 /**
  * Tracks service provider importer and exporter extensions registered in the system.
  */
-public interface TransferRegistry {
+public interface ProviderInfoRegistry {
 
     /**
      * Returns the registered service providers.
      */
-    List<RegisteredServiceProvider> getRegisteredServiceProviders();
+    List<ServiceProviderInfo> getRegisteredServiceProviders();
 
     /**
      * Registers a service provider.
      *
      * @param provider the provider to register
      */
-    void registerServiceProvider(RegisteredServiceProvider provider);
+    void registerServiceProvider(ServiceProviderInfo provider);
 
 }

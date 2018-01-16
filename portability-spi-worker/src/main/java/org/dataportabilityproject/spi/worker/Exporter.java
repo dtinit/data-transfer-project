@@ -15,12 +15,24 @@
  */
 package org.dataportabilityproject.spi.worker;
 
+import org.dataportabilityproject.datatransfer.types.auth.AuthData;
 import org.dataportabilityproject.datatransfer.types.models.DataModel;
 
 /**
- * Placeholder.
+ * Exports data from a source service.
  */
-public interface Exporter<T extends DataModel> {
+public interface Exporter<A extends AuthData, T extends DataModel> {
 
-    T export(Object continuationInformation); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
+    /**
+     * Performs an export operation.
+     */
+    ExportResult<T> export(A authData);
+
+    /**
+     * Performs an export operation, starting from the continuation.
+     *
+     * @param authData authentication data for the operation
+     * @param continuationInformation continuation data
+     */
+    ExportResult<T> export(A authData, Object continuationInformation); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
 }

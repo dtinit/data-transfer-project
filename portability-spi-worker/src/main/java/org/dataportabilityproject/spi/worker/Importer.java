@@ -15,28 +15,21 @@
  */
 package org.dataportabilityproject.spi.worker;
 
+import org.dataportabilityproject.datatransfer.types.auth.AuthData;
 import org.dataportabilityproject.datatransfer.types.models.DataModel;
 
 /**
  * Imports data into a destination service.
  */
-public interface Importer<T extends DataModel> {
-
-    /**
-     * Returns the service provider id of the importer.
-     */
-    String getServiceProviderId();
-
-    /**
-     * Returns supported data types.
-     */
-    String[] getTransferDataTypes();
+public interface Importer<A extends AuthData, T extends DataModel> {
 
     /**
      * Imports data.
      *
+     * @param authData authentication information
      * @param data the data
+     * @return the operation result
      */
-    void importItem(T data); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
+    ImportResult importItem(A authData, T data); // REVIEW: The original throws IOException. Continue to use or return as part of the result?
 
 }
