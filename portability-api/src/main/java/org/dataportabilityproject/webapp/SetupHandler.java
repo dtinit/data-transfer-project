@@ -16,6 +16,8 @@
 package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
+import static org.dataportabilityproject.webapp.PortabilityApiUtils.COOKIE_ATTRIBUTES;
 import static org.dataportabilityproject.webapp.SetupHandler.Mode.IMPORT;
 
 import com.google.common.base.Preconditions;
@@ -24,6 +26,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -32,6 +35,7 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
@@ -51,17 +55,19 @@ abstract class SetupHandler implements HttpHandler {
   private final CommonSettings commonSettings;
   private final Mode mode;
   private final String handlerUrlPath;
+  private final TokenManager tokenManager;
 
   protected SetupHandler(ServiceProviderRegistry serviceProviderRegistry,
       JobDao jobDao,
       CommonSettings commonSettings,
       Mode mode,
-      String handlerUrlPath) {
+      String handlerUrlPath, TokenManager tokenManager) {
     this.jobDao = jobDao;
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.commonSettings = commonSettings;
     this.mode = mode;
     this.handlerUrlPath = handlerUrlPath;
+    this.tokenManager = tokenManager;
   }
 
   @Override
@@ -104,6 +110,10 @@ abstract class SetupHandler implements HttpHandler {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
       } else {
         response = handleCopySetup(exchange.getRequestHeaders(), job);
+        // Valid job is present, generate an XSRF token to pass back via cookie
+        String tokenStr = tokenManager.createNewToken(jobId);
+        HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN, tokenStr);
+        exchange.getResponseHeaders().add(HEADER_SET_COOKIE, token.toString() + COOKIE_ATTRIBUTES);
       }
 
       // Mark the response as type Json and send
@@ -119,7 +129,7 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  JsonObject handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
+  private JsonObject handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
       throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
@@ -153,16 +163,16 @@ abstract class SetupHandler implements HttpHandler {
         .add(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl()).build();
   }
 
-  JsonObject handleCopySetup(Headers headers, PortabilityJob job) {
+  JsonObject handleCopySetup(Headers requestHeaders, PortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils
-          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+          .getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
 
       String importAuthCookie = PortabilityApiUtils
-          .getCookie(headers, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
+          .getCookie(requestHeaders, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
     } else {

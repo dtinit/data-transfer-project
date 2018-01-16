@@ -63,7 +63,8 @@ export class BackendService {
   }
 
   copySetup() {
-    let url = `${this.baseEndpoint}copySetup`;
+    // copySetup needs to be relative call for XSRF token to be attached
+    let url = `/_/copySetup`;
     return this.http.get<setupResponse>(url)
       .map(res => this.copySetupSuccess(res))
       .catch(err => this.handleError(err));

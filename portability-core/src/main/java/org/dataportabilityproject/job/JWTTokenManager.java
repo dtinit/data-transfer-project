@@ -23,25 +23,52 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for token creation and verification.
  */
 public class JWTTokenManager implements TokenManager {
 
+  public static final String JWT_KEY_NAME = "JWT_KEY";
+  public static final String JWT_SECRET_NAME = "JWT_SECRET";
+
   // TODO: determine proper issuer for JWT tokens
   private static final String ISSUER = "dataportabilityproject";
-  // Key for the portability id storated as a private 'claim' in the JWT
+  // Key for the portability id stored as a private 'claim' in the JWT
   private static final String ID_CLAIM_KEY = "portability-id";
+  private static final int EXPIRATION_TIME_MILLIS = 1000 * 60; // 1 minute expiration
 
   private final Algorithm algorithm;
+  private final Logger logger = LoggerFactory.getLogger(JWTTokenManager.class);
   private JWTVerifier verifier;
 
   public JWTTokenManager(String secret) {
     this.algorithm = createAlgorithm(secret);
-    this.verifier =  createVerifier(secret, ISSUER);
+    this.verifier = createVerifier(secret, ISSUER);
+  }
 
-  } /* no-op */
+  /**
+   * Create an instance of the token verifier.
+   */
+  private static JWTVerifier createVerifier(String secret, String issuer) {
+    return JWT.require(createAlgorithm(secret))
+        .withIssuer(issuer)
+        .build();
+  }
+
+  /**
+   * Create the {@link Algorithm} to be used for signing and parsing tokens.
+   */
+  private static Algorithm createAlgorithm(String secret) {
+    try {
+      return Algorithm.HMAC256(secret);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e); // TODO: Better error handling
+    }
+  }
 
   @Override
   public boolean verifyToken(String token) {
@@ -49,7 +76,8 @@ public class JWTTokenManager implements TokenManager {
       DecodedJWT jwt = verifier.verify(token);
       return true;
     } catch (JWTVerificationException exception) {
-      System.out.println("Error verifying token: " + token);
+      logger.debug("Error verifying token: {}", exception);
+      logger.debug("Token: {}", token);
       return false;
     }
   }
@@ -65,6 +93,7 @@ public class JWTTokenManager implements TokenManager {
       }
       return claim.isNull() ? null : claim.asString();
     } catch (JWTVerificationException exception) {
+
       throw new RuntimeException("Error verifying token: " + token);
     }
   }
@@ -75,25 +104,10 @@ public class JWTTokenManager implements TokenManager {
       return JWT.create()
           .withIssuer(JWTTokenManager.ISSUER)
           .withClaim(JWTTokenManager.ID_CLAIM_KEY, uuid)
+          .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MILLIS))
           .sign(algorithm);
     } catch (JWTCreationException e) {
       throw new RuntimeException("Error creating token for: " + uuid);
-    }
-  }
-
-  /** Create an instance of the token verifier. */
-  private static JWTVerifier createVerifier(String secret, String issuer) {
-    return JWT.require(createAlgorithm(secret))
-        .withIssuer(issuer)
-        .build();
-  }
-
-  /** Create the {@link Algorithm} to be used for signing and parsing tokens. */
-  private static Algorithm createAlgorithm(String secret) {
-    try {
-      return Algorithm.HMAC256(secret);
-    } catch(UnsupportedEncodingException e) {
-      throw new RuntimeException(e); // TODO: Better error handling
     }
   }
 }
