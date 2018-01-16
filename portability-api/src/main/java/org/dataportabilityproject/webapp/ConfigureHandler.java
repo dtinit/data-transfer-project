@@ -120,9 +120,9 @@ final class ConfigureHandler implements HttpHandler {
 
       // TODO: Validate job before going further
 
-      // Obtain the OnlineAuthDataGenerator
+      // Obtain the OnlineAuthDataGenerator for export service
       OnlineAuthDataGenerator generator = serviceProviderRegistry
-          .getOnlineAuth(job.exportService(), dataType);
+          .getOnlineAuth(job.exportService(), dataType, ServiceMode.EXPORT);
       Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
           dataType, job.exportService());
 

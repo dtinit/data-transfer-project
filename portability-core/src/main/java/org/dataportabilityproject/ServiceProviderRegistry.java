@@ -30,6 +30,7 @@ import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -116,8 +117,8 @@ public class ServiceProviderRegistry {
     }
 
     public OnlineAuthDataGenerator getOnlineAuth(String serviceProvider,
-        PortableDataType dataType) {
-        return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType);
+                                                 PortableDataType dataType, ServiceMode serviceMode) {
+        return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType, serviceMode);
     }
 
     public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,

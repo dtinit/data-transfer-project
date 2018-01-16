@@ -126,7 +126,7 @@ final class OauthCallbackHandler implements HttpHandler {
           jobId);
 
       // Obtain the ServiceProvider from the registry
-      OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType);
+      OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType, serviceMode);
 
       // Retrieve initial auth data, if it existed
       AuthData initialAuthData = JobUtils.getInitialAuthData(job, serviceMode);
