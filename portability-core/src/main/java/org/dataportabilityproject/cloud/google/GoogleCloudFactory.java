@@ -29,8 +29,6 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class GoogleCloudFactory implements CloudFactory {
   private final Datastore datastore;

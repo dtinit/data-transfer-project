@@ -17,9 +17,9 @@ package org.dataportabilityproject.cloud.google;
 
 import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
-import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
