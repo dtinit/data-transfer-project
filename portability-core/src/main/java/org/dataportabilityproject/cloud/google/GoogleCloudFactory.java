@@ -46,6 +46,7 @@ public final class GoogleCloudFactory implements CloudFactory {
       @ProjectId String projectId) {
 
     /* Switch between remote and local
+      GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem) {
     this.datastore = DatastoreOptions
         .newBuilder()
         .setProjectId(projectId)
