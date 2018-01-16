@@ -23,10 +23,7 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import javax.inject.Inject;
-import org.dataportabilityproject.cloud.google.Annotations.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
@@ -52,18 +49,17 @@ public final class GoogleCloudFactory implements CloudFactory {
       GoogleBucketStore googleBucketStore,
       GoogleCredentials googleCredentials,
       GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
-      @ProjectId String projectId) {
-    logger.warn("\n\n\nGoogleCloudFactory being constructed!\n\n\n");
+      ProjectId projectId) {
     this.datastore = DatastoreOptions
         .newBuilder()
-        .setProjectId(projectId)
+        .setProjectId(projectId.getProjectId())
         .setCredentials(googleCredentials)
         .build()
         .getService();
     this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
-    this.projectId = projectId;
+    this.projectId = projectId.getProjectId();
   }
 
   @Override

@@ -20,7 +20,6 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.inject.Inject;
-import org.dataportabilityproject.cloud.google.Annotations.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 
 final class GoogleBucketStore implements BucketStore {
@@ -29,9 +28,9 @@ final class GoogleBucketStore implements BucketStore {
   @Inject
   GoogleBucketStore(
       GoogleCredentials googleCredentials,
-      @ProjectId String projectId) {
+      ProjectId projectId) {
     storage = StorageOptions.newBuilder()
-        .setProjectId(projectId)
+        .setProjectId(projectId.getProjectId())
         .setCredentials(googleCredentials)
         .build().getService();
   }

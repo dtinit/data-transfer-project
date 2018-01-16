@@ -93,8 +93,8 @@ public final class PortabilityCoreModule extends AbstractModule {
       Provider<GoogleCloudFactory> googleCloudFactoryProvider) {
     if (commonSettings.getCloud() == SupportedCloud.LOCAL) {
       return localCloudFactoryProvider.get();
-    //} else if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
-      // return googleCloudFactoryProvider.get();
+    } else if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
+       return googleCloudFactoryProvider.get();
     } else {
       throw new UnsupportedOperationException(commonSettings.getCloud() + " is not supported yet.");
     }

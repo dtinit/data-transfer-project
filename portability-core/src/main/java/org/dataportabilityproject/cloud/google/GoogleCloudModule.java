@@ -23,16 +23,13 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import java.io.IOException;
-import org.dataportabilityproject.cloud.google.Annotations.ProjectId;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public class GoogleCloudModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(String.class).annotatedWith(ProjectId.class).toInstance(getProjectId());
   }
 
   @Provides
@@ -69,7 +66,7 @@ public class GoogleCloudModule extends AbstractModule {
    * @throws IllegalArgumentException if project ID is unset
    */
 
-  private static String getProjectId() {
+  @Provides ProjectId getProjectId() {
     String projectId;
     try {
       projectId = System.getenv("GOOGLE_PROJECT_ID");
@@ -81,6 +78,6 @@ public class GoogleCloudModule extends AbstractModule {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "Need to specify a project "
         + "ID when using Google Cloud. This should be exposed as an environment variable by "
         + "Kubernetes, see k8s/api-deployment.yaml");
-    return projectId.toLowerCase();
+    return new ProjectId(projectId.toLowerCase());
   }
 }
