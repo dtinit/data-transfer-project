@@ -34,4 +34,9 @@ public class JsonKeys {
   public static final String IMPORT_SERVICE_AUTH_EXISTS = "importServiceAuthExists";
   public static final String IMPORT_AUTH_URL = "importAuthUrl";
   public static final String TOKEN = "token";
+
+  // These tokens should match the token and header defined in the app.module.ts angular client.
+  // see angular docs for more details: https://angular.io/guide/http#security-xsrf-protection
+  public static final String XSRF_TOKEN = "XSRF-TOKEN";
+  public static final String XSRF_HEADER = "X-XSRF-TOKEN";
 }

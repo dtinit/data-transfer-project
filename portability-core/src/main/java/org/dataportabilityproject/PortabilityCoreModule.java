@@ -15,6 +15,9 @@
 */
 package org.dataportabilityproject;
 
+import static org.dataportabilityproject.job.JWTTokenManager.JWT_KEY_NAME;
+import static org.dataportabilityproject.job.JWTTokenManager.JWT_SECRET_NAME;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.inject.AbstractModule;
@@ -27,6 +30,8 @@ import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.google.GoogleCloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
+import org.dataportabilityproject.job.JWTTokenManager;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.serviceProviders.flickr.FlickrModule;
 import org.dataportabilityproject.serviceProviders.google.GoogleModule;
 import org.dataportabilityproject.serviceProviders.instagram.InstagramModule;
@@ -59,8 +64,6 @@ public final class PortabilityCoreModule extends AbstractModule {
       InputStream in =
           CommonSettings.class.getClassLoader().getResourceAsStream("settings/common.yaml");
       CommonSettings commonSettings = mapper.readValue(in, CommonSettings.class);
-
-
       return commonSettings;
     } catch (IOException e) {
       throw new IllegalArgumentException("Problem parsing common settings", e);
@@ -96,4 +99,14 @@ public final class PortabilityCoreModule extends AbstractModule {
     }
   }
 
+  @Singleton
+  @Provides
+  TokenManager provideTokenManager(AppCredentialFactory appCredentialFactory) {
+    try {
+      return new JWTTokenManager(
+          appCredentialFactory.lookupAndCreate(JWT_KEY_NAME, JWT_SECRET_NAME).secret());
+    } catch (IOException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
 }
