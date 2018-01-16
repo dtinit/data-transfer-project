@@ -32,6 +32,7 @@ import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for the Configure service
  */
 final class ConfigureHandler implements HttpHandler {
+
   private static final Logger logger = LoggerFactory.getLogger(ConfigureHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -92,11 +94,11 @@ final class ConfigureHandler implements HttpHandler {
       PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
 
       String exportService = requestParameters.get(JsonKeys.EXPORT_SERVICE);
-      Preconditions.checkArgument(JobUtils.isValidService(exportService, true),
+      Preconditions.checkArgument(JobUtils.isValidService(exportService, ServiceMode.EXPORT),
           "Missing valid exportService: %s", exportService);
 
       String importService = requestParameters.get(JsonKeys.IMPORT_SERVICE);
-      Preconditions.checkArgument(JobUtils.isValidService(importService, false),
+      Preconditions.checkArgument(JobUtils.isValidService(importService, ServiceMode.IMPORT),
           "Missing valid importService: %s", importService);
 
       // Create a new job and persist
@@ -111,16 +113,16 @@ final class ConfigureHandler implements HttpHandler {
       PortabilityJob job;
       if (commonSettings.getEncryptedFlow()) {
         job = PortabilityApiUtils.lookupJobPendingAuthData(newJob.id(), jobDao);
-      }  else {
+      } else {
         job = PortabilityApiUtils.lookupJob(newJob.id(), jobDao);
       }
       Preconditions.checkState(job != null, "Job required");
 
       // TODO: Validate job before going further
 
-      // Obtain the OnlineAuthDataGenerator
+      // Obtain the OnlineAuthDataGenerator for export service
       OnlineAuthDataGenerator generator = serviceProviderRegistry
-          .getOnlineAuth(job.exportService(), dataType);
+          .getOnlineAuth(job.exportService(), dataType, ServiceMode.EXPORT);
       Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
           dataType, job.exportService());
 
@@ -135,7 +137,7 @@ final class ConfigureHandler implements HttpHandler {
       // is done in the SetupHandler in IMPORT mode
       if (authFlowInitiator.initialAuthData() != null) {
         PortabilityJob updatedJob = JobUtils
-            .setInitialAuthData(job, authFlowInitiator.initialAuthData(),  /*isExport=*/ true);
+            .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.EXPORT);
         if (commonSettings.getEncryptedFlow()) {
           jobDao.updatePendingAuthDataJob(updatedJob);
         } else {
@@ -153,12 +155,16 @@ final class ConfigureHandler implements HttpHandler {
     return redirect; // to the auth url for the export service
   }
 
-  /** Create the initial job in initial state and persist in storage. */
-  private PortabilityJob createJob(PortableDataType dataType, String exportService, String importService)
+  /**
+   * Create the initial job in initial state and persist in storage.
+   */
+  private PortabilityJob createJob(PortableDataType dataType, String exportService,
+      String importService)
       throws IOException {
     PortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
-      jobDao.insertJobInPendingAuthDataState(job); // This is the initial population of the row in storage
+      // This is the initial population of the row in storage
+      jobDao.insertJobInPendingAuthDataState(job); 
     } else {
       jobDao.insertJob(job);
     }

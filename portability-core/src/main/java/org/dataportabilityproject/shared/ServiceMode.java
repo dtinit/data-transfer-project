@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2017 The Data-Portability Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { PortabilityDemoPage } from './app.po';
 
-describe('portability-demo App', () => {
-  let page: PortabilityDemoPage;
+package org.dataportabilityproject.shared;
 
-  beforeEach(() => {
-    page = new PortabilityDemoPage();
-  });
-
-  it('should display message saying app works', () => {
-    page.navigateTo();
-    expect(page.getParagraphText()).toEqual('app works!');
-  });
-});
+/**
+ * The possible service modes for transferring data.
+ */
+public enum ServiceMode {
+  IMPORT,
+  EXPORT
+}

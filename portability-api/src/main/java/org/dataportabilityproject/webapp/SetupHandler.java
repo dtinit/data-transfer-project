@@ -36,6 +36,7 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.TokenManager;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -140,16 +141,16 @@ abstract class SetupHandler implements HttpHandler {
     }
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()));
+        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()), ServiceMode.IMPORT);
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
     // This is done in ConfigureHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
       // Auth data is different for import and export. This is only valid for the /_/importSetup page,
-      // so isExport is set to false.
+      // so serviceMode is IMPORT
       PortabilityJob updatedJob = JobUtils
-          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), /*isExport=*/false);
+          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
       if (commonSettings.getEncryptedFlow()) {
         jobDao.updatePendingAuthDataJob(job);
       } else {
