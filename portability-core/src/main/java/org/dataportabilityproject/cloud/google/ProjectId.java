@@ -5,11 +5,11 @@ import com.google.inject.Inject;
 /**
  * Wrapper class for a Google Cloud Platform project ID.
  *
- * <p>Injecting @ProjectId into Google cloud implementation classes is an alternative to injecting
- * @SomeProjectIdAnnotation String projectId, that prevents Guice from eagerly evaluating
+ * <p>Injecting "ProjectId projectId" into Google cloud implementation classes is an alternative to
+ * injecting "@ProjectId String projectId", that prevents Guice from eagerly evaluating
  * Provider<GoogleCloudFactory> when we are not using Google Cloud.
- * TODO: Investigate injecting @SomeProjectIdAnnotation String projectId and not eagerly evaluating
- * Provider<GoogleCloudFactory>
+ * TODO: Investigate injecting "@ProjectId String projectId" and not eagerly evaluating, then we
+ * won't need this wrapper class.
  */
 class ProjectId {
   private final String projectId;

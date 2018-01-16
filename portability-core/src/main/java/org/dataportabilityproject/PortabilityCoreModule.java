@@ -38,11 +38,8 @@ import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.CloudAppCredentialFactory;
 import org.dataportabilityproject.shared.local.LocalAppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class PortabilityCoreModule extends AbstractModule {
-  private final Logger logger = LoggerFactory.getLogger(PortabilityCoreModule.class);
   private final CommonSettings commonSettings;
 
   public PortabilityCoreModule() {
@@ -59,9 +56,7 @@ public final class PortabilityCoreModule extends AbstractModule {
     install(new RememberTheMilkModule());
     install(new SmugmugModule());
 
-    logger.warn("Using cloud: " + commonSettings.getCloud());
     if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
-      logger.warn("installing GoogleCloudModule");
       install(new GoogleCloudModule());
     }
   }
@@ -94,7 +89,7 @@ public final class PortabilityCoreModule extends AbstractModule {
     if (commonSettings.getCloud() == SupportedCloud.LOCAL) {
       return localCloudFactoryProvider.get();
     } else if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
-       return googleCloudFactoryProvider.get();
+      return googleCloudFactoryProvider.get();
     } else {
       throw new UnsupportedOperationException(commonSettings.getCloud() + " is not supported yet.");
     }
@@ -111,5 +106,4 @@ public final class PortabilityCoreModule extends AbstractModule {
       return cloudAppCredentialFactoryProvider.get();
     }
   }
-
 }
