@@ -1,8 +1,7 @@
-package org.dataportabilityproject.transfer.types.job;
+package org.dataportabilityproject.types.transfer.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dataportabilityproject.test.types.ObjectMapperFactory;
-import org.dataportabilityproject.types.transfer.job.PortabilityJob;
 import org.junit.Assert;
 import org.junit.Test;
 
