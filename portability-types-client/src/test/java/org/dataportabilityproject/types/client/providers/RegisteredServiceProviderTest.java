@@ -1,4 +1,4 @@
-package org.dataportabilityproject.client.types.providers;
+package org.dataportabilityproject.types.client.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;

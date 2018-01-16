@@ -1,6 +1,6 @@
 rootProject.name = 'org.dataportabilityproject'
 
-include ':portability-client-types', ':portability-types-transfer'
+include ':portability-types-client', ':portability-types-transfer'
 
 include ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
 

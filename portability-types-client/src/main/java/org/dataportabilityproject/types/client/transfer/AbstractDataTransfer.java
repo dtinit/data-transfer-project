@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.client.types.transfer;
+package org.dataportabilityproject.types.client.transfer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModelProperty;
