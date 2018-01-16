@@ -48,8 +48,9 @@ public interface ServiceProvider {
     }
 
     /* Same as above, but retrieves AuthGenerator for read/write access (ignoring serviceMode)
-     * TODO: deprecate once all serviceProviders implement the above version of this method.
+     * TODO: remove once all serviceProviders implement the above version of this method.
      */
+    @Deprecated
     default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
         System.out.println("WARNING: getOnlineAuthDataGenerator not implemented for type: "
                 + dataType + ", service: " + getName());
