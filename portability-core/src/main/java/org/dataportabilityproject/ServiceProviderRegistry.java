@@ -122,7 +122,7 @@ public class ServiceProviderRegistry {
     }
 
     public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,
-            PortableDataType dataType) {
-        return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType);
+            PortableDataType dataType, ServiceMode serviceMode) {
+        return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType, serviceMode);
     }
 }

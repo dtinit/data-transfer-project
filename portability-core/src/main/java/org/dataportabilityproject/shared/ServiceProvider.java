@@ -26,20 +26,42 @@ import java.io.IOException;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A service provider that supports importing and export different data types.
  */
 public interface ServiceProvider {
+    Logger logger = LoggerFactory.getLogger(ServiceProvider.class);
+
     String getName();
 
     ImmutableList<PortableDataType> getExportTypes();
 
     ImmutableList<PortableDataType> getImportTypes();
 
-    OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType);
+    /**
+     * Return an OfflineAuthDataGenerator for the provided dataType. The returned generator will
+     * have permissions based on the serviceMode provided.
+     */
+    default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
+      // default implementation to ignore serviceMode
+      return getOfflineAuthDataGenerator(dataType);
+    }
 
-    /* Return an OnlineAuthDataGenerator for the provided dataType. The returned generator will have permissions based
+    /**
+     * Same as above but retrieves AuthGenerator for read/write access (ignoring serviceMode).
+     * TODO: remove once all serviceProviders implement the above version of this method.
+     */
+    @Deprecated
+    default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType){
+      logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, service: {}",
+          dataType, getName());
+      return null;
+    };
+
+    /* Return an OnlineAuthDataGenerator for the provided  dataType. The returned generator will have permissions based
      * on the serviceMode provided.
      */
     default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
@@ -52,8 +74,8 @@ public interface ServiceProvider {
      */
     @Deprecated
     default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-        System.out.println("WARNING: getOnlineAuthDataGenerator not implemented for type: "
-                + dataType + ", service: " + getName());
+        logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, service: {}",
+                dataType, getName());
         return null;
     }
 
