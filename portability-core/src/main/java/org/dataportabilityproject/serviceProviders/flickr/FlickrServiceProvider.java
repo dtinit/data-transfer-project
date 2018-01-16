@@ -16,6 +16,7 @@
 package org.dataportabilityproject.serviceProviders.flickr;
 
 import com.flickr4java.flickr.auth.Auth;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -36,12 +38,16 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  */
 final class FlickrServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
-    private final FlickrAuth flickrAuth;
+    private final FlickrAuth importAuth;
+    private final FlickrAuth exportAuth;
+    private final ImmutableList<PortableDataType> dataTypes = ImmutableList
+        .of(PortableDataType.PHOTOS);
 
     @Inject
     FlickrServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         this.appCredentials = appCredentialFactory.lookupAndCreate("FLICKR_KEY", "FLICKR_SECRET");
-        this.flickrAuth = new FlickrAuth(appCredentials);
+        this.importAuth = new FlickrAuth(appCredentials, ServiceMode.IMPORT);
+        this.exportAuth = new FlickrAuth(appCredentials, ServiceMode.EXPORT);
     }
 
     @Override public String getName() {
@@ -49,23 +55,33 @@ final class FlickrServiceProvider implements ServiceProvider {
     }
 
     @Override public ImmutableList<PortableDataType> getExportTypes() {
-        return ImmutableList.of(PortableDataType.PHOTOS);
+        return dataTypes;
     }
 
     @Override public ImmutableList<PortableDataType> getImportTypes() {
-        return ImmutableList.of(PortableDataType.PHOTOS);
+        return dataTypes;
     }
 
-    @Override
+    @Override // OfflineDataGenerator. Assume import mode.
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return flickrAuth;
+        return importAuth;
     }
 
     @Override
-    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-        return flickrAuth;
-    }
+    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
+        ServiceMode serviceMode) {
+        Preconditions.checkArgument(dataTypes.contains(dataType),
+            "Provided dataType not supported: " + dataType);
 
+        switch (serviceMode) {
+            case IMPORT:
+                return importAuth;
+            case EXPORT:
+                return exportAuth;
+            default:
+                throw new IllegalArgumentException("ServiceMode not supported: " + serviceMode);
+        }
+    }
 
     @Override public Exporter<? extends DataModel> getExporter(
         PortableDataType type,
@@ -75,7 +91,7 @@ final class FlickrServiceProvider implements ServiceProvider {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData, jobDataCache);
+        return getInstanceOfService(authData, jobDataCache, ServiceMode.EXPORT);
     }
 
     @Override public Importer<? extends DataModel> getImporter(
@@ -86,13 +102,25 @@ final class FlickrServiceProvider implements ServiceProvider {
             throw new IllegalArgumentException("Type " + type + " is not supported");
         }
 
-        return getInstanceOfService(authData, jobDataCache);
+        return getInstanceOfService(authData, jobDataCache, ServiceMode.IMPORT);
     }
 
     private synchronized FlickrPhotoService getInstanceOfService(
         AuthData authData,
-        JobDataCache jobDataCache) throws IOException {
-        Auth auth = flickrAuth.getAuth(authData);
+        JobDataCache jobDataCache, ServiceMode serviceMode) throws IOException {
+        Auth auth;
+
+        switch (serviceMode) {
+            case EXPORT:
+                auth = exportAuth.getAuth(authData);
+                break;
+            case IMPORT:
+                auth = importAuth.getAuth(authData);
+                break;
+            default:
+                throw new IllegalArgumentException("ServiceMode not supported: " + serviceMode);
+        }
+
         return new FlickrPhotoService(
                 appCredentials,
                 auth,
