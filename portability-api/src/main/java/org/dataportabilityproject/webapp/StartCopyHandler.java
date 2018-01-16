@@ -71,17 +71,6 @@ final class StartCopyHandler implements HttpHandler {
     this.tokenManager = tokenManager;
   }
 
-  /* Test constructor used only for verification of xsrf token flow */
-  @VisibleForTesting
-  StartCopyHandler(TokenManager tokenManager) {
-    this.tokenManager = tokenManager;
-    this.serviceProviderRegistry = null;
-    this.jobDao = null;
-    this.cloudFactory = null;
-    this.cryptoHelper = null;
-    this.commonSettings = null;
-  }
-
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
