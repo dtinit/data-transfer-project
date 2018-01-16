@@ -33,11 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class GoogleCloudFactory implements CloudFactory {
-  private final Logger logger = LoggerFactory.getLogger(GoogleCloudFactory.class);
-  // Lazy init this in case we are running a different cloud than Google, in which case this class
-  // won't be used and the environment variable this is set from won't be available.
-  private static String PROJECT_ID;
-
   private final Datastore datastore;
   private final PersistentKeyValueStore persistentKeyValueStore;
   private final CryptoKeyManagementSystem cryptoKeyManagementSystem;

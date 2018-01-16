@@ -5,11 +5,10 @@ import com.google.inject.Inject;
 /**
  * Wrapper class for a Google Cloud Platform project ID.
  *
- * <p>Injecting "ProjectId projectId" into Google cloud implementation classes is an alternative to
- * injecting "@ProjectId String projectId", that prevents Guice from eagerly evaluating
- * Provider<GoogleCloudFactory> when we are not using Google Cloud.
- * TODO: Investigate injecting "@ProjectId String projectId" and not eagerly evaluating, then we
- * won't need this wrapper class.
+ * <p>This class exists so that we can inject ProjectId into Google implementation classes without
+ * forcing Guice to eagerly eval Provider<GoogleCloudFactory> when not using cloud=GOOGLE. i.e. if
+ * we just bound the project ID as a String directly ("@ProjectId String projectId") via
+ * bind(String.toClass).annotatedWith(ProjectId.class).toInstance(...), that causes eager init.
  */
 class ProjectId {
   private final String projectId;

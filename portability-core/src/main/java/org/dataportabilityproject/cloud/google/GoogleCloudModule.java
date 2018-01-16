@@ -65,7 +65,6 @@ public class GoogleCloudModule extends AbstractModule {
    *
    * @throws IllegalArgumentException if project ID is unset
    */
-
   @Provides ProjectId getProjectId() {
     String projectId;
     try {
