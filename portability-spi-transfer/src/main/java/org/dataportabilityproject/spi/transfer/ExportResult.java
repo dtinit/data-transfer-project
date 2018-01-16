@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.worker;
+package org.dataportabilityproject.spi.transfer;
 
 import org.dataportabilityproject.datatransfer.types.models.DataModel;
 

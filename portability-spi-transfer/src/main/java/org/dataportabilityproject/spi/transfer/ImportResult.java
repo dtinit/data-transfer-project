@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.worker;
+package org.dataportabilityproject.spi.transfer;
 
 /**
  * The result of an item import operation.

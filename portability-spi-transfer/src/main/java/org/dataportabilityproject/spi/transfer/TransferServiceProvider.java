@@ -1,9 +1,9 @@
-package org.dataportabilityproject.spi.worker;
+package org.dataportabilityproject.spi.transfer;
 
 /**
  * Factory responsible for providing {@link Exporter} and {@link Importer} implementations that transfer data from and to a particular service.
  */
-public interface WorkerServiceProvider {
+public interface TransferServiceProvider {
 
     /**
      * Returns the id of the service this factory supports.

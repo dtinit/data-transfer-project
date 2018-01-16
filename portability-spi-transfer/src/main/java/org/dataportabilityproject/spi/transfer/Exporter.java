@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.worker;
+package org.dataportabilityproject.spi.transfer;
 
 import org.dataportabilityproject.datatransfer.types.auth.AuthData;
 import org.dataportabilityproject.datatransfer.types.models.DataModel;

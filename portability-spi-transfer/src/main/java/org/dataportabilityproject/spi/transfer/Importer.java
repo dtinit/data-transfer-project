@@ -13,8 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.spi.transfer;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-worker')
+import org.dataportabilityproject.datatransfer.types.auth.AuthData;
+import org.dataportabilityproject.datatransfer.types.models.DataModel;
+
+/**
+ * Imports data into a destination service.
+ */
+public interface Importer<A extends AuthData, T extends DataModel> {
+
+    /**
+     * Imports data.
+     *
+     * @param authData authentication information
+     * @param data the data
+     * @return the operation result
+     */
+    ImportResult importItem(A authData, T data); // REVIEW: The original throws IOException. Continue to use or return as part of the result?
+
 }

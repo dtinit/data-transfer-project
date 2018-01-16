@@ -16,5 +16,5 @@
 
 dependencies {
     compile project(':portability-spi-cloud')
-    compile project(':portability-spi-worker')
+    compile project(':portability-spi-transfer')
 }

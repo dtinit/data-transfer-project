@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Implements a worker services that dispatches jobs to importer and exporter extensions.
+ * Defines the transfer SPI. Extensions use this module to implement custom import/export functionality for a service provider.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.spi.transfer;
 

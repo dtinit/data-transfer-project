@@ -13,23 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.worker;
-
-import org.dataportabilityproject.datatransfer.types.auth.AuthData;
-import org.dataportabilityproject.datatransfer.types.models.DataModel;
-
 /**
- * Imports data into a destination service.
+ * Implements a worker service that dispatches jobs to service provider extensions.
  */
-public interface Importer<A extends AuthData, T extends DataModel> {
+package org.dataportabilityproject.transfer;
 
-    /**
-     * Imports data.
-     *
-     * @param authData authentication information
-     * @param data the data
-     * @return the operation result
-     */
-    ImportResult importItem(A authData, T data); // REVIEW: The original throws IOException. Continue to use or return as part of the result?
-
-}
