@@ -60,9 +60,10 @@ public class CommonSettings {
       // locally and connecting to GCP
       String googleProjectId = System.getenv("GOOGLE_PROJECT_ID");
       Preconditions.checkArgument(
-          googleProjectId.endsWith("-local") || googleProjectId.endsWith("-test"),
+          googleProjectId.endsWith("-local") || googleProjectId.endsWith("-test")
+              || googleProjectId.endsWith("-qa"),
           "Invalid project to connect to with env=LOCAL. " + googleProjectId + " doesn't appear to"
-              + " be a local/test project since it doesn't end in -local or -test. Aborting");
+              + " be a local/test project since it doesn't end in -local, -test, or -qa. Aborting");
     }
   }
 

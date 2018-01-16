@@ -26,9 +26,11 @@ final class GoogleBucketStore implements BucketStore {
   private Storage storage;
 
   @Inject
-  GoogleBucketStore(GoogleCredentials googleCredentials) {
+  GoogleBucketStore(
+      GoogleCredentials googleCredentials,
+      ProjectId projectId) {
     storage = StorageOptions.newBuilder()
-        .setProjectId(GoogleCloudFactory.getGoogleProjectId())
+        .setProjectId(projectId.getProjectId())
         .setCredentials(googleCredentials)
         .build().getService();
   }

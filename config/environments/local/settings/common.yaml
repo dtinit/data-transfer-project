@@ -1,5 +1,5 @@
 env: LOCAL
-cloud: LOCAL
+cloud: GOOGLE
 serviceProviderClasses: [
   "org.dataportabilityproject.serviceProviders.flickr.FlickrServiceProvider",
   "org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider",

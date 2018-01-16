@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.google.GoogleCloudFactory;
+import org.dataportabilityproject.cloud.google.GoogleCloudModule;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JWTTokenManager;
@@ -42,8 +43,16 @@ import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.CloudAppCredentialFactory;
 import org.dataportabilityproject.shared.local.LocalAppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class PortabilityCoreModule extends AbstractModule {
+  private final Logger logger = LoggerFactory.getLogger(PortabilityCoreModule.class);
+  private final CommonSettings commonSettings;
+
+  public PortabilityCoreModule() {
+    this.commonSettings = getCommonSettings();
+  }
 
   @Override
   protected void configure() {
@@ -54,11 +63,21 @@ public final class PortabilityCoreModule extends AbstractModule {
     install(new MicrosoftModule());
     install(new RememberTheMilkModule());
     install(new SmugmugModule());
+
+    logger.warn("Using cloud: " + commonSettings.getCloud());
+    if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
+      logger.warn("installing GoogleCloudModule");
+      install(new GoogleCloudModule());
+    }
   }
 
   @Singleton
   @Provides
   CommonSettings provideCommonSettings() {
+    return commonSettings;
+  }
+
+  private CommonSettings getCommonSettings() {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     try {
       InputStream in =
@@ -80,12 +99,11 @@ public final class PortabilityCoreModule extends AbstractModule {
     if (commonSettings.getCloud() == SupportedCloud.LOCAL) {
       return localCloudFactoryProvider.get();
     } else if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
-      return googleCloudFactoryProvider.get();
+       return googleCloudFactoryProvider.get();
     } else {
       throw new UnsupportedOperationException(commonSettings.getCloud() + " is not supported yet.");
     }
   }
-
 
   @Provides
   AppCredentialFactory provideAppCredentialFactory(
