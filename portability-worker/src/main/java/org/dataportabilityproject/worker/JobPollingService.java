@@ -89,7 +89,8 @@ class JobPollingService extends AbstractScheduledService {
   private void pollUntilJobIsReady() {
     PortabilityJob job = jobDao
         .lookupAssignedWithAuthDataJob(jobMetadata.getJobId());
-    logger.debug("Polled lookupAssignedWithAuthDataJob, found id: {}", job.id());
+    logger.debug("Polled lookupAssignedWithAuthDataJob, found id: {}",
+        (job != null ? job.id() : "null"));
 
     Preconditions.checkNotNull(job);
     // Validate job has auth data
