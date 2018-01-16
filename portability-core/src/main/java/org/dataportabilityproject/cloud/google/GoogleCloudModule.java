@@ -18,6 +18,8 @@ package org.dataportabilityproject.cloud.google;
 import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -28,7 +30,6 @@ public class GoogleCloudModule extends AbstractModule {
 
   @Override
   protected void configure() {
-
   }
 
   @Provides
@@ -59,4 +60,23 @@ public class GoogleCloudModule extends AbstractModule {
     }
   }
 
+  /**
+   * Get project ID from environment variable and validate it is set.
+   *
+   * @throws IllegalArgumentException if project ID is unset
+   */
+  @Provides ProjectId getProjectId() {
+    String projectId;
+    try {
+      projectId = System.getenv("GOOGLE_PROJECT_ID");
+    } catch (NullPointerException e) {
+      throw new IllegalArgumentException("Need to specify a project ID when using Google Cloud. "
+          + "This should be exposed as an environment variable by Kubernetes, see "
+          + "k8s/api-deployment.yaml");
+    }
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "Need to specify a project "
+        + "ID when using Google Cloud. This should be exposed as an environment variable by "
+        + "Kubernetes, see k8s/api-deployment.yaml");
+    return new ProjectId(projectId.toLowerCase());
+  }
 }

@@ -23,8 +23,6 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import javax.inject.Inject;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
@@ -33,29 +31,28 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 public final class GoogleCloudFactory implements CloudFactory {
-  // Lazy init this in case we are running a different cloud than Google, in which case this class
-  // won't be used and the environment variable this is set from won't be available.
-  private static String PROJECT_ID;
-
   private final Datastore datastore;
   private final PersistentKeyValueStore persistentKeyValueStore;
   private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
   private final BucketStore bucketStore;
+  private final String projectId;
 
   @Inject
   public GoogleCloudFactory(
       GoogleBucketStore googleBucketStore,
       GoogleCredentials googleCredentials,
-      GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem) {
+      GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
+      ProjectId projectId) {
     this.datastore = DatastoreOptions
         .newBuilder()
-        .setProjectId(getGoogleProjectId())
+        .setProjectId(projectId.getProjectId())
         .setCredentials(googleCredentials)
         .build()
         .getService();
     this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
+    this.projectId = projectId.getProjectId();
   }
 
   @Override
@@ -94,34 +91,6 @@ public final class GoogleCloudFactory implements CloudFactory {
    */
   @Override
   public String getProjectId() {
-    return getGoogleProjectId();
-  }
-
-  /**
-   * Get project ID from environment variable and validate it is set.
-   *
-   * <p>Exposed as package private so Google classes in this package may use this directly without
-   * needing to obtain a CloudFactory instance.
-   *
-   * @return project ID
-   * @throws IllegalArgumentException if project ID is unset
-   */
-  static String getGoogleProjectId() throws IllegalArgumentException {
-    if (PROJECT_ID != null) {
-      return PROJECT_ID;
-    }
-    String tempProjectId;
-    try {
-      tempProjectId = System.getenv("GOOGLE_PROJECT_ID");
-    } catch (NullPointerException e) {
-      throw new IllegalArgumentException("Need to specify a project ID when using Google Cloud. "
-          + "This should be exposed as an environment variable by Kubernetes, see "
-          + "k8s/api-deployment.yaml");
-    }
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tempProjectId), "Need to specify a project "
-        + "ID when using Google Cloud. This should be exposed as an environment variable by "
-        + "Kubernetes, see k8s/api-deployment.yaml");
-    PROJECT_ID = tempProjectId.toLowerCase();
-    return PROJECT_ID;
+    return projectId;
   }
 }
