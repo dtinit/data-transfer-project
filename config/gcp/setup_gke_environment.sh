@@ -375,4 +375,9 @@ Next steps, not done by this script, are:
 7. Deploy the image you just loaded in Kubernetes Engine -> Workloads -> portability-api -> Actions
    -> Rolling Update
 8. (Optional) Enable IAP to whitelist only select users to view the app
+9. Setup Stackdriver account and billing at https://app.google.stackdriver.com/project=project-name
+   This will enable monitoring (logging is already on by default).
+10. Disable load balancer logging so we don't log full requests URLs, which may contain sensitive
+    info like OAuth credentials. Do this at: https://console.cloud.google.com/logs/usage
+    > Cloud HTTP Load Balancer > Disable log source.
 "
