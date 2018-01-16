@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -35,7 +34,7 @@ public class JobDaoTest {
 
   @Before
   public void setUp() {
-    jobDao = new JobDao(new InMemoryPersistentKeyValueStore());
+    jobDao = new JobDao(new LocalCloudFactory().getPersistentKeyValueStore());
   }
 
   @Test
