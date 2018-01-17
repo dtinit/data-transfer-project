@@ -27,6 +27,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
 import org.dataportabilityproject.cloud.google.GoogleJobDataCache;
 import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
@@ -34,6 +35,7 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +68,18 @@ public class LocalCloudFactory implements CloudFactory {
       .setProjectId(DUMMY_PROJECT_ID)
       .build()
       .getService();
-  private static final Supplier<PersistentKeyValueStore> KEY_VALUE_SUPPLIER =
-      Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore));
+
+
+  private final Supplier<PersistentKeyValueStore> keyValueStoreSupplier;
+
+  @Inject
+  public LocalCloudFactory(CommonSettings commonSettings) {
+    if(commonSettings.getEncryptedFlow()) {
+      this.keyValueStoreSupplier = Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore));
+    } else {
+      this.keyValueStoreSupplier = Suppliers.memoize( () -> new InMemoryPersistentKeyValueStore());
+    }
+  }
 
   @Override
   public JobDataCache getJobDataCache(String jobId, String service) {
@@ -78,7 +90,7 @@ public class LocalCloudFactory implements CloudFactory {
   @Override
   public PersistentKeyValueStore getPersistentKeyValueStore() {
     logger.info("Returning local google datastore-based key value store");
-    return KEY_VALUE_SUPPLIER.get();
+    return keyValueStoreSupplier.get();
   }
 
   @Override
