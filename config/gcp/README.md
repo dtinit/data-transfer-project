@@ -27,7 +27,11 @@ is controlled with the _cloud=LOCAL_ flag in
 We also provide functionality for local instances to point to a test GCP
 project by specifying _cloud=GOOGLE_. The project this points to, as
 well as credentials to access it, are configured in our Docker image
-build [script](build_and_upload_docker_image.sh).
+build [script](build_and_upload_docker_image.sh). The project should be
+specified in LOCAL_GCP_PROJECT in init_common_vars.sh. Credentials
+for that project's service account should be accessed from API >
+Credentials > service account credentials in GoogleCloudPlatform and
+copied into config/gcp/service_account_credentials.json locally.
 
 For more information on running locally see
 [Developer documentation](../../Documentation/Developer.md).

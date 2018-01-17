@@ -98,8 +98,6 @@ Continue? (Y/n): " response
       echo "Aborting"
       exit 0
     fi
-    # This is a test project. Only use test projects here!
-    LOCAL_GCP_PROJECT="world-takeout-test"
     LOCAL_DEBUG_SETTINGS=$LOCAL_DEBUG_SETTINGS"
 COPY $CREDS_FILE /service_acct_creds.json
 ENV GOOGLE_PROJECT_ID=$LOCAL_GCP_PROJECT

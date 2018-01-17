@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.google.GoogleCloudFactory;
+import org.dataportabilityproject.cloud.google.GoogleCloudModule;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JWTTokenManager;
@@ -44,7 +45,6 @@ import org.dataportabilityproject.shared.local.LocalAppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public final class PortabilityCoreModule extends AbstractModule {
-
   @Override
   protected void configure() {
     // TODO: selectively load these
@@ -54,6 +54,8 @@ public final class PortabilityCoreModule extends AbstractModule {
     install(new MicrosoftModule());
     install(new RememberTheMilkModule());
     install(new SmugmugModule());
+
+    install(new GoogleCloudModule());
   }
 
   @Singleton
@@ -85,7 +87,6 @@ public final class PortabilityCoreModule extends AbstractModule {
       throw new UnsupportedOperationException(commonSettings.getCloud() + " is not supported yet.");
     }
   }
-
 
   @Provides
   AppCredentialFactory provideAppCredentialFactory(
