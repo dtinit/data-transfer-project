@@ -81,7 +81,7 @@ class JobPollingService extends AbstractScheduledService {
       PrivateKey privateKey = jobMetadata.getKeyPair().getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
       jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
-      logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}", publicKey);
+      logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}", publicKey.getEncoded().length);
     } else {
       logger.debug("findNextJobPendingWorkerAssignment result was null");
     }
