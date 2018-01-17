@@ -23,7 +23,9 @@ import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import java.io.IOException;
+import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public class GoogleCloudModule extends AbstractModule {
@@ -35,6 +37,7 @@ public class GoogleCloudModule extends AbstractModule {
   @Provides
   @Inject
   GoogleCredentials getCredentials(CommonSettings commonSettings) throws GoogleCredentialException {
+    validateUsingGoogle(commonSettings);
     // TODO: Check whether we are actually running on GCP once we find out how
     boolean isRunningOnGcp = commonSettings.getEnv() != LOCAL;
     // DO NOT REMOVE this security check! This ensures we are using the correct GCP credentials.
@@ -65,7 +68,8 @@ public class GoogleCloudModule extends AbstractModule {
    *
    * @throws IllegalArgumentException if project ID is unset
    */
-  @Provides ProjectId getProjectId() {
+  @Provides @Singleton ProjectId getProjectId(CommonSettings commonSettings) {
+    validateUsingGoogle(commonSettings);
     String projectId;
     try {
       projectId = System.getenv("GOOGLE_PROJECT_ID");
@@ -78,5 +82,17 @@ public class GoogleCloudModule extends AbstractModule {
         + "ID when using Google Cloud. This should be exposed as an environment variable by "
         + "Kubernetes, see k8s/api-deployment.yaml");
     return new ProjectId(projectId.toLowerCase());
+  }
+
+  /**
+   * Validate we are using Google Cloud. Should be called in all Providers in this module.
+   *
+   * <p>This allows us to install this module and rely on Guice-ified flag parsing, and not do a
+   * separate parse to conditionally install this module.
+   */
+  private void validateUsingGoogle(CommonSettings commonSettings) {
+    if (commonSettings.getCloud() != SupportedCloud.GOOGLE) {
+      throw new IllegalStateException("Injecting Google objects when cloud != Google!");
+    }
   }
 }

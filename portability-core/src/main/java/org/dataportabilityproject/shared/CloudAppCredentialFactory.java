@@ -85,9 +85,14 @@ public class CloudAppCredentialFactory implements AppCredentialFactory {
     String secret;
     try {
       key = keys.get(keyName);
+    } catch (ExecutionException e) {
+      throw new IOException("Couldn't lookup key: " + keyName, e);
+    }
+
+    try {
       secret = secrets.get(secretName);
     } catch (ExecutionException e) {
-      throw new IOException("Couldn't lookup key or secret", e);
+      throw new IOException("Couldn't lookup secret: " + secretName, e);
     }
 
     return AppCredentials.create(key, secret);

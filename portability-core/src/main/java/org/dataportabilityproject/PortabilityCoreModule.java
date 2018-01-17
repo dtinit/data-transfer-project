@@ -45,12 +45,6 @@ import org.dataportabilityproject.shared.local.LocalAppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public final class PortabilityCoreModule extends AbstractModule {
-  private final CommonSettings commonSettings;
-
-  public PortabilityCoreModule() {
-    this.commonSettings = getCommonSettings();
-  }
-
   @Override
   protected void configure() {
     // TODO: selectively load these
@@ -61,18 +55,12 @@ public final class PortabilityCoreModule extends AbstractModule {
     install(new RememberTheMilkModule());
     install(new SmugmugModule());
 
-    if (commonSettings.getCloud() == SupportedCloud.GOOGLE) {
-      install(new GoogleCloudModule());
-    }
+    install(new GoogleCloudModule());
   }
 
   @Singleton
   @Provides
   CommonSettings provideCommonSettings() {
-    return commonSettings;
-  }
-
-  private CommonSettings getCommonSettings() {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     try {
       InputStream in =
