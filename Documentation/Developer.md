@@ -52,6 +52,15 @@ The following commands will run the angular frontend in dev mode locally proxyin
 * [optional] `npm install` #required first time through
 * `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
 
+## Running angular tests
+
+The following commands will run the angular frontend in dev mode locally proxying requests to the local webserver.
+
+* `cd client/`
+* `ng test --env=local -sm=false`
+  * Flag for environment set to local
+  * Flag for sourcemaps set to false gives better debugging messages
+
 ## Deploying in production
 
 [See config/README.md](../config/README.md)

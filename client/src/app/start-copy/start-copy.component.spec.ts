@@ -14,16 +14,28 @@
  * limitations under the License.
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {Observable} from 'rxjs/Rx';
+import { FormsModule } from '@angular/forms';
+import { BackendService } from '../backend.service';
 
 import { StartCopyComponent } from './start-copy.component';
 
+class MockBackendService {
+  copySetup(): Observable<any> {
+    return Observable.of();
+  }
+}
+
 describe('StartCopyComponent', () => {
   let component: StartCopyComponent;
+  let backend: BackendService;
   let fixture: ComponentFixture<StartCopyComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ StartCopyComponent ]
+      imports: [FormsModule],
+      declarations: [ StartCopyComponent ],
+      providers: [ {provide: BackendService, useClass: MockBackendService}]
     })
     .compileComponents();
   }));
@@ -31,10 +43,13 @@ describe('StartCopyComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(StartCopyComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    backend = TestBed.get(BackendService);
+    spyOn(backend, 'copySetup').and.callThrough();
   });
 
-  it('should be created', () => {
+  it('should be created with initial backend call made', () => {
     expect(component).toBeTruthy();
+    component.ngOnInit();
+    expect(backend.copySetup).toHaveBeenCalled();
   });
 });

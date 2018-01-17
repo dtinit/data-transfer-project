@@ -23,6 +23,7 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +63,7 @@ final class LocalCopier {
         "What service do you want to import to",
         registry.getServiceProvidersThatCanImport(type));
 
-    AuthData exportAuthData = registry.getOfflineAuth(exporterName, type)
+    AuthData exportAuthData = registry.getOfflineAuth(exporterName, type, ServiceMode.EXPORT)
         .generateAuthData(ioInterface);
 
     // This is a hack to allow round tripping to the same account while only doing one auth.
@@ -70,7 +71,7 @@ final class LocalCopier {
     if (exporterName.equals(importerName)) {
       importAuthData = exportAuthData;
     } else {
-      importAuthData = registry.getOfflineAuth(importerName, type)
+      importAuthData = registry.getOfflineAuth(importerName, type, ServiceMode.IMPORT)
           .generateAuthData(ioInterface);
     }
 
