@@ -77,6 +77,7 @@ if [[ ! -e $ENCRYPTED_SECRETS_DIR ]]; then
   encrypt_secret "RTM"
   encrypt_secret "SHUTTERSTOCK"
   encrypt_secret "SMUGMUG"
+  encrypt_secret "JWT"
 fi
 
 
