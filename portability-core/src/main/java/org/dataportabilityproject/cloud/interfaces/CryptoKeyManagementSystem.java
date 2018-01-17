@@ -21,5 +21,6 @@ import java.io.IOException;
  * Stores encryption/decryption keys and manages their usage.
  */
 public interface CryptoKeyManagementSystem {
-  byte[] decrypt(String cryptoKeyName, byte[] ciphertext) throws IOException;
+  // Decrypt an app secret. Each implementation may have its own convention for key names.
+  byte[] decryptAppSecret(byte[] ciphertext) throws IOException;
 }
