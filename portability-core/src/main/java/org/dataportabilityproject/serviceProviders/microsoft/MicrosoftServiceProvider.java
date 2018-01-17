@@ -47,13 +47,16 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         "wl.offline_access", // provides for refresh tokens
         "wl.calendars", "wl.contacts_calendars"); // calendar export
 
-    private final MicrosoftAuth microsoftAuth;
+    // oauthAuth is used for calendar import and export
+    private final MicrosoftAuth oauthAuth;
+    // passwordAuth is used for mail export
     private final PasswordAuthDataGenerator passwordAuth;
+    // credentials to pass into AuthDataGenerators
     private final AppCredentials appCredentials;
 
     // The list of supported dataTypes for import and export.
     // TODO: support IMPORT for MAIL.
-    private final Map<ServiceMode, ImmutableList<PortableDataType>> supportedDataTypes = ImmutableMap.<ServiceMode, ImmutableList<PortableDataType>>builder()
+    private final static Map<ServiceMode, ImmutableList<PortableDataType>> SUPPORTED_DATA_TYPES = ImmutableMap.<ServiceMode, ImmutableList<PortableDataType>>builder()
         .put(ServiceMode.IMPORT, ImmutableList.of(PortableDataType.CALENDAR))
         .put(ServiceMode.EXPORT, ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL))
         .build();
@@ -62,7 +65,7 @@ final class MicrosoftServiceProvider implements ServiceProvider {
     MicrosoftServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         this.appCredentials =
             appCredentialFactory.lookupAndCreate("MICROSOFT_KEY", "MICROSOFT_SECRET");
-        this.microsoftAuth = new MicrosoftAuth(
+        this.oauthAuth = new MicrosoftAuth(
             appCredentials,
             // TODO: only use scopes from the products we are accessing.
             SCOPES);
@@ -75,39 +78,39 @@ final class MicrosoftServiceProvider implements ServiceProvider {
 
     @Override
     public ImmutableList<PortableDataType> getExportTypes() {
-        return supportedDataTypes.get(ServiceMode.EXPORT);
+        return SUPPORTED_DATA_TYPES.get(ServiceMode.EXPORT);
     }
 
     @Override
     public ImmutableList<PortableDataType> getImportTypes() {
-        return supportedDataTypes.get(ServiceMode.IMPORT);
+        return SUPPORTED_DATA_TYPES.get(ServiceMode.IMPORT);
     }
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-        Preconditions.checkArgument(supportedDataTypes.get(serviceMode).contains(dataType),
-            "DataType %s not supported for provided ServiceMode: %s", dataType, serviceMode);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.get(serviceMode).contains(dataType),
+            "[%s] of type [%s] is not supported by Microsoft.", serviceMode, dataType);
         switch (dataType) {
             case CALENDAR:
-                return microsoftAuth;
+                return oauthAuth;
             case MAIL:
                 return passwordAuth;
             default:
-                throw new IllegalArgumentException("Type " + dataType + " is not supported");
+                throw new IllegalArgumentException("Type [" + dataType + "] is not supported.");
         }
     }
 
     @Override
     public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-        Preconditions.checkArgument(supportedDataTypes.get(serviceMode).contains(dataType),
-            "DataType %s not supported for provided ServiceMode: %s", dataType, serviceMode);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.get(serviceMode).contains(dataType),
+            "[%s] of type [%s] is not supported by Microsoft", serviceMode, dataType);
         switch (dataType) {
             case CALENDAR:
-                return microsoftAuth;
+                return oauthAuth;
             case MAIL:
                 return passwordAuth;
             default:
-                throw new IllegalArgumentException("Type " + dataType + " is not supported");
+                throw new IllegalArgumentException("Type [" + dataType + "] is not supported.");
         }
     }
 
@@ -116,15 +119,15 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         PortableDataType type,
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
-        Preconditions.checkArgument(supportedDataTypes.get(ServiceMode.EXPORT).contains(type),
-            "DataType %s not supported for EXPORT", type);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.get(ServiceMode.EXPORT).contains(type),
+            "Export of type [%s] is not supported by Microsoft.", type);
         switch (type) {
             case CALENDAR:
                 return getCalendarService(authData);
             case MAIL:
                 return getMailService(authData);
             default:
-                throw new IllegalArgumentException("Type " + type + " is not supported");
+                throw new IllegalArgumentException("Type [" + type + "] is not supported.");
         }
     }
 
@@ -133,13 +136,13 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         PortableDataType type,
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
-        Preconditions.checkArgument(supportedDataTypes.get(ServiceMode.IMPORT).contains(type),
-            "DataType %s not supported for IMPORT", type);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.get(ServiceMode.IMPORT).contains(type),
+            "Import of type [%s] is not supported.", type);
         switch (type) {
             case CALENDAR:
                 return getCalendarService(authData);
             default:
-                throw new IllegalArgumentException("Type " + type + " is not supported");
+                throw new IllegalArgumentException("Type [" + type + "] is not supported.");
         }
     }
 
