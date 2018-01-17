@@ -15,11 +15,13 @@
  */
 package org.dataportabilityproject.webapp;
 
+import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class PortabilityApiMain {
   public static void main(String args[]) throws Exception {
+    Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
     PortabilityApiFlags.parse();
     Injector injector = Guice.createInjector(new PortabilityApiModule());
     ApiServer apiServer = injector.getInstance(ApiServer.class);

@@ -161,8 +161,8 @@ public class JobDao {
     Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
     Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
     // Populate job with keys to persist
-    String encodedPublicKey = PublicPrivateKeyUtils.encodeKey(publicKey);
-    String encodedPrivateKey = PublicPrivateKeyUtils.encodeKey(privateKey);
+    String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
+    String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
     PortabilityJob updatedJob = existingJob.toBuilder()
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
