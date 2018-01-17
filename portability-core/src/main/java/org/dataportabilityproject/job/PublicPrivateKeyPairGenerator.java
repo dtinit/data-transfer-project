@@ -25,7 +25,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +60,7 @@ public class PublicPrivateKeyPairGenerator {
    */
   public static PublicKey parsePublicKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
-    EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
+    EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
     KeyFactory keyFactory;
     try {
       keyFactory = KeyFactory.getInstance(ALGORITHM);
@@ -80,7 +80,7 @@ public class PublicPrivateKeyPairGenerator {
    */
   public static PrivateKey parsePrivateKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
-    EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
+    EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
     KeyFactory keyFactory;
     try {
       keyFactory = KeyFactory.getInstance(ALGORITHM);
