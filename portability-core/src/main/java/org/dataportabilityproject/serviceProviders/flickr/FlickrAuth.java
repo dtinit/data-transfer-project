@@ -29,6 +29,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -39,10 +40,12 @@ import org.scribe.model.Verifier;
 
 final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   private final Flickr flickr;
+  private final ServiceMode serviceMode;
 
-  FlickrAuth(AppCredentials appCredentials) {
+  FlickrAuth(AppCredentials appCredentials, ServiceMode serviceMode) {
     Preconditions.checkNotNull(appCredentials);
     this.flickr = new Flickr(appCredentials.key(), appCredentials.secret(), new REST());
+    this.serviceMode = serviceMode;
   }
 
   @Override
@@ -78,7 +81,8 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = authInterface.getRequestToken(
         callbackBaseUrl + "/callback1/flickr");
-    String url = authInterface.getAuthorizationUrl(token, Permission.WRITE);
+    String url = authInterface.getAuthorizationUrl(token,
+        serviceMode == ServiceMode.IMPORT ? Permission.WRITE : Permission.READ);
     return AuthFlowInitiator.create(url, toAuthData(token));
   }
 
