@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.serviceProviders.smugmug;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -34,13 +36,19 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  * The {@link ServiceProvider} for the SmugMub service (https://www.smugmug.com/).
  */
 final class SmugMugServiceProvider implements ServiceProvider {
-    private final SmugMugAuth smugMugAuth;
+
+    private final SmugMugAuth importAuth;
+    private final SmugMugAuth exportAuth;
+
+    private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
+        .of(PortableDataType.PHOTOS);
 
     @Inject
     SmugMugServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         AppCredentials appCredentials =
             appCredentialFactory.lookupAndCreate("SMUGMUG_KEY", "SMUGMUG_SECRET");
-        this.smugMugAuth = new SmugMugAuth(appCredentials);
+        this.importAuth = new SmugMugAuth(appCredentials, ServiceMode.IMPORT);
+        this.exportAuth = new SmugMugAuth(appCredentials, ServiceMode.EXPORT);
     }
 
     @Override public String getName() {
@@ -48,39 +56,46 @@ final class SmugMugServiceProvider implements ServiceProvider {
     }
 
     @Override public ImmutableList<PortableDataType> getExportTypes() {
-        return ImmutableList.of(PortableDataType.PHOTOS);
+        return SUPPORTED_DATA_TYPES;
     }
 
     @Override public ImmutableList<PortableDataType> getImportTypes() {
-        return ImmutableList.of(PortableDataType.PHOTOS);
+        return SUPPORTED_DATA_TYPES;
     }
 
     @Override
-    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return smugMugAuth;
+    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+        ServiceMode serviceMode) {
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
+            "[%s] mode is not supported for dataType [%s] by Smugmug.", serviceMode, dataType);
+        switch (serviceMode) {
+            case EXPORT:
+                return exportAuth;
+            case IMPORT:
+                return importAuth;
+            default:
+                throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
+        }
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
             AuthData authData, JobDataCache jobDataCache) throws IOException {
-        if (type != PortableDataType.PHOTOS) {
-            throw new IllegalArgumentException("Type " + type + " is not supported");
-        }
-
-        return getInstanceOfService(authData, jobDataCache);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(type),
+            "Export of type [%s] is not supported by SmugMug.", type);
+        return getInstanceOfService(authData, jobDataCache, exportAuth);
     }
 
     @Override public Importer<? extends DataModel> getImporter(PortableDataType type,
             AuthData authData, JobDataCache jobDataCache) throws IOException {
-        if (type != PortableDataType.PHOTOS) {
-            throw new IllegalArgumentException("Type " + type + " is not supported");
-        }
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(type),
+            "Import of type [%s] is not supported by SmugMug.", type);
 
-        return getInstanceOfService(authData, jobDataCache);
+        return getInstanceOfService(authData, jobDataCache, importAuth);
     }
 
     private synchronized SmugMugPhotoService getInstanceOfService(
         AuthData authData,
-        JobDataCache jobDataCache) throws IOException {
+        JobDataCache jobDataCache, SmugMugAuth smugMugAuth) throws IOException {
         OAuthConsumer consumer = smugMugAuth.generateConsumer(authData);
         return new SmugMugPhotoService(
             consumer,

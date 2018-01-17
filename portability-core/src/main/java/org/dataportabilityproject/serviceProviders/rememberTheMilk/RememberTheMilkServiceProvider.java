@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
@@ -34,16 +36,18 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  */
 final class RememberTheMilkServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
-    private final RememberTheMilkAuth rememberTheMilkAuth;
+    private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
+        .of(PortableDataType.TASKS);
+    private final RememberTheMilkAuth importAuth;
+    private final RememberTheMilkAuth exportAuth;
 
     @Inject
     RememberTheMilkServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         this.appCredentials = appCredentialFactory.lookupAndCreate("RTM_KEY", "RTM_SECRET");
-        this.rememberTheMilkAuth = new RememberTheMilkAuth(
-            new RememberTheMilkSignatureGenerator(
-            appCredentials,
-            null
-        ));
+        this.importAuth = new RememberTheMilkAuth(
+            new RememberTheMilkSignatureGenerator(appCredentials, null), ServiceMode.IMPORT);
+        this.exportAuth = new RememberTheMilkAuth(
+            new RememberTheMilkSignatureGenerator(appCredentials, null), ServiceMode.EXPORT);
     }
 
     @Override public String getName() {
@@ -52,39 +56,45 @@ final class RememberTheMilkServiceProvider implements ServiceProvider {
 
     @Override
     public ImmutableList<PortableDataType> getExportTypes() {
-        return ImmutableList.of(PortableDataType.TASKS);
+        return SUPPORTED_DATA_TYPES;
     }
 
     @Override
     public ImmutableList<PortableDataType> getImportTypes() {
-        return ImmutableList.of(PortableDataType.TASKS);
+        return SUPPORTED_DATA_TYPES;
     }
 
     @Override
-    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return rememberTheMilkAuth;
+    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+        ServiceMode serviceMode) {
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
+            "[%s] mode for type [%s] is not supported by RememberTheMilk.", serviceMode, dataType);
+        switch (serviceMode) {
+            case IMPORT:
+                return importAuth;
+            case EXPORT:
+                return exportAuth;
+            default:
+                throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
+        }
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
             AuthData authData, JobDataCache jobDataCache) throws IOException {
-        if (type != PortableDataType.TASKS) {
-            throw new IllegalArgumentException("Type " + type + " is not supported");
-        }
-
-        return getInstanceOfService(authData, jobDataCache);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(type),
+            "Export of type [%s] is not supported by RememberTheMilk.", type);
+        return getInstanceOfService(authData, jobDataCache, exportAuth);
     }
 
     @Override public Importer<? extends DataModel> getImporter(PortableDataType type,
             AuthData authData, JobDataCache jobDataCache) throws IOException {
-        if (type != PortableDataType.TASKS) {
-            throw new IllegalArgumentException("Type " + type + " is not supported");
-        }
-
-        return getInstanceOfService(authData, jobDataCache);
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(type),
+            "Import of type [%s] is not supported by RememberTheMilk.", type);
+        return getInstanceOfService(authData, jobDataCache, importAuth);
     }
 
     private synchronized RememberTheMilkTaskService getInstanceOfService(
-        AuthData authData, JobDataCache jobDataCache)
+        AuthData authData, JobDataCache jobDataCache, RememberTheMilkAuth rememberTheMilkAuth)
             throws IOException {
             RememberTheMilkSignatureGenerator signer = new RememberTheMilkSignatureGenerator(
                 appCredentials,
