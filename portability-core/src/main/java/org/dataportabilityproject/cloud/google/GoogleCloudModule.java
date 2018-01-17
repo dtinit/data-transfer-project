@@ -34,6 +34,7 @@ public class GoogleCloudModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    requireBinding(CommonSettings.class);
   }
 
   @Provides
