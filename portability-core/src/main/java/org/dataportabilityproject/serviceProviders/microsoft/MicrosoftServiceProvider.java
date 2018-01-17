@@ -17,8 +17,10 @@ package org.dataportabilityproject.serviceProviders.microsoft;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
@@ -33,8 +35,8 @@ import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.shared.auth.PasswordAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.PasswordAuthData;
+import org.dataportabilityproject.shared.auth.PasswordAuthDataGenerator;
 
 /**
  * The {@link ServiceProvider} for Microsoft (http://www.microsoft.com/).
@@ -46,17 +48,25 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         "wl.calendars", "wl.contacts_calendars"); // calendar export
 
     private final MicrosoftAuth microsoftAuth;
-    private final PasswordAuthDataGenerator  passwordAuth;
+    private final PasswordAuthDataGenerator passwordAuth;
+    private final AppCredentials appCredentials;
+
+    // The list of supported dataTypes for import and export.
+    // TODO: support IMPORT for MAIL.
+    private final Map<ServiceMode, ImmutableList<PortableDataType>> supportedDataTypes = ImmutableMap.<ServiceMode, ImmutableList<PortableDataType>>builder()
+        .put(ServiceMode.IMPORT, ImmutableList.of(PortableDataType.CALENDAR))
+        .put(ServiceMode.EXPORT, ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL))
+        .build();
 
     @Inject
     MicrosoftServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
-        AppCredentials appCredentials =
+        this.appCredentials =
             appCredentialFactory.lookupAndCreate("MICROSOFT_KEY", "MICROSOFT_SECRET");
-        microsoftAuth = new MicrosoftAuth(
+        this.microsoftAuth = new MicrosoftAuth(
             appCredentials,
             // TODO: only use scopes from the products we are accessing.
             SCOPES);
-        passwordAuth  = new PasswordAuthDataGenerator();
+        this.passwordAuth = new PasswordAuthDataGenerator();
     }
 
     @Override public String getName() {
@@ -65,23 +75,22 @@ final class MicrosoftServiceProvider implements ServiceProvider {
 
     @Override
     public ImmutableList<PortableDataType> getExportTypes() {
-        return ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL);
+        return supportedDataTypes.get(ServiceMode.EXPORT);
     }
 
     @Override
     public ImmutableList<PortableDataType> getImportTypes() {
-        return ImmutableList.of(PortableDataType.CALENDAR);
+        return supportedDataTypes.get(ServiceMode.IMPORT);
     }
 
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
+        Preconditions.checkArgument(supportedDataTypes.get(serviceMode).contains(dataType),
+            "DataType %s not supported for provided ServiceMode: %s", dataType, serviceMode);
         switch (dataType) {
             case CALENDAR:
-                // IMPORT and EXPORT are supported for CALENDAR
                 return microsoftAuth;
             case MAIL:
-                // Only EXPORT is supported for MAIL
-                Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT for MAIL is not supported by Microsoft.");
                 return passwordAuth;
             default:
                 throw new IllegalArgumentException("Type " + dataType + " is not supported");
@@ -90,13 +99,12 @@ final class MicrosoftServiceProvider implements ServiceProvider {
 
     @Override
     public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
+        Preconditions.checkArgument(supportedDataTypes.get(serviceMode).contains(dataType),
+            "DataType %s not supported for provided ServiceMode: %s", dataType, serviceMode);
         switch (dataType) {
             case CALENDAR:
-                // IMPORT and EXPORT are supported for CALENDAR
                 return microsoftAuth;
             case MAIL:
-                // Only EXPORT is supported for MAIL
-                Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT for MAIL is not supported by Microsoft.");
                 return passwordAuth;
             default:
                 throw new IllegalArgumentException("Type " + dataType + " is not supported");
@@ -108,6 +116,8 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         PortableDataType type,
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
+        Preconditions.checkArgument(supportedDataTypes.get(ServiceMode.EXPORT).contains(type),
+            "DataType %s not supported for EXPORT", type);
         switch (type) {
             case CALENDAR:
                 return getCalendarService(authData);
@@ -123,6 +133,8 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         PortableDataType type,
         AuthData authData,
         JobDataCache jobDataCache) throws IOException {
+        Preconditions.checkArgument(supportedDataTypes.get(ServiceMode.IMPORT).contains(type),
+            "DataType %s not supported for IMPORT", type);
         switch (type) {
             case CALENDAR:
                 return getCalendarService(authData);
