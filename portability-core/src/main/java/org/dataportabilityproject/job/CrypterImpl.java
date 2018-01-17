@@ -10,9 +10,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /** Handles encryption and decryption with the give {@code key} it is constructed with. */
 class CrypterImpl implements Crypter {

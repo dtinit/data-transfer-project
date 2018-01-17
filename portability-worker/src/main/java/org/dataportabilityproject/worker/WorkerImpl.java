@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 final class WorkerImpl {
   private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
   private static final Gson GSON = new Gson();
+
   private final CloudFactory cloudFactory;
   private final JobPollingService jobPollingService;
   private final JobDao jobDao;
