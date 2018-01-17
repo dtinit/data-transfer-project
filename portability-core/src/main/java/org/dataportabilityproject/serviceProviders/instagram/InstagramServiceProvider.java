@@ -36,6 +36,9 @@ final class InstagramServiceProvider implements ServiceProvider {
   // Instagram only offers basic scope for reading user's profiles. There is no "write" scope.
   // See https://www.instagram.com/developer/authorization/
   private static final ImmutableList<String> SCOPES = ImmutableList.of("basic");
+  private final ImmutableList<PortableDataType> exportTypes = ImmutableList
+      .of(PortableDataType.PHOTOS);
+
   private final InstagramAuth instagramAuth;
 
   @Inject
@@ -52,7 +55,7 @@ final class InstagramServiceProvider implements ServiceProvider {
 
   @Override
   public ImmutableList<PortableDataType> getExportTypes() {
-    return ImmutableList.of(PortableDataType.PHOTOS);
+    return exportTypes;
   }
 
   @Override
@@ -64,12 +67,18 @@ final class InstagramServiceProvider implements ServiceProvider {
   @Override
   public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
     Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+    Preconditions
+        .checkArgument(exportTypes.contains(dataType), "DataType %s not supported by Instagram",
+            dataType);
     return instagramAuth;
   }
 
   @Override
   public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
     Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+    Preconditions
+        .checkArgument(exportTypes.contains(dataType), "DataType %s not supported by Instagram",
+            dataType);
     return instagramAuth;
   }
 
@@ -78,10 +87,9 @@ final class InstagramServiceProvider implements ServiceProvider {
       PortableDataType type,
       AuthData authData,
       JobDataCache jobDataCache) throws IOException {
-    if (type == PortableDataType.PHOTOS) {
-      return new InstagramPhotoService(((InstagramOauthData) authData));
-    }
-    throw new IllegalStateException("Instagram doesn't support exporting: " + type);
+    Preconditions
+        .checkArgument(exportTypes.contains(type), "Instagram doesn't support exporting %s", type);
+    return new InstagramPhotoService(((InstagramOauthData) authData));
   }
 
   @Override
