@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class WorkerImpl {
-  private final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
   private final CloudFactory cloudFactory;
   private final JobPollingService jobPollingService;
   private final JobDao jobDao;

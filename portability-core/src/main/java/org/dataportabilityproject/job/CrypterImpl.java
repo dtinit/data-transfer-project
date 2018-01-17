@@ -12,10 +12,13 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /** Handles symmetric encryption and decryption with the give {@code key} it is constructed with. */
 public class CrypterImpl implements Crypter {
+  private static final Logger logger = LoggerFactory.getLogger(CrypterImpl.class);
   private static final String ALGORITHM = "AES";
   private final Key key;
 
@@ -35,14 +38,19 @@ public class CrypterImpl implements Crypter {
       byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
       return BaseEncoding.base64Url().encode(encrypted);
     } catch (BadPaddingException e) {
+      logger.error("BadPaddingException for data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     } catch (IllegalBlockSizeException e) {
+      logger.error("IllegalBlockSizeException for data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     } catch (InvalidKeyException e) {
+      logger.error("InvalidKeyException for data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     } catch (NoSuchAlgorithmException e) {
+      logger.error("NoSuchAlgorithmException for data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     } catch (NoSuchPaddingException e) {
+      logger.error("NoSuchPaddingException for data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     }
   }
@@ -61,14 +69,19 @@ public class CrypterImpl implements Crypter {
       System.arraycopy(decrypted, 8, data, 0, data.length);
       return new String(data, Charsets.UTF_8);
     } catch (BadPaddingException e) {
+      logger.error("BadPaddingException for data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     } catch (IllegalBlockSizeException e) {
+      logger.error("IllegalBlockSizeException for data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     } catch (InvalidKeyException e) {
+      logger.error("InvalidKeyException for data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     } catch (NoSuchAlgorithmException e) {
+      logger.error("NoSuchAlgorithmException for data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     } catch (NoSuchPaddingException e) {
+      logger.error("NoSuchPaddingException for data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     }
   }
