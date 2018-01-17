@@ -14,16 +14,30 @@
  * limitations under the License.
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import {Observable} from 'rxjs/Rx';
 
 import { DemoComponent } from './demo.component';
+import { BackendService } from '../backend.service';
+import { PortableDataType } from '../portable-data-type';
+
+class MockBackendService {
+  private data_ : PortableDataType = new PortableDataType("dummyName", "dummyDescription");
+  listDataTypes(): Observable<any> {
+    return Observable.of([this.data_]);
+  }
+}
 
 describe('DemoComponent', () => {
   let component: DemoComponent;
+  let backend: BackendService;
   let fixture: ComponentFixture<DemoComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DemoComponent ]
+      imports: [FormsModule],
+      declarations: [ DemoComponent ],
+      providers: [ {provide: BackendService, useClass: MockBackendService}]
     })
     .compileComponents();
   }));
@@ -31,10 +45,13 @@ describe('DemoComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(DemoComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    backend = TestBed.get(BackendService);
+    spyOn(backend, 'listDataTypes').and.callThrough();
   });
 
-  it('should be created', () => {
-    expect(component).toBeTruthy();
+  it('should be created with initial backend call made',() => {
+      expect(component).toBeTruthy();
+      component.ngOnInit();
+      expect(backend.listDataTypes).toHaveBeenCalled();
   });
 });

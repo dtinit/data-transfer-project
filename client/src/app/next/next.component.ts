@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { BackendService } from '../backend.service';
 import { CopyConfiguration } from '../copy-configuration';
 
