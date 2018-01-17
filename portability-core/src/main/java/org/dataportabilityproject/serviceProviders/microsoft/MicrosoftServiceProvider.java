@@ -77,8 +77,11 @@ final class MicrosoftServiceProvider implements ServiceProvider {
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
         switch (dataType) {
             case CALENDAR:
+                // IMPORT and EXPORT are supported for CALENDAR
                 return microsoftAuth;
             case MAIL:
+                // Only EXPORT is supported for MAIL
+                Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT for MAIL is not supported by Microsoft.");
                 return passwordAuth;
             default:
                 throw new IllegalArgumentException("Type " + dataType + " is not supported");
