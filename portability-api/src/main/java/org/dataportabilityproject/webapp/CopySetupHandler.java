@@ -19,17 +19,21 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
-/** {@link HttpHandler} that handles starting a copy job. */
+/**
+ * {@link HttpHandler} that handles starting a copy job.
+ */
 final class CopySetupHandler extends SetupHandler {
+
   static final String PATH = "/_/copySetup";
 
   @Inject
   CopySetupHandler(
       ServiceProviderRegistry serviceProviderRegistry,
       JobDao jobDao,
-      CommonSettings commonSettings) {
-    super(serviceProviderRegistry, jobDao, commonSettings, Mode.COPY, PATH);
+      CommonSettings commonSettings, TokenManager tokenManager) {
+    super(serviceProviderRegistry, jobDao, commonSettings, Mode.COPY, PATH, tokenManager);
   }
 }

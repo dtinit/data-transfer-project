@@ -18,9 +18,11 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
 import com.google.api.client.util.Sleeper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -38,12 +40,14 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PublicPrivateKeyUtils;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class StartCopyHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -51,17 +55,20 @@ final class StartCopyHandler implements HttpHandler {
   private final CloudFactory cloudFactory;
   private final CryptoHelper cryptoHelper;
   private final CommonSettings commonSettings;
+  private final TokenManager tokenManager;
 
   @Inject
   StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
       CloudFactory cloudFactory,
       CryptoHelper cryptoHelper,
-      CommonSettings commonSettings) {
+      CommonSettings commonSettings,
+      TokenManager tokenManager) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobDao = jobDao;
     this.cloudFactory = cloudFactory;
     this.cryptoHelper = cryptoHelper;
     this.commonSettings = commonSettings;
+    this.tokenManager = tokenManager;
   }
 
   @Override
@@ -69,13 +76,7 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
 
-    String encodedIdCookie = PortabilityApiUtils
-        .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
-
-    // Valid job must be present
-    String jobId = JobUtils.decodeId(encodedIdCookie);
+    String jobId = PortabilityApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
 
     if (commonSettings.getEncryptedFlow()) {
       handleWorkerAssignmentFlow(exchange, jobId);
@@ -85,8 +86,8 @@ final class StartCopyHandler implements HttpHandler {
   }
 
   /**
-   * Handles flow for assigning a worker instance, encrypting data with the assigned worker key,
-   * and persisting the auth data, which will result in the worker starting the copy.
+   * Handles flow for assigning a worker instance, encrypting data with the assigned worker key, and
+   * persisting the auth data, which will result in the worker starting the copy.
    */
   private void handleWorkerAssignmentFlow(HttpExchange exchange, String id)
       throws IOException {
@@ -128,10 +129,10 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
-    while(jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
+    while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
       try {
         Sleeper.DEFAULT.sleep(5000);
-      } catch (InterruptedException e)  {
+      } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
@@ -140,7 +141,8 @@ final class StartCopyHandler implements HttpHandler {
     PortabilityJob assignedJob = jobDao.lookupAssignedWithoutAuthDataJob(job.id());
     Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
-    PublicKey publicKey = PublicPrivateKeyUtils.parsePublicKey(assignedJob.workerInstancePublicKey());
+    PublicKey publicKey = PublicPrivateKeyUtils
+        .parsePublicKey(assignedJob.workerInstancePublicKey());
     jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(),
         cryptoHelper.encryptAuthData(publicKey, exportAuthCookie),
         cryptoHelper.encryptAuthData(publicKey, importAuthCookie));
@@ -148,7 +150,9 @@ final class StartCopyHandler implements HttpHandler {
     writeResponse(exchange);
   }
 
-  /** Validates job information, starts the copy job inline, and returns status to the client. */
+  /**
+   * Validates job information, starts the copy job inline, and returns status to the client.
+   */
   private void handleStartCopyInApi(HttpExchange exchange, String id) throws IOException {
     // Lookup job
     PortabilityJob job = PortabilityApiUtils.lookupJob(id, jobDao);
@@ -183,7 +187,9 @@ final class StartCopyHandler implements HttpHandler {
     writeResponse(exchange);
   }
 
-  /** Write a response with status to the client. */
+  /**
+   * Write a response with status to the client.
+   */
   private void writeResponse(HttpExchange exchange) throws IOException {
     JsonObject response = Json.createObjectBuilder().add("status", "started").build();
 

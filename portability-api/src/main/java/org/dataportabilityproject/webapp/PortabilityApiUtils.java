@@ -35,7 +35,9 @@ import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
@@ -194,6 +196,50 @@ public class PortabilityApiUtils {
     }
     return true;
   }
+
+  /**
+   * Validates that the JobId in the request matches the jobId in the xsrf header and contains
+   * Does not validate that the job id itself is valid. Returns JobID.
+   */
+  public static String validateJobId(Headers requestHeaders, TokenManager tokenManager) {
+    String encodedIdCookie = PortabilityApiUtils
+        .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+
+    // Valid job must be present
+    String jobId = JobUtils.decodeId(encodedIdCookie);
+
+    // Validate XSRF token is present in request header and in the token.
+    String tokenHeader = parseXsrfTokenHeader(requestHeaders);
+    String tokenCookie = PortabilityApiUtils
+        .getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
+
+    // Both header and token should be present
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenHeader), "xsrf token header must be present");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenCookie), "xsrf token cookie must be present");
+
+    // The token present in the header should be the same as the token present in the cookie.
+    Preconditions.checkArgument(tokenCookie.equals(tokenHeader), "xsrf token header and cookie must match");
+
+    // Verify that the token is actually valid in the tokenManager
+    Preconditions.checkArgument(tokenManager.verifyToken(tokenHeader), "xsrf token provided is invalid");
+
+    // finally make sure the jobId present in the token is also equal to the jobId present in the cookie
+    String jobIdFromToken = tokenManager.getData(tokenHeader);
+    Preconditions.checkArgument(jobId.equals(jobIdFromToken), "encoded job id and job id token must match");
+    return jobId;
+  }
+
+  //The cookie value might be surrounded by double quotes which causes the angular cli to also
+  // surround the header with double quotes. Since the value itself may not contain quotes or
+  // whitespace, trim off the double quotes by converting them to whitespace.
+  private static String parseXsrfTokenHeader(Headers requestHeaders){
+    return requestHeaders.getFirst(JsonKeys.XSRF_HEADER)
+        .replace("\"", " ")
+        .trim();
+  }
+
 
   // TODO: figure out how to get the client to submit "clean" values
   // Hack to strip the angular indexing in option values.
