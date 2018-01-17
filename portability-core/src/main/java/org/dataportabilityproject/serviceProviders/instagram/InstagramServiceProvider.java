@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.serviceProviders.instagram;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -25,14 +26,16 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 final class InstagramServiceProvider implements ServiceProvider {
-  private static final ImmutableList<String> SCOPES = ImmutableList.of(
-      "basic"); // See https://www.instagram.com/developer/authorization/
+  // Instagram only offers basic scope for reading user's profiles. There is no "write" scope.
+  // See https://www.instagram.com/developer/authorization/
+  private static final ImmutableList<String> SCOPES = ImmutableList.of("basic");
   private final InstagramAuth instagramAuth;
 
   @Inject
@@ -59,12 +62,14 @@ final class InstagramServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
     return instagramAuth;
   }
 
   @Override
-  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
     return instagramAuth;
   }
 
