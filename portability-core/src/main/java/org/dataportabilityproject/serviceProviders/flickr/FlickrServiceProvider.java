@@ -62,9 +62,19 @@ final class FlickrServiceProvider implements ServiceProvider {
         return dataTypes;
     }
 
-    @Override // OfflineDataGenerator. Assume import mode.
-    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
-        return importAuth;
+    @Override // OfflineDataGenerator
+    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
+        Preconditions.checkArgument(dataTypes.contains(dataType),
+                "Provided dataType not supported: " + dataType);
+
+        switch (serviceMode) {
+            case IMPORT:
+                return importAuth;
+            case EXPORT:
+                return exportAuth;
+            default:
+                throw new IllegalArgumentException("ServiceMode not supported: " + serviceMode);
+        }
     }
 
     @Override
