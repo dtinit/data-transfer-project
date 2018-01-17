@@ -18,11 +18,9 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
 import com.google.api.client.util.Sleeper;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -39,7 +37,7 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PublicPrivateKeyUtils;
+import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -148,7 +146,7 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
     logger.debug("About to parse: {}", assignedJob.workerInstancePublicKey());
-    PublicKey publicKey = PublicPrivateKeyUtils
+    PublicKey publicKey = PublicPrivateKeyPairGenerator
         .parsePublicKey(assignedJob.workerInstancePublicKey());
     logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
 

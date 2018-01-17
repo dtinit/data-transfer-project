@@ -26,17 +26,17 @@ import java.net.HttpCookie;
 import java.security.PublicKey;
 import javax.crypto.SecretKey;
 import org.dataportabilityproject.job.Crypter;
-import org.dataportabilityproject.job.CrypterImpl;
+import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.SessionKeyGenerator;
+import org.dataportabilityproject.job.SecretKeyGenerator;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Helper methods utlized for encrypting data for the client.
+ * Helper methods utilized for encrypting and decrypting data for the client.
  */
 class CryptoHelper {
 
@@ -53,7 +53,7 @@ class CryptoHelper {
    * Serialize and encrypt the given {@code authData} with the session key.
    */
   static String encryptAuthData(PublicKey key, String sessionEncryptedAuthData) {
-    Crypter crypter = new CrypterImpl(key);
+    Crypter crypter = CrypterFactory.createCrypterForPublicKey(key);
     return crypter.encrypt(sessionEncryptedAuthData);
   }
 
@@ -61,7 +61,7 @@ class CryptoHelper {
    * Serialize and encrypt the given {@code authData} with the session key.
    */
   private static String encryptAuthData(SecretKey key, AuthData authData) {
-    Crypter crypter = new CrypterImpl(key);
+    Crypter crypter = CrypterFactory.createCrypterForSecretKey(key);
     String serialized = serialize(authData);
     return crypter.encrypt(serialized);
   }
@@ -90,6 +90,6 @@ class CryptoHelper {
     String encodedSessionKey = job.sessionKey();
     Preconditions
         .checkState(!Strings.isNullOrEmpty(encodedSessionKey), "Session key should not be null");
-    return SessionKeyGenerator.parse(encodedSessionKey);
+    return SecretKeyGenerator.parse(encodedSessionKey);
   }
 }
