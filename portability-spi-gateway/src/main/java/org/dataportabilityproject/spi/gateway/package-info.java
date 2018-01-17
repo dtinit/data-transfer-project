@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Defines the gateway SPI. Extensions use this module to implement custom import/export functionality for the system.
+ * Defines the gateway SPI. Extensions use this module to implement custom auth and gateway functionality for the system.
  */
 package org.dataportabilityproject.spi.gateway;
 

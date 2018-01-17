@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.transfer;
+package org.dataportabilityproject.spi.transfer.provider;
 
 /**
  * Factory responsible for providing {@link Exporter} and {@link Importer} implementations that transfer data from and to a particular service.

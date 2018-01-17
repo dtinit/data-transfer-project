@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer;
+package org.dataportabilityproject.spi.transfer.provider;
 
+import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -29,10 +30,10 @@ public interface Exporter<A extends AuthData, T extends DataModel> {
     ExportResult<T> export(A authData);
 
     /**
-     * Performs an export operation, starting from the continuation.
+     * Performs an export operation, starting from the data specified by the continuation.
      *
      * @param authData authentication data for the operation
-     * @param continuationInformation continuation data
+     * @param continuationData continuation data
      */
-    ExportResult<T> export(A authData, Object continuationInformation); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
+    ExportResult<T> export(A authData, ContinuationData continuationData); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
 }

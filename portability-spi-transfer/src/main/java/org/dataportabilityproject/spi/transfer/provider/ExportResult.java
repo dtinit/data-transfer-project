@@ -1,5 +1,6 @@
-package org.dataportabilityproject.spi.transfer;
+package org.dataportabilityproject.spi.transfer.provider;
 
+import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
@@ -35,7 +36,7 @@ public class ExportResult<T extends DataModel> {
     private ResultType type;
     private String message;
     private T exportedData;
-    private Object continuationInformation;
+    private ContinuationData continuationData;
 
     /**
      * Ctor used to return error or retry results.
@@ -73,12 +74,12 @@ public class ExportResult<T extends DataModel> {
      *
      * @param type the result type
      * @param exportedData the exported data
-     * @param continuationInformation continuation information
+     * @param continuationData continuation information
      */
-    public ExportResult(ResultType type, T exportedData, Object continuationInformation) {
+    public ExportResult(ResultType type, T exportedData, ContinuationData continuationData) {
         this.type = type;
         this.exportedData = exportedData;
-        this.continuationInformation = continuationInformation;
+        this.continuationData = continuationData;
     }
 
     /**
@@ -102,7 +103,7 @@ public class ExportResult<T extends DataModel> {
         return exportedData;
     }
 
-    public Object getContinuationInformation() {
-        return continuationInformation;
+    public Object getContinuationData() {
+        return continuationData;
     }
 }

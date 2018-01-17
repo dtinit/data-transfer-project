@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.transfer;
+package org.dataportabilityproject.spi.transfer.provider;
 
 /**
  * Manages {@link TransferServiceProvider}s registered in the system.
