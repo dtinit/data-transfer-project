@@ -21,10 +21,12 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,20 +62,25 @@ public class PublicPrivateKeyPairGenerator {
    */
   public static PublicKey parsePublicKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
-    EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+    EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(decoded);
     KeyFactory keyFactory;
     try {
       keyFactory = KeyFactory.getInstance(ALGORITHM);
+      logger.debug("public keyFactory generated for: {}", ALGORITHM);
     } catch (NoSuchAlgorithmException e) {
       logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
       throw new RuntimeException("NoSuchAlgorithmException generating public keyFactory", e);
     }
     try {
-      return keyFactory.generatePublic(spec);
+      return keyFactory.generatePublic(pubKeySpec);
     } catch (InvalidKeySpecException e) {
-      logger.error("InvalidKeySpecException for: {}", spec.getEncoded().length, e);
+      logger.error("InvalidKeySpecException for: {}", pubKeySpec.getEncoded().length, e);
       throw new RuntimeException("InvalidKeySpecException generating public key", e);
+    } catch (Exception e) {
+      logger.debug("Exception for: {}", ALGORITHM);
+      throw new RuntimeException("Exception generating  public keyFactory", e);
     }
+
   }
 
   /**
@@ -84,7 +91,9 @@ public class PublicPrivateKeyPairGenerator {
     EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
     KeyFactory keyFactory;
     try {
-      keyFactory = KeyFactory.getInstance(ALGORITHM);
+      keyFactory = KeyFactory.getInstance("DSA", "SUN");
+    } catch (NoSuchProviderException e) {
+      throw new RuntimeException("NoSuchProviderException generating private keyFactory", e);
     } catch (NoSuchAlgorithmException e) {
       logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
       throw new RuntimeException("NoSuchAlgorithmException generating private keyFactory", e);
