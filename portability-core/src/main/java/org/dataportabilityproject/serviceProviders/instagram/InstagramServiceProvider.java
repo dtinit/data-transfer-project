@@ -36,7 +36,7 @@ final class InstagramServiceProvider implements ServiceProvider {
   // Instagram only offers basic scope for reading user's profiles. There is no "write" scope.
   // See https://www.instagram.com/developer/authorization/
   private static final ImmutableList<String> SCOPES = ImmutableList.of("basic");
-  private final ImmutableList<PortableDataType> exportTypes = ImmutableList
+  private static final ImmutableList<PortableDataType> EXPORT_TYPES = ImmutableList
       .of(PortableDataType.PHOTOS);
 
   private final InstagramAuth instagramAuth;
@@ -55,7 +55,7 @@ final class InstagramServiceProvider implements ServiceProvider {
 
   @Override
   public ImmutableList<PortableDataType> getExportTypes() {
-    return exportTypes;
+    return EXPORT_TYPES;
   }
 
   @Override
@@ -68,7 +68,8 @@ final class InstagramServiceProvider implements ServiceProvider {
   public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
     Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
     Preconditions
-        .checkArgument(exportTypes.contains(dataType), "DataType %s not supported by Instagram",
+        .checkArgument(EXPORT_TYPES.contains(dataType),
+            "Export of type [%s] is not supported by Instagram",
             dataType);
     return instagramAuth;
   }
@@ -77,7 +78,8 @@ final class InstagramServiceProvider implements ServiceProvider {
   public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
     Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
     Preconditions
-        .checkArgument(exportTypes.contains(dataType), "DataType %s not supported by Instagram",
+        .checkArgument(EXPORT_TYPES.contains(dataType),
+            "Export of type [%s] is not supported by Instagram",
             dataType);
     return instagramAuth;
   }
@@ -88,7 +90,8 @@ final class InstagramServiceProvider implements ServiceProvider {
       AuthData authData,
       JobDataCache jobDataCache) throws IOException {
     Preconditions
-        .checkArgument(exportTypes.contains(type), "Instagram doesn't support exporting %s", type);
+        .checkArgument(EXPORT_TYPES.contains(type),
+            "Export of type [%s] is not supported by Instagram", type);
     return new InstagramPhotoService(((InstagramOauthData) authData));
   }
 
