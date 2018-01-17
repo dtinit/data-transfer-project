@@ -44,23 +44,12 @@ public final class GoogleCloudFactory implements CloudFactory {
       GoogleCredentials googleCredentials,
       GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
       @ProjectId String projectId) {
-
-    /* Switch between remote and local
-      GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem) {
     this.datastore = DatastoreOptions
         .newBuilder()
         .setProjectId(projectId)
         .setCredentials(googleCredentials)
         .build()
         .getService();
-    */
-    this.datastore = DatastoreOptions.newBuilder()
-        .setHost("http://localhost:8081")
-        .setProjectId(projectId)
-        .build()
-        .getService();
-
-
     this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
