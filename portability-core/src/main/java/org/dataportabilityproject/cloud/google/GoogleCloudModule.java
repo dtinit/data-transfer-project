@@ -15,22 +15,31 @@
 */
 package org.dataportabilityproject.cloud.google;
 
-import static org.dataportabilityproject.cloud.SupportedCloud.GOOGLE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
+import com.google.inject.BindingAnnotation;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public class GoogleCloudModule extends AbstractModule {
+  @BindingAnnotation
+  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  public @interface ProjectId {}
 
   @Override
   protected void configure() {
@@ -39,7 +48,7 @@ public class GoogleCloudModule extends AbstractModule {
 
   @Provides
   @Inject
-  GoogleCredentials getCredentials(CommonSettings commonSettings, ProjectId projectIdWrapper)
+  GoogleCredentials getCredentials(CommonSettings commonSettings, @ProjectId String projectId)
       throws GoogleCredentialException {
     validateUsingGoogle(commonSettings);
 
@@ -47,7 +56,6 @@ public class GoogleCloudModule extends AbstractModule {
     if (env == LOCAL) { // Running locally
       // This is a crude check to make sure we are only pointing to test projects when running
       // locally and connecting to GCP
-      String projectId = projectIdWrapper.getProjectId();
       Preconditions.checkArgument(
           projectId.endsWith("-local") || projectId.endsWith("-test") || projectId.endsWith("-qa"),
           "Invalid project to connect to with env=LOCAL. " + projectId + " doesn't appear to"
@@ -80,7 +88,8 @@ public class GoogleCloudModule extends AbstractModule {
    *
    * @throws IllegalArgumentException if project ID is unset
    */
-  @Provides @Singleton ProjectId getProjectId(CommonSettings commonSettings) {
+  @Provides @Singleton @ProjectId
+  String getProjectId(CommonSettings commonSettings) {
     validateUsingGoogle(commonSettings);
     String projectId;
     try {
@@ -93,7 +102,7 @@ public class GoogleCloudModule extends AbstractModule {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "Need to specify a project "
         + "ID when using Google Cloud. This should be exposed as an environment variable by "
         + "Kubernetes, see k8s/api-deployment.yaml");
-    return new ProjectId(projectId.toLowerCase());
+    return projectId;
   }
 
   /**

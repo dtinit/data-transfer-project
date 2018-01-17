@@ -46,21 +46,16 @@ public class CloudAppCredentialFactory implements AppCredentialFactory {
   private LoadingCache<String, String> keys;
   private LoadingCache<String, String> secrets;
 
-  private static final String BUCKET_NAME_PREFIX = "app-data-";
   private static final String KEYS_DIR = "keys/";
   private static final String KEY_EXTENSION = ".txt";
   private static final String SECRETS_DIR = "encrypted_secrets/";
   private static final String SECRET_EXTENSION = ".encrypted";
-  private static final String CRYPTO_KEY_FMT_STRING = "projects/%s/locations/global/"
-      + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
 
-  private final CloudFactory cloudFactory;
   private final BucketStore bucketStore;
   private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
 
   @Inject
   CloudAppCredentialFactory(CloudFactory cloudFactory) {
-    this.cloudFactory = cloudFactory;
     this.bucketStore = cloudFactory.getBucketStore();
     this.cryptoKeyManagementSystem = cloudFactory.getCryptoKeyManagementSystem();
     this.keys = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build(
@@ -99,30 +94,21 @@ public class CloudAppCredentialFactory implements AppCredentialFactory {
   }
 
   private String lookupKey(String keyName) {
-    String projectId = cloudFactory.getProjectId();
-    String bucketName = BUCKET_NAME_PREFIX + projectId;
     String keyLocation = KEYS_DIR + keyName + KEY_EXTENSION;
-    logger.debug("Getting key {} (blob {}) from bucket {}", keyName, keyLocation, bucketName);
-    byte[] rawKeyBytes = bucketStore.getBlob(bucketName, keyLocation);
+    logger.debug("Getting app key for {} (blob {}) from bucket", keyName, keyLocation);
+    byte[] rawKeyBytes = bucketStore.getAppCredentialBlob(keyLocation);
+    checkState(rawKeyBytes != null, "Couldn't look up: " + keyName);
     String key = new String(rawKeyBytes);
-    checkState(!Strings.isNullOrEmpty(key), "Couldn't lookup: " + keyName);
     return key;
   }
 
   private String lookupSecret(String secretName) throws IOException {
-    String projectId = cloudFactory.getProjectId();
-    String bucketName = BUCKET_NAME_PREFIX + projectId;
-    BucketStore bucketStore = cloudFactory.getBucketStore();
     String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
-    logger.debug("Getting secret {} (blob {}) from bucket {}", secretName, secretLocation,
-        bucketName);
-    byte[] encryptedSecret = bucketStore.getBlob(bucketName, secretLocation);
-    String cryptoKeyName = String.format(CRYPTO_KEY_FMT_STRING, projectId);
-    logger.debug("Decrypting secret with crypto key {}", cryptoKeyName);
-
-    String secret =
-        new String(cryptoKeyManagementSystem.decrypt(cryptoKeyName, encryptedSecret));
-    checkState(!Strings.isNullOrEmpty(secret), "Couldn't lookup: " + secretName);
+    logger.debug("Getting app secret for {} (blob {})", secretName, secretLocation);
+    byte[] encryptedSecret = bucketStore.getAppCredentialBlob(secretLocation);
+    checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
+    String secret = new String(cryptoKeyManagementSystem.decryptAppSecret(encryptedSecret));
+    checkState(!Strings.isNullOrEmpty(secret), "Couldn't decrypt: " + secretName);
     return secret;
   }
 }

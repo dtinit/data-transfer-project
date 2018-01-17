@@ -24,6 +24,7 @@ import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import javax.inject.Inject;
+import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
@@ -42,17 +43,17 @@ public final class GoogleCloudFactory implements CloudFactory {
       GoogleBucketStore googleBucketStore,
       GoogleCredentials googleCredentials,
       GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
-      ProjectId projectId) {
+      @ProjectId String projectId) {
     this.datastore = DatastoreOptions
         .newBuilder()
-        .setProjectId(projectId.getProjectId())
+        .setProjectId(projectId)
         .setCredentials(googleCredentials)
         .build()
         .getService();
     this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
-    this.projectId = projectId.getProjectId();
+    this.projectId = projectId;
   }
 
   @Override
@@ -83,14 +84,5 @@ public final class GoogleCloudFactory implements CloudFactory {
             datastore.newKeyFactory().setKind(GoogleJobDataCache.JOB_KIND).newKey(jobId)))
         .build());
     results.forEachRemaining(datastore::delete);
-  }
-
-  /**
-   * Google's implementation of project ID to use in generic (non-Google-specific) code like
-   * {@code AppCredentials}.
-   */
-  @Override
-  public String getProjectId() {
-    return projectId;
   }
 }
