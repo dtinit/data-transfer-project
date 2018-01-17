@@ -1,12 +1,15 @@
-package org.dataportabilityproject.types.transfer.auth;
+package org.dataportabilityproject.spi.gateway.types;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.dataportabilityproject.types.transfer.PortableType;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * Configuration for an authorization flow. A flow has an initial URL and optional initial authentication data.
  */
+@JsonTypeName("org.dataportability:AuthFlowConfiguration")
 public class AuthFlowConfiguration extends PortableType {
     private String url;
     private AuthData initialAuthData;

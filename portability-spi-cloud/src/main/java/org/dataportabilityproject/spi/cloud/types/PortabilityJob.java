@@ -1,4 +1,4 @@
-package org.dataportabilityproject.types.transfer.job;
+package org.dataportabilityproject.spi.cloud.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.dataportabilityproject.types.transfer.EntityType;
