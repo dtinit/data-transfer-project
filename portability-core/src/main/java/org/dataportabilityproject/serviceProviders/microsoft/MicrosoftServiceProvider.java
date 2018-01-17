@@ -17,12 +17,13 @@ package org.dataportabilityproject.serviceProviders.microsoft;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
@@ -58,16 +59,16 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         .put(ServiceMode.EXPORT, ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL))
         .build();
 
-    private final static Map<PortableDataType, Map<ServiceMode, List<String>>> DATA_TYPE_SCOPES =
-        ImmutableMap.<PortableDataType, Map<ServiceMode, List<String>>>builder()
-            .put(PortableDataType.CALENDAR, ImmutableMap.<ServiceMode, List<String>>builder()
-                .put(ServiceMode.EXPORT, Arrays.asList("wl.calendars", "wl.contacts_calendars"))
-                .put(ServiceMode.IMPORT, Arrays.asList("wl.calendars_update"))
+    private final static Map<PortableDataType, ListMultimap<ServiceMode, String>> DATA_TYPE_SCOPES =
+        ImmutableMap.<PortableDataType, ListMultimap<ServiceMode, String>>builder()
+            .put(PortableDataType.CALENDAR, ImmutableListMultimap.<ServiceMode, String>builder()
+                .putAll(ServiceMode.EXPORT, Arrays.asList("wl.calendars", "wl.contacts_calendars"))
+                .putAll(ServiceMode.IMPORT, Arrays.asList("wl.calendars_update"))
                 .build())
-            // TODO: add support for more service scopes here
+            // Support for more service scopes go here
             .build();
 
-    private Map<PortableDataType, Map<ServiceMode, MicrosoftAuth>> dataTypeAuths = new HashMap<>();
+    private final static Map<PortableDataType, Map<ServiceMode, MicrosoftAuth>> DATA_TYPE_AUTHS = new HashMap<>();
 
     @Inject
     MicrosoftServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
@@ -165,11 +166,11 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         Preconditions.checkArgument(SUPPORTED_DATA_TYPES.get(serviceMode).contains(dataType),
             "[%s] of type [%s] is not supported by Microsoft", serviceMode, dataType);
 
-        if (!dataTypeAuths.containsKey(dataType)) {
-            dataTypeAuths.put(dataType, new HashMap<>());
+        if (!DATA_TYPE_AUTHS.containsKey(dataType)) {
+            DATA_TYPE_AUTHS.put(dataType, new HashMap<>());
         }
 
-        Map<ServiceMode, MicrosoftAuth> serviceModeAuth = dataTypeAuths.get(dataType);
+        Map<ServiceMode, MicrosoftAuth> serviceModeAuth = DATA_TYPE_AUTHS.get(dataType);
         if (!serviceModeAuth.containsKey(serviceMode)) {
             serviceModeAuth.put(serviceMode,
                 new MicrosoftAuth(appCredentials, DATA_TYPE_SCOPES.get(dataType).get(serviceMode)));
