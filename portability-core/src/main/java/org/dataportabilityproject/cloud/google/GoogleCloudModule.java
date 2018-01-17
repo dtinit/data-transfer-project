@@ -15,6 +15,7 @@
 */
 package org.dataportabilityproject.cloud.google;
 
+import static org.dataportabilityproject.cloud.SupportedCloud.GOOGLE;
 import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -26,6 +27,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import java.io.IOException;
 import org.dataportabilityproject.cloud.SupportedCloud;
+import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public class GoogleCloudModule extends AbstractModule {
@@ -38,17 +40,26 @@ public class GoogleCloudModule extends AbstractModule {
   @Inject
   GoogleCredentials getCredentials(CommonSettings commonSettings) throws GoogleCredentialException {
     validateUsingGoogle(commonSettings);
-    // TODO: Check whether we are actually running on GCP once we find out how
-    boolean isRunningOnGcp = commonSettings.getEnv() != LOCAL;
-    // DO NOT REMOVE this security check! This ensures we are using the correct GCP credentials.
-    if (isRunningOnGcp) {
+
+    Environment env = commonSettings.getEnv();
+    if (env == LOCAL) { // Running locally
+      // This is a crude check to make sure we are only pointing to test projects when running
+      // locally and connecting to GCP
+      String googleProjectId = System.getenv("GOOGLE_PROJECT_ID");
+      Preconditions.checkArgument(
+          googleProjectId.endsWith("-local") || googleProjectId.endsWith("-test")
+              || googleProjectId.endsWith("-qa"),
+          "Invalid project to connect to with env=LOCAL. " + googleProjectId + " doesn't appear to"
+              + " be a local/test project since it doesn't end in -local, -test, or -qa.");
+    } else { // Assume running on GCP
+      // TODO: Check whether we are actually running on GCP once we find out how
       String credsLocation = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
       if (!credsLocation.startsWith("/var/secrets/")) {
         String cause = String.format("You are attempting to obtain credentials from somewhere "
-                + "other than Kubernetes secrets in prod. You may have accidentally copied creds into"
-                + "your image, which we provide as a local debugging mechanism only. See GCP build "
-                + "script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds location was: %s",
-            credsLocation);
+                + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
+                + "into your image, which we provide as a local debugging mechanism only. See GCP "
+                + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
+                + "location was: %s", credsLocation);
         throw new GoogleCredentialException(cause);
       }
       // Note: Tried an extra check via Kubernetes API to verify GOOGLE_APPLICATION_CREDENTIALS

@@ -55,16 +55,6 @@ public class CommonSettings {
     }
     this.serviceProviderClasses = serviceProviderClasses;
     this.encryptedFlow = encryptedFlow;
-    if (env == LOCAL && cloud == GOOGLE) {
-      // This is a crude check to make sure we are only pointing to test projects when running
-      // locally and connecting to GCP
-      String googleProjectId = System.getenv("GOOGLE_PROJECT_ID");
-      Preconditions.checkArgument(
-          googleProjectId.endsWith("-local") || googleProjectId.endsWith("-test")
-              || googleProjectId.endsWith("-qa"),
-          "Invalid project to connect to with env=LOCAL. " + googleProjectId + " doesn't appear to"
-              + " be a local/test project since it doesn't end in -local, -test, or -qa. Aborting");
-    }
   }
 
   public Environment getEnv() {
