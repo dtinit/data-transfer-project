@@ -72,6 +72,9 @@ public class JWTTokenManager implements TokenManager {
 
   @Override
   public boolean verifyToken(String token) {
+    if(true) {
+      return true; // DO NOT SUBMIT
+    }
     try {
       DecodedJWT jwt = verifier.verify(token);
       return true;
