@@ -16,6 +16,7 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -59,7 +60,7 @@ class JobPollingService extends AbstractScheduledService {
 
   @Override
   protected Scheduler scheduler() {
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.MINUTES);
+    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
   }
 
   /**
@@ -80,6 +81,9 @@ class JobPollingService extends AbstractScheduledService {
       PrivateKey privateKey = jobMetadata.getKeyPair().getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
       jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
+      logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}", publicKey);
+    } else {
+      logger.debug("findNextJobPendingWorkerAssignment result was null");
     }
   }
 
@@ -92,14 +96,14 @@ class JobPollingService extends AbstractScheduledService {
     logger.debug("Polled lookupAssignedWithAuthDataJob, found id: {}",
         (job != null ? job.id() : "null"));
 
-    Preconditions.checkNotNull(job);
     // Validate job has auth data
-    if ((job.exportAuthData() != null) && (job.importAuthData() != null)) {
+    if ((job != null) && (!Strings.isNullOrEmpty(job.encryptedExportAuthData()))
+        && (!Strings.isNullOrEmpty(job.encryptedImportAuthData()))) {
       logger.debug("Polled lookupAssignedWithAuthDataJob, found auth data, id: {}", job.id());
       // Stop polling now that we have all the data ready to start the job
       this.stopAsync();
     } else {
-      logger.debug("Polled lookupAssignedWithAuthDataJob, no auth data found, id: {}", job.id());
+      logger.debug("Polled lookupAssignedWithAuthDataJob, no auth data found, id: {}", jobMetadata.getJobId());
     }
   }
 }

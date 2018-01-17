@@ -131,26 +131,38 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
     while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
-      logger.debug("Found null lookupAssignedWithoutAuthDataJob, id: {}", job.id());
+      logger.debug("No result for lookupAssignedWithoutAuthDataJob, id: {}", job.id());
       try {
-        Sleeper.DEFAULT.sleep(5000);
+        Sleeper.DEFAULT.sleep(10000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
 
+    logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", job.id());
+
     // Ensure job is assigned and has worker key
     PortabilityJob assignedJob = jobDao.lookupAssignedWithoutAuthDataJob(job.id());
+
+    logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", job.id());
     Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
+    logger.debug("About to parse: {}", assignedJob.workerInstancePublicKey());
     PublicKey publicKey = PublicPrivateKeyUtils
         .parsePublicKey(assignedJob.workerInstancePublicKey());
-    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(),
-        cryptoHelper.encryptAuthData(publicKey, exportAuthCookie),
-        cryptoHelper.encryptAuthData(publicKey, importAuthCookie));
+    logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
+
+    String encryptedExportAuthData = cryptoHelper.encryptAuthData(publicKey, exportAuthCookie);
+    logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
+
+    String encryptedImportAuthData = cryptoHelper.encryptAuthData(publicKey, importAuthCookie);
+    logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
+
+    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
     logger.debug("Updated updateJobStateToAssigneWithAuthData, id: {}", job.id());
 
     writeResponse(exchange);
+    logger.debug("writeResponse");
   }
 
   /**

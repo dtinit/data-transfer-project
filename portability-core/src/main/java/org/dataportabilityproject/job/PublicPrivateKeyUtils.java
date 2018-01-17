@@ -21,17 +21,21 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for generating, encoding, and decoding asymmetric keys.
  */
 public class PublicPrivateKeyUtils {
-
-  public static final String ALGORITHM = "RSA";
+  private static final Logger logger = LoggerFactory.getLogger(PublicPrivateKeyUtils.class);
 
   /**
    * Generate a new KeyPair.
@@ -39,9 +43,11 @@ public class PublicPrivateKeyUtils {
   public static KeyPair generateKeyPair() {
     KeyPairGenerator kpg = null;
     try {
-      kpg = KeyPairGenerator.getInstance(ALGORITHM);
+      kpg = KeyPairGenerator.getInstance("DSA", "SUN");
+    } catch (NoSuchProviderException e) {
+      throw new RuntimeException("NoSuchProviderException generating key", e);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("Error generating key", e);
+      throw new RuntimeException("NoSuchAlgorithmException generating key", e);
     }
     kpg.initialize(1024);
     return kpg.genKeyPair();
@@ -56,17 +62,33 @@ public class PublicPrivateKeyUtils {
    */
   public static PublicKey parsePublicKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
-    PKCS8EncodedKeySpec pubKeySpec = new PKCS8EncodedKeySpec(decoded);
+    logger.debug("decoded length: {}", decoded.length);
+    EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(decoded);
+    logger.debug("pubKeySpec generated for: {}", decoded.length);
     KeyFactory keyFactory;
     try {
-      keyFactory = KeyFactory.getInstance(ALGORITHM);
+      keyFactory = KeyFactory.getInstance("DSA", "SUN");
+      logger.debug("public keyFactory generated for: {}", "DSA - SUN");
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("Error generating keyFactory", e);
+      logger.debug("NoSuchAlgorithmException for: {}", "DSA - SUN");
+      e.printStackTrace();
+      throw new RuntimeException("NoSuchAlgorithmException generating public keyFactory", e);
+    } catch (Exception e) {
+      logger.debug("Exception for: {}", "DSA - SUN");
+      e.printStackTrace();
+      throw new RuntimeException("Exception generating  public keyFactory", e);
     }
     try {
+      logger.debug("About to generate PublicKey");
       return keyFactory.generatePublic(pubKeySpec);
     } catch (InvalidKeySpecException e) {
-      throw new RuntimeException("Error generating public key", e);
+      logger.debug("InvalidKeySpecException for: {}", pubKeySpec);
+      e.printStackTrace();
+      throw new RuntimeException("InvalidKeySpecException generating public key", e);
+    } catch (Exception e) {
+      logger.debug("Exception for: {}", "DSA - SUN");
+      e.printStackTrace();
+      throw new RuntimeException("Exception generating public key", e);
     }
   }
 
@@ -75,17 +97,19 @@ public class PublicPrivateKeyUtils {
    */
   public static PrivateKey parsePrivateKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
-    PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
+    EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
     KeyFactory keyFactory;
     try {
-      keyFactory = KeyFactory.getInstance(ALGORITHM);
+      keyFactory = KeyFactory.getInstance("DSA", "SUN");
+    } catch (NoSuchProviderException e) {
+      throw new RuntimeException("NoSuchProviderException generating private keyFactory", e);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("Error generating keyFactory", e);
+      throw new RuntimeException("NoSuchAlgorithmException generating private keyFactory", e);
     }
     try {
       return keyFactory.generatePrivate(spec);
     } catch (InvalidKeySpecException e) {
-      throw new RuntimeException("Error generating public key", e);
+      throw new RuntimeException("InvalidKeySpecException generating private key", e);
     }
   }
 }
