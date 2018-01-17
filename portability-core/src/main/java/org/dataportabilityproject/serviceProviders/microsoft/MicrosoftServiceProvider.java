@@ -15,10 +15,10 @@
  */
 package org.dataportabilityproject.serviceProviders.microsoft;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.io.IOException;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
@@ -28,12 +28,12 @@ import org.dataportabilityproject.serviceProviders.microsoft.mail.MicrosoftMailS
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
-import org.dataportabilityproject.shared.auth.OfflinePasswordAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
-import org.dataportabilityproject.shared.auth.OnlinePasswordAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.PasswordAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.PasswordAuthData;
 
 /**
@@ -44,9 +44,9 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         "wl.imap", // outlook export via IMAP
         "wl.offline_access", // provides for refresh tokens
         "wl.calendars", "wl.contacts_calendars"); // calendar export
+
     private final MicrosoftAuth microsoftAuth;
-    private final OfflinePasswordAuthDataGenerator passwordAuth =
-        new OfflinePasswordAuthDataGenerator();
+    private final PasswordAuthDataGenerator  passwordAuth;
 
     @Inject
     MicrosoftServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
@@ -56,6 +56,7 @@ final class MicrosoftServiceProvider implements ServiceProvider {
             appCredentials,
             // TODO: only use scopes from the products we are accessing.
             SCOPES);
+        passwordAuth  = new PasswordAuthDataGenerator();
     }
 
     @Override public String getName() {
@@ -73,7 +74,7 @@ final class MicrosoftServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
+    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
         switch (dataType) {
             case CALENDAR:
                 return microsoftAuth;
@@ -85,12 +86,15 @@ final class MicrosoftServiceProvider implements ServiceProvider {
     }
 
     @Override
-    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
         switch (dataType) {
             case CALENDAR:
+                // IMPORT and EXPORT are supported for CALENDAR
                 return microsoftAuth;
             case MAIL:
-                return new OnlinePasswordAuthDataGenerator();
+                // Only EXPORT is supported for MAIL
+                Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT for MAIL is not supported by Microsoft.");
+                return passwordAuth;
             default:
                 throw new IllegalArgumentException("Type " + dataType + " is not supported");
         }
