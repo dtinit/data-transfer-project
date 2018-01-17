@@ -17,9 +17,13 @@ package org.dataportabilityproject.serviceProviders.microsoft;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
@@ -42,15 +46,9 @@ import org.dataportabilityproject.shared.auth.PasswordAuthDataGenerator;
  * The {@link ServiceProvider} for Microsoft (http://www.microsoft.com/).
  */
 final class MicrosoftServiceProvider implements ServiceProvider {
-    private static final ImmutableList<String> SCOPES = ImmutableList.of(
-        "wl.imap", // outlook export via IMAP
-        "wl.offline_access", // provides for refresh tokens
-        "wl.calendars", "wl.contacts_calendars"); // calendar export
-
-    // oauthAuth is used for calendar import and export
-    private final MicrosoftAuth oauthAuth;
     // passwordAuth is used for mail export
     private final PasswordAuthDataGenerator passwordAuth;
+
     // credentials to pass into AuthDataGenerators
     private final AppCredentials appCredentials;
 
@@ -61,14 +59,21 @@ final class MicrosoftServiceProvider implements ServiceProvider {
         .put(ServiceMode.EXPORT, ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL))
         .build();
 
+    private final static Map<PortableDataType, ListMultimap<ServiceMode, String>> DATA_TYPE_SCOPES =
+        ImmutableMap.<PortableDataType, ListMultimap<ServiceMode, String>>builder()
+            .put(PortableDataType.CALENDAR, ImmutableListMultimap.<ServiceMode, String>builder()
+                .putAll(ServiceMode.EXPORT, Arrays.asList("wl.calendars", "wl.contacts_calendars"))
+                .putAll(ServiceMode.IMPORT, Arrays.asList("wl.calendars_update"))
+                .build())
+            // Support for more service scopes go here
+            .build();
+
+    private final static Map<PortableDataType, Map<ServiceMode, MicrosoftAuth>> DATA_TYPE_AUTHS = new HashMap<>();
+
     @Inject
     MicrosoftServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         this.appCredentials =
             appCredentialFactory.lookupAndCreate("MICROSOFT_KEY", "MICROSOFT_SECRET");
-        this.oauthAuth = new MicrosoftAuth(
-            appCredentials,
-            // TODO: only use scopes from the products we are accessing.
-            SCOPES);
         this.passwordAuth = new PasswordAuthDataGenerator();
     }
 
@@ -92,7 +97,7 @@ final class MicrosoftServiceProvider implements ServiceProvider {
             "[%s] of type [%s] is not supported by Microsoft.", serviceMode, dataType);
         switch (dataType) {
             case CALENDAR:
-                return oauthAuth;
+                return getAndCreateMicrosoftAuth(dataType, serviceMode);
             case MAIL:
                 return passwordAuth;
             default:
@@ -106,7 +111,7 @@ final class MicrosoftServiceProvider implements ServiceProvider {
             "[%s] of type [%s] is not supported by Microsoft", serviceMode, dataType);
         switch (dataType) {
             case CALENDAR:
-                return oauthAuth;
+                return getAndCreateMicrosoftAuth(dataType, serviceMode);
             case MAIL:
                 return passwordAuth;
             default:
@@ -154,5 +159,23 @@ final class MicrosoftServiceProvider implements ServiceProvider {
     private MicrosoftMailService getMailService(AuthData authData) {
         PasswordAuthData passwordAuthData = (PasswordAuthData) authData;
         return new MicrosoftMailService(passwordAuthData.username(), passwordAuthData.password());
+    }
+
+    private MicrosoftAuth getAndCreateMicrosoftAuth(PortableDataType dataType,
+        ServiceMode serviceMode) {
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.get(serviceMode).contains(dataType),
+            "[%s] of type [%s] is not supported by Microsoft", serviceMode, dataType);
+
+        if (!DATA_TYPE_AUTHS.containsKey(dataType)) {
+            DATA_TYPE_AUTHS.put(dataType, new HashMap<>());
+        }
+
+        Map<ServiceMode, MicrosoftAuth> serviceModeAuth = DATA_TYPE_AUTHS.get(dataType);
+        if (!serviceModeAuth.containsKey(serviceMode)) {
+            serviceModeAuth.put(serviceMode,
+                new MicrosoftAuth(appCredentials, DATA_TYPE_SCOPES.get(dataType).get(serviceMode)));
+        }
+
+        return serviceModeAuth.get(serviceMode);
     }
 }
