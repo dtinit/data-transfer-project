@@ -77,10 +77,4 @@ public class LocalCloudFactory implements CloudFactory {
   public void clearJobData(String jobId) {
     JOB_DATA_CACHE.invalidate(jobId);
   }
-
-  @Override
-  public String getProjectId() {
-    throw new UnsupportedOperationException(
-        "Project ID not applicable when using the 'LOCAL' SupportedCloud");
-  }
 }

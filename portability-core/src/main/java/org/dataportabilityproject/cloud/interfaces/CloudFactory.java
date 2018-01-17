@@ -24,5 +24,4 @@ public interface CloudFactory {
   CryptoKeyManagementSystem getCryptoKeyManagementSystem();
   BucketStore getBucketStore();
   void clearJobData(String jobId);
-  String getProjectId();
 }
