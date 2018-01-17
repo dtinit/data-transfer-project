@@ -46,37 +46,19 @@ public interface ServiceProvider {
      * have permissions based on the serviceMode provided.
      */
     default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      // default implementation to ignore serviceMode
-      return getOfflineAuthDataGenerator(dataType);
+      logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
+          dataType, serviceMode, getName());
+      return null;
     }
 
-    /**
-     * Same as above but retrieves AuthGenerator for read/write access (ignoring serviceMode).
-     * TODO: remove once all serviceProviders implement the above version of this method.
-     */
-    @Deprecated
-    default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType){
-      logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, service: {}",
-          dataType, getName());
-      return null;
-    };
 
-    /* Return an OnlineAuthDataGenerator for the provided  dataType. The returned generator will have permissions based
-     * on the serviceMode provided.
+    /* Return an OnlineAuthDataGenerator for the provided  dataType. The returned generator will
+     * have permissions based on the serviceMode provided.
      */
     default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-        // default implementation is to ignore serviceMode
-        return getOnlineAuthDataGenerator(dataType);
-    }
-
-    /* Same as above, but retrieves AuthGenerator for read/write access (ignoring serviceMode)
-     * TODO: remove once all serviceProviders implement the above version of this method.
-     */
-    @Deprecated
-    default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
-        logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, service: {}",
-                dataType, getName());
-        return null;
+      logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
+          dataType, serviceMode, getName());
+      return null;
     }
 
     Exporter<? extends DataModel> getExporter(
