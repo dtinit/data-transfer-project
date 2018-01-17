@@ -38,18 +38,18 @@ public class GoogleCloudModule extends AbstractModule {
 
   @Provides
   @Inject
-  GoogleCredentials getCredentials(CommonSettings commonSettings) throws GoogleCredentialException {
+  GoogleCredentials getCredentials(CommonSettings commonSettings, ProjectId projectIdWrapper)
+      throws GoogleCredentialException {
     validateUsingGoogle(commonSettings);
 
     Environment env = commonSettings.getEnv();
     if (env == LOCAL) { // Running locally
       // This is a crude check to make sure we are only pointing to test projects when running
       // locally and connecting to GCP
-      String googleProjectId = System.getenv("GOOGLE_PROJECT_ID");
+      String projectId = projectIdWrapper.getProjectId();
       Preconditions.checkArgument(
-          googleProjectId.endsWith("-local") || googleProjectId.endsWith("-test")
-              || googleProjectId.endsWith("-qa"),
-          "Invalid project to connect to with env=LOCAL. " + googleProjectId + " doesn't appear to"
+          projectId.endsWith("-local") || projectId.endsWith("-test") || projectId.endsWith("-qa"),
+          "Invalid project to connect to with env=LOCAL. " + projectId + " doesn't appear to"
               + " be a local/test project since it doesn't end in -local, -test, or -qa.");
     } else { // Assume running on GCP
       // TODO: Check whether we are actually running on GCP once we find out how
