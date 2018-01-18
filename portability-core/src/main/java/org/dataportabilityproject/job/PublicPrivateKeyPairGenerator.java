@@ -64,13 +64,15 @@ public class PublicPrivateKeyPairGenerator {
     KeyFactory keyFactory;
     try {
       keyFactory = KeyFactory.getInstance(ALGORITHM);
+    } catch (NoSuchAlgorithmException e) {
+      logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
+      throw new RuntimeException("NoSuchAlgorithmException generating public keyFactory", e);
+    }
+    try {
       return keyFactory.generatePublic(spec);
     } catch (InvalidKeySpecException e) {
       logger.error("InvalidKeySpecException for: {}", spec.getEncoded().length, e);
       throw new RuntimeException("InvalidKeySpecException generating public key", e);
-    } catch (NoSuchAlgorithmException e) {
-      logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
-      throw new RuntimeException("NoSuchAlgorithmException generating private keyFactory", e);
     }
 
   }
