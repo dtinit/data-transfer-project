@@ -21,31 +21,32 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Results from https://api.smugmug.com/api/v2!authuser
  */
 public class SmugMugUserResponse {
-    @JsonProperty("Url")
-    private String uri;
 
-    @JsonProperty("Locator")
-    private String locator;
+  @JsonProperty("Url")
+  private String uri;
 
-    @JsonProperty("LocatorType")
-    private String locatorType;
+  @JsonProperty("Locator")
+  private String locator;
 
-    @JsonProperty("User")
-    private SmugMugUser user;
+  @JsonProperty("LocatorType")
+  private String locatorType;
 
-    public String getUri() {
-        return uri;
-    }
+  @JsonProperty("User")
+  private SmugMugUser user;
 
-    public String getLocator() {
-        return locator;
-    }
+  public String getUri() {
+    return uri;
+  }
 
-    public String getLocatorType() {
-        return locatorType;
-    }
+  public String getLocator() {
+    return locator;
+  }
 
-    public SmugMugUser getUser() {
-        return user;
-    }
+  public String getLocatorType() {
+    return locatorType;
+  }
+
+  public SmugMugUser getUser() {
+    return user;
+  }
 }
