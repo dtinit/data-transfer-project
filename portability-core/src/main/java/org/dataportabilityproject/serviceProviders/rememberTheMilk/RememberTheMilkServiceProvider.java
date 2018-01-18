@@ -18,18 +18,17 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
-import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-import org.dataportabilityproject.shared.AppCredentialFactory;
-import org.dataportabilityproject.shared.AppCredentials;
-import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.ServiceProvider;
+import org.dataportabilityproject.shared.*;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The {@link ServiceProvider} for the Remember the Milk service (https://www.rememberthemilk.com/).
@@ -38,16 +37,11 @@ final class RememberTheMilkServiceProvider implements ServiceProvider {
     private final AppCredentials appCredentials;
     private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
         .of(PortableDataType.TASKS);
-    private final RememberTheMilkAuth importAuth;
-    private final RememberTheMilkAuth exportAuth;
+    private final static Map<ServiceMode, RememberTheMilkAuth> AUTH_MAP = new HashMap<>();
 
     @Inject
     RememberTheMilkServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
         this.appCredentials = appCredentialFactory.lookupAndCreate("RTM_KEY", "RTM_SECRET");
-        this.importAuth = new RememberTheMilkAuth(
-            new RememberTheMilkSignatureGenerator(appCredentials, null), ServiceMode.IMPORT);
-        this.exportAuth = new RememberTheMilkAuth(
-            new RememberTheMilkSignatureGenerator(appCredentials, null), ServiceMode.EXPORT);
     }
 
     @Override public String getName() {
@@ -67,30 +61,17 @@ final class RememberTheMilkServiceProvider implements ServiceProvider {
     @Override
     public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
         ServiceMode serviceMode) {
-        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
-            "[%s] mode for type [%s] is not supported by RememberTheMilk.", serviceMode, dataType);
-        switch (serviceMode) {
-            case IMPORT:
-                return importAuth;
-            case EXPORT:
-                return exportAuth;
-            default:
-                throw new IllegalArgumentException("Unsupported service mode: " + serviceMode);
-        }
+        return lookupAndCreateAuth(dataType, serviceMode);
     }
 
     @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
             AuthData authData, JobDataCache jobDataCache) throws IOException {
-        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(type),
-            "Export of type [%s] is not supported by RememberTheMilk.", type);
-        return getInstanceOfService(authData, jobDataCache, exportAuth);
+        return getInstanceOfService(authData, jobDataCache, lookupAndCreateAuth(type, ServiceMode.EXPORT));
     }
 
     @Override public Importer<? extends DataModel> getImporter(PortableDataType type,
             AuthData authData, JobDataCache jobDataCache) throws IOException {
-        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(type),
-            "Import of type [%s] is not supported by RememberTheMilk.", type);
-        return getInstanceOfService(authData, jobDataCache, importAuth);
+        return getInstanceOfService(authData, jobDataCache, lookupAndCreateAuth(type, ServiceMode.IMPORT));
     }
 
     private synchronized RememberTheMilkTaskService getInstanceOfService(
@@ -101,5 +82,14 @@ final class RememberTheMilkServiceProvider implements ServiceProvider {
                 rememberTheMilkAuth.getToken(authData));
 
         return new RememberTheMilkTaskService(signer, jobDataCache);
+    }
+
+    private RememberTheMilkAuth lookupAndCreateAuth(PortableDataType dataType, ServiceMode serviceMode) {
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType), "[%s] mode not supported for dataType [%s]", serviceMode, dataType);
+        if (!AUTH_MAP.containsKey(serviceMode)) {
+            AUTH_MAP.put(serviceMode, new RememberTheMilkAuth(
+                    new RememberTheMilkSignatureGenerator(appCredentials, null), serviceMode));
+        }
+        return AUTH_MAP.get(serviceMode);
     }
 }
