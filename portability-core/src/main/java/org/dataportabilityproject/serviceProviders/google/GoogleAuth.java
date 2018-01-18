@@ -41,20 +41,25 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  * A generator of Google {@link Credential}
  */
 class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
-  /** Port in the "Callback URL". */
+
+  /**
+   * Port in the "Callback URL".
+   */
   private static final int PORT = 8080;
   private static final String CALLBACK_PATH = "/callback/google";
 
-  /** Domain name in the "Callback URL". */
+  /**
+   * Domain name in the "Callback URL".
+   */
   private static final String DOMAIN = "127.0.0.1";
 
   private final AppCredentials appCredentials;
   private final List<String> scopes;
 
   GoogleAuth(AppCredentials appCredentials, List<String> scopes) {
-      this.appCredentials = Preconditions.checkNotNull(appCredentials);
-      Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
-      this.scopes = scopes;
+    this.appCredentials = Preconditions.checkNotNull(appCredentials);
+    Preconditions.checkArgument(!scopes.isEmpty(), "At least one scope is required.");
+    this.scopes = scopes;
   }
 
   @Override
@@ -89,7 +94,6 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     // GoogleIdToken.Payload payload = ((GoogleTokenResponse) response).parseIdToken().getPayload();
     return toAuthData(credential);
   }
-
 
 
   Credential getCredential(AuthData authData) {
@@ -129,7 +133,9 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
   }
 
-  /** Creates an AuthorizationCodeFlow for use in online and offline mode.*/
+  /**
+   * Creates an AuthorizationCodeFlow for use in online and offline mode.
+   */
   private GoogleAuthorizationCodeFlow createFlow()
       throws IOException {
     return new GoogleAuthorizationCodeFlow.Builder(

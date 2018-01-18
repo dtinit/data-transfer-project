@@ -38,6 +38,7 @@ import org.dataportabilityproject.shared.StringPaginationToken;
 
 public final class GoogleMailService
     implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
+
   // TODO: Configure MAX_RESULTS_PER_REQUEST to a reasonable number of messages to process in memory
   // Max results to fetch on each request for more mail messages
   private static final long MAX_RESULTS_PER_REQUEST = 10L;
@@ -47,11 +48,16 @@ public final class GoogleMailService
 
   public GoogleMailService(Credential credential) {
     this.gmail = new Gmail.Builder(
-            GoogleStaticObjects.getHttpTransport(),
-            GoogleStaticObjects.JSON_FACTORY,
-            credential)
+        GoogleStaticObjects.getHttpTransport(),
+        GoogleStaticObjects.JSON_FACTORY,
+        credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
+  }
+
+  // TODO: Replace with logging framework
+  private static void log(String fmt, Object... args) {
+    System.out.println(String.format("GoogleMailService: " + fmt, args));
   }
 
   @Override
@@ -75,7 +81,7 @@ public final class GoogleMailService
 
     if (exportInformation.getPaginationInformation().isPresent()) {
       request.setPageToken(
-          ((StringPaginationToken)exportInformation.getPaginationInformation().get()).getId());
+          ((StringPaginationToken) exportInformation.getPaginationInformation().get()).getId());
     }
 
     ListMessagesResponse response = request.execute();
@@ -112,10 +118,5 @@ public final class GoogleMailService
         .setLabelListVisibility("labelShow")
         .setMessageListVisibility("show");
     return gmail.users().labels().create(USER, newLabel).execute().getId();
-  }
-
-  // TODO: Replace with logging framework
-  private static void log (String fmt, Object... args) {
-    System.out.println(String.format("GoogleMailService: " + fmt, args));
   }
 }
