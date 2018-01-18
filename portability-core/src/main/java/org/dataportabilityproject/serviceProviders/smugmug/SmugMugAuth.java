@@ -36,6 +36,7 @@ import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
 import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
 
 final class SmugMugAuth implements OfflineAuthDataGenerator {
+
   private final AppCredentials appCredentials;
   private final ServiceMode serviceMode;
 

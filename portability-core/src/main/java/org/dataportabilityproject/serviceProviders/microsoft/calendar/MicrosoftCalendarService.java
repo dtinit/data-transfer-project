@@ -48,88 +48,103 @@ import org.dataportabilityproject.shared.IdOnlyResource;
  * Stub for the Microsoft calendar service.
  */
 public class MicrosoftCalendarService
-      implements Importer<CalendarModelWrapper>, Exporter<CalendarModelWrapper> {
-    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private static final String HEADER_PREFIX = "Bearer ";
+    implements Importer<CalendarModelWrapper>, Exporter<CalendarModelWrapper> {
 
-    private final HttpRequestFactory requestFactory;
-    public MicrosoftCalendarService(String token, String account) {
-        this.requestFactory =
-            HTTP_TRANSPORT.createRequestFactory(
-                request -> {
-                  String headerValue = HEADER_PREFIX + token;
-                  request.getHeaders().setAuthorization(headerValue);
-                  request.getHeaders().setAccept("text/*, application/xml, application/json;odata.metadata=none;odata.streaming=false");
-                  // TODO: add if needed: request.getHeaders().set("X-AnchorMailbox", account);
-                  request.getHeaders().setUserAgent("PlayGroundAgent/1.0");
-                });
+  private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+  private static final String HEADER_PREFIX = "Bearer ";
+
+  private final HttpRequestFactory requestFactory;
+
+  public MicrosoftCalendarService(String token, String account) {
+    this.requestFactory =
+        HTTP_TRANSPORT.createRequestFactory(
+            request -> {
+              String headerValue = HEADER_PREFIX + token;
+              request.getHeaders().setAuthorization(headerValue);
+              request.getHeaders().setAccept(
+                  "text/*, application/xml, application/json;odata.metadata=none;odata.streaming=false");
+              // TODO: add if needed: request.getHeaders().set("X-AnchorMailbox", account);
+              request.getHeaders().setUserAgent("PlayGroundAgent/1.0");
+            });
+  }
+
+  // Formats in ISO Date Time format
+  private static String formatTime(ZonedDateTime dateTime) {
+    return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX")
+        .withZone(ZoneOffset.UTC)
+        .format(dateTime);
+  }
+
+  @Override
+  public void importItem(CalendarModelWrapper object) throws IOException {
+    System.out.println("importItem: " + object);
+  }
+
+  @Override
+  public CalendarModelWrapper export(ExportInformation exportInformation)
+      throws IOException {
+    if (exportInformation.getResource().isPresent()) {
+      return getCalendarEvents(
+          ((IdOnlyResource) exportInformation.getResource().get()).getId(),
+          exportInformation.getPaginationInformation());
+    } else {
+      return getCalendars(exportInformation.getPaginationInformation());
     }
 
-    @Override public void importItem(CalendarModelWrapper object) throws IOException {
-      System.out.println("importItem: " + object);
+  }
+
+  private CalendarModelWrapper getCalendars(Optional<PaginationInformation> pageInfo)
+      throws IOException {
+    URL url = new URL("https://outlook.office.com/api/v2.0/me/calendars");
+
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(url));
+    getRequest.setParser(new JsonObjectParser(new JacksonFactory()));
+    HttpResponse response;
+    try {
+      response = getRequest.execute();
+    } catch (HttpResponseException e) {
+      System.out.println("Error fetching content");
+      System.out.println("response status code: " + e.getStatusCode());
+      System.out.println("response status message: " + e.getStatusMessage());
+      System.out.println("response headers: " + e.getHeaders());
+      System.out.println("response content: " + e.getContent());
+      e.printStackTrace();
+      throw e;
+    }
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
 
-    @Override public CalendarModelWrapper export(ExportInformation exportInformation)
-        throws IOException {
-      if (exportInformation.getResource().isPresent()) {
-        return getCalendarEvents(
-            ((IdOnlyResource) exportInformation.getResource().get()).getId(),
-            exportInformation.getPaginationInformation());
-      } else {
-        return getCalendars(exportInformation.getPaginationInformation());
-      }
+    // Parse response into model
+    OutlookCalendarList data = response.parseAs(OutlookCalendarList.class);
 
+    List<CalendarModel> calendars = new ArrayList<>(data.list.size());
+    List<Resource> resources = new ArrayList<>(data.list.size());
+    for (OutlookCalendar calendar : data.list) {
+      calendars.add(new CalendarModel(calendar.id, calendar.name, null));
+      resources.add(new IdOnlyResource(calendar.id));
     }
 
-    private CalendarModelWrapper getCalendars(Optional<PaginationInformation> pageInfo)
-        throws IOException {
-      URL url = new URL("https://outlook.office.com/api/v2.0/me/calendars");
+    return new CalendarModelWrapper(
+        calendars,
+        null,
+        new ContinuationInformation(resources, null));
 
-      HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(url));
-      getRequest.setParser(new JsonObjectParser(new JacksonFactory()));
-      HttpResponse response;
-      try {
-        response = getRequest.execute();
-      } catch (HttpResponseException e) {
-        System.out.println("Error fetching content");
-        System.out.println("response status code: " + e.getStatusCode());
-        System.out.println("response status message: " +e.getStatusMessage());
-        System.out.println("response headers: " + e.getHeaders());
-        System.out.println("response content: " + e.getContent());
-        e.printStackTrace();
-        throw e;
-      }
-      int statusCode = response.getStatusCode();
-      if (statusCode != 200) {
-          throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-      }
-
-      // Parse response into model
-      OutlookCalendarList data = response.parseAs(OutlookCalendarList.class);
-
-      List<CalendarModel> calendars = new ArrayList<>(data.list.size());
-      List<Resource> resources = new ArrayList<>(data.list.size());
-      for (OutlookCalendar calendar : data.list) {
-        calendars.add(new CalendarModel(calendar.id, calendar.name, null));
-        resources.add(new IdOnlyResource(calendar.id));
-      }
-
-      return new CalendarModelWrapper(
-          calendars,
-          null,
-          new ContinuationInformation(resources, null));
-
-    }
+  }
 
   private CalendarModelWrapper getCalendarEvents(String calendarId,
-        Optional<PaginationInformation> pageInfo) throws IOException {
+      Optional<PaginationInformation> pageInfo) throws IOException {
     ZonedDateTime end = ZonedDateTime.now();     // The current date and time
     ZonedDateTime begin = end.minusDays(90);
 
-    String eventsUrl = String.format("https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
+    String eventsUrl = String.format(
+        "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
         calendarId, formatTime(begin), formatTime(end));
     System.out.println("calendar: " + calendarId);
-    System.out.println("eventsUrl: " + eventsUrl); // TODO: Determine why this URL works in the MS Oauth Playground but not here
+    System.out.println("eventsUrl: "
+        + eventsUrl); // TODO: Determine why this URL works in the MS Oauth Playground but not here
 
     // Make requests for events
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(eventsUrl));
@@ -139,7 +154,7 @@ public class MicrosoftCalendarService
     } catch (HttpResponseException e) {
       System.out.println("Error fetching content");
       System.out.println("response status code: " + e.getStatusCode());
-      System.out.println("response status message: " +e.getStatusMessage());
+      System.out.println("response status message: " + e.getStatusMessage());
       System.out.println("response headers: " + e.getHeaders());
       System.out.println("response content: " + e.getContent());
       e.printStackTrace();
@@ -147,7 +162,8 @@ public class MicrosoftCalendarService
     }
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
-      throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
 
     // TODO: Parse with JSON and add to model
@@ -159,46 +175,41 @@ public class MicrosoftCalendarService
     // TODO(chuy): return actual results here.
     return null;
   }
- 
-    // Formats in ISO Date Time format
-    private static String formatTime(ZonedDateTime dateTime) {
-      return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX")
-          .withZone(ZoneOffset.UTC)
-          .format(dateTime);
-    }
 
-    public static class OutlookCalendarList {
-      @Key("@odata.context")
-      public String context;
-  
-      @Key("value")
-      public List<OutlookCalendar> list;
-  
-      @Override
-      public String toString() {
-        return String.format("OutlookCalendarList(context=%s list=%s)",
-            context,
-            (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
-        }
-    }
+  public static class OutlookCalendarList {
 
-    public static class OutlookCalendar {
-      @Key("@odata.id")
-      public String odataId;
-        
-      @Key("Id")
-      public String id;
-        
-      @Key("Name")
-      public String name;
-        
-      @Key("Color")
-      public String color;
-  
-      @Override
-      public String toString() {
-        return String.format("OutlookCalendar(Id=%s Name=%s Color=%s)",
-            id, name, color);
-      }
+    @Key("@odata.context")
+    public String context;
+
+    @Key("value")
+    public List<OutlookCalendar> list;
+
+    @Override
+    public String toString() {
+      return String.format("OutlookCalendarList(context=%s list=%s)",
+          context,
+          (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
     }
+  }
+
+  public static class OutlookCalendar {
+
+    @Key("@odata.id")
+    public String odataId;
+
+    @Key("Id")
+    public String id;
+
+    @Key("Name")
+    public String name;
+
+    @Key("Color")
+    public String color;
+
+    @Override
+    public String toString() {
+      return String.format("OutlookCalendar(Id=%s Name=%s Color=%s)",
+          id, name, color);
+    }
+  }
 }

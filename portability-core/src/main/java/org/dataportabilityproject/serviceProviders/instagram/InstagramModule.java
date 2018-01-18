@@ -25,7 +25,7 @@ public final class InstagramModule extends AbstractModule {
   @Override
   protected void configure() {
     MapBinder<String, ServiceProvider> mapbinder
-= MapBinder.newMapBinder(binder(), String.class, ServiceProvider.class);
+        = MapBinder.newMapBinder(binder(), String.class, ServiceProvider.class);
     mapbinder
         .addBinding(InstagramServiceProvider.class.getName())
         .to(InstagramServiceProvider.class);

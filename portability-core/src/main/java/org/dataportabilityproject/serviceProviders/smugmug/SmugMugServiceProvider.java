@@ -21,7 +21,6 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 import oauth.signpost.OAuthConsumer;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
@@ -39,60 +38,68 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
  * The {@link ServiceProvider} for the SmugMub service (https://www.smugmug.com/).
  */
 final class SmugMugServiceProvider implements ServiceProvider {
-    private final AppCredentials appCredentials;
 
-    private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
-        .of(PortableDataType.PHOTOS);
-    private final static Map<ServiceMode, SmugMugAuth> AUTH_MAP = new HashMap<>();
+  private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
+      .of(PortableDataType.PHOTOS);
+  private final static Map<ServiceMode, SmugMugAuth> AUTH_MAP = new HashMap<>();
+  private final AppCredentials appCredentials;
 
-    @Inject
-    SmugMugServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
-        this.appCredentials =
-            appCredentialFactory.lookupAndCreate("SMUGMUG_KEY", "SMUGMUG_SECRET");
+  @Inject
+  SmugMugServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
+    this.appCredentials =
+        appCredentialFactory.lookupAndCreate("SMUGMUG_KEY", "SMUGMUG_SECRET");
+  }
+
+  @Override
+  public String getName() {
+    return "SmugMug";
+  }
+
+  @Override
+  public ImmutableList<PortableDataType> getExportTypes() {
+    return SUPPORTED_DATA_TYPES;
+  }
+
+  @Override
+  public ImmutableList<PortableDataType> getImportTypes() {
+    return SUPPORTED_DATA_TYPES;
+  }
+
+  @Override
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    return lookupAndCreateAuth(dataType, serviceMode);
+  }
+
+  @Override
+  public Exporter<? extends DataModel> getExporter(PortableDataType type,
+      AuthData authData, JobDataCache jobDataCache) throws IOException {
+    return getInstanceOfService(authData, jobDataCache,
+        lookupAndCreateAuth(type, ServiceMode.EXPORT));
+  }
+
+  @Override
+  public Importer<? extends DataModel> getImporter(PortableDataType type,
+      AuthData authData, JobDataCache jobDataCache) throws IOException {
+    return getInstanceOfService(authData, jobDataCache,
+        lookupAndCreateAuth(type, ServiceMode.IMPORT));
+  }
+
+  private synchronized SmugMugPhotoService getInstanceOfService(
+      AuthData authData,
+      JobDataCache jobDataCache, SmugMugAuth smugMugAuth) throws IOException {
+    OAuthConsumer consumer = smugMugAuth.generateConsumer(authData);
+    return new SmugMugPhotoService(
+        consumer,
+        jobDataCache);
+  }
+
+  private SmugMugAuth lookupAndCreateAuth(PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
+        "[%s] mode not supported for dataType [%s]", serviceMode, dataType);
+    if (!AUTH_MAP.containsKey(serviceMode)) {
+      AUTH_MAP.put(serviceMode, new SmugMugAuth(appCredentials, serviceMode));
     }
-
-    @Override public String getName() {
-        return "SmugMug";
-    }
-
-    @Override public ImmutableList<PortableDataType> getExportTypes() {
-        return SUPPORTED_DATA_TYPES;
-    }
-
-    @Override public ImmutableList<PortableDataType> getImportTypes() {
-        return SUPPORTED_DATA_TYPES;
-    }
-
-    @Override
-    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
-        ServiceMode serviceMode) {
-        return lookupAndCreateAuth(dataType, serviceMode);
-    }
-
-    @Override public Exporter<? extends DataModel> getExporter(PortableDataType type,
-            AuthData authData, JobDataCache jobDataCache) throws IOException {
-        return getInstanceOfService(authData, jobDataCache, lookupAndCreateAuth(type, ServiceMode.EXPORT));
-    }
-
-    @Override public Importer<? extends DataModel> getImporter(PortableDataType type,
-            AuthData authData, JobDataCache jobDataCache) throws IOException {
-        return getInstanceOfService(authData, jobDataCache, lookupAndCreateAuth(type, ServiceMode.IMPORT));
-    }
-
-    private synchronized SmugMugPhotoService getInstanceOfService(
-        AuthData authData,
-        JobDataCache jobDataCache, SmugMugAuth smugMugAuth) throws IOException {
-        OAuthConsumer consumer = smugMugAuth.generateConsumer(authData);
-        return new SmugMugPhotoService(
-            consumer,
-            jobDataCache);
-    }
-
-    private SmugMugAuth lookupAndCreateAuth(PortableDataType dataType, ServiceMode serviceMode) {
-        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType), "[%s] mode not supported for dataType [%s]", serviceMode, dataType);
-        if (!AUTH_MAP.containsKey(serviceMode)) {
-            AUTH_MAP.put(serviceMode, new SmugMugAuth(appCredentials, serviceMode));
-        }
-        return AUTH_MAP.get(serviceMode);
-    }
+    return AUTH_MAP.get(serviceMode);
+  }
 }

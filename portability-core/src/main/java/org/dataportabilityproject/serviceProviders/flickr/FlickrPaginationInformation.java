@@ -19,6 +19,7 @@ import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 
 final class FlickrPaginationInformation implements PaginationInformation {
+
   private final int page;
 
   FlickrPaginationInformation(int page) {

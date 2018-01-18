@@ -51,27 +51,6 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     // TODO(olsona): utilize JobDataCache
   }
 
-  @Override
-  public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
-    // TODO(olsona): implement pagination
-
-    Collection<VCard> vCards = new HashSet<>();
-
-    List<String> resourceNames = peopleService.contactGroups().batchGet().getResourceNames();
-    for (String resourceName : resourceNames) {
-      Person person = peopleService.people().get(resourceName).execute();
-      VCard vcard = convertToModel(person);
-      vCards.add(vcard);
-    }
-
-    return new ContactsModelWrapper(vCards, null);
-  }
-
-  @Override
-  public void importItem(ContactsModelWrapper object) throws IOException {
-    // TODO(olsona): complete this
-  }
-
   private static VCard convertToModel(Person person) throws IOException {
     VCard vcard = new VCard();
 
@@ -127,7 +106,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return vcardEmails;
   }
 
-  private static Pair<StructuredName, StructuredName[]> convertToVcardNames(List<Name> personNames) {
+  private static Pair<StructuredName, StructuredName[]> convertToVcardNames(
+      List<Name> personNames) {
     StructuredName primaryVcardName = null;
     LinkedList<StructuredName> alternateVcardNames = new LinkedList<>();
     for (Name personName : personNames) {
@@ -168,5 +148,26 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     }
 
     return vcardTelephones;
+  }
+
+  @Override
+  public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
+    // TODO(olsona): implement pagination
+
+    Collection<VCard> vCards = new HashSet<>();
+
+    List<String> resourceNames = peopleService.contactGroups().batchGet().getResourceNames();
+    for (String resourceName : resourceNames) {
+      Person person = peopleService.people().get(resourceName).execute();
+      VCard vcard = convertToModel(person);
+      vCards.add(vcard);
+    }
+
+    return new ContactsModelWrapper(vCards, null);
+  }
+
+  @Override
+  public void importItem(ContactsModelWrapper object) throws IOException {
+    // TODO(olsona): complete this
   }
 }
