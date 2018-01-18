@@ -16,13 +16,11 @@
 package org.dataportabilityproject.shared;
 
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
-
-import java.io.IOException;
-
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
@@ -46,7 +44,8 @@ public interface ServiceProvider {
      * have permissions based on the serviceMode provided.
      */
     default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      logger.warn("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
+      logger.warn(
+          "getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
           dataType, serviceMode, getName());
       return null;
     }
@@ -56,7 +55,8 @@ public interface ServiceProvider {
      * have permissions based on the serviceMode provided.
      */
     default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      logger.warn("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
+      logger.warn(
+          "getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
           dataType, serviceMode, getName());
       return null;
     }
