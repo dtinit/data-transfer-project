@@ -35,20 +35,9 @@ class CrypterImpl implements Crypter {
       cipher.update(salt);
       byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
       return BaseEncoding.base64Url().encode(encrypted);
-    } catch (BadPaddingException e) {
-      logger.error("BadPaddingException for data, length: {}", data.length(), e);
-      throw new RuntimeException(e);
-    } catch (IllegalBlockSizeException e) {
-      logger.error("IllegalBlockSizeException for data, length: {}", data.length(), e);
-      throw new RuntimeException(e);
-    } catch (InvalidKeyException e) {
-      logger.error("InvalidKeyException for data, length: {}", data.length(), e);
-      throw new RuntimeException(e);
-    } catch (NoSuchAlgorithmException e) {
-      logger.error("NoSuchAlgorithmException for data, length: {}", data.length(), e);
-      throw new RuntimeException(e);
-    } catch (NoSuchPaddingException e) {
-      logger.error("NoSuchPaddingException for data, length: {}", data.length(), e);
+    } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
+        | NoSuchAlgorithmException | NoSuchPaddingException e) {
+      logger.error("Exception encrypting data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     }
   }
@@ -66,20 +55,9 @@ class CrypterImpl implements Crypter {
       byte[] data = new byte[decrypted.length - 8];
       System.arraycopy(decrypted, 8, data, 0, data.length);
       return new String(data, Charsets.UTF_8);
-    } catch (BadPaddingException e) {
-      logger.error("BadPaddingException for data, length: {}", encrypted.length(), e);
-      throw new RuntimeException(e);
-    } catch (IllegalBlockSizeException e) {
-      logger.error("IllegalBlockSizeException for data, length: {}", encrypted.length(), e);
-      throw new RuntimeException(e);
-    } catch (InvalidKeyException e) {
-      logger.error("InvalidKeyException for data, length: {}", encrypted.length(), e);
-      throw new RuntimeException(e);
-    } catch (NoSuchAlgorithmException e) {
-      logger.error("NoSuchAlgorithmException for data, length: {}", encrypted.length(), e);
-      throw new RuntimeException(e);
-    } catch (NoSuchPaddingException e) {
-      logger.error("NoSuchPaddingException for data, length: {}", encrypted.length(), e);
+    } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
+        | NoSuchAlgorithmException | NoSuchPaddingException e) {
+      logger.error("Error decrypting data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     }
   }

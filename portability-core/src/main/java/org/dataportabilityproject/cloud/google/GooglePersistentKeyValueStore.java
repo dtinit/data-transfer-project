@@ -37,6 +37,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
+/**
+ * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
+ */
 public final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";

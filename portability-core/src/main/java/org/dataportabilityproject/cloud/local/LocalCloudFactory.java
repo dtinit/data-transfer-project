@@ -26,10 +26,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-<<<<<<< HEAD
-=======
-import java.util.concurrent.ExecutionException;
->>>>>>> 528786562a6138f9ba6e9199b281745c9775557b
 import javax.inject.Inject;
 import org.dataportabilityproject.cloud.google.GoogleJobDataCache;
 import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
