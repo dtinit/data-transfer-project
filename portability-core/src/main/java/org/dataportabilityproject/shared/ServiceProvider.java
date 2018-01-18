@@ -46,7 +46,7 @@ public interface ServiceProvider {
      * have permissions based on the serviceMode provided.
      */
     default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
+      logger.warn("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
           dataType, serviceMode, getName());
       return null;
     }
@@ -56,7 +56,7 @@ public interface ServiceProvider {
      * have permissions based on the serviceMode provided.
      */
     default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      logger.debug("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
+      logger.warn("WARNING: getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
           dataType, serviceMode, getName());
       return null;
     }
