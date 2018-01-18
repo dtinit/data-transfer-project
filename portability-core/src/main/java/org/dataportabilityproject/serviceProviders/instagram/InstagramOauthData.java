@@ -29,6 +29,9 @@ abstract class InstagramOauthData extends AuthData {
   }
 
   abstract String accessToken();
-  @Nullable abstract String refreshToken(); // TODO: Determine if we can get refresh token in non-Sandbox mode
+
+  @Nullable
+  abstract String refreshToken(); // TODO: Determine if we can get refresh token in non-Sandbox mode
+
   abstract String tokenServerEncodedUrl();
 }

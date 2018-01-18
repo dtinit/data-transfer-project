@@ -39,6 +39,7 @@ import org.dataportabilityproject.serviceProviders.instagram.model.MediaFeedData
 import org.dataportabilityproject.serviceProviders.instagram.model.MediaResponse;
 
 final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
+
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

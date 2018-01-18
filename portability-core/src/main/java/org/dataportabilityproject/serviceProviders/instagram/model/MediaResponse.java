@@ -21,6 +21,7 @@ import java.util.List;
  * DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping.
  */
 public final class MediaResponse {
+
   private Meta meta;
 
   private List<MediaFeedData> data;
