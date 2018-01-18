@@ -15,38 +15,29 @@
  */
 package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 public class FiveHundredPxPhoto {
   @JsonProperty("id")
   private int id;
 
-  @JsonProperty("name")
+  @JsonProperty("name")  // AKA title
   private String name;
 
   @JsonProperty("description")
   private String description;
 
-  @JsonProperty("WATERMARK")
-  @JsonFormat(with={ JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES })
-  private boolean watermark;
+  @JsonProperty("images")
+  private List<FiveHundredPxImage> imageList;
 
-  @JsonProperty("LICENSING_REQUESTED")
-  @JsonFormat(with={ JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES })
-  private boolean licensing_requested;
-
-  @JsonProperty("LICENSING_SUGGESTED")
-  @JsonFormat(with={ JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES })
-  private boolean licensing_suggested;
-
-  @JsonProperty("IS_FREE_PHOTO")
-  @JsonFormat(with={ JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES })
-  private boolean is_free_photo;
+  // NB: image_url is deprecated, and image_type isn't documented
 
   public int getId() { return id; }
 
   public String getName() { return name; }
 
   public String getDescription() { return description; }
+
+  public List<FiveHundredPxImage> getImageList() { return imageList; }
 }
