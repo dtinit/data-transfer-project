@@ -32,6 +32,7 @@ import java.net.URL;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.AuthElement;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.Frob;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
@@ -46,8 +47,12 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
 
     private AuthElement authElement;
 
-    RememberTheMilkAuth(RememberTheMilkSignatureGenerator signatureGenerator) {
+    private final ServiceMode serviceMode;
+
+    RememberTheMilkAuth(RememberTheMilkSignatureGenerator signatureGenerator,
+        ServiceMode serviceMode) {
         this.signatureGenerator = signatureGenerator;
+        this.serviceMode = serviceMode;
     }
 
     @Override
@@ -111,7 +116,8 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
     }
 
     private void presentLinkToUser(String frob, IOInterface ioInterface) throws IOException {
-        URL authUrlUnsigned = new URL(AUTH_URL + "?perms=write&frob=" + frob);
+        String perms = (serviceMode == ServiceMode.EXPORT) ? "read" : "write";
+        URL authUrlUnsigned = new URL(AUTH_URL + "?perms=" + perms + "&frob=" + frob);
         URL authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
 
         ioInterface.ask("Please visit " + authUrlSigned + " and flow the flow there then hit return/enter");
