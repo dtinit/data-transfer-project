@@ -19,8 +19,11 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.tasks.TasksScopes;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import com.google.inject.Inject;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
@@ -38,7 +41,6 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.dataportabilityproject.shared.PortableDataType.*;
@@ -47,33 +49,33 @@ import static org.dataportabilityproject.shared.PortableDataType.*;
  * The {@link ServiceProvider} for Google (http://www.google.com/).
  */
 final class GoogleServiceProvider implements ServiceProvider {
-    private final ImmutableList<PortableDataType> dataTypes = ImmutableList
+    private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
         .of(CALENDAR, MAIL, PHOTOS, TASKS);
 
     // The scopes necessary to read or write each PortableDataType and ServiceMode pair
     // Scopes for EXPORT should contain READONLY permissions
-    final private Map<PortableDataType, Map<ServiceMode, List<String>>> dataTypeServiceModeScopes =
-            ImmutableMap.<PortableDataType, Map<ServiceMode, List<String>>>builder()
-                    .put(CALENDAR, ImmutableMap.<ServiceMode, List<String>>builder()
-                            .put(ServiceMode.IMPORT, Arrays.asList(CalendarScopes.CALENDAR))
-                            .put(ServiceMode.EXPORT, Arrays.asList(CalendarScopes.CALENDAR_READONLY))
+    final private static Map<PortableDataType, ListMultimap<ServiceMode, String>> DATA_TYPE_SCOPES =
+            ImmutableMap.<PortableDataType, ListMultimap<ServiceMode, String>>builder()
+                    .put(CALENDAR, ImmutableListMultimap.<ServiceMode, String>builder()
+                            .putAll(ServiceMode.IMPORT, Arrays.asList(CalendarScopes.CALENDAR))
+                            .putAll(ServiceMode.EXPORT, Arrays.asList(CalendarScopes.CALENDAR_READONLY))
                             .build())
-                    .put(MAIL, ImmutableMap.<ServiceMode, List<String>>builder()
-                            .put(ServiceMode.IMPORT, Arrays.asList(GmailScopes.GMAIL_MODIFY))
-                            .put(ServiceMode.EXPORT, Arrays.asList(GmailScopes.GMAIL_READONLY))
+                    .put(MAIL, ImmutableListMultimap.<ServiceMode, String>builder()
+                            .putAll(ServiceMode.IMPORT, Arrays.asList(GmailScopes.GMAIL_MODIFY))
+                            .putAll(ServiceMode.EXPORT, Arrays.asList(GmailScopes.GMAIL_READONLY))
                             .build())
-                    .put(PHOTOS, ImmutableMap.<ServiceMode, List<String>>builder()
-                            // picasaweb does not have a READONLY scope
-                            .put(ServiceMode.IMPORT, Arrays.asList("https://picasaweb.google.com/data/"))
-                            .put(ServiceMode.EXPORT, Arrays.asList("https://picasaweb.google.com/data/"))
+                    .put(PHOTOS, ImmutableListMultimap.<ServiceMode, String>builder()
+                             //picasaweb does not have a READONLY scope
+                            .putAll(ServiceMode.IMPORT, Arrays.asList("https://picasaweb.google.com/data/"))
+                            .putAll(ServiceMode.EXPORT, Arrays.asList("https://picasaweb.google.com/data/"))
                             .build())
-                    .put(TASKS, ImmutableMap.<ServiceMode, List<String>>builder()
-                            .put(ServiceMode.IMPORT, Arrays.asList(TasksScopes.TASKS))
-                            .put(ServiceMode.EXPORT, Arrays.asList(TasksScopes.TASKS_READONLY))
+                    .put(TASKS, ImmutableListMultimap.<ServiceMode, String>builder()
+                            .putAll(ServiceMode.IMPORT, Arrays.asList(TasksScopes.TASKS))
+                            .putAll(ServiceMode.EXPORT, Arrays.asList(TasksScopes.TASKS_READONLY))
                             .build())
                     .build();
 
-    private Map<PortableDataType, Map<ServiceMode, GoogleAuth>> dataTypeServiceModeAuths = new HashMap<>();
+    private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new HashMap<>();
 
     private final AppCredentials appCredentials;
 
@@ -90,12 +92,12 @@ final class GoogleServiceProvider implements ServiceProvider {
 
     @Override
     public ImmutableList<PortableDataType> getExportTypes() {
-        return dataTypes;
+        return SUPPORTED_DATA_TYPES;
     }
 
     @Override
     public ImmutableList<PortableDataType> getImportTypes() {
-        return dataTypes;
+        return SUPPORTED_DATA_TYPES;
     }
 
     @Override
@@ -159,14 +161,17 @@ final class GoogleServiceProvider implements ServiceProvider {
     }
 
     private GoogleAuth lookupAndCreateGoogleAuth(PortableDataType dataType, ServiceMode serviceMode) {
-        if (!dataTypeServiceModeAuths.containsKey(dataType)) {
-            dataTypeServiceModeAuths.put(dataType, new HashMap<>());
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
+            "[%s] mode for type [%s] is not supported by Google.", serviceMode, dataType);
+
+        if (!DATA_TYPE_AUTHS.containsKey(dataType)) {
+            DATA_TYPE_AUTHS.put(dataType, new HashMap<>());
         }
 
-        Map<ServiceMode, GoogleAuth> googleAuth = dataTypeServiceModeAuths.get(dataType);
+        Map<ServiceMode, GoogleAuth> googleAuth = DATA_TYPE_AUTHS.get(dataType);
         if (!googleAuth.containsKey(serviceMode)) {
             googleAuth.put(serviceMode, new GoogleAuth(appCredentials,
-                    dataTypeServiceModeScopes.get(dataType).get(serviceMode)));
+                    DATA_TYPE_SCOPES.get(dataType).get(serviceMode)));
         }
 
         return googleAuth.get(serviceMode);
