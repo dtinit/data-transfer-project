@@ -33,6 +33,7 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 final class InstagramServiceProvider implements ServiceProvider {
+
   // Instagram only offers basic scope for reading user's profiles. There is no "write" scope.
   // See https://www.instagram.com/developer/authorization/
   private static final ImmutableList<String> SCOPES = ImmutableList.of("basic");
@@ -65,8 +66,10 @@ final class InstagramServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-    Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    Preconditions
+        .checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
     Preconditions
         .checkArgument(EXPORT_TYPES.contains(dataType),
             "Export of type [%s] is not supported by Instagram",
@@ -75,8 +78,10 @@ final class InstagramServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-    Preconditions.checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    Preconditions
+        .checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
     Preconditions
         .checkArgument(EXPORT_TYPES.contains(dataType),
             "Export of type [%s] is not supported by Instagram",

@@ -28,7 +28,8 @@ import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.serviceProviders.common.mail.ImapMailHelper;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
-public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
+public class MicrosoftMailService implements Exporter<MailModelWrapper>,
+    Importer<MailModelWrapper> {
 
   public static final String HOST = "outlook.office365.com";
   public static final String PROTOCOL = "imap";
@@ -38,6 +39,12 @@ public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importe
   public MicrosoftMailService(String account, String password) {
     this.account = account;
     this.password = password;
+  }
+
+  @Nullable
+  private static PaginationInformation getPaginationInformation(
+      ExportInformation exportInformation) {
+    return exportInformation.getPaginationInformation().orElse(null);
   }
 
   @Override
@@ -54,17 +61,14 @@ public class MicrosoftMailService implements Exporter<MailModelWrapper>, Importe
       if (resource.isPresent()) {
         IdOnlyResource folder = (IdOnlyResource) resource.get();
 
-        return helper.getFolderContents(HOST, account, password, folder.getId(), getPaginationInformation(exportInformation));
+        return helper.getFolderContents(HOST, account, password, folder.getId(),
+            getPaginationInformation(exportInformation));
       } else {
-        return helper.getFolderContents(HOST, account, password, null, getPaginationInformation(exportInformation));
+        return helper.getFolderContents(HOST, account, password, null,
+            getPaginationInformation(exportInformation));
       }
     } catch (MessagingException e) {
       throw new IOException(e);
     }
-  }
-
-  @Nullable
-  private static PaginationInformation getPaginationInformation(ExportInformation exportInformation) {
-    return exportInformation.getPaginationInformation().orElse(null);
   }
 }

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 public class SmugMugAlbumImage {
+
   @JsonProperty("Title")
   private String title;
 

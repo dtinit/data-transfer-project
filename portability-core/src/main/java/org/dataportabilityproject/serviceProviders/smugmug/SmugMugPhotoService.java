@@ -53,6 +53,7 @@ import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
+import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
@@ -62,7 +63,6 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
-import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.serviceProviders.smugmug.model.ImageUploadResponse;
 import org.dataportabilityproject.serviceProviders.smugmug.model.SmugMugAlbum;
 import org.dataportabilityproject.serviceProviders.smugmug.model.SmugMugAlbumImage;
@@ -77,9 +77,10 @@ import org.dataportabilityproject.shared.StringPaginationToken;
 final class SmugMugPhotoService implements
     Exporter<PhotosModelWrapper>,
     Importer<PhotosModelWrapper> {
+
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  private static final String BASE_URL  = "https://api.smugmug.com";
+  private static final String BASE_URL = "https://api.smugmug.com";
   private static final String USER_URL = "/api/v2!authuser";
 
   private final OAuthConsumer authConsumer;
@@ -94,6 +95,13 @@ final class SmugMugPhotoService implements
     } catch (GeneralSecurityException e) {
       throw new IllegalStateException("Couldn't create smugmug api", e);
     }
+  }
+
+  private static InputStream getImageAsStream(String urlStr) throws IOException {
+    URL url = new URL(urlStr);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.connect();
+    return conn.getInputStream();
   }
 
   @Override
@@ -135,10 +143,11 @@ final class SmugMugPhotoService implements
     json.put("Privacy", "Private");
     HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
     SmugMugResponse<SmugmugAlbumResponse> response = postRequest(
-        folder +"!albums",
+        folder + "!albums",
         content,
         ImmutableMap.of(),
-        new TypeReference<SmugMugResponse<SmugmugAlbumResponse>>() {});
+        new TypeReference<SmugMugResponse<SmugmugAlbumResponse>>() {
+        });
     checkState(response.getResponse() != null, "Response is null");
     checkState(response.getResponse().getAlbum() != null, "Album is null");
     jobDataCache.store(album.getId(), response.getResponse().getAlbum().getAlbumKey());
@@ -159,7 +168,8 @@ final class SmugMugPhotoService implements
             "X-Smug-AlbumUri", "/api/v2/album/" + newAlbumKey,
             "X-Smug-ResponseType", "json",
             "X-Smug-Version", "v2"),
-        new TypeReference<ImageUploadResponse>() {});
+        new TypeReference<ImageUploadResponse>() {
+        });
   }
 
   private PhotosModelWrapper getImages(IdOnlyResource resource,
@@ -237,15 +247,18 @@ final class SmugMugPhotoService implements
 
   private SmugMugResponse<SmugMugAlbumInfoResponse> makeAlbumInfoRequest(String url)
       throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {});
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {
+    });
   }
 
   private SmugMugResponse<SmugmugAlbumsResponse> makeAlbumRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugmugAlbumsResponse>>() {});
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugmugAlbumsResponse>>() {
+    });
   }
 
   private SmugMugResponse<SmugMugUserResponse> makeUserRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {
+    });
   }
 
   private <T> SmugMugResponse<T> makeRequest(String url,
@@ -305,12 +318,12 @@ final class SmugMugPhotoService implements
 
     HttpResponse response;
     try {
-       response = postRequest.execute();
+      response = postRequest.execute();
     } catch (HttpResponseException e) {
-      throw new IOException("Problem making request: "+ postRequest.getUrl(), e);
+      throw new IOException("Problem making request: " + postRequest.getUrl(), e);
     }
     int statusCode = response.getStatusCode();
-    if (statusCode <200 || statusCode >=300) {
+    if (statusCode < 200 || statusCode >= 300) {
       throw new IOException("Bad status code: " + statusCode + " error: "
           + response.getStatusMessage());
     }
@@ -318,12 +331,5 @@ final class SmugMugPhotoService implements
         response.getContent(), Charsets.UTF_8));
 
     return MAPPER.readValue(result, typeReference);
-  }
-
-  private static InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
   }
 }

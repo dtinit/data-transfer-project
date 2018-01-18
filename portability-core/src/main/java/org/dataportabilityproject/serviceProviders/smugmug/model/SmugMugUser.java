@@ -22,6 +22,7 @@ import java.util.Map;
  * A SmugMug user object.
  */
 public class SmugMugUser {
+
   @JsonProperty("Name")
   private String name;
 

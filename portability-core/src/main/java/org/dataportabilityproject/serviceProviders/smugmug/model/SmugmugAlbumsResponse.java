@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class SmugmugAlbumsResponse {
+
   @JsonProperty("Uri")
   private String uri;
 

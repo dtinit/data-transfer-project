@@ -18,6 +18,7 @@ package org.dataportabilityproject.serviceProviders.smugmug.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SmugmugAlbumResponse {
+
   @JsonProperty("Uri")
   private String uri;
 
