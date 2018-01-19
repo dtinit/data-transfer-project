@@ -15,7 +15,7 @@ public class CrypterTest {
   public void testRoundTripSecretKey() throws Exception {
     KeyGenerator generator = KeyGenerator.getInstance("AES");
     SecretKey key = generator.generateKey();
-    Crypter crypter = CrypterFactory.createCrypterForSecretKey(key);
+    Crypter crypter = CrypterFactory.create(key);
     String data = "The lazy dog didn't jump over anything except \u2614, and a \u26F5";
     assertThat(crypter.decrypt(crypter.encrypt(data))).isEqualTo(data);
   }
@@ -26,8 +26,8 @@ public class CrypterTest {
     KeyPair keyPair = generator.genKeyPair();
     PublicKey publicKey = keyPair.getPublic();
     PrivateKey privateKey = keyPair.getPrivate();
-    Crypter encrypter = CrypterFactory.createCrypterForPublicKey(publicKey);
-    Crypter decrypter = CrypterFactory.createCrypterForPrivateKey(privateKey);
+    Crypter encrypter = CrypterFactory.create(publicKey);
+    Crypter decrypter = CrypterFactory.create(privateKey);
     String data = "The lazy dog didn't jump over anything except \u2614, and a \u26F5";
     assertThat(decrypter.decrypt(encrypter.encrypt(data))).isEqualTo(data);
   }

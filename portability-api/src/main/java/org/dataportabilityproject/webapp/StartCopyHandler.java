@@ -34,6 +34,8 @@ import javax.json.JsonWriter;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
@@ -150,18 +152,15 @@ final class StartCopyHandler implements HttpHandler {
         .parsePublicKey(assignedJob.workerInstancePublicKey());
     logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
 
-    String encryptedExportAuthData = cryptoHelper.encryptAuthData(publicKey, exportAuthCookie);
+    // Encrypt the data with the assigned workers PublicKey and persist
+    Crypter crypter = CrypterFactory.create(publicKey);
+    String encryptedExportAuthData = crypter.encrypt(exportAuthCookie);
     logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
-
-    String encryptedImportAuthData = cryptoHelper.encryptAuthData(publicKey, importAuthCookie);
+    String encryptedImportAuthData = crypter.encrypt(importAuthCookie);
     logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
-
     jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
 
-    logger.debug("Updated updateJobStateToAssigneWithAuthData, id: {}", job.id());
-
     writeResponse(exchange);
-    logger.debug("writeResponse");
   }
 
   /**

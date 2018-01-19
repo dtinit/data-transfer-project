@@ -36,17 +36,17 @@ import org.slf4j.LoggerFactory;
 /** Constructs instances of the {@link Crypter} for different key types. */
 public class CrypterFactory {
 
-  public static Crypter createCrypterForSecretKey(SecretKey key) {
+  public static Crypter create(SecretKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("AES"));
     return new CrypterImpl("AES", key);
   }
 
-  public static Crypter createCrypterForPublicKey(PublicKey key) {
+  public static Crypter create(PublicKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
     return new CrypterImpl("RSA/ECB/PKCS1Padding", key);
   }
 
-  public static Crypter createCrypterForPrivateKey(PrivateKey key) {
+  public static Crypter create(PrivateKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
     return new CrypterImpl("RSA/ECB/PKCS1Padding", key);
   }

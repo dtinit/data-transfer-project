@@ -23,7 +23,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import java.net.HttpCookie;
-import java.security.PublicKey;
 import javax.crypto.SecretKey;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
@@ -48,19 +47,11 @@ class CryptoHelper {
     this.jobDao = jobDao;
   }
 
-  /**
-   * Serialize and encrypt the given {@code authData} with the session key.
+   /**
+   * Serialize and encrypt the given {@code authData} with the given {@link SecretKey}.
    */
-  static String encryptAuthData(PublicKey key, String sessionEncryptedAuthData) {
-    Crypter crypter = CrypterFactory.createCrypterForPublicKey(key);
-    return crypter.encrypt(sessionEncryptedAuthData);
-  }
-
-  /**
-   * Serialize and encrypt the given {@code authData} with the session key.
-   */
-  private static String encryptAuthData(SecretKey key, AuthData authData) {
-    Crypter crypter = CrypterFactory.createCrypterForSecretKey(key);
+  private static String encrypt(SecretKey key, AuthData authData) {
+    Crypter crypter = CrypterFactory.create(key);
     String serialized = serialize(authData);
     return crypter.encrypt(serialized);
   }
@@ -70,12 +61,13 @@ class CryptoHelper {
   }
 
   /**
-   * Encrypts the given {@code authData} and stores it as a cookie in the provided headers.
+   * Encrypts the given {@code authData} with the session-based {@link SecretKey} and stores it as a
+   * cookie in the provided headers.
    */
   void encryptAndSetCookie(Headers headers, String jobId, ServiceMode serviceMode,
       AuthData authData) {
     SecretKey sessionKey = getSessionKey(jobId);
-    String encrypted = encryptAuthData(sessionKey, authData);
+    String encrypted = encrypt(sessionKey, authData);
     String cookieKey = (serviceMode == ServiceMode.EXPORT) ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
         : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
     HttpCookie cookie = new HttpCookie(cookieKey, encrypted);

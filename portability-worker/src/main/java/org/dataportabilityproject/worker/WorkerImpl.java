@@ -93,7 +93,7 @@ final class WorkerImpl {
           logger.warn("Exiting before copy, job: {}", job);
           return;
         }
-        Crypter decrypter = CrypterFactory.createCrypterForPrivateKey(workerJobMetadata.getKeyPair().getPrivate());
+        Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
         String serializedExportAuthData = decrypter.decrypt(job.encryptedExportAuthData());
         AuthData exportAuthData = deSerialize(serializedExportAuthData);
         String serializedImportAuthData = decrypter.decrypt(job.encryptedImportAuthData());
