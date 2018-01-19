@@ -16,25 +16,27 @@
 package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
-public class FiveHundredPxImage {
-  @JsonProperty("size")
-  private int size;
+public class S00PxUserGalleryResponse {
 
-  @JsonProperty("url")
-  private String url;
+  @JsonProperty("current_page")
+  private int currentPage;
 
-  @JsonProperty("https_url")
-  private String httpsUrl;
+  @JsonProperty("total_pages")
+  private int totalPages;
 
-  @JsonProperty("format")
-  private String format;
+  @JsonProperty("total_items")
+  private int totalItems;
 
-  public int getSize() { return size; }
+  @JsonProperty("galleries")
+  private List<FHPxGallery> galleryList;
 
-  public String getUrl() { return url; }
+  public int getCurrentPage() { return currentPage; }
 
-  public String getHttpsUrl() { return httpsUrl; }
+  public int getTotalPages() { return totalPages; }
 
-  public String getFormat() { return format; }
+  public int getTotalItems() { return totalItems; }
+
+  public List<FHPxGallery> getGalleryList() { return galleryList; }
 }

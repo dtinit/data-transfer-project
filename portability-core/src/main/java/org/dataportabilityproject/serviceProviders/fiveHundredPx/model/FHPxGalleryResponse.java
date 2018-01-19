@@ -18,7 +18,8 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public class FiveHundredPxGalleryItem {
+public class S00PxGalleryResponse {
+
   @JsonProperty("current_page")
   private int currentPage;
 
@@ -29,7 +30,7 @@ public class FiveHundredPxGalleryItem {
   private int totalItems;
 
   @JsonProperty("photos")
-  private List<FiveHundredPxPhoto> photoList;
+  private List<FHPxPhoto> photoList;
 
   public int getCurrentPage() { return currentPage; }
 
@@ -37,5 +38,5 @@ public class FiveHundredPxGalleryItem {
 
   public int getTotalItems() { return totalItems; }
 
-  public List<FiveHundredPxPhoto> getPhotoList() { return photoList; }
+  public List<FHPxPhoto> getPhotoList() { return photoList; }
 }

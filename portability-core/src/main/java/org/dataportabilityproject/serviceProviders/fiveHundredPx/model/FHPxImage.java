@@ -17,28 +17,25 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * A generic wrapper around 500px html responses.
- */
-public class FiveHundredPxResponse<T> {
-  @JsonProperty("Response")
-  private T response;
+public class S00PxImage {
 
-  @JsonProperty("Code")
-  private int code;
+  @JsonProperty("size")
+  private int size;
 
-  @JsonProperty("Message")
-  private String message;
+  @JsonProperty("url")
+  private String url;
 
-  public int getCode() {
-    return code;
-  }
+  @JsonProperty("https_url")
+  private String httpsUrl;
 
-  public String getMessage() {
-    return message;
-  }
+  @JsonProperty("format")
+  private String format;
 
-  public T getResponse() {
-    return response;
-  }
+  public int getSize() { return size; }
+
+  public String getUrl() { return url; }
+
+  public String getHttpsUrl() { return httpsUrl; }
+
+  public String getFormat() { return format; }
 }

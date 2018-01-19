@@ -27,6 +27,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.InputStreamContent;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
@@ -49,7 +50,8 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
-import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FiveHundredPxResponse;
+import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxPhotoUploadResponse;
+import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxResponse;
 
 // TODO(olsona): address image sizing (1,2,3,...)
 // TODO(olsona): what is the 500px equivalent of "/api/v2!authuser"?  Is there one?
@@ -100,13 +102,32 @@ final public class FiveHundredPxPhotoService implements Exporter<PhotosModelWrap
     }
   }
 
+  private void uploadSinglePhoto(PhotoModel photo) throws IOException {
+
+    InputStreamContent content = new InputStreamContent(null,
+        getImageAsStream(photo.getFetchableUrl()));
+
+    String url = ""; // TODO(olsona)
+
+    FHPxResponse<FHPxPhotoUploadResponse> wrappedResponse = makeRequest(url,
+        new TypeReference<FHPxResponse<FHPxPhotoUploadResponse>>() {
+        });
+    String uploadKey = wrappedResponse.getResponse().getUploadKey();
+  }
+
   // This could also be pulled out into a library.
-  private <T> FiveHundredPxResponse<T> makeRequest(String url,
-      TypeReference<FiveHundredPxResponse<T>> typeReference) throws IOException {
+  private <T> FHPxResponse<T> makeRequest(String url,
+      TypeReference<FHPxResponse<T>> typeReference) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     String signedRequest;
+
+    String fullUrl = url;
+    if (!fullUrl.contains("://")) {
+      fullUrl = BASE_URL + fullUrl;
+    }
+
     try {
-      signedRequest = this.authConsumer.sign(BASE_URL + url + "?_accept=application%2Fjson");
+      signedRequest = this.authConsumer.sign(fullUrl + "?_accept=application%2Fjson");
     } catch (OAuthMessageSignerException
         | OAuthExpectationFailedException
         | OAuthCommunicationException e) {
@@ -124,7 +145,7 @@ final public class FiveHundredPxPhotoService implements Exporter<PhotosModelWrap
     return MAPPER.readValue(result, typeReference);
   }
 
-  private <T> FiveHundredPxResponse<T> postRequest(String url, HttpContent content,
+  private <T> FHPxResponse<T> postRequest(String url, HttpContent content,
       Map<String, String> headers, TypeReference<T> typeReference) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
 

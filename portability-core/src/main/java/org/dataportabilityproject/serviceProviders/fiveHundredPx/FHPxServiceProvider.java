@@ -24,7 +24,6 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
-import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 
 final public class FiveHundredPxServiceProvider implements ServiceProvider {
 
@@ -40,11 +39,6 @@ final public class FiveHundredPxServiceProvider implements ServiceProvider {
 
   @Override
   public ImmutableList<PortableDataType> getImportTypes() {
-    return null;
-  }
-
-  @Override
-  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
     return null;
   }
 
