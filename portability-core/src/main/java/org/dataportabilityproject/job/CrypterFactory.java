@@ -33,19 +33,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-/** Constructs instances of the {@link Crypter} for different key types. */
+/**
+ * Constructs instances of the {@link Crypter} for different key types. See
+ * https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html
+ */
 public class CrypterFactory {
 
+  /**
+   * Creates a {@link Crypter} with the given {@link SecretKey} for use with "AES"-based symmetric
+   * encryption.
+   */
   public static Crypter create(SecretKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("AES"));
     return new CrypterImpl("AES", key);
   }
 
+  /**
+   * Creates a {@link Crypter} with the given {@link PublicKey} for use with "RSA"-based asymmetric
+   * encryption.
+   */
   public static Crypter create(PublicKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
     return new CrypterImpl("RSA/ECB/PKCS1Padding", key);
   }
 
+  /**
+   * Creates a {@link Crypter} with the given {@link PrivateKey} for use with "RSA"-based asymmetric
+   * encryption.
+   */
   public static Crypter create(PrivateKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
     return new CrypterImpl("RSA/ECB/PKCS1Padding", key);

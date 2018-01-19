@@ -63,7 +63,7 @@ public class LocalCloudFactory implements CloudFactory {
 
   // Google DataStore emulator is used for local development
   private static final Datastore datastore = DatastoreOptions.newBuilder()
-      .setHost("http://localhost:8081")
+      .setHost("http://localhost:8081") // TODO: move to yaml config in case non-default is used
       .setProjectId(DUMMY_PROJECT_ID)
       .build()
       .getService();
