@@ -110,15 +110,15 @@ final class StartCopyHandler implements HttpHandler {
     PortableDataType type = JobUtils.getDataType(job.dataType());
 
     //  Validate auth data is present in cookies
-    String exportAuthCookie = PortabilityApiUtils
+    String exportAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookieValue), "Export auth cookie required");
 
-    String importAuthCookie = PortabilityApiUtils
+    String importAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
 
     // We have the data, now update it unassigned so it can be assigned a worker
     // Set Job to state to pending worker assignment
@@ -154,9 +154,9 @@ final class StartCopyHandler implements HttpHandler {
 
     // Encrypt the data with the assigned workers PublicKey and persist
     Crypter crypter = CrypterFactory.create(publicKey);
-    String encryptedExportAuthData = crypter.encrypt(exportAuthCookie);
+    String encryptedExportAuthData = crypter.encrypt(exportAuthCookieValue);
     logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
-    String encryptedImportAuthData = crypter.encrypt(importAuthCookie);
+    String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
     logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
     jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
 
