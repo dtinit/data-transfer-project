@@ -39,78 +39,84 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
  * The {@link ServiceProvider} for the Flickr service (http://www.flickr.com/).
  */
 final class FlickrServiceProvider implements ServiceProvider {
-    private final AppCredentials appCredentials;
 
-    private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
-        .of(PortableDataType.PHOTOS);
-    private final static Map<ServiceMode, FlickrAuth> AUTH_MAP = new HashMap<>();
+  private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
+      .of(PortableDataType.PHOTOS);
+  private final static Map<ServiceMode, FlickrAuth> AUTH_MAP = new HashMap<>();
+  private final AppCredentials appCredentials;
 
-    @Inject
-    FlickrServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
-        this.appCredentials = appCredentialFactory.lookupAndCreate("FLICKR_KEY", "FLICKR_SECRET");
+  @Inject
+  FlickrServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
+    this.appCredentials = appCredentialFactory.lookupAndCreate("FLICKR_KEY", "FLICKR_SECRET");
+  }
+
+  @Override
+  public String getName() {
+    return "Flickr";
+  }
+
+  @Override
+  public ImmutableList<PortableDataType> getExportTypes() {
+    return SUPPORTED_DATA_TYPES;
+  }
+
+  @Override
+  public ImmutableList<PortableDataType> getImportTypes() {
+    return SUPPORTED_DATA_TYPES;
+  }
+
+  @Override // OfflineDataGenerator
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    return lookupAndCreateAuth(dataType, serviceMode);
+  }
+
+  @Override
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    return lookupAndCreateAuth(dataType, serviceMode);
+  }
+
+  @Override
+  public Exporter<? extends DataModel> getExporter(
+      PortableDataType type,
+      AuthData authData,
+      JobDataCache jobDataCache) throws IOException {
+
+    return getInstanceOfService(authData, jobDataCache,
+        lookupAndCreateAuth(type, ServiceMode.EXPORT));
+  }
+
+  @Override
+  public Importer<? extends DataModel> getImporter(
+      PortableDataType type,
+      AuthData authData,
+      JobDataCache jobDataCache) throws IOException {
+    if (type != PortableDataType.PHOTOS) {
+      throw new IllegalArgumentException("Type " + type + " is not supported");
     }
 
-    @Override public String getName() {
-        return "Flickr";
+    return getInstanceOfService(authData, jobDataCache,
+        lookupAndCreateAuth(type, ServiceMode.IMPORT));
+  }
+
+  private synchronized FlickrPhotoService getInstanceOfService(
+      AuthData authData,
+      JobDataCache jobDataCache, FlickrAuth flickrAuth) throws IOException {
+    Auth auth = flickrAuth.getAuth(authData);
+
+    return new FlickrPhotoService(
+        appCredentials,
+        auth,
+        jobDataCache);
+  }
+
+  private FlickrAuth lookupAndCreateAuth(PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
+        "[%s] mode not supported for dataType [%s]", serviceMode, dataType);
+    if (!AUTH_MAP.containsKey(serviceMode)) {
+      AUTH_MAP.put(serviceMode, new FlickrAuth(appCredentials, serviceMode));
     }
-
-    @Override public ImmutableList<PortableDataType> getExportTypes() {
-        return SUPPORTED_DATA_TYPES;
-    }
-
-    @Override public ImmutableList<PortableDataType> getImportTypes() {
-        return SUPPORTED_DATA_TYPES;
-    }
-
-    @Override // OfflineDataGenerator
-    public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-        return lookupAndCreateAuth(dataType, serviceMode);
-    }
-
-    @Override
-    public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
-        ServiceMode serviceMode) {
-        return lookupAndCreateAuth(dataType, serviceMode);
-    }
-
-    @Override public Exporter<? extends DataModel> getExporter(
-        PortableDataType type,
-        AuthData authData,
-        JobDataCache jobDataCache) throws IOException {
-
-        return getInstanceOfService(authData, jobDataCache,
-            lookupAndCreateAuth(type, ServiceMode.EXPORT));
-    }
-
-    @Override public Importer<? extends DataModel> getImporter(
-        PortableDataType type,
-        AuthData authData,
-        JobDataCache jobDataCache) throws IOException {
-        if (type != PortableDataType.PHOTOS) {
-            throw new IllegalArgumentException("Type " + type + " is not supported");
-        }
-
-        return getInstanceOfService(authData, jobDataCache,
-            lookupAndCreateAuth(type, ServiceMode.IMPORT));
-    }
-
-    private synchronized FlickrPhotoService getInstanceOfService(
-        AuthData authData,
-        JobDataCache jobDataCache, FlickrAuth flickrAuth) throws IOException {
-        Auth auth = flickrAuth.getAuth(authData);
-
-        return new FlickrPhotoService(
-                appCredentials,
-                auth,
-                jobDataCache);
-    }
-
-    private FlickrAuth lookupAndCreateAuth(PortableDataType dataType, ServiceMode serviceMode) {
-        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
-            "[%s] mode not supported for dataType [%s]", serviceMode, dataType);
-        if (!AUTH_MAP.containsKey(serviceMode)) {
-            AUTH_MAP.put(serviceMode, new FlickrAuth(appCredentials, serviceMode));
-        }
-        return AUTH_MAP.get(serviceMode);
-    }
+    return AUTH_MAP.get(serviceMode);
+  }
 }

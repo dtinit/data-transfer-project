@@ -39,6 +39,7 @@ import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 
 final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
+
   private final Flickr flickr;
   private final ServiceMode serviceMode;
 
@@ -46,6 +47,15 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
     Preconditions.checkNotNull(appCredentials);
     this.flickr = new Flickr(appCredentials.key(), appCredentials.secret(), new REST());
     this.serviceMode = serviceMode;
+  }
+
+  private static TokenSecretAuthData toAuthData(Token token) {
+    return TokenSecretAuthData.create(token.getToken(), token.getSecret());
+  }
+
+  private static Token fromAuthData(AuthData authData) {
+    TokenSecretAuthData data = (TokenSecretAuthData) authData;
+    return new Token(data.token(), data.secret());
   }
 
   @Override
@@ -69,7 +79,7 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
         authData.getClass().getCanonicalName());
     Token requestToken = fromAuthData(authData);
     try {
-    Auth auth = flickr.getAuthInterface().checkToken(requestToken);
+      Auth auth = flickr.getAuthInterface().checkToken(requestToken);
       return auth;
     } catch (FlickrException e) {
       throw new IOException("Problem verifying auth token", e);
@@ -101,14 +111,5 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
     } catch (FlickrException e) {
       throw new IOException("Problem verifying auth token", e);
     }
-  }
-
-  private static TokenSecretAuthData toAuthData(Token token) {
-    return TokenSecretAuthData.create(token.getToken(), token.getSecret());
-  }
-
-  private static Token fromAuthData(AuthData authData) {
-    TokenSecretAuthData data = (TokenSecretAuthData) authData;
-    return new Token(data.token(), data.secret());
   }
 }

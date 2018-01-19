@@ -29,6 +29,8 @@ abstract class GoogleTokenData extends AuthData {
   }
 
   abstract String accessToken();
+
   abstract String refreshToken();
+
   abstract String tokenServerEncodedUrl();
 }

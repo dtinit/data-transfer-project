@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * A generic wrapper around SmugMug html responses.
  */
 public class SmugMugResponse<T> {
+
   @JsonProperty("Response")
   private T response;
 

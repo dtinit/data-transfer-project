@@ -32,53 +32,53 @@ import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 
 /**
- * Generates signatures hash based on the algorithm described:
- * https://www.rememberthemilk.com/services/api/authentication.rtm
+ * Generates signatures hash based on the algorithm described: https://www.rememberthemilk.com/services/api/authentication.rtm
  */
 final class RememberTheMilkSignatureGenerator {
-    private final AppCredentials appCredentials;
-    private final String authToken;
 
-    RememberTheMilkSignatureGenerator(AppCredentials appCredentials, @Nullable String authToken) {
-        this.appCredentials = Preconditions.checkNotNull(appCredentials);
-        this.authToken = authToken;
+  private final AppCredentials appCredentials;
+  private final String authToken;
+
+  RememberTheMilkSignatureGenerator(AppCredentials appCredentials, @Nullable String authToken) {
+    this.appCredentials = Preconditions.checkNotNull(appCredentials);
+    this.authToken = authToken;
+  }
+
+  URL getSignature(URL url) throws MalformedURLException {
+    String query = url.getQuery();
+    Map<String, String> map = new HashMap<>(Splitter.on('&')
+        .trimResults()
+        .withKeyValueSeparator("=")
+        .split(query));
+
+    String apiKey = appCredentials.key();
+    String secret = appCredentials.secret();
+
+    map.put("api_key", apiKey);
+    if (null != authToken) {
+      map.put("auth_token", authToken);
+    }
+    List<String> orderedKeys = map.keySet().stream().collect(Collectors.toList());
+    Collections.sort(orderedKeys);
+
+    StringBuilder sb = new StringBuilder(query.length() + secret.length() + 20);
+    sb.append(secret);
+    for (String key : orderedKeys) {
+      sb.append(key).append(map.get(key));
     }
 
-    URL getSignature(URL url) throws MalformedURLException {
-        String query = url.getQuery();
-        Map<String, String> map = new HashMap<>(Splitter.on('&')
-            .trimResults()
-            .withKeyValueSeparator("=")
-            .split(query));
-
-        String apiKey = appCredentials.key();
-        String secret = appCredentials.secret();
-
-        map.put("api_key", apiKey);
-        if (null != authToken) {
-            map.put("auth_token", authToken);
-        }
-        List<String> orderedKeys = map.keySet().stream().collect(Collectors.toList());
-        Collections.sort(orderedKeys);
-
-        StringBuilder sb = new StringBuilder(query.length() + secret.length() + 20);
-        sb.append(secret);
-        for (String key : orderedKeys) {
-            sb.append(key).append(map.get(key));
-        }
-
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
-            String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
-            return new URL(url
-                + "&" + "api_key" + "=" + apiKey
-                + (authToken == null ? "" : ("&" + "auth_token" + "=" + authToken))
-                + "&" + "api_sig" + "=" + signature);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Couldn't find MD5 hash", e);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Couldn't parse authUrl", e);
-        }
+    try {
+      MessageDigest md = MessageDigest.getInstance("MD5");
+      byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
+      String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
+      return new URL(url
+          + "&" + "api_key" + "=" + apiKey
+          + (authToken == null ? "" : ("&" + "auth_token" + "=" + authToken))
+          + "&" + "api_sig" + "=" + signature);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("Couldn't find MD5 hash", e);
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException("Couldn't parse authUrl", e);
     }
+  }
 }

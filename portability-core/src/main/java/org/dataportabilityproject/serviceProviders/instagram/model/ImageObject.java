@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Instantiated by JSON mapping.
  */
 public final class ImageObject {
+
   private ImageData thumbnail;
 
   @JsonProperty("standard_resolution")

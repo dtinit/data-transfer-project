@@ -17,50 +17,51 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk.model;
 
 import com.google.api.client.util.Joiner;
 import com.google.api.client.util.Key;
-
 import java.util.List;
 
 /**
  * A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm
  */
 public class TaskSeries {
-    @Key("@id")
-    public int id;
 
-    @Key("@created")
-    public String created;
+  @Key("@id")
+  public int id;
 
-    @Key("@modified")
-    public String modified;
+  @Key("@created")
+  public String created;
 
-    @Key("@name")
-    public String name;
+  @Key("@modified")
+  public String modified;
 
-    @Key("@source")
-    public String source;
+  @Key("@name")
+  public String name;
 
-    @Key("@authUrl")
-    public String url;
+  @Key("@source")
+  public String source;
 
-    @Key("@location_id")
-    public String location_id;
+  @Key("@authUrl")
+  public String url;
 
-    @Key("tags")
-    public String tags;
+  @Key("@location_id")
+  public String location_id;
 
-    @Key("participants")
-    public String participants;
+  @Key("tags")
+  public String tags;
 
-    @Key("notes")
-    public Notes notes;
+  @Key("participants")
+  public String participants;
 
-    @Key("task")
-    public List<Task> tasks;
+  @Key("notes")
+  public Notes notes;
 
-    @Override
-    public String toString() {
-        return String.format("TaskSeries(id=%d created=%s modified=%s name=%s source=%s authUrl=%s, notes=%s tasks:%s)",
-                id, created, modified, name, source, url, notes,
-                (tasks == null || tasks.isEmpty()) ? "" : Joiner.on('\n').join(tasks));
-    }
+  @Key("task")
+  public List<Task> tasks;
+
+  @Override
+  public String toString() {
+    return String.format(
+        "TaskSeries(id=%d created=%s modified=%s name=%s source=%s authUrl=%s, notes=%s tasks:%s)",
+        id, created, modified, name, source, url, notes,
+        (tasks == null || tasks.isEmpty()) ? "" : Joiner.on('\n').join(tasks));
+  }
 }
