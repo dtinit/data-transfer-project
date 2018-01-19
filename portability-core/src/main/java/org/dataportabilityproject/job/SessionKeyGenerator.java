@@ -26,9 +26,12 @@ import javax.crypto.spec.SecretKeySpec;
  * api, and worker.
  */
 public class SessionKeyGenerator {
+
   public static final String ALGORITHM = "AES";
 
-  /** Generate a new symmetric key to use throughout the life of a job session.  */
+  /**
+   * Generate a new symmetric key to use throughout the life of a job session.
+   */
   public static String generateKeyAndEncode() {
     try {
       KeyGenerator generator = KeyGenerator.getInstance(ALGORITHM);

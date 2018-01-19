@@ -32,7 +32,8 @@ import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 
 /**
- * Generates signatures hash based on the algorithm described: https://www.rememberthemilk.com/services/api/authentication.rtm
+ * Generates signatures hash based on the algorithm described: https://www.rememberthemilk
+ * .com/services/api/authentication.rtm
  */
 final class RememberTheMilkSignatureGenerator {
 

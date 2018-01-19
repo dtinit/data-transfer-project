@@ -31,20 +31,21 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
  * Factory that can create cloud interfaces when running locally.
  */
 public class LocalCloudFactory implements CloudFactory {
+
   private static final LoadingCache<String, LoadingCache<String, JobDataCache>> JOB_DATA_CACHE =
       CacheBuilder.newBuilder()
-      .build(new CacheLoader<String, LoadingCache<String, JobDataCache>>() {
-        @Override
-        public LoadingCache<String, JobDataCache> load(String jobId) throws Exception {
-          return CacheBuilder.newBuilder()
-              .build(new CacheLoader<String, JobDataCache>() {
-                @Override
-                public JobDataCache load(String service) throws Exception {
-                  return new JobDataCacheImpl();
-                }
-              });
-        }
-      });
+          .build(new CacheLoader<String, LoadingCache<String, JobDataCache>>() {
+            @Override
+            public LoadingCache<String, JobDataCache> load(String jobId) throws Exception {
+              return CacheBuilder.newBuilder()
+                  .build(new CacheLoader<String, JobDataCache>() {
+                    @Override
+                    public JobDataCache load(String service) throws Exception {
+                      return new JobDataCacheImpl();
+                    }
+                  });
+            }
+          });
 
   private static final Supplier<PersistentKeyValueStore> KEY_VALUE_SUPPLIER =
       Suppliers.memoize(InMemoryPersistentKeyValueStore::new);

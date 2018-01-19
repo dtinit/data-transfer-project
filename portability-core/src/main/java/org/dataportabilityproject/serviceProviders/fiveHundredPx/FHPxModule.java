@@ -17,7 +17,7 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx;
 
 import com.google.inject.AbstractModule;
 
-public class FiveHundredPxModule extends AbstractModule {
+public class FHPxModule extends AbstractModule {
 
   @Override
   protected void configure() {

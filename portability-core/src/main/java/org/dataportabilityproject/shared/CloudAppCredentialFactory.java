@@ -34,11 +34,12 @@ import org.slf4j.LoggerFactory;
 
 @Singleton
 public class CloudAppCredentialFactory implements AppCredentialFactory {
+
   static final Logger logger = LoggerFactory.getLogger(AppCredentials.class);
 
   /**
-   * Store keys and secrets in a cache so we can reduce load on cloud storage / KMS when
-   * reading keys and reading/decrypting secrets several times on startup.
+   * Store keys and secrets in a cache so we can reduce load on cloud storage / KMS when reading
+   * keys and reading/decrypting secrets several times on startup.
    *
    * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
    * compromised, we can update them without restarting our servers.

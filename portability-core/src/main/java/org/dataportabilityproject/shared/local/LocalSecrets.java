@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * <p>Should only be used for local development.
  */
 public class LocalSecrets {
+
   private final Logger logger = LoggerFactory.getLogger(LocalSecrets.class);
 
   private static final String SECRETS_FILENAME = "secrets.csv";
@@ -72,7 +73,9 @@ public class LocalSecrets {
     this.secrets = builder.build();
   }
 
-  /** Reads the path as a stream from file system or jar. */
+  /**
+   * Reads the path as a stream from file system or jar.
+   */
   private static InputStream getStream(String filePath) throws IOException {
     InputStream in = LocalSecrets.class.getClassLoader().getResourceAsStream(filePath);
     if (in == null) {

@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class WorkerImpl {
+
   private final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
   private final CloudFactory cloudFactory;
   private final JobPollingService jobPollingService;
@@ -82,7 +83,7 @@ final class WorkerImpl {
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       try {
-        if(true) {
+        if (true) {
           logger.info("Exiting before copy, job: {}", job);
           // TODO: Enable worker-based copying
           return;

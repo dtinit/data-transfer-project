@@ -24,6 +24,7 @@ import org.dataportabilityproject.dataModels.DataModel;
  * A Wrapper for all the possible objects that can be returned by a photos exporter.
  */
 public class PhotosModelWrapper implements DataModel {
+
   private final Collection<PhotoAlbum> albums;
   private final Collection<PhotoModel> photos;
   private ContinuationInformation continuationInformation;

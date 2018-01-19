@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
  * Handler to redirect all paths to the angular view.
  */
 public class ViewHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(ViewHandler.class);
 
   private final String INDEX = "static/index.html";

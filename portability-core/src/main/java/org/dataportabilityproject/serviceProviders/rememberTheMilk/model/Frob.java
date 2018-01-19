@@ -20,7 +20,8 @@ import com.google.api.client.util.Key;
 /**
  * Response from rtm.auth.getFrob
  *
- * <p>Example: //<?xml version='1.0' encoding='UTF-8'?><rsp stat="ok"><frob>d27f3ecf5497d7fdd79aea0ba1ebe9bad375ce7b</frob></rsp>
+ * <p>Example: //<?xml version='1.0' encoding='UTF-8'?><rsp
+ * stat="ok"><frob>d27f3ecf5497d7fdd79aea0ba1ebe9bad375ce7b</frob></rsp>
  */
 public class Frob extends RememberTheMilkResponse {
 

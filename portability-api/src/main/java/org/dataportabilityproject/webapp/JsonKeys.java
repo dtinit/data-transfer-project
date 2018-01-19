@@ -15,10 +15,16 @@
  */
 package org.dataportabilityproject.webapp;
 
-/** Keys for returned Json data. */
+/**
+ * Keys for returned Json data.
+ */
 public class JsonKeys {
 
-  private JsonKeys(){} /** no instantiation */
+  private JsonKeys() {}
+
+  /**
+   * no instantiation
+   */
 
   public static final String ID_COOKIE_KEY = "e_id";
   public static final String EXPORT_AUTH_DATA_COOKIE_KEY = "ead_id";

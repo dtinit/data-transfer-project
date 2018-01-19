@@ -27,18 +27,21 @@ import org.dataportabilityproject.shared.auth.AuthData;
  * storage layer.
  */
 final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String, Object>> {
+
   // Keys for specific values in the key value store
   private static final String ID_DATA_KEY = "UUID";
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
   private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
   private static final String EXPORT_INITIAL_AUTH_DATA_KEY = "EXPORT_INITIAL_AUTH_DATA";
-  @Deprecated private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
+  @Deprecated
+  private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
   private static final String EXPORT_ENCRYPTED_AUTH_DATA_KEY = "EXPORT_ENCRYPTED_AUTH_DATA_KEY";
   private static final String IMPORT_SERVICE_DATA_KEY = "IMPORT_SERVICE";
   private static final String IMPORT_ACCOUNT_DATA_KEY = "IMPORT_ACCOUNT";
   private static final String IMPORT_INITIAL_AUTH_DATA_KEY = "IMPORT_INITIAL_AUTH_DATA";
-  @Deprecated private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
+  @Deprecated
+  private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
   private static final String IMPORT_ENCRYPTED_AUTH_DATA_KEY = "IMPORT_ENCRYPTED_AUTH_DATA";
   private static final String SESSION_KEY = "SESSION_KEY";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
@@ -56,14 +59,14 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     builder.put(ID_DATA_KEY, job.id());
 
     // Data type may not be set during initial flow
-    if(!Strings.isNullOrEmpty(job.dataType())) {
+    if (!Strings.isNullOrEmpty(job.dataType())) {
       builder.put(DATA_TYPE_DATA_KEY, job.dataType());
     }
     // Validate and add export service information
-    if(!Strings.isNullOrEmpty(job.exportService())){
+    if (!Strings.isNullOrEmpty(job.exportService())) {
       builder.put(EXPORT_SERVICE_DATA_KEY, job.exportService());
     }
-    if(!Strings.isNullOrEmpty(job.exportAccount())) {
+    if (!Strings.isNullOrEmpty(job.exportAccount())) {
       builder.put(EXPORT_ACCOUNT_DATA_KEY, job.exportAccount());
     }
     if (null != job.exportInitialAuthData()) {
@@ -77,10 +80,10 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
       builder.put(EXPORT_ENCRYPTED_AUTH_DATA_KEY, job.encryptedExportAuthData());
     }
     // Validate and add import service information
-    if(!Strings.isNullOrEmpty(job.importService())){
+    if (!Strings.isNullOrEmpty(job.importService())) {
       builder.put(IMPORT_SERVICE_DATA_KEY, job.importService());
     }
-    if(!Strings.isNullOrEmpty(job.importAccount())) {
+    if (!Strings.isNullOrEmpty(job.importAccount())) {
       builder.put(IMPORT_ACCOUNT_DATA_KEY, job.importAccount());
     }
     if (null != job.importInitialAuthData()) {
@@ -127,7 +130,7 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     if (!isStringValueNullOrEmpty(data, EXPORT_SERVICE_DATA_KEY)) {
       builder.setExportService(getString(data, EXPORT_SERVICE_DATA_KEY));
     }
-    if(!isStringValueNullOrEmpty(data, EXPORT_ACCOUNT_DATA_KEY)) {
+    if (!isStringValueNullOrEmpty(data, EXPORT_ACCOUNT_DATA_KEY)) {
       builder.setExportAccount(getString(data, EXPORT_ACCOUNT_DATA_KEY));
     }
     if (data.get(EXPORT_INITIAL_AUTH_DATA_KEY) != null) {

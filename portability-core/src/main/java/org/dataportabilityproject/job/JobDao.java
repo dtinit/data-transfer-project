@@ -30,23 +30,24 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
  * A data acccess object that provides functionality to manage persisted data for portability jobs.
  */
 public class JobDao {
+
   // Keys for specific values in data store
   private static final String ID_DATA_KEY = "UUID";
   private static final String KEY_SEPERATOR = "::";
 
   /**
-   * The current state of the job.
-   * <p>
-   * The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to be assigned before
-   * sending all the data required for the job.
-   * The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required, such as the
-   * encrypted auth data, in order to begin processing the portability job.
+   * The current state of the job. <p> The value PENDING_WORKER_ASSIGNMENT indicates the client has
+   * sent a request for a worker to be assigned before sending all the data required for the job.
+   * The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required, such
+   * as the encrypted auth data, in order to begin processing the portability job.
    */
   @VisibleForTesting // Package-Private
   public enum JobState {
     PENDING_AUTH_DATA, // The job has not finished the authorization flows
-    PENDING_WORKER_ASSIGNMENT, // The job has all authorization information but is not assigned a worker yet
-    ASSIGNED_WITHOUT_AUTH_DATA, // The job is assigned a worker and waiting for auth data from the api
+    PENDING_WORKER_ASSIGNMENT, // The job has all authorization information but is not assigned a
+    // worker yet
+    ASSIGNED_WITHOUT_AUTH_DATA, // The job is assigned a worker and waiting for auth data from
+    // the api
     ASSIGNED_WITH_AUTH_DATA, // The job is assigned a worker and has encrypted auth data
   }
 
@@ -64,7 +65,9 @@ public class JobDao {
 
   // INDEX LOOKUP METHODS
 
-  /** Returns the next job in unassigned state. */
+  /**
+   * Returns the next job in unassigned state.
+   */
   public String findNextJobPendingWorkerAssignment() {
     String key = storage.getFirst(JobState.PENDING_WORKER_ASSIGNMENT.name());
     if (key != null) {
@@ -73,26 +76,34 @@ public class JobDao {
     return null;
   }
 
-
   // LOOKUP METHODS
 
-  /** Looks up a job that is not yet completely populated with auth data. */
+  /**
+   * Looks up a job that is not yet completely populated with auth data.
+   */
   public PortabilityJob lookupJobPendingAuthData(String id) {
     return lookupJob(id, JobState.PENDING_AUTH_DATA);
   }
 
-  /** Looks up a job that is pending worker assignment. */
+  /**
+   * Looks up a job that is pending worker assignment.
+   */
   public PortabilityJob lookupJobPendingWorkerAssignment(String id) {
     return lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
   }
 
-  /** Looks up a job that is assigned to a worker and is ready to be processed. */
+  /**
+   * Looks up a job that is assigned to a worker and is ready to be processed.
+   */
   public PortabilityJob lookupAssignedWithoutAuthDataJob(String id) {
     return lookupJob(id, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
   }
 
   // TODO: Only expose for testing
-  /** Looks up a job that is assigned to a worker and is ready to be processed. */
+
+  /**
+   * Looks up a job that is assigned to a worker and is ready to be processed.
+   */
   public PortabilityJob lookupAssignedWithAuthDataJob(String id) {
     return lookupJob(id, JobState.ASSIGNED_WITH_AUTH_DATA);
   }
@@ -106,7 +117,6 @@ public class JobDao {
     PortabilityJob job = PortabilityJob.mapToJob(data);
     return job;
   }
-
 
   // INSERT METHODS
 
@@ -138,15 +148,15 @@ public class JobDao {
   }
 
   /**
-   * Replaces the job in PENDING_AUTH_DATA state to PENDING_WORKER_ASSIGNMENT state with
-   * encryption data included.
+   * Replaces the job in PENDING_AUTH_DATA state to PENDING_WORKER_ASSIGNMENT state with encryption
+   * data included.
    */
   public void updateJobStateToPendingWorkerAssignment(String id) throws IOException {
     // Verify job is in existing state
     PortabilityJob existingJob = lookupJob(id, JobState.PENDING_AUTH_DATA);
     // No updated to the job itself, just the state
     updateJobState(existingJob, JobState.PENDING_AUTH_DATA, JobState.PENDING_WORKER_ASSIGNMENT);
-   }
+  }
 
   /**
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
@@ -214,7 +224,8 @@ public class JobDao {
   /**
    * Updates an existing {@code job} in storage with the given {@code jobState}.
    */
-  private void updateJobState(PortabilityJob job, JobState previous, JobState updated) throws IOException {
+  private void updateJobState(PortabilityJob job, JobState previous, JobState updated)
+      throws IOException {
     String previousKey = createKey(previous, job.id());
     Map<String, Object> existing = storage.get(previousKey);
     Preconditions.checkArgument(existing != null, "Job not found");
@@ -250,6 +261,7 @@ public class JobDao {
 
   /**
    * Inserts a new {@code job} in storage.
+   *
    * @deprecated Remove when worker flow is implemented
    */
   @Deprecated
@@ -263,6 +275,7 @@ public class JobDao {
 
   /**
    * Returns the information for a user job or null if not found.
+   *
    * @deprecated Remove when worker flow is implemented
    */
   @Deprecated
@@ -277,6 +290,7 @@ public class JobDao {
 
   /**
    * Updates an existing {@code job} in storage.
+   *
    * @deprecated Remove when worker flow is implemented
    */
   @Deprecated

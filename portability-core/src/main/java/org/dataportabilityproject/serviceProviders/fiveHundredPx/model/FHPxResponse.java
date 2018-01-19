@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * A generic wrapper around 500px html responses.
  */
-public class FiveHundredPxResponse<T> {
+public class FHPxResponse<T> {
 
   @JsonProperty("Response")
   private T response;

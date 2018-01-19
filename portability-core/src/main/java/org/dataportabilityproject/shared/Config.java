@@ -19,6 +19,7 @@ package org.dataportabilityproject.shared;
  * Global config for portability code specific for each environment.
  */
 public final class Config {
+
   /**
    * Supported deployment environments.
    */

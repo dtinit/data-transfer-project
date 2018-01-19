@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * HTTP Handler for the listDataTypes service
  */
 final class ListDataTypesHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 

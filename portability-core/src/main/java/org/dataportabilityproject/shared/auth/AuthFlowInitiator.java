@@ -33,5 +33,7 @@ public abstract class AuthFlowInitiator {
   }
 
   public abstract String authUrl();
-  @Nullable public abstract AuthData initialAuthData();
+
+  @Nullable
+  public abstract AuthData initialAuthData();
 }

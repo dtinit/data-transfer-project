@@ -22,11 +22,12 @@ import java.security.KeyPair;
 import org.dataportabilityproject.job.PublicPrivateKeyUtils;
 
 /**
- * A class that contains the value of the job and key for a worker instance. This classes uses
- * the initialization-on-demand holder idiom to ensure it is a singleton.
+ * A class that contains the value of the job and key for a worker instance. This classes uses the
+ * initialization-on-demand holder idiom to ensure it is a singleton.
  */
 @Singleton
 final class WorkerJobMetadata {
+
   private static KeyPair keyPair = null;
   private static String jobId = null;
 

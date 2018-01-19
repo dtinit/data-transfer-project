@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * Utility methods for handling data in the related to jobss.
  */
 public final class JobUtils {
+
   private static final Logger logger = LoggerFactory.getLogger(JobUtils.class);
 
   public static String decodeId(String encoded) {
@@ -43,7 +44,8 @@ public final class JobUtils {
     return BaseEncoding.base64Url().encode(job.id().getBytes(Charsets.UTF_8));
   }
 
-  /* Returns the initial auth data for export or import determined by the {@code serviceMode} param. */
+  /* Returns the initial auth data for export or import determined by the {@code serviceMode}
+  param. */
   public static AuthData getInitialAuthData(PortabilityJob job, ServiceMode serviceMode) {
     switch (serviceMode) {
       case EXPORT:

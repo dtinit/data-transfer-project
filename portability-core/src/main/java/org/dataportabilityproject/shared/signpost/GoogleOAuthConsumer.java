@@ -24,8 +24,8 @@ import oauth.signpost.http.HttpRequest;
 import oauth.signpost.signature.QueryStringSigningStrategy;
 
 /**
- * Implements a SingPost {@link AbstractOAuthConsumer} that knows how to interact
- * with a a Google {@link com.google.api.client.http.HttpRequest}.
+ * Implements a SingPost {@link AbstractOAuthConsumer} that knows how to interact with a a Google
+ * {@link com.google.api.client.http.HttpRequest}.
  */
 public final class GoogleOAuthConsumer extends AbstractOAuthConsumer {
 

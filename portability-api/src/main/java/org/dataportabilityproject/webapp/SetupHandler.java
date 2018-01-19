@@ -93,7 +93,8 @@ abstract class SetupHandler implements HttpHandler {
 
       Preconditions.checkNotNull(job, "existingJob not found for jobId: %s", jobId);
 
-      // This page is only valid after the oauth of the export service - export data should exist for
+      // This page is only valid after the oauth of the export service - export data should exist
+      // for
       // all setup Modes.
       String exportService = job.exportService();
       Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");
@@ -141,13 +142,15 @@ abstract class SetupHandler implements HttpHandler {
     }
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()), ServiceMode.IMPORT);
+        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()),
+            ServiceMode.IMPORT);
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
     // This is done in ConfigureHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
-      // Auth data is different for import and export. This is only valid for the /_/importSetup page,
+      // Auth data is different for import and export. This is only valid for the /_/importSetup
+      // page,
       // so serviceMode is IMPORT
       PortabilityJob updatedJob = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);

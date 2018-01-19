@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 public final class MailMessageModel {
+
   private final String rawString;
   private final List<String> containerIds;
 
@@ -28,11 +29,16 @@ public final class MailMessageModel {
     this.containerIds = (containerIds == null) ? ImmutableList.of() : containerIds;
   }
 
-  /** RFC 2822 formatted and base64url encoded string **/
+  /**
+   * RFC 2822 formatted and base64url encoded string
+   **/
   public String getRawString() {
     return rawString;
   }
-  /** Container, e.g. folder or label, this message belongs to **/
+
+  /**
+   * Container, e.g. folder or label, this message belongs to
+   **/
   public List<String> getContainerIds() { return containerIds; }
 
   @Override

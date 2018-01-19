@@ -19,6 +19,7 @@ import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 
 public class IntPaginationToken implements PaginationInformation {
+
   // The number the next page starts at
   private final int start;
 

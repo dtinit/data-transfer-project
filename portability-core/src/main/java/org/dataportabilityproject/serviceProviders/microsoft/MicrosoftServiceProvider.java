@@ -49,7 +49,8 @@ final class MicrosoftServiceProvider implements ServiceProvider {
 
   // The list of supported dataTypes for import and export.
   // TODO: support IMPORT for MAIL.
-  private final static Map<ServiceMode, ImmutableList<PortableDataType>> SUPPORTED_DATA_TYPES = ImmutableMap.<ServiceMode, ImmutableList<PortableDataType>>builder()
+  private final static Map<ServiceMode, ImmutableList<PortableDataType>> SUPPORTED_DATA_TYPES =
+      ImmutableMap.<ServiceMode, ImmutableList<PortableDataType>>builder()
       .put(ServiceMode.IMPORT, ImmutableList.of(PortableDataType.CALENDAR))
       .put(ServiceMode.EXPORT, ImmutableList.of(PortableDataType.CALENDAR, PortableDataType.MAIL))
       .build();
@@ -61,7 +62,8 @@ final class MicrosoftServiceProvider implements ServiceProvider {
               .build())
           // Support for more service scopes go here
           .build();
-  private final static Map<PortableDataType, Map<ServiceMode, MicrosoftAuth>> DATA_TYPE_AUTHS = new HashMap<>();
+  private final static Map<PortableDataType, Map<ServiceMode, MicrosoftAuth>> DATA_TYPE_AUTHS =
+      new HashMap<>();
   // passwordAuth is used for mail export
   private final PasswordAuthDataGenerator passwordAuth;
   // credentials to pass into AuthDataGenerators

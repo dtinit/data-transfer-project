@@ -30,6 +30,7 @@ import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 
 final class GoogleCryptoKeyManagementSystem implements CryptoKeyManagementSystem {
+
   // Key for encrypting app secrets.
   private static final String SECRETS_CRYPTO_KEY_FMT_STRING = "projects/%s/locations/global/"
       + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";

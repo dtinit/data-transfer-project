@@ -22,12 +22,13 @@ import java.util.List;
  * Interface allowing services to display information, or ask questions to users
  */
 public interface IOInterface {
-    void print(String text);
 
-    String ask(String prompt) throws IOException;
+  void print(String text);
 
-    /**
-     * Asks the user a multiple choice question.
-     */
-    <T> T ask(String prompt, List<T> choices) throws IOException;
+  String ask(String prompt) throws IOException;
+
+  /**
+   * Asks the user a multiple choice question.
+   */
+  <T> T ask(String prompt, List<T> choices) throws IOException;
 }

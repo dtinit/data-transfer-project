@@ -32,10 +32,14 @@ import java.net.URI;
  */
 public class AuthorizationCodeInstalledAppSecureOverride {
 
-  /** Authorization code flow. */
+  /**
+   * Authorization code flow.
+   */
   private final AuthorizationCodeFlow flow;
 
-  /** Verification code receiver. */
+  /**
+   * Verification code receiver.
+   */
   private final VerificationCodeReceiver receiver;
 
   /**
@@ -88,18 +92,17 @@ public class AuthorizationCodeInstalledAppSecureOverride {
   /**
    * Handles user authorization by redirecting to the OAuth 2.0 authorization server.
    *
-   * <p>
-   * Default implementation is to call {@code browse(authorizationUrl.build())}. Subclasses may
+   * <p> Default implementation is to call {@code browse(authorizationUrl.build())}. Subclasses may
    * override to provide optional parameters such as the recommended state parameter. Sample
-   * implementation:
-   * </p>
+   * implementation: </p>
    *
    * <pre>
-  &#64;Override
-  protected void onAuthorization(AuthorizationCodeRequestUrl authorizationUrl) throws IOException {
-    authorizationUrl.setState("xyz");
-    super.onAuthorization(authorizationUrl);
-  }
+   * &#64;Override
+   * protected void onAuthorization(AuthorizationCodeRequestUrl authorizationUrl) throws IOException
+   * {
+   * authorizationUrl.setState("xyz");
+   * super.onAuthorization(authorizationUrl);
+   * }
    * </pre>
    *
    * @param authorizationUrl authorization URL
@@ -134,14 +137,18 @@ public class AuthorizationCodeInstalledAppSecureOverride {
     System.out.println("  " + url);
   }
 
-  /** Returns the authorization code flow. */
+  /**
+   * Returns the authorization code flow.
+   */
   public final AuthorizationCodeFlow getFlow() {
     return flow;
   }
 
-  /** Returns the verification code receiver. */
+  /**
+   * Returns the verification code receiver.
+   */
   public final VerificationCodeReceiver getReceiver() {
     return receiver;
   }
-  
+
 }

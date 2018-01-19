@@ -18,11 +18,9 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
 import com.google.api.client.util.Sleeper;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;

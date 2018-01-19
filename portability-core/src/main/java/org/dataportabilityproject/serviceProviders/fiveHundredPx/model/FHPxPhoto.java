@@ -18,7 +18,7 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public class FiveHundredPxPhoto {
+public class FHPxPhoto {
 
   @JsonProperty("id")
   private int id;
@@ -30,7 +30,7 @@ public class FiveHundredPxPhoto {
   private String description;
 
   @JsonProperty("images")
-  private List<S00PxImage> imageList;
+  private List<FHPxImage> imageList;
 
   // NB: image_url is deprecated, and image_type isn't documented
 
@@ -40,5 +40,5 @@ public class FiveHundredPxPhoto {
 
   public String getDescription() { return description; }
 
-  public List<S00PxImage> getImageList() { return imageList; }
+  public List<FHPxImage> getImageList() { return imageList; }
 }

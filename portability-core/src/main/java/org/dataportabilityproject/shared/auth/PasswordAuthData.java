@@ -28,5 +28,6 @@ public abstract class PasswordAuthData extends AuthData {
   }
 
   public abstract String username();
+
   public abstract String password();
 }

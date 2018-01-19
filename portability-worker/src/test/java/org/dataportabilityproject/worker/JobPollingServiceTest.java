@@ -17,7 +17,6 @@ package org.dataportabilityproject.worker;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao;
@@ -28,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class JobPollingServiceTest {
+
   private static final String TEST_ID = "a_test_id";
 
   private JobDao jobDao;
@@ -35,7 +35,7 @@ public class JobPollingServiceTest {
   private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
   @Before
-  public void setUp()  throws Exception {
+  public void setUp() throws Exception {
     PersistentKeyValueStore persistentKeyValueStore = new InMemoryPersistentKeyValueStore();
     jobDao = new JobDao(persistentKeyValueStore);
     jobPollingService = new JobPollingService(jobDao, metadata);

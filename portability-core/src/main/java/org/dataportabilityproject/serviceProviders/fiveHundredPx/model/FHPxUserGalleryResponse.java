@@ -18,7 +18,7 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public class S00PxUserGalleryResponse {
+public class FHPxUserGalleryResponse {
 
   @JsonProperty("current_page")
   private int currentPage;

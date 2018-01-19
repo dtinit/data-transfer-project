@@ -26,8 +26,11 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Server that handles requests to API/web server. */
+/**
+ * Server that handles requests to API/web server.
+ */
 final class ApiServer {
+
   private final Logger logger = LoggerFactory.getLogger(ApiServer.class);
 
   private static final int PORT = 8080;
@@ -43,7 +46,8 @@ final class ApiServer {
     }
 
     // Redirect anything that doesn't match to the ViewHandler. The view handler serves index.html
-    // which should reference static content served by our bucket. The angular app then routes requests
+    // which should reference static content served by our bucket. The angular app then routes
+    // requests
     // client side via angular.
     server.createContext("/", new ViewHandler());
 

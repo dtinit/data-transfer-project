@@ -17,7 +17,7 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FHPxPhotoUploadResponse {
+public class FHPxPhotoUploadMetadataResponse {
   @JsonProperty("upload_key")
   private String uploadKey;
 

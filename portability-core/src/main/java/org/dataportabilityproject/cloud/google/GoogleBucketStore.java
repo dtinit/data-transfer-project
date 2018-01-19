@@ -24,6 +24,7 @@ import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 
 final class GoogleBucketStore implements BucketStore {
+
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
 
   private Storage storage;

@@ -18,15 +18,15 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public class FiveHundredPxPhotoResponse {
+public class FHPxPhotoResponse {
 
   @JsonProperty("photo")
-  private FiveHundredPxPhoto photo;
+  private FHPxPhoto photo;
 
   @JsonProperty("comments")
   private List<String> comments;
 
-  public FiveHundredPxPhoto getPhoto() { return photo; }
+  public FHPxPhoto getPhoto() { return photo; }
 
   public List<String> getComments() { return comments; }
 }

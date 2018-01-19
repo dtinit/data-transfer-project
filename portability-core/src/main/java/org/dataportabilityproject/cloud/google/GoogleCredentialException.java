@@ -16,6 +16,7 @@
 package org.dataportabilityproject.cloud.google;
 
 public final class GoogleCredentialException extends Exception {
+
   GoogleCredentialException(String message) {
     super(message);
   }

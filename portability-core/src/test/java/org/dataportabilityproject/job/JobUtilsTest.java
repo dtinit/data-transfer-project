@@ -4,13 +4,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.dataportabilityproject.shared.ServiceMode.EXPORT;
 import static org.dataportabilityproject.shared.ServiceMode.IMPORT;
 
-import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.PasswordAuthData;
 import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
 import org.junit.Test;
 
 public class JobUtilsTest {
+
   @Test
   public void encodeDecodeRoundTrip() throws Exception {
     String jobId = "This is my @$*(#$ job id \t\n";

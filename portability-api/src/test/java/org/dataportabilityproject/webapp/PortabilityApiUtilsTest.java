@@ -1,8 +1,7 @@
 package org.dataportabilityproject.webapp;
 
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 
 import com.sun.net.httpserver.Headers;
 import java.net.HttpCookie;
@@ -14,6 +13,7 @@ import org.dataportabilityproject.job.TokenManager;
 import org.junit.Test;
 
 public class PortabilityApiUtilsTest {
+
   @Test
   public void parseCookieTest() {
     String cookieStr = "e_in=\"e_in_value\"; yummy_cookie=\"yummy_cookie_value\"";
@@ -32,12 +32,13 @@ public class PortabilityApiUtilsTest {
 
   @Test
   public void validateJobIdSuccessfulTest() {
-    TokenManager     tokenManager = new JWTTokenManager("TestSecret");
+    TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
 
     // create cookies
-    String encodedJobId = JobUtils.encodeId(testJob);;
+    String encodedJobId = JobUtils.encodeId(testJob);
+    ;
     String token = tokenManager.createNewToken(testJob.id());
     String cookieStr = String
         .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
@@ -52,12 +53,13 @@ public class PortabilityApiUtilsTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void validateJobIdMismatchTest(){
-    TokenManager     tokenManager = new JWTTokenManager("TestSecret");
+  public void validateJobIdMismatchTest() {
+    TokenManager tokenManager = new JWTTokenManager("TestSecret");
     PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
 
     // create cookies - purposefully create a token thats not for the correct job ID.
-    String encodedJobId = JobUtils.encodeId(testJob);;
+    String encodedJobId = JobUtils.encodeId(testJob);
+    ;
     String token = tokenManager.createNewToken("789");
 
     String cookieStr = String
@@ -73,13 +75,14 @@ public class PortabilityApiUtilsTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void validateJobIdMissingCookieTest(){
-    TokenManager     tokenManager = new JWTTokenManager("TestSecret");
+  public void validateJobIdMissingCookieTest() {
+    TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
 
     // create cookies
-    String encodedJobId = JobUtils.encodeId(testJob);;
+    String encodedJobId = JobUtils.encodeId(testJob);
+    ;
     String token = tokenManager.createNewToken(testJob.id());
     String cookieStr = String
         .format("%s=%s;", JsonKeys.ID_COOKIE_KEY, encodedJobId);
@@ -94,12 +97,13 @@ public class PortabilityApiUtilsTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void validateJobIdMissingHeaderTest(){
-    TokenManager     tokenManager = new JWTTokenManager("TestSecret");
+  public void validateJobIdMissingHeaderTest() {
+    TokenManager tokenManager = new JWTTokenManager("TestSecret");
     PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
 
     // create cookies
-    String encodedJobId = JobUtils.encodeId(testJob);;
+    String encodedJobId = JobUtils.encodeId(testJob);
+    ;
     String token = tokenManager.createNewToken(testJob.id());
     String cookieStr = String
         .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);

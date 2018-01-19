@@ -38,7 +38,8 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
 
 /**
- * Generates a token using the flow described: https://www.rememberthemilk.com/services/api/authentication.rtm
+ * Generates a token using the flow described: https://www.rememberthemilk
+ * .com/services/api/authentication.rtm
  */
 public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
 

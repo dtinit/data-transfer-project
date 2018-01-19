@@ -15,9 +15,9 @@
  */
 package org.dataportabilityproject.job;
 
-import com.google.common.base.Charsets;
-
-/** Provides functions related to encryption. */
+/**
+ * Provides functions related to encryption.
+ */
 public interface Crypter {
 
   /**

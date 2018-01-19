@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class JobDaoTest {
+
   private static final String TEST_JOB_ID = "test-job-id";
   private static final String TEST_EXPORT_SERVICE = "test-export-service";
   private static final String TEST_IMPORT_SERVICE = "test-import-service";

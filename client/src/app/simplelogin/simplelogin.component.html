@@ -1,30 +1,29 @@
-
 <div class="text-left portability-form">
   <form name="simpleLoginForm" #form action="{{url}}/simpleLoginSubmit" method="post">
     <div class="form-group">
       <label for="username">username:</label>
       <input type="text"
-            [(ngModel)]="username"
-            (change)="onInputChange()"
-            id="username"
-            name="username"
-            title="user name"
-            class="form-control"/>
+             [(ngModel)]="username"
+             (change)="onInputChange()"
+             id="username"
+             name="username"
+             title="user name"
+             class="form-control"/>
       <label for="password">password:</label>
       <input type="password"
-            [(ngModel)]="password"
-            (change)="onInputChange()"
-            id="password"
-            name="password"
-            title="password"
-            class="form-control"/>
+             [(ngModel)]="password"
+             (change)="onInputChange()"
+             id="password"
+             name="password"
+             title="password"
+             class="form-control"/>
       <button [disabled]="!enableSubmit"
-            type="submit" (click)="form.submit()"
-            class="btn btn-primary"
-            title="Clicking this will submit your credentials">
+              type="submit" (click)="form.submit()"
+              class="btn btn-primary"
+              title="Clicking this will submit your credentials">
         Authorize
       </button>
-      </div>
+    </div>
   </form>
 </div>
 

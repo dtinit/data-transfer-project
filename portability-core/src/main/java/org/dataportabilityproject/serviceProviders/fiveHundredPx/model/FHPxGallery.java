@@ -17,7 +17,7 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class S00PxGallery {
+public class FHPxGallery {
 
   @JsonProperty("id")
   private int id;

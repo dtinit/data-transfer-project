@@ -22,18 +22,21 @@ import org.dataportabilityproject.shared.AppCredentials;
 import org.junit.Test;
 
 public class RememberTheMilkSignatureGeneratorTest {
-    private static final String KEY = "BANANAS1";
-    private static final String SECRET = "BANANAS2";
-    private static final String TOKEN = "BANANAS3";
 
-    private static final AppCredentials APP_CREDENTIALS = AppCredentials.create(KEY, SECRET);
-    private static final RememberTheMilkSignatureGenerator SIGNATURE_GENERATOR
-        = new RememberTheMilkSignatureGenerator(APP_CREDENTIALS, TOKEN);
+  private static final String KEY = "BANANAS1";
+  private static final String SECRET = "BANANAS2";
+  private static final String TOKEN = "BANANAS3";
 
-    @Test
-    public void signatureTest() throws Exception {
-        URL url = new URL("http://example.com?yxz=foo&feg=bar&abc=baz");
-        URL expected = new URL("http://example.com?yxz=foo&feg=bar&abc=baz&api_key=BANANAS1&auth_token=BANANAS3&api_sig=b48f0dd1a18179b3068b16728e214561");
-        assertThat(SIGNATURE_GENERATOR.getSignature(url)).isEqualTo(expected);
-    }
+  private static final AppCredentials APP_CREDENTIALS = AppCredentials.create(KEY, SECRET);
+  private static final RememberTheMilkSignatureGenerator SIGNATURE_GENERATOR
+      = new RememberTheMilkSignatureGenerator(APP_CREDENTIALS, TOKEN);
+
+  @Test
+  public void signatureTest() throws Exception {
+    URL url = new URL("http://example.com?yxz=foo&feg=bar&abc=baz");
+    URL expected = new URL(
+        "http://example.com?yxz=foo&feg=bar&abc=baz&api_key=BANANAS1&auth_token=BANANAS3&api_sig"
+            + "=b48f0dd1a18179b3068b16728e214561");
+    assertThat(SIGNATURE_GENERATOR.getSignature(url)).isEqualTo(expected);
+  }
 }

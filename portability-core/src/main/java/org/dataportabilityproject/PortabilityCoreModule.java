@@ -45,6 +45,7 @@ import org.dataportabilityproject.shared.local.LocalAppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public final class PortabilityCoreModule extends AbstractModule {
+
   @Override
   protected void configure() {
     // TODO: selectively load these

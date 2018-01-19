@@ -82,7 +82,8 @@ final class GoogleServiceProvider implements ServiceProvider {
               .build())
           .build();
 
-  private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new HashMap<>();
+  private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new
+      HashMap<>();
 
   private final AppCredentials appCredentials;
 

@@ -32,6 +32,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
 public final class GoogleCloudFactory implements CloudFactory {
+
   private final Datastore datastore;
   private final PersistentKeyValueStore persistentKeyValueStore;
   private final CryptoKeyManagementSystem cryptoKeyManagementSystem;

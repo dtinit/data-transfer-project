@@ -9,13 +9,14 @@ import java.security.SecureRandom;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 
 
-/** Handles symmetric encryption and decryption with the give {@code key} it is constructed with. */
+/**
+ * Handles symmetric encryption and decryption with the give {@code key} it is constructed with.
+ */
 public class CrypterImpl implements Crypter {
+
   private static final String ALGORITHM = "AES";
   private final Key key;
 

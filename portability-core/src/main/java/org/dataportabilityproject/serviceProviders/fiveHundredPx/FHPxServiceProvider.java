@@ -25,7 +25,7 @@ import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 
-final public class FiveHundredPxServiceProvider implements ServiceProvider {
+final public class FHPxServiceProvider implements ServiceProvider {
 
   @Override
   public String getName() {

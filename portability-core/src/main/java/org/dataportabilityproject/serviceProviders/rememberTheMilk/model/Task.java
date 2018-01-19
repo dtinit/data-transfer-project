@@ -52,7 +52,8 @@ public class Task {
   @Override
   public String toString() {
     return String.format(
-        "Task(id=%d due=%s has_due_time=%s added=%s completed=%s deleted=%s priority=%s postponed=%s",
+        "Task(id=%d due=%s has_due_time=%s added=%s completed=%s deleted=%s priority=%s "
+            + "postponed=%s",
         id, due, has_due_time, added, completed, deleted, priority, postponed);
   }
 }

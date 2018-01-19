@@ -28,5 +28,6 @@ public abstract class TokenSecretAuthData extends AuthData {
   }
 
   public abstract String token();
+
   public abstract String secret();
 }

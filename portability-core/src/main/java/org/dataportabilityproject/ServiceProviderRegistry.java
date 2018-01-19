@@ -43,86 +43,87 @@ import org.slf4j.LoggerFactory;
  * A registry of all the supported {@link org.dataportabilityproject.shared.ServiceProvider}
  */
 public class ServiceProviderRegistry {
-    private final Logger logger = LoggerFactory.getLogger(ServiceProviderRegistry.class);
-    private final ImmutableMap<String, ServiceProvider> serviceProviders;
-    private final CloudFactory cloudFactory;
-    private final ImmutableSet<PortableDataType> supportedTypes;
 
-    @Inject
-    public ServiceProviderRegistry(
-        CloudFactory cloudFactory,
-        CommonSettings commonSettings,
-        Map<String, ServiceProvider> serviceProviderMap)
-            throws Exception {
-        this.cloudFactory = cloudFactory;
-        ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
-        ImmutableSet.Builder<PortableDataType> portableDataTypesBuilder = ImmutableSet.builder();
+  private final Logger logger = LoggerFactory.getLogger(ServiceProviderRegistry.class);
+  private final ImmutableMap<String, ServiceProvider> serviceProviders;
+  private final CloudFactory cloudFactory;
+  private final ImmutableSet<PortableDataType> supportedTypes;
 
-        for(String enabledService : commonSettings.getServiceProviderClasses()) {
-            ServiceProvider serviceProvider = serviceProviderMap.get(enabledService);
-            checkState(serviceProvider != null, "Couldn't find %s", enabledService);
-            providerBuilder.put(serviceProvider.getName(), serviceProvider);
-            portableDataTypesBuilder.addAll(serviceProvider.getImportTypes());
-            portableDataTypesBuilder.addAll(serviceProvider.getExportTypes());
-        }
+  @Inject
+  public ServiceProviderRegistry(
+      CloudFactory cloudFactory,
+      CommonSettings commonSettings,
+      Map<String, ServiceProvider> serviceProviderMap)
+      throws Exception {
+    this.cloudFactory = cloudFactory;
+    ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
+    ImmutableSet.Builder<PortableDataType> portableDataTypesBuilder = ImmutableSet.builder();
 
-        this.serviceProviders = providerBuilder.build();
-        this.supportedTypes = portableDataTypesBuilder.build();
-
-        if (this.serviceProviders.isEmpty()) {
-            throw new IllegalStateException("No service providers were provided");
-        }
+    for (String enabledService : commonSettings.getServiceProviderClasses()) {
+      ServiceProvider serviceProvider = serviceProviderMap.get(enabledService);
+      checkState(serviceProvider != null, "Couldn't find %s", enabledService);
+      providerBuilder.put(serviceProvider.getName(), serviceProvider);
+      portableDataTypesBuilder.addAll(serviceProvider.getImportTypes());
+      portableDataTypesBuilder.addAll(serviceProvider.getExportTypes());
     }
 
-    public ImmutableSet<PortableDataType> getSupportedTypes() {
-        return supportedTypes;
-    }
+    this.serviceProviders = providerBuilder.build();
+    this.supportedTypes = portableDataTypesBuilder.build();
 
-    public List<String> getServiceProvidersThatCanExport(PortableDataType portableDataType) {
-        return serviceProviders.values().stream()
-                .filter(sp -> sp.getExportTypes().stream().anyMatch(e -> e == portableDataType))
-                .map(ServiceProvider::getName)
-                .collect(Collectors.toList());
+    if (this.serviceProviders.isEmpty()) {
+      throw new IllegalStateException("No service providers were provided");
     }
+  }
 
-    public List<String> getServiceProvidersThatCanImport(PortableDataType portableDataType) {
-        return serviceProviders.values().stream()
-                .filter(sp -> sp.getImportTypes().stream().anyMatch(e -> e == portableDataType))
-                .map(ServiceProvider::getName)
-                .collect(Collectors.toList());
-    }
+  public ImmutableSet<PortableDataType> getSupportedTypes() {
+    return supportedTypes;
+  }
 
-    @SuppressWarnings("unchecked")
-    public <T extends DataModel> Exporter<T> getExporter(
-            String serviceProvider,
-            PortableDataType portableDataType,
-            String jobId,
-            AuthData authData) throws IOException {
-        JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
-        Exporter<? extends DataModel> exporter = serviceProviders.get(serviceProvider)
-            .getExporter(portableDataType, authData, jobDataCache);
-        return (Exporter<T>) exporter;
-    }
+  public List<String> getServiceProvidersThatCanExport(PortableDataType portableDataType) {
+    return serviceProviders.values().stream()
+        .filter(sp -> sp.getExportTypes().stream().anyMatch(e -> e == portableDataType))
+        .map(ServiceProvider::getName)
+        .collect(Collectors.toList());
+  }
 
-    @SuppressWarnings("unchecked")
-    public <T extends DataModel> Importer<T> getImporter(
-            String serviceProvider,
-            PortableDataType portableDataType,
-            String jobId,
-            AuthData authData) throws IOException {
-        JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
-        Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider)
-            .getImporter(portableDataType, authData, jobDataCache);
-        return (Importer<T>) importer;
-    }
+  public List<String> getServiceProvidersThatCanImport(PortableDataType portableDataType) {
+    return serviceProviders.values().stream()
+        .filter(sp -> sp.getImportTypes().stream().anyMatch(e -> e == portableDataType))
+        .map(ServiceProvider::getName)
+        .collect(Collectors.toList());
+  }
 
-    public OnlineAuthDataGenerator getOnlineAuth(String serviceProvider,
-                                                 PortableDataType dataType, ServiceMode serviceMode) {
-        return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType, serviceMode);
-    }
+  @SuppressWarnings("unchecked")
+  public <T extends DataModel> Exporter<T> getExporter(
+      String serviceProvider,
+      PortableDataType portableDataType,
+      String jobId,
+      AuthData authData) throws IOException {
+    JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
+    Exporter<? extends DataModel> exporter = serviceProviders.get(serviceProvider)
+        .getExporter(portableDataType, authData, jobDataCache);
+    return (Exporter<T>) exporter;
+  }
 
-    public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,
-            PortableDataType dataType, ServiceMode serviceMode) {
-        return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType, serviceMode);
-    }
+  @SuppressWarnings("unchecked")
+  public <T extends DataModel> Importer<T> getImporter(
+      String serviceProvider,
+      PortableDataType portableDataType,
+      String jobId,
+      AuthData authData) throws IOException {
+    JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
+    Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider)
+        .getImporter(portableDataType, authData, jobDataCache);
+    return (Importer<T>) importer;
+  }
+
+  public OnlineAuthDataGenerator getOnlineAuth(String serviceProvider,
+      PortableDataType dataType, ServiceMode serviceMode) {
+    return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType, serviceMode);
+  }
+
+  public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,
+      PortableDataType dataType, ServiceMode serviceMode) {
+    return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType, serviceMode);
+  }
 }

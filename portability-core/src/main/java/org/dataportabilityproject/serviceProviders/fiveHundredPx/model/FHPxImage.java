@@ -17,7 +17,7 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class S00PxImage {
+public class FHPxImage {
 
   @JsonProperty("size")
   private int size;

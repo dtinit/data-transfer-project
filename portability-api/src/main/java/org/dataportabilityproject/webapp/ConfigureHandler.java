@@ -164,7 +164,7 @@ final class ConfigureHandler implements HttpHandler {
     PortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
-      jobDao.insertJobInPendingAuthDataState(job); 
+      jobDao.insertJobInPendingAuthDataState(job);
     } else {
       jobDao.insertJob(job);
     }

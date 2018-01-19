@@ -26,13 +26,11 @@ import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 
 /**
- * A service that polls storage for a job to process in two steps:
- * <br>
- *   (1) find an unassigned job for this worker
- * <br>
- *   (2) wait until the job is ready to process (i.e. creds are available)
+ * A service that polls storage for a job to process in two steps: <br> (1) find an unassigned job
+ * for this worker <br> (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
+
   private final JobDao jobDao;
   private final WorkerJobMetadata jobMetadata;
 

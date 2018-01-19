@@ -19,7 +19,8 @@ import com.google.api.client.util.Key;
 import java.util.List;
 
 /**
- * Resonse to rtm.lists.getList. See: https://www.rememberthemilk.com/services/api/methods/rtm.lists.getList.rtm
+ * Resonse to rtm.lists.getList. See: https://www.rememberthemilk.com/services/api/methods/rtm
+ * .lists.getList.rtm
  */
 public class ListInfoList {
 

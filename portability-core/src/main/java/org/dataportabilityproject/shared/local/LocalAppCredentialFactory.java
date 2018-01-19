@@ -23,6 +23,7 @@ import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 
 public class LocalAppCredentialFactory implements AppCredentialFactory {
+
   private final LocalSecrets localSecrets;
 
   @Inject

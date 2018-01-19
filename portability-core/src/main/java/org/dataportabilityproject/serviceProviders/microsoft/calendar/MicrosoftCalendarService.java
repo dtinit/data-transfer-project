@@ -62,7 +62,8 @@ public class MicrosoftCalendarService
               String headerValue = HEADER_PREFIX + token;
               request.getHeaders().setAuthorization(headerValue);
               request.getHeaders().setAccept(
-                  "text/*, application/xml, application/json;odata.metadata=none;odata.streaming=false");
+                  "text/*, application/xml, application/json;odata.metadata=none;odata"
+                      + ".streaming=false");
               // TODO: add if needed: request.getHeaders().set("X-AnchorMailbox", account);
               request.getHeaders().setUserAgent("PlayGroundAgent/1.0");
             });
@@ -140,7 +141,8 @@ public class MicrosoftCalendarService
     ZonedDateTime begin = end.minusDays(90);
 
     String eventsUrl = String.format(
-        "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
+        "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s"
+            + "&endDateTime=%s",
         calendarId, formatTime(begin), formatTime(end));
     System.out.println("calendar: " + calendarId);
     System.out.println("eventsUrl: "

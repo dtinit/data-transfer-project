@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Properties;
 import javax.annotation.Nullable;
 import javax.mail.Folder;
@@ -49,7 +48,9 @@ public class ImapMailHelper {
   // Max results to fetch on each request for more mail messages
   private static final int MAX_RESULTS_PER_REQUEST = 10;
 
-  /** Whether to enable imap debugging. */
+  /**
+   * Whether to enable imap debugging.
+   */
   private final boolean debug;
 
   public ImapMailHelper() {
@@ -62,7 +63,8 @@ public class ImapMailHelper {
 
 
   public MailModelWrapper getFolderContents(String host,
-      String account, String password, @Nullable String folderName, PaginationInformation paginationInformation)
+      String account, String password, @Nullable String folderName,
+      PaginationInformation paginationInformation)
       throws MessagingException, IOException {
     Properties props = createProperties(host, account, debug);
 
@@ -101,7 +103,10 @@ public class ImapMailHelper {
   }
 
   // TODO: Move to hierarchical model
-  /** Get all messages in an account. */
+
+  /**
+   * Get all messages in an account.
+   */
   private MailModelWrapper getMessages(String host, String account, String password,
       Folder parentFolder, boolean fetchMessages, PaginationInformation paginationInformation)
       throws MessagingException, IOException {
@@ -132,11 +137,14 @@ public class ImapMailHelper {
       int end = getEnd(start, parentFolder.getMessageCount());
       if (end < parentFolder.getMessageCount()) {
         // Indicates page to be fetched on next request
-        nextPaginationInformation = new IntPaginationToken(end + 1 /* the start index for next iteration */);
+        nextPaginationInformation = new IntPaginationToken(end + 1 /* the start index for next
+        iteration */);
       }
-      log("Fetching messages for foder: %s, start: %d, end: %d", parentFolder.getFullName(), start, end);
+      log("Fetching messages for foder: %s, start: %d, end: %d", parentFolder.getFullName(), start,
+          end);
       Message[] messages = parentFolder.getMessages(start, end);
-      log("Fetched message for folder: %s, messages: %s", parentFolder.getFullName(), messages.length);
+      log("Fetched message for folder: %s, messages: %s", parentFolder.getFullName(),
+          messages.length);
       for (Message message : messages) {
         log("Message, contentType: %s ,size: %s", message.getContentType(), message.getSize());
         ImmutableList<String> folderId = ImmutableList.of(parentFolder.getName());
@@ -154,28 +162,27 @@ public class ImapMailHelper {
   private static int getStart(PaginationInformation paginationInformation) {
     int start = 1;
     if (paginationInformation != null) {
-      start = Math.max(((IntPaginationToken)paginationInformation).getStart(), start);
+      start = Math.max(((IntPaginationToken) paginationInformation).getStart(), start);
     }
     return start;
   }
 
   private static int getEnd(int start, int totalNumMessages) {
-    return Math.min(((start + MAX_RESULTS_PER_REQUEST) - 1)  , totalNumMessages);
+    return Math.min(((start + MAX_RESULTS_PER_REQUEST) - 1), totalNumMessages);
   }
 
   private static Properties createProperties(String host, String user, boolean debug) {
     Properties props = new Properties();
     props.put("mail.imap.ssl.enable", "true"); // required for Gmail
-    
+
     // disable other auth
     props.put("mail.imap.auth.login.disable", "false");
     props.put("mail.imap.auth.plain.disable", "false");
-    
 
     // timeouts
     props.put("mail.imaps.connectiontimeout", "10000");
     props.put("mail.imaps.timeout", "10000");
-   
+
     props.setProperty("mail.store.protocol", PROTOCOL);
     props.setProperty("mail.imap.user", user);
     props.setProperty("mail.imap.host", host);
@@ -184,13 +191,13 @@ public class ImapMailHelper {
       props.put("mail.debug", "true");
       props.put("mail.debug.auth", "true");
     }
-  
+
     //extra code required for reading messages during IMAP-start
     props.setProperty("mail.imaps.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
     props.setProperty("mail.imaps.socketFactory.fallback", "false");
     props.setProperty("mail.imaps.port", "993");
     props.setProperty("mail.imaps.socketFactory.port", "993");
-      //extra codes required for reading OUTLOOK mails during IMAP-end
+    //extra codes required for reading OUTLOOK mails during IMAP-end
 
     // XOAUTH unsupported, consider uncommenting if needed
     // props.put("mail.imap.sasl.enable", "true");
@@ -200,7 +207,9 @@ public class ImapMailHelper {
     return props;
   }
 
-  /** Creates a raw representation of the given email {@code message} */
+  /**
+   * Creates a raw representation of the given email {@code message}
+   */
   private static String createRawMessage(Message message) throws MessagingException, IOException {
     ByteArrayOutputStream outstream = new ByteArrayOutputStream();
     message.writeTo(outstream);
@@ -208,7 +217,7 @@ public class ImapMailHelper {
   }
 
   // TODO: Replace with logging framework
-  private static void log (String fmt, Object... args) {
+  private static void log(String fmt, Object... args) {
     System.out.println(String.format("ImapMailHelper: " + fmt, args));
   }
 }

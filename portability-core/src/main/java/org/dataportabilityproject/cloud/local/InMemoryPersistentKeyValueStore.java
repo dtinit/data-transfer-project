@@ -19,8 +19,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
-/** In-memory implementation of backend storage. */
+/**
+ * In-memory implementation of backend storage.
+ */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
+
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
   public InMemoryPersistentKeyValueStore() {
@@ -40,8 +43,8 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   @Override
   public String getFirst(String prefix) {
     // Mimic an index lookup
-    for(String key : map.keySet()) {
-      if(key.startsWith(prefix)) {
+    for (String key : map.keySet()) {
+      if (key.startsWith(prefix)) {
         return key;
       }
     }

@@ -26,15 +26,23 @@ import java.util.Map;
 //                I left it that way to make the refactor easier.
 public interface PersistentKeyValueStore {
 
-  /** Persist {@code data} with the given {@code key} overriding previous data. */
+  /**
+   * Persist {@code data} with the given {@code key} overriding previous data.
+   */
   void put(String key, Map<String, Object> data) throws IOException;
 
-  /** Retrieve data with the given {@code key} or null if not found. */
+  /**
+   * Retrieve data with the given {@code key} or null if not found.
+   */
   Map<String, Object> get(String key);
 
-  /** Retrieve the first key that begins with the given {@code prefix} */
+  /**
+   * Retrieve the first key that begins with the given {@code prefix}
+   */
   String getFirst(String prefix);
 
-  /** Deletes entry with the given {@code key}*/
+  /**
+   * Deletes entry with the given {@code key}
+   */
   void delete(String key);
 }

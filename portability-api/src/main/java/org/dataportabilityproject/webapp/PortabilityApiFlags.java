@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * A class that contains all flags exlusive to the API server.
  */
 public class PortabilityApiFlags {
+
   private static final Logger logger = LoggerFactory.getLogger(PortabilityApiFlags.class);
   private static PortabilityApiFlags INSTANCE = null;
   private final ApiSettings apiSettings;

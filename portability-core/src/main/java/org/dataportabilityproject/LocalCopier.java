@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class LocalCopier {
+
   private final Logger logger = LoggerFactory.getLogger(LocalCopier.class);
   private final IOInterface ioInterface;
   private final ServiceProviderRegistry serviceRegistry;
@@ -38,7 +39,7 @@ final class LocalCopier {
   LocalCopier(
       IOInterface ioInterface,
       ServiceProviderRegistry serviceRegistry,
-      CloudFactory cloudFactory){
+      CloudFactory cloudFactory) {
     this.ioInterface = ioInterface;
     this.serviceRegistry = serviceRegistry;
     this.cloudFactory = cloudFactory;

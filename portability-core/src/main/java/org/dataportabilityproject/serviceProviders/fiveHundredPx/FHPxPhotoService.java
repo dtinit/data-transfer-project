@@ -29,6 +29,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +51,8 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
-import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxPhotoUploadResponse;
+import org.dataportabilityproject.serviceProviders.fiveHundredPx.model
+    .FHPxPhotoUploadMetadataResponse;
 import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxResponse;
 
 // TODO(olsona): address image sizing (1,2,3,...)
@@ -58,7 +60,7 @@ import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxRespo
 // TODO(olsona): write custom mapper to address TRUE/FALSE coming up in JSON response
 // TODO(olsona): address license types (for now, assume no problem)
 
-final public class FiveHundredPxPhotoService implements Exporter<PhotosModelWrapper>,
+final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
     Importer<PhotosModelWrapper> {
 
   private static final ObjectMapper MAPPER = new ObjectMapper()
@@ -69,7 +71,7 @@ final public class FiveHundredPxPhotoService implements Exporter<PhotosModelWrap
   private final HttpTransport httpTransport;
   private final JobDataCache jobDataCache;
 
-  FiveHundredPxPhotoService(OAuthConsumer authConsumer, JobDataCache jobDataCache)
+  FHPxPhotoService(OAuthConsumer authConsumer, JobDataCache jobDataCache)
       throws IOException {
     this.jobDataCache = jobDataCache;
     try {
@@ -87,12 +89,14 @@ final public class FiveHundredPxPhotoService implements Exporter<PhotosModelWrap
 
   @Override
   public void importItem(PhotosModelWrapper wrapper) throws IOException {
-    HashMap<Integer, Integer> galleriesToPhotosMap = new HashMap<>();
+    HashMap<String, Integer> galleriesToPhotosMap = new HashMap<>();
     // Photos are uploaded first.
     for (PhotoModel photo : wrapper.getPhotos()) {
       // Upload photo
       // Get photo ID from upload
       // Add <albumId, photoId> to map
+      int photoKey = uploadSinglePhoto(photo);
+      galleriesToPhotosMap.put(photo.getAlbumId(), photoKey);
     }
     if (!wrapper.getAlbums().isEmpty()) {
       for (PhotoAlbum album : wrapper.getAlbums()) {
@@ -102,17 +106,23 @@ final public class FiveHundredPxPhotoService implements Exporter<PhotosModelWrap
     }
   }
 
-  private void uploadSinglePhoto(PhotoModel photo) throws IOException {
+  private int uploadSinglePhoto(PhotoModel photo) throws IOException {
+    // Reference: https://github.com/500px/api-documentation/blob/master/basics/upload.md
+
+    String metadataUrl = ""; // TODO(olsona)
+
+    FHPxPhotoUploadMetadataResponse response = makeRequest(metadataUrl,
+        new TypeReference<FHPxResponse<FHPxPhotoUploadMetadataResponse>>() {
+        }).getResponse();
 
     InputStreamContent content = new InputStreamContent(null,
         getImageAsStream(photo.getFetchableUrl()));
+    Map<String, String> headersMap = ImmutableMap.of(); // TODO(olsona)
+    String uploadUrl = ""; // TODO(olsona)
 
-    String url = ""; // TODO(olsona)
+    postRequest(uploadUrl, content, headersMap, new TypeReference<Object>() {}); // TODO(olsona)
 
-    FHPxResponse<FHPxPhotoUploadResponse> wrappedResponse = makeRequest(url,
-        new TypeReference<FHPxResponse<FHPxPhotoUploadResponse>>() {
-        });
-    String uploadKey = wrappedResponse.getResponse().getUploadKey();
+    return response.getPhoto().getId();
   }
 
   // This could also be pulled out into a library.

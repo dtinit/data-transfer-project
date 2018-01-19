@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 
 final class GoogleJobDataCache implements JobDataCache {
+
   static final String JOB_KIND = "job";
   private static final String SERVICE_KIND = "service";
   static final String USER_KEY_KIND = "user-key";

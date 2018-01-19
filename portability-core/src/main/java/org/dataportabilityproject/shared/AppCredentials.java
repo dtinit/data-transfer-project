@@ -22,10 +22,12 @@ import com.google.auto.value.AutoValue;
  */
 @AutoValue
 public abstract class AppCredentials {
-    public abstract String key();
-    public abstract String secret();
 
-    public static AppCredentials create(String key, String secret) {
-        return new AutoValue_AppCredentials(key, secret);
-    }
+  public abstract String key();
+
+  public abstract String secret();
+
+  public static AppCredentials create(String key, String secret) {
+    return new AutoValue_AppCredentials(key, secret);
+  }
 }

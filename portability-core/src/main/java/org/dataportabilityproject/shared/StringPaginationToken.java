@@ -18,7 +18,8 @@ package org.dataportabilityproject.shared;
 import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 
-public class StringPaginationToken  implements PaginationInformation {
+public class StringPaginationToken implements PaginationInformation {
+
   private final String id;
 
   public StringPaginationToken(String id) {

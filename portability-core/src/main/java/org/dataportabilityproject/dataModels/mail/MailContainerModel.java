@@ -19,6 +19,7 @@ import com.google.common.base.MoreObjects;
 
 // Model for a mail folder or label, which may contain sub folders and messages
 public final class MailContainerModel {
+
   private final String id;
   private final String name;
 

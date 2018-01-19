@@ -19,10 +19,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 /**
- * Main class to bootstrap a portabilty worker that will operate on a single job whose state
- * is held in WorkerJobMetadata.
+ * Main class to bootstrap a portabilty worker that will operate on a single job whose state is held
+ * in WorkerJobMetadata.
  */
 public class WorkerMain {
+
   public static void main(String[] args) throws Exception {
     Injector injector = Guice.createInjector(new WorkerModule());
     WorkerImpl worker = injector.getInstance(WorkerImpl.class);

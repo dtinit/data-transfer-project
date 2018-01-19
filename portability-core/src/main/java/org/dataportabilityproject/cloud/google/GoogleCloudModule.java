@@ -37,8 +37,10 @@ import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public class GoogleCloudModule extends AbstractModule {
+
   @BindingAnnotation
-  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+  @Target({FIELD, PARAMETER, METHOD})
+  @Retention(RUNTIME)
   public @interface ProjectId {}
 
   @Override
@@ -65,10 +67,10 @@ public class GoogleCloudModule extends AbstractModule {
       String credsLocation = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
       if (!credsLocation.startsWith("/var/secrets/")) {
         String cause = String.format("You are attempting to obtain credentials from somewhere "
-                + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
-                + "into your image, which we provide as a local debugging mechanism only. See GCP "
-                + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
-                + "location was: %s", credsLocation);
+            + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
+            + "into your image, which we provide as a local debugging mechanism only. See GCP "
+            + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
+            + "location was: %s", credsLocation);
         throw new GoogleCredentialException(cause);
       }
       // Note: Tried an extra check via Kubernetes API to verify GOOGLE_APPLICATION_CREDENTIALS
@@ -88,7 +90,9 @@ public class GoogleCloudModule extends AbstractModule {
    *
    * @throws IllegalArgumentException if project ID is unset
    */
-  @Provides @Singleton @ProjectId
+  @Provides
+  @Singleton
+  @ProjectId
   String getProjectId(CommonSettings commonSettings) {
     validateUsingGoogle(commonSettings);
     String projectId;

@@ -22,7 +22,7 @@ import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
-public class FiveHundredPxAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
+public class FHPxAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(IOInterface ioInterface) throws IOException {

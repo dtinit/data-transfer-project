@@ -17,20 +17,25 @@ package org.dataportabilityproject.shared.auth;
 
 import java.io.IOException;
 
-/** Methods to generate AuthData for online */
+/**
+ * Methods to generate AuthData for online
+ */
 public interface OnlineAuthDataGenerator {
+
   /**
-   * Provide a authUrl to redirect the user to authenticate. In the Oauth2 case,
-   * this is the authorization code authUrl.
-   *  @param callbackBaseUrl the url to the api server serving the callback for the auth request
-   *  @param id is a client supplied identifier
+   * Provide a authUrl to redirect the user to authenticate. In the Oauth2 case, this is the
+   * authorization code authUrl.
+   *
+   * @param callbackBaseUrl the url to the api server serving the callback for the auth request
+   * @param id is a client supplied identifier
    */
   AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException;
 
   /**
-   * Generate auth data given the code, identifier, and, optional, initial auth data that was
-   * used for earlier steps of the authentication flow.
-   *  @param callbackBaseUrl the url to the api server serving the callback for the auth request
+   * Generate auth data given the code, identifier, and, optional, initial auth data that was used
+   * for earlier steps of the authentication flow.
+   *
+   * @param callbackBaseUrl the url to the api server serving the callback for the auth request
    * @param authCode The authorization code or oauth verififer after user authorization
    * @param id is a client supplied identifier
    * @param initialAuthData optional data resulting from the initial auth step

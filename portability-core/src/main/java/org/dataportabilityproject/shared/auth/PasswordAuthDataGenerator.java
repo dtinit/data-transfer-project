@@ -19,7 +19,9 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import org.dataportabilityproject.shared.IOInterface;
 
-public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator, OfflineAuthDataGenerator {
+public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator,
+    OfflineAuthDataGenerator {
+
   @Override // offline
   public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
     String account = ioInterface.ask("Enter email account");

@@ -7,6 +7,7 @@ import javax.crypto.SecretKey;
 import org.junit.Test;
 
 public class CrypterImplTest {
+
   @Test
   public void testRoundTripSecretKey() throws Exception {
     KeyGenerator generator = KeyGenerator.getInstance("AES");
