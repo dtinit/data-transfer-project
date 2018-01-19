@@ -16,15 +16,38 @@
 package org.dataportabilityproject.serviceProviders.fiveHundredPx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
 
 public class FHPxPhotoUploadMetadataResponse {
   @JsonProperty("upload_key")
   private String uploadKey;
+
+  @JsonProperty("keyword_key")
+  private String keywordKey;
+
+  @JsonProperty("presigned_post")
+  private FHPxPresignedPost presignedPost;
 
   @JsonProperty("photo")
   private FHPxPhoto photo;
 
   public String getUploadKey() { return uploadKey; }
 
+  public String getKeywordKey() { return keywordKey; }
+
+  public FHPxPresignedPost getPresignedPost() { return presignedPost; }
+
   public FHPxPhoto getPhoto() { return photo; }
+
+  class FHPxPresignedPost {
+    @JsonProperty("url")
+    private String url;
+
+    @JsonProperty("fields")
+    private Map<String, String> fields;
+
+    public String getUrl() { return url; }
+
+    public Map<String, String> getFields() { return fields; }
+  }
 }
