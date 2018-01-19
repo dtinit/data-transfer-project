@@ -110,6 +110,7 @@ final class WorkerImpl {
   }
 
 
+  // TODO: Switch to using Jackson in the new transfer types
   private static AuthData deSerialize(String serialized) {
     return GSON.fromJson(serialized, AuthData.class);
   }
