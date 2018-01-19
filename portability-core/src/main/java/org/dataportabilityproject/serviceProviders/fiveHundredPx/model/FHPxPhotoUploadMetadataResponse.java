@@ -39,6 +39,8 @@ public class FHPxPhotoUploadMetadataResponse {
 
   public FHPxPhoto getPhoto() { return photo; }
 
+  public String getUrl() { return presignedPost.getUrl(); }
+
   class FHPxPresignedPost {
     @JsonProperty("url")
     private String url;

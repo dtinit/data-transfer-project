@@ -28,11 +28,14 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.http.MultipartContent;
+import com.google.api.client.http.MultipartContent.Part;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
@@ -43,6 +46,8 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import oauth.signpost.OAuthConsumer;
@@ -160,10 +165,15 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
         metadataHeadersMap,
         new TypeReference<FHPxPhotoUploadMetadataResponse>() {}).getResponse();
 
-    InputStreamContent content = new InputStreamContent(null,
-        getImageAsStream(photo.getFetchableUrl()));
     ImmutableMap<String, String> contentHeadersMap = ImmutableMap.of(); // TODO(olsona)
-    String contentUrl = "'"; // TODO(olsona)
+    String contentUrl = response.getUrl();
+    JsonHttpContent presignedPostContent = new JsonHttpContent(new JacksonFactory(), response.getPhoto());
+    InputStreamContent imageContent = new InputStreamContent(null,
+        getImageAsStream(photo.getFetchableUrl()));
+    // TODO(olsona): verify this does what I think it does
+    MultipartContent.Part presignedPart = new Part().setContent(presignedPostContent);
+    MultipartContent.Part imagePart = new Part().setContent(imageContent);
+    MultipartContent content = new MultipartContent().addPart(presignedPart).addPart(imagePart);
 
     postRequest(contentUrl, content, contentHeadersMap, new TypeReference<Object>() {}); // TODO(olsona)
 
