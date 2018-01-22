@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 /**
+ * NOTE: The Gradle build is currenty not enabled; use Maven instead until the project has been transitioned.
+ *
  * Gradle build script for the data portability project.
  *
  * Try on *Nix:
