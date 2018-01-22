@@ -25,6 +25,8 @@ import java.security.PublicKey;
 import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A data acccess object that provides functionality to manage persisted data for portability jobs.
@@ -33,6 +35,7 @@ public class JobDao {
   // Keys for specific values in data store
   private static final String ID_DATA_KEY = "UUID";
   private static final String KEY_SEPERATOR = "::";
+  private static final Logger logger = LoggerFactory.getLogger(JobDao.class);
 
   /**
    * The current state of the job.
@@ -208,6 +211,7 @@ public class JobDao {
     Preconditions.checkArgument(existing != null, "Job not found");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
+    logger.debug("Data: {}", data);
     storage.put(key, data);
   }
 
@@ -253,12 +257,22 @@ public class JobDao {
    * @deprecated Remove when worker flow is implemented
    */
   @Deprecated
-  public void insertJob(PortabilityJob job) throws IOException {
+  public void insertJobWithKey(PortabilityJob job) throws IOException {
     Map<String, Object> existing = storage.get(job.id());
     Preconditions.checkArgument(existing == null, "Attempting to insert an already existing job");
     // Store the updated job info
     Map<String, Object> data = job.asMap();
     storage.put(getString(data, ID_DATA_KEY), data);
+  }
+
+  @Deprecated
+  public void insertJob(PortabilityJob job) throws IOException {
+    Map<String, Object> existing = storage.get(job.id());
+    Preconditions.checkArgument(existing == null, "Attempting to insert an already existing job");
+    // Store the updated job info
+    Map<String, Object> data = job.asMap();
+    logger.debug("insertJob: Data: {}", data);
+    storage.put(job.id(), data);
   }
 
   /**
@@ -269,6 +283,7 @@ public class JobDao {
   public PortabilityJob findExistingJob(String id) {
     Preconditions.checkNotNull(id);
     Map<String, Object> data = storage.get(id);
+    logger.debug("findExistingJob: id: {} data: {}", id, data);
     if (data == null || data.isEmpty()) {
       return null;
     }
@@ -284,7 +299,9 @@ public class JobDao {
     Map<String, Object> existing = storage.get(job.id());
     Preconditions.checkArgument(existing != null, "Attempting to update a non-existent job");
     // Store the updated job info
+    logger.debug("updateJob: job: {}", job);
     Map<String, Object> data = job.asMap();
-    storage.put(getString(data, ID_DATA_KEY), data);
+    logger.debug("updateJob: data: {}", data);
+    storage.put(job.id(), data);
   }
 }
