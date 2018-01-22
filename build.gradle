@@ -1,0 +1,72 @@
+/*
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * NOTE: The Gradle build is currenty not enabled; use Maven instead until the project has been transitioned.
+ *
+ * Gradle build script for the data portability project.
+ *
+ * Try on *Nix:
+ *
+ * ./gradlew clean jar
+ *
+ * Or on Windows:
+ *
+ *  gradlew clean jar
+ *
+ */
+buildscript {
+
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+}
+
+def sourceProjects() {
+    // define projects containing source code
+    return subprojects.findAll { new File(it.projectDir, 'src').exists() }
+}
+
+configure(sourceProjects()) {
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+
+    sourceCompatibility = 1.8
+
+    dependencies {
+        compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+
+        testCompile "junit:junit:${junitVersion}"
+        testCompile project(":portability-test-utilities")
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+
+}
+
+                                                                                       
