@@ -15,11 +15,22 @@
  */
 package org.dataportabilityproject.webapp;
 
+import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.lang.Thread.UncaughtExceptionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PortabilityApiMain {
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityApiMain.class);
   public static void main(String args[]) throws Exception {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler(){
+      @Override
+      public void uncaughtException(Thread thread, Throwable t) {
+        logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
+      }
+    });
     PortabilityApiFlags.parse();
     Injector injector = Guice.createInjector(new PortabilityApiModule());
     ApiServer apiServer = injector.getInstance(ApiServer.class);

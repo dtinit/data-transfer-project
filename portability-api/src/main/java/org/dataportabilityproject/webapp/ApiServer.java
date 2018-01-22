@@ -15,6 +15,8 @@
 */
 package org.dataportabilityproject.webapp;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -23,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +50,11 @@ final class ApiServer {
     // client side via angular.
     server.createContext("/", new ViewHandler());
 
-    server.setExecutor(Executors.newCachedThreadPool());
+    ThreadFactory threadPoolFactory = new ThreadFactoryBuilder()
+        .setNameFormat("http-server-%d")
+        .setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit())
+        .build();
+    server.setExecutor(Executors.newCachedThreadPool(threadPoolFactory));
   }
 
   public void start() throws IOException {

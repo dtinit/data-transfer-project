@@ -16,19 +16,25 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.io.IOException;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class WorkerImpl {
-  private final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
+  private static final Gson GSON = new Gson();
+
   private final CloudFactory cloudFactory;
   private final JobPollingService jobPollingService;
   private final JobDao jobDao;
@@ -70,10 +76,10 @@ final class WorkerImpl {
   }
 
   private PortabilityJob getJob(JobDao jobDao) {
-    logger.debug("Begin processing jobId: {}", workerJobMetadata.getJobId());
     String jobId = workerJobMetadata.getJobId();
-    PortabilityJob job = jobDao.findExistingJob(jobId);
-    Preconditions.checkNotNull(job, "Job not found, id: %s");
+    logger.debug("Begin processing jobId: {}", jobId);
+    PortabilityJob job = jobDao.lookupAssignedWithAuthDataJob(jobId);
+    Preconditions.checkNotNull(job, "Job not found, id: %s", jobId);
     return job;
   }
 
@@ -82,23 +88,30 @@ final class WorkerImpl {
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       try {
+        // TODO: Enable worker-based copying
         if(true) {
-          logger.info("Exiting before copy, job: {}", job);
-          // TODO: Enable worker-based copying
+          logger.warn("Exiting before copy, job: {}", job);
           return;
         }
+        Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
+        String serializedExportAuthData = decrypter.decrypt(job.encryptedExportAuthData());
+        AuthData exportAuthData = deSerialize(serializedExportAuthData);
+        String serializedImportAuthData = decrypter.decrypt(job.encryptedImportAuthData());
+        AuthData importAuthData = deSerialize(serializedImportAuthData);
         PortabilityCopier
-            .copyDataType(registry, dataType, job.exportService(), job.exportAuthData(),
-                job.importService(), job.importAuthData(), job.id());
+            .copyDataType(registry, dataType, job.exportService(), exportAuthData,
+                job.importService(), importAuthData, job.id());
       } catch (IOException e) {
-        System.err.println("Error processing jobId: " + workerJobMetadata.getJobId()
-            + ", error: " + e.getMessage());
-        e.printStackTrace();
-
-        System.exit(1);
+        logger.error("Error processing jobId: {}" + workerJobMetadata.getJobId(), e);
       }
     } finally {
       cloudFactory.clearJobData(job.id());
     }
+  }
+
+
+  // TODO: Switch to using Jackson in the new transfer types
+  private static AuthData deSerialize(String serialized) {
+    return GSON.fromJson(serialized, AuthData.class);
   }
 }

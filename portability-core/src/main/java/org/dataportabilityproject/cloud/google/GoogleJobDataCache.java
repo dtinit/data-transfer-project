@@ -35,7 +35,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 
-final class GoogleJobDataCache implements JobDataCache {
+/**
+ * A {@link JobDataCache} implementation based on Google Cloud Platform's DataStore.
+ */
+public final class GoogleJobDataCache implements JobDataCache {
   static final String JOB_KIND = "job";
   private static final String SERVICE_KIND = "service";
   static final String USER_KEY_KIND = "user-key";
@@ -58,7 +61,7 @@ final class GoogleJobDataCache implements JobDataCache {
         }
       });
 
-  GoogleJobDataCache(Datastore datastore, String jobId, String service) {
+  public GoogleJobDataCache(Datastore datastore, String jobId, String service) {
     this.datastore = datastore;
     this.ancestors = ImmutableList.of(
         PathElement.of(JOB_KIND, jobId),
