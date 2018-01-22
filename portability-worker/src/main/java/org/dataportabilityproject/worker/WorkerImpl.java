@@ -88,11 +88,6 @@ final class WorkerImpl {
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       try {
-        // TODO: Enable worker-based copying
-        if(true) {
-          logger.warn("Exiting before copy, job: {}", job);
-          return;
-        }
         Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
         String serializedExportAuthData = decrypter.decrypt(job.encryptedExportAuthData());
         AuthData exportAuthData = deSerialize(serializedExportAuthData);
