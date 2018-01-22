@@ -1,6 +1,14 @@
 
 # Development
 
+## Communication
+
+ * General questions and discussion: [portability-discuss@googlegroups.com](mailto:portability-discuss@googlegroups.com)
+ * [Slack channel](https://portability.slack.com), email 
+   [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com) for invitation
+ * Weekly Skype call, email [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
+   for invitation
+
 ## First Run/Setup
 
 ###  From top level directory
