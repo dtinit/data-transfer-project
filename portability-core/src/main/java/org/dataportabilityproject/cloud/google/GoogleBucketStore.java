@@ -15,23 +15,34 @@
  */
 package org.dataportabilityproject.cloud.google;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import org.dataportabilityproject.cloud.google.GoogleCloudFactory.CredentialsException;
+import com.google.inject.Inject;
+import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 
 final class GoogleBucketStore implements BucketStore {
-  private Storage storage;
+  private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
 
-  GoogleBucketStore() throws CredentialsException {
+  private Storage storage;
+  private String bucketName;
+
+  @Inject
+  GoogleBucketStore(
+      GoogleCredentials googleCredentials,
+      @ProjectId String projectId) {
     storage = StorageOptions.newBuilder()
-        .setProjectId(GoogleCloudFactory.getGoogleProjectId())
-        .setCredentials(GoogleCloudFactory.getCredentials())
+        .setProjectId(projectId)
+        .setCredentials(googleCredentials)
         .build().getService();
+    // Google Cloud Platform requires bucket names be unique across projects, so we include project
+    // ID in the bucket name.
+    bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
   }
 
-  public byte[] getBlob(String bucketName, String blobName) {
+  public byte[] getAppCredentialBlob(String blobName) {
     Bucket bucket = storage.get(bucketName);
     return bucket.get(blobName).getContent();
   }

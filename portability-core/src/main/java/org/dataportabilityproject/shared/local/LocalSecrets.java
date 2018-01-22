@@ -18,12 +18,13 @@ package org.dataportabilityproject.shared.local;
 import static com.google.gdata.util.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.shared.Config.Environment;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,22 +36,18 @@ import org.slf4j.LoggerFactory;
 public class LocalSecrets {
   private final Logger logger = LoggerFactory.getLogger(LocalSecrets.class);
 
-  private static final LocalSecrets INSTANCE = new LocalSecrets();
   private static final String SECRETS_FILENAME = "secrets.csv";
 
   private final ImmutableMap<String, String> secrets;
-
-  public static LocalSecrets getInstance() {
-    return INSTANCE;
-  }
 
   public String get(String key) {
     return secrets.get(key);
   }
 
-  private LocalSecrets() {
+  @Inject
+  LocalSecrets(CommonSettings commonSettings) {
     // DO NOT REMOVE this security check! For prod, we should read secrets from the cloud.
-    checkState(PortabilityFlags.environment() == Environment.LOCAL,
+    checkState(commonSettings.getEnv() == Environment.LOCAL,
         "Secrets from secrets.csv is only supported for local development");
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     try {

@@ -38,11 +38,11 @@
   margin-bottom: 5px;
 }
 
-.wt-form button {
+.portability-form button {
   margin-top: 50px;
 }
 
-.wt-servicelist {
+.portability-servicelist {
   position: fixed;
   bottom: 0;
   width: 400px;
@@ -51,11 +51,11 @@
   padding-bottom: 20px;
 }
 
-.wt-not-endorsed {
+.portability-not-endorsed {
   font-size: 10px;
 }
 
-.wt-rights-reserved {
+.portability-rights-reserved {
   font-size: 8px;
 }
 

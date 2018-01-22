@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import { TestBed, async } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import {By} from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 
@@ -23,6 +25,14 @@ describe('AppComponent', () => {
       declarations: [
         AppComponent
       ],
+      imports: [
+        RouterTestingModule.withRoutes([
+            {
+                path: '',
+                component: AppComponent
+            }
+        ]),
+    ]
     }).compileComponents();
   }));
 
@@ -32,16 +42,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   }));
 
-  it(`should have as title 'app works!'`, async(() => {
+  it(`should have as title 'Data Portability'`, async(() => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('app works!');
+    expect(app.title).toEqual('Data Portability');
   }));
 
-  it('should render title in a h1 tag', async(() => {
+  it('should render title in portability-header', async(() => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('h1').textContent).toContain('app works!');
+    const de = fixture.debugElement;
+    expect(de.query(By.css('.portability-header')).nativeElement.textContent).toContain('Data Portability');
   }));
 });

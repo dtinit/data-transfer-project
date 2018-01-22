@@ -32,6 +32,7 @@ import java.net.URL;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.AuthElement;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.Frob;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
@@ -40,99 +41,109 @@ import org.dataportabilityproject.shared.auth.SecretAuthData;
  * Generates a token using the flow described: https://www.rememberthemilk.com/services/api/authentication.rtm
  */
 public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
-    private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
-    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private final RememberTheMilkSignatureGenerator signatureGenerator;
 
-    private AuthElement authElement;
+  private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
+  private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+  private final RememberTheMilkSignatureGenerator signatureGenerator;
+  private final ServiceMode serviceMode;
+  private AuthElement authElement;
 
-    RememberTheMilkAuth(RememberTheMilkSignatureGenerator signatureGenerator) {
-        this.signatureGenerator = signatureGenerator;
+  RememberTheMilkAuth(RememberTheMilkSignatureGenerator signatureGenerator,
+      ServiceMode serviceMode) {
+    this.signatureGenerator = signatureGenerator;
+    this.serviceMode = serviceMode;
+  }
+
+  @Override
+  public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
+    return SecretAuthData.create(getToken(false, ioInterface));
+  }
+
+  String getToken(AuthData authData) {
+    checkArgument(authData instanceof SecretAuthData,
+        "authData expected to be SecretAuthData not %s",
+        authData.getClass().getCanonicalName());
+    return ((SecretAuthData) authData).secret();
+  }
+
+  private String getToken(boolean force, IOInterface ioInterface) throws IOException {
+    if (authElement == null || force) {
+      String frob = getFrob();
+      presentLinkToUser(frob, ioInterface);
+      authElement = getAuthToken(frob);
     }
 
-    @Override
-    public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
-        return SecretAuthData.create(getToken(false, ioInterface));
+    return authElement.auth.token;
+  }
+
+  private AuthElement validateToken(String auth_token) throws IOException {
+    URL url = new URL(RememberTheMilkMethods.CHECK_TOKEN.getUrl());
+    URL signedUrl = signatureGenerator.getSignature(url);
+
+    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
+    getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
+    HttpResponse response = getRequest.execute();
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
 
-    String getToken(AuthData authData) {
-        checkArgument(authData instanceof SecretAuthData,
-            "authData expected to be SecretAuthData not %s",
-            authData.getClass().getCanonicalName());
-        return ((SecretAuthData) authData).secret();
+    AuthElement authElement = response.parseAs(AuthElement.class);
+    checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
+    checkState(!Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty",
+        authElement);
+    return authElement;
+  }
+
+  private String getFrob() throws IOException {
+    URL url = new URL(RememberTheMilkMethods.GET_FROB.getUrl());
+    URL signedUrl = signatureGenerator.getSignature(url);
+
+    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
+    getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
+    HttpResponse response = getRequest.execute();
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
+    Frob frob = response.parseAs(Frob.class);
 
-    private String getToken(boolean force, IOInterface ioInterface) throws IOException {
-        if (authElement == null || force) {
-            String frob = getFrob();
-            presentLinkToUser(frob, ioInterface);
-            authElement = getAuthToken(frob);
-        }
+    checkState(frob.stat.equals("ok"), "frob state must be ok: %s", frob);
+    checkState(!Strings.isNullOrEmpty(frob.frob), "frob must not be empty", frob);
+    return frob.frob;
+  }
 
-        return authElement.auth.token;
+  private void presentLinkToUser(String frob, IOInterface ioInterface) throws IOException {
+    String perms = (serviceMode == ServiceMode.EXPORT) ? "read" : "write";
+    URL authUrlUnsigned = new URL(AUTH_URL + "?perms=" + perms + "&frob=" + frob);
+    URL authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
+
+    ioInterface
+        .ask("Please visit " + authUrlSigned + " and flow the flow there then hit return/enter");
+  }
+
+  private AuthElement getAuthToken(String frob) throws IOException {
+    URL url = new URL(RememberTheMilkMethods.GET_TOKEN.getUrl() + "&frob=" + frob);
+    URL signedUrl = signatureGenerator.getSignature(url);
+
+    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
+    getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
+    HttpResponse response = getRequest.execute();
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-
-    private AuthElement validateToken(String auth_token) throws IOException {
-        URL url = new URL(RememberTheMilkMethods.CHECK_TOKEN.getUrl());
-        URL signedUrl = signatureGenerator.getSignature(url);
-
-        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-        HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
-        getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
-        HttpResponse response = getRequest.execute();
-        int statusCode = response.getStatusCode();
-        if (statusCode != 200) {
-            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-        }
-
-        AuthElement authElement = response.parseAs(AuthElement.class);
-        checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
-        checkState(!Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty", authElement);
-        return authElement;
-    }
-
-    private String getFrob() throws IOException{
-        URL url = new URL(RememberTheMilkMethods.GET_FROB.getUrl());
-        URL signedUrl = signatureGenerator.getSignature(url);
-
-        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-        HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
-        getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
-        HttpResponse response = getRequest.execute();
-        int statusCode = response.getStatusCode();
-        if (statusCode != 200) {
-            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-        }
-        Frob frob =response.parseAs(Frob.class);
-
-        checkState(frob.stat.equals("ok"), "frob state must be ok: %s", frob);
-        checkState(!Strings.isNullOrEmpty(frob.frob), "frob must not be empty", frob);
-        return frob.frob;
-    }
-
-    private void presentLinkToUser(String frob, IOInterface ioInterface) throws IOException {
-        URL authUrlUnsigned = new URL(AUTH_URL + "?perms=write&frob=" + frob);
-        URL authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
-
-        ioInterface.ask("Please visit " + authUrlSigned + " and flow the flow there then hit return/enter");
-    }
-
-    private AuthElement getAuthToken(String frob) throws IOException {
-        URL url = new URL(RememberTheMilkMethods.GET_TOKEN.getUrl() + "&frob=" + frob);
-        URL signedUrl = signatureGenerator.getSignature(url);
-
-        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-        HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
-        getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
-        HttpResponse response = getRequest.execute();
-        int statusCode = response.getStatusCode();
-        if (statusCode != 200) {
-            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-        }
-        AuthElement authElement =response.parseAs(AuthElement.class);
-        checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
-        checkState(!Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty", authElement);
-        System.out.println("Auth Token: " + authElement);
-        return authElement;
-    }
+    AuthElement authElement = response.parseAs(AuthElement.class);
+    checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
+    checkState(!Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty",
+        authElement);
+    System.out.println("Auth Token: " + authElement);
+    return authElement;
+  }
 }

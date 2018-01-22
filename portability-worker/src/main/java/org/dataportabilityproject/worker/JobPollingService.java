@@ -16,13 +16,17 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A service that polls storage for a job to process in two steps:
@@ -32,15 +36,19 @@ import org.dataportabilityproject.job.PortabilityJob;
  *   (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
+  private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
   private final JobDao jobDao;
+  private final WorkerJobMetadata jobMetadata;
 
-  JobPollingService(JobDao jobDao) {
+  @Inject
+  JobPollingService(JobDao jobDao, WorkerJobMetadata jobMetadata) {
     this.jobDao = jobDao;
+    this.jobMetadata = jobMetadata;
   }
 
   @Override
   protected void runOneIteration() throws Exception {
-    if (WorkerJobMetadata.getInstance().isInitialized()) {
+    if (jobMetadata.isInitialized()) {
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this worker instance.
@@ -52,7 +60,7 @@ class JobPollingService extends AbstractScheduledService {
 
   @Override
   protected Scheduler scheduler() {
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.MINUTES);
+    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
   }
 
   /**
@@ -61,17 +69,21 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollForUnassignedJob() throws IOException {
     String id = jobDao.findNextJobPendingWorkerAssignment();
+    logger.debug("Polled pollForUnassignedJob, found id: {}", id);
     if (id != null) {
       PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
       Preconditions.checkNotNull(job);
-      Preconditions.checkState(!WorkerJobMetadata.getInstance().isInitialized());
-      WorkerJobMetadata.getInstance().init(id);
+      Preconditions.checkState(!jobMetadata.isInitialized());
+      jobMetadata.init(id);
 
-      PublicKey publicKey = WorkerJobMetadata.getInstance().getKeyPair().getPublic();
+      PublicKey publicKey = jobMetadata.getKeyPair().getPublic();
       // TODO: Move storage of private key to a different location
-      PrivateKey privateKey = WorkerJobMetadata.getInstance().getKeyPair().getPrivate();
+      PrivateKey privateKey = jobMetadata.getKeyPair().getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
       jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
+      logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}", publicKey.getEncoded().length);
+    } else {
+      logger.debug("findNextJobPendingWorkerAssignment result was null");
     }
   }
 
@@ -80,12 +92,18 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollUntilJobIsReady() {
     PortabilityJob job = jobDao
-        .lookupAssignedWithAuthDataJob(WorkerJobMetadata.getInstance().getJobId());
-    Preconditions.checkNotNull(job);
+        .lookupAssignedWithAuthDataJob(jobMetadata.getJobId());
+    logger.debug("Polled lookupAssignedWithAuthDataJob, found id: {}",
+        (job != null ? job.id() : "null"));
+
     // Validate job has auth data
-    if ((job.exportAuthData() != null) && (job.importAuthData() != null)) {
+    if ((job != null) && (!Strings.isNullOrEmpty(job.encryptedExportAuthData()))
+        && (!Strings.isNullOrEmpty(job.encryptedImportAuthData()))) {
+      logger.debug("Polled lookupAssignedWithAuthDataJob, found auth data, id: {}", job.id());
       // Stop polling now that we have all the data ready to start the job
       this.stopAsync();
+    } else {
+      logger.debug("Polled lookupAssignedWithAuthDataJob, no auth data found, id: {}", jobMetadata.getJobId());
     }
   }
 }

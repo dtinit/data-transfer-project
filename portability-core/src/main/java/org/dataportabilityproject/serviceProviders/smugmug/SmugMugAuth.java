@@ -29,16 +29,20 @@ import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
 import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
 
 final class SmugMugAuth implements OfflineAuthDataGenerator {
-  private final AppCredentials appCredentials;
 
-  SmugMugAuth(AppCredentials appCredentials) {
+  private final AppCredentials appCredentials;
+  private final ServiceMode serviceMode;
+
+  SmugMugAuth(AppCredentials appCredentials, ServiceMode serviceMode) {
     this.appCredentials = Preconditions.checkNotNull(appCredentials);
+    this.serviceMode = serviceMode;
   }
 
   @Override
@@ -48,10 +52,13 @@ final class SmugMugAuth implements OfflineAuthDataGenerator {
     // Google library puts signature in header and not in request, see https://oauth.net/1/
     OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
 
+    String permissions = (serviceMode == ServiceMode.EXPORT) ? "Read" : "Add";
+
     OAuthProvider provider = new DefaultOAuthProvider(
         "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken",
         "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken",
-        "https://secure.smugmug.com/services/oauth/1.0a/authorize?Access=Full&Permissions=Add");
+        "https://secure.smugmug.com/services/oauth/1.0a/authorize?Access=Full&Permissions="
+            + permissions);
 
     String authUrl;
     try {

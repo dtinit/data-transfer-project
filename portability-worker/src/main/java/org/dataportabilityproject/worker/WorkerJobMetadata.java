@@ -16,18 +16,22 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.security.KeyPair;
-import org.dataportabilityproject.job.PublicPrivateKeyUtils;
+import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 
 /**
  * A class that contains the value of the job and key for a worker instance. This classes uses
  * the initialization-on-demand holder idiom to ensure it is a singleton.
  */
-class WorkerJobMetadata {
+@Singleton
+final class WorkerJobMetadata {
   private static KeyPair keyPair = null;
   private static String jobId = null;
 
-  private WorkerJobMetadata() {}
+  @Inject
+  WorkerJobMetadata() {}
 
   boolean isInitialized() {
     return (jobId != null && keyPair != null);
@@ -36,7 +40,7 @@ class WorkerJobMetadata {
   void init(String jobId) {
     Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
     this.jobId = jobId;
-    this.keyPair = PublicPrivateKeyUtils.generateKeyPair();
+    this.keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
   }
 
   public KeyPair getKeyPair() {
@@ -47,16 +51,5 @@ class WorkerJobMetadata {
   public String getJobId() {
     Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
     return jobId;
-  }
-
-  private static class WorkerJobMetadataHolder {
-    private static WorkerJobMetadata INSTANCE = new WorkerJobMetadata();
-  }
-
-  /**
-   * Creates a Singleton instance of WorkerJobMetadata.
-   */
-  public static WorkerJobMetadata getInstance() {
-    return WorkerJobMetadataHolder.INSTANCE;
   }
 }

@@ -24,21 +24,28 @@ import com.google.api.services.cloudkms.v1.CloudKMS;
 import com.google.api.services.cloudkms.v1.CloudKMSScopes;
 import com.google.api.services.cloudkms.v1.model.DecryptRequest;
 import com.google.api.services.cloudkms.v1.model.DecryptResponse;
+import com.google.inject.Inject;
 import java.io.IOException;
-import org.dataportabilityproject.cloud.google.GoogleCloudFactory.CredentialsException;
+import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 
 final class GoogleCryptoKeyManagementSystem implements CryptoKeyManagementSystem {
-  private CloudKMS cloudKMS;
+  // Key for encrypting app secrets.
+  private static final String SECRETS_CRYPTO_KEY_FMT_STRING = "projects/%s/locations/global/"
+      + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
 
-  GoogleCryptoKeyManagementSystem() throws CredentialsException {
+  private CloudKMS cloudKMS;
+  private String secretsCryptoKey;
+
+  @Inject
+  GoogleCryptoKeyManagementSystem(@ProjectId String projectId) throws GoogleCredentialException {
     HttpTransport transport = new NetHttpTransport();
     JsonFactory jsonFactory = new JacksonFactory();
     GoogleCredential credential;
     try {
       credential = GoogleCredential.getApplicationDefault(transport, jsonFactory);
     } catch (IOException e) {
-      throw new CredentialsException(
+      throw new GoogleCredentialException(
           "Problem obtaining credentials via GoogleCredential.getApplicationDefault()");
     }
     if (credential.createScopedRequired()) {
@@ -47,12 +54,13 @@ final class GoogleCryptoKeyManagementSystem implements CryptoKeyManagementSystem
     this.cloudKMS = new CloudKMS.Builder(transport, jsonFactory, credential)
         .setApplicationName("GoogleCryptoKeyManagementSystem")
         .build();
+    this.secretsCryptoKey = String.format(SECRETS_CRYPTO_KEY_FMT_STRING, projectId);
   }
 
-  public byte[] decrypt(String cryptoKeyName, byte[] ciphertext) throws IOException {
+  public byte[] decryptAppSecret(byte[] ciphertext) throws IOException {
     DecryptRequest request = new DecryptRequest().encodeCiphertext(ciphertext);
     DecryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
-        .decrypt(cryptoKeyName, request)
+        .decrypt(secretsCryptoKey, request)
         .execute();
 
     return response.decodePlaintext();

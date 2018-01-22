@@ -20,6 +20,7 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 import com.google.api.client.util.Sleeper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -31,46 +32,53 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.PortabilityCopier;
-import org.dataportabilityproject.PortabilityFlags;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PublicPrivateKeyUtils;
+import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
+import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StartCopyHandler implements HttpHandler {
+final class StartCopyHandler implements HttpHandler {
+
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final CloudFactory cloudFactory;
   private final CryptoHelper cryptoHelper;
+  private final CommonSettings commonSettings;
+  private final TokenManager tokenManager;
 
-  public StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
-      CloudFactory cloudFactory, CryptoHelper cryptoHelper) {
+  @Inject
+  StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
+      CloudFactory cloudFactory,
+      CryptoHelper cryptoHelper,
+      CommonSettings commonSettings,
+      TokenManager tokenManager) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.jobDao = jobDao;
     this.cloudFactory = cloudFactory;
     this.cryptoHelper = cryptoHelper;
+    this.commonSettings = commonSettings;
+    this.tokenManager = tokenManager;
   }
 
+  @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
 
-    String encodedIdCookie = PortabilityApiUtils
-        .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+    String jobId = PortabilityApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
 
-    // Valid job must be present
-    String jobId = JobUtils.decodeId(encodedIdCookie);
-
-    if (PortabilityFlags.encryptedFlow()) {
+    if (commonSettings.getEncryptedFlow()) {
       handleWorkerAssignmentFlow(exchange, jobId);
     } else {
       handleStartCopyInApi(exchange, jobId);
@@ -78,8 +86,8 @@ public class StartCopyHandler implements HttpHandler {
   }
 
   /**
-   * Handles flow for assigning a worker instance, encrypting data with the assigned worker key,
-   * and persisting the auth data, which will result in the worker starting the copy.
+   * Handles flow for assigning a worker instance, encrypting data with the assigned worker key, and
+   * persisting the auth data, which will result in the worker starting the copy.
    */
   private void handleWorkerAssignmentFlow(HttpExchange exchange, String id)
       throws IOException {
@@ -102,46 +110,62 @@ public class StartCopyHandler implements HttpHandler {
     PortableDataType type = JobUtils.getDataType(job.dataType());
 
     //  Validate auth data is present in cookies
-    String exportAuthCookie = PortabilityApiUtils
+    String exportAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookieValue), "Export auth cookie required");
 
-    String importAuthCookie = PortabilityApiUtils
+    String importAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
 
     // We have the data, now update it unassigned so it can be assigned a worker
     // Set Job to state to pending worker assignment
     jobDao.updateJobStateToPendingWorkerAssignment(job.id()); // Now that job is complete unassiged
+    logger.debug("Updated updateJobStateToPendingWorkerAssignment, id: {}", job.id());
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
     // the worker instance key will be populated
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
-    while(jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
+    while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
+      logger.debug("No result for lookupAssignedWithoutAuthDataJob, id: {}", job.id());
       try {
-        Sleeper.DEFAULT.sleep(5000);
-      } catch (InterruptedException e)  {
+        Sleeper.DEFAULT.sleep(10000);
+      } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
 
+    logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", job.id());
+
     // Ensure job is assigned and has worker key
     PortabilityJob assignedJob = jobDao.lookupAssignedWithoutAuthDataJob(job.id());
+
+    logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", job.id());
     Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
-    PublicKey publicKey = PublicPrivateKeyUtils.parsePublicKey(assignedJob.workerInstancePublicKey());
-    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(),
-        cryptoHelper.encryptAuthData(publicKey, exportAuthCookie),
-        cryptoHelper.encryptAuthData(publicKey, importAuthCookie));
+    logger.debug("About to parse: {}", assignedJob.workerInstancePublicKey());
+    PublicKey publicKey = PublicPrivateKeyPairGenerator
+        .parsePublicKey(assignedJob.workerInstancePublicKey());
+    logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
+
+    // Encrypt the data with the assigned workers PublicKey and persist
+    Crypter crypter = CrypterFactory.create(publicKey);
+    String encryptedExportAuthData = crypter.encrypt(exportAuthCookieValue);
+    logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
+    String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
+    logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
+    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
 
     writeResponse(exchange);
   }
 
-  /** Validates job information, starts the copy job inline, and returns status to the client. */
+  /**
+   * Validates job information, starts the copy job inline, and returns status to the client.
+   */
   private void handleStartCopyInApi(HttpExchange exchange, String id) throws IOException {
     // Lookup job
     PortabilityJob job = PortabilityApiUtils.lookupJob(id, jobDao);
@@ -176,7 +200,9 @@ public class StartCopyHandler implements HttpHandler {
     writeResponse(exchange);
   }
 
-  /** Write a response with status to the client. */
+  /**
+   * Write a response with status to the client.
+   */
   private void writeResponse(HttpExchange exchange) throws IOException {
     JsonObject response = Json.createObjectBuilder().add("status", "started").build();
 

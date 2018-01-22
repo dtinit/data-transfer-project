@@ -20,6 +20,7 @@ import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -54,15 +55,6 @@ public class CommonSettings {
     }
     this.serviceProviderClasses = serviceProviderClasses;
     this.encryptedFlow = encryptedFlow;
-    if (env == LOCAL && cloud == GOOGLE) {
-      // This is a crude check to make sure we are only pointing to test projects when running
-      // locally and connecting to GCP
-      String googleProjectId = System.getenv("GOOGLE_PROJECT_ID");
-      Preconditions.checkArgument(
-          googleProjectId.endsWith("-local") || googleProjectId.endsWith("-test"),
-          "Invalid project to connect to with env=LOCAL. " + googleProjectId + " doesn't appear to"
-              + " be a local/test project since it doesn't end in -local or -test. Aborting");
-    }
   }
 
   public Environment getEnv() {
@@ -79,5 +71,15 @@ public class CommonSettings {
 
   public Boolean getEncryptedFlow() {
     return encryptedFlow != null ? encryptedFlow : false;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("env", env)
+        .add("cloud", cloud)
+        .add("encryptedFlow", encryptedFlow)
+        .add("serviceProviderClasses", serviceProviderClasses)
+        .toString();
   }
 }

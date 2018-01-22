@@ -18,6 +18,7 @@ package org.dataportabilityproject.serviceProviders.smugmug.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class ImageUploadResponse {
+
   @JsonProperty("stat")
   private String stat;
 
@@ -36,6 +37,7 @@ public final class ImageUploadResponse {
   }
 
   public static class ImageInfo {
+
     @JsonProperty("ImageUri")
     private String imageUri;
 

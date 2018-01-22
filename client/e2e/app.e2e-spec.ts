@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { WtDemoPage } from './app.po';
+import { PortabilityDemoPage } from './app.po';
 
-describe('wt-demo App', () => {
-  let page: WtDemoPage;
+describe('portability-demo App', () => {
+  let page: PortabilityDemoPage;
 
   beforeEach(() => {
-    page = new WtDemoPage();
+    page = new PortabilityDemoPage();
   });
 
   it('should display message saying app works', () => {

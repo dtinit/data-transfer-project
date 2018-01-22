@@ -16,10 +16,10 @@
 package org.dataportabilityproject.serviceProviders.instagram.model;
 
 /**
- * DataModel for a Caption object in the Instagram API. Instantiated
- * by JSON mapping.
+ * DataModel for a Caption object in the Instagram API. Instantiated by JSON mapping.
  */
 public final class Caption {
+
   private String created_time;
 
   private String id;

@@ -15,27 +15,37 @@
  */
 package org.dataportabilityproject.serviceProviders.instagram;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
-public final class InstagramServiceProvider implements ServiceProvider {
-  private static final ImmutableList<String> SCOPES = ImmutableList.of(
-      "basic"); // See https://www.instagram.com/developer/authorization/
+final class InstagramServiceProvider implements ServiceProvider {
+
+  // Instagram only offers basic scope for reading user's profiles. There is no "write" scope.
+  // See https://www.instagram.com/developer/authorization/
+  private static final ImmutableList<String> SCOPES = ImmutableList.of("basic");
+  private static final ImmutableList<PortableDataType> EXPORT_TYPES = ImmutableList
+      .of(PortableDataType.PHOTOS);
+
   private final InstagramAuth instagramAuth;
 
-  public InstagramServiceProvider() {
+  @Inject
+  InstagramServiceProvider(AppCredentialFactory appCredentialFactory) throws IOException {
     AppCredentials appCredentials =
-        AppCredentials.lookupAndCreate("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
+        appCredentialFactory.lookupAndCreate("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
     this.instagramAuth = new InstagramAuth(appCredentials, SCOPES);
   }
 
@@ -46,7 +56,7 @@ public final class InstagramServiceProvider implements ServiceProvider {
 
   @Override
   public ImmutableList<PortableDataType> getExportTypes() {
-    return ImmutableList.of(PortableDataType.PHOTOS);
+    return EXPORT_TYPES;
   }
 
   @Override
@@ -56,12 +66,26 @@ public final class InstagramServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType) {
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    Preconditions
+        .checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+    Preconditions
+        .checkArgument(EXPORT_TYPES.contains(dataType),
+            "Export of type [%s] is not supported by Instagram",
+            dataType);
     return instagramAuth;
   }
 
   @Override
-  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType) {
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    Preconditions
+        .checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+    Preconditions
+        .checkArgument(EXPORT_TYPES.contains(dataType),
+            "Export of type [%s] is not supported by Instagram",
+            dataType);
     return instagramAuth;
   }
 
@@ -70,10 +94,10 @@ public final class InstagramServiceProvider implements ServiceProvider {
       PortableDataType type,
       AuthData authData,
       JobDataCache jobDataCache) throws IOException {
-    if (type == PortableDataType.PHOTOS) {
-      return new InstagramPhotoService(((InstagramOauthData) authData));
-    }
-    throw new IllegalStateException("Instagram doesn't support exporting: " + type);
+    Preconditions
+        .checkArgument(EXPORT_TYPES.contains(type),
+            "Export of type [%s] is not supported by Instagram", type);
+    return new InstagramPhotoService(((InstagramOauthData) authData));
   }
 
   @Override

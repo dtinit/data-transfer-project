@@ -15,16 +15,28 @@
  */
 package org.dataportabilityproject.shared.auth;
 
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import org.dataportabilityproject.shared.IOInterface;
 
-public final class OfflinePasswordAuthDataGenerator implements OfflineAuthDataGenerator {
-
-  @Override
+public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator, OfflineAuthDataGenerator {
+  @Override // offline
   public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
     String account = ioInterface.ask("Enter email account");
     String password = ioInterface.ask("Enter email account password");
 
     return PasswordAuthData.create(account, password);
+  }
+
+  @Override
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+    return AuthFlowInitiator.create(callbackBaseUrl + "/simplelogin");
+  }
+
+  @Override // online
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+      AuthData initialAuthData, String extra) throws IOException {
+    Preconditions.checkArgument(initialAuthData == null, "initial auth data not expected");
+    return PasswordAuthData.create(authCode, extra);
   }
 }

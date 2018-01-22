@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /* You can add global styles to this file, and also import other style files */
-.wt-header {
+.portability-header {
   font-size: 48px;
   padding-bottom: 40px;
 }
@@ -24,8 +24,8 @@
   height: 80px;
 }
 
-.wt-content {
-  width: 400px;
+.portability-content {
+  width: 600px;
   padding-top: 50px;
   font-size: 26px;
   font-family: Roboto, RobotoDraft, "Helvetica Neue", arial, sans-serif;

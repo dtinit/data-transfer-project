@@ -52,7 +52,7 @@ public class PortabilityJobFactory {
   public PortabilityJob create(PortableDataType dataType, String exportService,
       String importService) throws IOException {
     String newId = idProvider.createId();
-    String encodedSessionKey = SessionKeyGenerator.generateKeyAndEncode();
+    String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
     PortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
     logger.info("Creating new PortabilityJob, id: {}", newId);
     return job;
@@ -71,6 +71,7 @@ public class PortabilityJobFactory {
         .setDataType(dataType.name())
         .setExportService(exportService)
         .setImportService(importService)
+        .setSessionKey(sessionKey)
         .build();
   }
 

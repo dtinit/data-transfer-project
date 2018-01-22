@@ -20,38 +20,57 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
-import java.security.PublicKey;
+import java.net.HttpCookie;
 import javax.crypto.SecretKey;
-import javax.servlet.http.Cookie;
 import org.dataportabilityproject.job.Crypter;
-import org.dataportabilityproject.job.CrypterImpl;
+import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.SessionKeyGenerator;
+import org.dataportabilityproject.job.SecretKeyGenerator;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Helper methods utlized for encrypting data for the client.
+ * Helper methods utilized for encrypting and decrypting data for the client.
  */
 class CryptoHelper {
-  private final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
-
+  private static final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
   private static final Gson GSON = new Gson();
   private final JobDao jobDao;
 
+  @Inject
   CryptoHelper(JobDao jobDao) {
     this.jobDao = jobDao;
   }
 
-  /** Encrypts the given {@code authData} and stores it as a cookie in the provided headers. */
-  void encryptAndSetCookie(Headers headers, String jobId, boolean isExport, AuthData authData){
+   /**
+   * Serialize and encrypt the given {@code authData} with the given {@link SecretKey}.
+   */
+  private static String encrypt(SecretKey key, AuthData authData) {
+    Crypter crypter = CrypterFactory.create(key);
+    String serialized = serialize(authData);
+    return crypter.encrypt(serialized);
+  }
+
+  private static String serialize(AuthData authData) {
+    return GSON.toJson(authData, AuthData.class);
+  }
+
+  /**
+   * Encrypts the given {@code authData} with the session-based {@link SecretKey} and stores it as a
+   * cookie in the provided headers.
+   */
+  void encryptAndSetCookie(Headers headers, String jobId, ServiceMode serviceMode,
+      AuthData authData) {
     SecretKey sessionKey = getSessionKey(jobId);
-    String encrypted = encryptAuthData(sessionKey, authData);
-    String cookieKey = isExport ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
-    Cookie cookie = new Cookie(cookieKey, encrypted);
+    String encrypted = encrypt(sessionKey, authData);
+    String cookieKey = (serviceMode == ServiceMode.EXPORT) ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
+        : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
+    HttpCookie cookie = new HttpCookie(cookieKey, encrypted);
     logger.debug("Set new cookie with key: {}, length: {} for job: {}",
         cookieKey, encrypted.length(), jobId);
     headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
@@ -60,24 +79,8 @@ class CryptoHelper {
   private SecretKey getSessionKey(String jobId) {
     PortabilityJob job = jobDao.lookupJobPendingAuthData(jobId);
     String encodedSessionKey = job.sessionKey();
-    Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey));
-    return SessionKeyGenerator.parse(encodedSessionKey);
-  }
-
-  /** Serialize and encrypt the given {@code authData} with the session key. */
-  public static String encryptAuthData(PublicKey key, String sessionEncryptedAuthData) {
-    Crypter crypter = new CrypterImpl(key);
-    return crypter.encrypt(sessionEncryptedAuthData);
-  }
-
-  /** Serialize and encrypt the given {@code authData} with the session key. */
-  private static String encryptAuthData(SecretKey key, AuthData authData) {
-    Crypter crypter = new CrypterImpl(key);
-    String serialized = serialize(authData);
-    return crypter.encrypt(serialized);
-  }
-
-  private static String serialize(AuthData authData) {
-    return GSON.toJson(authData, AuthData.class);
+    Preconditions
+        .checkState(!Strings.isNullOrEmpty(encodedSessionKey), "Session key should not be null");
+    return SecretKeyGenerator.parse(encodedSessionKey);
   }
 }

@@ -15,21 +15,27 @@
  */
 package org.dataportabilityproject;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +48,23 @@ public class ServiceProviderRegistry {
     private final CloudFactory cloudFactory;
     private final ImmutableSet<PortableDataType> supportedTypes;
 
-    public ServiceProviderRegistry(CloudFactory cloudFactory, Iterable<String> providerClasses)
+    @Inject
+    public ServiceProviderRegistry(
+        CloudFactory cloudFactory,
+        CommonSettings commonSettings,
+        Map<String, ServiceProvider> serviceProviderMap)
             throws Exception {
         this.cloudFactory = cloudFactory;
         ImmutableMap.Builder<String, ServiceProvider> providerBuilder = ImmutableMap.builder();
         ImmutableSet.Builder<PortableDataType> portableDataTypesBuilder = ImmutableSet.builder();
 
-        loadServiceProviders(providerClasses, providerBuilder, portableDataTypesBuilder);
+        for(String enabledService : commonSettings.getServiceProviderClasses()) {
+            ServiceProvider serviceProvider = serviceProviderMap.get(enabledService);
+            checkState(serviceProvider != null, "Couldn't find %s", enabledService);
+            providerBuilder.put(serviceProvider.getName(), serviceProvider);
+            portableDataTypesBuilder.addAll(serviceProvider.getImportTypes());
+            portableDataTypesBuilder.addAll(serviceProvider.getExportTypes());
+        }
 
         this.serviceProviders = providerBuilder.build();
         this.supportedTypes = portableDataTypesBuilder.build();
@@ -101,41 +117,12 @@ public class ServiceProviderRegistry {
     }
 
     public OnlineAuthDataGenerator getOnlineAuth(String serviceProvider,
-        PortableDataType dataType) {
-        return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType);
+                                                 PortableDataType dataType, ServiceMode serviceMode) {
+        return serviceProviders.get(serviceProvider).getOnlineAuthDataGenerator(dataType, serviceMode);
     }
 
     public OfflineAuthDataGenerator getOfflineAuth(String serviceProvider,
-            PortableDataType dataType) {
-        return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType);
-    }
-
-    private static void addServiceProvider(ServiceProvider serviceProvider,
-                                      ImmutableMap.Builder<String, ServiceProvider> builder) {
-        builder.put(serviceProvider.getName(), serviceProvider);
-    }
-
-    private void loadServiceProviders(
-        Iterable<String> providerClasses,
-        ImmutableMap.Builder<String, ServiceProvider> providerBuilder,
-        ImmutableSet.Builder<PortableDataType> portableDataTypesBuilder) {
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        for (String className : providerClasses) {
-            try {
-                Class aClass = classLoader.loadClass(className);
-                ServiceProvider serviceProvider = (ServiceProvider) aClass.newInstance();
-                addServiceProvider(serviceProvider, providerBuilder);
-                portableDataTypesBuilder.addAll(serviceProvider.getExportTypes());
-                portableDataTypesBuilder.addAll(serviceProvider.getImportTypes());
-            } catch (ClassNotFoundException e) {
-                logger.error("Couldn't load class {}", className, e);
-            } catch (InstantiationException e) {
-                logger.error("Couldn't initialize class {}", className, e);
-            } catch (SecurityException | IllegalAccessException e) {
-                logger.error("Security exception loading class {}", className, e);
-            } catch (ClassCastException e) {
-                logger.error("Type {} is not of type ServiceProvider", className, e);
-            }
-        }
+            PortableDataType dataType, ServiceMode serviceMode) {
+        return serviceProviders.get(serviceProvider).getOfflineAuthDataGenerator(dataType, serviceMode);
     }
 }

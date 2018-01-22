@@ -15,7 +15,7 @@
  */
 package org.dataportabilityproject.cloud.google;
 
-
+import com.google.cloud.datastore.Query;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
@@ -24,7 +24,9 @@ import com.google.cloud.datastore.DoubleValue;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.LongValue;
+import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
+import com.google.cloud.datastore.StructuredQuery.Filter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
@@ -35,18 +37,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
-final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
+/**
+ * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
+ */
+public final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
-  @Override
-  public String getFirst(String prefix) {
-    throw new UnsupportedOperationException();
-  }
-
   private final Datastore datastore;
 
-  GooglePersistentKeyValueStore(Datastore datastore) {
+  public GooglePersistentKeyValueStore(Datastore datastore) {
     this.datastore = datastore;
   }
 
@@ -120,6 +120,20 @@ final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
   @Override
   public void delete(String key) {
     datastore.delete(getKey(key));
+  }
+
+  @Override
+  public String getFirst(String prefix) {
+    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND)
+        .build();
+    QueryResults<Key> results = datastore.run(query);
+    while(results.hasNext()) {
+      String key = results.next().getName();
+      if(key.startsWith(prefix)) {
+        return key;
+      }
+    }
+    return null;
   }
 
   private Key getKey(String key) {

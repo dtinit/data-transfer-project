@@ -8,5 +8,6 @@ target/
 config/local/secrets.csv
 config/test/secrets.csv
 config/qa/secrets.csv
+**/src/main/resources/settings/*.yaml
 # Dockerfile is generated each time we run build.sh
 Dockerfile

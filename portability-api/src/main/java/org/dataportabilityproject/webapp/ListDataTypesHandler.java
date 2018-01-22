@@ -18,6 +18,7 @@ package org.dataportabilityproject.webapp;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -34,14 +35,16 @@ import org.slf4j.LoggerFactory;
 /**
  * HTTP Handler for the listDataTypes service
  */
-public class ListDataTypesHandler implements HttpHandler {
+final class ListDataTypesHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
-  public ListDataTypesHandler(ServiceProviderRegistry serviceProviderRegistry) {
+  @Inject
+  ListDataTypesHandler(ServiceProviderRegistry serviceProviderRegistry) {
     this.serviceProviderRegistry = serviceProviderRegistry;
   }
 
+  @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/listDataTypes"),

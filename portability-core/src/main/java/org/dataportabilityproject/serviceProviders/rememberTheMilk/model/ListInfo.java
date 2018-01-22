@@ -18,30 +18,31 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk.model;
 import com.google.api.client.util.Key;
 
 public class ListInfo {
-    @Key("@id")
-    public int id;
 
-    @Key("@name")
-    public String name;
+  @Key("@id")
+  public int id;
 
-    @Key("@deleted")
-    public boolean deleted;
+  @Key("@name")
+  public String name;
 
-    @Key("@locked")
-    public boolean locked;
+  @Key("@deleted")
+  public boolean deleted;
 
-    @Key("@archived")
-    public boolean archived;
+  @Key("@locked")
+  public boolean locked;
 
-    @Key("@position")
-    public int position;
+  @Key("@archived")
+  public boolean archived;
 
-    @Key("@smart")
-    public boolean smart;
+  @Key("@position")
+  public int position;
 
-    @Override
-    public String toString() {
-        return String.format("List(id=%d, name=%s)", id, name);
-    }
+  @Key("@smart")
+  public boolean smart;
+
+  @Override
+  public String toString() {
+    return String.format("List(id=%d, name=%s)", id, name);
+  }
 }
 

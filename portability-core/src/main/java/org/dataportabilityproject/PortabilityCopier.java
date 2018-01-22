@@ -26,10 +26,13 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PortabilityCopier {
   // TODO: Use better monitoring, this is a hack!
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityCopier.class);
 
   // Start the copy data process
   public static <T extends DataModel> void copyDataType(ServiceProviderRegistry registry,
@@ -44,7 +47,7 @@ public class PortabilityCopier {
     Importer<T> importer = registry.getImporter(importService, dataType, jobId, importAuthData);
     ExportInformation emptyExportInfo =
         new ExportInformation(Optional.empty(), Optional.empty());
-    log("Starting copy job, id: %s, source: %s, destination: %s",
+    logger.debug("Starting copy job, id: {}, source: {}, destination: {}",
         jobId, exportService, importService);
     copy(exporter, importer, emptyExportInfo);
   }
@@ -53,27 +56,27 @@ public class PortabilityCopier {
       Exporter<T> exporter,
       Importer<T> importer,
       ExportInformation exportInformation) throws IOException {
-    log("copy iteration: %d", COPY_ITERATION_COUNTER.incrementAndGet());
+    logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
     // NOTE: order is important bellow, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
 
-    log("Starting export, exportInformation: %s", exportInformation);
+    logger.debug("Starting export, exportInformation: {}", exportInformation);
     T items = exporter.export(exportInformation);
-    log("Finished export, results: %s", items);
+    logger.debug("Finished export, results: {}", items);
 
-    log("Starting import");
+    logger.debug("Starting import");
     // The collection of items can be both containers and items
     importer.importItem(items);
-    log("Finished import");
+    logger.debug("Finished import");
 
     ContinuationInformation continuationInfo = items.getContinuationInformation();
     if (null != continuationInfo) {
 
       // Process the next page of items for the resource
       if (null != continuationInfo.getPaginationInformation()) {
-        log("start off a new copy iteration with pagination info");
+        logger.debug("start off a new copy iteration with pagination info");
         copy(exporter, importer,
             new ExportInformation(
                 exportInformation.getResource(), // Resource with additional pages to fetch
@@ -82,7 +85,7 @@ public class PortabilityCopier {
 
       // Start processing sub-resources
       if (continuationInfo.getSubResources() != null && !continuationInfo.getSubResources().isEmpty()) {
-        log("start off a new copy iterations with a sub resource, size: %d",
+        logger.debug("start off a new copy iterations with a sub resource, size: {}",
             continuationInfo.getSubResources().size());
         for (Resource resource : continuationInfo.getSubResources()) {
           copy(
@@ -92,10 +95,5 @@ public class PortabilityCopier {
         }
       }
     }
-  }
-
-  // TODO: Replace with logging framework
-  private static void log (String fmt, Object... args) {
-    System.out.println(String.format("PortabilityCopier: " + fmt, args));
   }
 }
