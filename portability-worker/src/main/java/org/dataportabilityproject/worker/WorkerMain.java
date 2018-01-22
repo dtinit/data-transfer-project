@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.worker;
 
+import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -24,6 +25,7 @@ import com.google.inject.Injector;
  */
 public class WorkerMain {
   public static void main(String[] args) throws Exception {
+    Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
     Injector injector = Guice.createInjector(new WorkerModule());
     WorkerImpl worker = injector.getInstance(WorkerImpl.class);
     worker.processJob();
