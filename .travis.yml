@@ -2,6 +2,8 @@ matrix:
   include:
     - language: java
     - language: node_js
+      node_js:
+        - '8.9'
       before_script:
         - cd client
         - npm install -g @angular/cli
