@@ -87,18 +87,16 @@ final class WorkerImpl {
 
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
-      try {
-        Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
-        String serializedExportAuthData = decrypter.decrypt(job.encryptedExportAuthData());
-        AuthData exportAuthData = deSerialize(serializedExportAuthData);
-        String serializedImportAuthData = decrypter.decrypt(job.encryptedImportAuthData());
-        AuthData importAuthData = deSerialize(serializedImportAuthData);
-        PortabilityCopier
-            .copyDataType(registry, dataType, job.exportService(), exportAuthData,
-                job.importService(), importAuthData, job.id());
-      } catch (IOException e) {
-        logger.error("Error processing jobId: {}" + workerJobMetadata.getJobId(), e);
-      }
+      Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
+      String serializedExportAuthData = decrypter.decrypt(job.encryptedExportAuthData());
+      AuthData exportAuthData = deSerialize(serializedExportAuthData);
+      String serializedImportAuthData = decrypter.decrypt(job.encryptedImportAuthData());
+      AuthData importAuthData = deSerialize(serializedImportAuthData);
+      PortabilityCopier
+          .copyDataType(registry, dataType, job.exportService(), exportAuthData,
+              job.importService(), importAuthData, job.id());
+    } catch (IOException e) {
+      logger.error("Error processing jobId: {}" + workerJobMetadata.getJobId(), e);
     } finally {
       cloudFactory.clearJobData(job.id());
     }
