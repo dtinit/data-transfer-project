@@ -27,6 +27,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.dataportabilityproject.cloud.google.GoogleJobDataCache;
 import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Factory that can create cloud interfaces when running locally.
  */
+@Singleton
 public class LocalCloudFactory implements CloudFactory {
   private final Logger logger = LoggerFactory.getLogger(LocalCloudFactory.class);
   private static final String DUMMY_PROJECT_ID = "local-dev";
@@ -88,8 +90,9 @@ public class LocalCloudFactory implements CloudFactory {
 
   @Override
   public PersistentKeyValueStore getPersistentKeyValueStore() {
-    logger.info("Returning local google datastore-based key value store");
-    return keyValueStoreSupplier.get();
+    PersistentKeyValueStore store = keyValueStoreSupplier.get();
+    logger.info("Returning local datastore-based key value store, {}", store.getClass().getName());
+    return store;
   }
 
   @Override
