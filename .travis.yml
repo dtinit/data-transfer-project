@@ -3,6 +3,7 @@ matrix:
     - language: java
     - language: node_js
       before_script:
+        - cd client
         - npm install -g @angular/cli
       script:
         - ng test --environment local
