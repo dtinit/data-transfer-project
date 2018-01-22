@@ -23,7 +23,7 @@ import org.dataportabilityproject.spi.cloud.types.TypeManager;
  * Jackson-based type manager that supports polymorphic type handling.
  */
 public class TypeManagerImpl implements TypeManager {
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public TypeManagerImpl() {
         objectMapper = new ObjectMapper();

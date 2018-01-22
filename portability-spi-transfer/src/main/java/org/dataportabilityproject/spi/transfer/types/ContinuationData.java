@@ -1,5 +1,7 @@
 package org.dataportabilityproject.spi.transfer.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.dataportabilityproject.types.transfer.EntityType;
 
@@ -14,12 +16,10 @@ import java.util.List;
 @JsonTypeName("org.dataportability:Continuation")
 public class ContinuationData extends EntityType {
     private List<ContainerResource> containerResources = new ArrayList<>();
-    private PaginationData paginationData;
+    private final PaginationData paginationData;
 
-    public ContinuationData() {
-    }
-
-    public ContinuationData(PaginationData paginationData) {
+    @JsonCreator
+    public ContinuationData(@JsonProperty("paginationData") PaginationData paginationData) {
         this.paginationData = paginationData;
     }
 

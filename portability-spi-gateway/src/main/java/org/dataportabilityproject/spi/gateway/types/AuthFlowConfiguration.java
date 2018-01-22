@@ -11,7 +11,7 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
  */
 @JsonTypeName("org.dataportability:AuthFlowConfiguration")
 public class AuthFlowConfiguration extends PortableType {
-    private String url;
+    private final String url;
     private AuthData initialAuthData;
 
     /**
