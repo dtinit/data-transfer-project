@@ -23,11 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides methods for the creation of new {@link PortabilityJob} objects in correct initial
- * state.
+ * Provides methods for the creation of new {@link PortabilityJob} objects in correct initial state.
  */
 public class PortabilityJobFactory {
-
   private final Logger logger = LoggerFactory.getLogger(PortabilityJobFactory.class);
   // Keys for specific values in data store
   private static final String ID_DATA_KEY = "UUID";
@@ -54,16 +52,13 @@ public class PortabilityJobFactory {
   public PortabilityJob create(PortableDataType dataType, String exportService,
       String importService) throws IOException {
     String newId = idProvider.createId();
-    String encodedSessionKey = SessionKeyGenerator.generateKeyAndEncode();
-    PortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService,
-        importService);
+    String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
+    PortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
     logger.info("Creating new PortabilityJob, id: {}", newId);
     return job;
   }
 
-  /**
-   * Creates the initial data entry to persist.
-   */
+  /** Creates the initial data entry to persist. */
   private static PortabilityJob createInitialJob(String id, String sessionKey,
       PortableDataType dataType, String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
@@ -82,7 +77,6 @@ public class PortabilityJobFactory {
 
   /**
    * Creates the initial data entry to persist.
-   *
    * @deprecated Remove when encrypted flow complete.
    */
   @Deprecated

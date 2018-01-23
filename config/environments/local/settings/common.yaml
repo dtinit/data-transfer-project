@@ -1,5 +1,6 @@
 env: LOCAL
 cloud: LOCAL
+encryptedFlow: false
 serviceProviderClasses: [
   "org.dataportabilityproject.serviceProviders.flickr.FlickrServiceProvider",
   "org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider",

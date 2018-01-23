@@ -15,23 +15,39 @@
  */
 package org.dataportabilityproject.cloud.local;
 
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.dataportabilityproject.cloud.google.GoogleJobDataCache;
+import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factory that can create cloud interfaces when running locally.
  */
+@Singleton
 public class LocalCloudFactory implements CloudFactory {
-
+  private final Logger logger = LoggerFactory.getLogger(LocalCloudFactory.class);
+  private static final String DUMMY_PROJECT_ID = "local-dev";
+  private static final String USER_KEY_KIND = "local-user-key";
+  private static final String JOB_KIND = "local-job";
   private static final LoadingCache<String, LoadingCache<String, JobDataCache>> JOB_DATA_CACHE =
       CacheBuilder.newBuilder()
           .build(new CacheLoader<String, LoadingCache<String, JobDataCache>>() {
@@ -47,21 +63,36 @@ public class LocalCloudFactory implements CloudFactory {
             }
           });
 
-  private static final Supplier<PersistentKeyValueStore> KEY_VALUE_SUPPLIER =
-      Suppliers.memoize(InMemoryPersistentKeyValueStore::new);
+  // Google DataStore emulator is used for local development
+  private static final Datastore datastore = DatastoreOptions.newBuilder()
+      .setHost("http://localhost:8081") // TODO: move to yaml config in case non-default is used
+      .setProjectId(DUMMY_PROJECT_ID)
+      .build()
+      .getService();
 
-  @Override
-  public JobDataCache getJobDataCache(String jobId, String service) {
-    try {
-      return JOB_DATA_CACHE.get(jobId).get(service);
-    } catch (ExecutionException e) {
-      throw new IllegalStateException("Couldn't creat loading jobdatacache", e);
+
+  private final Supplier<PersistentKeyValueStore> keyValueStoreSupplier;
+
+  @Inject
+  public LocalCloudFactory(CommonSettings commonSettings) {
+    if(commonSettings.getEncryptedFlow()) {
+      this.keyValueStoreSupplier = Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore));
+    } else {
+      this.keyValueStoreSupplier = Suppliers.memoize( () -> new InMemoryPersistentKeyValueStore());
     }
   }
 
   @Override
+  public JobDataCache getJobDataCache(String jobId, String service) {
+    logger.info("Returning local google datastore-based cache");
+    return new GoogleJobDataCache(datastore, jobId, service);
+  }
+
+  @Override
   public PersistentKeyValueStore getPersistentKeyValueStore() {
-    return KEY_VALUE_SUPPLIER.get();
+    PersistentKeyValueStore store = keyValueStoreSupplier.get();
+    logger.info("Returning local datastore-based key value store, {}", store.getClass().getName());
+    return store;
   }
 
   @Override
@@ -76,6 +107,11 @@ public class LocalCloudFactory implements CloudFactory {
 
   @Override
   public void clearJobData(String jobId) {
-    JOB_DATA_CACHE.invalidate(jobId);
+    QueryResults<Key> results = datastore.run(Query.newKeyQueryBuilder()
+        .setKind(USER_KEY_KIND)
+        .setFilter(PropertyFilter.hasAncestor(
+            datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId)))
+        .build());
+    results.forEachRemaining(datastore::delete);
   }
 }

@@ -34,10 +34,12 @@ import javax.json.JsonWriter;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.job.Crypter;
+import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PublicPrivateKeyUtils;
+import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -108,19 +110,20 @@ final class StartCopyHandler implements HttpHandler {
     PortableDataType type = JobUtils.getDataType(job.dataType());
 
     //  Validate auth data is present in cookies
-    String exportAuthCookie = PortabilityApiUtils
+    String exportAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookieValue), "Export auth cookie required");
 
-    String importAuthCookie = PortabilityApiUtils
+    String importAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
 
     // We have the data, now update it unassigned so it can be assigned a worker
     // Set Job to state to pending worker assignment
     jobDao.updateJobStateToPendingWorkerAssignment(job.id()); // Now that job is complete unassiged
+    logger.debug("Updated updateJobStateToPendingWorkerAssignment, id: {}", job.id());
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
     // the worker instance key will be populated
@@ -128,22 +131,34 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
     while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
+      logger.debug("No result for lookupAssignedWithoutAuthDataJob, id: {}", job.id());
       try {
-        Sleeper.DEFAULT.sleep(5000);
+        Sleeper.DEFAULT.sleep(10000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
 
+    logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", job.id());
+
     // Ensure job is assigned and has worker key
     PortabilityJob assignedJob = jobDao.lookupAssignedWithoutAuthDataJob(job.id());
+
+    logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", job.id());
     Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
-    PublicKey publicKey = PublicPrivateKeyUtils
+    logger.debug("About to parse: {}", assignedJob.workerInstancePublicKey());
+    PublicKey publicKey = PublicPrivateKeyPairGenerator
         .parsePublicKey(assignedJob.workerInstancePublicKey());
-    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(),
-        cryptoHelper.encryptAuthData(publicKey, exportAuthCookie),
-        cryptoHelper.encryptAuthData(publicKey, importAuthCookie));
+    logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
+
+    // Encrypt the data with the assigned workers PublicKey and persist
+    Crypter crypter = CrypterFactory.create(publicKey);
+    String encryptedExportAuthData = crypter.encrypt(exportAuthCookieValue);
+    logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
+    String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
+    logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
+    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
 
     writeResponse(exchange);
   }

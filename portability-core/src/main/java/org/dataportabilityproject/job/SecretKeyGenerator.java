@@ -20,30 +20,31 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Generates session keys, e.g. for use to associate with a job and encrypt data between the client,
+ * Generates secret keys, e.g. for use to associate with a job and encrypt data between the client,
  * api, and worker.
  */
-public class SessionKeyGenerator {
-
+public class SecretKeyGenerator {
+  private static final Logger logger = LoggerFactory.getLogger(SecretKeyGenerator.class);
   public static final String ALGORITHM = "AES";
 
-  /**
-   * Generate a new symmetric key to use throughout the life of a job session.
-   */
+  /** Generate a new symmetric key to use throughout the life of a job session.  */
   public static String generateKeyAndEncode() {
     try {
       KeyGenerator generator = KeyGenerator.getInstance(ALGORITHM);
       SecretKey key = generator.generateKey();
       return BaseEncoding.base64Url().encode(key.getEncoded());
     } catch (NoSuchAlgorithmException e) {
+      logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
       throw new RuntimeException("Error creating key generator", e);
     }
   }
 
   public static SecretKey parse(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
-    return new SecretKeySpec(decoded, 0, decoded.length, SessionKeyGenerator.ALGORITHM);
+    return new SecretKeySpec(decoded, 0, decoded.length, SecretKeyGenerator.ALGORITHM);
   }
 }
