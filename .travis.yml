@@ -11,6 +11,7 @@ matrix:
         - npm install
       before_script:
         - cd client
+        - npm install -g karma
         - npm install -g @angular/cli
       script:
         - export CHROME_BIN=chromium-browser
