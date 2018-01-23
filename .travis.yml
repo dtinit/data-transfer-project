@@ -6,11 +6,10 @@ matrix:
         - '8.9'
       cache:
         directories:
-          - ./node_modules
-      install:
-        - npm install
+          - ./client/node_modules
       before_script:
         - cd client
+        - npm install
         - npm install -g karma
         - npm install -g @angular/cli
       script:
