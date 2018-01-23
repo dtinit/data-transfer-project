@@ -1,0 +1,15 @@
+rootProject.name = 'org.dataportabilityproject'
+
+include ':portability-types-client', ':portability-types-transfer'
+
+include ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
+
+include ':portability-gateway', ':portability-cloud', ':portability-transfer'
+
+include ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
+
+include ':extensions:data-transfer:portability-data-transfer-google', ':extensions:data-transfer:portability-data-transfer-microsoft'
+
+include ':portability-test-utilities'
+
+
