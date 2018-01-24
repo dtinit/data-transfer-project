@@ -19,6 +19,7 @@
     <!--New modules-->
     <module>portability-types-client</module>
     <module>portability-types-transfer</module>
+    <module>portability-test-utilities</module>
   </modules>
 
   <build>
