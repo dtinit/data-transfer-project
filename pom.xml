@@ -22,6 +22,7 @@
     <module>portability-test-utilities</module>
     <module>portability-spi-transfer</module>
     <module>portability-spi-gateway</module>
+    <module>portability-spi-cloud</module>
   </modules>
 
   <build>
