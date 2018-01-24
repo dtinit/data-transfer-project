@@ -81,7 +81,6 @@ final class ConfigureHandler implements HttpHandler {
     logger.debug("received request: {}", exchange.getRequestURI());
 
     DataTransfer dataTransfer = handleExchange(exchange);
-
     logger.debug("redirecting to: {}", dataTransfer.getNextURL());
 
     // Mark the response as type Json and send
@@ -90,6 +89,7 @@ final class ConfigureHandler implements HttpHandler {
     exchange.sendResponseHeaders(200, 0);
     objectMapper.writeValue(exchange.getResponseBody(), dataTransfer);
   }
+
 
   DataTransfer handleExchange(HttpExchange exchange) throws IOException {
     String redirect = "/error";
