@@ -15,6 +15,21 @@
     <module>portability-core</module>
     <module>portability-api</module>
     <module>portability-worker</module>
+
+    <!--New modules-->
+    <module>portability-types-client</module>
+    <module>portability-types-transfer</module>
+    <module>portability-test-utilities</module>
+    <module>portability-spi-transfer</module>
+    <module>portability-spi-gateway</module>
+    <module>portability-spi-cloud</module>
+    <module>portability-transfer</module>
+    <module>portability-cloud</module>
+    <module>portability-gateway</module>
+    <module>extensions/cloud/portability-cloud-google</module>
+    <module>extensions/cloud/portability-cloud-microsoft</module>
+    <module>extensions/data-transfer/portability-data-transfer-google</module>
+    <module>extensions/data-transfer/portability-data-transfer-microsoft</module>
   </modules>
 
   <build>
