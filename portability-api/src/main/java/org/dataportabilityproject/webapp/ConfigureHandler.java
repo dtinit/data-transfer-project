@@ -76,8 +76,8 @@ final class ConfigureHandler implements HttpHandler {
    */
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/configure"),
-        "/configure only supports POST.");
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/configure"),
+        "/_/configure only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
 
     DataTransfer dataTransfer = handleExchange(exchange);

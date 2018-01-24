@@ -59,7 +59,7 @@ export class BackendService {
   }
 
   configure(formData: DataTransferRequest) {
-    let url = '/configure';
+    let url = '/_/configure';
     this.http.post<DataTransfer>(url, JSON.stringify(formData))
         .map(res=>this.configureSuccess(res))
         .catch(err=>this.handleError(err))
