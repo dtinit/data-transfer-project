@@ -121,13 +121,14 @@ Authorization is ideally provided by OAuth, in which case a common auth code can
 
 The export interface can be implemented to allow each service's adapter code to retrieve data and return it in a common data model format.  It also allows for continuation and pagination of data:   
 	<T extends DataModel> export (ExportInformation continuationInformation)
+ExportInformation contains an optional Resource and an optional PaginationInformation.  A Resource represents a collection (such as an album or playlist) so that it is clear what collection subsequent data should be added to.  A PaginationInformation contains information about what the next page is - for example, if the job is currently looking at page 2 of a collection, then PaginationInformation should direct to page 3.
 
 The import interface allows for implementations to import or upload the data stored in a common data model format, which may include a collection of data or single data item:   
 void importItem(<T extends DataModel> object)
 
 ### Task Management
 
-This component handles starting, and managing individual data migrations.  This includes things like persisting state, handling pagination, managing retries and rate limiting (globally, per service, and per user).
+This component handles starting, and managing individual data migrations.  This includes things like persisting state, handling pagination, managing retries and rate limiting (globally, per service, and per user).  One class used for this is the JobDataCache, which can be used for storing information that should be used across multiple instances.
 
 Individual deployments are free to use any task management implementation they choose, however the reference implementation is abstracted away from the cloud layer so that providers can provide the cloud implementation of their choice (Azure, AWS, GCP, etc.) to make this as reusable as possible.
 
