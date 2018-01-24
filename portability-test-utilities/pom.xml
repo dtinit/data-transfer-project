@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>portability-test-utilities</artifactId>
-  <version>unspecified</version>
+  <version>1.0-SNAPSHOT</version>
   <dependencies>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
