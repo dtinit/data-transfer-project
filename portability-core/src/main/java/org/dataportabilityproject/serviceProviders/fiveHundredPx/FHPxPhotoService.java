@@ -35,21 +35,22 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
@@ -58,6 +59,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
+import org.dataportabilityproject.dataModels.PaginationInformation;
 import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
@@ -65,6 +67,9 @@ import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxGalle
 import org.dataportabilityproject.serviceProviders.fiveHundredPx.model
     .FHPxPhotoUploadMetadataResponse;
 import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxResponse;
+import org.dataportabilityproject.serviceProviders.fiveHundredPx.model.FHPxUserGalleryResponse;
+import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.StringPaginationToken;
 
 // TODO(olsona): address image sizing (1,2,3,...)
 // TODO(olsona): what is the 500px equivalent of "/api/v2!authuser"?  Is there one?
@@ -126,8 +131,9 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
     json.put("description", album.getDescription());
     json.put("privacy", 1); // default gallery to private
     json.put("kind", 0);
-      // Generic gallery kind, see
-      // https://github.com/500px/api-documentation/blob/master/basics/formats_and_terms.md#gallery-kinds
+    // Generic gallery kind, see
+    // https://github.com/500px/api-documentation/blob/master/basics/formats_and_terms
+    // .md#gallery-kinds
     HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
 
     FHPxGallery response = postRequest(url, content, headersMap,
@@ -136,7 +142,8 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
   }
 
   private void addPhotosToGallery(int galleryId, Collection<Integer> photoIds) throws IOException {
-    String url = String.format("v1/users/%d/galleries/%d/items", -1, galleryId); // TODO(olsona): fix user value
+    String url = String
+        .format("v1/users/%d/galleries/%d/items", -1, galleryId); // TODO(olsona): fix user value
     ImmutableMap<String, String> headersMap = ImmutableMap.of(); // TODO(olsona)
 
     Map<String, Map<String, Collection<Integer>>> json = new HashMap<>();
@@ -145,7 +152,8 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
 
     Map<String, Map<String, Object>> response = putRequest(url, content, headersMap,
         new TypeReference<Map<String, Map<String, Object>>>() {}).getResponse();
-    // We can go through this list of responses and find out which additions were successful and which weren't
+    // We can go through this list of responses and find out which additions were successful and
+    // which weren't
   }
 
   private int uploadSinglePhoto(PhotoModel photo) throws IOException {
@@ -153,7 +161,6 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
 
     String metadataUrl = "v1/photos"; // TODO(olsona)
     ImmutableMap<String, String> metadataHeadersMap = ImmutableMap.of(); // TODO(olsona)
-    // TODO(olsona): should this photo be private?
 
     Map<String, Object> json = new HashMap<>();
     json.put("name", photo.getTitle());
@@ -167,7 +174,8 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
 
     ImmutableMap<String, String> contentHeadersMap = ImmutableMap.of(); // TODO(olsona)
     String contentUrl = response.getUrl();
-    JsonHttpContent presignedPostContent = new JsonHttpContent(new JacksonFactory(), response.getPhoto());
+    JsonHttpContent presignedPostContent = new JsonHttpContent(new JacksonFactory(),
+        response.getPhoto());
     InputStreamContent imageContent = new InputStreamContent(null,
         getImageAsStream(photo.getFetchableUrl()));
     // TODO(olsona): verify this does what I think it does
@@ -175,9 +183,25 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
     MultipartContent.Part imagePart = new Part().setContent(imageContent);
     MultipartContent content = new MultipartContent().addPart(presignedPart).addPart(imagePart);
 
-    postRequest(contentUrl, content, contentHeadersMap, new TypeReference<Object>() {}); // TODO(olsona)
+    postRequest(contentUrl, content, contentHeadersMap,
+        new TypeReference<Object>() {}); // TODO(olsona)
 
     return response.getPhoto().getId();
+  }
+
+  private PhotosModelWrapper getAlbums(Optional<PaginationInformation> paginationInformation)
+      throws IOException {
+    String albumUri;
+    if (paginationInformation.isPresent()) {
+      albumUri = ((StringPaginationToken) paginationInformation.get()).getId();
+    } else {
+      String url = String.format("v1/users/%d/galleries", -1);  // TODO(olsona)
+      FHPxUserGalleryResponse userResponse = makeRequest(url,
+          new TypeReference<FHPxResponse<FHPxUserGalleryResponse>>() {}).getResponse();
+
+    }
+
+    return null;
   }
 
   // This could also be pulled out into a library.
