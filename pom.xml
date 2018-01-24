@@ -23,6 +23,7 @@
     <module>portability-spi-transfer</module>
     <module>portability-spi-gateway</module>
     <module>portability-spi-cloud</module>
+    <module>portability-transfer</module>
   </modules>
 
   <build>
