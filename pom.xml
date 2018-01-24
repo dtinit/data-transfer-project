@@ -24,6 +24,7 @@
     <module>portability-spi-gateway</module>
     <module>portability-spi-cloud</module>
     <module>portability-transfer</module>
+    <module>portability-cloud</module>
   </modules>
 
   <build>
