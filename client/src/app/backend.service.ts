@@ -18,6 +18,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable } from 'rxjs/Observable';
 import { CopyConfiguration } from './copy-configuration';
+import { DataTransferRequest } from './data-transfer-request';
+import { DataTransfer } from './data-transfer';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
 import 'rxjs/add/operator/catch';
@@ -38,6 +40,7 @@ interface setupResponse {
 @Injectable()
 export class BackendService {
   private baseEndpoint = environment.apiUrl;
+  private apiEndpoint = environment.apiPostUrl;
   constructor(private http: HttpClient) { }
 
   listDataTypes() {
@@ -55,6 +58,15 @@ export class BackendService {
       .catch(err => this.handleError(err));
   }
 
+  configure(formData: DataTransferRequest) {
+   console.log("got configure request with: " + JSON.stringify(formData))
+   let url = '/configure';
+   this.http.post<DataTransfer>(url, JSON.stringify(formData))
+      .map(res=>this.configureSuccess(res))
+      .catch(err=>this.handleError(err))
+      .subscribe();
+  }
+
   importSetup() {
     let url = `${this.baseEndpoint}importSetup`;
     return this.http.get<setupResponse>(url)
@@ -66,7 +78,6 @@ export class BackendService {
     // copySetup needs to be relative call for XSRF token to be attached
     let url = `/_/copySetup`;
     return this.http.get<setupResponse>(url)
-      .map(res => this.copySetupSuccess(res))
       .catch(err => this.handleError(err));
   }
 
@@ -126,6 +137,10 @@ export class BackendService {
     return body;
   }
 
+  private configureSuccess(res:DataTransfer){
+    window.location.href=res.nextURL;
+  }
+
   private handleError(error: HttpErrorResponse | any) {
     // In a real world app, you might use a remote logging infrastructure
     let errorMessage: string;
@@ -135,7 +150,7 @@ export class BackendService {
     } else {
       errorMessage = error.message ? error.message : error.toString();
     }
-    console.error(errorMessage);
-    return Observable.throw(errorMessage);
+    console.error(error);
+    return Observable.throw(error);
   }
 }

@@ -179,7 +179,7 @@ public class PortabilityApiUtils {
   public static boolean validateRequest(HttpExchange exchange, HttpMethods supportedMethod,
       String resourceRegex) throws IOException {
     String path = exchange.getRequestURI().getPath();
-
+    logger.debug("requested method: {}", exchange.getRequestMethod().toLowerCase());
     if (!exchange.getRequestMethod().equalsIgnoreCase(supportedMethod.name())) {
       exchange.sendResponseHeaders(404, 0);
       OutputStream writer = exchange.getResponseBody();

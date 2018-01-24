@@ -35,6 +35,7 @@ if [[ $BINARY == "worker" ]]; then
 fi
 
 mvn=$(which mvn)|| { echo "Maven (mvn) not found. Please install it and try again." >&2; exit 1; }
+gradle=$(which gradle)|| { echo "Gradle (gradle) not found. Please install it and try again." >&2; exit 1; }
 
 # Copy settings yaml files from ENV/settings/ into $SRC_DIR/src/main/resources/
 DEST_RESOURCES_PATH="$SRC_DIR/src/main/resources"
@@ -129,6 +130,8 @@ fi
 
 # Compile jar with maven.
 echo -e "\nCompiling and installing...\n"
+gradle build
+gradle publishToMavenLocal
 mvn clean install
 echo -e "Packaging...\n"
 
