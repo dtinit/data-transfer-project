@@ -43,6 +43,9 @@ module.exports = function (config) {
       reports: [ 'html', 'lcovonly' ],
       fixWebpackSourcePaths: true
     },
+    // This custom launcher is used by Travis (see .travis.yml). It launches the 
+    // version of Chrome installed in Travis' docker images. Without it, Travis
+    // can't start the default Chrome.
     customLaunchers: {
       ChromeNoSandbox: {
         base: 'Chrome',
