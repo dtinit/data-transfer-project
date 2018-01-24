@@ -20,6 +20,7 @@
     <module>portability-types-client</module>
     <module>portability-types-transfer</module>
     <module>portability-test-utilities</module>
+    <module>portability-spi-transfer</module>
   </modules>
 
   <build>
