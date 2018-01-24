@@ -22,8 +22,9 @@ describe('portability-demo App', () => {
     page = new PortabilityDemoPage();
   });
 
-  it('should display message saying app works', () => {
+  // TODO: add more thorough tests
+  it('should display Data Portability header', () => {
     page.navigateTo();
-    expect(page.getParagraphText()).toEqual('app works!');
+    expect(page.getParagraphText()).toEqual('Data Portability');
   });
 });
