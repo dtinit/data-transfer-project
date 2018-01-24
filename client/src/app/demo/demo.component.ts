@@ -18,6 +18,8 @@ import { Component, OnInit } from '@angular/core';
 import { BackendService } from '../backend.service';
 import { ServiceDescription, ServiceDescriptions } from '../service-description';
 import { PortableDataType } from '../portable-data-type';
+import { CopyConfiguration } from '../copy-configuration';
+import { DataTransferRequest } from '../data-transfer-request';
 
 
 @Component({
@@ -92,6 +94,11 @@ export class DemoComponent implements OnInit {
   // Handles selection of an export service
   onImportServiceChange() {
     this.toggleNext(true); // Ensure next is enabled anytime import is chosen
+  }
+
+  onSubmit() {
+    let formData = new DataTransferRequest(this.selectedDataType, this.selectedExportService, this.selectedImportService)
+    this.service.configure(formData);
   }
 
   // Toggle showing import

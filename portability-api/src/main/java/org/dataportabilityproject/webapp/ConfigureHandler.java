@@ -15,9 +15,10 @@
  */
 package org.dataportabilityproject.webapp;
 
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_LOCATION;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -25,7 +26,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -36,6 +37,9 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.types.client.transfer.DataTransfer;
+import org.dataportabilityproject.types.client.transfer.DataTransfer.Status;
+import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +53,7 @@ final class ConfigureHandler implements HttpHandler {
   private final JobDao jobDao;
   private final PortabilityJobFactory jobFactory;
   private final CommonSettings commonSettings;
+  private final ObjectMapper objectMapper;
 
   @Inject
   ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
@@ -59,6 +64,7 @@ final class ConfigureHandler implements HttpHandler {
     this.jobDao = jobDao;
     this.jobFactory = jobFactory;
     this.commonSettings = commonSettings;
+    this.objectMapper = new ObjectMapper();
   }
 
   /**
@@ -74,30 +80,34 @@ final class ConfigureHandler implements HttpHandler {
         "/configure only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    String redirect = handleExchange(exchange);
-    logger.debug("redirecting to: {}", redirect);
-    exchange.getResponseHeaders().set(HEADER_LOCATION, redirect);
-    exchange.sendResponseHeaders(303, -1);
+    DataTransfer dataTransfer = handleExchange(exchange);
+
+    logger.debug("redirecting to: {}", dataTransfer.getNextURL());
+
+    // Mark the response as type Json and send
+    exchange.getResponseHeaders()
+        .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
+    exchange.sendResponseHeaders(200, 0);
+    objectMapper.writeValue(exchange.getResponseBody(), dataTransfer);
   }
 
-  String handleExchange(HttpExchange exchange) throws IOException {
+  DataTransfer handleExchange(HttpExchange exchange) throws IOException {
     String redirect = "/error";
+    DataTransferRequest request = objectMapper
+        .readValue(exchange.getRequestBody(), DataTransferRequest.class);
 
     try {
-      Map<String, String> requestParameters = PortabilityApiUtils.getRequestParams(exchange);
-      requestParameters.putAll(PortabilityApiUtils.getPostParams(exchange));
-
-      String dataTypeStr = requestParameters.get(JsonKeys.DATA_TYPE);
+      String dataTypeStr = request.getTransferDataType();
       Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr),
           "Missing valid dataTypeParam: %s", dataTypeStr);
 
       PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
 
-      String exportService = requestParameters.get(JsonKeys.EXPORT_SERVICE);
+      String exportService = request.getSource();
       Preconditions.checkArgument(JobUtils.isValidService(exportService, ServiceMode.EXPORT),
           "Missing valid exportService: %s", exportService);
 
-      String importService = requestParameters.get(JsonKeys.IMPORT_SERVICE);
+      String importService = request.getDestination();
       Preconditions.checkArgument(JobUtils.isValidService(importService, ServiceMode.IMPORT),
           "Missing valid importService: %s", importService);
 
@@ -152,7 +162,9 @@ final class ConfigureHandler implements HttpHandler {
       throw e;
     }
 
-    return redirect; // to the auth url for the export service
+    return new DataTransfer(request.getSource(), request.getDestination(),
+        request.getTransferDataType(),
+        Status.INPROCESS, redirect); // to the auth url for the export service
   }
 
   /**

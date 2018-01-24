@@ -13,11 +13,12 @@ public class DataTransferTest {
     public void verifySerializeDeserialize() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        DataTransfer transfer = new DataTransfer("testSource", "testDestination", "application/json", DataTransfer.Status.INPROCESS);
+        DataTransfer transfer = new DataTransfer("testSource", "testDestination", "application/json", DataTransfer.Status.INPROCESS,"nexturltofollow");
         String serialized = objectMapper.writeValueAsString(transfer);
 
         DataTransfer deserialized = objectMapper.readValue(serialized, DataTransfer.class);
 
         Assert.assertEquals(DataTransfer.Status.INPROCESS, deserialized.getStatus());
+        Assert.assertEquals("nexturltofollow", deserialized.getNextURL());
     }
 }

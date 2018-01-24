@@ -32,19 +32,25 @@ public class DataTransfer extends AbstractDataTransfer {
     }
 
     private Status status;
+    private String nextURL;
 
     @JsonCreator
     public DataTransfer(
             @JsonProperty(value = "source", required = true) String source,
             @JsonProperty(value = "destination", required = true) String destination,
             @JsonProperty(value = "transferDataType", required = true) String transferDataType,
-            @JsonProperty(value = "status", required = true) Status status) {
+            @JsonProperty(value = "status", required = true) Status status,
+            @JsonProperty(value = "nextURL", required = true) String nextURL) {
         super(source, destination, transferDataType);
         this.status = status;
+        this.nextURL = nextURL;
     }
 
     @ApiModelProperty
     public Status getStatus() {
         return status;
     }
+
+    @ApiModelProperty
+    public String getNextURL() { return nextURL;}
 }
