@@ -21,6 +21,7 @@
     <module>portability-types-transfer</module>
     <module>portability-test-utilities</module>
     <module>portability-spi-transfer</module>
+    <module>portability-spi-gateway</module>
   </modules>
 
   <build>
