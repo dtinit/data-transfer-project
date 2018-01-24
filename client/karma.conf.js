@@ -44,7 +44,7 @@ module.exports = function (config) {
       fixWebpackSourcePaths: true
     },
     customLaunchers: {
-      Chrome_travis_ci: {
+      ChromeNoSandbox: {
         base: 'Chrome',
         flags: ['--no-sandbox']
       }
@@ -59,7 +59,7 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ((process.env.TRAVIS) ? ['Chrome_travis_ci'] : ['Chrome']),
+    browsers: ['Chrome'],
     singleRun: false
   });
 };
