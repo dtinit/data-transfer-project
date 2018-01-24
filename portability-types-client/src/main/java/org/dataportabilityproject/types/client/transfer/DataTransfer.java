@@ -32,6 +32,8 @@ public class DataTransfer extends AbstractDataTransfer {
     }
 
     private Status status;
+
+    // The URL to go to after this is returned from the API
     private String nextURL;
 
     @JsonCreator
@@ -40,7 +42,7 @@ public class DataTransfer extends AbstractDataTransfer {
             @JsonProperty(value = "destination", required = true) String destination,
             @JsonProperty(value = "transferDataType", required = true) String transferDataType,
             @JsonProperty(value = "status", required = true) Status status,
-            @JsonProperty(value = "nextURL", required = true) String nextURL) {
+            @JsonProperty(value = "nextURL") String nextURL) {
         super(source, destination, transferDataType);
         this.status = status;
         this.nextURL = nextURL;
