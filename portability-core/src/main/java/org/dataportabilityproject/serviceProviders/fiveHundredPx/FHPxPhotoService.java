@@ -107,7 +107,8 @@ final public class FHPxPhotoService implements Exporter<PhotosModelWrapper>,
   public void importItem(PhotosModelWrapper wrapper) throws IOException {
     // TODO(olsona): What are we going to do about photo order in albums/galleries?
 
-    Multimap<String, Integer> galleriesToPhotosMap = ArrayListMultimap.create();
+    Multimap<String, Integer> galleriesToPhotosMap = ArrayListMultimap.create(); // TODO(olsona): pagination (JobServiceCache)
+    // TODO(olsona): make map between old gallery id and new album id and store in JobServiceCache
     // Photos are uploaded first.
     for (PhotoModel photo : wrapper.getPhotos()) {
       int photoKey = uploadSinglePhoto(photo);
