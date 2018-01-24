@@ -15,6 +15,9 @@
     <module>portability-core</module>
     <module>portability-api</module>
     <module>portability-worker</module>
+
+    <!--New modules-->
+    <module>portability-types-client</module>
   </modules>
 
   <build>
