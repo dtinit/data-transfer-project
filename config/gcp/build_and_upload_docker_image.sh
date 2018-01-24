@@ -44,6 +44,7 @@ BINARY=$1
 ENV=$2
 PROJECT_ID_SUFFIX=$3
 SRC_DIR="portability-$BINARY"
+GIT_COMMIT=$(git log -1 --format=%h)
 DEBUG_PORT=5005
 if [[ $BINARY == "worker" ]]; then
   DEBUG_PORT=5006
@@ -107,12 +108,15 @@ EXPOSE 5005/tcp"
 fi
 
 # And onto generating the dockerfile...
+# Tag it with the git commit. To find the git commit of an image
+# once uploaded to GCP, pull the image and 'docker inspect' it
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
 COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
 $LOCAL_DEBUG_SETTINGS
 ENTRYPOINT ["java", $OPTIONAL_DEBUG_FLAG "-jar", "/$BINARY.jar"]
 EXPOSE 8080/tcp
+LABEL git_commit=$GIT_COMMIT
 EOF
 
 echo -e "\nGenerated Dockerfile:
