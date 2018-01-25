@@ -37,8 +37,8 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
-import org.dataportabilityproject.types.client.transfer.DataTransfer;
-import org.dataportabilityproject.types.client.transfer.DataTransfer.Status;
+import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
+import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,18 +80,18 @@ final class ConfigureHandler implements HttpHandler {
         "/_/configure only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    DataTransfer dataTransfer = handleExchange(exchange);
-    logger.debug("redirecting to: {}", dataTransfer.getNextURL());
+    DataTransferResponse dataTransferResponse = handleExchange(exchange);
+    logger.debug("redirecting to: {}", dataTransferResponse.getNextURL());
 
     // Mark the response as type Json and send
     exchange.getResponseHeaders()
         .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
-    objectMapper.writeValue(exchange.getResponseBody(), dataTransfer);
+    objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
   }
 
 
-  DataTransfer handleExchange(HttpExchange exchange) throws IOException {
+  DataTransferResponse handleExchange(HttpExchange exchange) throws IOException {
     String redirect = "/error";
     DataTransferRequest request = objectMapper
         .readValue(exchange.getRequestBody(), DataTransferRequest.class);
@@ -162,7 +162,7 @@ final class ConfigureHandler implements HttpHandler {
       throw e;
     }
 
-    return new DataTransfer(request.getSource(), request.getDestination(),
+    return new DataTransferResponse(request.getSource(), request.getDestination(),
         request.getTransferDataType(),
         Status.INPROCESS, redirect); // to the auth url for the export service
   }
