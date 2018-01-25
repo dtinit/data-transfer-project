@@ -20,21 +20,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-/* Test for DataTransferRequest */
-public class DataTransferRequestTest {
+/* Test for DataTransferResponse */
+public class DataTransferResponseTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
 
-    String serialized = objectMapper.writeValueAsString(
-        new DataTransferRequest("testSource", "testDestination", "application/json"));
+    DataTransferResponse transfer = new DataTransferResponse("testSource", "testDestination",
+        "application/json",
+        DataTransferResponse.Status.INPROCESS, "nexturltofollow");
+    String serialized = objectMapper.writeValueAsString(transfer);
 
-    DataTransferRequest deserialized = objectMapper
-        .readValue(serialized, DataTransferRequest.class);
+    DataTransferResponse deserialized = objectMapper
+        .readValue(serialized, DataTransferResponse.class);
 
-    Assert.assertEquals("testSource", deserialized.getSource());
-    Assert.assertEquals("testDestination", deserialized.getDestination());
-    Assert.assertEquals("application/json", deserialized.getTransferDataType());
+    Assert.assertEquals(DataTransferResponse.Status.INPROCESS, deserialized.getStatus());
+    Assert.assertEquals("nexturltofollow", deserialized.getNextUrl());
   }
 }
