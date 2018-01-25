@@ -307,13 +307,16 @@ else
   exit 0
 fi
 
-print_step "Creating credentials for service account to access GCP APIs"
+print_step "Creating credentials for service account to access GCP APIs. Both the API and worker
+pools, which we are about to create below, will import these credentials in create_backend_pool."
 gcloud iam service-accounts keys create \
     /tmp/service_account_creds.json \
     --iam-account=${SERVICE_ACCOUNT}
 
+# Create the API pool
 create_backend_pool "api"
 
+# Create the worker pool
 create_backend_pool "worker"
 
 rm /tmp/service_account_creds.json
