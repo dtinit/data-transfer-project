@@ -136,6 +136,10 @@ create_backend_pool() { # args: ${1}: backend name, "api" or "worker"
   gcloud compute instance-groups set-named-ports ${INSTANCE_GROUP_NAME} \
   --named-ports=http:${API_NODE_PORT} --zone=${ZONE}
 
+  print_step "Creating health check for backend service and instance group"
+  gcloud compute http-health-checks create portability-health-check --port=${API_NODE_PORT} \
+  --request-path=/healthz --port=${HEALTH_CHECK_PORT}
+
   # TODO: Uncomment as soon as 'gcloud compute instance-groups managed set-autohealing' is GA. It is
   # currently in alpha (gcloud alpha compute) which requires project to be whitelisted. For now, have
   # to do this step manually. There is an instruction for this at the end.
@@ -319,10 +323,8 @@ create_backend_pool "api"
 # Create the worker pool
 create_backend_pool "worker"
 
+# Clean up service account creds so we don't leave these lying around on our local machines
 rm /tmp/service_account_creds.json
-print_step "Creating health check"
-gcloud compute http-health-checks create portability-health-check --port=${API_NODE_PORT} \
---request-path=/healthz --port=${HEALTH_CHECK_PORT}
 
 print_step "Creating load balancer"
 gcloud compute url-maps create ${LB_NAME} \
