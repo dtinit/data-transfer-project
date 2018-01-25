@@ -1,11 +1,11 @@
 <form name="importForm" #form>
   <div class="form-group">
     Moving
-    <span class="fancy-u">{{config.dataType}}</span>
+    <span class="fancy-u">{{dataTransferResponse.transferDataType}}</span>
     from
-    <span class="fancy-u">{{config.exportService}}</span>
+    <span class="fancy-u">{{dataTransferResponse.source}}</span>
     to
-    <span class="fancy-u">{{config.importService}}</span>
+    <span class="fancy-u">{{dataTransferResponse.destination}}</span>
   </div>
   <button type="submit" (click)="authorize()"
         class="btn btn-primary"
