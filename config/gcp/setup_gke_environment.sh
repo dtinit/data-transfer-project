@@ -62,6 +62,7 @@ create_backend_pool() { # args: ${1}: backend name, "api" or "worker"
     echo -e "Invalid backend ${BACKEND}"
     exit 1
   fi
+  echo -e "Creating ${BACKEND} pool"
   NUM_INSTANCES=${NUM_WORKER_INSTANCES}
   if [[ ${BACKEND} == "api" ]]; then
     NUM_INSTANCES=${NUM_API_INSTANCES}
@@ -292,7 +293,6 @@ gcloud kms keyrings create portability_secrets --location global
 # Currently only one purposes is supported: "encryption". Can't have separate encrypt/decrypt keys.
 gcloud kms keys create portability_secrets_key --location global --keyring portability_secrets \
 --purpose encryption
-END
 
 KUBECTL_CONTEXT=$(kubectl config current-context)
 print_step
@@ -313,7 +313,7 @@ gcloud iam service-accounts keys create \
     --iam-account=${SERVICE_ACCOUNT}
 
 create_backend_pool "api"
-END
+
 create_backend_pool "worker"
 
 rm /tmp/service_account_creds.json
