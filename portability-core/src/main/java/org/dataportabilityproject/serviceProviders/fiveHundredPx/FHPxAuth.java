@@ -54,8 +54,8 @@ public class FHPxAuth implements OfflineAuthDataGenerator {
 
     // TODO(olsona): figure out if we need permissions, as in SmugMugAuth
     String requestTokenUrl = "https://api.500px.com/v1/oauth/request_token";
-    String accessTokenUrl = ""; // TODO(olsona)
-    String authWebsiteUrl = ""; // TODO(olsona)
+    String accessTokenUrl = "https://api.500px.com/v1/oauth/access_token";
+    String authWebsiteUrl = "https://api.500px.com/v1/oauth/authorize";
     OAuthProvider provider = new DefaultOAuthProvider(requestTokenUrl, accessTokenUrl, authWebsiteUrl);
 
     String authUrl;
