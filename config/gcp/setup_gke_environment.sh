@@ -74,19 +74,19 @@ create_backend_pool() { # args: ${1}: backend name, "api" or "worker"
 
   print_step "Creating a Kubernetes deployment"
   IMAGE="gcr.io/$PROJECT_ID/portability-${BACKEND}:v1"
-  # Save a copy of api-deployment.yaml before we substitute in our vars
+  # Save a copy of the deployment file before we substitute in our vars
   DEPLOYMENT_YAML_FILE_PATH="../k8s/${BACKEND}-deployment.yaml"
   TEMP_DEPLOYMENT_YAML_FILE_PATH="../k8s/temp-${BACKEND}-deployment.yaml"
   cp ${DEPLOYMENT_YAML_FILE_PATH} ${TEMP_DEPLOYMENT_YAML_FILE_PATH}
-  # Substitute in the current image to our deployment yaml
+  # Substitute in the current image to our deployment file
   sed -i "s|IMAGE # Replaced by script|$IMAGE|g" ${DEPLOYMENT_YAML_FILE_PATH}
   sed -i "s|PROJECT-ID # Replaced by script|$PROJECT_ID|g" ${DEPLOYMENT_YAML_FILE_PATH}
   kubectl create -f ${DEPLOYMENT_YAML_FILE_PATH}
-  # Restore api-deployment.yaml to previous state
+  # Restore deployment file to previous state
   mv ${TEMP_DEPLOYMENT_YAML_FILE_PATH} ${DEPLOYMENT_YAML_FILE_PATH}
 
-  print_step "Importing the service account credentials as a Kubernetes Secret"
-  kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/key.json
+  print_step "Importing the service account credentials, created earlier, as a Kubernetes Secret"
+  kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/service_account_creds.json
 
   if [[ ${BACKEND} != "api" ]]; then
     echo -e "Done creating ${BACKEND} pool!"
@@ -309,14 +309,14 @@ fi
 
 print_step "Creating credentials for service account to access GCP APIs"
 gcloud iam service-accounts keys create \
-    /tmp/key.json \
+    /tmp/service_account_creds.json \
     --iam-account=${SERVICE_ACCOUNT}
 
 create_backend_pool "api"
 END
 create_backend_pool "worker"
 
-rm /tmp/key.json
+rm /tmp/service_account_creds.json
 print_step "Creating health check"
 gcloud compute http-health-checks create portability-health-check --port=${API_NODE_PORT} \
 --request-path=/healthz --port=${HEALTH_CHECK_PORT}
