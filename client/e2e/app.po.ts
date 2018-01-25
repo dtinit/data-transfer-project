@@ -21,6 +21,6 @@ export class PortabilityDemoPage {
   }
 
   getParagraphText() {
-    return element(by.css('app-root h1')).getText();
+    return element(by.css('.portability-header')).getText();
   }
 }
