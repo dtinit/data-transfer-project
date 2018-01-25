@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.dataportabilityproject.spi.transfer.types.ContinuationDataTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2018-01-25T19:09:42" hostname="olsona.chi.corp.google.com" time="0.221">
+  <properties/>
+  <testcase name="verifySerializeDeserialize" classname="org.dataportabilityproject.spi.transfer.types.ContinuationDataTest" time="0.221"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

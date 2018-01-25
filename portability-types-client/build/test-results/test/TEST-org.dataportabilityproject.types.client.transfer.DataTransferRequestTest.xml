@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.dataportabilityproject.types.client.transfer.DataTransferRequestTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2018-01-25T19:09:43" hostname="olsona.chi.corp.google.com" time="0.003">
+  <properties/>
+  <testcase name="verifySerializeDeserialize" classname="org.dataportabilityproject.types.client.transfer.DataTransferRequestTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

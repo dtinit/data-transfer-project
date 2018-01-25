@@ -33,6 +33,7 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JWTTokenManager;
 import org.dataportabilityproject.job.TokenManager;
+import org.dataportabilityproject.serviceProviders.fiveHundredPx.FHPxModule;
 import org.dataportabilityproject.serviceProviders.flickr.FlickrModule;
 import org.dataportabilityproject.serviceProviders.google.GoogleModule;
 import org.dataportabilityproject.serviceProviders.instagram.InstagramModule;
@@ -55,6 +56,7 @@ public final class PortabilityCoreModule extends AbstractModule {
     install(new MicrosoftModule());
     install(new RememberTheMilkModule());
     install(new SmugmugModule());
+    install(new FHPxModule());
 
     install(new GoogleCloudModule());
   }
