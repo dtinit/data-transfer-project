@@ -26,7 +26,7 @@ spec:
           secretName: portability-service-account-creds
       containers:
       - name: portability-worker
-        image: gcr.io/world-takeout-qa/portability-worker:v1
+        image: IMAGE # Replaced by script
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: portability-service-account-key
