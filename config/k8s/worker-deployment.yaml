@@ -1,0 +1,46 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: portability
+  name: portability-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: portability
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: portability
+    spec:
+      volumes:
+      - name: portability-service-account-key
+        secret:
+          secretName: portability-service-account-creds
+      containers:
+      - name: portability-worker
+        image: gcr.io/world-takeout-qa/portability-worker:v1
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: portability-service-account-key
+          mountPath: /var/secrets/portability-service-account-key
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/portability-service-account-key/key.json
+        - name: GOOGLE_PROJECT_ID
+          value: world-takeout-qa
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
