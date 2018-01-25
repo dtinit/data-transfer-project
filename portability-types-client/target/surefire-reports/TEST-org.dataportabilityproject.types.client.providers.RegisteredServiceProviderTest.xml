@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.dataportabilityproject.types.client.providers.RegisteredServiceProviderTest" time="0.005" tests="1" errors="0" skipped="0" failures="0">
+<testsuite name="org.dataportabilityproject.types.client.providers.RegisteredServiceProviderTest" time="0.006" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="sun.boot.library.path" value="/usr/local/buildtools/java/jdk8-google-v7-64/jre/lib/amd64"/>
@@ -59,5 +59,5 @@
     <property name="sun.desktop" value="gnome"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase name="verifySerializeDeserialize" classname="org.dataportabilityproject.types.client.providers.RegisteredServiceProviderTest" time="0.005"/>
+  <testcase name="verifySerializeDeserialize" classname="org.dataportabilityproject.types.client.providers.RegisteredServiceProviderTest" time="0.006"/>
 </testsuite>

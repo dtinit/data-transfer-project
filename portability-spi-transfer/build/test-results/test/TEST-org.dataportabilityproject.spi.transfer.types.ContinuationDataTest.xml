@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.dataportabilityproject.spi.transfer.types.ContinuationDataTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2018-01-25T20:43:09" hostname="olsona.chi.corp.google.com" time="0.205">
+<testsuite name="org.dataportabilityproject.spi.transfer.types.ContinuationDataTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2018-01-25T22:16:54" hostname="olsona.chi.corp.google.com" time="0.215">
   <properties/>
-  <testcase name="verifySerializeDeserialize" classname="org.dataportabilityproject.spi.transfer.types.ContinuationDataTest" time="0.205"/>
+  <testcase name="verifySerializeDeserialize" classname="org.dataportabilityproject.spi.transfer.types.ContinuationDataTest" time="0.215"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
