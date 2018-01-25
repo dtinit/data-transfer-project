@@ -1,4 +1,49 @@
-language: java
+#
+# Copyright 2018 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+matrix:
+  include:
+    # language: java causes Travis to automatically run Maven and/or Gradle tests based on the
+    # presence of the appropriate build files.
+    # During the transition from Maven -> Gradle, manually run both; Travis would just run
+    # Gradle by default if both are present
+    - language: java # Maven. TODO: Remove this once we are fully on Gradle
+      before_script:
+        - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      script:
+        - mvn test -B
+    - language: java # Gradle (used automatically)
+    # The angularjs flow below is more customized. There is some nodejs setup to do as well as
+    # configuration to use the version of Chrome that is installed in Travis images.
+    - language: node_js
+      node_js:
+        - '8.9'
+      cache:
+        directories:
+          - ./client/node_modules
+      before_script:
+        - cd client
+        - npm install
+        - npm install -g karma
+        - npm install -g @angular/cli
+        - export CHROME_BIN=chromium-browser
+        - export DISPLAY=:99.0
+        - sh -e /etc/init.d/xvfb start
+      script:
+        - ng test --single-run --no-progress --browser=ChromeNoSandbox --environment local
+        - ng e2e --no-progress --config=protractor-ci.conf.js --environment local
 notifications:
   slack:
     secure: U+Xfg5/isDKa6JWpy98kauwcirWDAGlmVYcqBRkNBztH6uKvpJQX94Ftj3ciRyWU4f2Dm+fmBRtMnCsRBOied7XK8r+J/MFL7E+jP3FHT/3v/sRROhS15nX3vPPJDVMpU5G3UDe2d1n8VE6RyK6a6bGvOaFFBnt9WLdyoKKmM2gmR6ie/iBIJlQdYy4nMuu8Q0ExDuEX6gWCAyCzl9iC3uUHHOPCCuQPiEDD9zN17UYI+kbcYNjIbVJItyjGG9W3oBcVZm7Rn8mpB+kaV33iioMqz6oUC5vzPjwDw0vVk9AivZH1GQDhDvuJMFvFgJ5w7lj+rV6J6c9RvpHpMTZGFy4Fx7HoaTukqO53g74Vz63c9ql/L+hRXbkO7pkfB4PQJSpdF0Dc7Zq8hRZMcoMo6YW0+zYH0PtSESMo4+FK8WtmBtRwKcWCAaPdsDsYtnhj3ezjLijEqeKuk98AaV11Dik+C6/xmhmmfWqe+JizmSnCrRQz4h7H/2vsX8KSDip8hftvimjRkx0nYLsEwEjy7k5QmFsJ8zK47XJPUxiEimW86xoOP9Jesvtx+Ns+vRNa6wqXok2WM5cwD2oYQ7xdopBh98rQdrQiKnwFU6NE8us1tyKNwnJ2xuNrXbt+7PcJodCXTIlOkQIIAGUQx2CAR4TLAk564e/hqD+GW9102zw=

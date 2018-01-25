@@ -1,5 +1,5 @@
 <div class="text-left portability-form">
-  <form name="configForm" #form action="{{url}}/configure" method="post">
+  <form name="transferRequestForm" (ngSubmit)="onSubmit()">
     <div class="form-group">
       I want to move
       <div class="fancy-select">
@@ -57,15 +57,15 @@
       </div>
     </div>
 
-
-    <button [disabled]="!enableNext"
-            type="submit" (click)="form.submit()"
+    <button type="submit"
+            [disabled]="!enableNext"
             class="btn btn-primary"
             title="Clicking this will start the authorization flow">
-      Authorize
+    Authorize
     </button>
   </form>
 </div>
+
 
 <div *ngIf="error_text" class="alert alert-danger" role="alert">
   <strong>Oh snap!</strong> {{ error_text }}

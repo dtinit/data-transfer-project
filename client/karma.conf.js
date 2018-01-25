@@ -39,9 +39,21 @@ module.exports = function (config) {
     mime: {
       'text/x-typescript': ['ts','tsx']
     },
+    // The default timeout, 10000, was sometimes causing Karma to time out with:
+    // "Disconnected (1 times), because no message in 10000 ms."
+    browserNoActivityTimeout: 60000,
     coverageIstanbulReporter: {
       reports: [ 'html', 'lcovonly' ],
       fixWebpackSourcePaths: true
+    },
+    // This custom launcher is used by Travis (see .travis.yml). It launches the 
+    // version of Chrome installed in Travis' docker images. Without it, Travis
+    // can't start the default Chrome.
+    customLaunchers: {
+      ChromeNoSandbox: {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
     },
     angularCli: {
       environment: 'dev'

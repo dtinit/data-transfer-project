@@ -147,7 +147,7 @@ abstract class SetupHandler implements HttpHandler {
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
-    // This is done in ConfigureHandler as well for export services
+    // This is done in DataTransferHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
       // Auth data is different for import and export. This is only valid for the /_/importSetup
       // page,
