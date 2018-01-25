@@ -39,7 +39,9 @@ module.exports = function (config) {
     mime: {
       'text/x-typescript': ['ts','tsx']
     },
-    browserNoActivityTimeout: 100, // TODO: increase this
+    // The default timeout, 10000, was sometimes causing Karma to time out with:
+    // "Disconnected (1 times), because no message in 10000 ms."
+    browserNoActivityTimeout: 60000,
     coverageIstanbulReporter: {
       reports: [ 'html', 'lcovonly' ],
       fixWebpackSourcePaths: true
