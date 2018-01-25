@@ -40,7 +40,7 @@ public class PortabilityApiModule extends AbstractModule {
     mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
     mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
 
-    mapbinder.addBinding("/_/configure").to(ConfigureHandler.class);
+    mapbinder.addBinding("/_/DataTransfer").to(DataTransferHandler.class);
     mapbinder.addBinding("/_/listDataTypes").to(ListDataTypesHandler.class);
     mapbinder.addBinding("/_/listServices").to(ListServicesHandler.class);
     mapbinder.addBinding("/_/startCopy").to(StartCopyHandler.class);

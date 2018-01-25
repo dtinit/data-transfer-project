@@ -7,19 +7,19 @@ import org.junit.Test;
 /**
  *
  */
-public class DataTransferTest {
+public class DataTransferResponseTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
 
-    DataTransfer transfer = new DataTransfer("testSource", "testDestination", "application/json",
-        DataTransfer.Status.INPROCESS, "nexturltofollow");
+    DataTransferResponse transfer = new DataTransferResponse("testSource", "testDestination", "application/json",
+        DataTransferResponse.Status.INPROCESS, "nexturltofollow");
     String serialized = objectMapper.writeValueAsString(transfer);
 
-    DataTransfer deserialized = objectMapper.readValue(serialized, DataTransfer.class);
+    DataTransferResponse deserialized = objectMapper.readValue(serialized, DataTransferResponse.class);
 
-    Assert.assertEquals(DataTransfer.Status.INPROCESS, deserialized.getStatus());
-    Assert.assertEquals("nexturltofollow", deserialized.getNextURL());
+    Assert.assertEquals(DataTransferResponse.Status.INPROCESS, deserialized.getStatus());
+    Assert.assertEquals("nexturltofollow", deserialized.getNextUrl());
   }
 }

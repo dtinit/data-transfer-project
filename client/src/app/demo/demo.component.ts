@@ -98,7 +98,7 @@ export class DemoComponent implements OnInit {
 
   onSubmit() {
     let formData = new DataTransferRequest(this.selectedDataType, this.selectedExportService, this.selectedImportService)
-    this.service.configure(formData);
+    this.service.dataTransfer(formData);
   }
 
   // Toggle showing import

@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
  * A transfer operation in the system.
  */
 @ApiModel(description = "A transfer operation in the system")
-public class DataTransfer extends AbstractDataTransfer {
+public class DataTransferResponse extends AbstractDataTransfer {
 
     @ApiModel
     public enum Status {
@@ -34,18 +34,19 @@ public class DataTransfer extends AbstractDataTransfer {
     private Status status;
 
     // The URL to go to after this is returned from the API
-    private String nextURL;
+    private String nextUrl;
+
 
     @JsonCreator
-    public DataTransfer(
+    public DataTransferResponse(
             @JsonProperty(value = "source", required = true) String source,
             @JsonProperty(value = "destination", required = true) String destination,
             @JsonProperty(value = "transferDataType", required = true) String transferDataType,
             @JsonProperty(value = "status", required = true) Status status,
-            @JsonProperty(value = "nextURL") String nextURL) {
+            @JsonProperty(value = "nextUrl") String nextUrl) {
         super(source, destination, transferDataType);
         this.status = status;
-        this.nextURL = nextURL;
+        this.nextUrl = nextUrl;
     }
 
     @ApiModelProperty
@@ -54,5 +55,5 @@ public class DataTransfer extends AbstractDataTransfer {
     }
 
     @ApiModelProperty
-    public String getNextURL() { return nextURL;}
+    public String getNextUrl() { return nextUrl;}
 }

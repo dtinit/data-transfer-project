@@ -19,7 +19,7 @@ import { HttpClient, HttpResponse, HttpParams, HttpErrorResponse } from '@angula
 import { Observable } from 'rxjs/Observable';
 import { CopyConfiguration } from './copy-configuration';
 import { DataTransferRequest } from './data-transfer-request';
-import { DataTransfer } from './data-transfer';
+import { DataTransferResponse } from './data-transfer-response';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
 import 'rxjs/add/operator/catch';
@@ -58,9 +58,9 @@ export class BackendService {
       .catch(err => this.handleError(err));
   }
 
-  configure(formData: DataTransferRequest) {
-    let url = '/_/configure';
-    this.http.post<DataTransfer>(url, JSON.stringify(formData))
+  dataTransfer(formData: DataTransferRequest) {
+    let url = '/_/DataTransfer';
+    this.http.post<DataTransferResponse>(url, JSON.stringify(formData))
         .map(res=>this.configureSuccess(res))
         .catch(err=>this.handleError(err))
         .subscribe();
@@ -136,11 +136,12 @@ export class BackendService {
     return body;
   }
 
-  private configureSuccess(res:DataTransfer){
+  private configureSuccess(res:DataTransferResponse){
     // Redirect to the export authorization flow after configure.
     // this should be returned from the configure request and is checked
     // upon creation of the DataTransfer object.
-    window.location.href=res.nextURL;
+    console.log("DataTransferResponse, redirecting to: " + res.nextUrl)
+    window.location.href = res.nextUrl;
   }
 
   private handleError(error: HttpErrorResponse | any) {

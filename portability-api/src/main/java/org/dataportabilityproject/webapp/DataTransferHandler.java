@@ -46,9 +46,9 @@ import org.slf4j.LoggerFactory;
 /**
  * HttpHandler for the Configure service
  */
-final class ConfigureHandler implements HttpHandler {
+final class DataTransferHandler implements HttpHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(ConfigureHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final PortabilityJobFactory jobFactory;
@@ -56,7 +56,7 @@ final class ConfigureHandler implements HttpHandler {
   private final ObjectMapper objectMapper;
 
   @Inject
-  ConfigureHandler(ServiceProviderRegistry serviceProviderRegistry,
+  DataTransferHandler(ServiceProviderRegistry serviceProviderRegistry,
       JobDao jobDao,
       PortabilityJobFactory jobFactory,
       CommonSettings commonSettings) {
@@ -76,12 +76,12 @@ final class ConfigureHandler implements HttpHandler {
    */
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/configure"),
-        "/_/configure only supports POST.");
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/DataTransfer"),
+        "/_/DataTransfer only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
 
     DataTransferResponse dataTransferResponse = handleExchange(exchange);
-    logger.debug("redirecting to: {}", dataTransferResponse.getNextURL());
+    logger.debug("redirecting to: {}", dataTransferResponse.getNextUrl());
 
     // Mark the response as type Json and send
     exchange.getResponseHeaders()

@@ -15,10 +15,9 @@
 */
 
 // Represents the configuration for a data transfer job
-export class DataTransfer {
-  constructor (
-  public transferDataType: string,
-  public source: string,
-  public destination: string,
-  public nextUrl: string){}
+export interface DataTransferResponse {
+  transferDataType: string;
+  source: string;
+  destination: string;
+  nextUrl: string
 }
