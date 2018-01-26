@@ -112,7 +112,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   @Override
-  public synchronized void startTransaction() throws IOException {
+  public void startTransaction() throws IOException {
     if (currentTransaction != null) {
       throw new IOException("Already started a transaction. Can only do one transaction at a time."
           + " Please commit or rollback the current transaction before starting a new one.");
@@ -162,46 +162,42 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return builder.build();
   }
 
-<<<<<<< HEAD
-  private Map<String, Object> getProperties(Entity entity) {
-=======
-    private static Map<String, Object> getProperties(Entity entity) {
->>>>>>> Fix race condition so only one worker may poll a given job
-      if (entity == null) return null;
-      ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-      for (String property : entity.getNames()) {
-        // builder.put(property, entity.getValue(property));
-        if (entity.getValue(property) instanceof StringValue) {
-          builder.put(property, (String) entity.getString(property));
-        } else if (entity.getValue(property) instanceof LongValue) {
-          // This conversion is safe because of integer to long conversion above
-          builder.put(property, new Long(entity.getLong(property)).intValue());
-        } else if (entity.getValue(property) instanceof DoubleValue) {
-          builder.put(property, (Double) entity.getDouble(property));
-        } else if (entity.getValue(property) instanceof BooleanValue) {
-          builder.put(property, (Boolean) entity.getBoolean(property));
-        } else if (entity.getValue(property) instanceof TimestampValue) {
-          builder.put(property, (Timestamp) entity.getTimestamp(property));
-        } else {
-          Blob blob = entity.getBlob(property);
-          Object obj = null;
-          try {
-            try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-              try {
-                obj = in.readObject();
-              } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-              }
+  private static Map<String, Object> getProperties(Entity entity) {
+    if (entity == null) return null;
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+    for (String property : entity.getNames()) {
+      // builder.put(property, entity.getValue(property));
+      if (entity.getValue(property) instanceof StringValue) {
+        builder.put(property, (String) entity.getString(property));
+      } else if (entity.getValue(property) instanceof LongValue) {
+        // This conversion is safe because of integer to long conversion above
+        builder.put(property, new Long(entity.getLong(property)).intValue());
+      } else if (entity.getValue(property) instanceof DoubleValue) {
+        builder.put(property, (Double) entity.getDouble(property));
+      } else if (entity.getValue(property) instanceof BooleanValue) {
+        builder.put(property, (Boolean) entity.getBoolean(property));
+      } else if (entity.getValue(property) instanceof TimestampValue) {
+        builder.put(property, (Timestamp) entity.getTimestamp(property));
+      } else {
+        Blob blob = entity.getBlob(property);
+        Object obj = null;
+        try {
+          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+            try {
+              obj = in.readObject();
+            } catch (ClassNotFoundException e) {
+              e.printStackTrace();
             }
-          } catch (IOException e) {
-            e.printStackTrace();
           }
-          builder.put(property, obj); // BlobValue
+        } catch (IOException e) {
+          e.printStackTrace();
         }
+        builder.put(property, obj); // BlobValue
       }
-
-      return builder.build();
     }
+
+    return builder.build();
+  }
 
   private Key getKey(String key) {
     return datastore.newKeyFactory().setKind(KIND).newKey(key);
