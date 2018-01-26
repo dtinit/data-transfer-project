@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * HTTP Handler for the listDataTypes service
  */
 final class ListDataTypesHandler implements HttpHandler {
+  public static final String PATH = "/_/listDataTypes";
   private final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
@@ -47,8 +48,8 @@ final class ListDataTypesHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/listDataTypes"),
-        "This resource only supports GET.");
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, PATH),
+        PATH + " only supports GET.");
 
     // Mark the response as type Json
     Headers headers = exchange.getResponseHeaders();

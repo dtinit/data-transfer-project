@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 final class SimpleLoginSubmitHandler implements HttpHandler {
 
+  public static final String PATH = "/simpleLoginSubmit";
   private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -61,7 +62,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/simpleLoginSubmit");
+    PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH);
 
     String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);

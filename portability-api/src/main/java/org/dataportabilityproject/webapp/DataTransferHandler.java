@@ -48,6 +48,8 @@ import org.slf4j.LoggerFactory;
  */
 final class DataTransferHandler implements HttpHandler {
 
+  public static final String PATH = "/_/DataTransfer";
+
   private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
@@ -76,8 +78,8 @@ final class DataTransferHandler implements HttpHandler {
    */
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/DataTransfer"),
-        "/_/DataTransfer only supports POST.");
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH),
+        PATH + " only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
 
     DataTransferResponse dataTransferResponse = handleExchange(exchange);

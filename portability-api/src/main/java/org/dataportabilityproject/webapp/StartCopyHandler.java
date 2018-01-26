@@ -47,7 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class StartCopyHandler implements HttpHandler {
-
+  public final static String PATH = "/_/startCopy";
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -74,7 +74,7 @@ final class StartCopyHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH));
 
     String jobId = PortabilityApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
 

@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for callbacks from Oauth1 authorization flow.
  */
 final class OauthCallbackHandler implements HttpHandler {
+  public static final String PATH = "/callback1/";
 
   private final Logger logger = LoggerFactory.getLogger(OauthCallbackHandler.class);
 
@@ -64,7 +65,8 @@ final class OauthCallbackHandler implements HttpHandler {
 
   @Override
   public void handle(HttpExchange exchange) throws IOException {
-    PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/callback1/.*");
+    // Add .* to resource path as this path will be of the form /callback/SERVICEPROVIDER
+    PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, PATH+".*");
     logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);

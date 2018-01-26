@@ -22,6 +22,8 @@ import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.PortabilityCoreModule;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
+import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
+
 public class PortabilityApiModule extends AbstractModule {
 
   @Override
@@ -38,14 +40,13 @@ public class PortabilityApiModule extends AbstractModule {
     // all be handled by the ListServicesHandler below. To prevent this, each handler below should
     // validate the request URI that it is getting passed in.
     mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
+    mapbinder.addBinding(DataTransferHandler.PATH).to(DataTransferHandler.class);
     mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
-
-    mapbinder.addBinding("/_/DataTransfer").to(DataTransferHandler.class);
-    mapbinder.addBinding("/_/listDataTypes").to(ListDataTypesHandler.class);
-    mapbinder.addBinding("/_/listServices").to(ListServicesHandler.class);
-    mapbinder.addBinding("/_/startCopy").to(StartCopyHandler.class);
-    mapbinder.addBinding("/callback/").to(Oauth2CallbackHandler.class);
-    mapbinder.addBinding("/callback1/").to(OauthCallbackHandler.class);
-    mapbinder.addBinding("/simpleLoginSubmit").to(SimpleLoginSubmitHandler.class);
+    mapbinder.addBinding(ListDataTypesHandler.PATH).to(ListDataTypesHandler.class);
+    mapbinder.addBinding(ListServicesHandler.PATH).to(ListServicesHandler.class);
+    mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
+    mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
+    mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
+    mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
   }
 }
