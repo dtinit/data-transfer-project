@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 final class StartCopyHandler implements HttpHandler {
 
+  public final static String PATH = "/_/startCopy";
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -74,7 +75,7 @@ final class StartCopyHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/startCopy"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH));
 
     String jobId = PortabilityApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
 
@@ -113,12 +114,14 @@ final class StartCopyHandler implements HttpHandler {
     String exportAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookieValue), "Export auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookieValue),
+            "Export auth cookie required");
 
     String importAuthCookieValue = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
+        .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue),
+            "Import auth cookie required");
 
     // We have the data, now update it unassigned so it can be assigned a worker
     // Set Job to state to pending worker assignment
@@ -158,7 +161,8 @@ final class StartCopyHandler implements HttpHandler {
     logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
     String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
     logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
-    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData, encryptedImportAuthData);
+    jobDao.updateJobStateToAssigneWithAuthData(assignedJob.id(), encryptedExportAuthData,
+        encryptedImportAuthData);
 
     writeResponse(exchange);
   }

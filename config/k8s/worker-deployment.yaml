@@ -14,16 +14,19 @@
 # limitations under the License.
 #
 # -----------------------------------------------------------------------
-# Kubernetes deployment for APIs.
+# Kubernetes deployment for workers. Workers each process one job, and
+# terminate themselves at the end of it. The "Always" restart policy in
+# this configuration is necessary to constantly refill the worker pool
+# as workers complete jobs and terminate.
 #
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
     app: portability
-  name: portability-api
+  name: portability-worker
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: portability
@@ -43,7 +46,7 @@ spec:
         secret:
           secretName: portability-service-account-creds
       containers:
-      - name: portability-api
+      - name: portability-worker
         image: IMAGE # Replaced by script
         imagePullPolicy: IfNotPresent
         volumeMounts:
@@ -53,7 +56,7 @@ spec:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /var/secrets/portability-service-account-key/key.json
         - name: GOOGLE_PROJECT_ID
-          value: PROJECT-ID # Replaced by script
+          value: world-takeout-qa
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
