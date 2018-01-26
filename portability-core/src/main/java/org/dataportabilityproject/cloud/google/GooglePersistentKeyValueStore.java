@@ -47,6 +47,10 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   private final Datastore datastore;
   private Transaction currentTransaction = null;
 
+  // Current transaction for completing atomic operations. Only one atomic transaction may be
+  // executed at a time. Null if we are not currently completing a transaction.
+  private Transaction currentTransaction = null;
+
   public GooglePersistentKeyValueStore(Datastore datastore) {
     this.datastore = datastore;
   }
@@ -159,42 +163,46 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return builder.build();
   }
 
+<<<<<<< HEAD
   private Map<String, Object> getProperties(Entity entity) {
-    if (entity == null) return null;
-    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-    for (String property : entity.getNames()) {
-      // builder.put(property, entity.getValue(property));
-      if (entity.getValue(property) instanceof StringValue) {
-        builder.put(property, (String) entity.getString(property));
-      } else if (entity.getValue(property) instanceof LongValue) {
-        // This conversion is safe because of integer to long conversion above
-        builder.put(property, new Long(entity.getLong(property)).intValue());
-      } else if (entity.getValue(property) instanceof DoubleValue) {
-        builder.put(property, (Double) entity.getDouble(property));
-      } else if (entity.getValue(property) instanceof BooleanValue) {
-        builder.put(property, (Boolean) entity.getBoolean(property));
-      } else if (entity.getValue(property) instanceof TimestampValue) {
-        builder.put(property, (Timestamp) entity.getTimestamp(property));
-      } else {
-        Blob blob = entity.getBlob(property);
-        Object obj = null;
-        try {
-          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-            try {
-              obj = in.readObject();
-            } catch (ClassNotFoundException e) {
-              e.printStackTrace();
+=======
+    private static Map<String, Object> getProperties(Entity entity) {
+>>>>>>> Fix race condition so only one worker may poll a given job
+      if (entity == null) return null;
+      ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+      for (String property : entity.getNames()) {
+        // builder.put(property, entity.getValue(property));
+        if (entity.getValue(property) instanceof StringValue) {
+          builder.put(property, (String) entity.getString(property));
+        } else if (entity.getValue(property) instanceof LongValue) {
+          // This conversion is safe because of integer to long conversion above
+          builder.put(property, new Long(entity.getLong(property)).intValue());
+        } else if (entity.getValue(property) instanceof DoubleValue) {
+          builder.put(property, (Double) entity.getDouble(property));
+        } else if (entity.getValue(property) instanceof BooleanValue) {
+          builder.put(property, (Boolean) entity.getBoolean(property));
+        } else if (entity.getValue(property) instanceof TimestampValue) {
+          builder.put(property, (Timestamp) entity.getTimestamp(property));
+        } else {
+          Blob blob = entity.getBlob(property);
+          Object obj = null;
+          try {
+            try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+              try {
+                obj = in.readObject();
+              } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+              }
             }
+          } catch (IOException e) {
+            e.printStackTrace();
           }
-        } catch (IOException e) {
-          e.printStackTrace();
+          builder.put(property, obj); // BlobValue
         }
-        builder.put(property, obj); // BlobValue
       }
-    }
 
-    return builder.build();
-  }
+      return builder.build();
+    }
 
   private Key getKey(String key) {
     return datastore.newKeyFactory().setKind(KIND).newKey(key);

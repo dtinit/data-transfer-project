@@ -20,7 +20,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
-/** In-memory implementation of backend storage. */
+/**
+ * In-memory implementation of backend storage.
+ *
+ * This shouldn't have to deal with concurrency, so make atomic operations call the normal
+ * operations.
+ *
+ */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
