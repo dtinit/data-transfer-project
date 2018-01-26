@@ -15,19 +15,22 @@
  */
 import { environment } from '../../environments/environment';
 import { Component, OnInit } from '@angular/core';
+import { BackendService } from '../backend.service';
+import { SimpleLoginRequest } from '../simple-login-request';
 
 @Component({
   selector: 'app-simplelogin',
   templateUrl: './simplelogin.component.html',
   styleUrls: ['./simplelogin.component.css']
 })
+
 export class SimpleLoginComponent implements OnInit {
   url = environment.apiPostUrl;
   username: string = "";
   password: string = "";
   enableSubmit: boolean = false;
   error_text: string = "";
-  constructor() { }
+  constructor(private service : BackendService) { }
 
   ngOnInit() {
     this.toggleSubmit(false);
@@ -35,11 +38,13 @@ export class SimpleLoginComponent implements OnInit {
 
   // Handles change in text input value
   onInputChange() {
-    console.log('username: ' + this.username);
-    console.log('password: ' + this.password);
     if(this.password.length > 2 && this.username.length > 2) {
       this.toggleSubmit(true);
     }
+  }
+
+  onSubmit() {
+    this.service.submitSimpleCreds(<SimpleLoginRequest>{username: this.username, password: this.password});
   }
 
   // Toggle showing submit
@@ -48,4 +53,5 @@ export class SimpleLoginComponent implements OnInit {
       this.enableSubmit = show;
     }
   }
+
 }

@@ -22,6 +22,7 @@ import { DataTransferRequest } from './data-transfer-request';
 import { DataTransferResponse } from './data-transfer-response';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
+import { SimpleLoginRequest } from './simple-login-request';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 
@@ -63,6 +64,11 @@ export class BackendService {
     let url = `${this.baseEndpoint}importSetup`;
     return this.http.get<DataTransferResponse>(url)
       .catch(err => this.handleError(err));
+  }
+
+  submitSimpleCreds(formData: SimpleLoginRequest) {
+    console.log("formData: " + JSON.stringify(formData));
+    this.http.post('/_/simpleLoginSubmit', formData);
   }
 
   copySetup() {
