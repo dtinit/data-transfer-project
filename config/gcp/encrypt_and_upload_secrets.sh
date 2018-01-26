@@ -1,5 +1,19 @@
-#!/bin/sh
-
+#
+# Copyright 2018 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# -----------------------------------------------------------------------
 # Script to encrypt application secrets, and then upload the encrypted secrets as well as the (raw)
 # app keys to GCS.
 # Usage: ./encrypt_and_upload_secrets.sh <env> <PROJECT_ID_SUFFIX>
@@ -8,6 +22,8 @@
 # Then uploads environments/<env>/app_data/encrypted_secrets and environments/<env>/app_data/keys to
 # GCS. Keys and secrets in app_data should NOT be checked into source control (this is enforced with
 # .gitignore) and only need to be encrypted/uploaded once per provider and GCP project.
+#
+#!/bin/sh
 
 if [[ $(pwd) != */gcp ]]; then
   echo "Please run out of /gcp directory. Aborting."
