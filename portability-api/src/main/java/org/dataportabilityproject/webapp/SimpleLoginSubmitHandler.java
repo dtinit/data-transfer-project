@@ -38,10 +38,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for SimpleLoginSubmit Controller.
+ * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to:
+ *   - the next authorization (if this is after the source service auth) or
+ *   - the copy page (if this is after the destination service auth)
  */
 final class SimpleLoginSubmitHandler implements HttpHandler {
 
+  public static final String PATH = "/simpleLoginSubmit";
   private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -61,7 +64,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/simpleLoginSubmit");
+    PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH);
 
     String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
@@ -113,7 +116,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     }
 
     String redirect =
-        PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT ? "/next" : "/copy");
+        PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT
+            ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
 
     // Set new cookie and redirect to the next page
     logger.debug("simpleLoginSubmit, redirecting to: {}", redirect);

@@ -43,6 +43,9 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for the ListServices service
  */
 final class ListServicesHandler implements HttpHandler {
+
+  public static final String PATH = "/_/listServices";
+
   private final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
 
@@ -54,7 +57,7 @@ final class ListServicesHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/_/listServices"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, PATH));
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();

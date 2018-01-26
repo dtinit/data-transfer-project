@@ -37,16 +37,19 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
-import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for the Configure service
+ * HttpHandler for the DataTransfer service Takes a DataTransferRequest and creates a new job entry
+ * according to the request. Redirects to the authorization flow for source Service.
  */
 final class DataTransferHandler implements HttpHandler {
+
+  public static final String PATH = "/_/DataTransfer";
 
   private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -76,8 +79,8 @@ final class DataTransferHandler implements HttpHandler {
    */
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, "/_/DataTransfer"),
-        "/_/DataTransfer only supports POST.");
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH),
+        PATH + " only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
 
     DataTransferResponse dataTransferResponse = handleExchange(exchange);
@@ -176,7 +179,7 @@ final class DataTransferHandler implements HttpHandler {
     PortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
-      jobDao.insertJobInPendingAuthDataState(job); 
+      jobDao.insertJobInPendingAuthDataState(job);
     } else {
       jobDao.insertJob(job);
     }
