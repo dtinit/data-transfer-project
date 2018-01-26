@@ -30,13 +30,6 @@ interface listServicesResponse {
  import: string[];
 }
 
-interface setupResponse {
- dataType: string;
- importService: string;
- exportService: string;
- importAuthUrl: string;
-}
-
 @Injectable()
 export class BackendService {
   private baseEndpoint = environment.apiUrl;
@@ -68,15 +61,14 @@ export class BackendService {
 
   importSetup() {
     let url = `${this.baseEndpoint}importSetup`;
-    return this.http.get<setupResponse>(url)
-      .map(res => this.importSetupSuccess(res))
+    return this.http.get<DataTransferResponse>(url)
       .catch(err => this.handleError(err));
   }
 
   copySetup() {
     // copySetup needs to be relative call for XSRF token to be attached
     let url = `/_/copySetup`;
-    return this.http.get<setupResponse>(url)
+    return this.http.get<DataTransferResponse>(url)
       .catch(err => this.handleError(err));
   }
 
@@ -109,26 +101,6 @@ export class BackendService {
       importServices.push(new ServiceDescription(importData[name], importData[name]));
     }
     return new ServiceDescriptions(importServices, exportServices);
-  }
-
-  private importSetupSuccess(res: setupResponse) {
-    let config = new CopyConfiguration(
-      res.dataType,
-      res.exportService,
-      "", // export auth url is not required at this step
-      res.importService,
-      res.importAuthUrl);
-    return config;
-  }
-
-  private copySetupSuccess(res: setupResponse) {
-    let config = new CopyConfiguration(
-      res.dataType,
-      res.exportService,
-      "", // export auth url is not required at this step
-      res.importService,
-      ""); // import auth url is not required at this step
-    return config;
   }
 
   private startCopySuccess(res: any) {

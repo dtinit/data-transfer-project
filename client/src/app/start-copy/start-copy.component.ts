@@ -15,6 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { BackendService } from '../backend.service';
+import { DataTransferResponse } from '../data-transfer-response';
 
 @Component({
   selector: 'app-start-copy',
@@ -22,9 +23,7 @@ import { BackendService } from '../backend.service';
   styleUrls: ['./start-copy.component.css']
 })
 export class StartCopyComponent implements OnInit {
-  dataType: string = "";
-  exportService: string = "";
-  importService: string = "";
+  dataTransferResponse: DataTransferResponse = <DataTransferResponse>{transferDataType:"", source:"", destination:""};
   submitted: boolean = false;
   error_text: string = "";
   constructor(private service : BackendService) { }
@@ -38,17 +37,10 @@ export class StartCopyComponent implements OnInit {
   copySetup() {
     this.service.copySetup().subscribe(
       data => {
-        this.dataType = data.dataType;
-        this.exportService = data.exportService;
-        this.importService = data.importService;
-        console.log('copySetup: dataType: ' + this.dataType);
-        console.log('copySetup: exportService: ' + this.exportService);
-        console.log('copySetup: importService: ' + this.importService);
+        this.dataTransferResponse = data;
+        console.log('copySetup: dataTransferResponse: ' + JSON.stringify(this.dataTransferResponse));
       },
       err => {
-        this.dataType = '';
-        this.exportService = '';
-        this.importService = '';
         this.error_text = 'There was an error';
         console.error(err);
       }
