@@ -15,7 +15,7 @@ public class ListDataTypesResponse {
   }
 
   @ApiModelProperty
-  public String[] getDataTypes(){
+  public String[] getDataTypes() {
     return this.dataTypes;
   }
 }

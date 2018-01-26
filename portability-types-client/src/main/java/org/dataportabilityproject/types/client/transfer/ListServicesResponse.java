@@ -21,13 +21,17 @@ public class ListServicesResponse {
   }
 
   @ApiModelProperty
-  public String[] getImportServices(){
+  public String[] getImportServices() {
     return this.importServices;
   }
 
   @ApiModelProperty
-  public String[] getExportServices() { return  this.exportServices; }
+  public String[] getExportServices() {
+    return this.exportServices;
+  }
 
   @ApiModelProperty
-  public String getTransferDataType() { return this.transferDataType; }
+  public String getTransferDataType() {
+    return this.transferDataType;
+  }
 }
