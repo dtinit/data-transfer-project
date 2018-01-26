@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
  * HttpHandler for the ListServices service
  */
 final class ListServicesHandler implements HttpHandler {
+
   public static final String PATH = "/_/listServices";
 
   private final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);

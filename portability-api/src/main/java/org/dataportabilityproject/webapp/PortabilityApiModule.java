@@ -22,7 +22,6 @@ import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.PortabilityCoreModule;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.job.UUIDProvider;
-import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 
 public class PortabilityApiModule extends AbstractModule {
 
@@ -33,7 +32,6 @@ public class PortabilityApiModule extends AbstractModule {
 
     MapBinder<String, HttpHandler> mapbinder
         = MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
-
 
     // HttpServer does exact longest matching prefix for context matching. This means
     // /_/listServices, /_/listServicesthisshouldnotwork and /_/listServices/path/to/resource will

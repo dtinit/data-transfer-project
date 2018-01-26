@@ -37,16 +37,15 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
-import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for the DataTransfer service
- * Takes a DataTransferRequest and creates a new job entry according to the request.
- * Redirects to the authorization flow for source Service.
+ * HttpHandler for the DataTransfer service Takes a DataTransferRequest and creates a new job entry
+ * according to the request. Redirects to the authorization flow for source Service.
  */
 final class DataTransferHandler implements HttpHandler {
 
@@ -180,7 +179,7 @@ final class DataTransferHandler implements HttpHandler {
     PortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
-      jobDao.insertJobInPendingAuthDataState(job); 
+      jobDao.insertJobInPendingAuthDataState(job);
     } else {
       jobDao.insertJob(job);
     }

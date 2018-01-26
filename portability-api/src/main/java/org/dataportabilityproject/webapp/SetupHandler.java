@@ -44,9 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Common logic for job setup handlers.
- * This handler is meant to retrieve the current status via a DataTransferResponse
- * Directs the frontend to:
+ * Common logic for job setup handlers. This handler is meant to retrieve the current status via a
+ * DataTransferResponse Directs the frontend to:
  *   - The destination services authorization page (in case of IMPORT mode)
  *   - The startCopy page (in case of COPY mode)
  */

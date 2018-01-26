@@ -38,8 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for SimpleLoginSubmit authorization flow.
- * Redirects client request to:
+ * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to:
  *   - the next authorization (if this is after the source service auth) or
  *   - the copy page (if this is after the destination service auth)
  */
@@ -117,7 +116,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     }
 
     String redirect =
-        PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
+        PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT
+            ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
 
     // Set new cookie and redirect to the next page
     logger.debug("simpleLoginSubmit, redirecting to: {}", redirect);

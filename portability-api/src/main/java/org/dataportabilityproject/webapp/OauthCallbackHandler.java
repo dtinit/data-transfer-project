@@ -40,12 +40,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for callbacks from Oauth1 authorization flow.
- * Redirects client request to:
+ * HttpHandler for callbacks from Oauth1 authorization flow. Redirects client request to:
  *   - the next authorization (if this is after the source service auth) or
  *   - the copy page (if this is after the destination service auth)
  */
 final class OauthCallbackHandler implements HttpHandler {
+
   public static final String PATH = "/callback1/";
 
   private final Logger logger = LoggerFactory.getLogger(OauthCallbackHandler.class);
@@ -69,7 +69,7 @@ final class OauthCallbackHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     // Add .* to resource path as this path will be of the form /callback/SERVICEPROVIDER
-    PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, PATH+".*");
+    PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, PATH + ".*");
     logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
@@ -131,7 +131,8 @@ final class OauthCallbackHandler implements HttpHandler {
           jobId);
 
       // Obtain the ServiceProvider from the registry
-      OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType, serviceMode);
+      OnlineAuthDataGenerator generator = serviceProviderRegistry
+          .getOnlineAuth(service, dataType, serviceMode);
 
       // Retrieve initial auth data, if it existed
       AuthData initialAuthData = JobUtils.getInitialAuthData(job, serviceMode);
@@ -154,7 +155,8 @@ final class OauthCallbackHandler implements HttpHandler {
       }
 
       redirect =
-          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT) ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
+          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT)
+              ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
     } catch (Exception e) {
       logger.error("Error handling request", e);
       throw e;
