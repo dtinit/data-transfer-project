@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.job;
 
+import com.google.cloud.datastore.DatastoreException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -155,11 +156,15 @@ public class JobDao {
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
    * data.
    */
-  public void updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
+  public boolean updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
+
     // Verify job is in existing state
     PortabilityJob existingJob = lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
-    Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
+    if (existingJob == null) {
+      logger.debug("Existing job was null; this probably means another worker already claimed it");
+      return false;
+    }
     // Verify existing job in correct state
     Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
     Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
@@ -170,7 +175,7 @@ public class JobDao {
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
         .build();
-    updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT,
+    return updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT,
         JobState.ASSIGNED_WITHOUT_AUTH_DATA);
   }
 
@@ -216,23 +221,38 @@ public class JobDao {
   }
 
   /**
-   * Updates an existing {@code job} in storage with the given {@code jobState}.
+   * Atomically updates an existing {@code job} in storage with the given {@code jobState}.
    */
-  private void updateJobState(PortabilityJob job, JobState previous, JobState updated) throws IOException {
+  private boolean updateJobState(PortabilityJob job, JobState previous, JobState updated)
+      throws IOException {
     String previousKey = createKey(previous, job.id());
-    Map<String, Object> existing = storage.get(previousKey);
-    Preconditions.checkArgument(existing != null, "Job not found");
+    storage.startTransaction();
+    Map<String, Object> existing = storage.atomicGet(previousKey);
+    if (existing == null) {
+      logger.debug("Could not find job {} in state {}", job.id(), previous);
+      return false;
+    }
 
     String updatedKey = createKey(updated, job.id());
-    Map<String, Object> shouldNotExist = storage.get(updatedKey);
-    Preconditions.checkArgument(shouldNotExist == null, "Job in updated state already found");
+    Map<String, Object> shouldNotExist = storage.atomicGet(updatedKey);
+    if (shouldNotExist != null) {
+      logger.debug("Job {} already exists in updated state {}", job.id(), updated);
+      return false;
+    }
 
     // Store the updated job info
     Map<String, Object> data = job.asMap();
-    storage.put(updatedKey, data);
-    storage.delete(previousKey);
+    storage.atomicPut(updatedKey, data);
+    storage.atomicDelete(previousKey);
+    try {
+      storage.commitTransaction();
+    } catch (DatastoreException e) {
+      logger.debug("Could not commit transaction: {}", e);
+      storage.rollbackTransaction();
+      return false;
+    }
+    return true;
   }
-
   // UTILITY METHODS
 
   // TODO: come up with a better scheme for indexing state
