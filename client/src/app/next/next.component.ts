@@ -17,6 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BackendService } from '../backend.service';
 import { CopyConfiguration } from '../copy-configuration';
+import { DataTransferResponse } from '../data-transfer-response';
 
 @Component({
   selector: 'app-next',
@@ -24,7 +25,8 @@ import { CopyConfiguration } from '../copy-configuration';
   styleUrls: ['./next.component.css']
 })
 export class NextComponent implements OnInit {
-  config: CopyConfiguration = new CopyConfiguration("", "", "", "", "");
+  // This is kinda ugly but is the only way to init an interface wihtout creating a dummy class
+  dataTransferResponse: DataTransferResponse = <DataTransferResponse>{transferDataType:"", source:"", destination:""};
   error_text: string = "";
   constructor(private service : BackendService) { }
 
@@ -36,11 +38,11 @@ export class NextComponent implements OnInit {
   importSetup() {
     this.service.importSetup().subscribe(
       data => {
-        this.config = data;
-        console.log('config: ' + JSON.stringify(this.config));
+        this.dataTransferResponse = data;
+        console.log('dataTransferResponse: ' + JSON.stringify(this.dataTransferResponse));
       },
       err => {
-        this.config = null;
+        this.dataTransferResponse = null;
         this.error_text = 'There was an error';
         console.error(err);
       }
@@ -49,7 +51,7 @@ export class NextComponent implements OnInit {
 
   // Redirect to the import auth url to authorize
   authorize() {
-    console.log('authorize, redirecting to: ' + this.config.importAuthUrl);
-    window.location.href=this.config.importAuthUrl;
+    console.log('authorize, redirecting to: ' + this.dataTransferResponse.nextUrl);
+    window.location.href = this.dataTransferResponse.nextUrl;
   }
 }

@@ -20,6 +20,7 @@ import static org.apache.axis.transport.http.HTTPConstants.HEADER_SET_COOKIE;
 import static org.dataportabilityproject.webapp.PortabilityApiUtils.COOKIE_ATTRIBUTES;
 import static org.dataportabilityproject.webapp.SetupHandler.Mode.IMPORT;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.sun.net.httpserver.Headers;
@@ -28,9 +29,6 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -40,6 +38,8 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
+import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +48,8 @@ import org.slf4j.LoggerFactory;
  */
 abstract class SetupHandler implements HttpHandler {
 
-  private final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
-
+  private static final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   private final JobDao jobDao;
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final CommonSettings commonSettings;
@@ -105,7 +105,8 @@ abstract class SetupHandler implements HttpHandler {
       String importService = job.importService();
       Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
 
-      JsonObject response;
+      DataTransferResponse response;
+
       if (mode == IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
       } else {
@@ -120,16 +121,15 @@ abstract class SetupHandler implements HttpHandler {
       exchange.getResponseHeaders()
           .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
       exchange.sendResponseHeaders(200, 0);
-      JsonWriter writer = Json.createWriter(exchange.getResponseBody());
-      writer.write(response);
-      writer.close();
+
+      objectMapper.writeValue(exchange.getResponseBody(), response);
     } catch (Exception e) {
       logger.error("Error handling request", e);
       throw e;
     }
   }
 
-  private JsonObject handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
+  private DataTransferResponse handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
       throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
@@ -141,7 +141,8 @@ abstract class SetupHandler implements HttpHandler {
     }
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()), ServiceMode.IMPORT);
+        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()),
+            ServiceMode.IMPORT);
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
@@ -157,13 +158,11 @@ abstract class SetupHandler implements HttpHandler {
         jobDao.updateJob(updatedJob);
       }
     }
-    return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())
-        .add(JsonKeys.EXPORT_SERVICE, job.exportService())
-        .add(JsonKeys.IMPORT_SERVICE, job.importService())
-        .add(JsonKeys.IMPORT_AUTH_URL, authFlowInitiator.authUrl()).build();
+    return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
+        Status.INPROCESS, authFlowInitiator.authUrl());
   }
 
-  JsonObject handleCopySetup(Headers requestHeaders, PortabilityJob job) {
+  private DataTransferResponse handleCopySetup(Headers requestHeaders, PortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils
@@ -180,9 +179,9 @@ abstract class SetupHandler implements HttpHandler {
 
     }
 
-    return Json.createObjectBuilder().add(JsonKeys.DATA_TYPE, job.dataType())
-        .add(JsonKeys.EXPORT_SERVICE, job.exportService())
-        .add(JsonKeys.IMPORT_SERVICE, job.importService()).build();
+    // TODO: make all frontend URLs constant in a shared class
+    return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
+        Status.INPROCESS, "/startCopy");
   }
 
 
