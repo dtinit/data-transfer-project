@@ -17,6 +17,7 @@ package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
@@ -24,11 +25,13 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Vector;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.types.client.transfer.ListDataTypesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +41,8 @@ import org.slf4j.LoggerFactory;
 final class ListDataTypesHandler implements HttpHandler {
 
   public static final String PATH = "/_/listDataTypes";
-  private final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
+  private final static Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
+  private final static ObjectMapper objectMapper = new ObjectMapper();
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   @Inject
@@ -56,22 +60,21 @@ final class ListDataTypesHandler implements HttpHandler {
     Headers headers = exchange.getResponseHeaders();
     headers.set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
 
-    JsonArrayBuilder builder = Json.createArrayBuilder();
+    Vector<String> data_types = new Vector<>();
 
     for (PortableDataType data_type : PortableDataType.values()) {
       try {
         if (hasImportAndExport(data_type)) {
-          builder.add(data_type.name());
-        }
+            data_types.add(data_type.name());
+          }
       } catch (Exception e) {
         logger.error("hasImportAndExport for datatype {} failed", data_type.name(), e);
       }
     }
 
+    ListDataTypesResponse response = new ListDataTypesResponse(data_types.toArray(new String[data_types.size()]));
     exchange.sendResponseHeaders(200, 0);
-    JsonWriter writer = Json.createWriter(exchange.getResponseBody());
-    writer.writeArray(builder.build());
-    writer.close();
+    objectMapper.writeValue(exchange.getResponseBody(), response);
   }
 
   /**

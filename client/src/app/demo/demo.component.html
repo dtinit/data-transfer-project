@@ -12,8 +12,8 @@
                 title="Select what type of data to transfer"
                 class="form-control">
           <option value="" disabled="true" [selected]="!selectedDataType">[select data type]</option>
-          <option *ngFor="let item of dataTypes" [ngValue]="item.name">
-              {{item.description}}
+          <option *ngFor="let item of dataTypes.dataTypes" [ngValue]="item">
+              {{item}}
           </option>
         </select>
       </div>
@@ -30,8 +30,8 @@
                 title="Select the service to transfer data from"
                 class="form-control">
           <option value="" disabled="true" [selected]="!selectedExportService">[select company]</option>
-          <option *ngFor="let item of exportServices" [ngValue]="item.name">
-              {{item.description}}
+          <option *ngFor="let item of exportServices" [ngValue]="item">
+              {{item}}
           </option>
         </select>
       </div>
@@ -48,8 +48,8 @@
                 title="Select the service to transfer data to"
                 class="form-control">
           <option value="" disabled="true" [selected]="!selectedImportService">[select company]</option>
-          <option *ngFor="let item of importServices" [ngValue]="item.name">
-              {{item.description}}
+          <option *ngFor="let item of importServices" [ngValue]="item">
+              {{item}}
           </option>
         </select>
       </div>
