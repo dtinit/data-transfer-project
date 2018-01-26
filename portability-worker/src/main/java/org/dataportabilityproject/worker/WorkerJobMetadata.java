@@ -43,6 +43,11 @@ final class WorkerJobMetadata {
     this.keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
   }
 
+  void reset() {
+    keyPair = null;
+    jobId = null;
+  }
+
   public KeyPair getKeyPair() {
     Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
     return keyPair;

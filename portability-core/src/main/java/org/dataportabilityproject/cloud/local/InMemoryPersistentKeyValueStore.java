@@ -15,11 +15,18 @@
  */
 package org.dataportabilityproject.cloud.local;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 
-/** In-memory implementation of backend storage. */
+/**
+ * In-memory implementation of backend storage.
+ *
+ * This shouldn't have to deal with concurrency, so make atomic operations call the normal
+ * operations.
+ *
+ */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
@@ -30,6 +37,31 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   @Override
   public void put(String key, Map<String, Object> data) {
     map.put(key, data);
+  }
+
+  @Override
+  public void atomicPut(String key, Map<String, Object> data) throws IOException {
+    put(key, data);
+  }
+
+  @Override
+  public Map<String, Object> atomicGet(String key) throws IOException {
+    return get(key);
+  }
+
+  @Override
+  public void startTransaction() throws IOException {
+    // Do nothing
+  }
+
+  @Override
+  public void commitTransaction() throws IOException {
+    // Do nothing
+  }
+
+  @Override
+  public void rollbackTransaction() throws IOException {
+    // Do nothing
   }
 
   @Override
@@ -51,5 +83,10 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   @Override
   public void delete(String key) {
     map.remove(key);
+  }
+
+  @Override
+  public void atomicDelete(String key) throws IOException {
+    delete(key);
   }
 }
