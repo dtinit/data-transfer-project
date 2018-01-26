@@ -42,9 +42,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for callbacks from Oauth2 authorization flow.
+ * HttpHandler for callbacks from Oauth2 authorization flow. Redirects client request to:
+ *   - the next authorization (if this is after the source service auth) or
+ *   - the copy page (if this is after the destination service auth)
  */
 final class Oauth2CallbackHandler implements HttpHandler {
+
+  public static final String PATH = "/callback/";
 
   private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
 
@@ -66,8 +70,9 @@ final class Oauth2CallbackHandler implements HttpHandler {
 
   @Override
   public void handle(HttpExchange exchange) throws IOException {
+    // Add .* to resource path as this path will be of the form /callback/SERVICEPROVIDER
     Preconditions.checkArgument(
-        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, "/callback/.*"));
+        PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, PATH + ".*"));
     logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
@@ -132,7 +137,8 @@ final class Oauth2CallbackHandler implements HttpHandler {
           "service not found, service: %s serviceMode: %s, jobId: %s", service, serviceMode, jobId);
 
       // Obtain the ServiceProvider from the registry
-      OnlineAuthDataGenerator generator = serviceProviderRegistry.getOnlineAuth(service, dataType, serviceMode);
+      OnlineAuthDataGenerator generator = serviceProviderRegistry
+          .getOnlineAuth(service, dataType, serviceMode);
 
       // Retrieve initial auth data, if it existed
       AuthData initialAuthData = JobUtils.getInitialAuthData(job, serviceMode);
@@ -155,7 +161,8 @@ final class Oauth2CallbackHandler implements HttpHandler {
       }
 
       redirect =
-          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT) ? "/next" : "/copy");
+          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT)
+              ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
     } catch (Exception e) {
       logger.error("Error handling request: {}", e);
       throw e;
