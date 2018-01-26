@@ -29,9 +29,6 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonWriter;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
@@ -51,15 +48,14 @@ import org.slf4j.LoggerFactory;
  */
 abstract class SetupHandler implements HttpHandler {
 
-  private final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
-
+  private static final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   private final JobDao jobDao;
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final CommonSettings commonSettings;
   private final Mode mode;
   private final String handlerUrlPath;
   private final TokenManager tokenManager;
-  private final ObjectMapper objectMapper;
 
   protected SetupHandler(ServiceProviderRegistry serviceProviderRegistry,
       JobDao jobDao,
@@ -72,7 +68,6 @@ abstract class SetupHandler implements HttpHandler {
     this.mode = mode;
     this.handlerUrlPath = handlerUrlPath;
     this.tokenManager = tokenManager;
-    this.objectMapper = new ObjectMapper();
   }
 
   @Override
@@ -110,7 +105,7 @@ abstract class SetupHandler implements HttpHandler {
       String importService = job.importService();
       Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
 
-      DataTransferResponse response ;
+      DataTransferResponse response;
 
       if (mode == IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
@@ -146,7 +141,8 @@ abstract class SetupHandler implements HttpHandler {
     }
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()), ServiceMode.IMPORT);
+        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()),
+            ServiceMode.IMPORT);
     AuthFlowInitiator authFlowInitiator = generator
         .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
 
@@ -183,7 +179,9 @@ abstract class SetupHandler implements HttpHandler {
 
     }
 
-    return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(), Status.INPROCESS, "/startCopy");
+    // TODO: make all frontend URLs constant in a shared class
+    return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
+        Status.INPROCESS, "/startCopy");
   }
 
 
