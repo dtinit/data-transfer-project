@@ -154,7 +154,7 @@ public class JobDao {
 
   /**
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
-   * data.
+   * data. Returns whether it was able to update the job.
    */
   public boolean updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
@@ -162,7 +162,8 @@ public class JobDao {
     // Verify job is in existing state
     PortabilityJob existingJob = lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
     if (existingJob == null) {
-      logger.debug("Existing job was null; this probably means another worker already claimed it");
+      logger.debug("Could not find job {} in unassigned state; this probably means another worker "
+          + "already claimed it", id);
       return false;
     }
     // Verify existing job in correct state
@@ -222,6 +223,7 @@ public class JobDao {
 
   /**
    * Atomically updates an existing {@code job} in storage with the given {@code jobState}.
+   * Returns whether it was able to update the job.
    */
   private boolean updateJobState(PortabilityJob job, JobState previous, JobState updated)
       throws IOException {

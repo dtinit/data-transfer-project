@@ -71,10 +71,7 @@ class JobPollingService extends AbstractScheduledService {
     String id = jobDao.findNextJobPendingWorkerAssignment();
     logger.debug("Polled pollForUnassignedJob, found id: {}", id);
     if (id != null) {
-      // PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
-      // Preconditions.checkNotNull(job);
       Preconditions.checkState(!jobMetadata.isInitialized());
-
       jobMetadata.init(id);
       PublicKey publicKey = jobMetadata.getKeyPair().getPublic();
       // TODO: Move storage of private key to a different location
