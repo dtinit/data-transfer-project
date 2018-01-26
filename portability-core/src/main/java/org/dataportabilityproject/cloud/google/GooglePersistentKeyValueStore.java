@@ -45,7 +45,6 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
-  private Transaction currentTransaction = null;
 
   // Current transaction for completing atomic operations. Only one atomic transaction may be
   // executed at a time. Null if we are not currently completing a transaction.
