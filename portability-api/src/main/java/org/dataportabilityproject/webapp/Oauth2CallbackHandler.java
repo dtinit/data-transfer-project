@@ -43,6 +43,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for callbacks from Oauth2 authorization flow.
+ * Redirects client request to:
+ *   - the next authorization (if this is after the source service auth) or
+ *   - the copy page (if this is after the destination service auth)
  */
 final class Oauth2CallbackHandler implements HttpHandler {
   public static final String PATH = "/callback/";
@@ -157,7 +160,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       }
 
       redirect =
-          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT) ? "/next" : "/copy");
+          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT) ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
     } catch (Exception e) {
       logger.error("Error handling request: {}", e);
       throw e;

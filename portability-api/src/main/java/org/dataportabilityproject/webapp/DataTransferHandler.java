@@ -44,7 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for the Configure service
+ * HttpHandler for the DataTransfer service
+ * Takes a DataTransferRequest and creates a new job entry according to the request.
+ * Redirects to the authorization flow for source Service.
  */
 final class DataTransferHandler implements HttpHandler {
 
