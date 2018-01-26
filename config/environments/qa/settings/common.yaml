@@ -1,5 +1,6 @@
 env: QA
 cloud: GOOGLE
+encryptedFlow: true
 serviceProviderClasses: [
   "org.dataportabilityproject.serviceProviders.flickr.FlickrServiceProvider",
   "org.dataportabilityproject.serviceProviders.google.GoogleServiceProvider",
