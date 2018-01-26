@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.cloud.google;
 
-import com.google.cloud.datastore.Query;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
@@ -24,10 +23,11 @@ import com.google.cloud.datastore.DoubleValue;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.LongValue;
+import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
-import com.google.cloud.datastore.StructuredQuery.Filter;
 import com.google.cloud.datastore.TimestampValue;
+import com.google.cloud.datastore.Transaction;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,6 +45,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
+  private Transaction currentTransaction = null;
 
   public GooglePersistentKeyValueStore(Datastore datastore) {
     this.datastore = datastore;
@@ -52,6 +53,87 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
 
   @Override
   public void put(String key, Map<String, Object> data) throws IOException {
+    Entity entity = createEntity(key, data);
+    datastore.put(entity);
+  }
+
+  @Override
+  public void atomicPut(String key, Map<String, Object> data) throws IOException {
+    if (currentTransaction == null) {
+      throw new IOException("Attempting atomic put as part of a non-existent transaction");
+    }
+    Entity entity = createEntity(key, data);
+    currentTransaction.put(entity);
+  }
+
+  @Override
+  public Map<String, Object> get(String key) {
+    Entity entity = datastore.get(getKey(key));
+    return getProperties(entity);
+  }
+
+  @Override
+  public Map<String, Object> atomicGet(String key) throws IOException {
+    if (currentTransaction == null) {
+      throw new IOException("Attempting atomic get as part of a non-existent transaction");
+    }
+    Entity entity = currentTransaction.get(getKey(key));
+    return getProperties(entity);
+  }
+
+  @Override
+  public String getFirst(String prefix) {
+    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND)
+        .build();
+    QueryResults<Key> results = datastore.run(query);
+    while(results.hasNext()) {
+      String key = results.next().getName();
+      if(key.startsWith(prefix)) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void delete(String key) {
+    datastore.delete(getKey(key));
+  }
+
+  @Override
+  public void atomicDelete(String key) throws IOException {
+    if (currentTransaction == null) {
+      throw new IOException("Attempting atomic delete as part of a non-existent transaction");
+    }
+    currentTransaction.delete(getKey(key));
+  }
+
+  @Override
+  public synchronized void startTransaction() throws IOException {
+    if (currentTransaction != null) {
+      throw new IOException("Already started a transaction. Can only do one transaction at a time."
+          + " Please commit or rollback the current transaction before starting a new one.");
+    }
+    currentTransaction = datastore.newTransaction();
+  }
+
+  @Override
+  public void commitTransaction() throws IOException {
+    if (currentTransaction == null) {
+      throw new IOException("Attempting to commit a non-existent transaction");
+    }
+    currentTransaction.commit();
+  }
+
+  @Override
+  public void rollbackTransaction() throws IOException {
+    if (currentTransaction == null) {
+      throw new IOException("Attempting to roll back a non-existent transaction");
+    }
+    currentTransaction.rollback();
+  }
+
+  private Entity createEntity(String key, Map<String, Object> data) throws IOException {
     Entity.Builder builder = Entity.newBuilder(getKey(key))
         .set(CREATED_FIELD, Timestamp.now());
 
@@ -74,15 +156,12 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
         builder.set(entry.getKey(), Blob.copyFrom(bos.toByteArray())); // BlobValue
       }
     }
-
-    datastore.put(builder.build());
+    return builder.build();
   }
 
-  @Override
-  public Map<String, Object> get(String key) {
-    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-    Entity entity = datastore.get(getKey(key));
+  private Map<String, Object> getProperties(Entity entity) {
     if (entity == null) return null;
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
     for (String property : entity.getNames()) {
       // builder.put(property, entity.getValue(property));
       if (entity.getValue(property) instanceof StringValue) {
@@ -115,25 +194,6 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     }
 
     return builder.build();
-  }
-
-  @Override
-  public void delete(String key) {
-    datastore.delete(getKey(key));
-  }
-
-  @Override
-  public String getFirst(String prefix) {
-    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND)
-        .build();
-    QueryResults<Key> results = datastore.run(query);
-    while(results.hasNext()) {
-      String key = results.next().getName();
-      if(key.startsWith(prefix)) {
-        return key;
-      }
-    }
-    return null;
   }
 
   private Key getKey(String key) {

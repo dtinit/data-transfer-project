@@ -71,17 +71,22 @@ class JobPollingService extends AbstractScheduledService {
     String id = jobDao.findNextJobPendingWorkerAssignment();
     logger.debug("Polled pollForUnassignedJob, found id: {}", id);
     if (id != null) {
-      PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
-      Preconditions.checkNotNull(job);
+      // PortabilityJob job = jobDao.lookupJobPendingWorkerAssignment(id);
+      // Preconditions.checkNotNull(job);
       Preconditions.checkState(!jobMetadata.isInitialized());
-      jobMetadata.init(id);
 
+      jobMetadata.init(id);
       PublicKey publicKey = jobMetadata.getKeyPair().getPublic();
       // TODO: Move storage of private key to a different location
       PrivateKey privateKey = jobMetadata.getKeyPair().getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
-      jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
-      logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}", publicKey.getEncoded().length);
+      if (jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey)) {
+        logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}",
+            publicKey.getEncoded().length);
+      } else {
+        logger.debug("Tried to claim job {}, but it was already claimed by another worker", id);
+        jobMetadata.reset();
+      }
     } else {
       logger.debug("findNextJobPendingWorkerAssignment result was null");
     }
