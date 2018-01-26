@@ -25,7 +25,6 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
  *
  * This shouldn't have to deal with concurrency, so make atomic operations call the normal
  * operations.
- *
  */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
   private final ConcurrentHashMap<String, Map<String, Object>> map;
@@ -45,28 +44,13 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   @Override
-  public Map<String, Object> atomicGet(String key) throws IOException {
-    return get(key);
-  }
-
-  @Override
-  public void startTransaction() throws IOException {
-    // Do nothing
-  }
-
-  @Override
-  public void commitTransaction() throws IOException {
-    // Do nothing
-  }
-
-  @Override
-  public void rollbackTransaction() throws IOException {
-    // Do nothing
-  }
-
-  @Override
   public Map<String, Object> get(String key) {
     return map.get(key);
+  }
+
+  @Override
+  public Map<String, Object> atomicGet(String key) throws IOException {
+    return get(key);
   }
 
   @Override
@@ -88,5 +72,20 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   @Override
   public void atomicDelete(String key) throws IOException {
     delete(key);
+  }
+
+  @Override
+  public void startTransaction() throws IOException {
+    // Do nothing
+  }
+
+  @Override
+  public void commitTransaction() throws IOException {
+    // Do nothing
+  }
+
+  @Override
+  public void rollbackTransaction() throws IOException {
+    // Do nothing
   }
 }
