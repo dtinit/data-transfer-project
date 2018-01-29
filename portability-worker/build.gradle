@@ -41,6 +41,11 @@ jar {
     }
 }
 
+// This is brought in by lower level dependencies, so we remove it globally
+configurations {
+    all*.exclude group: 'com.google.guava', module: 'guava-jdk5'
+}
+
 dependencies {
     compile project(':portability-core')
 
