@@ -20,15 +20,12 @@ import { Observable } from 'rxjs/Observable';
 import { CopyConfiguration } from './copy-configuration';
 import { DataTransferRequest } from './data-transfer-request';
 import { DataTransferResponse } from './data-transfer-response';
+import { ListDataTypesResponse } from './list-data-types-response';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
+import { ListServicesResponse } from './list-services-response';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
-
-interface listServicesResponse {
- export: string[];
- import: string[];
-}
 
 @Injectable()
 export class BackendService {
@@ -38,16 +35,14 @@ export class BackendService {
 
   listDataTypes() {
     let url = `${this.baseEndpoint}listDataTypes`;
-    return this.http.get(url)
-      .map(res => this.listDataTypesSuccess(res))
+    return this.http.get<ListDataTypesResponse>(url)
       .catch(err => this.handleError(err));
   }
 
   listServices(dataType: string) {
     let myParams = new HttpParams().set('dataType', dataType);
     let url = `${this.baseEndpoint}listServices`;
-    return this.http.get<listServicesResponse>(url, {params : myParams})
-      .map(res => this.listServicesSuccess(res))
+    return this.http.get<ListServicesResponse>(url, {params : myParams})
       .catch(err => this.handleError(err));
   }
 
@@ -78,29 +73,6 @@ export class BackendService {
     return this.http.post(url, '')
       .map(res => this.startCopySuccess(res))
       .catch(err => this.handleError(err));
-  }
-
-  private listDataTypesSuccess(res: any) {
-    let dataTypes: PortableDataType[] = [];
-    for (var prop in res) {
-      dataTypes.push(new PortableDataType(res[prop], res[prop]));
-    }
-    return dataTypes;
-  }
-
-  private listServicesSuccess(res: listServicesResponse) {
-    let exportServices: ServiceDescription[] = [];
-    let exportData = res.export;
-    for (var name in exportData) {
-      exportServices.push(new ServiceDescription(exportData[name], exportData[name]));
-    }
-
-    let importServices: ServiceDescription[] = [];
-    let importData = res.import;
-    for (var name in importData) {
-      importServices.push(new ServiceDescription(importData[name], importData[name]));
-    }
-    return new ServiceDescriptions(importServices, exportServices);
   }
 
   private startCopySuccess(res: any) {

@@ -20,6 +20,7 @@ import { ServiceDescription, ServiceDescriptions } from '../service-description'
 import { PortableDataType } from '../portable-data-type';
 import { CopyConfiguration } from '../copy-configuration';
 import { DataTransferRequest } from '../data-transfer-request';
+import { ListDataTypesResponse } from '../list-data-types-response';
 
 
 @Component({
@@ -30,7 +31,7 @@ import { DataTransferRequest } from '../data-transfer-request';
 export class DemoComponent implements OnInit {
   url = environment.apiPostUrl;
   selectedDataType: string = "";
-  dataTypes: PortableDataType[] = [];
+  dataTypes: ListDataTypesResponse = <ListDataTypesResponse>{dataTypes:[""]};
   exportServices: ServiceDescription[] = [];
   selectedExportService: string = "";
   importServices: ServiceDescription[] = [];
@@ -54,7 +55,7 @@ export class DemoComponent implements OnInit {
         console.log('updated dataTypes: ' + JSON.stringify(this.dataTypes));
       },
       err => {
-        this.dataTypes = [];
+        this.dataTypes = <ListDataTypesResponse>{dataTypes:[""]};
         this.error_text = 'There was an error';
         console.error(err);
       }
