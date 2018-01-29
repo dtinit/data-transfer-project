@@ -2,7 +2,6 @@
 build/
 out/
 target/
-gradle/
 .gradle/
 .../gradle/
 **/gradlew
