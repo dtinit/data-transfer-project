@@ -1,69 +1,71 @@
-apply plugin: 'java'
+/*
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-// TODO: Determine how to use versions defined in gradle.properties
-group = 'org.dataportabilityproject'
-version = '1.0-SNAPSHOT'
+group = "${projectGroup}"
+version = "${projectVersion}"
 
 description = """Portability Core Library"""
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 tasks.withType(JavaCompile) {
-	options.encoding = 'UTF-8'
+    options.encoding = 'UTF-8'
 }
 
 // This is brought in by lower level dependencies, so we remove it globally
 configurations {
-  all*.exclude group: 'com.google.guava', module:'guava-jdk5'
+    all*.exclude group: 'com.google.guava', module: 'guava-jdk5'
 }
 
-// TODO: Determine how to use versions defined in gradle.properties
 dependencies {
-    compile group: 'com.google.guava', name: 'guava', version:'20.0'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version:'3.4'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.2'
-    compile group: 'javax.annotation', name: 'javax.annotation-api', version:'1.2'
-    compile group: 'com.flickr4java', name: 'flickr4java', version:'2.16'
-    compile (group: 'com.google.apis', name: 'google-api-services-calendar', version:'v3-rev276-1.23.0'){
-        exclude(module: 'guava-jdk5')
+    compile("com.google.auto.value:auto-value:${autoValueVersion}")
+    compile("javax.annotation:javax.annotation-api:${annotationApiVersion}")
+    compile("com.auth0:java-jwt:${jwtVersion}")
+    compile("com.flickr4java:flickr4java:${flickrVersion}")
+    compile("com.google.api-client:google-api-client:${googleApiClient}")
+    compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
+    compile("com.google.apis:google-api-services-cloudkms:${googleKmsVersion}")
+    compile("com.google.apis:google-api-services-gmail:${googleGmailVersion}")
+    compile("com.google.apis:google-api-services-people:${googlePeopleVersion}")
+    compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
+    compile("com.google.cloud:google-cloud-storage:${googleDatastoreVersion}")
+    compile("com.google.cloud:google-cloud-datastore:${googleDatastoreVersion}")
+    compile("com.google.code.gson:gson:${gsonVersion}")
+    compile("com.google.gdata:core:${gdataVersion}") {
+        exclude(module: 'jetty-util')
+        exclude(module: 'servlet-api')
     }
-    compile group: 'com.google.apis', name: 'google-api-services-gmail', version:'v1-rev76-1.23.0'
-    compile group: 'com.google.apis', name: 'google-api-services-tasks', version:'v1-rev48-1.23.0'
-    compile group: 'com.google.apis', name: 'google-api-services-people', version:'v1-rev194-1.23.0'
-    compile(group: 'com.google.gdata', name: 'core', version:'1.47.1') {
-exclude(module: 'jetty-util')
-exclude(module: 'servlet-api')
-    }
-    compile group: 'com.google.oauth-client', name: 'google-oauth-client', version:'1.23.0'
-    compile group: 'com.google.oauth-client', name: 'google-oauth-client-jetty', version:'1.23.0'
-    compile group: 'com.google.http-client', name: 'google-http-client', version:'1.23.0'
-    compile group: 'com.google.http-client', name: 'google-http-client-xml', version:'1.23.0'
-    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version:'2.8.7'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.7'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:'2.8.7'
-    compile group: 'com.google.code.gson', name: 'gson', version:'2.2.4'
-    compile group: 'oauth.signpost', name: 'signpost-commonshttp4', version:'1.2.1.2'
-    compile group: 'com.google.cloud', name: 'google-cloud-datastore', version:'1.12.0'
-    compile group: 'com.googlecode.ez-vcard', name: 'ez-vcard', version:'0.10.3'
-    compile group: 'com.auth0', name: 'java-jwt', version:'3.2.0'
-    compile group: 'com.google.cloud', name: 'google-cloud-storage', version:'1.12.0'
-    compile(group: 'com.google.apis', name: 'google-api-services-cloudkms', version:'v1-rev29-1.23.0') {
-exclude(module: 'guava-jdk5')
-    }
-    compile(group: 'com.google.api-client', name: 'google-api-client', version:'1.23.0') {
-exclude(module: 'guava-jdk5')
-    }
-    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.14'
-    compile group: 'com.google.inject', name: 'guice', version:'4.1.0'
-    compile group: 'com.google.inject.extensions', name: 'guice-multibindings', version:'4.1.0'
-    runtime group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.14'
-    testCompile group: 'org.hamcrest', name: 'hamcrest-core', version:'1.3'
-    testCompile group: 'com.google.truth', name: 'truth', version:'0.30'
-    testCompile group: 'com.jayway.jsonpath', name: 'json-path', version:'2.2.0'
-    testCompile group: 'junit', name: 'junit', version:'4.12'
-    compile(group: 'com.google.auto.value', name: 'auto-value', version:'1.2') {
-       /* This dependency was originally in the Maven provided scope, but the project was not of type war.
-       This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
-       Please review and delete this closure when resolved. */
-    }
+    compile("com.google.inject.extensions:guice-multibindings:${guiceVersion}")
+    compile("com.google.inject:guice:${guiceVersion}")
+    compile("com.google.guava:guava:${guavaVersion}")
+    compile("com.google.http-client:google-http-client:${googleApiClient}")
+    compile("com.google.http-client:google-http-client-xml:${googleApiClient}")
+    compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
+    compile("com.google.oauth-client:google-oauth-client-jetty:${googleApiClient}")
+    compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+    compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
+    compile("org.apache.commons:commons-lang3:${commonsLangVersion}")
+    compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
+    compile("oauth.signpost:signpost-commonshttp4:${signpostVersion}")
+    // Logging
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+
+    testCompile("com.jayway.jsonpath:json-path:${jaywayVersion}")
+    testCompile("com.google.truth:truth:${truthVersion}")
+    testCompile("junit:junit:${junitVersion}")
+    testCompile("org.hamcrest:hamcrest-core:${hamcrestVersion}")
 }
