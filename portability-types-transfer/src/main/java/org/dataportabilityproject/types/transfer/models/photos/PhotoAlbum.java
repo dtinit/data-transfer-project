@@ -13,26 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer.models.tasks;
+package org.dataportabilityproject.types.transfer.models.photos;
+
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.dataportabilityproject.types.transfer.models.DataModel;
 
-public class TaskListModel extends DataModel {
+public class PhotoAlbum {
     private final String id;
     private final String name;
+    private final String description;
 
+    /** The {@code id} is used to associate photos with this album. **/
     @JsonCreator
-    public TaskListModel(
+    public PhotoAlbum(
         @JsonProperty("id") String id,
-        @JsonProperty("name") String name) {
+        @JsonProperty("name") String name,
+        @JsonProperty("description") String description) {
         this.id = id;
         this.name = name;
+        this.description = description;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public String getId() {

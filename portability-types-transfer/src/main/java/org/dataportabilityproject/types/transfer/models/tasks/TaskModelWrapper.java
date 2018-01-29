@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer.models.photos;
+package org.dataportabilityproject.types.transfer.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,25 +22,25 @@ import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * A Wrapper for all the possible objects that can be returned by a photos exporter.
+ * A Wrapper for all the possible objects that can be returned by a task exporter.
  */
-public class PhotosModelWrapper extends DataModel {
-  private final Collection<PhotoAlbum> albums;
-  private final Collection<PhotoModel> photos;
+public class TaskModelWrapper extends DataModel {
+  private final Collection<TaskListModel> lists;
+  private final Collection<TaskModel> tasks;
 
   @JsonCreator
-  public PhotosModelWrapper(
-      @JsonProperty("albums") Collection<PhotoAlbum> albums,
-      @JsonProperty("photos") Collection<PhotoModel> photos) {
-    this.albums = albums == null ? ImmutableList.of() : albums;
-    this.photos = photos == null ? ImmutableList.of() : photos;
+  public TaskModelWrapper(
+      @JsonProperty("lists") Collection<TaskListModel> lists,
+      @JsonProperty("tasks") Collection<TaskModel> tasks) {
+    this.lists = lists == null ? ImmutableList.of() : lists;
+    this.tasks = tasks == null ? ImmutableList.of() : tasks;
   }
 
-  public Collection<PhotoAlbum> getAlbums() {
-    return albums;
+  public Collection<TaskListModel> getLists() {
+    return lists;
   }
 
-  public Collection<PhotoModel> getPhotos() {
-    return photos;
+  public Collection<TaskModel> getTasks() {
+    return tasks;
   }
 }

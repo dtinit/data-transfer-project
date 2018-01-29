@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.transfer.models.calendar;
+package org.dataportabilityproject.types.transfer.models.calendar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -6,10 +6,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.time.OffsetDateTime;
 import java.util.List;
-import org.dataportabilityproject.spi.transfer.models.calendar.CalendarEventModel.CalendarEventTime;
-import org.dataportabilityproject.spi.transfer.models.mail.MailContainerModel;
-import org.dataportabilityproject.spi.transfer.models.mail.MailMessageModel;
-import org.dataportabilityproject.spi.transfer.models.mail.MailModelWrapper;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel.CalendarEventTime;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.junit.Test;
 

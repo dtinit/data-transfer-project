@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer.models.calendar;
+package org.dataportabilityproject.types.transfer.models.calendar;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.OffsetDateTime;
 import java.util.List;
-import org.dataportabilityproject.types.transfer.models.DataModel;
 
 public class CalendarEventModel {
 

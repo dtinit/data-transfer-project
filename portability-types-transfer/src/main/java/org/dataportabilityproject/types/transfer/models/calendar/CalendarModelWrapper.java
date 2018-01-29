@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer.models.tasks;
+package org.dataportabilityproject.types.transfer.models.calendar;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,25 +22,24 @@ import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * A Wrapper for all the possible objects that can be returned by a task exporter.
+ * A Wrapper for all the possible objects that can be returned by a calendar exporter.
  */
-public class TaskModelWrapper extends DataModel {
-  private final Collection<TaskListModel> lists;
-  private final Collection<TaskModel> tasks;
+public class CalendarModelWrapper extends DataModel {
+  private final Collection<CalendarModel> calendars;
+  private final Collection<CalendarEventModel> events;
 
   @JsonCreator
-  public TaskModelWrapper(
-      @JsonProperty("lists") Collection<TaskListModel> lists,
-      @JsonProperty("tasks") Collection<TaskModel> tasks) {
-    this.lists = lists == null ? ImmutableList.of() : lists;
-    this.tasks = tasks == null ? ImmutableList.of() : tasks;
+  public CalendarModelWrapper(
+      @JsonProperty("calendars") Collection<CalendarModel> calendars,
+      @JsonProperty("events") Collection<CalendarEventModel> events) {
+    this.calendars = calendars == null ? ImmutableList.of() : calendars;
+    this.events = events == null ? ImmutableList.of() : events;
+  }
+  public Collection<CalendarModel> getCalendars() {
+    return calendars;
   }
 
-  public Collection<TaskListModel> getLists() {
-    return lists;
-  }
-
-  public Collection<TaskModel> getTasks() {
-    return tasks;
+  public Collection<CalendarEventModel> getEvents() {
+    return events;
   }
 }

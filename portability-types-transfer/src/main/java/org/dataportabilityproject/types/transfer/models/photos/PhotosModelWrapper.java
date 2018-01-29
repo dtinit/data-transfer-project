@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer.models.calendar;
+package org.dataportabilityproject.types.transfer.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,24 +22,25 @@ import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * A Wrapper for all the possible objects that can be returned by a calendar exporter.
+ * A Wrapper for all the possible objects that can be returned by a photos exporter.
  */
-public class CalendarModelWrapper extends DataModel {
-  private final Collection<CalendarModel> calendars;
-  private final Collection<CalendarEventModel> events;
+public class PhotosModelWrapper extends DataModel {
+  private final Collection<PhotoAlbum> albums;
+  private final Collection<PhotoModel> photos;
 
   @JsonCreator
-  public CalendarModelWrapper(
-      @JsonProperty("calendars") Collection<CalendarModel> calendars,
-      @JsonProperty("events") Collection<CalendarEventModel> events) {
-    this.calendars = calendars == null ? ImmutableList.of() : calendars;
-    this.events = events == null ? ImmutableList.of() : events;
-  }
-  public Collection<CalendarModel> getCalendars() {
-    return calendars;
+  public PhotosModelWrapper(
+      @JsonProperty("albums") Collection<PhotoAlbum> albums,
+      @JsonProperty("photos") Collection<PhotoModel> photos) {
+    this.albums = albums == null ? ImmutableList.of() : albums;
+    this.photos = photos == null ? ImmutableList.of() : photos;
   }
 
-  public Collection<CalendarEventModel> getEvents() {
-    return events;
+  public Collection<PhotoAlbum> getAlbums() {
+    return albums;
+  }
+
+  public Collection<PhotoModel> getPhotos() {
+    return photos;
   }
 }

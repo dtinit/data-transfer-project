@@ -1,12 +1,9 @@
-package org.dataportabilityproject.spi.transfer.models.tasks;
+package org.dataportabilityproject.types.transfer.models.tasks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.util.List;
-import org.dataportabilityproject.spi.transfer.models.photos.PhotoAlbum;
-import org.dataportabilityproject.spi.transfer.models.photos.PhotoModel;
-import org.dataportabilityproject.spi.transfer.models.photos.PhotosModelWrapper;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.junit.Test;
 

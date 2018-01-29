@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.transfer.models.mail;
+package org.dataportabilityproject.types.transfer.models.mail;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;

@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer.models.tasks;
+package org.dataportabilityproject.types.transfer.models.calendar;
+
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TaskModel {
-    private final String taskListId;
-    private final String text;
-    private final String notes;
+public class CalendarAttendeeModel {
+    private final String displayName;
+    private final String email;
+    private final boolean optional;
 
     @JsonCreator
-    public TaskModel(
-        @JsonProperty("taskListId") String taskListId,
-        @JsonProperty("text") String text,
-        @JsonProperty("notes") String notes) {
-        this.taskListId = taskListId;
-        this.text = text;
-        this.notes = notes;
+    public CalendarAttendeeModel(
+        @JsonProperty("displayName") String displayName,
+        @JsonProperty("email") String email,
+        @JsonProperty("optional") boolean optional) {
+        this.displayName = displayName;
+        this.email = email;
+        this.optional = optional;
     }
 
-    public String getText() {
-        return text;
+    public boolean getOptional() {
+        return optional;
     }
 
-    public String getNotes() {
-        return notes;
+    public String getEmail() {
+        return email;
     }
 
-    public String getTaskListId() {
-        return taskListId;
+    public String getDisplayName() {
+        return displayName;
     }
 }
