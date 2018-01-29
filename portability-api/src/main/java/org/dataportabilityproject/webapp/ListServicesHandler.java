@@ -15,8 +15,6 @@
  */
 package org.dataportabilityproject.webapp;
 
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Enums;
 import com.google.common.base.Optional;
@@ -26,17 +24,18 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.types.client.transfer.ListServicesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
 
 /**
  * HttpHandler for the ListServices service
@@ -77,7 +76,6 @@ final class ListServicesHandler implements HttpHandler {
   private ListServicesResponse generateGetResponse(String dataTypeParam) {
     // Validate incoming data type parameter
     PortableDataType dataType = getDataType(dataTypeParam);
-    JsonObjectBuilder builder = Json.createObjectBuilder();
 
     List<String> exportServices = new ArrayList<String>();
     List<String> importServices = new ArrayList<String>();
