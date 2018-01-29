@@ -1,6 +1,6 @@
 
 <div class="text-left portability-form">
-  <form name="simpleLoginForm" #form action="{{url}}/simpleLoginSubmit" method="post">
+  <form name="simpleLoginForm" (ngSubmit)="onSubmit()">
     <div class="form-group">
       <label for="username">username:</label>
       <input type="text"
@@ -18,8 +18,8 @@
             name="password"
             title="password"
             class="form-control"/>
-      <button [disabled]="!enableSubmit"
-            type="submit" (click)="form.submit()"
+      <button type="submit"
+            [disabled]="!enableSubmit"
             class="btn btn-primary"
             title="Clicking this will submit your credentials">
         Authorize

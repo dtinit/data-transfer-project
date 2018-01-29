@@ -17,6 +17,7 @@ package org.dataportabilityproject.webapp;
 
 import static org.apache.axis.transport.http.HTTPConstants.HEADER_LOCATION;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -34,6 +35,7 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.types.client.transfer.SimpleLoginRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +46,10 @@ import org.slf4j.LoggerFactory;
  */
 final class SimpleLoginSubmitHandler implements HttpHandler {
 
-  public static final String PATH = "/simpleLoginSubmit";
-  private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
+  public static final String PATH = "/_/simpleLoginSubmit";
+  private static final ObjectMapper objectMapper = new ObjectMapper();
 
+  private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final CryptoHelper cryptoHelper;
@@ -90,14 +93,11 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-    Map<String, String> requestParams = PortabilityApiUtils.getRequestParams(exchange);
-    requestParams.putAll(PortabilityApiUtils.getPostParams(exchange));
+    SimpleLoginRequest request = objectMapper.readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
 
-    String username = requestParams.get("username");
-    String password = requestParams.get("password");
     Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(username), "Missing valid username: %s", username);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(password), "Password is empty");
+        .checkArgument(!Strings.isNullOrEmpty(request.getUsername()), "Missing valid username");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getPassword()), "Missing password");
 
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.exportService(), dataType, serviceMode);
@@ -106,7 +106,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     // Generate and store auth data
     AuthData authData = generator
-        .generateAuthData(PortabilityApiFlags.baseApiUrl(), username, jobId, null, password);
+        .generateAuthData(PortabilityApiFlags.baseApiUrl(), request.getUsername(), jobId, null, request.getPassword());
     Preconditions.checkNotNull(authData, "Auth data should not be null");
 
     if (!commonSettings.getEncryptedFlow()) {
