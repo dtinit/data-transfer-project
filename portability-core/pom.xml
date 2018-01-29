@@ -302,6 +302,11 @@
       <artifactId>guice-multibindings</artifactId>
       <version>4.1.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.oauth-client</groupId>
+      <artifactId>google-oauth-client</artifactId>
+      <version>1.23.0</version>
+    </dependency>
 
   </dependencies>
 

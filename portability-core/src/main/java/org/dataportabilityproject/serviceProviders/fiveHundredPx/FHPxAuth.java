@@ -17,6 +17,16 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.api.client.auth.oauth.OAuthAuthorizeTemporaryTokenUrl;
+import com.google.api.client.auth.oauth.OAuthCredentialsResponse;
+import com.google.api.client.auth.oauth.OAuthGetAccessToken;
+import com.google.api.client.auth.oauth.OAuthGetTemporaryToken;
+import com.google.api.client.auth.oauth.OAuthHmacSigner;
+import com.google.api.client.auth.oauth.OAuthParameters;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -136,27 +146,40 @@ public class FHPxAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerat
     logger.debug("Starting 500px generateAuthData");
 
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
-    OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
     String requestTokenUrl = "https://api.500px.com/v1/oauth/request_token";
     String accessTokenUrl = "https://api.500px.com/v1/oauth/access_token";
     String authWebsiteUrl = "https://api.500px.com/v1/oauth/authorize";
-    OAuthProvider provider = new DefaultOAuthProvider(requestTokenUrl, accessTokenUrl,
-        authWebsiteUrl);
 
-    logger.debug("500px initial auth data {}", initialAuthData.toString());
-    TokenSecretAuthData tokenSecretAuthData = (TokenSecretAuthData) initialAuthData;
-    consumer.setTokenWithSecret(tokenSecretAuthData.token(), tokenSecretAuthData.secret());
-    logger.debug("Consumer token: {}", consumer.getToken());
-    logger.debug("Consumer key: {}", consumer.getConsumerKey());
+    TokenSecretAuthData initialTokenSecret = (TokenSecretAuthData) initialAuthData;
 
-    consumer.setMessageSigner(new HmacSha1MessageSigner());
+    OAuthHmacSigner hmacSigner = new OAuthHmacSigner();
 
-    try {
-      provider.retrieveAccessToken(consumer, authCode);
-    } catch (OAuthMessageSignerException | OAuthNotAuthorizedException |
-        OAuthExpectationFailedException | OAuthCommunicationException e) {
-      throw new IOException("Could not get access token", e);
-    }
+    OAuthGetAccessToken accessTokenRequest = new OAuthGetAccessToken(accessTokenUrl);
+    accessTokenRequest.signer = hmacSigner;
+    accessTokenRequest.temporaryToken = initialTokenSecret.token();
+    accessTokenRequest.transport = new NetHttpTransport();
+    accessTokenRequest.verifier = authCode;
+    accessTokenRequest.consumerKey = appCredentials.key();
+
+    logger.debug("Access token request: {}", accessTokenRequest);
+
+    OAuthCredentialsResponse accessTokenResponse = accessTokenRequest.execute();
+
+    logger.debug("Access token response: {}", accessTokenResponse);
+
+    OAuthParameters params = new OAuthParameters();
+    hmacSigner.tokenSharedSecret = initialTokenSecret.secret();
+    params.signer = hmacSigner;
+    params.consumerKey = appCredentials.key();
+    params.token = initialTokenSecret.token();
+    params.verifier = authCode;
+
+    logger.debug("Parameters: {}", params);
+
+    HttpRequestFactory reqFactory = new NetHttpTransport().createRequestFactory();
+    GenericUrl url = new GenericUrl(authWebsiteUrl);
+    HttpResponse response = reqFactory.buildGetRequest(url).execute();
+    logger.debug("Response: {}", response);
 
     return null;
   }
