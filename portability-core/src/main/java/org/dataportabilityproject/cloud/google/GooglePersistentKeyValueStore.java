@@ -51,10 +51,6 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
 
   private final Datastore datastore;
 
-  // Current transaction for completing atomic operations. Only one atomic transaction may be
-  // executed at a time. Null if we are not currently completing a transaction.
-  private Transaction currentTransaction = null;
-
   public GooglePersistentKeyValueStore(Datastore datastore) {
     this.datastore = datastore;
   }
