@@ -11,6 +11,7 @@ public class PhotosModelWrapperTest {
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerSubtypes(PhotosModelWrapper.class);
 
     List<PhotoAlbum> albums = ImmutableList.of(
         new PhotoAlbum("id1", "albumb1", "This is a fake albumb")

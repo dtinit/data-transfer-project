@@ -11,6 +11,7 @@ public class TasksModelWrapperTest {
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerSubtypes(TaskModelWrapper.class);
 
     List<TaskListModel> taskLists = ImmutableList.of(
         new TaskListModel("id1", "List 1")

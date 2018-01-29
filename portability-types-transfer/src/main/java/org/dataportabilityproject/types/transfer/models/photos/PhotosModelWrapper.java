@@ -17,6 +17,7 @@ package org.dataportabilityproject.types.transfer.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.DataModel;
@@ -24,6 +25,7 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 /**
  * A Wrapper for all the possible objects that can be returned by a photos exporter.
  */
+@JsonTypeName("PhotosModelWrapper")
 public class PhotosModelWrapper extends DataModel {
   private final Collection<PhotoAlbum> albums;
   private final Collection<PhotoModel> photos;

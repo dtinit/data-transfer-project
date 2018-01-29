@@ -15,6 +15,7 @@ public class CalendarModelWrapperTest {
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.registerSubtypes(CalendarModelWrapper.class);
 
     CalendarEventTime today = new CalendarEventTime(OffsetDateTime.now(), true);
 

@@ -17,6 +17,7 @@ package org.dataportabilityproject.types.transfer.models.calendar;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.DataModel;
@@ -24,6 +25,7 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 /**
  * A Wrapper for all the possible objects that can be returned by a calendar exporter.
  */
+@JsonTypeName("CalendarModelWrapper")
 public class CalendarModelWrapper extends DataModel {
   private final Collection<CalendarModel> calendars;
   private final Collection<CalendarEventModel> events;

@@ -11,6 +11,7 @@ public class MailModelWrapperTest {
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerSubtypes(MailModelWrapper.class);
 
     List<MailContainerModel> containers = ImmutableList.of(
         new MailContainerModel("id1", "container1"),
