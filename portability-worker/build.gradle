@@ -1,0 +1,53 @@
+apply plugin: 'java'
+
+// TODO: Determine how to use versions defined in gradle.properties
+group = 'org.dataportabilityproject'
+version = '1.0-SNAPSHOT'
+
+description = """Portability Worker"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+jar {
+    // TODO: consider fatjar plugin
+    // Add dependencies
+    from ({
+      (configurations.runtime).collect {
+        it.isDirectory() ? it : zipTree(it)
+      }
+    }) {
+        // Exclude signature files to avoid SecurityException
+        exclude '**/META-INF/*.SF'
+        exclude '**/META-INF/*.DSA'
+        exclude '**/META-INF/*.RSA'
+    }
+    manifest {
+      attributes 'Main-Class': 'org.dataportabilityproject.worker.WorkerMain'
+    }
+}
+
+dependencies {
+    compile project(':portability-core')
+		// TODO: Determine how to use versions defined in gradle.properties
+    compile group: 'com.google.guava', name: 'guava', version:'20.0'
+    compile group: 'com.flickr4java', name: 'flickr4java', version:'2.16'
+    compile group: 'com.google.apis', name: 'google-api-services-calendar', version:'v3-rev236-1.22.0'
+    compile group: 'com.google.apis', name: 'google-api-services-gmail', version:'v1-rev62-1.22.0'
+    compile group: 'com.google.apis', name: 'google-api-services-tasks', version:'v1-rev46-1.22.0'
+    compile(group: 'com.google.gdata', name: 'core', version:'1.47.1') {
+exclude(module: 'jetty-util')
+exclude(module: 'servlet-api')
+    }
+    compile group: 'com.google.oauth-client', name: 'google-oauth-client', version:'1.22.0'
+    compile group: 'com.google.http-client', name: 'google-http-client', version:'1.22.0'
+    compile group: 'com.google.http-client', name: 'google-http-client-xml', version:'1.22.0'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.7'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:'2.8.7'
+    compile group: 'com.google.code.gson', name: 'gson', version:'2.2.4'
+    testCompile group: 'junit', name: 'junit', version:'4.10'
+    testCompile group: 'com.google.truth', name: 'truth', version:'0.30'
+}

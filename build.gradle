@@ -31,8 +31,11 @@ buildscript {
 
     repositories {
         jcenter()
-        mavenLocal()
     }
+}
+
+plugins {
+  id 'java'
 }
 
 def sourceProjects() {
@@ -43,11 +46,9 @@ def sourceProjects() {
 configure(sourceProjects()) {
     repositories {
         jcenter()
-        mavenLocal()
     }
 
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.8
 
@@ -59,14 +60,4 @@ configure(sourceProjects()) {
         testCompile project(":portability-test-utilities")
     }
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        }
-    }
-
 }
-
-                                                                                       

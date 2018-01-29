@@ -1,8 +1,12 @@
 .idea
-.gradle/
 build/
 out/
 target/
+gradle/
+.gradle/
+.../gradle/
+**/gradlew
+**/gradlew.bat
 *.iml
 *.log
 config/local/secrets.csv

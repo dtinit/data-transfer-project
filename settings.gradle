@@ -12,4 +12,5 @@ include ':extensions:data-transfer:portability-data-transfer-google', ':extensio
 
 include ':portability-test-utilities'
 
+include ':portability-core', ':portability-worker', ':portability-api'
 
