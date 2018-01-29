@@ -109,6 +109,7 @@ abstract class SetupHandler implements HttpHandler {
       JsonObject response;
       if (mode == IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
+        logger.debug("Handle import setup response: {}", response);
       } else {
         response = handleCopySetup(exchange.getRequestHeaders(), job);
         // Valid job is present, generate an XSRF token to pass back via cookie
@@ -121,6 +122,7 @@ abstract class SetupHandler implements HttpHandler {
       exchange.getResponseHeaders()
           .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
       exchange.sendResponseHeaders(200, 0);
+      logger.debug("Exchange: {}", exchange.toString());
       JsonWriter writer = Json.createWriter(exchange.getResponseBody());
       writer.write(response);
       writer.close();

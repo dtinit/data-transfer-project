@@ -72,6 +72,8 @@ final class LocalCopier {
     if (exporterName.equals(importerName)) {
       importAuthData = exportAuthData;
     } else {
+      logger.warn("Importer name: {}\ttype: {}", importerName, type);
+      logger.warn("Offline auth: {}", registry.getOfflineAuth(importerName, type, ServiceMode.IMPORT));
       importAuthData = registry.getOfflineAuth(importerName, type, ServiceMode.IMPORT)
           .generateAuthData(ioInterface);
     }

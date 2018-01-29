@@ -32,6 +32,8 @@ import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
 import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
+import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 
 /**
  * The {@link ServiceProvider} for the 500px service (https://www.500px.com/).
@@ -51,7 +53,7 @@ final public class FHPxServiceProvider implements ServiceProvider {
 
   @Override
   public String getName() {
-    return "FHPx";
+    return "500px";
   }
 
   @Override
@@ -62,6 +64,22 @@ final public class FHPxServiceProvider implements ServiceProvider {
   @Override
   public ImmutableList<PortableDataType> getImportTypes() {
     return SUPPORTED_DATA_TYPES;
+  }
+
+  @Override
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    return lookupAndCreateAuth(dataType, serviceMode);
+  }
+
+  @Override
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
+      ServiceMode serviceMode) {
+    Preconditions
+        .checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
+            "Export of type [%s] is not supported by Instagram",
+            dataType);
+    return lookupAndCreateAuth(dataType, serviceMode);
   }
 
   @Override

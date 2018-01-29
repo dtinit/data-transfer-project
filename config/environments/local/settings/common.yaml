@@ -8,4 +8,5 @@ serviceProviderClasses: [
   "org.dataportabilityproject.serviceProviders.microsoft.MicrosoftServiceProvider",
   "org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkServiceProvider",
   "org.dataportabilityproject.serviceProviders.smugmug.SmugMugServiceProvider",
+  "org.dataportabilityproject.serviceProviders.fiveHundredPx.FHPxServiceProvider",
 ]

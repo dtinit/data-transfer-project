@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo -e "\nSetting Google vars"
+
+ORGANIZATION_ID=433637338589 #ID for google.com organization in GCP project
+BILLING_ACCOUNT_ID=0072FE-A63213-1B46B7
+BASE_PROJECT_ID="world-takeout"
+OWNERS="\"user:chuy@google.com\",\"user:rtannenbaum@google.com\",\"user:sihamh@google.com\",\"user:willard@google.com\",\"user:olsona@google.com\""
+# This is a test project. Only use test projects here!
+LOCAL_GCP_PROJECT="world-takeout-test"

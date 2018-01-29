@@ -17,8 +17,9 @@ package org.dataportabilityproject.serviceProviders.fiveHundredPx;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
-import jdk.nashorn.internal.parser.Token;
 import oauth.signpost.OAuth;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
@@ -27,6 +28,7 @@ import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
+import oauth.signpost.signature.HmacSha1MessageSigner;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.ServiceMode;
@@ -36,11 +38,15 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
 import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class FHPxAuth implements OfflineAuthDataGenerator {
+public class FHPxAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
 
   private final AppCredentials appCredentials;
   private final ServiceMode serviceMode;  // Either import or export
+
+  private final Logger logger = LoggerFactory.getLogger(FHPxAuth.class);
 
   FHPxAuth(AppCredentials appCredentials, ServiceMode serviceMode) {
     this.appCredentials = appCredentials;
@@ -56,7 +62,8 @@ public class FHPxAuth implements OfflineAuthDataGenerator {
     String requestTokenUrl = "https://api.500px.com/v1/oauth/request_token";
     String accessTokenUrl = "https://api.500px.com/v1/oauth/access_token";
     String authWebsiteUrl = "https://api.500px.com/v1/oauth/authorize";
-    OAuthProvider provider = new DefaultOAuthProvider(requestTokenUrl, accessTokenUrl, authWebsiteUrl);
+    OAuthProvider provider = new DefaultOAuthProvider(requestTokenUrl, accessTokenUrl,
+        authWebsiteUrl);
 
     String authUrl;
     try {
@@ -90,5 +97,67 @@ public class FHPxAuth implements OfflineAuthDataGenerator {
     OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
     consumer.setTokenWithSecret(tokenSecretAuthData.token(), tokenSecretAuthData.secret());
     return consumer;
+  }
+
+  @Override
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+    logger.debug("Starting 500px generateAuthUrl");
+
+    OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
+
+    String requestTokenUrl = "https://api.500px.com/v1/oauth/request_token";
+    String accessTokenUrl = "https://api.500px.com/v1/oauth/access_token";
+    String authWebsiteUrl = "https://api.500px.com/v1/oauth/authorize";
+    OAuthProvider provider = new DefaultOAuthProvider(requestTokenUrl, accessTokenUrl,
+        authWebsiteUrl);
+    String tokenInfo;
+    try {
+      tokenInfo = provider.retrieveRequestToken(consumer,
+          callbackBaseUrl + "/callback1/500px"); // so this is sent to the OAuth handler
+    } catch (OAuthMessageSignerException
+        | OAuthNotAuthorizedException
+        | OAuthExpectationFailedException
+        | OAuthCommunicationException e) {
+      throw new IOException("Couldn't generate authUrl", e);
+    }
+
+    logger.debug("500px auth flow token: {}", tokenInfo);
+    TokenSecretAuthData authData = TokenSecretAuthData
+        .create(consumer.getToken(), consumer.getTokenSecret());
+    logger.debug("500px authData: {}", authData);
+
+    return AuthFlowInitiator
+        .create(tokenInfo, authData); // tokenInfo contains a url and all the params
+  }
+
+  @Override
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+      AuthData initialAuthData, String extra) throws IOException {
+    logger.debug("Starting 500px generateAuthData");
+
+    Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
+    OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
+    String requestTokenUrl = "https://api.500px.com/v1/oauth/request_token";
+    String accessTokenUrl = "https://api.500px.com/v1/oauth/access_token";
+    String authWebsiteUrl = "https://api.500px.com/v1/oauth/authorize";
+    OAuthProvider provider = new DefaultOAuthProvider(requestTokenUrl, accessTokenUrl,
+        authWebsiteUrl);
+
+    logger.debug("500px initial auth data {}", initialAuthData.toString());
+    TokenSecretAuthData tokenSecretAuthData = (TokenSecretAuthData) initialAuthData;
+    consumer.setTokenWithSecret(tokenSecretAuthData.token(), tokenSecretAuthData.secret());
+    logger.debug("Consumer token: {}", consumer.getToken());
+    logger.debug("Consumer key: {}", consumer.getConsumerKey());
+
+    consumer.setMessageSigner(new HmacSha1MessageSigner());
+
+    try {
+      provider.retrieveAccessToken(consumer, authCode);
+    } catch (OAuthMessageSignerException | OAuthNotAuthorizedException |
+        OAuthExpectationFailedException | OAuthCommunicationException e) {
+      throw new IOException("Could not get access token", e);
+    }
+
+    return null;
   }
 }
