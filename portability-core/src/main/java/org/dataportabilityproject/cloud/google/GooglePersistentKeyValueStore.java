@@ -36,11 +36,16 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.job.JobDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
  */
 public final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
+  private static final Logger logger = LoggerFactory.getLogger(GooglePersistentKeyValueStore.class);
+
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
@@ -61,26 +66,8 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   @Override
-  public void atomicPut(String key, Map<String, Object> data) throws IOException {
-    if (currentTransaction == null) {
-      throw new IOException("Attempting atomic put as part of a non-existent transaction");
-    }
-    Entity entity = createEntity(key, data);
-    currentTransaction.put(entity);
-  }
-
-  @Override
   public Map<String, Object> get(String key) {
     Entity entity = datastore.get(getKey(key));
-    return getProperties(entity);
-  }
-
-  @Override
-  public Map<String, Object> atomicGet(String key) throws IOException {
-    if (currentTransaction == null) {
-      throw new IOException("Attempting atomic get as part of a non-existent transaction");
-    }
-    Entity entity = currentTransaction.get(getKey(key));
     return getProperties(entity);
   }
 
@@ -104,41 +91,39 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   @Override
-  public void atomicDelete(String key) throws IOException {
-    if (currentTransaction == null) {
-      throw new IOException("Attempting atomic delete as part of a non-existent transaction");
+  public boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data) {
+    Transaction transaction = datastore.newTransaction();
+
+    try {
+      Key previousKey = getKey(previousKeyStr);
+      Entity previousEntity = transaction.get(previousKey);
+      if (previousEntity == null) {
+        logger.debug("Could not find previous key {}", previousKeyStr);
+        return false;
+      }
+
+      Key newKey = getKey(newKeyStr);
+      Entity newEntity = transaction.get(newKey);
+      if (newEntity != null) {
+        logger.debug("Updated key already exists: {}", newKeyStr);
+        return false;
+      }
+
+      newEntity = createEntity(newKey, data);
+      transaction.put(newEntity);
+      transaction.delete(previousKey);
+      transaction.commit();
+      return true;
+    } catch (Throwable t) {
+      logger.debug("Failed atomic update of {} to {}. Exception was: {}",
+          previousKeyStr, newKeyStr, t);
+      transaction.rollback();
+      return false;
     }
-    currentTransaction.delete(getKey(key));
   }
 
-  @Override
-  public void startTransaction() throws IOException {
-    if (currentTransaction != null) {
-      throw new IOException("Already started a transaction. Can only do one transaction at a time."
-          + " Please commit or rollback the current transaction before starting a new one.");
-    }
-    currentTransaction = datastore.newTransaction();
-  }
-
-  @Override
-  public void commitTransaction() throws IOException {
-    if (currentTransaction == null) {
-      throw new IOException("Attempting to commit a non-existent transaction");
-    }
-    currentTransaction.commit();
-  }
-
-  @Override
-  public void rollbackTransaction() throws IOException {
-    if (currentTransaction == null) {
-      throw new IOException("Attempting to roll back a non-existent transaction");
-    }
-    currentTransaction.rollback();
-  }
-
-  private Entity createEntity(String key, Map<String, Object> data) throws IOException {
-    Entity.Builder builder = Entity.newBuilder(getKey(key))
-        .set(CREATED_FIELD, Timestamp.now());
+  private Entity createEntity(Key key, Map<String, Object> data) throws IOException {
+    Entity.Builder builder = Entity.newBuilder(key).set(CREATED_FIELD, Timestamp.now());
 
     for (Entry<String, Object> entry : data.entrySet()) {
       if (entry.getValue() instanceof String) {
@@ -160,6 +145,10 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
       }
     }
     return builder.build();
+  }
+
+  private Entity createEntity(String key, Map<String, Object> data) throws IOException {
+    return createEntity(getKey(key), data);
   }
 
   private static Map<String, Object> getProperties(Entity entity) {

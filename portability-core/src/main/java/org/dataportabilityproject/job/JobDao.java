@@ -225,36 +225,24 @@ public class JobDao {
    * Atomically updates an existing {@code job} in storage with the given {@code jobState}.
    * Returns whether it was able to update the job.
    */
-  private boolean updateJobState(PortabilityJob job, JobState previous, JobState updated)
-      throws IOException {
-    String previousKey = createKey(previous, job.id());
-    storage.startTransaction();
-    Map<String, Object> existing = storage.atomicGet(previousKey);
-    if (existing == null) {
-      logger.debug("Could not find job {} in state {}", job.id(), previous);
-      return false;
-    }
-
-    String updatedKey = createKey(updated, job.id());
-    Map<String, Object> shouldNotExist = storage.atomicGet(updatedKey);
-    if (shouldNotExist != null) {
-      logger.debug("Job {} already exists in updated state {}", job.id(), updated);
-      return false;
-    }
-
+  private boolean updateJobState(PortabilityJob job, JobState previousJobState,
+      JobState newJobState) throws IOException {
+    String previousKey = createKey(previousJobState, job.id());
+    String newKey = createKey(newJobState, job.id());
     // Store the updated job info
     Map<String, Object> data = job.asMap();
-    storage.atomicPut(updatedKey, data);
-    storage.atomicDelete(previousKey);
-    try {
-      storage.commitTransaction();
-    } catch (DatastoreException e) {
-      logger.debug("Could not commit transaction: {}", e);
-      storage.rollbackTransaction();
+    boolean updated = storage.atomicUpdate(previousKey, newKey, data);
+    if (updated) {
+      logger.debug("Successfully updated state for job {}. Previous state: {}. New state: {}",
+          job.id(), previousJobState, newJobState);
+      return true;
+    } else {
+      logger.warn("Failed to update state for job {}. Previous state: {}. New state: {}",
+          job.id(), previousJobState, newJobState);
       return false;
     }
-    return true;
   }
+
   // UTILITY METHODS
 
   // TODO: come up with a better scheme for indexing state

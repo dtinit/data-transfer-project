@@ -18,15 +18,18 @@ package org.dataportabilityproject.cloud.local;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * In-memory implementation of backend storage.
- *
- * This shouldn't have to deal with concurrency, so make atomic operations call the normal
- * operations.
  */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
+  private static final Logger logger =
+      LoggerFactory.getLogger(InMemoryPersistentKeyValueStore.class);
+
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
   public InMemoryPersistentKeyValueStore() {
@@ -39,25 +42,15 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   @Override
-  public void atomicPut(String key, Map<String, Object> data) throws IOException {
-    put(key, data);
-  }
-
-  @Override
   public Map<String, Object> get(String key) {
     return map.get(key);
   }
 
   @Override
-  public Map<String, Object> atomicGet(String key) throws IOException {
-    return get(key);
-  }
-
-  @Override
   public String getFirst(String prefix) {
     // Mimic an index lookup
-    for(String key : map.keySet()) {
-      if(key.startsWith(prefix)) {
+    for (String key : map.keySet()) {
+      if (key.startsWith(prefix)) {
         return key;
       }
     }
@@ -69,23 +62,28 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
     map.remove(key);
   }
 
+  /**
+   * Update map, but note that this is not atomic or threadsafe currently.
+   *
+   * TODO: Implement threadsafe, atomic version if necessary. This class is only currently used for
+   * local development, where we typically don't test concurrent requests.
+   */
   @Override
-  public void atomicDelete(String key) throws IOException {
-    delete(key);
+  public boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data) {
+    Map<String, Object> previousData = get(previousKeyStr);
+    if (previousData == null) {
+      logger.debug("Could not find previous key {}", previousKeyStr);
+      return false;
+    }
+
+    Map<String, Object> newData = get(newKeyStr);
+    if (newData != null) {
+      logger.debug("Updated key already exists: {}", newKeyStr);
+    }
+
+    put(newKeyStr, data);
+    delete(previousKeyStr);
+    return true;
   }
 
-  @Override
-  public void startTransaction() throws IOException {
-    // Do nothing
-  }
-
-  @Override
-  public void commitTransaction() throws IOException {
-    // Do nothing
-  }
-
-  @Override
-  public void rollbackTransaction() throws IOException {
-    // Do nothing
-  }
 }
