@@ -63,13 +63,15 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Update map, but note that this is not atomic or threadsafe currently.
+   * Atomically update map.
    *
-   * TODO: Implement threadsafe, atomic version if necessary. This class is only currently used for
-   * local development, where we typically don't test concurrent requests.
+   * Simple synchronization on the entire method makes this atomic. This is inefficient as we
+   * can only perform one atomic update at a time even if another one is for an unrelated key, but
+   * that's OK as this class is only used for local testing.
    */
   @Override
-  public boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data) {
+  public synchronized boolean atomicUpdate(String previousKeyStr, String newKeyStr,
+      Map<String, Object> data) {
     Map<String, Object> previousData = get(previousKeyStr);
     if (previousData == null) {
       logger.debug("Could not find previous key {}", previousKeyStr);
