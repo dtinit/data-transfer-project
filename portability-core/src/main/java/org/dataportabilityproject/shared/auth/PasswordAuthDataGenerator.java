@@ -30,7 +30,7 @@ public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator,
 
   @Override
   public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
-    return AuthFlowInitiator.create("http://localhost:3000/simplelogin");
+    return AuthFlowInitiator.create(callbackBaseUrl + "/simplelogin");
   }
 
   @Override // online
