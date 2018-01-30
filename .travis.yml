@@ -15,15 +15,8 @@
 #
 matrix:
   include:
-    # language: java causes Travis to automatically run Maven and/or Gradle tests based on the
+    # language: java causes Travis to automatically run Gradle tests based on the
     # presence of the appropriate build files.
-    # During the transition from Maven -> Gradle, manually run both; Travis would just run
-    # Gradle by default if both are present
-    - language: java # Maven. TODO: Remove this once we are fully on Gradle
-      before_script:
-        - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-      script:
-        - mvn test -B
     - language: java # Gradle (used automatically)
     # The angularjs flow below is more customized. There is some nodejs setup to do as well as
     # configuration to use the version of Chrome that is installed in Travis images.

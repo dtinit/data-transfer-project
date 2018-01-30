@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.cloud.google;
 
-import com.google.cloud.datastore.Query;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
@@ -24,10 +23,11 @@ import com.google.cloud.datastore.DoubleValue;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.LongValue;
+import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
-import com.google.cloud.datastore.StructuredQuery.Filter;
 import com.google.cloud.datastore.TimestampValue;
+import com.google.cloud.datastore.Transaction;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,11 +36,16 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.job.JobDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
  */
 public final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
+  private static final Logger logger = LoggerFactory.getLogger(GooglePersistentKeyValueStore.class);
+
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
@@ -52,8 +57,70 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
 
   @Override
   public void put(String key, Map<String, Object> data) throws IOException {
-    Entity.Builder builder = Entity.newBuilder(getKey(key))
-        .set(CREATED_FIELD, Timestamp.now());
+    Entity entity = createEntity(key, data);
+    datastore.put(entity);
+  }
+
+  @Override
+  public Map<String, Object> get(String key) {
+    Entity entity = datastore.get(getKey(key));
+    return getProperties(entity);
+  }
+
+  @Override
+  public String getFirst(String prefix) {
+    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND).build();
+    QueryResults<Key> results = datastore.run(query);
+    while(results.hasNext()) {
+      String key = results.next().getName();
+      if(key.startsWith(prefix)) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void delete(String key) {
+    datastore.delete(getKey(key));
+  }
+
+  @Override
+  public boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data) {
+    Transaction transaction = datastore.newTransaction();
+
+    try {
+      Key previousKey = getKey(previousKeyStr);
+      Entity previousEntity = transaction.get(previousKey);
+      if (previousEntity == null) {
+        logger.debug("Could not find previous key {}", previousKeyStr);
+        transaction.rollback();
+        return false;
+      }
+
+      Key newKey = getKey(newKeyStr);
+      Entity newEntity = transaction.get(newKey);
+      if (newEntity != null) {
+        logger.debug("Updated key already exists: {}", newKeyStr);
+        transaction.rollback();
+        return false;
+      }
+
+      newEntity = createEntity(newKey, data);
+      transaction.put(newEntity);
+      transaction.delete(previousKey);
+      transaction.commit();
+      return true;
+    } catch (Throwable t) {
+      logger.debug("Failed atomic update of {} to {}. Exception was: {}",
+          previousKeyStr, newKeyStr, t);
+      transaction.rollback();
+      return false;
+    }
+  }
+
+  private Entity createEntity(Key key, Map<String, Object> data) throws IOException {
+    Entity.Builder builder = Entity.newBuilder(key).set(CREATED_FIELD, Timestamp.now());
 
     for (Entry<String, Object> entry : data.entrySet()) {
       if (entry.getValue() instanceof String) {
@@ -74,15 +141,16 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
         builder.set(entry.getKey(), Blob.copyFrom(bos.toByteArray())); // BlobValue
       }
     }
-
-    datastore.put(builder.build());
+    return builder.build();
   }
 
-  @Override
-  public Map<String, Object> get(String key) {
-    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-    Entity entity = datastore.get(getKey(key));
+  private Entity createEntity(String key, Map<String, Object> data) throws IOException {
+    return createEntity(getKey(key), data);
+  }
+
+  private static Map<String, Object> getProperties(Entity entity) {
     if (entity == null) return null;
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
     for (String property : entity.getNames()) {
       // builder.put(property, entity.getValue(property));
       if (entity.getValue(property) instanceof StringValue) {
@@ -115,25 +183,6 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     }
 
     return builder.build();
-  }
-
-  @Override
-  public void delete(String key) {
-    datastore.delete(getKey(key));
-  }
-
-  @Override
-  public String getFirst(String prefix) {
-    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND)
-        .build();
-    QueryResults<Key> results = datastore.run(query);
-    while(results.hasNext()) {
-      String key = results.next().getName();
-      if(key.startsWith(prefix)) {
-        return key;
-      }
-    }
-    return null;
   }
 
   private Key getKey(String key) {
