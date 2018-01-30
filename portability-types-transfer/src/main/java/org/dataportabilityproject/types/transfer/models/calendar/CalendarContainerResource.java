@@ -20,18 +20,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
-import org.dataportabilityproject.types.transfer.models.DataModel;
+import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
 /**
  * A Wrapper for all the possible objects that can be returned by a calendar exporter.
  */
-@JsonTypeName("CalendarModelWrapper")
-public class CalendarModelWrapper extends DataModel {
+@JsonTypeName("CalendarContainerResource")
+public class CalendarContainerResource extends ContainerResource {
   private final Collection<CalendarModel> calendars;
   private final Collection<CalendarEventModel> events;
 
   @JsonCreator
-  public CalendarModelWrapper(
+  public CalendarContainerResource(
       @JsonProperty("calendars") Collection<CalendarModel> calendars,
       @JsonProperty("events") Collection<CalendarEventModel> events) {
     this.calendars = calendars == null ? ImmutableList.of() : calendars;

@@ -6,16 +6,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.time.OffsetDateTime;
 import java.util.List;
+import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel.CalendarEventTime;
-import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.junit.Test;
 
-public class CalendarModelWrapperTest {
+public class CalendarContainerResourceTest {
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.registerSubtypes(CalendarModelWrapper.class);
+    objectMapper.registerSubtypes(CalendarContainerResource.class);
 
     CalendarEventTime today = new CalendarEventTime(OffsetDateTime.now(), true);
 
@@ -31,15 +31,15 @@ public class CalendarModelWrapperTest {
             "place 2", today, today)
     );
 
-    DataModel data = new CalendarModelWrapper(calendars, events);
+    ContainerResource data = new CalendarContainerResource(calendars, events);
 
     String serialized = objectMapper.writeValueAsString(data);
 
-    DataModel deserializedModel = objectMapper.readValue(serialized, DataModel.class);
+    ContainerResource deserializedModel = objectMapper.readValue(serialized, ContainerResource.class);
 
     Truth.assertThat(deserializedModel).isNotNull();
-    Truth.assertThat(deserializedModel).isInstanceOf(CalendarModelWrapper.class);
-    CalendarModelWrapper deserialized = (CalendarModelWrapper) deserializedModel;
+    Truth.assertThat(deserializedModel).isInstanceOf(CalendarContainerResource.class);
+    CalendarContainerResource deserialized = (CalendarContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getCalendars()).hasSize(1);
     Truth.assertThat(deserialized.getEvents()).hasSize(2);
   }

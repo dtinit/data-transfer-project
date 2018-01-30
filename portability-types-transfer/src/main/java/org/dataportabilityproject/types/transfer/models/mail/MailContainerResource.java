@@ -21,18 +21,18 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
-import org.dataportabilityproject.types.transfer.models.DataModel;
+import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
 /**
  * A Wrapper for all the possible objects that can be returned by a mail exporter.
  */
-@JsonTypeName("MailModelWrapper")
-public class MailModelWrapper extends DataModel {
+@JsonTypeName("MailContainerResource")
+public class MailContainerResource extends ContainerResource {
   private final Collection<MailContainerModel> folders;
   private final Collection<MailMessageModel> messages;
 
   @JsonCreator
-  public MailModelWrapper(
+  public MailContainerResource(
       @JsonProperty("folders") Collection<MailContainerModel> folders,
       @JsonProperty("messages") Collection<MailMessageModel> messages) {
     this.messages = (messages == null) ? ImmutableList.of() : messages;
