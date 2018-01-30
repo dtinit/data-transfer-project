@@ -1,4 +1,4 @@
-package org.dataportabilityproject.spi.transfer.types;
+package org.dataportabilityproject.types.transfer.models;
 
 import org.dataportabilityproject.types.transfer.PortableType;
 

@@ -7,6 +7,7 @@ import org.dataportabilityproject.types.transfer.EntityType;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
 /**
  * Specifies the starting point and context information for an export operation.
