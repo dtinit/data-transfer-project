@@ -54,9 +54,11 @@ configure(sourceProjects()) {
     dependencies {
         compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
         compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+        compile "com.google.guava:guava:${guavaVersion}-jre"
 
         testCompile "junit:junit:${junitVersion}"
         testCompile project(":portability-test-utilities")
+        testCompile "com.google.truth:truth:0.39"
     }
 
     publishing {
