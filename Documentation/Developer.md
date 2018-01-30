@@ -24,12 +24,12 @@
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored
-per environment in the environments/ directory. There is a subdirectory
-for each environment: local/, qa/, test/, and prod/. Each environment
-subdirectory contains a settings.yaml and common.yaml for PortabilityFlags values.
+per environment in the `environments/` directory. There is a subdirectory
+for each environment: `local/`, `qa/`, `test/`, and `prod/`. Each environment
+subdirectory contains a `settings.yaml` and `common.yaml` for PortabilityFlags values.
 
-For local development and testing, a secrets.csv file should be included in config/environments/local.
-This should contain all your API keys, see portability-core/src/resources/secrets_template.csv for an example.
+For local development and testing, a `secrets.csv` file should be included in `config/environments/local`.
+This should contain all your API keys, see `portability-core/src/resources/secrets_template.csv` for an example.
 
 ## Building/Running portability-core CLI locally
 The following builds and optionally runs the core CLI
@@ -39,7 +39,7 @@ The following builds and optionally runs the core CLI
    * This will also prompt you to run the jar.
 
 ## Building/Running the API server locally
-The following builds and optionally runs the API server on port 8080
+The following builds and optionally runs the API server on `port:8080`
 
  * `bin/build_and_run_jar.sh api local`
    * This copies over LOCAL secrets and settings and compiles the api jar.
