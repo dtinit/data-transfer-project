@@ -15,7 +15,7 @@
  */
 package org.dataportabilityproject.spi.transfer.provider;
 
-import org.dataportabilityproject.spi.transfer.types.ContinuationData;
+import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -33,7 +33,7 @@ public interface Exporter<A extends AuthData, T extends DataModel> {
      * Performs an export operation, starting from the data specified by the continuation.
      *
      * @param authData authentication data for the operation
-     * @param continuationData continuation data
+     * @param exportInformation info about what data to export see {@link ExportInformation} for more info
      */
-    ExportResult<T> export(A authData, ContinuationData continuationData); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
+    ExportResult<T> export(A authData, ExportInformation exportInformation); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
 }
