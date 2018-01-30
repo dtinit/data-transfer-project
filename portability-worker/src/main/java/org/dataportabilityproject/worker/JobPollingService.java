@@ -20,11 +20,13 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,18 +74,18 @@ class JobPollingService extends AbstractScheduledService {
     logger.debug("Polled pollForUnassignedJob, found id: {}", id);
     if (id != null) {
       Preconditions.checkState(!jobMetadata.isInitialized());
-      jobMetadata.init(id);
-      PublicKey publicKey = jobMetadata.getKeyPair().getPublic();
+      KeyPair keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
+      PublicKey publicKey = keyPair.getPublic();
       // TODO: Move storage of private key to a different location
-      PrivateKey privateKey = jobMetadata.getKeyPair().getPrivate();
+      PrivateKey privateKey = keyPair.getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
       if (jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey)) {
+        jobMetadata.init(id, keyPair);
         logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}",
             publicKey.getEncoded().length);
       } else {
         logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
             id);
-        jobMetadata.reset();
       }
     } else {
       logger.debug("findNextJobPendingWorkerAssignment result was null");

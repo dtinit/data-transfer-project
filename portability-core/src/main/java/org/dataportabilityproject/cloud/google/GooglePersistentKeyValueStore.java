@@ -69,8 +69,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
 
   @Override
   public String getFirst(String prefix) {
-    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND)
-        .build();
+    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND).build();
     QueryResults<Key> results = datastore.run(query);
     while(results.hasNext()) {
       String key = results.next().getName();
@@ -95,6 +94,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
       Entity previousEntity = transaction.get(previousKey);
       if (previousEntity == null) {
         logger.debug("Could not find previous key {}", previousKeyStr);
+        transaction.rollback();
         return false;
       }
 
@@ -102,6 +102,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
       Entity newEntity = transaction.get(newKey);
       if (newEntity != null) {
         logger.debug("Updated key already exists: {}", newKeyStr);
+        transaction.rollback();
         return false;
       }
 
