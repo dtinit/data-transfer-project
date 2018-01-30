@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.job;
 
+import com.google.cloud.datastore.DatastoreException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -153,13 +154,18 @@ public class JobDao {
 
   /**
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
-   * data.
+   * data. Returns whether it was able to update the job.
    */
-  public void updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
+  public boolean updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
+
     // Verify job is in existing state
     PortabilityJob existingJob = lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
-    Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
+    if (existingJob == null) {
+      logger.debug("Could not find job {} in unassigned state; this probably means another worker "
+          + "already claimed it", id);
+      return false;
+    }
     // Verify existing job in correct state
     Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
     Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
@@ -170,7 +176,7 @@ public class JobDao {
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
         .build();
-    updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT,
+    return updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT,
         JobState.ASSIGNED_WITHOUT_AUTH_DATA);
   }
 
@@ -216,21 +222,25 @@ public class JobDao {
   }
 
   /**
-   * Updates an existing {@code job} in storage with the given {@code jobState}.
+   * Atomically updates an existing {@code job} in storage with the given {@code jobState}.
+   * Returns whether it was able to update the job.
    */
-  private void updateJobState(PortabilityJob job, JobState previous, JobState updated) throws IOException {
-    String previousKey = createKey(previous, job.id());
-    Map<String, Object> existing = storage.get(previousKey);
-    Preconditions.checkArgument(existing != null, "Job not found");
-
-    String updatedKey = createKey(updated, job.id());
-    Map<String, Object> shouldNotExist = storage.get(updatedKey);
-    Preconditions.checkArgument(shouldNotExist == null, "Job in updated state already found");
-
+  private boolean updateJobState(PortabilityJob job, JobState previousJobState,
+      JobState newJobState) throws IOException {
+    String previousKey = createKey(previousJobState, job.id());
+    String newKey = createKey(newJobState, job.id());
     // Store the updated job info
     Map<String, Object> data = job.asMap();
-    storage.put(updatedKey, data);
-    storage.delete(previousKey);
+    boolean updated = storage.atomicUpdate(previousKey, newKey, data);
+    if (updated) {
+      logger.debug("Successfully updated state for job {}. Previous state: {}. New state: {}",
+          job.id(), previousJobState, newJobState);
+      return true;
+    } else {
+      logger.warn("Failed to update state for job {}. Previous state: {}. New state: {}",
+          job.id(), previousJobState, newJobState);
+      return false;
+    }
   }
 
   // UTILITY METHODS

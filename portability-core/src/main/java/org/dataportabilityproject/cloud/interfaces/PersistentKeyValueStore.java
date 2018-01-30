@@ -35,6 +35,12 @@ public interface PersistentKeyValueStore {
   /** Retrieve the first key that begins with the given {@code prefix} or null if none found. */
   String getFirst(String prefix);
 
-  /** Deletes entry with the given {@code key}*/
+  /** Deletes entry with the given {@code key}. */
   void delete(String key);
+
+  /**
+   * Atomically updates {@code previousKeyStr} to {@code newKeyStr} with {@code data},
+   * and deletes {@code previousKeyStr}.
+   **/
+  boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data);
 }
