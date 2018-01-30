@@ -63,7 +63,9 @@ export class BackendService {
 
   submitSimpleCreds(formData: SimpleLoginRequest) {
     console.log("formData: " + JSON.stringify(formData));
-    this.http.post('/_/simpleLoginSubmit', formData);
+    this.http.post('/_/simpleLoginSubmit', JSON.stringify(formData))
+      .catch(err=>this.handleError(err))
+      .subscribe();
   }
 
   copySetup() {

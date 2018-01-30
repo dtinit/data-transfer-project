@@ -48,8 +48,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
   public static final String PATH = "/_/simpleLoginSubmit";
   private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
 
-  private final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobDao jobDao;
   private final CryptoHelper cryptoHelper;
@@ -67,7 +67,12 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
+    SimpleLoginRequest request = objectMapper.readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
+    logger.debug("request: {}", request);
+
+
     PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH);
+
 
     String encodedIdCookie = PortabilityApiUtils
         .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
@@ -93,7 +98,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-    SimpleLoginRequest request = objectMapper.readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
+
 
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(request.getUsername()), "Missing valid username");
