@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 /**
- * NOTE: The Gradle build is currenty not enabled; use Maven instead until the project has been transitioned.
- *
  * Gradle build script for the data portability project.
  *
  * Try on *Nix:
@@ -31,8 +29,11 @@ buildscript {
 
     repositories {
         jcenter()
-        mavenLocal()
     }
+}
+
+plugins {
+  id 'java'
 }
 
 def sourceProjects() {
@@ -43,32 +44,20 @@ def sourceProjects() {
 configure(sourceProjects()) {
     repositories {
         jcenter()
-        mavenLocal()
     }
 
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.8
 
     dependencies {
         compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
         compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
-        compile "com.google.guava:guava:${guavaVersion}-jre"
+        compile "com.google.guava:guava:${guavaVersion}"
 
         testCompile "junit:junit:${junitVersion}"
         testCompile project(":portability-test-utilities")
         testCompile "com.google.truth:truth:0.39"
     }
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        }
-    }
-
 }
-
-                                                                                       
