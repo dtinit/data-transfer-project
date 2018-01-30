@@ -16,4 +16,4 @@
 /**
  * Implements importers and exporters for Google services.
  */
-package org.dataportabilityproject.datatransfer.microsoft;
+package org.dataportabilityproject.transfer.microsoft;

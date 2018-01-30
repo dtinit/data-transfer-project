@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Implements importers and exporters for Google services.
+ */
+package org.dataportabilityproject.auth.microsoft;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-//    compile 'com.microsoft.azure:azure-documentdb:1.15.1'
-
-    compile 'com.datastax.cassandra:cassandra-driver-core:3.4.0'
-    testCompile 'org.apache.cassandra:cassandra-all:3.11.1'
-    testCompile 'org.scassandra:java-client:1.1.2'
-}
