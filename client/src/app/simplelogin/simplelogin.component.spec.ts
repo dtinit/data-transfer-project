@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {Observable} from 'rxjs/Rx';
 import { FormsModule } from '@angular/forms';
+import { BackendService } from '../backend.service';
 
 import { SimpleLoginComponent } from './simplelogin.component';
 
+class MockBackendService {
+  submitSimpleCreds(): Observable<any> {
+    return Observable.of();
+  }
+}
+
 describe('SimpleLoginComponent', () => {
   let component: SimpleLoginComponent;
+  let backend: BackendService;
   let fixture: ComponentFixture<SimpleLoginComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       imports: [FormsModule],
-      declarations: [ SimpleLoginComponent ]
+      declarations: [ SimpleLoginComponent ],
+      providers: [ {provide: BackendService, useClass: MockBackendService}]
     })
     .compileComponents();
   }));
