@@ -12,16 +12,14 @@ public class SimpleLoginRequest {
 
   @JsonCreator
   public SimpleLoginRequest(
-      @JsonProperty() String username,
-      @JsonProperty() String password){
+      @JsonProperty(value="username", required = true) String username,
+      @JsonProperty(value="password", required = true) String password){
     this.username = username;
     this.password = password;
   }
 
   @ApiModelProperty
-  public String getPassword() {
-    return password;
-  }
+  public String getPassword() { return password; }
 
   @ApiModelProperty
   public String getUsername() {

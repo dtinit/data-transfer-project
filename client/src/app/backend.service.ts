@@ -50,7 +50,7 @@ export class BackendService {
   dataTransfer(formData: DataTransferRequest) {
     let url = '/_/DataTransfer';
     this.http.post<DataTransferResponse>(url, JSON.stringify(formData))
-        .map(res=>this.configureSuccess(res))
+        .map(res=>this.redirectResponse(res))
         .catch(err=>this.handleError(err))
         .subscribe();
   }
@@ -63,7 +63,8 @@ export class BackendService {
 
   submitSimpleCreds(formData: SimpleLoginRequest) {
     console.log("formData: " + JSON.stringify(formData));
-    this.http.post('/_/simpleLoginSubmit', JSON.stringify(formData))
+    this.http.post<DataTransferResponse>('/_/simpleLoginSubmit', JSON.stringify(formData))
+      .map(res=>this.redirectResponse(res))
       .catch(err=>this.handleError(err))
       .subscribe();
   }
@@ -88,7 +89,7 @@ export class BackendService {
     return body;
   }
 
-  private configureSuccess(res:DataTransferResponse){
+  private redirectResponse(res:DataTransferResponse){
     // Redirect to the export authorization flow after configure.
     // this should be returned from the configure request and is checked
     // upon creation of the DataTransfer object.
