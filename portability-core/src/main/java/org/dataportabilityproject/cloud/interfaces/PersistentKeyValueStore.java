@@ -41,7 +41,7 @@ public interface PersistentKeyValueStore {
   /** Retrieve data with the given {@code jobId} or null if not found. */
   PortabilityJob get(String jobId);
 
-  /** Retrieve the ID of the first job in the given job state. */
+  /** Retrieve the ID of the first job in the given job state, or null if none found. */
   String getFirst(JobState jobState);
 
   /** Deletes job with the given {@code JobId}.

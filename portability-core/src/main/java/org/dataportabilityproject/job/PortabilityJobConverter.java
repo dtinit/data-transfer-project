@@ -105,7 +105,7 @@ public final class PortabilityJobConverter extends Converter<PortabilityJob, Map
       builder.put(WORKER_INSTANCE_PRIVATE_KEY, job.workerInstancePrivateKey());
     }
     if (null != job.jobState()) {
-      builder.put(JOB_STATE, job.jobState());
+      builder.put(JOB_STATE, job.jobState().name());
     }
     return builder.build();
   }
@@ -169,7 +169,7 @@ public final class PortabilityJobConverter extends Converter<PortabilityJob, Map
       builder.setWorkerInstancePrivateKey(getString(data, WORKER_INSTANCE_PRIVATE_KEY));
     }
     if (data.get(JOB_STATE) != null) {
-      builder.setJobState(JobState.valueOf(data.get(JOB_STATE).toString()));
+      builder.setJobState(JobState.valueOf(getString(data, JOB_STATE)));
     }
     return builder.build();
   }

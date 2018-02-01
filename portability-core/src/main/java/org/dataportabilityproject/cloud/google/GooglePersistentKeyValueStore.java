@@ -31,7 +31,6 @@ import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,8 +42,6 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
@@ -96,13 +93,17 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   @Override
   public String getFirst(JobState jobState) {
     Query<Entity> query = Query.newEntityQueryBuilder()
+        .setKind(KIND)
         .setFilter(PropertyFilter.eq(PortabilityJobConverter.JOB_STATE, jobState.name()))
         .setOrderBy(OrderBy.asc("created"))
         .setLimit(1)
         .build();
     QueryResults<Entity> results = datastore.run(query);
+    if (!results.hasNext()) {
+      return null;
+    }
     Entity entity = results.next();
-    return entity.getValue(PortabilityJobConverter.ID_DATA_KEY).toString();
+    return (String) entity.getValue(PortabilityJobConverter.ID_DATA_KEY).get();
   }
 
   @Override
@@ -126,9 +127,10 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
         transaction.rollback();
         throw new IOException("Could not find record for jobId " + jobId);
       }
-      if (previousState != null && getJobState(previousEntity) == previousState) {
+      JobState actualState = getJobState(previousEntity);
+      if (previousState != null && actualState != previousState) {
         throw new IOException("Job " + jobId + " existed in an unexpected state. "
-            + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
+            + "Expected: " + previousState + " but was: " + actualState);
       }
 
       Entity newEntity = createEntity(key, portabilityJob.asMap());
@@ -212,6 +214,6 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   private JobState getJobState(Entity entity) {
-    return JobState.valueOf(entity.getValue(PortabilityJobConverter.JOB_STATE).toString());
+    return JobState.valueOf(entity.getString(PortabilityJobConverter.JOB_STATE));
   }
 }
