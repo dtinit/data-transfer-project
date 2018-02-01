@@ -143,7 +143,7 @@ public class JobDao {
 
   /**
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
-   * data. Returns whether it was able to update the job.
+   * data.
    */
   public void updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
