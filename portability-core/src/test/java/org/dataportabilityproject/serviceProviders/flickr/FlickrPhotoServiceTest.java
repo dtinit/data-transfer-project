@@ -8,6 +8,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
+import com.flickr4java.flickr.auth.Permission;
+import com.flickr4java.flickr.people.User;
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.PhotosInterface;
 import com.flickr4java.flickr.photos.Size;
@@ -47,7 +49,8 @@ public class FlickrPhotoServiceTest {
   PhotosInterface photosInterface = Mockito.mock(PhotosInterface.class);
   Uploader uploader = Mockito.mock(Uploader.class);
   JobDataCache jobDataCache = Mockito.mock(JobDataCache.class);
-  Auth auth = Mockito.mock(Auth.class);
+  User user = Mockito.mock(User.class);
+  Auth auth = new Auth(Permission.WRITE, user);
   FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
       photosInterface, uploader, jobDataCache, auth);
 
@@ -94,7 +97,7 @@ public class FlickrPhotoServiceTest {
         new ExportInformation(Optional.empty(), Optional.empty());
 
     // Set up auth
-    Mockito.when(auth.getUser().getId()).thenReturn("id");
+    Mockito.when(user.getId()).thenReturn("id");
 
     // Set up photoset information
     int page = 1;
