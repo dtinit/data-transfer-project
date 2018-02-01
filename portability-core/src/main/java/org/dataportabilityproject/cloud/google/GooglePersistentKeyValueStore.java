@@ -127,10 +127,9 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
         transaction.rollback();
         throw new IOException("Could not find record for jobId " + jobId);
       }
-      JobState actualState = getJobState(previousEntity);
-      if (previousState != null && actualState != previousState) {
+      if (previousState != null && getJobState(previousEntity) != previousState) {
         throw new IOException("Job " + jobId + " existed in an unexpected state. "
-            + "Expected: " + previousState + " but was: " + actualState);
+            + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
       }
 
       Entity newEntity = createEntity(key, portabilityJob.asMap());
