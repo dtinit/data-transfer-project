@@ -15,46 +15,52 @@
  */
 package org.dataportabilityproject.cloud.interfaces;
 
+import com.google.cloud.datastore.Transaction;
 import java.io.IOException;
 import java.util.Map;
 import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 
 /**
- * Stores data that is persisted indefinitely.
+ * Stores key-value data that is persisted indefinitely.
  */
 // TODO(willard): Add TTLs to data
-// TODO(willard): Change interface to take serializable data and not just Map<String, Object>,
-//                I left it that way to make the refactor easier.
 public interface PersistentKeyValueStore {
 
   /**
-   *  Puts {@code job} in the database for the first time, keyed by {@code jobId}, and verifies
-   *  it doesn't already exist. To update the value for an already existing {@code jobId},
-   *  use atomicUpdate instead.
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
-   *  @throws IOException if an entry already exists for {@code jobId}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   *
+   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
+   * problem inserting the job.
    */
   void put(String jobId, PortabilityJob job) throws IOException;
 
-  /** Retrieve job with the given {@code jobId}, or null if not found. */
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store.
+   */
   PortabilityJob get(String jobId);
 
-  /** Retrieve the ID of the first job in the given job state, or null if none found. */
+  /**
+   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store, or nul
+   * if none found.
+   */
   String getFirst(JobState jobState);
 
-  /** Deletes job with the given {@code JobId}.
+  /**
+   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
-   * @throws IOException if the jobID didn't exist or deletion was unsuccessful for another reason.
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
   void delete(String jobId) throws IOException;
 
   /**
-   * Atomically updates {@code jobId} to {@code job} and verifies it was previously in state
-   * {@code previousState}.
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code portabilityJob},
+   * and verifies that it was previously in the expected {@code previousState}.
    *
-   * @throws IOException if the jobID didn't exist in the expected state or the update was
-   * unsuccessful for another reason.
-   **/
+   * @throws IOException if the job was not in the expected state in the store, or there was another
+   * problem updating it.
+   */
   void atomicUpdate(String jobId, JobState previousState, PortabilityJob job) throws IOException;
 }

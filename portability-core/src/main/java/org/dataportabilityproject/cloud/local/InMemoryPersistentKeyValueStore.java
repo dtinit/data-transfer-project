@@ -23,22 +23,26 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * In-memory implementation of backend storage.
+ * An in-memory {@link PersistentKeyValueStore} implementation that uses a concurrent map as its
+ * store.
  */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
-  private static final Logger logger =
-      LoggerFactory.getLogger(InMemoryPersistentKeyValueStore.class);
-
   private final ConcurrentHashMap<String, Map<String, Object>> map;
 
   public InMemoryPersistentKeyValueStore() {
     map = new ConcurrentHashMap<>();
   }
 
+  /**
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the map.
+   *
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   *
+   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
+   * problem inserting the job.
+   */
   @Override
   public synchronized void put(String jobId, PortabilityJob job) throws IOException {
     if (map.get(jobId) != null) {
@@ -47,6 +51,9 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
     map.put(jobId, job.asMap());
   }
 
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the map.
+   */
   @Override
   public PortabilityJob get(String key) {
     if (!map.containsKey(key)) {
@@ -55,6 +62,10 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
     return PortabilityJob.mapToJob(map.get(key));
   }
 
+  /**
+   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the map, or null
+   * if none found.
+   */
   @Override
   public synchronized String getFirst(JobState jobState) {
     // Mimic an index lookup
@@ -69,16 +80,25 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
     return null;
   }
 
+  /**
+   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in the map.
+   *
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   */
   @Override
   public void delete(String jobId) throws IOException {
     Map<String, Object> previous = map.remove(jobId);
     if (previous == null) {
-      throw new IOException("Job " + jobId + " didn't exist in the database");
+      throw new IOException("Job " + jobId + " didn't exist in the map");
     }
   }
 
   /**
-   * Atomically update map.
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code portabilityJob}
+   * in the map, and verifies that it was previously in the expected {@code previousState}.
+   *
+   * @throws IOException if the job was not in the expected state in the map, or there was another
+   * problem updating it.
    */
   @Override
   public void atomicUpdate(String jobId, JobState previousState, PortabilityJob job)
@@ -86,9 +106,9 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
     try {
       Map<String, Object> previousEntry = map.replace(jobId, job.asMap());
       if (previousEntry == null) {
-        throw new IOException("Job " + jobId + " didn't exist in the database");
+        throw new IOException("Job " + jobId + " didn't exist in the map");
       }
-      if (previousState != null && getJobState(previousEntry) != previousState) {
+      if (getJobState(previousEntry) != previousState) {
         throw new IOException("Job " + jobId + " existed in an unexpected state. "
             + "Expected: " + previousState + " but was: " + getJobState(previousEntry));
       }
@@ -98,7 +118,13 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
     }
   }
 
+  /**
+   * Return {@code data}'s {@link JobState}, or null if missing.
+   *
+   * @param data a {@link PortabilityJob}'s representation in {@link #map}.
+   */
   private JobState getJobState(Map<String, Object> data) {
-    return JobState.valueOf(data.get(PortabilityJobConverter.JOB_STATE).toString());
+    Object jobState = data.get(PortabilityJobConverter.JOB_STATE);
+    return jobState == null ? null : JobState.valueOf(jobState.toString());
   }
 }

@@ -22,32 +22,37 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.Map;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A data acccess object that provides functionality to manage persisted data for portability jobs.
+ * A data access object that provides functionality to manage persisted data for
+ * {@link PortabilityJob}s.
  */
 public class JobDao {
   private static final Logger logger = LoggerFactory.getLogger(JobDao.class);
 
   /**
    * The current state of the job.
-   * <p>
-   * The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to be assigned before
-   * sending all the data required for the job.
-   * The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required, such as the
-   * encrypted auth data, in order to begin processing the portability job.
+   *
+   * <p>The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to
+   * be assigned before sending all the data required for the job.
+   *
+   * <p>The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required,
+   * such as the encrypted auth data, in order to begin processing the job.
    */
   @VisibleForTesting // Package-Private
   public enum JobState {
-    PENDING_AUTH_DATA, // The job has not finished the authorization flows
-    PENDING_WORKER_ASSIGNMENT, // The job has all authorization information but is not assigned a worker yet
-    ASSIGNED_WITHOUT_AUTH_DATA, // The job is assigned a worker and waiting for auth data from the api
-    ASSIGNED_WITH_AUTH_DATA, // The job is assigned a worker and has encrypted auth data
+    // The job has not finished the authorization flows
+    PENDING_AUTH_DATA,
+    // The job has all authorization information but is not assigned a worker yet
+    PENDING_WORKER_ASSIGNMENT,
+    // The job is assigned a worker and waiting for auth data from the api
+    ASSIGNED_WITHOUT_AUTH_DATA,
+    // The job is assigned a worker and has encrypted auth data
+    ASSIGNED_WITH_AUTH_DATA,
   }
 
   private final PersistentKeyValueStore storage;
@@ -167,7 +172,7 @@ public class JobDao {
   /**
    * Updates an existing assigned {@code job} with encrypted auth data.
    */
-  public void updateJobStateToAssigneWithAuthData(String id, String encryptedExportAuthData,
+  public void updateJobStateToAssignedWithAuthData(String id, String encryptedExportAuthData,
       String encryptedImportAuthData) throws IOException {
     PortabilityJob existingJob = lookupJob(id, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
     Preconditions.checkArgument(existingJob != null, "Attempting to update a non-existent job");
@@ -196,7 +201,6 @@ public class JobDao {
    */
   private void updateJobState(PortabilityJob job, JobState previousJobState) throws IOException {
     // Store the updated job info
-    Map<String, Object> data = job.asMap();
     storage.atomicUpdate(job.id(), previousJobState, job);
   }
 

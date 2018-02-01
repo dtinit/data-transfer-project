@@ -17,11 +17,9 @@ package org.dataportabilityproject.worker;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.job.JobDao;
-import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.junit.Before;
@@ -81,7 +79,7 @@ public class JobPollingServiceTest {
     assertThat(job.workerInstancePublicKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
-    jobDao.updateJobStateToAssigneWithAuthData(job.id(), "dummy export data", "dummy import data");
+    jobDao.updateJobStateToAssignedWithAuthData(job.id(), "dummy export data", "dummy import data");
 
     // Run another iteration of the polling service
     // Worker picks up encrypted data and update job

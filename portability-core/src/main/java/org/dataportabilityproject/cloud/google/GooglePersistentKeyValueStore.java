@@ -44,7 +44,7 @@ import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
 
 /**
- * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
+ * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's Datastore.
  */
 public final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
   private static final String KIND = "persistentKey";
@@ -57,10 +57,12 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   /**
-   * Puts {@code jobId} in the database and verifies it doesn't already exist. To update the value
-   * for an already existing {@code jobId}, use atomicUpdate instead.
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in Datastore.
    *
-   * @throws IOException if an entry already exists,
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   *
+   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
+   * problem inserting the job.
    */
   @Override
   public void put(String jobId, PortabilityJob job) throws IOException {
@@ -81,6 +83,9 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     transaction.commit();
   }
 
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
+   */
   @Override
   public PortabilityJob get(String jobId) {
     Entity entity = datastore.get(getKey(jobId));
@@ -90,6 +95,10 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return PortabilityJob.mapToJob(getProperties(entity));
   }
 
+  /**
+   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or null
+   * if none found.
+   */
   @Override
   public String getFirst(JobState jobState) {
     Query<Entity> query = Query.newEntityQueryBuilder()
@@ -106,6 +115,11 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return (String) entity.getValue(PortabilityJobConverter.ID_DATA_KEY).get();
   }
 
+  /**
+   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
+   *
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   */
   @Override
   public void delete(String jobId) throws IOException {
     try {
@@ -115,6 +129,14 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     }
   }
 
+  /**
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code portabilityJob},
+   * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
+   * {@code previousState}.
+   *
+   * @throws IOException if the job was not in the expected state in Datastore, or there was another
+   * problem updating it.
+   */
   @Override
   public void atomicUpdate(String jobId, JobState previousState, PortabilityJob portabilityJob)
       throws IOException {
@@ -127,7 +149,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
         transaction.rollback();
         throw new IOException("Could not find record for jobId " + jobId);
       }
-      if (previousState != null && getJobState(previousEntity) != previousState) {
+      if (getJobState(previousEntity) != previousState) {
         throw new IOException("Job " + jobId + " existed in an unexpected state. "
             + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
       }
@@ -212,7 +234,13 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return datastore.newKeyFactory().setKind(KIND).newKey(jobId);
   }
 
+  /**
+   * Return {@code entity}'s {@link JobState}, or null if missing.
+   *
+   * @param entity a {@link PortabilityJob}'s representation in {@link #datastore}.
+   */
   private JobState getJobState(Entity entity) {
-    return JobState.valueOf(entity.getString(PortabilityJobConverter.JOB_STATE));
+    String jobState = entity.getString(PortabilityJobConverter.JOB_STATE);
+    return jobState == null ? null : JobState.valueOf(jobState);
   }
 }
