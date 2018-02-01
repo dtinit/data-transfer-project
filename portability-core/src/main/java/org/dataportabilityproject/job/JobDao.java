@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.job;
 
-import com.google.cloud.datastore.DatastoreException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -33,9 +32,6 @@ import org.slf4j.LoggerFactory;
  * A data acccess object that provides functionality to manage persisted data for portability jobs.
  */
 public class JobDao {
-  // Keys for specific values in data store
-  private static final String ID_DATA_KEY = "UUID";
-  private static final String KEY_SEPERATOR = "::";
   private static final Logger logger = LoggerFactory.getLogger(JobDao.class);
 
   /**
@@ -70,11 +66,7 @@ public class JobDao {
 
   /** Returns the next job in unassigned state. */
   public String findNextJobPendingWorkerAssignment() {
-    String key = storage.getFirst(JobState.PENDING_WORKER_ASSIGNMENT.name());
-    if (key != null) {
-      return getIdFromKey(key);
-    }
-    return null;
+    return storage.getFirst(JobState.PENDING_WORKER_ASSIGNMENT);
   }
 
 
@@ -101,13 +93,13 @@ public class JobDao {
     return lookupJob(id, JobState.ASSIGNED_WITH_AUTH_DATA);
   }
 
+  /**
+   * Look up a job based on ID and verify it is in the expected job state.
+   */
   private PortabilityJob lookupJob(String id, JobState jobState) {
     Preconditions.checkNotNull(id);
-    Map<String, Object> data = storage.get(createKey(jobState, id));
-    if (data == null || data.isEmpty()) {
-      return null;
-    }
-    PortabilityJob job = PortabilityJob.mapToJob(data);
+    PortabilityJob job = storage.get(id);
+    Preconditions.checkArgument(job == null || job.jobState() == jobState);
     return job;
   }
 
@@ -122,14 +114,8 @@ public class JobDao {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(job.dataType()));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(job.exportService()));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
-    for (JobState state : JobState.values()) {
-      String key = createKey(state, job.id());
-      Preconditions.checkArgument((storage.get(key) == null),
-          "Attempting to insert an already existing job");
-    }
-
-    String key = createKey(JobState.PENDING_AUTH_DATA, job.id());
-    storage.put(key, job.asMap());
+    job = job.toBuilder().setJobState(JobState.PENDING_AUTH_DATA).build();
+    storage.put(job.id(), job);
   }
 
   // UPDATE METHODS
@@ -138,7 +124,7 @@ public class JobDao {
    * Updates an existing incomplete {@code job} in storage.
    */
   public void updatePendingAuthDataJob(PortabilityJob job) throws IOException {
-    updateJob(job, JobState.PENDING_AUTH_DATA);
+    storage.atomicUpdate(job.id(), JobState.PENDING_AUTH_DATA, job);
   }
 
   /**
@@ -146,27 +132,25 @@ public class JobDao {
    * encryption data included.
    */
   public void updateJobStateToPendingWorkerAssignment(String id) throws IOException {
-    // Verify job is in existing state
-    PortabilityJob existingJob = lookupJob(id, JobState.PENDING_AUTH_DATA);
+    // Lookup job so we can append to its existing properties. updateJobState will verify that
+    // the job still has the expected state when performing the atomic update.
+    PortabilityJob existingJob = storage.get(id);
     // No updated to the job itself, just the state
-    updateJobState(existingJob, JobState.PENDING_AUTH_DATA, JobState.PENDING_WORKER_ASSIGNMENT);
+    PortabilityJob updatedJob =
+        existingJob.toBuilder().setJobState(JobState.PENDING_WORKER_ASSIGNMENT).build();
+    updateJobState(updatedJob, JobState.PENDING_AUTH_DATA);
    }
 
   /**
    * Replaces a unassigned entry in storage with the provided {@code job} in assigned state with key
    * data. Returns whether it was able to update the job.
    */
-  public boolean updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
+  public void updateJobStateToAssignedWithoutAuthData(String id, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
-
-    // Verify job is in existing state
-    PortabilityJob existingJob = lookupJob(id, JobState.PENDING_WORKER_ASSIGNMENT);
-    if (existingJob == null) {
-      logger.debug("Could not find job {} in unassigned state; this probably means another worker "
-          + "already claimed it", id);
-      return false;
-    }
-    // Verify existing job in correct state
+    // Lookup job so we can append to its existing properties. updateJobState will verify that
+    // the job still has the expected state when performing the atomic update.
+    PortabilityJob existingJob = storage.get(id);
+    // Verify no worker key
     Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
     Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
     // Populate job with keys to persist
@@ -175,9 +159,9 @@ public class JobDao {
     PortabilityJob updatedJob = existingJob.toBuilder()
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
+        .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
         .build();
-    return updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT,
-        JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    updateJobState(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT);
   }
 
   /**
@@ -193,96 +177,44 @@ public class JobDao {
     PortabilityJob updatedJob = existingJob.toBuilder()
         .setEncryptedExportAuthData(encryptedExportAuthData)
         .setEncryptedImportAuthData(encryptedImportAuthData)
+        .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
         .build();
-    updateJobState(updatedJob, JobState.ASSIGNED_WITHOUT_AUTH_DATA,
-        JobState.ASSIGNED_WITH_AUTH_DATA);
+    updateJobState(updatedJob, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
   }
 
   /**
    * Deletes an existing {@code job} in storage with the given {@code jobState}.
    */
-  public void deleteJob(String id, JobState jobState) throws IOException {
-    String key = createKey(jobState, id);
-    Map<String, Object> existing = storage.get(key);
-    Preconditions.checkArgument(existing != null, "Job not found");
-    storage.delete(key);
-  }
-
-  /**
-   * Updates an existing {@code job} in storage with the given {@code jobState}.
-   */
-  private void updateJob(PortabilityJob job, JobState jobState) throws IOException {
-    String key = createKey(jobState, job.id());
-    Map<String, Object> existing = storage.get(key);
-    Preconditions.checkArgument(existing != null, "Job not found");
-    // Store the updated job info
-    Map<String, Object> data = job.asMap();
-    logger.debug("Data: {}", data);
-    storage.put(key, data);
+  public void deleteJob(String jobId) throws IOException {
+    storage.delete(jobId);
   }
 
   /**
    * Atomically updates an existing {@code job} in storage with the given {@code jobState}.
-   * Returns whether it was able to update the job.
+   *
+   * @throws IOException if the update failed.
    */
-  private boolean updateJobState(PortabilityJob job, JobState previousJobState,
-      JobState newJobState) throws IOException {
-    String previousKey = createKey(previousJobState, job.id());
-    String newKey = createKey(newJobState, job.id());
+  private void updateJobState(PortabilityJob job, JobState previousJobState) throws IOException {
     // Store the updated job info
     Map<String, Object> data = job.asMap();
-    boolean updated = storage.atomicUpdate(previousKey, newKey, data);
-    if (updated) {
-      logger.debug("Successfully updated state for job {}. Previous state: {}. New state: {}",
-          job.id(), previousJobState, newJobState);
-      return true;
-    } else {
-      logger.warn("Failed to update state for job {}. Previous state: {}. New state: {}",
-          job.id(), previousJobState, newJobState);
-      return false;
-    }
+    storage.atomicUpdate(job.id(), previousJobState, job);
   }
 
   // UTILITY METHODS
 
-  // TODO: come up with a better scheme for indexing state
-  private static String createKey(JobState state, String id) {
-    Preconditions.checkArgument(!id.contains(KEY_SEPERATOR));
-    return String.format("%s%s%s", state.name(), KEY_SEPERATOR, id);
-  }
-
-  private static String getIdFromKey(String key) {
-    Preconditions.checkArgument(key.contains(KEY_SEPERATOR));
-    return key.split(KEY_SEPERATOR)[1];
-  }
-
-  private static String getString(Map<String, Object> map, String key) {
-    return (String) map.get(key);
-  }
-
   // DEPRECATED
-
   /**
-   * Inserts a new {@code job} in storage.
+   * Updates an existing {@code job} in storage.
    * @deprecated Remove when worker flow is implemented
    */
   @Deprecated
-  public void insertJobWithKey(PortabilityJob job) throws IOException {
-    Map<String, Object> existing = storage.get(job.id());
-    Preconditions.checkArgument(existing == null, "Attempting to insert an already existing job");
-    // Store the updated job info
-    Map<String, Object> data = job.asMap();
-    storage.put(getString(data, ID_DATA_KEY), data);
+  public void updateJob(PortabilityJob job) throws IOException {
+    storage.atomicUpdate(job.id(), null, job);
   }
 
   @Deprecated
   public void insertJob(PortabilityJob job) throws IOException {
-    Map<String, Object> existing = storage.get(job.id());
-    Preconditions.checkArgument(existing == null, "Attempting to insert an already existing job");
-    // Store the updated job info
-    Map<String, Object> data = job.asMap();
-    logger.debug("insertJob: Data: {}", data);
-    storage.put(job.id(), data);
+    storage.put(job.id(), job);
   }
 
   /**
@@ -292,26 +224,8 @@ public class JobDao {
   @Deprecated
   public PortabilityJob findExistingJob(String id) {
     Preconditions.checkNotNull(id);
-    Map<String, Object> data = storage.get(id);
-    logger.debug("findExistingJob: id: {} data: {}", id, data);
-    if (data == null || data.isEmpty()) {
-      return null;
-    }
-    return PortabilityJob.mapToJob(data);
-  }
-
-  /**
-   * Updates an existing {@code job} in storage.
-   * @deprecated Remove when worker flow is implemented
-   */
-  @Deprecated
-  public void updateJob(PortabilityJob job) throws IOException {
-    Map<String, Object> existing = storage.get(job.id());
-    Preconditions.checkArgument(existing != null, "Attempting to update a non-existent job");
-    // Store the updated job info
-    logger.debug("updateJob: job: {}", job);
-    Map<String, Object> data = job.asMap();
-    logger.debug("updateJob: data: {}", data);
-    storage.put(job.id(), data);
+    PortabilityJob job = storage.get(id);
+    logger.debug("findExistingJob: id: {} job: {}", id, job);
+    return job;
   }
 }

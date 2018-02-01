@@ -79,11 +79,12 @@ class JobPollingService extends AbstractScheduledService {
       // TODO: Move storage of private key to a different location
       PrivateKey privateKey = keyPair.getPrivate();
       // Executing Job State Transition from Unassigned to Assigned
-      if (jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey)) {
+      try {
+        jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
         jobMetadata.init(id, keyPair);
         logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}",
             publicKey.getEncoded().length);
-      } else {
+      } catch (IOException e) {
         logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
             id);
       }

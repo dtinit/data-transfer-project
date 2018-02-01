@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 /** Data about a particular portability job. */
@@ -43,6 +44,7 @@ public abstract class PortabilityJob {
   @Nullable public abstract String sessionKey();
   @Nullable public abstract String workerInstancePublicKey();
   @Nullable public abstract String workerInstancePrivateKey(); // TODO: Consider removing
+  @Nullable public abstract JobState jobState();
 
   public static Builder builder() {
      return new AutoValue_PortabilityJob.Builder();
@@ -69,6 +71,7 @@ public abstract class PortabilityJob {
     public abstract Builder setSessionKey(String id);
     public abstract Builder setWorkerInstancePublicKey(String id);
     public abstract Builder setWorkerInstancePrivateKey(String id);
+    public abstract Builder setJobState(JobState jobState);
 
     abstract PortabilityJob autoBuild(); // not public
 

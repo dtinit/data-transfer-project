@@ -18,6 +18,7 @@ package org.dataportabilityproject.job;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
@@ -49,7 +50,7 @@ public class JobDaoTest {
         job.toBuilder().setEncryptedExportAuthData("enc-import-data").build());
     job = jobDao.lookupJobPendingAuthData(TEST_JOB_ID);
     assertThat(job.encryptedExportAuthData()).isEqualTo("enc-import-data");
-    jobDao.deleteJob(TEST_JOB_ID, JobState.PENDING_AUTH_DATA);
+    jobDao.deleteJob(TEST_JOB_ID);
   }
 
   @Test
@@ -58,7 +59,7 @@ public class JobDaoTest {
     try {
       jobDao.updatePendingAuthDataJob(createTestJob());
       fail();
-    } catch (IllegalArgumentException e) {
+    } catch (IOException e) {
       // expected
     }
   }

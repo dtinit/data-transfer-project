@@ -20,15 +20,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
+import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 /**
  * Converter from {@link PortabilityJob} to and from a Map suitable for storing in a key value
  * storage layer.
  */
-final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String, Object>> {
+public final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String, Object>> {
   // Keys for specific values in the key value store
-  private static final String ID_DATA_KEY = "UUID";
+  public static final String ID_DATA_KEY = "UUID";
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
   private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
@@ -43,6 +44,7 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
   private static final String SESSION_KEY = "SESSION_KEY";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
   private static final String WORKER_INSTANCE_PRIVATE_KEY = "WORKER_INSTANCE_PRIVATE_KEY";
+  public static final String JOB_STATE = "JOB_STATE";
 
   /**
    * Converts a {@link PortabilityJob} to a map of key value pairs.
@@ -101,6 +103,9 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     }
     if (null != job.workerInstancePrivateKey()) {
       builder.put(WORKER_INSTANCE_PRIVATE_KEY, job.workerInstancePrivateKey());
+    }
+    if (null != job.jobState()) {
+      builder.put(JOB_STATE, job.jobState());
     }
     return builder.build();
   }
@@ -162,6 +167,9 @@ final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String
     }
     if (data.get(WORKER_INSTANCE_PRIVATE_KEY) != null) {
       builder.setWorkerInstancePrivateKey(getString(data, WORKER_INSTANCE_PRIVATE_KEY));
+    }
+    if (data.get(JOB_STATE) != null) {
+      builder.setJobState(JobState.valueOf(data.get(JOB_STATE).toString()));
     }
     return builder.build();
   }

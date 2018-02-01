@@ -90,6 +90,6 @@ public class JobPollingServiceTest {
     job = jobDao.lookupAssignedWithAuthDataJob(job.id());
     assertThat(job.encryptedExportAuthData()).isNotEmpty();
     assertThat(job.encryptedImportAuthData()).isNotEmpty();
-    jobDao.deleteJob(job.id(), JobState.ASSIGNED_WITH_AUTH_DATA);
+    jobDao.deleteJob(job.id());
   }
 }

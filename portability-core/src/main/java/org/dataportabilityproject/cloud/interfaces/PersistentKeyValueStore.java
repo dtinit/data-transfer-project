@@ -17,6 +17,8 @@ package org.dataportabilityproject.cloud.interfaces;
 
 import java.io.IOException;
 import java.util.Map;
+import org.dataportabilityproject.job.JobDao.JobState;
+import org.dataportabilityproject.job.PortabilityJob;
 
 /**
  * Stores data that is persisted indefinitely.
@@ -26,21 +28,34 @@ import java.util.Map;
 //                I left it that way to make the refactor easier.
 public interface PersistentKeyValueStore {
 
-  /** Persist {@code data} with the given {@code key} overriding previous data. */
-  void put(String key, Map<String, Object> data) throws IOException;
+  /**
+   *  Puts {@code job} in the database for the first time, keyed by {@code jobId}, and verifies
+   *  it doesn't already exist. To update the value for an already existing {@code jobId},
+   *  use atomicUpdate instead.
+   *
+   *  @throws IOException if an entry already exists for {@code jobId}.
+   */
+  // TODO make this take PortabilityJob directly
+  void put(String jobId, PortabilityJob job) throws IOException;
 
-  /** Retrieve data with the given {@code key} or null if not found. */
-  Map<String, Object> get(String key);
+  /** Retrieve data with the given {@code jobId} or null if not found. */
+  PortabilityJob get(String jobId);
 
-  /** Retrieve the first key that begins with the given {@code prefix} or null if none found. */
-  String getFirst(String prefix);
+  /** Retrieve the ID of the first job in the given job state. */
+  String getFirst(JobState jobState);
 
-  /** Deletes entry with the given {@code key}. */
-  void delete(String key);
+  /** Deletes job with the given {@code JobId}.
+   *
+   * @throws IOException if the jobID didn't exist or deletion was unsuccessful for another reason.
+   */
+  void delete(String jobId) throws IOException;
 
   /**
-   * Atomically updates {@code previousKeyStr} to {@code newKeyStr} with {@code data},
-   * and deletes {@code previousKeyStr}.
+   * Atomically updates {@code jobId} to {@code job} and verifies it was previously in state
+   * {@code previousState}.
+   *
+   * @throws IOException if the jobID didn't exist in the expected state or the update was
+   * unsuccessful for another reason.
    **/
-  boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data);
+  void atomicUpdate(String jobId, JobState previousState, PortabilityJob job) throws IOException;
 }

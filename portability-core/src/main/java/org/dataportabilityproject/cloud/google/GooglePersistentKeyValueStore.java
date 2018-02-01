@@ -19,6 +19,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
 import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreException;
 import com.google.cloud.datastore.DoubleValue;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
@@ -26,8 +27,11 @@ import com.google.cloud.datastore.LongValue;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
+import com.google.cloud.datastore.StructuredQuery.OrderBy;
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,7 +40,9 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.JobDao.JobState;
+import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJobConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +50,6 @@ import org.slf4j.LoggerFactory;
  * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's DataStore.
  */
 public final class GooglePersistentKeyValueStore implements PersistentKeyValueStore {
-  private static final Logger logger = LoggerFactory.getLogger(GooglePersistentKeyValueStore.class);
-
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
@@ -55,67 +59,85 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     this.datastore = datastore;
   }
 
+  /**
+   * Puts {@code jobId} in the database and verifies it doesn't already exist. To update the value
+   * for {@code jobId}, use atomicUpdate instead.
+   *
+   * @throws IOException if an entry already exists,
+   */
   @Override
-  public void put(String key, Map<String, Object> data) throws IOException {
-    Entity entity = createEntity(key, data);
-    datastore.put(entity);
-  }
-
-  @Override
-  public Map<String, Object> get(String key) {
-    Entity entity = datastore.get(getKey(key));
-    return getProperties(entity);
-  }
-
-  @Override
-  public String getFirst(String prefix) {
-    Query<Key> query = Query.newKeyQueryBuilder().setKind(KIND).build();
-    QueryResults<Key> results = datastore.run(query);
-    while(results.hasNext()) {
-      String key = results.next().getName();
-      if(key.startsWith(prefix)) {
-        return key;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public void delete(String key) {
-    datastore.delete(getKey(key));
-  }
-
-  @Override
-  public boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data) {
+  public void put(String jobId, PortabilityJob job) throws IOException {
     Transaction transaction = datastore.newTransaction();
+    Entity shouldNotExist = transaction.get(getKey(jobId));
+    if (shouldNotExist != null) {
+      transaction.rollback();
+      throw new IOException("Entity already exists for jobID " + jobId + ": " + shouldNotExist);
+    }
+    Entity entity = createEntity(jobId, job.asMap());
+    try {
+      transaction.put(entity);
+    } catch (DatastoreException e) {
+      transaction.rollback();
+      throw new IOException(
+          "Could not update entry for jobID " + jobId + " to entity " + entity, e);
+    }
+    transaction.commit();
+  }
+
+  @Override
+  public PortabilityJob get(String jobId) {
+    Entity entity = datastore.get(getKey(jobId));
+    if (entity == null) {
+      return null;
+    }
+    return PortabilityJob.mapToJob(getProperties(entity));
+  }
+
+  @Override
+  public String getFirst(JobState jobState) {
+    Query<Entity> query = Query.newEntityQueryBuilder()
+        .setFilter(PropertyFilter.eq(PortabilityJobConverter.JOB_STATE, jobState.name()))
+        .setOrderBy(OrderBy.asc("created"))
+        .setLimit(1)
+        .build();
+    QueryResults<Entity> results = datastore.run(query);
+    Entity entity = results.next();
+    return entity.getValue(PortabilityJobConverter.ID_DATA_KEY).toString();
+  }
+
+  @Override
+  public void delete(String jobId) throws IOException {
+    try {
+      datastore.delete(getKey(jobId));
+    } catch (DatastoreException e) {
+      throw new IOException("Could not delete job " + jobId, e);
+    }
+  }
+
+  @Override
+  public void atomicUpdate(String jobId, JobState previousState, PortabilityJob portabilityJob)
+      throws IOException {
+    Transaction transaction = datastore.newTransaction();
+    Key key = getKey(jobId);
 
     try {
-      Key previousKey = getKey(previousKeyStr);
-      Entity previousEntity = transaction.get(previousKey);
+      Entity previousEntity = transaction.get(key);
       if (previousEntity == null) {
-        logger.debug("Could not find previous key {}", previousKeyStr);
         transaction.rollback();
-        return false;
+        throw new IOException("Could not find record for jobId " + jobId);
+      }
+      if (previousState != null && getJobState(previousEntity) == previousState) {
+        throw new IOException("Job " + jobId + " existed in an unexpected state. "
+            + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
       }
 
-      Key newKey = getKey(newKeyStr);
-      Entity newEntity = transaction.get(newKey);
-      if (newEntity != null) {
-        logger.debug("Updated key already exists: {}", newKeyStr);
-        transaction.rollback();
-        return false;
-      }
-
-      newEntity = createEntity(newKey, data);
+      Entity newEntity = createEntity(key, portabilityJob.asMap());
       transaction.put(newEntity);
-      transaction.delete(previousKey);
       transaction.commit();
-      return true;
     } catch (Throwable t) {
-      logger.debug("Failed atomic update of {} to {}. Exception was: {}",
-          previousKeyStr, newKeyStr, t);
       transaction.rollback();
-      return false;
+      throw new IOException("Failed atomic update of job " + jobId + " (was state "
+          + previousState + ").", t);
     }
   }
 
@@ -144,8 +166,8 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return builder.build();
   }
 
-  private Entity createEntity(String key, Map<String, Object> data) throws IOException {
-    return createEntity(getKey(key), data);
+  private Entity createEntity(String jobId, Map<String, Object> data) throws IOException {
+    return createEntity(getKey(jobId), data);
   }
 
   private static Map<String, Object> getProperties(Entity entity) {
@@ -185,7 +207,11 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     return builder.build();
   }
 
-  private Key getKey(String key) {
-    return datastore.newKeyFactory().setKind(KIND).newKey(key);
+  private Key getKey(String jobId) {
+    return datastore.newKeyFactory().setKind(KIND).newKey(jobId);
+  }
+
+  private JobState getJobState(Entity entity) {
+    return JobState.valueOf(entity.getValue(PortabilityJobConverter.JOB_STATE).toString());
   }
 }
