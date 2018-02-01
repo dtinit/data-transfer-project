@@ -75,10 +75,12 @@ public class LocalCloudFactory implements CloudFactory {
 
   @Inject
   public LocalCloudFactory(CommonSettings commonSettings) {
-    if(commonSettings.getEncryptedFlow()) {
-      this.keyValueStoreSupplier = Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore));
+    if (commonSettings.getEncryptedFlow()) {
+      this.keyValueStoreSupplier =
+          Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore, commonSettings));
     } else {
-      this.keyValueStoreSupplier = Suppliers.memoize( () -> new InMemoryPersistentKeyValueStore());
+      this.keyValueStoreSupplier =
+          Suppliers.memoize( () -> new InMemoryPersistentKeyValueStore(commonSettings));
     }
   }
 

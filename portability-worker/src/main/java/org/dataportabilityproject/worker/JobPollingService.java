@@ -88,7 +88,7 @@ class JobPollingService extends AbstractScheduledService {
       updateJobStateToAssignedWithoutAuthData(jobId, publicKey, privateKey);
       jobMetadata.init(jobId, keyPair);
       logger.debug("Updated job {} to ASSIGNED_WITHOUT_AUTH_DATA, publicKey length: {}",
-          publicKey.getEncoded().length);
+          jobId, publicKey.getEncoded().length);
     } catch (IOException e) {
       logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
           jobId);

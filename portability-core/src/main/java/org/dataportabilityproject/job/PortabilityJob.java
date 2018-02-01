@@ -62,6 +62,7 @@ public abstract class PortabilityJob {
   @Nullable public abstract String sessionKey();
   @Nullable public abstract String workerInstancePublicKey();
   @Nullable public abstract String workerInstancePrivateKey(); // TODO: Consider removing
+  // TODO: Remove Nullable - jobState should never be null after we enable encryptedFlow everywhere
   @Nullable public abstract JobState jobState();
 
   public static Builder builder() {

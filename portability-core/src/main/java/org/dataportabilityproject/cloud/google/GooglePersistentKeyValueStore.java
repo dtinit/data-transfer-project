@@ -43,6 +43,7 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 
 /**
  * A {@link PersistentKeyValueStore} implementation based on Google Cloud Platform's Datastore.
@@ -52,9 +53,11 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
+  private final CommonSettings commonSettings;
 
-  public GooglePersistentKeyValueStore(Datastore datastore) {
+  public GooglePersistentKeyValueStore(Datastore datastore, CommonSettings commonSettings) {
     this.datastore = datastore;
+    this.commonSettings = commonSettings;
   }
 
   /**
@@ -256,6 +259,12 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
    */
   private JobState getJobState(Entity entity) {
     String jobState = entity.getString(PortabilityJobConverter.JOB_STATE);
-    return jobState == null ? null : JobState.valueOf(jobState);
+    // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
+    // in legacy non-encrypted case
+    if (!commonSettings.getEncryptedFlow()) {
+      return jobState == null ? null : JobState.valueOf(jobState);
+    }
+    Preconditions.checkNotNull(jobState, "Job should never exist without a state");
+    return JobState.valueOf(jobState);
   }
 }

@@ -18,12 +18,15 @@ package org.dataportabilityproject.worker;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
 import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,12 +37,15 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
   private static final String TEST_ID = "a_test_id";
+  private static final CommonSettings COMMON_SETTINGS = new CommonSettings(
+     Environment.LOCAL, SupportedCloud.LOCAL, new String[]{}, true);
+
+  @Mock private CloudFactory cloudFactory;
 
   private JobPollingService jobPollingService;
   private WorkerJobMetadata metadata = new WorkerJobMetadata();
-  PersistentKeyValueStore store = new InMemoryPersistentKeyValueStore();
 
-  @Mock private CloudFactory cloudFactory;
+  PersistentKeyValueStore store = new InMemoryPersistentKeyValueStore(COMMON_SETTINGS);
 
   @Before
   public void setUp()  throws Exception {

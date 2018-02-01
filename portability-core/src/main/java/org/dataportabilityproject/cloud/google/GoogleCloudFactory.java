@@ -30,16 +30,17 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public final class GoogleCloudFactory implements CloudFactory {
   private final Datastore datastore;
   private final PersistentKeyValueStore persistentKeyValueStore;
   private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
   private final BucketStore bucketStore;
-  private final String projectId;
 
   @Inject
   public GoogleCloudFactory(
+      CommonSettings commonSettings,
       GoogleBucketStore googleBucketStore,
       GoogleCredentials googleCredentials,
       GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
@@ -50,10 +51,9 @@ public final class GoogleCloudFactory implements CloudFactory {
         .setCredentials(googleCredentials)
         .build()
         .getService();
-    this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore);
+    this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore, commonSettings);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
-    this.projectId = projectId;
   }
 
   @Override

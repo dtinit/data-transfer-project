@@ -24,6 +24,7 @@ import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
+import org.dataportabilityproject.shared.settings.CommonSettings;
 
 /**
  * An in-memory {@link PersistentKeyValueStore} implementation that uses a concurrent map as its
@@ -31,9 +32,11 @@ import org.dataportabilityproject.job.PortabilityJobConverter;
  */
 public final class InMemoryPersistentKeyValueStore implements PersistentKeyValueStore {
   private final ConcurrentHashMap<String, Map<String, Object>> map;
+  private final CommonSettings commonSettings;
 
-  public InMemoryPersistentKeyValueStore() {
+  public InMemoryPersistentKeyValueStore(CommonSettings commonSettings) {
     map = new ConcurrentHashMap<>();
+    this.commonSettings = commonSettings;
   }
 
   /**
@@ -140,6 +143,12 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
    */
   private JobState getJobState(Map<String, Object> data) {
     Object jobState = data.get(PortabilityJobConverter.JOB_STATE);
-    return jobState == null ? null : JobState.valueOf(jobState.toString());
+    // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
+    // in legacy non-encrypted case
+    if (!commonSettings.getEncryptedFlow()) {
+      return jobState == null ? null : JobState.valueOf(jobState.toString());
+    }
+    Preconditions.checkNotNull(jobState, "Job should never exist without a state");
+    return JobState.valueOf(jobState.toString());
   }
 }
