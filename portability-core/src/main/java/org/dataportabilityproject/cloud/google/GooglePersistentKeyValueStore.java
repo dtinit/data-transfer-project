@@ -58,7 +58,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
 
   /**
    * Puts {@code jobId} in the database and verifies it doesn't already exist. To update the value
-   * for {@code jobId}, use atomicUpdate instead.
+   * for an already existing {@code jobId}, use atomicUpdate instead.
    *
    * @throws IOException if an entry already exists,
    */

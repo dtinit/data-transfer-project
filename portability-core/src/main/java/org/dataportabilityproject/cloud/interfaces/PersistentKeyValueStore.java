@@ -35,10 +35,9 @@ public interface PersistentKeyValueStore {
    *
    *  @throws IOException if an entry already exists for {@code jobId}.
    */
-  // TODO make this take PortabilityJob directly
   void put(String jobId, PortabilityJob job) throws IOException;
 
-  /** Retrieve data with the given {@code jobId} or null if not found. */
+  /** Retrieve job with the given {@code jobId}, or null if not found. */
   PortabilityJob get(String jobId);
 
   /** Retrieve the ID of the first job in the given job state, or null if none found. */
