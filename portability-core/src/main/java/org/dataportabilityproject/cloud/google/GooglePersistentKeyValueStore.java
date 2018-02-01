@@ -68,7 +68,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     Entity shouldNotExist = transaction.get(getKey(jobId));
     if (shouldNotExist != null) {
       transaction.rollback();
-      throw new IOException("Entity already exists for jobID " + jobId + ": " + shouldNotExist);
+      throw new IOException("Record already exists for jobID " + jobId + ": " + shouldNotExist);
     }
     Entity entity = createEntity(jobId, job.asMap());
     try {
@@ -76,7 +76,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     } catch (DatastoreException e) {
       transaction.rollback();
       throw new IOException(
-          "Could not update entry for jobID " + jobId + " to entity " + entity, e);
+          "Could not put initial record for jobID " + jobId + " (record: " + entity + ")", e);
     }
     transaction.commit();
   }
