@@ -18,7 +18,7 @@ package org.dataportabilityproject.webapp;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
@@ -32,9 +32,9 @@ final class ImportSetupHandler extends SetupHandler {
   @Inject
   ImportSetupHandler(
       ServiceProviderRegistry serviceProviderRegistry,
-      JobDao jobDao,
+      CloudFactory cloudFactory,
       CommonSettings commonSettings,
       TokenManager tokenManager) {
-    super(serviceProviderRegistry, jobDao, commonSettings, Mode.IMPORT, PATH, tokenManager);
+    super(serviceProviderRegistry, cloudFactory, commonSettings, Mode.IMPORT, PATH, tokenManager);
   }
 }

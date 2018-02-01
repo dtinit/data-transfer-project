@@ -16,17 +16,35 @@
 package org.dataportabilityproject.job;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Converter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 /** Data about a particular portability job. */
 @AutoValue
 public abstract class PortabilityJob {
+  /**
+   * The current state of the job.
+   *
+   * <p>The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to
+   * be assigned before sending all the data required for the job.
+   *
+   * <p>The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required,
+   * such as the encrypted auth data, in order to begin processing the job.
+   */
+  public enum JobState {
+    // The job has not finished the authorization flows
+    PENDING_AUTH_DATA,
+    // The job has all authorization information but is not assigned a worker yet
+    PENDING_WORKER_ASSIGNMENT,
+    // The job is assigned a worker and waiting for auth data from the api
+    ASSIGNED_WITHOUT_AUTH_DATA,
+    // The job is assigned a worker and has encrypted auth data
+    ASSIGNED_WITH_AUTH_DATA,
+  }
+
   public abstract String id();
   @Nullable public abstract String dataType();
   @Nullable public abstract String exportService();
@@ -50,7 +68,7 @@ public abstract class PortabilityJob {
      return new AutoValue_PortabilityJob.Builder();
   }
 
-  abstract Builder toBuilder();
+  public abstract Builder toBuilder();
 
   @AutoValue.Builder
   public abstract static class Builder {

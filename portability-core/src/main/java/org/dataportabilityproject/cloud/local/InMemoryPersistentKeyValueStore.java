@@ -15,12 +15,13 @@
  */
 package org.dataportabilityproject.cloud.local;
 
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.job.JobDao.JobState;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
 
@@ -52,7 +53,7 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the map.
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the map, or null if not found.
    */
   @Override
   public PortabilityJob get(String key) {
@@ -60,6 +61,20 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
       return null;
     }
     return PortabilityJob.mapToJob(map.get(key));
+  }
+
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the map, and verify it is in
+   * state {@code jobState}.
+   */
+  @Override
+  public PortabilityJob get(String jobId, JobState jobState) {
+    PortabilityJob job = get(jobId);
+    Preconditions.checkNotNull(job,
+        "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
+    Preconditions.checkState(job.jobState() == jobState,
+        "Expected job {} to be in state {}, but was {}", jobState, job.jobState());
+    return job;
   }
 
   /**

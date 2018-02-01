@@ -24,8 +24,10 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.TimeUnit;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +41,12 @@ import org.slf4j.LoggerFactory;
  */
 class JobPollingService extends AbstractScheduledService {
   private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
-  private final JobDao jobDao;
+  private final PersistentKeyValueStore store;
   private final WorkerJobMetadata jobMetadata;
 
   @Inject
-  JobPollingService(JobDao jobDao, WorkerJobMetadata jobMetadata) {
-    this.jobDao = jobDao;
+  JobPollingService(CloudFactory cloudFactory, WorkerJobMetadata jobMetadata) {
+    this.store = cloudFactory.getPersistentKeyValueStore();
     this.jobMetadata = jobMetadata;
   }
 
@@ -70,46 +72,74 @@ class JobPollingService extends AbstractScheduledService {
    * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() throws IOException {
-    String id = jobDao.findNextJobPendingWorkerAssignment();
-    logger.debug("Polled pollForUnassignedJob, found id: {}", id);
-    if (id != null) {
-      Preconditions.checkState(!jobMetadata.isInitialized());
-      KeyPair keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
-      PublicKey publicKey = keyPair.getPublic();
-      // TODO: Move storage of private key to a different location
-      PrivateKey privateKey = keyPair.getPrivate();
-      // Executing Job State Transition from Unassigned to Assigned
-      try {
-        jobDao.updateJobStateToAssignedWithoutAuthData(id, publicKey, privateKey);
-        jobMetadata.init(id, keyPair);
-        logger.debug("Completed updateJobStateToAssignedWithoutAuthData, publicKey: {}",
-            publicKey.getEncoded().length);
-      } catch (IOException e) {
-        logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
-            id);
-      }
-    } else {
-      logger.debug("findNextJobPendingWorkerAssignment result was null");
+    String jobId = store.getFirst(JobState.PENDING_WORKER_ASSIGNMENT);
+    logger.debug("Polling for a job PENDING_WORKER_ASSIGNMENT");
+    if (jobId == null) {
+      return;
     }
+    logger.debug("Polled job {}", jobId);
+    Preconditions.checkState(!jobMetadata.isInitialized());
+    KeyPair keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
+    PublicKey publicKey = keyPair.getPublic();
+    // TODO: Move storage of private key to a different location
+    PrivateKey privateKey = keyPair.getPrivate();
+    // Executing Job State Transition from Unassigned to Assigned
+    try {
+      updateJobStateToAssignedWithoutAuthData(jobId, publicKey, privateKey);
+      jobMetadata.init(jobId, keyPair);
+      logger.debug("Updated job {} to ASSIGNED_WITHOUT_AUTH_DATA, publicKey length: {}",
+          publicKey.getEncoded().length);
+    } catch (IOException e) {
+      logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
+          jobId);
+    }
+  }
+
+  /**
+   * Replaces a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
+   * assigned state with {@code publicKey} and {@code privateKey}.
+   */
+  private void updateJobStateToAssignedWithoutAuthData(String jobId, PublicKey publicKey,
+      PrivateKey privateKey) throws IOException {
+    // Lookup the job so we can append to its existing properties.
+    // atomicUpdate will verify the job is still in the expected state when performing the update.
+    PortabilityJob existingJob = store.get(jobId);
+    // Verify no worker key
+    Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
+    Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
+    // Populate job with keys to persist
+    String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
+    String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
+
+    PortabilityJob updatedJob = existingJob.toBuilder()
+        .setWorkerInstancePublicKey(encodedPublicKey)
+        .setWorkerInstancePrivateKey(encodedPrivateKey)
+        .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
+        .build();
+    store.atomicUpdate(jobId, JobState.PENDING_WORKER_ASSIGNMENT, updatedJob);
   }
 
   /**
    * Polls for job with populated auth data and stops this service when found.
    */
   private void pollUntilJobIsReady() {
-    PortabilityJob job = jobDao
-        .lookupAssignedWithAuthDataJob(jobMetadata.getJobId());
-    logger.debug("Polled lookupAssignedWithAuthDataJob, found id: {}",
-        (job != null ? job.id() : "null"));
-
-    // Validate job has auth data
-    if ((job != null) && (!Strings.isNullOrEmpty(job.encryptedExportAuthData()))
-        && (!Strings.isNullOrEmpty(job.encryptedImportAuthData()))) {
-      logger.debug("Polled lookupAssignedWithAuthDataJob, found auth data, id: {}", job.id());
-      // Stop polling now that we have all the data ready to start the job
+    String jobId = jobMetadata.getJobId();
+    PortabilityJob job = store.get(jobId);
+    if (job == null) {
+      logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
+    } else if (job.jobState() == JobState.ASSIGNED_WITH_AUTH_DATA) {
+      logger.debug("Polled job {} in state ASSIGNED_WITH_AUTH_DATA", jobId);
+      if (!Strings.isNullOrEmpty(job.encryptedExportAuthData())
+          && !Strings.isNullOrEmpty(job.encryptedImportAuthData())) {
+        logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
+      } else {
+        logger.warn("Polled job {} does not have auth data as expected. "
+            + "Done polling this job since it's in a bad state! Starting over.", jobId);
+      }
       this.stopAsync();
     } else {
-      logger.debug("Polled lookupAssignedWithAuthDataJob, no auth data found, id: {}", jobMetadata.getJobId());
+      logger.debug("Polling job {} until it's in state ASSIGNED_WITH_AUTH_DATA. "
+          + "It's currently in state: {}", jobId, job.jobState());
     }
   }
 }

@@ -15,11 +15,9 @@
  */
 package org.dataportabilityproject.cloud.interfaces;
 
-import com.google.cloud.datastore.Transaction;
 import java.io.IOException;
-import java.util.Map;
-import org.dataportabilityproject.job.JobDao.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 
 /**
  * Stores key-value data that is persisted indefinitely.
@@ -38,9 +36,15 @@ public interface PersistentKeyValueStore {
   void put(String jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store.
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store, or null if none found.
    */
   PortabilityJob get(String jobId);
+
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store, and verify it is in
+   * state {@code jobState}.
+   */
+  PortabilityJob get(String jobId, JobState jobState);
 
   /**
    * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store, or nul

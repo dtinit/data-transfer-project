@@ -34,11 +34,12 @@ import javax.json.JsonWriter;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
-import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -52,23 +53,21 @@ final class StartCopyHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobDao jobDao;
+  private final PersistentKeyValueStore store;
   private final CloudFactory cloudFactory;
-  private final CryptoHelper cryptoHelper;
   private final CommonSettings commonSettings;
   private final TokenManager tokenManager;
 
   @Inject
-  StartCopyHandler(ServiceProviderRegistry serviceProviderRegistry, JobDao jobDao,
+  StartCopyHandler(
+      ServiceProviderRegistry serviceProviderRegistry,
       CloudFactory cloudFactory,
-      CryptoHelper cryptoHelper,
       CommonSettings commonSettings,
       TokenManager tokenManager) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobDao = jobDao;
     this.cloudFactory = cloudFactory;
-    this.cryptoHelper = cryptoHelper;
     this.commonSettings = commonSettings;
+    this.store = cloudFactory.getPersistentKeyValueStore();
     this.tokenManager = tokenManager;
   }
 
@@ -90,8 +89,7 @@ final class StartCopyHandler implements HttpHandler {
    * Handles flow for assigning a worker instance, encrypting data with the assigned worker key, and
    * persisting the auth data, which will result in the worker starting the copy.
    */
-  private void handleWorkerAssignmentFlow(HttpExchange exchange, String id)
-      throws IOException {
+  private void handleWorkerAssignmentFlow(HttpExchange exchange, String jobId) throws IOException {
 
     // Encrypted job initiation flow
     //   - Validate auth data is present in cookies
@@ -101,14 +99,14 @@ final class StartCopyHandler implements HttpHandler {
     //   - Update job with auth data
 
     // Lookup job
-    PortabilityJob job = PortabilityApiUtils.lookupJobPendingAuthData(id, jobDao);
-    Preconditions.checkState(null != job, "existing job not found for id: %s", id);
+    PortabilityJob job = commonSettings.getEncryptedFlow()
+        ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+    Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
     // Validate job
     String exportService = job.exportService();
     Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");
     String importService = job.importService();
     Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
-    PortableDataType type = JobUtils.getDataType(job.dataType());
 
     //  Validate auth data is present in cookies
     String exportAuthCookieValue = PortabilityApiUtils
@@ -123,36 +121,38 @@ final class StartCopyHandler implements HttpHandler {
         .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue),
             "Import auth cookie required");
 
-    // We have the data, now update it unassigned so it can be assigned a worker
-    // Set Job to state to pending worker assignment
-    jobDao.updateJobStateToPendingWorkerAssignment(job.id()); // Now that job is complete unassiged
-    logger.debug("Updated updateJobStateToPendingWorkerAssignment, id: {}", job.id());
+    // We have the data, now update to 'pending worker assignment' so a worker may be assigned
+    job = job.toBuilder().setJobState(JobState.PENDING_WORKER_ASSIGNMENT).build();
+    store.atomicUpdate(job.id(), JobState.PENDING_AUTH_DATA, job);
+    logger.debug("Updated job {} to PENDING_WORKER_ASSIGNMENT", jobId);
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
     // the worker instance key will be populated
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
-    while (jobDao.lookupAssignedWithoutAuthDataJob(job.id()) == null) {
-      logger.debug("No result for lookupAssignedWithoutAuthDataJob, id: {}", job.id());
+    job = store.get(jobId);
+    while (job == null || job.jobState() != JobState.ASSIGNED_WITHOUT_AUTH_DATA) {
+      logger.debug("Waiting for job {} to enter state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
       try {
         Sleeper.DEFAULT.sleep(10000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
+      job = store.get(jobId);
     }
 
-    logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", job.id());
+    logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", jobId);
 
     // Ensure job is assigned and has worker key
-    PortabilityJob assignedJob = jobDao.lookupAssignedWithoutAuthDataJob(job.id());
+    job = store.get(jobId, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
 
-    logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", job.id());
-    Preconditions.checkNotNull(assignedJob.workerInstancePublicKey() != null);
+    logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", jobId);
+    Preconditions.checkNotNull(job.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
-    logger.debug("About to parse: {}", assignedJob.workerInstancePublicKey());
+    logger.debug("About to parse: {}", job.workerInstancePublicKey());
     PublicKey publicKey = PublicPrivateKeyPairGenerator
-        .parsePublicKey(assignedJob.workerInstancePublicKey());
+        .parsePublicKey(job.workerInstancePublicKey());
     logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
 
     // Encrypt the data with the assigned workers PublicKey and persist
@@ -161,8 +161,16 @@ final class StartCopyHandler implements HttpHandler {
     logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
     String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
     logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
-    jobDao.updateJobStateToAssignedWithAuthData(assignedJob.id(), encryptedExportAuthData,
-        encryptedImportAuthData);
+    Preconditions.checkNotNull(job, "Attempting to update a non-existent job");
+    Preconditions.checkState(job.encryptedExportAuthData() == null);
+    Preconditions.checkState(job.encryptedImportAuthData() == null);
+    // Populate job with encrypted auth data
+    job = job.toBuilder()
+        .setEncryptedExportAuthData(encryptedExportAuthData)
+        .setEncryptedImportAuthData(encryptedImportAuthData)
+        .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
+        .build();
+    store.atomicUpdate(jobId, JobState.ASSIGNED_WITHOUT_AUTH_DATA, job);
 
     writeResponse(exchange);
   }
@@ -170,10 +178,10 @@ final class StartCopyHandler implements HttpHandler {
   /**
    * Validates job information, starts the copy job inline, and returns status to the client.
    */
-  private void handleStartCopyInApi(HttpExchange exchange, String id) throws IOException {
+  private void handleStartCopyInApi(HttpExchange exchange, String jobId) throws IOException {
     // Lookup job
-    PortabilityJob job = PortabilityApiUtils.lookupJob(id, jobDao);
-    Preconditions.checkState(null != job, "existing job not found for id: %s", id);
+    PortabilityJob job = store.get(jobId);
+    Preconditions.checkState(null != job, "existing job not found for id: %s", jobId);
     // Validate job
     String exportService = job.exportService();
     Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");

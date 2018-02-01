@@ -31,6 +31,7 @@ import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,7 +40,7 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.job.JobDao.JobState;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobConverter;
 
@@ -84,7 +85,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
    */
   @Override
   public PortabilityJob get(String jobId) {
@@ -93,6 +94,20 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
       return null;
     }
     return PortabilityJob.mapToJob(getProperties(entity));
+  }
+
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in Datastore, and verify it is in
+   * state {@code jobState}.
+   */
+  @Override
+  public PortabilityJob get(String jobId, JobState jobState) {
+    PortabilityJob job = get(jobId);
+    Preconditions.checkNotNull(job,
+        "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
+    Preconditions.checkState(job.jobState() == jobState,
+        "Expected job {} to be in state {}, but was {}", jobState, job.jobState());
+    return job;
   }
 
   /**

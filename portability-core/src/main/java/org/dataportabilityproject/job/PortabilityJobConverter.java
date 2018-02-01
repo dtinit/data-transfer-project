@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import org.dataportabilityproject.job.JobDao.JobState;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.shared.auth.AuthData;
 
 /**
