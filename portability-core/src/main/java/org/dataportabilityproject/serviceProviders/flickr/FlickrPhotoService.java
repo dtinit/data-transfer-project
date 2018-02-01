@@ -85,6 +85,16 @@ public class FlickrPhotoService implements
     RequestContext.getRequestContext().setAuth(auth);
   }
 
+  FlickrPhotoService(Flickr flickr, PhotosetsInterface photosetsInterface,
+      PhotosInterface photosInterface, Uploader uploader, JobDataCache jobDataCache, Auth auth) {
+    this.flickr = flickr;
+    this.photosetsInterface = photosetsInterface;
+    this.photosInterface = photosInterface;
+    this.uploader = uploader;
+    this.jobDataCache = jobDataCache;
+    this.auth = auth;
+  }
+
   static int getPage(Optional<PaginationInformation> paginationInformation) {
     return paginationInformation.map(
         paginationInformation1 -> ((FlickrPaginationInformation) paginationInformation1)

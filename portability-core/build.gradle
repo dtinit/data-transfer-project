@@ -69,4 +69,5 @@ dependencies {
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.hamcrest:hamcrest-core:${hamcrestVersion}")
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
