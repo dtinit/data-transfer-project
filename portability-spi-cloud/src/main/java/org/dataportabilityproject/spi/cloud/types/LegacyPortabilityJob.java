@@ -55,7 +55,7 @@ public abstract class LegacyPortabilityJob {
   @Nullable public abstract LegacyPortabilityJob.JobState jobState();
 
   public static LegacyPortabilityJob.Builder builder() {
-    return new AutoValue_OldPortabilityJob.Builder();
+    return new AutoValue_LegacyPortabilityJob.Builder();
   }
 
   public abstract LegacyPortabilityJob.Builder toBuilder();
