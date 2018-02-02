@@ -1,33 +1,19 @@
-/*
- * Copyright 2017 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.dataportabilityproject.job;
+package org.dataportabilityproject.spi.cloud.types;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
- * Converter from {@link PortabilityJob} to and from a Map suitable for storing in a key value
+ * Converter from {@link LegacyPortabilityJob} to and from a Map suitable for storing in a key value
  * storage layer.
  */
-public final class PortabilityJobConverter extends Converter<PortabilityJob, Map<String, Object>> {
+public final class OldPortabilityJobConverter extends
+    Converter<LegacyPortabilityJob, Map<String, Object>> {
   // Keys for specific values in the key value store
   public static final String ID_DATA_KEY = "UUID";
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
@@ -47,10 +33,10 @@ public final class PortabilityJobConverter extends Converter<PortabilityJob, Map
   public static final String JOB_STATE = "JOB_STATE";
 
   /**
-   * Converts a {@link PortabilityJob} to a map of key value pairs.
+   * Converts a {@link LegacyPortabilityJob} to a map of key value pairs.
    */
   @Override
-  protected Map<String, Object> doForward(PortabilityJob job) {
+  protected Map<String, Object> doForward(LegacyPortabilityJob job) {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
     // Id is the key so it is required
@@ -111,13 +97,13 @@ public final class PortabilityJobConverter extends Converter<PortabilityJob, Map
   }
 
   /**
-   * Converts a Map of key value pairs to a {@link PortabilityJob}.
+   * Converts a Map of key value pairs to a {@link LegacyPortabilityJob}.
    */
   @Override
-  protected PortabilityJob doBackward(Map<String, Object> data) {
+  protected LegacyPortabilityJob doBackward(Map<String, Object> data) {
     Preconditions.checkArgument(!isStringValueNullOrEmpty(data, ID_DATA_KEY), "uuid missing");
     // Add required data
-    PortabilityJob.Builder builder = PortabilityJob.builder();
+    LegacyPortabilityJob.Builder builder = LegacyPortabilityJob.builder();
     builder.setId(getString(data, ID_DATA_KEY));
 
     // newly created sessions will not contain any data type selection
@@ -182,3 +168,4 @@ public final class PortabilityJobConverter extends Converter<PortabilityJob, Map
     return (String) map.get(key);
   }
 }
+

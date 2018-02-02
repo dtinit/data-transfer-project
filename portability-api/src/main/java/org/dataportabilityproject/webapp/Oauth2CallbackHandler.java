@@ -30,14 +30,14 @@ import java.net.HttpCookie;
 import java.util.Map;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
@@ -55,7 +55,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final PersistentKeyValueStore store;
+  private final JobStore store;
   private final CryptoHelper cryptoHelper;
   private final CommonSettings commonSettings;
 
@@ -66,7 +66,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       CryptoHelper cryptoHelper,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.store = cloudFactory.getPersistentKeyValueStore();
+    this.store = cloudFactory.getJobStore();
     this.cryptoHelper = cryptoHelper;
     this.commonSettings = commonSettings;
   }
@@ -121,7 +121,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
               jobId, state);
 
 
-      PortabilityJob job = commonSettings.getEncryptedFlow()
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
@@ -153,7 +153,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       // The data will be passed thru to the server via the cookie.
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
-        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
+        LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
         store.update(updatedJob, null);
       } else {
         // Set new cookie

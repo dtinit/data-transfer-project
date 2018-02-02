@@ -47,9 +47,9 @@ import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * The {@link ServiceProvider} for Google (http://www.google.com/).

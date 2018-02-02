@@ -8,8 +8,8 @@ import java.net.HttpCookie;
 import java.util.Map;
 import org.dataportabilityproject.job.JWTTokenManager;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.TokenManager;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.junit.Test;
 
 public class PortabilityApiUtilsTest {
@@ -33,7 +33,7 @@ public class PortabilityApiUtilsTest {
   public void validateJobIdSuccessfulTest() {
     TokenManager     tokenManager = new JWTTokenManager("TestSecret");
 
-    PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
+    LegacyPortabilityJob testJob = LegacyPortabilityJob.builder().setId("123456").build();
 
     // create cookies
     String encodedJobId = JobUtils.encodeId(testJob);;
@@ -53,7 +53,7 @@ public class PortabilityApiUtilsTest {
   @Test(expected = IllegalArgumentException.class)
   public void validateJobIdMismatchTest(){
     TokenManager     tokenManager = new JWTTokenManager("TestSecret");
-    PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
+    LegacyPortabilityJob testJob = LegacyPortabilityJob.builder().setId("123456").build();
 
     // create cookies - purposefully create a token thats not for the correct job ID.
     String encodedJobId = JobUtils.encodeId(testJob);;
@@ -75,7 +75,7 @@ public class PortabilityApiUtilsTest {
   public void validateJobIdMissingCookieTest(){
     TokenManager     tokenManager = new JWTTokenManager("TestSecret");
 
-    PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
+    LegacyPortabilityJob testJob = LegacyPortabilityJob.builder().setId("123456").build();
 
     // create cookies
     String encodedJobId = JobUtils.encodeId(testJob);;
@@ -95,7 +95,7 @@ public class PortabilityApiUtilsTest {
   @Test(expected = NullPointerException.class)
   public void validateJobIdMissingHeaderTest(){
     TokenManager     tokenManager = new JWTTokenManager("TestSecret");
-    PortabilityJob testJob = PortabilityJob.builder().setId("123456").build();
+    LegacyPortabilityJob testJob = LegacyPortabilityJob.builder().setId("123456").build();
 
     // create cookies
     String encodedJobId = JobUtils.encodeId(testJob);;

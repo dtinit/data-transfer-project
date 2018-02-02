@@ -29,12 +29,12 @@ import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 public final class GoogleCloudFactory implements CloudFactory {
   private final Datastore datastore;
-  private final PersistentKeyValueStore persistentKeyValueStore;
+  private final JobStore jobStore;
   private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
   private final BucketStore bucketStore;
 
@@ -51,7 +51,7 @@ public final class GoogleCloudFactory implements CloudFactory {
         .setCredentials(googleCredentials)
         .build()
         .getService();
-    this.persistentKeyValueStore = new GooglePersistentKeyValueStore(datastore, commonSettings);
+    this.jobStore = new GoogleCloudDatastore(datastore, commonSettings.getEncryptedFlow());
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
   }
@@ -62,8 +62,8 @@ public final class GoogleCloudFactory implements CloudFactory {
   }
 
   @Override
-  public PersistentKeyValueStore getPersistentKeyValueStore() {
-    return persistentKeyValueStore;
+  public JobStore getJobStore() {
+    return jobStore;
   }
 
   @Override
