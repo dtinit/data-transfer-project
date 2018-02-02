@@ -1,8 +1,7 @@
 package org.dataportabilityproject.webapp;
 
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_COOKIE;
 
 import com.sun.net.httpserver.Headers;
 import java.net.HttpCookie;

@@ -16,31 +16,55 @@
 package org.dataportabilityproject.cloud.interfaces;
 
 import java.io.IOException;
-import java.util.Map;
+import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 
 /**
- * Stores data that is persisted indefinitely.
+ * Stores key-value data that is persisted indefinitely.
  */
 // TODO(willard): Add TTLs to data
-// TODO(willard): Change interface to take serializable data and not just Map<String, Object>,
-//                I left it that way to make the refactor easier.
 public interface PersistentKeyValueStore {
 
-  /** Persist {@code data} with the given {@code key} overriding previous data. */
-  void put(String key, Map<String, Object> data) throws IOException;
-
-  /** Retrieve data with the given {@code key} or null if not found. */
-  Map<String, Object> get(String key);
-
-  /** Retrieve the first key that begins with the given {@code prefix} or null if none found. */
-  String getFirst(String prefix);
-
-  /** Deletes entry with the given {@code key}. */
-  void delete(String key);
+  /**
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
+   *
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   *
+   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
+   * problem inserting the job.
+   */
+  void put(String jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Atomically updates {@code previousKeyStr} to {@code newKeyStr} with {@code data},
-   * and deletes {@code previousKeyStr}.
-   **/
-  boolean atomicUpdate(String previousKeyStr, String newKeyStr, Map<String, Object> data);
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store, or null if none found.
+   */
+  PortabilityJob get(String jobId);
+
+  /**
+   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store, and verify it is in
+   * state {@code jobState}.
+   */
+  PortabilityJob get(String jobId, JobState jobState);
+
+  /**
+   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store, or nul
+   * if none found.
+   */
+  String getFirst(JobState jobState);
+
+  /**
+   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in the store.
+   *
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   */
+  void delete(String jobId) throws IOException;
+
+  /**
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code portabilityJob},
+   * and verifies that it was previously in the expected {@code previousState}.
+   *
+   * @throws IOException if the job was not in the expected state in the store, or there was another
+   * problem updating it.
+   */
+  void atomicUpdate(String jobId, JobState previousState, PortabilityJob job) throws IOException;
 }
