@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.spi.cloud.types.OldPortabilityJobConverter;
 
 /**
@@ -39,15 +39,15 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
-   * Inserts a new {@link OldPortabilityJob} keyed by its job ID in the map.
+   * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in the map.
    *
-   * <p>To update an existing {@link OldPortabilityJob} instead, use {@link #update}.
+   * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    * problem inserting the job.
    */
   @Override
-  public synchronized void create(OldPortabilityJob job) throws IOException {
+  public synchronized void create(LegacyPortabilityJob job) throws IOException {
     Preconditions.checkNotNull(job.id());
     String jobId = job.id();
     if (map.get(jobId) != null) {
@@ -57,23 +57,23 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
-   * Finds the {@link OldPortabilityJob} keyed by {@code jobId} in the map, or null if not found.
+   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map, or null if not found.
    */
   @Override
-  public OldPortabilityJob find(String key) {
+  public LegacyPortabilityJob find(String key) {
     if (!map.containsKey(key)) {
       return null;
     }
-    return OldPortabilityJob.mapToJob(map.get(key));
+    return LegacyPortabilityJob.mapToJob(map.get(key));
   }
 
   /**
-   * Finds the {@link OldPortabilityJob} keyed by {@code jobId} in the map, and verify it is in
+   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map, and verify it is in
    * state {@code jobState}.
    */
   @Override
-  public OldPortabilityJob find(String jobId, JobState jobState) {
-    OldPortabilityJob job = find(jobId);
+  public LegacyPortabilityJob find(String jobId, JobState jobState) {
+    LegacyPortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
     Preconditions.checkState(job.jobState() == jobState,
@@ -82,7 +82,7 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
-   * Finds the ID of the first {@link OldPortabilityJob} in state {@code jobState} in the map, or null
+   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in the map, or null
    * if none found.
    */
   @Override
@@ -100,7 +100,7 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
-   * Removes the {@link OldPortabilityJob} keyed by {@code jobId} in the map.
+   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map.
    *
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
@@ -113,14 +113,14 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
-   * Atomically updates the {@link OldPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob}
+   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob}
    * in the map, and verifies that it was previously in the expected {@code previousState}.
    *
    * @throws IOException if the job was not in the expected state in the map, or there was another
    * problem updating it.
    */
   @Override
-  public void update(OldPortabilityJob job, JobState previousState)
+  public void update(LegacyPortabilityJob job, JobState previousState)
       throws IOException{
     Preconditions.checkNotNull(job.id());
     String jobId = job.id();
@@ -142,7 +142,7 @@ public final class InMemoryKeyValueStore implements JobStore {
   /**
    * Return {@code data}'s {@link JobState}, or null if missing.
    *
-   * @param data a {@link OldPortabilityJob}'s representation in {@link #map}.
+   * @param data a {@link LegacyPortabilityJob}'s representation in {@link #map}.
    */
   private JobState getJobState(Map<String, Object> data) {
     Object jobState = data.get(OldPortabilityJobConverter.JOB_STATE);

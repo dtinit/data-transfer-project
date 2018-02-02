@@ -42,8 +42,8 @@ import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +99,7 @@ final class StartCopyHandler implements HttpHandler {
     //   - Update job with auth data
 
     // Lookup job
-    OldPortabilityJob job = commonSettings.getEncryptedFlow()
+    LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
         ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
     Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
     // Validate job
@@ -180,7 +180,7 @@ final class StartCopyHandler implements HttpHandler {
    */
   private void handleStartCopyInApi(HttpExchange exchange, String jobId) throws IOException {
     // Lookup job
-    OldPortabilityJob job = store.find(jobId);
+    LegacyPortabilityJob job = store.find(jobId);
     Preconditions.checkState(null != job, "existing job not found for id: %s", jobId);
     // Validate job
     String exportService = job.exportService();

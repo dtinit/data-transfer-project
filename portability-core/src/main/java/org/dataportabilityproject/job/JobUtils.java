@@ -23,7 +23,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,13 +39,13 @@ public final class JobUtils {
     return new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8);
   }
 
-  public static String encodeId(OldPortabilityJob job) {
+  public static String encodeId(LegacyPortabilityJob job) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
     return BaseEncoding.base64Url().encode(job.id().getBytes(Charsets.UTF_8));
   }
 
   /* Returns the initial auth data for export or import determined by the {@code serviceMode} param. */
-  public static AuthData getInitialAuthData(OldPortabilityJob job, ServiceMode serviceMode) {
+  public static AuthData getInitialAuthData(LegacyPortabilityJob job, ServiceMode serviceMode) {
     switch (serviceMode) {
       case EXPORT:
         return job.exportInitialAuthData();
@@ -57,9 +57,9 @@ public final class JobUtils {
   }
 
   /* Sets the service in the correct field of the OldPortabilityJob */
-  public static OldPortabilityJob setAuthData(OldPortabilityJob job, AuthData authData,
+  public static LegacyPortabilityJob setAuthData(LegacyPortabilityJob job, AuthData authData,
       ServiceMode serviceMode) {
-    OldPortabilityJob.Builder updatedJob = job.toBuilder();
+    LegacyPortabilityJob.Builder updatedJob = job.toBuilder();
     switch (serviceMode) {
       case EXPORT:
         updatedJob.setExportAuthData(authData);
@@ -74,10 +74,10 @@ public final class JobUtils {
   }
 
   /* Sets the service in the correct field of the OldPortabilityJob */
-  public static OldPortabilityJob setInitialAuthData(OldPortabilityJob job, AuthData initialAuthData,
+  public static LegacyPortabilityJob setInitialAuthData(LegacyPortabilityJob job, AuthData initialAuthData,
       ServiceMode serviceMode) {
     logger.debug("Setting initialAuthData: {}, serviceMode: {}", initialAuthData, serviceMode);
-    OldPortabilityJob.Builder updatedJob = job.toBuilder();
+    LegacyPortabilityJob.Builder updatedJob = job.toBuilder();
     switch (serviceMode) {
       case EXPORT:
         updatedJob.setExportInitialAuthData(initialAuthData);

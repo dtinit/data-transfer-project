@@ -30,8 +30,8 @@ import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.job.SecretKeyGenerator;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +81,7 @@ class CryptoHelper {
   }
 
   private SecretKey getSessionKey(String jobId) {
-    OldPortabilityJob job = store.find(jobId);
+    LegacyPortabilityJob job = store.find(jobId);
     Preconditions.checkState(job != null && job.jobState() == JobState.PENDING_AUTH_DATA);
     String encodedSessionKey = job.sessionKey();
     Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey),

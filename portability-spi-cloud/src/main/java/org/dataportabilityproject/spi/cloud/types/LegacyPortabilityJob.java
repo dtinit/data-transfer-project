@@ -12,7 +12,7 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
  * TODO(rtannenbaum): Migrate usage of this to the new {@link PortabilityJob}
  */
 @AutoValue
-public abstract class OldPortabilityJob {
+public abstract class LegacyPortabilityJob {
   /**
    * The current state of the job.
    *
@@ -52,41 +52,41 @@ public abstract class OldPortabilityJob {
   @Nullable public abstract String workerInstancePublicKey();
   @Nullable public abstract String workerInstancePrivateKey(); // TODO: Consider removing
   // TODO: Remove Nullable - jobState should never be null after we enable encryptedFlow everywhere
-  @Nullable public abstract OldPortabilityJob.JobState jobState();
+  @Nullable public abstract LegacyPortabilityJob.JobState jobState();
 
-  public static OldPortabilityJob.Builder builder() {
+  public static LegacyPortabilityJob.Builder builder() {
     return new AutoValue_OldPortabilityJob.Builder();
   }
 
-  public abstract OldPortabilityJob.Builder toBuilder();
+  public abstract LegacyPortabilityJob.Builder toBuilder();
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract OldPortabilityJob.Builder setId(String id);
-    public abstract OldPortabilityJob.Builder setDataType(String id);
-    public abstract OldPortabilityJob.Builder setExportService(String id);
-    public abstract OldPortabilityJob.Builder setExportAccount(String id);
-    public abstract OldPortabilityJob.Builder setExportInitialAuthData(AuthData id);
+    public abstract LegacyPortabilityJob.Builder setId(String id);
+    public abstract LegacyPortabilityJob.Builder setDataType(String id);
+    public abstract LegacyPortabilityJob.Builder setExportService(String id);
+    public abstract LegacyPortabilityJob.Builder setExportAccount(String id);
+    public abstract LegacyPortabilityJob.Builder setExportInitialAuthData(AuthData id);
     /** @deprecated Use setEncryptedExportAuthData when encrypted flow is implemented. */
-    @Deprecated public abstract OldPortabilityJob.Builder setExportAuthData(AuthData id);
-    public abstract OldPortabilityJob.Builder setEncryptedExportAuthData(String id);
-    public abstract OldPortabilityJob.Builder setImportService(String id);
-    public abstract OldPortabilityJob.Builder setImportAccount(String id);
-    public abstract OldPortabilityJob.Builder setImportInitialAuthData(AuthData id);
+    @Deprecated public abstract LegacyPortabilityJob.Builder setExportAuthData(AuthData id);
+    public abstract LegacyPortabilityJob.Builder setEncryptedExportAuthData(String id);
+    public abstract LegacyPortabilityJob.Builder setImportService(String id);
+    public abstract LegacyPortabilityJob.Builder setImportAccount(String id);
+    public abstract LegacyPortabilityJob.Builder setImportInitialAuthData(AuthData id);
     /** @deprecated Use setEncryptedImportAuthData when encrypted flow is implemented. */
-    @Deprecated public abstract OldPortabilityJob.Builder setImportAuthData(AuthData id);
-    public abstract OldPortabilityJob.Builder setEncryptedImportAuthData(String id);
-    public abstract OldPortabilityJob.Builder setSessionKey(String id);
-    public abstract OldPortabilityJob.Builder setWorkerInstancePublicKey(String id);
-    public abstract OldPortabilityJob.Builder setWorkerInstancePrivateKey(String id);
-    public abstract OldPortabilityJob.Builder setJobState(
-        OldPortabilityJob.JobState jobState);
+    @Deprecated public abstract LegacyPortabilityJob.Builder setImportAuthData(AuthData id);
+    public abstract LegacyPortabilityJob.Builder setEncryptedImportAuthData(String id);
+    public abstract LegacyPortabilityJob.Builder setSessionKey(String id);
+    public abstract LegacyPortabilityJob.Builder setWorkerInstancePublicKey(String id);
+    public abstract LegacyPortabilityJob.Builder setWorkerInstancePrivateKey(String id);
+    public abstract LegacyPortabilityJob.Builder setJobState(
+        LegacyPortabilityJob.JobState jobState);
 
-    abstract OldPortabilityJob autoBuild(); // not public
+    abstract LegacyPortabilityJob autoBuild(); // not public
 
     /** Validates required values on build. */
-    public OldPortabilityJob build() {
-      OldPortabilityJob job = autoBuild();
+    public LegacyPortabilityJob build() {
+      LegacyPortabilityJob job = autoBuild();
       Preconditions.checkState(!Strings.isNullOrEmpty(job.id()), "Invalid id value");
       return job;
     }
@@ -97,8 +97,8 @@ public abstract class OldPortabilityJob {
     return new OldPortabilityJobConverter().doForward(this);
   }
 
-  /** Creates a {@link OldPortabilityJob} from the data in the given {@code map}. */
-  public static OldPortabilityJob mapToJob(Map<String, Object> map) {
+  /** Creates a {@link LegacyPortabilityJob} from the data in the given {@code map}. */
+  public static LegacyPortabilityJob mapToJob(Map<String, Object> map) {
     return new OldPortabilityJobConverter().doBackward(map);
   }
 }

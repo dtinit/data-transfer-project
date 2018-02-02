@@ -38,8 +38,8 @@ import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
@@ -90,7 +90,7 @@ abstract class SetupHandler implements HttpHandler {
 
       // Valid job must be present
       String jobId = JobUtils.decodeId(encodedIdCookie);
-      OldPortabilityJob job = commonSettings.getEncryptedFlow()
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -130,7 +130,7 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(Headers headers, OldPortabilityJob job)
+  private DataTransferResponse handleImportSetup(Headers headers, LegacyPortabilityJob job)
       throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
@@ -161,7 +161,7 @@ abstract class SetupHandler implements HttpHandler {
         Status.INPROCESS, authFlowInitiator.authUrl()); // Redirect to auth page of import service
   }
 
-  private DataTransferResponse handleCopySetup(Headers requestHeaders, OldPortabilityJob job) {
+  private DataTransferResponse handleCopySetup(Headers requestHeaders, LegacyPortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils

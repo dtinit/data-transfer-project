@@ -37,7 +37,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 import org.slf4j.Logger;
@@ -143,7 +143,7 @@ public class PortabilityApiUtils {
   /**
    * Hack! For now, if we don't have export auth data, assume it's for export.
    */
-  public static ServiceMode getServiceMode(OldPortabilityJob job, Headers headers,
+  public static ServiceMode getServiceMode(LegacyPortabilityJob job, Headers headers,
       boolean useEncryptedFlow) {
     if (useEncryptedFlow) {
       String exportAuthCookie = PortabilityApiUtils

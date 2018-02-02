@@ -19,12 +19,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides methods for the creation of new {@link OldPortabilityJob} objects in correct initial state.
+ * Provides methods for the creation of new {@link LegacyPortabilityJob} objects in correct initial state.
  */
 public class PortabilityJobFactory {
   private final Logger logger = LoggerFactory.getLogger(PortabilityJobFactory.class);
@@ -50,24 +50,24 @@ public class PortabilityJobFactory {
   /**
    * Creates a new user job in initial state with session key.
    */
-  public OldPortabilityJob create(PortableDataType dataType, String exportService,
+  public LegacyPortabilityJob create(PortableDataType dataType, String exportService,
       String importService) throws IOException {
     String newId = idProvider.createId();
     String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
-    OldPortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
+    LegacyPortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
     logger.info("Creating new OldPortabilityJob, id: {}", newId);
     return job;
   }
 
   /** Creates the initial data entry to persist. */
-  private static OldPortabilityJob createInitialJob(String id, String sessionKey,
+  private static LegacyPortabilityJob createInitialJob(String id, String sessionKey,
       PortableDataType dataType, String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
-    return OldPortabilityJob.builder()
+    return LegacyPortabilityJob.builder()
         .setId(id)
         .setDataType(dataType.name())
         .setExportService(exportService)
@@ -81,13 +81,13 @@ public class PortabilityJobFactory {
    * @deprecated Remove when encrypted flow complete.
    */
   @Deprecated
-  private static OldPortabilityJob createInitialJob(String id, PortableDataType dataType,
+  private static LegacyPortabilityJob createInitialJob(String id, PortableDataType dataType,
       String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
-    return OldPortabilityJob.builder()
+    return LegacyPortabilityJob.builder()
       .setId(id)
       .setDataType(dataType.name())
       .setExportService(exportService)

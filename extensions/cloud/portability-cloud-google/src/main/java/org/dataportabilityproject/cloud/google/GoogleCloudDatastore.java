@@ -40,8 +40,8 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.spi.cloud.types.OldPortabilityJobConverter;
 
 /**
@@ -60,15 +60,15 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Inserts a new {@link OldPortabilityJob} keyed by its job ID in Datastore.
+   * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in Datastore.
    *
-   * <p>To update an existing {@link OldPortabilityJob} instead, use {@link #update}.
+   * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    * problem inserting the job.
    */
   @Override
-  public void create(OldPortabilityJob job) throws IOException {
+  public void create(LegacyPortabilityJob job) throws IOException {
     Preconditions.checkNotNull(job.id());
     String jobId = job.id();
     Transaction transaction = datastore.newTransaction();
@@ -89,24 +89,24 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Finds the {@link OldPortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
+   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
    */
   @Override
-  public OldPortabilityJob find(String jobId) {
+  public LegacyPortabilityJob find(String jobId) {
     Entity entity = datastore.get(getKey(jobId));
     if (entity == null) {
       return null;
     }
-    return OldPortabilityJob.mapToJob(getProperties(entity));
+    return LegacyPortabilityJob.mapToJob(getProperties(entity));
   }
 
   /**
-   * Finds the {@link OldPortabilityJob} keyed by {@code jobId} in Datastore, and verify it is in
+   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore, and verify it is in
    * state {@code jobState}.
    */
   @Override
-  public OldPortabilityJob find(String jobId, JobState jobState) {
-    OldPortabilityJob job = find(jobId);
+  public LegacyPortabilityJob find(String jobId, JobState jobState) {
+    LegacyPortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
     Preconditions.checkState(job.jobState() == jobState,
@@ -115,7 +115,7 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Finds the ID of the first {@link OldPortabilityJob} in state {@code jobState} in Datastore, or null
+   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore, or null
    * if none found.
    */
   @Override
@@ -135,7 +135,7 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Removes the {@link OldPortabilityJob} keyed by {@code jobId} in Datastore.
+   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore.
    *
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
@@ -149,7 +149,7 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Atomically updates the {@link OldPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob},
+   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob},
    * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
    * {@code previousState}.
    *
@@ -157,7 +157,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * problem updating it.
    */
   @Override
-  public void update(OldPortabilityJob job, JobState previousState)
+  public void update(LegacyPortabilityJob job, JobState previousState)
       throws IOException {
     Preconditions.checkNotNull(job.id());
     String jobId = job.id();
@@ -258,7 +258,7 @@ public final class GoogleCloudDatastore implements JobStore {
   /**
    * Return {@code entity}'s {@link JobState}, or null if missing.
    *
-   * @param entity a {@link OldPortabilityJob}'s representation in {@link #datastore}.
+   * @param entity a {@link LegacyPortabilityJob}'s representation in {@link #datastore}.
    */
   private JobState getJobState(Entity entity) {
     String jobState = entity.getString(OldPortabilityJobConverter.JOB_STATE);

@@ -5,15 +5,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
- * Converter from {@link OldPortabilityJob} to and from a Map suitable for storing in a key value
+ * Converter from {@link LegacyPortabilityJob} to and from a Map suitable for storing in a key value
  * storage layer.
  */
 public final class OldPortabilityJobConverter extends
-    Converter<OldPortabilityJob, Map<String, Object>> {
+    Converter<LegacyPortabilityJob, Map<String, Object>> {
   // Keys for specific values in the key value store
   public static final String ID_DATA_KEY = "UUID";
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
@@ -33,10 +33,10 @@ public final class OldPortabilityJobConverter extends
   public static final String JOB_STATE = "JOB_STATE";
 
   /**
-   * Converts a {@link OldPortabilityJob} to a map of key value pairs.
+   * Converts a {@link LegacyPortabilityJob} to a map of key value pairs.
    */
   @Override
-  protected Map<String, Object> doForward(OldPortabilityJob job) {
+  protected Map<String, Object> doForward(LegacyPortabilityJob job) {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
     // Id is the key so it is required
@@ -97,13 +97,13 @@ public final class OldPortabilityJobConverter extends
   }
 
   /**
-   * Converts a Map of key value pairs to a {@link OldPortabilityJob}.
+   * Converts a Map of key value pairs to a {@link LegacyPortabilityJob}.
    */
   @Override
-  protected OldPortabilityJob doBackward(Map<String, Object> data) {
+  protected LegacyPortabilityJob doBackward(Map<String, Object> data) {
     Preconditions.checkArgument(!isStringValueNullOrEmpty(data, ID_DATA_KEY), "uuid missing");
     // Add required data
-    OldPortabilityJob.Builder builder = OldPortabilityJob.builder();
+    LegacyPortabilityJob.Builder builder = LegacyPortabilityJob.builder();
     builder.setId(getString(data, ID_DATA_KEY));
 
     // newly created sessions will not contain any data type selection

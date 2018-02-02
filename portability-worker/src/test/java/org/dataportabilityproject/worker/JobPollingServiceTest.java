@@ -22,8 +22,8 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,11 +58,11 @@ public class JobPollingServiceTest {
     // Run once with no data in the database
     jobPollingService.runOneIteration();
     assertThat(metadata.isInitialized()).isFalse();
-    OldPortabilityJob job = store.find(TEST_ID);
+    LegacyPortabilityJob job = store.find(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
     // API inserts an job in state 'pending auth data'
-    store.create(OldPortabilityJob.builder()
+    store.create(LegacyPortabilityJob.builder()
         .setId(TEST_ID)
         .setDataType(PortableDataType.PHOTOS.name())
         .setExportService("DummyExportService")

@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,14 +96,14 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   /**
-   * Replaces a unassigned {@link OldPortabilityJob} in storage with the provided {@code jobId} in
+   * Replaces a unassigned {@link LegacyPortabilityJob} in storage with the provided {@code jobId} in
    * assigned state with {@code publicKey} and {@code privateKey}.
    */
   private void updateJobStateToAssignedWithoutAuthData(String jobId, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
     // Lookup the job so we can append to its existing properties.
     // update will verify the job is still in the expected state when performing the update.
-    OldPortabilityJob existingJob = store.find(jobId);
+    LegacyPortabilityJob existingJob = store.find(jobId);
     // Verify no worker key
     Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
     Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
@@ -111,7 +111,7 @@ class JobPollingService extends AbstractScheduledService {
     String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
     String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
 
-    OldPortabilityJob updatedJob = existingJob.toBuilder()
+    LegacyPortabilityJob updatedJob = existingJob.toBuilder()
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
         .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
@@ -124,7 +124,7 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollUntilJobIsReady() {
     String jobId = jobMetadata.getJobId();
-    OldPortabilityJob job = store.find(jobId);
+    LegacyPortabilityJob job = store.find(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
     } else if (job.jobState() == JobState.ASSIGNED_WITH_AUTH_DATA) {

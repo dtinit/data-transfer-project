@@ -31,8 +31,8 @@ import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -97,7 +97,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
-      OldPortabilityJob job = commonSettings.getEncryptedFlow()
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -130,7 +130,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
-        OldPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
+        LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
         store.update(updatedJob, null);
       }
 

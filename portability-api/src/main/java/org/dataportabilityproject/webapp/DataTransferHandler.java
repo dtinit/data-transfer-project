@@ -37,8 +37,8 @@ import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
@@ -118,7 +118,7 @@ final class DataTransferHandler implements HttpHandler {
           "Missing valid importService: %s", importService);
 
       // Create a new job and persist
-      OldPortabilityJob newJob = createJob(dataType, exportService, importService);
+      LegacyPortabilityJob newJob = createJob(dataType, exportService, importService);
 
       // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
@@ -127,7 +127,7 @@ final class DataTransferHandler implements HttpHandler {
 
       // Lookup job, even if just recently created
       String jobId = newJob.id();
-      OldPortabilityJob job = commonSettings.getEncryptedFlow()
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -171,9 +171,9 @@ final class DataTransferHandler implements HttpHandler {
   /**
    * Create the initial job in initial state and persist in storage.
    */
-  private OldPortabilityJob createJob(PortableDataType dataType, String exportService,
+  private LegacyPortabilityJob createJob(PortableDataType dataType, String exportService,
       String importService) throws IOException {
-    OldPortabilityJob job = jobFactory.create(dataType, exportService, importService);
+    LegacyPortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
