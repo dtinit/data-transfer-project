@@ -30,11 +30,11 @@ import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 

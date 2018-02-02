@@ -18,6 +18,7 @@ package org.dataportabilityproject.shared.auth;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator, OfflineAuthDataGenerator {
   @Override // offline

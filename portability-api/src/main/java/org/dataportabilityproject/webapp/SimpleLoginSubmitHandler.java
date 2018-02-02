@@ -27,13 +27,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
@@ -54,7 +54,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   private static final Logger logger = LoggerFactory.getLogger(SimpleLoginSubmitHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final PersistentKeyValueStore store;
+  private final JobStore store;
   private final CryptoHelper cryptoHelper;
   private final CommonSettings commonSettings;
 
@@ -65,7 +65,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       CryptoHelper cryptoHelper,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.store = cloudFactory.getPersistentKeyValueStore();
+    this.store = cloudFactory.getJobStore();
     this.cryptoHelper = cryptoHelper;
     this.commonSettings = commonSettings;
   }
@@ -97,8 +97,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
-      PortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
@@ -130,8 +130,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
-        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        store.atomicUpdate(job.id(), null, updatedJob);
+        LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
+        store.update(updatedJob, null);
       }
 
       if (commonSettings.getEncryptedFlow()) {

@@ -15,7 +15,6 @@
  */
 
 dependencies {
-    compile project(':portability-types-transfer')
-    compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    compile("com.google.auto.value:auto-value:${autoValueVersion}")
+    compile project(':portability-spi-cloud')
+    compile project(':portability-spi-transfer')
 }

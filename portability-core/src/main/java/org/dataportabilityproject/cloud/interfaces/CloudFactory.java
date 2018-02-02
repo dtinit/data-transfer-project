@@ -15,12 +15,14 @@
  */
 package org.dataportabilityproject.cloud.interfaces;
 
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+
 /**
  * Factory for creating object to interact with cloud implementations.
  */
 public interface CloudFactory {
   JobDataCache getJobDataCache(String jobId, String service);
-  PersistentKeyValueStore getPersistentKeyValueStore();
+  JobStore getJobStore();
   CryptoKeyManagementSystem getCryptoKeyManagementSystem();
   BucketStore getBucketStore();
   void clearJobData(String jobId);

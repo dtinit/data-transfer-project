@@ -17,6 +17,7 @@ package org.dataportabilityproject.shared.auth;
 
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * Represents the authUrl, and optional state, to request authorization for a service.
