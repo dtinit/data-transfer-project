@@ -9,7 +9,7 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /** Data about a particular portability job. */
 /**
- * TODO(rtannenbaum): Migrate usage of this to the new {@link org.dataportabilityproject.spi.cloud.types.OldPortabilityJob}
+ * TODO(rtannenbaum): Migrate usage of this to the new {@link PortabilityJob}
  */
 @AutoValue
 public abstract class OldPortabilityJob {
