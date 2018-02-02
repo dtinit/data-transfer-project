@@ -85,13 +85,23 @@ public class FlickrPhotoService implements
     RequestContext.getRequestContext().setAuth(auth);
   }
 
-  private static int getPage(Optional<PaginationInformation> paginationInformation) {
+  FlickrPhotoService(Flickr flickr, PhotosetsInterface photosetsInterface,
+      PhotosInterface photosInterface, Uploader uploader, JobDataCache jobDataCache, Auth auth) {
+    this.flickr = flickr;
+    this.photosetsInterface = photosetsInterface;
+    this.photosInterface = photosInterface;
+    this.uploader = uploader;
+    this.jobDataCache = jobDataCache;
+    this.auth = auth;
+  }
+
+  static int getPage(Optional<PaginationInformation> paginationInformation) {
     return paginationInformation.map(
         paginationInformation1 -> ((FlickrPaginationInformation) paginationInformation1)
             .getPage()).orElse(1);
   }
 
-  private static PhotoModel toCommonPhoto(Photo p, String albumId) {
+  static PhotoModel toCommonPhoto(Photo p, String albumId) {
     checkState(!Strings.isNullOrEmpty(p.getOriginalSize().getSource()),
         "photo %s had a null authUrl", p.getId());
     return new PhotoModel(
@@ -102,7 +112,7 @@ public class FlickrPhotoService implements
         albumId);
   }
 
-  private static String toMimeType(String flickrFormat) {
+  static String toMimeType(String flickrFormat) {
     switch (flickrFormat) {
       case "jpg":
       case "jpeg":
