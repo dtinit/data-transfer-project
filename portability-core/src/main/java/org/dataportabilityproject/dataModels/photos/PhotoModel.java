@@ -15,6 +15,8 @@
  */
 package org.dataportabilityproject.dataModels.photos;
 
+import com.google.common.base.MoreObjects;
+
 public class PhotoModel {
     private final String title;
     private final String fetchableUrl;
@@ -53,5 +55,32 @@ public class PhotoModel {
 
     public String getAlbumId() {
         return albumId;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+            .add("title", title)
+            .add("description", description)
+            .add("albumId", albumId)
+            .add("mediaType", mediaType)
+            .add("fetchableUrl", fetchableUrl)
+            .toString();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (!PhotoModel.class.isAssignableFrom(object.getClass())) {
+            return false;
+        }
+        PhotoModel photoModel = (PhotoModel) object;
+        return this.title.equals(photoModel.getTitle())
+            && this.description.equals(photoModel.getDescription())
+            && this.albumId.equals(photoModel.getAlbumId())
+            && this.mediaType.equals(photoModel.getMediaType())
+            && this.fetchableUrl.equals(photoModel.getFetchableUrl());
     }
 }
