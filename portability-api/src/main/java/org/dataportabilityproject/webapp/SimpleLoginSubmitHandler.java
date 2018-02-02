@@ -98,7 +98,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
       PortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
@@ -131,7 +131,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
         PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        store.atomicUpdate(job.id(), null, updatedJob);
+        store.update(updatedJob, null);
       }
 
       if (commonSettings.getEncryptedFlow()) {

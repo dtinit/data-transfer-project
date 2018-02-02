@@ -81,7 +81,7 @@ class CryptoHelper {
   }
 
   private SecretKey getSessionKey(String jobId) {
-    PortabilityJob job = store.get(jobId);
+    PortabilityJob job = store.find(jobId);
     Preconditions.checkState(job != null && job.jobState() == JobState.PENDING_AUTH_DATA);
     String encodedSessionKey = job.sessionKey();
     Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey),

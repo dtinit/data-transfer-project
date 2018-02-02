@@ -40,15 +40,17 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the map.
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in the map.
    *
-   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    * problem inserting the job.
    */
   @Override
-  public synchronized void put(String jobId, PortabilityJob job) throws IOException {
+  public synchronized void create(PortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(job.id());
+    String jobId = job.id();
     if (map.get(jobId) != null) {
       throw new IOException("An entry already exists for job " + jobId);
     }
@@ -56,10 +58,10 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the map, or null if not found.
+   * Finds the {@link PortabilityJob} keyed by {@code jobId} in the map, or null if not found.
    */
   @Override
-  public PortabilityJob get(String key) {
+  public PortabilityJob find(String key) {
     if (!map.containsKey(key)) {
       return null;
     }
@@ -67,12 +69,12 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the map, and verify it is in
+   * Finds the {@link PortabilityJob} keyed by {@code jobId} in the map, and verify it is in
    * state {@code jobState}.
    */
   @Override
-  public PortabilityJob get(String jobId, JobState jobState) {
-    PortabilityJob job = get(jobId);
+  public PortabilityJob find(String jobId, JobState jobState) {
+    PortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
     Preconditions.checkState(job.jobState() == jobState,
@@ -81,11 +83,11 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the map, or null
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in the map, or null
    * if none found.
    */
   @Override
-  public synchronized String getFirst(JobState jobState) {
+  public synchronized String findFirst(JobState jobState) {
     // Mimic an index lookup
     for (Entry<String, Map<String, Object>> job : map.entrySet()) {
       Map<String, Object> properties = job.getValue();
@@ -99,12 +101,12 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
   }
 
   /**
-   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in the map.
+   * Removes the {@link PortabilityJob} keyed by {@code jobId} in the map.
    *
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
   @Override
-  public void delete(String jobId) throws IOException {
+  public void remove(String jobId) throws IOException {
     Map<String, Object> previous = map.remove(jobId);
     if (previous == null) {
       throw new IOException("Job " + jobId + " didn't exist in the map");
@@ -119,8 +121,10 @@ public final class InMemoryPersistentKeyValueStore implements PersistentKeyValue
    * problem updating it.
    */
   @Override
-  public void atomicUpdate(String jobId, JobState previousState, PortabilityJob job)
+  public void update(PortabilityJob job, JobState previousState)
       throws IOException{
+    Preconditions.checkNotNull(job.id());
+    String jobId = job.id();
     try {
       Map<String, Object> previousEntry = map.replace(jobId, job.asMap());
       if (previousEntry == null) {

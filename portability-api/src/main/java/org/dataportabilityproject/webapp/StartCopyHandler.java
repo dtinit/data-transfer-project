@@ -100,7 +100,7 @@ final class StartCopyHandler implements HttpHandler {
 
     // Lookup job
     PortabilityJob job = commonSettings.getEncryptedFlow()
-        ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+        ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
     Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
     // Validate job
     String exportService = job.exportService();
@@ -123,7 +123,7 @@ final class StartCopyHandler implements HttpHandler {
 
     // We have the data, now update to 'pending worker assignment' so a worker may be assigned
     job = job.toBuilder().setJobState(JobState.PENDING_WORKER_ASSIGNMENT).build();
-    store.atomicUpdate(job.id(), JobState.PENDING_AUTH_DATA, job);
+    store.update(job, JobState.PENDING_AUTH_DATA);
     logger.debug("Updated job {} to PENDING_WORKER_ASSIGNMENT", jobId);
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
@@ -131,7 +131,7 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
-    job = store.get(jobId);
+    job = store.find(jobId);
     while (job == null || job.jobState() != JobState.ASSIGNED_WITHOUT_AUTH_DATA) {
       logger.debug("Waiting for job {} to enter state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
       try {
@@ -139,13 +139,13 @@ final class StartCopyHandler implements HttpHandler {
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-      job = store.get(jobId);
+      job = store.find(jobId);
     }
 
     logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", jobId);
 
     // Ensure job is assigned and has worker key
-    job = store.get(jobId, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    job = store.find(jobId, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
 
     logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", jobId);
     Preconditions.checkNotNull(job.workerInstancePublicKey() != null);
@@ -170,7 +170,7 @@ final class StartCopyHandler implements HttpHandler {
         .setEncryptedImportAuthData(encryptedImportAuthData)
         .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
         .build();
-    store.atomicUpdate(jobId, JobState.ASSIGNED_WITHOUT_AUTH_DATA, job);
+    store.update(job, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
 
     writeResponse(exchange);
   }
@@ -180,7 +180,7 @@ final class StartCopyHandler implements HttpHandler {
    */
   private void handleStartCopyInApi(HttpExchange exchange, String jobId) throws IOException {
     // Lookup job
-    PortabilityJob job = store.get(jobId);
+    PortabilityJob job = store.find(jobId);
     Preconditions.checkState(null != job, "existing job not found for id: %s", jobId);
     // Validate job
     String exportService = job.exportService();

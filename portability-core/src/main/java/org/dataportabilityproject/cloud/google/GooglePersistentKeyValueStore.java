@@ -61,15 +61,17 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   /**
-   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in Datastore.
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in Datastore.
    *
-   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    * problem inserting the job.
    */
   @Override
-  public void put(String jobId, PortabilityJob job) throws IOException {
+  public void create(PortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(job.id());
+    String jobId = job.id();
     Transaction transaction = datastore.newTransaction();
     Entity shouldNotExist = transaction.get(getKey(jobId));
     if (shouldNotExist != null) {
@@ -82,16 +84,16 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
     } catch (DatastoreException e) {
       transaction.rollback();
       throw new IOException(
-          "Could not put initial record for jobID " + jobId + " (record: " + entity + ")", e);
+          "Could not create initial record for jobID " + jobId + " (record: " + entity + ")", e);
     }
     transaction.commit();
   }
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
+   * Finds the {@link PortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
    */
   @Override
-  public PortabilityJob get(String jobId) {
+  public PortabilityJob find(String jobId) {
     Entity entity = datastore.get(getKey(jobId));
     if (entity == null) {
       return null;
@@ -100,12 +102,12 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in Datastore, and verify it is in
+   * Finds the {@link PortabilityJob} keyed by {@code jobId} in Datastore, and verify it is in
    * state {@code jobState}.
    */
   @Override
-  public PortabilityJob get(String jobId, JobState jobState) {
-    PortabilityJob job = get(jobId);
+  public PortabilityJob find(String jobId, JobState jobState) {
+    PortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
     Preconditions.checkState(job.jobState() == jobState,
@@ -114,11 +116,11 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   /**
-   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or null
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or null
    * if none found.
    */
   @Override
-  public String getFirst(JobState jobState) {
+  public String findFirst(JobState jobState) {
     Query<Entity> query = Query.newEntityQueryBuilder()
         .setKind(KIND)
         .setFilter(PropertyFilter.eq(PortabilityJobConverter.JOB_STATE, jobState.name()))
@@ -134,16 +136,16 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
   }
 
   /**
-   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
+   * Removes the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
    *
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
   @Override
-  public void delete(String jobId) throws IOException {
+  public void remove(String jobId) throws IOException {
     try {
       datastore.delete(getKey(jobId));
     } catch (DatastoreException e) {
-      throw new IOException("Could not delete job " + jobId, e);
+      throw new IOException("Could not remove job " + jobId, e);
     }
   }
 
@@ -156,8 +158,10 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
    * problem updating it.
    */
   @Override
-  public void atomicUpdate(String jobId, JobState previousState, PortabilityJob portabilityJob)
+  public void update(PortabilityJob job, JobState previousState)
       throws IOException {
+    Preconditions.checkNotNull(job.id());
+    String jobId = job.id();
     Transaction transaction = datastore.newTransaction();
     Key key = getKey(jobId);
 
@@ -172,7 +176,7 @@ public final class GooglePersistentKeyValueStore implements PersistentKeyValueSt
             + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
       }
 
-      Entity newEntity = createEntity(key, portabilityJob.asMap());
+      Entity newEntity = createEntity(key, job.asMap());
       transaction.put(newEntity);
       transaction.commit();
     } catch (Throwable t) {
