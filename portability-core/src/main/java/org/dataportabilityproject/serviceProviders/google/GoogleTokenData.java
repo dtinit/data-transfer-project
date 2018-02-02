@@ -16,7 +16,7 @@
 package org.dataportabilityproject.serviceProviders.google;
 
 import com.google.auto.value.AutoValue;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 @AutoValue
 abstract class GoogleTokenData extends AuthData {

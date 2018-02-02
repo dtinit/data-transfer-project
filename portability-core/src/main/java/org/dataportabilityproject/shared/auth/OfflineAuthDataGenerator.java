@@ -18,6 +18,7 @@ package org.dataportabilityproject.shared.auth;
 
 import java.io.IOException;
 import org.dataportabilityproject.shared.IOInterface;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 public interface OfflineAuthDataGenerator {
   AuthData generateAuthData(IOInterface ioInterface) throws IOException;

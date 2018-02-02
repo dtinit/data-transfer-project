@@ -15,8 +15,6 @@
  */
 package org.dataportabilityproject.serviceProviders.smugmug;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import oauth.signpost.OAuth;
@@ -30,10 +28,10 @@ import oauth.signpost.exception.OAuthNotAuthorizedException;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.TokenSecretAuthData;
 import org.dataportabilityproject.shared.signpost.GoogleOAuthConsumer;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 final class SmugMugAuth implements OfflineAuthDataGenerator {
 
@@ -85,7 +83,7 @@ final class SmugMugAuth implements OfflineAuthDataGenerator {
   }
 
   OAuthConsumer generateConsumer(AuthData authData) {
-    checkArgument(authData instanceof TokenSecretAuthData,
+    Preconditions.checkArgument(authData instanceof TokenSecretAuthData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenSecretAuthData = (TokenSecretAuthData) authData;

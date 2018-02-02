@@ -25,14 +25,14 @@ import com.sun.net.httpserver.Headers;
 import java.net.HttpCookie;
 import javax.crypto.SecretKey;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.SecretKeyGenerator;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,11 +43,11 @@ class CryptoHelper {
   private static final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
   private static final Gson GSON = new Gson();
 
-  private final PersistentKeyValueStore store;
+  private final JobStore store;
 
   @Inject
   CryptoHelper(CloudFactory cloudFactory) {
-    this.store = cloudFactory.getPersistentKeyValueStore();
+    this.store = cloudFactory.getJobStore();
   }
 
    /**
@@ -81,7 +81,7 @@ class CryptoHelper {
   }
 
   private SecretKey getSessionKey(String jobId) {
-    PortabilityJob job = store.get(jobId);
+    LegacyPortabilityJob job = store.find(jobId);
     Preconditions.checkState(job != null && job.jobState() == JobState.PENDING_AUTH_DATA);
     String encodedSessionKey = job.sessionKey();
     Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey),

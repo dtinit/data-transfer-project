@@ -1,55 +1,56 @@
 package org.dataportabilityproject.spi.cloud.storage;
 
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.types.transfer.models.DataModel;
-
-import java.io.InputStream;
+import java.io.IOException;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 
 /**
- * Implementations handle storage and retrieval of transfer job data.
+ * Implementations handle storage and retrieval of {@link LegacyPortabilityJob}s.
  *
  * This class is intended to be implemented by extensions that support storage in various back-end services.
  */
 public interface JobStore {
 
     /**
-     * Creates a new job.
-     */
-    void create(PortabilityJob job);
-
-    /**
-     * Updates and existing job.
+     * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in the store.
      *
-     * REVIEW: Maybe there should just be state transition-specific methods, e.g cancel(), complete(), etc.?
-     */
-    void update(PortabilityJob job);
-
-    /**
-     * Removes a job.
+     * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
      *
-     * REVIEW: Maybe there should just be state transition-specific methods, e.g cancel(), complete(), etc.?
+     * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
+     * problem inserting the job.
      */
-    void remove(PortabilityJob job);
+    void create(LegacyPortabilityJob job) throws IOException;
 
     /**
-     * Returns a model instance for the id of the given type or null if not found.
+     * Atomically updates the entry for {@code job}'s ID to {@code job}, and verifies that it
+     * previously existed in {@code previousState}.
+     *
+     * @throws IOException if the job was not in the expected state in the store, or there was
+     * another problem updating it.
      */
-    <T extends DataModel> T getData(Class<T> type, String id);
+    void update(LegacyPortabilityJob job, JobState previousState) throws IOException;
+    
+    /**
+     * Removes the {@link LegacyPortabilityJob} in the store keyed by {@code jobId}.
+     *
+     * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+     */
+    void remove(String jobId) throws IOException;
 
     /**
-     * Stores the given model instance associated with a job.
+     * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, or null if none found.
      */
-    <T extends DataModel> void store(String jobId, T model);
+    LegacyPortabilityJob find(String jobId);
 
     /**
-     * Stores a stream associated with a job using the given key.
+     * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, and verify it is in
+     * state {@code jobState}.
      */
-    void store(String key, String jobId, InputStream stream);
+    LegacyPortabilityJob find(String jobId, JobState jobState);
 
     /**
-     * Returns stream data for the given key.
+     * Gets the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in the store, or
+     * null if none found.
      */
-    InputStream getStream(String key);
-
-
+    String findFirst(JobState jobState);
 }

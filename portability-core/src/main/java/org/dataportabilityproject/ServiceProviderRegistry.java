@@ -32,18 +32,15 @@ import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.ServiceProvider;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * A registry of all the supported {@link org.dataportabilityproject.shared.ServiceProvider}
  */
 public class ServiceProviderRegistry {
-    private final Logger logger = LoggerFactory.getLogger(ServiceProviderRegistry.class);
     private final ImmutableMap<String, ServiceProvider> serviceProviders;
     private final CloudFactory cloudFactory;
     private final ImmutableSet<PortableDataType> supportedTypes;

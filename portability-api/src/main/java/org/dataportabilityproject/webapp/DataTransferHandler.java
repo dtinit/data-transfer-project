@@ -29,16 +29,16 @@ import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
@@ -55,7 +55,7 @@ final class DataTransferHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final PersistentKeyValueStore store;
+  private final JobStore store;
   private final PortabilityJobFactory jobFactory;
   private final CommonSettings commonSettings;
   private final ObjectMapper objectMapper;
@@ -67,7 +67,7 @@ final class DataTransferHandler implements HttpHandler {
       PortabilityJobFactory jobFactory,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.store = cloudFactory.getPersistentKeyValueStore();
+    this.store = cloudFactory.getJobStore();
     this.jobFactory = jobFactory;
     this.commonSettings = commonSettings;
     this.objectMapper = new ObjectMapper();
@@ -118,7 +118,7 @@ final class DataTransferHandler implements HttpHandler {
           "Missing valid importService: %s", importService);
 
       // Create a new job and persist
-      PortabilityJob newJob = createJob(dataType, exportService, importService);
+      LegacyPortabilityJob newJob = createJob(dataType, exportService, importService);
 
       // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
@@ -127,8 +127,8 @@ final class DataTransferHandler implements HttpHandler {
 
       // Lookup job, even if just recently created
       String jobId = newJob.id();
-      PortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Validate job before going further
@@ -153,7 +153,7 @@ final class DataTransferHandler implements HttpHandler {
             ServiceMode.EXPORT);
         JobState expectedPreviousState =
             commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
-        store.atomicUpdate(job.id(), expectedPreviousState, job);
+        store.update(job, expectedPreviousState);
       }
 
       // Send the authUrl for the client to redirect to export service authorization
@@ -171,9 +171,9 @@ final class DataTransferHandler implements HttpHandler {
   /**
    * Create the initial job in initial state and persist in storage.
    */
-  private PortabilityJob createJob(PortableDataType dataType, String exportService,
+  private LegacyPortabilityJob createJob(PortableDataType dataType, String exportService,
       String importService) throws IOException {
-    PortabilityJob job = jobFactory.create(dataType, exportService, importService);
+    LegacyPortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
@@ -182,7 +182,7 @@ final class DataTransferHandler implements HttpHandler {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
       job = job.toBuilder().setJobState(JobState.PENDING_AUTH_DATA).build();
     }
-    store.put(job.id(), job);
+    store.create(job);
     return job;
   }
 }

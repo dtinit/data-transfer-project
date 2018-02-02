@@ -31,11 +31,11 @@ import java.io.IOException;
 import java.util.List;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.AuthorizationCodeInstalledAppSecureOverride;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * Implements authorization flow for Microsoft

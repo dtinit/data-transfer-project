@@ -33,9 +33,9 @@ import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.AuthEle
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.Frob;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.SecretAuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * Generates a token using the flow described: https://www.rememberthemilk.com/services/api/authentication.rtm

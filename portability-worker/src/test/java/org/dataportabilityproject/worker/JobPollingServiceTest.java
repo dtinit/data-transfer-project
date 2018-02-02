@@ -18,18 +18,14 @@ package org.dataportabilityproject.worker;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.when;
 
-import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
+import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -37,19 +33,17 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
   private static final String TEST_ID = "a_test_id";
-  private static final CommonSettings COMMON_SETTINGS = new CommonSettings(
-     Environment.LOCAL, SupportedCloud.LOCAL, new String[]{}, true);
 
   @Mock private CloudFactory cloudFactory;
 
   private JobPollingService jobPollingService;
   private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
-  PersistentKeyValueStore store = new InMemoryPersistentKeyValueStore(COMMON_SETTINGS);
+  JobStore store = new InMemoryKeyValueStore(true);
 
   @Before
   public void setUp()  throws Exception {
-    when(cloudFactory.getPersistentKeyValueStore()).thenReturn(store);
+    when(cloudFactory.getJobStore()).thenReturn(store);
     jobPollingService = new JobPollingService(cloudFactory, metadata);
   }
 
@@ -64,11 +58,11 @@ public class JobPollingServiceTest {
     // Run once with no data in the database
     jobPollingService.runOneIteration();
     assertThat(metadata.isInitialized()).isFalse();
-    PortabilityJob job = store.get(TEST_ID);
+    LegacyPortabilityJob job = store.find(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
     // API inserts an job in state 'pending auth data'
-    store.put(TEST_ID, PortabilityJob.builder()
+    store.create(LegacyPortabilityJob.builder()
         .setId(TEST_ID)
         .setDataType(PortableDataType.PHOTOS.name())
         .setExportService("DummyExportService")
@@ -76,17 +70,17 @@ public class JobPollingServiceTest {
         .setJobState(JobState.PENDING_AUTH_DATA).build());
 
     // Verify initial state 'pending auth data'
-    job = store.get(TEST_ID);
+    job = store.find(TEST_ID);
     assertThat(job.jobState()).isEqualTo(JobState.PENDING_AUTH_DATA);
     assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
     assertThat(job.importAuthData()).isNull();// no auth data should exist yet
 
     // API atomically updates job to from 'pending auth data' to 'pending worker assignment'
     job = job.toBuilder().setJobState(JobState.PENDING_WORKER_ASSIGNMENT).build();
-    store.atomicUpdate(TEST_ID, JobState.PENDING_AUTH_DATA, job);
+    store.update(job, JobState.PENDING_AUTH_DATA);
 
     // Verify 'pending worker assignment' state
-    job = store.get(TEST_ID);
+    job = store.find(TEST_ID);
     assertThat(job.jobState()).isEqualTo(JobState.PENDING_WORKER_ASSIGNMENT);
     assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
     assertThat(job.importAuthData()).isNull();// no auth data should exist yet
@@ -97,7 +91,7 @@ public class JobPollingServiceTest {
     assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
 
     // Verify assigned without auth data state
-    job = store.get(TEST_ID);
+    job = store.find(TEST_ID);
     assertThat(job.jobState()).isEqualTo(JobState.ASSIGNED_WITHOUT_AUTH_DATA);
     assertThat(job.workerInstancePublicKey()).isNotEmpty();
 
@@ -107,16 +101,16 @@ public class JobPollingServiceTest {
         .setEncryptedImportAuthData("dummy import data")
         .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
         .build();
-    store.atomicUpdate(TEST_ID, JobState.ASSIGNED_WITHOUT_AUTH_DATA, job);
+    store.update(job, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
 
     // Run another iteration of the polling service
     // Worker should pick up encrypted data and update job
     jobPollingService.runOneIteration();
-    job = store.get(TEST_ID);
+    job = store.find(TEST_ID);
     assertThat(job.jobState()).isEqualTo(JobState.ASSIGNED_WITH_AUTH_DATA);
     assertThat(job.encryptedExportAuthData()).isNotEmpty();
     assertThat(job.encryptedImportAuthData()).isNotEmpty();
 
-    store.delete(TEST_ID);
+    store.remove(TEST_ID);
   }
 }

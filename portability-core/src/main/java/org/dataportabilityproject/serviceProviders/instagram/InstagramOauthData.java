@@ -17,7 +17,7 @@ package org.dataportabilityproject.serviceProviders.instagram;
 
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 @AutoValue
 abstract class InstagramOauthData extends AuthData {

@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.serviceProviders.google;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects.JSON_FACTORY;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
@@ -32,10 +31,10 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
-import org.dataportabilityproject.shared.auth.AuthData;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * A generator of Google {@link Credential}
@@ -97,7 +96,7 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
 
 
   Credential getCredential(AuthData authData) {
-    checkArgument(authData instanceof GoogleTokenData,
+    Preconditions.checkArgument(authData instanceof GoogleTokenData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     GoogleTokenData tokenData = (GoogleTokenData) authData;
