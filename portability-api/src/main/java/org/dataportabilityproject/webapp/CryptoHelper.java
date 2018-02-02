@@ -24,9 +24,11 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import java.net.HttpCookie;
 import javax.crypto.SecretKey;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.SecretKeyGenerator;
 import org.dataportabilityproject.shared.ServiceMode;
@@ -40,11 +42,12 @@ import org.slf4j.LoggerFactory;
 class CryptoHelper {
   private static final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
   private static final Gson GSON = new Gson();
-  private final JobDao jobDao;
+
+  private final PersistentKeyValueStore store;
 
   @Inject
-  CryptoHelper(JobDao jobDao) {
-    this.jobDao = jobDao;
+  CryptoHelper(CloudFactory cloudFactory) {
+    this.store = cloudFactory.getPersistentKeyValueStore();
   }
 
    /**
@@ -68,7 +71,8 @@ class CryptoHelper {
       AuthData authData) {
     SecretKey sessionKey = getSessionKey(jobId);
     String encrypted = encrypt(sessionKey, authData);
-    String cookieKey = (serviceMode == ServiceMode.EXPORT) ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
+    String cookieKey = (serviceMode == ServiceMode.EXPORT)
+        ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
         : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
     HttpCookie cookie = new HttpCookie(cookieKey, encrypted);
     logger.debug("Set new cookie with key: {}, length: {} for job: {}",
@@ -77,10 +81,11 @@ class CryptoHelper {
   }
 
   private SecretKey getSessionKey(String jobId) {
-    PortabilityJob job = jobDao.lookupJobPendingAuthData(jobId);
+    PortabilityJob job = store.get(jobId);
+    Preconditions.checkState(job != null && job.jobState() == JobState.PENDING_AUTH_DATA);
     String encodedSessionKey = job.sessionKey();
-    Preconditions
-        .checkState(!Strings.isNullOrEmpty(encodedSessionKey), "Session key should not be null");
+    Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey),
+        "Session key should not be null");
     return SecretKeyGenerator.parse(encodedSessionKey);
   }
 }

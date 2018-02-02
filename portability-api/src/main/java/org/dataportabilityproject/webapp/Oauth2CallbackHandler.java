@@ -29,9 +29,11 @@ import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
+import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
@@ -53,17 +55,18 @@ final class Oauth2CallbackHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobDao jobDao;
+  private final PersistentKeyValueStore store;
   private final CryptoHelper cryptoHelper;
   private final CommonSettings commonSettings;
 
   @Inject
-  Oauth2CallbackHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobDao jobDao,
+  Oauth2CallbackHandler(
+      ServiceProviderRegistry serviceProviderRegistry,
+      CloudFactory cloudFactory,
       CryptoHelper cryptoHelper,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobDao = jobDao;
+    this.store = cloudFactory.getPersistentKeyValueStore();
     this.cryptoHelper = cryptoHelper;
     this.commonSettings = commonSettings;
   }
@@ -117,12 +120,10 @@ final class Oauth2CallbackHandler implements HttpHandler {
           .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
               jobId, state);
 
-      PortabilityJob job;
-      if (commonSettings.getEncryptedFlow()) {
-        job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
-      } else {
-        job = PortabilityApiUtils.lookupJob(jobId, jobDao);
-      }
+
+      PortabilityJob job = commonSettings.getEncryptedFlow()
+          ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+      Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
       ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
@@ -153,7 +154,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
         PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        jobDao.updateJob(updatedJob);
+        store.atomicUpdate(job.id(), null, updatedJob);
       } else {
         // Set new cookie
         cryptoHelper

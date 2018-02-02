@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
-import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.TokenManager;
@@ -140,23 +139,6 @@ public class PortabilityApiUtils {
     return params;
   }
 
-  /**
-   * Looks up job in pending auth data state and verifies it exists.
-   */
-  public static PortabilityJob lookupJobPendingAuthData(String id, JobDao jobDao) {
-    PortabilityJob job = jobDao.lookupJobPendingAuthData(id);
-    Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
-    return job;
-  }
-
-  /**
-   * Looks up job and checks that it exists in the provided jobDao.
-   */
-  public static PortabilityJob lookupJob(String id, JobDao jobDao) {
-    PortabilityJob job = jobDao.findExistingJob(id);
-    Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
-    return job;
-  }
 
   /**
    * Hack! For now, if we don't have export auth data, assume it's for export.
