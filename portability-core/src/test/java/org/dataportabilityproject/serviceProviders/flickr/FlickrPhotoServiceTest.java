@@ -154,7 +154,7 @@ public class FlickrPhotoServiceTest {
     // TODO(olsona)
   }
 
-  private Photo initializePhoto(String title, String url, String description) {
+  private static Photo initializePhoto(String title, String url, String description) {
     Photo photo = new Photo();
     photo.setTitle(title);
     photo.setDescription(description);
@@ -166,7 +166,7 @@ public class FlickrPhotoServiceTest {
     return photo;
   }
 
-  private Photoset initializePhotoset(String id, String title, String description) {
+  private static Photoset initializePhotoset(String id, String title, String description) {
     Photoset photoset = new Photoset();
     photoset.setId(id);
     photoset.setTitle(title);
