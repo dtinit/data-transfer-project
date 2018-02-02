@@ -26,38 +26,38 @@ import org.dataportabilityproject.job.PortabilityJob.JobState;
 public interface PersistentKeyValueStore {
 
   /**
-   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
    *
-   * <p>To update an existing {@link PortabilityJob} instead, use {@link #atomicUpdate}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    * problem inserting the job.
    */
-  void put(String jobId, PortabilityJob job) throws IOException;
+  void create(PortabilityJob job) throws IOException;
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store, or null if none found.
+   * Finds the {@link PortabilityJob} keyed by {@code jobId} in the store, or null if none found.
    */
-  PortabilityJob get(String jobId);
+  PortabilityJob find(String jobId);
 
   /**
-   * Gets the {@link PortabilityJob} keyed by {@code jobId} in the store, and verify it is in
+   * Finds the {@link PortabilityJob} keyed by {@code jobId} in the store, and verify it is in
    * state {@code jobState}.
    */
-  PortabilityJob get(String jobId, JobState jobState);
+  PortabilityJob find(String jobId, JobState jobState);
 
   /**
-   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store, or nul
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in the store, or nul
    * if none found.
    */
-  String getFirst(JobState jobState);
+  String findFirst(JobState jobState);
 
   /**
-   * Deletes the {@link PortabilityJob} keyed by {@code jobId} in the store.
+   * Removes the {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
-  void delete(String jobId) throws IOException;
+  void remove(String jobId) throws IOException;
 
   /**
    * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code portabilityJob},
@@ -66,5 +66,5 @@ public interface PersistentKeyValueStore {
    * @throws IOException if the job was not in the expected state in the store, or there was another
    * problem updating it.
    */
-  void atomicUpdate(String jobId, JobState previousState, PortabilityJob job) throws IOException;
+  void update(PortabilityJob job, JobState previousState) throws IOException;
 }

@@ -61,7 +61,7 @@ final class WorkerImpl {
     // Start the processing
     String jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
-    PortabilityJob job = store.get(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
+    PortabilityJob job = store.find(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class

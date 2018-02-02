@@ -67,5 +67,7 @@ dependencies {
     testCompile("com.jayway.jsonpath:json-path:${jaywayVersion}")
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")
+    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.hamcrest:hamcrest-core:${hamcrestVersion}")
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }

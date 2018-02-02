@@ -128,7 +128,7 @@ final class DataTransferHandler implements HttpHandler {
       // Lookup job, even if just recently created
       String jobId = newJob.id();
       PortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Validate job before going further
@@ -153,7 +153,7 @@ final class DataTransferHandler implements HttpHandler {
             ServiceMode.EXPORT);
         JobState expectedPreviousState =
             commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
-        store.atomicUpdate(job.id(), expectedPreviousState, job);
+        store.update(job, expectedPreviousState);
       }
 
       // Send the authUrl for the client to redirect to export service authorization
@@ -182,7 +182,7 @@ final class DataTransferHandler implements HttpHandler {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
       job = job.toBuilder().setJobState(JobState.PENDING_AUTH_DATA).build();
     }
-    store.put(job.id(), job);
+    store.create(job);
     return job;
   }
 }
