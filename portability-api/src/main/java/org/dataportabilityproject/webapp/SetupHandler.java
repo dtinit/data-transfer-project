@@ -91,7 +91,7 @@ abstract class SetupHandler implements HttpHandler {
       // Valid job must be present
       String jobId = JobUtils.decodeId(encodedIdCookie);
       PortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.get(jobId, JobState.PENDING_AUTH_DATA) : store.get(jobId);
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // This page is only valid after the oauth of the export service - export data should exist for
@@ -155,7 +155,7 @@ abstract class SetupHandler implements HttpHandler {
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
       JobState expectedPreviousState =
           commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
-      store.atomicUpdate(job.id(), expectedPreviousState, job);
+      store.update(job, expectedPreviousState);
     }
     return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
         Status.INPROCESS, authFlowInitiator.authUrl()); // Redirect to auth page of import service

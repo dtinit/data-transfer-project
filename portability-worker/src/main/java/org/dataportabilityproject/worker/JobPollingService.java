@@ -72,7 +72,7 @@ class JobPollingService extends AbstractScheduledService {
    * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() throws IOException {
-    String jobId = store.getFirst(JobState.PENDING_WORKER_ASSIGNMENT);
+    String jobId = store.findFirst(JobState.PENDING_WORKER_ASSIGNMENT);
     logger.debug("Polling for a job PENDING_WORKER_ASSIGNMENT");
     if (jobId == null) {
       return;
@@ -102,8 +102,8 @@ class JobPollingService extends AbstractScheduledService {
   private void updateJobStateToAssignedWithoutAuthData(String jobId, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
     // Lookup the job so we can append to its existing properties.
-    // atomicUpdate will verify the job is still in the expected state when performing the update.
-    PortabilityJob existingJob = store.get(jobId);
+    // update will verify the job is still in the expected state when performing the update.
+    PortabilityJob existingJob = store.find(jobId);
     // Verify no worker key
     Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
     Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
@@ -116,7 +116,7 @@ class JobPollingService extends AbstractScheduledService {
         .setWorkerInstancePrivateKey(encodedPrivateKey)
         .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
         .build();
-    store.atomicUpdate(jobId, JobState.PENDING_WORKER_ASSIGNMENT, updatedJob);
+    store.update(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT);
   }
 
   /**
@@ -124,7 +124,7 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollUntilJobIsReady() {
     String jobId = jobMetadata.getJobId();
-    PortabilityJob job = store.get(jobId);
+    PortabilityJob job = store.find(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
     } else if (job.jobState() == JobState.ASSIGNED_WITH_AUTH_DATA) {
