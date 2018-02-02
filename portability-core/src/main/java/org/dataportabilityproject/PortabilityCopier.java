@@ -25,7 +25,7 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

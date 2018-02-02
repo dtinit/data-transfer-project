@@ -21,13 +21,13 @@ import java.io.IOException;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ final class WorkerImpl {
 
   private final CloudFactory cloudFactory;
   private final JobPollingService jobPollingService;
-  private final PersistentKeyValueStore store;
+  private final JobStore store;
   private final ServiceProviderRegistry registry;
   private final WorkerJobMetadata workerJobMetadata;
 
@@ -49,7 +49,7 @@ final class WorkerImpl {
       WorkerJobMetadata workerJobMetadata) {
     this.cloudFactory = cloudFactory;
     this.jobPollingService = jobPollingService;
-    this.store = cloudFactory.getPersistentKeyValueStore();
+    this.store = cloudFactory.getJobStore();
     this.registry = registry;
     this.workerJobMetadata = workerJobMetadata;
   }
@@ -61,7 +61,7 @@ final class WorkerImpl {
     // Start the processing
     String jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
-    PortabilityJob job = store.find(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
+    OldPortabilityJob job = store.find(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class
@@ -76,7 +76,7 @@ final class WorkerImpl {
     jobPollingService.awaitTerminated();
   }
 
-  private void processJob(PortabilityJob job) {
+  private void processJob(OldPortabilityJob job) {
 
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {

@@ -16,6 +16,7 @@
 package org.dataportabilityproject.shared.auth;
 
 import java.io.IOException;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /** Methods to generate AuthData for online */
 public interface OnlineAuthDataGenerator {

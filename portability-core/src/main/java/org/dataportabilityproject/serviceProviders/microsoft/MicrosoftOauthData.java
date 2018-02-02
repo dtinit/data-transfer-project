@@ -16,7 +16,7 @@
 package org.dataportabilityproject.serviceProviders.microsoft;
 
 import com.google.auto.value.AutoValue;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 @AutoValue
 abstract class MicrosoftOauthData extends AuthData {

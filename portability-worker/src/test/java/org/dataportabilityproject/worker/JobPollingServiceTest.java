@@ -18,18 +18,14 @@ package org.dataportabilityproject.worker;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.when;
 
-import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
-import org.dataportabilityproject.cloud.local.InMemoryPersistentKeyValueStore;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.shared.Config.Environment;
+import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -37,19 +33,17 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
   private static final String TEST_ID = "a_test_id";
-  private static final CommonSettings COMMON_SETTINGS = new CommonSettings(
-     Environment.LOCAL, SupportedCloud.LOCAL, new String[]{}, true);
 
   @Mock private CloudFactory cloudFactory;
 
   private JobPollingService jobPollingService;
   private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
-  PersistentKeyValueStore store = new InMemoryPersistentKeyValueStore(COMMON_SETTINGS);
+  JobStore store = new InMemoryKeyValueStore(true);
 
   @Before
   public void setUp()  throws Exception {
-    when(cloudFactory.getPersistentKeyValueStore()).thenReturn(store);
+    when(cloudFactory.getJobStore()).thenReturn(store);
     jobPollingService = new JobPollingService(cloudFactory, metadata);
   }
 
@@ -64,11 +58,11 @@ public class JobPollingServiceTest {
     // Run once with no data in the database
     jobPollingService.runOneIteration();
     assertThat(metadata.isInitialized()).isFalse();
-    PortabilityJob job = store.find(TEST_ID);
+    OldPortabilityJob job = store.find(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
     // API inserts an job in state 'pending auth data'
-    store.create(PortabilityJob.builder()
+    store.create(OldPortabilityJob.builder()
         .setId(TEST_ID)
         .setDataType(PortableDataType.PHOTOS.name())
         .setExportService("DummyExportService")

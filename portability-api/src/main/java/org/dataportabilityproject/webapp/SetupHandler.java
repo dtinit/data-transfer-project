@@ -31,15 +31,15 @@ import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
-import org.dataportabilityproject.job.PortabilityJob.JobState;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.OldPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
@@ -55,7 +55,7 @@ abstract class SetupHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
   private static final ObjectMapper objectMapper = new ObjectMapper();
-  private final PersistentKeyValueStore store;
+  private final JobStore store;
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final CommonSettings commonSettings;
   private final Mode mode;
@@ -68,7 +68,7 @@ abstract class SetupHandler implements HttpHandler {
       CommonSettings commonSettings,
       Mode mode,
       String handlerUrlPath, TokenManager tokenManager) {
-    this.store = cloudFactory.getPersistentKeyValueStore();
+    this.store = cloudFactory.getJobStore();
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.commonSettings = commonSettings;
     this.mode = mode;
@@ -90,7 +90,7 @@ abstract class SetupHandler implements HttpHandler {
 
       // Valid job must be present
       String jobId = JobUtils.decodeId(encodedIdCookie);
-      PortabilityJob job = commonSettings.getEncryptedFlow()
+      OldPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -130,7 +130,7 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(Headers headers, PortabilityJob job)
+  private DataTransferResponse handleImportSetup(Headers headers, OldPortabilityJob job)
       throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
@@ -161,7 +161,7 @@ abstract class SetupHandler implements HttpHandler {
         Status.INPROCESS, authFlowInitiator.authUrl()); // Redirect to auth page of import service
   }
 
-  private DataTransferResponse handleCopySetup(Headers requestHeaders, PortabilityJob job) {
+  private DataTransferResponse handleCopySetup(Headers requestHeaders, OldPortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils
