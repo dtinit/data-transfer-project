@@ -31,6 +31,7 @@ import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.BufferedInputStream;
@@ -55,10 +56,14 @@ import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FlickrPhotoService implements
     Exporter<PhotosModelWrapper>,
     Importer<PhotosModelWrapper> {
+
+  private final Logger logger = LoggerFactory.getLogger(FlickrPhotoService.class);
 
   private static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
   private static final int PHOTO_SETS_PER_PAGE = 500;
@@ -76,22 +81,35 @@ public class FlickrPhotoService implements
 
   FlickrPhotoService(AppCredentials appCredentials, Auth auth,
       JobDataCache jobDataCache) throws IOException {
-    this.flickr = new Flickr(appCredentials.key(), appCredentials.secret(), new REST());
-    this.photosetsInterface = flickr.getPhotosetsInterface();
-    this.photosInterface = flickr.getPhotosInterface();
-    this.uploader = flickr.getUploader();
-    this.jobDataCache = jobDataCache;
-    this.auth = auth;
+    this(new Flickr(appCredentials.key(), appCredentials.secret(), new REST()), auth, jobDataCache);
     RequestContext.getRequestContext().setAuth(auth);
   }
 
-  private static int getPage(Optional<PaginationInformation> paginationInformation) {
+  private FlickrPhotoService(Flickr flickr, Auth auth, JobDataCache jobDataCache) {
+    this(flickr, flickr.getPhotosetsInterface(), flickr.getPhotosInterface(), flickr.getUploader(),
+        auth, jobDataCache);
+  }
+
+  @VisibleForTesting
+  FlickrPhotoService(Flickr flickr, PhotosetsInterface photosetsInterface,
+      PhotosInterface photosInterface, Uploader uploader, Auth auth, JobDataCache jobDataCache) {
+    this.flickr = flickr;
+    this.photosetsInterface = photosetsInterface;
+    this.photosInterface = photosInterface;
+    this.uploader = uploader;
+    this.jobDataCache = jobDataCache;
+    this.auth = auth;
+  }
+
+  @VisibleForTesting
+  static int getPage(Optional<PaginationInformation> paginationInformation) {
     return paginationInformation.map(
         paginationInformation1 -> ((FlickrPaginationInformation) paginationInformation1)
             .getPage()).orElse(1);
   }
 
-  private static PhotoModel toCommonPhoto(Photo p, String albumId) {
+  @VisibleForTesting
+  static PhotoModel toCommonPhoto(Photo p, String albumId) {
     checkState(!Strings.isNullOrEmpty(p.getOriginalSize().getSource()),
         "photo %s had a null authUrl", p.getId());
     return new PhotoModel(
@@ -102,7 +120,8 @@ public class FlickrPhotoService implements
         albumId);
   }
 
-  private static String toMimeType(String flickrFormat) {
+  @VisibleForTesting
+  static String toMimeType(String flickrFormat) {
     switch (flickrFormat) {
       case "jpg":
       case "jpeg":
@@ -186,6 +205,8 @@ public class FlickrPhotoService implements
       if (hasMore) {
         newPage = new FlickrPaginationInformation(page + 1);
       }
+
+      logger.debug("Albums: {}", results.build().get(0));
 
       return new PhotosModelWrapper(
           results.build(),
