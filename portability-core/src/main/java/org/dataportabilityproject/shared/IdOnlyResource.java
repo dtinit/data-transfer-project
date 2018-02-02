@@ -38,4 +38,16 @@ public class IdOnlyResource implements Resource {
         .add("id", id)
         .toString();
   }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object == null) {
+      return false;
+    }
+    if (!IdOnlyResource.class.isAssignableFrom(object.getClass())) {
+      return false;
+    }
+    IdOnlyResource resource = (IdOnlyResource) object;
+    return this.id.equals(resource.getId());
+  }
 }

@@ -2,8 +2,10 @@ package org.dataportabilityproject.serviceProviders.flickr;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
@@ -19,17 +21,24 @@ import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.Uploader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
+import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
+import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
+import org.dataportabilityproject.shared.IdOnlyResource;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FlickrPhotoServiceTest {
+
+  private final Logger logger = LoggerFactory.getLogger(FlickrPhotoServiceTest.class);
 
   static final String PHOTO_TITLE = "Title";
   static final String FETCHABLE_URL = "fetchable_url";
@@ -44,15 +53,15 @@ public class FlickrPhotoServiceTest {
       MEDIA_TYPE, ALBUM_ID);
   static final PhotoAlbum PHOTO_ALBUM = new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
 
-  Flickr flickr = Mockito.mock(Flickr.class);
-  PhotosetsInterface photosetsInterface = Mockito.mock(PhotosetsInterface.class);
-  PhotosInterface photosInterface = Mockito.mock(PhotosInterface.class);
-  Uploader uploader = Mockito.mock(Uploader.class);
-  JobDataCache jobDataCache = Mockito.mock(JobDataCache.class);
-  User user = Mockito.mock(User.class);
+  Flickr flickr = mock(Flickr.class);
+  PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
+  PhotosInterface photosInterface = mock(PhotosInterface.class);
+  Uploader uploader = mock(Uploader.class);
+  JobDataCache jobDataCache = mock(JobDataCache.class);
+  User user = mock(User.class);
   Auth auth = new Auth(Permission.WRITE, user);
   FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
-      photosInterface, uploader, jobDataCache, auth);
+      photosInterface, uploader, auth, jobDataCache);
 
   @Test
   public void getPage() {
@@ -73,17 +82,10 @@ public class FlickrPhotoServiceTest {
 
   @Test
   public void toCommonPhoto() {
-    Photo photo = new Photo();
-    photo.setTitle(PHOTO_TITLE);
-    Size size = new Size();
-    size.setSource(FETCHABLE_URL);
-    size.setLabel(Size.ORIGINAL);
-    List<Size> sizeList = Arrays.asList(size);
-    photo.setSizes(sizeList);
-    photo.setDescription(DESCRIPTION);
-    photo.setOriginalFormat(MEDIA_TYPE);
+    Photo photo = initializePhoto(PHOTO_TITLE, FETCHABLE_URL, DESCRIPTION);
 
     PhotoModel photoModel = FlickrPhotoService.toCommonPhoto(photo, ALBUM_ID);
+
     assertThat(photoModel.getAlbumId()).isEqualTo(ALBUM_ID);
     assertThat(photoModel.getFetchableUrl()).isEqualTo(FETCHABLE_URL);
     assertThat(photoModel.getTitle()).isEqualTo(PHOTO_TITLE);
@@ -92,35 +94,83 @@ public class FlickrPhotoServiceTest {
   }
 
   @Test
-  public void exportAlbumReturnsNextPage() throws IOException, FlickrException {
+  public void exportAlbumInitial() throws IOException, FlickrException {
+    // Set up initial export information, such as what FlickrPhotoService would see when a transfer
+    // is initiated
     ExportInformation emptyExportInfo =
         new ExportInformation(Optional.empty(), Optional.empty());
 
     // Set up auth
-    Mockito.when(user.getId()).thenReturn("id");
+    when(user.getId()).thenReturn("id");
 
-    // Set up photoset information
+    // Set up photoset
+    String photosetId = "photosetId";
+    String photosetTitle = "title";
+    String photosetDescription = "description";
+    Photoset photoset = initializePhotoset(photosetId, photosetTitle, photosetDescription);
+
+    // Set up photosets list (aka album view)
     int page = 1;
-    Photoset photoset = new Photoset();
-    photoset.setId("id");
-    photoset.setTitle("title");
-    photoset.setDescription("description");
     Photosets photosetList = new Photosets();
     photosetList.setPage(page);
     photosetList.setPages(page + 1);
     photosetList.setPhotosets(Arrays.asList(photoset));
-    Mockito.when(photosetsInterface.getList(anyString(), anyInt(), anyInt(), anyString()))
-        .thenReturn(new Photosets());
+    when(photosetsInterface.getList(anyString(), anyInt(), anyInt(), anyString()))
+        .thenReturn(photosetList);
 
+    // Run test
     PhotosModelWrapper result = photoService
         .export(emptyExportInfo);
 
-    assertThat(result.getContinuationInformation().getPaginationInformation())
+    // Make sure album/photo information is correct
+    assertThat(result.getPhotos()).isEmpty();
+    Collection<PhotoAlbum> albums = result.getAlbums();
+    assertThat(albums.size()).isEqualTo(1);
+    assertThat(albums).containsExactly(new PhotoAlbum(photosetId, photosetTitle, photosetDescription));
+
+    // Make sure continuation information is correct
+    ContinuationInformation continuationInformation = result.getContinuationInformation();
+
+    assertThat((FlickrPaginationInformation) continuationInformation.getPaginationInformation())
         .isEqualTo(new FlickrPaginationInformation(page + 1));
+
+    Collection<? extends Resource> subResources = continuationInformation.getSubResources();
+    assertThat(subResources.size()).isEqualTo(1);
+    assertThat(subResources).containsExactly(new IdOnlyResource(photosetId));
   }
 
   @Test
-  public void exportAlbumReturnsPhotoset() {
+  public void exportNextAlbum() {
+    // TODO(olsona)
+  }
 
+  @Test
+  public void exportPhotosFromAlbum() {
+    // TODO(olsona)
+  }
+
+  @Test
+  public void exportNextPhotosFromAlbum() {
+    // TODO(olsona)
+  }
+
+  private Photo initializePhoto(String title, String url, String description) {
+    Photo photo = new Photo();
+    photo.setTitle(title);
+    photo.setDescription(description);
+    photo.setOriginalFormat(MEDIA_TYPE);
+    Size size = new Size();
+    size.setSource(url);
+    size.setLabel(Size.ORIGINAL);
+    photo.setSizes(Arrays.asList(size));
+    return photo;
+  }
+
+  private Photoset initializePhotoset(String id, String title, String description) {
+    Photoset photoset = new Photoset();
+    photoset.setId(id);
+    photoset.setTitle(title);
+    photoset.setDescription(description);
+    return photoset;
   }
 }
