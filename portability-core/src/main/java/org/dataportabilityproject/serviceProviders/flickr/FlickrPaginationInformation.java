@@ -36,4 +36,16 @@ final class FlickrPaginationInformation implements PaginationInformation {
         .add("page", page)
         .toString();
   }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object == null) {
+      return false;
+    }
+    if (!FlickrPaginationInformation.class.isAssignableFrom(object.getClass())) {
+      return false;
+    }
+    FlickrPaginationInformation paginationInformation = (FlickrPaginationInformation) object;
+    return this.page == paginationInformation.getPage();
+  }
 }
