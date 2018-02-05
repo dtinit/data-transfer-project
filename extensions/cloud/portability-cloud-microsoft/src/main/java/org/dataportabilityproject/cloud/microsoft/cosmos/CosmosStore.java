@@ -112,7 +112,7 @@ public class CosmosStore implements JobStore {
     }
 
     @Override
-    public void update(LegacyPortabilityJob job) throws IOException {
+    public void update(LegacyPortabilityJob job, LegacyPortabilityJob.JobState previousState) throws IOException {
         throw new UnsupportedOperationException();
     }
 

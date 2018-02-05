@@ -44,7 +44,7 @@ public interface JobStore {
      * @throws IOException if the job was not in the expected state in the store, or there was
      * another problem updating it.
      */
-    void update(LegacyPortabilityJob job) throws IOException;
+    void update(LegacyPortabilityJob job, JobState previousState) throws IOException;
 
     /**
      * Atomically updates the entry for {@code job}'s ID to {@code job}.
@@ -82,22 +82,31 @@ public interface JobStore {
      */
     String findFirst(JobState jobState);
 
-    <T extends DataModel> void create(String jobId, T model);
+    default <T extends DataModel> void create(String jobId, T model) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Updates the given model instance associated with a job.
      */
-    <T extends DataModel> void update(String jobId, T model);
+    default <T extends DataModel> void update(String jobId, T model) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Returns a model instance for the id of the given type or null if not found.
      */
-    <T extends DataModel> T findData(Class<T> type, String id);
+    default <T extends DataModel> T findData(Class<T> type, String id) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
-     * Removes ther data model instance.
+     * Removes the data model instance.
      */
-    void removeData(String id);
+    default void removeData(String id) {
+        throw new UnsupportedOperationException();
+
+    }
 
     /**
      * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, and verify it is in
@@ -105,9 +114,13 @@ public interface JobStore {
      */
     LegacyPortabilityJob find(String jobId, JobState jobState);
 
-    void create(String jobId, String key, InputStream stream);
+    default void create(String jobId, String key, InputStream stream) {
+        throw new UnsupportedOperationException();
+    }
 
-    InputStream getStream(String jobId, String key);
+    default InputStream getStream(String jobId, String key) {
+        throw new UnsupportedOperationException();
+    }
 
 
 }

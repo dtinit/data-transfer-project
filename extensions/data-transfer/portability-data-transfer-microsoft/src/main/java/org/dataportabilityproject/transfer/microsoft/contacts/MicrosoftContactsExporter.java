@@ -10,6 +10,7 @@ import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
+import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.transfer.microsoft.types.GraphPagination;
@@ -44,7 +45,7 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
     }
 
     @Override
-    public ExportResult<ContactsModelWrapper> export(TokenAuthData authData, ContinuationData continuationData) {
+    public ExportResult<ContactsModelWrapper> export(TokenAuthData authData, ExportInformation continuationData) {
         GraphPagination graphPagination = (GraphPagination) continuationData.getPaginationData();
         return doExport(authData, graphPagination.getNextLink());
     }
