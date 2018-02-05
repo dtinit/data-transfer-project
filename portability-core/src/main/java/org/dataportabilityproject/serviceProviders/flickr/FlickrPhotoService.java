@@ -65,7 +65,8 @@ public class FlickrPhotoService implements
 
   private final Logger logger = LoggerFactory.getLogger(FlickrPhotoService.class);
 
-  private static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
+  @VisibleForTesting
+  static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
   private static final int PHOTO_SETS_PER_PAGE = 500;
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS =
@@ -139,7 +140,9 @@ public class FlickrPhotoService implements
         // Store the data in the cache because Flickr only allows you
         // to create an album with a photo in it so we need to wait for
         // the first photo to create the album.
-        jobDataCache.store(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
+        String key = CACHE_ALBUM_METADATA_PREFIX + album.getId();
+        jobDataCache.store(key, album);
+        logger.debug("Storing album in JobDataCache: {}", key);
       }
       for (PhotoModel photo : modelWrapper.getPhotos()) {
         String photoId = uploadPhoto(photo);
@@ -205,8 +208,6 @@ public class FlickrPhotoService implements
       if (hasMore) {
         newPage = new FlickrPaginationInformation(page + 1);
       }
-
-      logger.debug("Albums: {}", results.build().get(0));
 
       return new PhotosModelWrapper(
           results.build(),

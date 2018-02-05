@@ -6,6 +6,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.flickr4java.flickr.Flickr;
@@ -95,6 +96,16 @@ public class FlickrPhotoServiceTest {
   }
 
   @Test
+  public void importStoresAlbumsInJobCache() throws IOException {
+    PhotosModelWrapper wrapper = new PhotosModelWrapper(Arrays.asList(PHOTO_ALBUM),
+        Arrays.asList(PHOTO_MODEL), new ContinuationInformation(null, null));
+    photoService.importItem(wrapper);
+    verify(jobDataCache)
+        .store(FlickrPhotoService.CACHE_ALBUM_METADATA_PREFIX + ALBUM_ID, PHOTO_ALBUM);
+    verify(jobDataCache).hasKey(ALBUM_ID);
+  }
+
+  @Test
   public void exportAlbumInitial() throws IOException, FlickrException {
     // Set up initial export information, such as what FlickrPhotoService would see when a transfer
     // is initiated
@@ -141,11 +152,6 @@ public class FlickrPhotoServiceTest {
   }
 
   @Test
-  public void exportNextAlbum() {
-    // TODO(olsona)
-  }
-
-  @Test
   public void exportPhotosFromPhotoset() throws FlickrException, IOException {
     // Situation: getting photos from a set with id photosetsId and page 1
     int page = 1;
@@ -168,18 +174,12 @@ public class FlickrPhotoServiceTest {
 
     // Run test
     PhotosModelWrapper result = photoService.export(exportInformation);
-    logger.debug("Result: {}", result);
 
     assertThat(result.getPhotos().size()).isEqualTo(numPhotos);
     assertThat(result.getAlbums()).isEmpty();
     assertThat(result.getContinuationInformation().getSubResources()).isEmpty();
     assertThat(result.getContinuationInformation().getPaginationInformation())
         .isEqualTo(new FlickrPaginationInformation(page + 1));
-  }
-
-  @Test
-  public void exportNextPhotosFromAlbum() {
-    // TODO(olsona)
   }
 
   private static Photo initializePhoto(String title, String url, String description) {
