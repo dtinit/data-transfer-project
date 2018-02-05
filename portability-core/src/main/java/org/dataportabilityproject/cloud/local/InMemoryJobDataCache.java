@@ -24,7 +24,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 
-final class InMemoryJobDataCacheImpl implements JobDataCache {
+final public class InMemoryJobDataCache implements JobDataCache {
   private static HashMap<String, byte[]> map = new HashMap<>();
 
   @Override

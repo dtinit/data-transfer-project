@@ -21,12 +21,16 @@ import com.flickr4java.flickr.photos.Size;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
+import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
+import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Resource;
@@ -36,6 +40,7 @@ import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.ImageStreamProvider;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,14 +61,18 @@ public class FlickrPhotoServiceTest {
       MEDIA_TYPE, ALBUM_ID);
   static final PhotoAlbum PHOTO_ALBUM = new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
 
+  static final String FLICKR_PHOTO_ID = "flickrPhotoId";
+  static final String FLICKR_ALBUM_ID = "flickrAlbumId";
+
   Flickr flickr = mock(Flickr.class);
   PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
   PhotosInterface photosInterface = mock(PhotosInterface.class);
   Uploader uploader = mock(Uploader.class);
-  JobDataCache jobDataCache = mock(JobDataCache.class);
+  JobDataCache jobDataCache = new InMemoryJobDataCache();
   User user = mock(User.class);
   Auth auth = new Auth(Permission.WRITE, user);
   ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
+  InputStream inputStream = mock(InputStream.class);
   FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
       photosInterface, uploader, auth, jobDataCache, imageStreamProvider);
 
@@ -98,13 +107,37 @@ public class FlickrPhotoServiceTest {
   }
 
   @Test
-  public void importStoresAlbumsInJobCache() throws IOException {
+  public void importStoresAlbumsInJobCache() throws IOException, FlickrException {
+    // Set up input: a single photo album with a single photo
     PhotosModelWrapper wrapper = new PhotosModelWrapper(Arrays.asList(PHOTO_ALBUM),
         Arrays.asList(PHOTO_MODEL), new ContinuationInformation(null, null));
+
+    // Set up mocks
+    when(imageStreamProvider.get(FETCHABLE_URL)).thenReturn(inputStream);
+
+    when(uploader
+        .upload(Matchers.any(BufferedInputStream.class), Matchers.any(UploadMetaData.class)))
+        .thenReturn(FLICKR_PHOTO_ID);
+
+    String flickrAlbumTitle = FlickrPhotoService.FLICKR_ALBUM_PREFIX + ALBUM_NAME;
+    Photoset photoSet = initializePhotoset(FLICKR_ALBUM_ID, flickrAlbumTitle, ALBUM_DESCRIPTION);
+    when(photosetsInterface.create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID))
+        .thenReturn(photoSet);
+
+    // Run test
     photoService.importItem(wrapper);
-    verify(jobDataCache)
-        .store(FlickrPhotoService.CACHE_ALBUM_METADATA_PREFIX + ALBUM_ID, PHOTO_ALBUM);
-    verify(jobDataCache).hasKey(ALBUM_ID);
+
+    // Verify the mocks were called correctly
+    verify(imageStreamProvider).get(FETCHABLE_URL);
+    verify(uploader)
+        .upload(Matchers.any(BufferedInputStream.class), Matchers.any(UploadMetaData.class));
+    verify(photosetsInterface).create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID);
+
+    // Check jobDataCache contents
+    String expectedAlbumKey = FlickrPhotoService.CACHE_ALBUM_METADATA_PREFIX + ALBUM_ID;
+    assertThat(jobDataCache.hasKey(expectedAlbumKey));
+    assertThat(jobDataCache.getData(expectedAlbumKey, PhotoAlbum.class)).isEqualTo(PHOTO_ALBUM);
+    assertThat(jobDataCache.getData(ALBUM_ID, String.class)).isEqualTo(FLICKR_ALBUM_ID);
   }
 
   @Test
@@ -201,6 +234,7 @@ public class FlickrPhotoServiceTest {
     photoset.setId(id);
     photoset.setTitle(title);
     photoset.setDescription(description);
+
     return photoset;
   }
 }

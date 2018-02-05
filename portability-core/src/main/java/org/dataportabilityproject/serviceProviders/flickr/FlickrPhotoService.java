@@ -65,6 +65,8 @@ public class FlickrPhotoService implements
 
   @VisibleForTesting
   static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
+  @VisibleForTesting
+  static final String FLICKR_ALBUM_PREFIX = "Copy of - ";
   private static final int PHOTO_SETS_PER_PAGE = 500;
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS =
@@ -137,7 +139,7 @@ public class FlickrPhotoService implements
 
   @Override
   public void importItem(PhotosModelWrapper modelWrapper) throws IOException {
-    PhotosetsInterface photosetsInterface = flickr.getPhotosetsInterface();
+    // TODO(olsona): what should we do with the continuation information?
     try {
       for (PhotoAlbum album : modelWrapper.getAlbums()) {
         // Store the data in the cache because Flickr only allows you
@@ -145,7 +147,6 @@ public class FlickrPhotoService implements
         // the first photo to create the album.
         String key = CACHE_ALBUM_METADATA_PREFIX + album.getId();
         jobDataCache.store(key, album);
-        logger.debug("Storing album in JobDataCache: {}", key);
       }
       for (PhotoModel photo : modelWrapper.getPhotos()) {
         String photoId = uploadPhoto(photo);
@@ -154,7 +155,7 @@ public class FlickrPhotoService implements
           PhotoAlbum album = jobDataCache.getData(
               CACHE_ALBUM_METADATA_PREFIX + oldAlbumId,
               PhotoAlbum.class);
-          Photoset photoset = photosetsInterface.create("Copy of - " + album.getName(),
+          Photoset photoset = photosetsInterface.create(FLICKR_ALBUM_PREFIX + album.getName(),
               album.getDescription(), photoId);
           jobDataCache.store(oldAlbumId, photoset.getId());
         } else {
