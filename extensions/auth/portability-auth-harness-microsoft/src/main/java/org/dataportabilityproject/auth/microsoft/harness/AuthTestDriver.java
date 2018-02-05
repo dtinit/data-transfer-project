@@ -1,3 +1,4 @@
+
 package org.dataportabilityproject.auth.microsoft.harness;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,7 @@ public class AuthTestDriver {
         authRetrievalUrl = callbackBase + "/code";
     }
 
+    @Deprecated
     public static void main(String... args) throws Exception {
         new AuthTestDriver().getOAuthTokenCode();
     }
@@ -65,7 +67,7 @@ public class AuthTestDriver {
         // get the token
         TokenAuthData tokenData = dataGenerator.generateAuthData(callbackBase, authCode, "1", configuration.getInitialAuthData(), null);
 
-        System.out.println("TOKEN: " + tokenData.getToken());
+        // System.out.println("TOKEN: " + tokenData.getToken());
         return tokenData;
     }
 
@@ -79,7 +81,7 @@ public class AuthTestDriver {
             }
             String authCode = new String(authBody.bytes());
 
-            System.out.println("AUTH: " + authResponse.code() + ":" + authCode);
+            // System.out.println("AUTH: " + authResponse.code() + ":" + authCode);
 
             return authCode;
         }

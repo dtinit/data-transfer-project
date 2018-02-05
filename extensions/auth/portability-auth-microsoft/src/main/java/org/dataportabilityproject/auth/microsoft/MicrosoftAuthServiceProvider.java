@@ -18,6 +18,7 @@ public class MicrosoftAuthServiceProvider implements AuthServiceProvider {
     }
 
     public AuthDataGenerator getAuthDataGenerator(String transferDataType) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 }

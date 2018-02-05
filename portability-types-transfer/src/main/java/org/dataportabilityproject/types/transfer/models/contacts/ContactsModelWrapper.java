@@ -8,7 +8,7 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
  * A collection of contacts as serialized vCards.
  */
 public class ContactsModelWrapper extends DataModel {
-    private String vCards;
+    private final String vCards;
 
     @JsonCreator
     public ContactsModelWrapper(@JsonProperty("vCards") String vCards) {

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonTypeName("org.dataportability:TokenAuthData")
 public class TokenAuthData extends AuthData {
-    private String token;
+    private final String token;
 
     @JsonCreator
     public TokenAuthData(@JsonProperty("token") String token) {

@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 /**
- * Implements importers and exporters for Google services.
+ * Implements importers and exporters for Microsoft services.
  */
 package org.dataportabilityproject.transfer.microsoft;

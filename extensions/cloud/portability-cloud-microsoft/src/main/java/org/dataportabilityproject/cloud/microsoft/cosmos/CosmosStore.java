@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.dataportabilityproject.cloud.microsoft.cosmos;
 
 import com.datastax.driver.core.BoundStatement;
@@ -22,18 +37,18 @@ import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudCo
  * A {@link JobStore} backed by Cosmos DB. This implementation uses the DataStax Cassandra driver to communicate with Cosmos DB.
  */
 public class CosmosStore implements JobStore {
-    static final String JOB_INSERT = "INSERT INTO  " + JOB_TABLE + " (job_id, job_data) VALUES (?,?)";
-    static final String JOB_QUERY = "SELECT * FROM " + JOB_TABLE + " WHERE job_id = ?";
-    static final String JOB_DELETE = "DELETE FROM " + JOB_TABLE + " WHERE job_id = ?";
-    static final String JOB_UPDATE = "UPDATE " + JOB_TABLE + "SET job_data = ? WHERE job_id = ?";
+    static final String JOB_INSERT = String.format("INSERT INTO  %s (job_id, job_data) VALUES (?,?)", JOB_TABLE);
+    static final String JOB_QUERY = String.format("SELECT * FROM %s WHERE job_id = ?", JOB_TABLE);
+    static final String JOB_DELETE = String.format("DELETE FROM %s WHERE job_id = ?", JOB_TABLE);
+    static final String JOB_UPDATE = String.format("UPDATE %s SET job_data = ? WHERE job_id = ?", JOB_TABLE);
 
-    static final String DATA_INSERT = "INSERT INTO  " + DATA_TABLE + " (data_id, data_model) VALUES (?,?)";
-    static final String DATA_QUERY = "SELECT * FROM " + DATA_TABLE + " WHERE data_id = ?";
-    static final String DATA_DELETE = "DELETE FROM " + DATA_TABLE + " WHERE data_id = ?";
-    static final String DATA_UPDATE = "UPDATE " + DATA_TABLE + "SET data_model = ? WHERE data_id = ?";
+    static final String DATA_INSERT = String.format("INSERT INTO  %s (data_id, data_model) VALUES (?,?)", DATA_TABLE);
+    static final String DATA_QUERY = String.format("SELECT * FROM %s WHERE data_id = ?", DATA_TABLE);
+    static final String DATA_DELETE = String.format("DELETE FROM %s WHERE data_id = ?", DATA_TABLE);
+    static final String DATA_UPDATE = String.format("UPDATE %s SET data_model = ? WHERE data_id = ?", DATA_TABLE);
 
-    private Session session;
-    private ObjectMapper mapper;
+    private final Session session;
+    private final ObjectMapper mapper;
 
     public CosmosStore(Session session, ObjectMapper mapper) {
         this.session = session;

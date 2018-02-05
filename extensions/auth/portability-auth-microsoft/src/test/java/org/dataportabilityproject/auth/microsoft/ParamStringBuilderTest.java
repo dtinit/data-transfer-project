@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Verifies various parameter building scenarios.
  */
 public class ParamStringBuilderTest {
 

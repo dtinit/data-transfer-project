@@ -23,14 +23,14 @@ import java.util.function.Supplier;
  * The second step takes the authorization code and posts it against the AD API to obtain a token for querying the Graph API.
  */
 public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
-    public static final String AUTHORIZATION_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
-    public static final String TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+    private static final String AUTHORIZATION_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
+    private static final String TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
-    private String redirectPath;
-    private Supplier<String> clientIdSupplier;
-    private Supplier<String> clientSecretSupplier;
-    private OkHttpClient httpClient;
-    private ObjectMapper mapper;
+    private final String redirectPath;
+    private final Supplier<String> clientIdSupplier;
+    private final Supplier<String> clientSecretSupplier;
+    private final OkHttpClient httpClient;
+    private final ObjectMapper mapper;
 
     /**
      * Ctor.

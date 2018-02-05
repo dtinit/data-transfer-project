@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.dataportabilityproject.cloud.microsoft.cosmos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +40,7 @@ import static org.scassandra.cql.PrimitiveType.VARCHAR;
 import static org.scassandra.matchers.Matchers.preparedStatementRecorded;
 
 /**
- *
+ * Verifies the CosmosStore implementation against a mock Cassandra instance.
  */
 public class CosmosStoreTest {
     private CosmosStore cosmosStore;
@@ -53,7 +68,7 @@ public class CosmosStoreTest {
         cassandra.primingClient().prime(findRequest);
 
         PrimingRequest.Then.ThenBuilder thenUpdate = PrimingRequest.then();
-        thenUpdate.withVariableTypes(VARCHAR, UUID).withColumnTypes(ColumnMetadata.column("job_data", VARCHAR),ColumnMetadata.column("job_id", UUID));
+        thenUpdate.withVariableTypes(VARCHAR, UUID).withColumnTypes(ColumnMetadata.column("job_data", VARCHAR), ColumnMetadata.column("job_id", UUID));
         PrimingRequest updateRequest = PrimingRequest.preparedStatementBuilder()
                 .withQuery(JOB_UPDATE)
                 .withThen(thenUpdate)
@@ -76,10 +91,10 @@ public class CosmosStoreTest {
         cosmosStore.remove(copy.getId());
 
         PreparedStatementExecution expectedStatement = PreparedStatementExecution.builder()
-            .withPreparedStatementText(JOB_DELETE)
-            .withConsistency("LOCAL_ONE")
-            .withVariables(primeJob.getId())
-            .build();
+                .withPreparedStatementText(JOB_DELETE)
+                .withConsistency("LOCAL_ONE")
+                .withVariables(primeJob.getId())
+                .build();
 
         Assert.assertThat(cassandra.activityClient().retrievePreparedStatementExecutions(), preparedStatementRecorded(expectedStatement));
     }
@@ -92,6 +107,6 @@ public class CosmosStoreTest {
 
         int port = cassandra.getBinaryPort();
         ObjectMapper mapper = new ObjectMapper();
-        cosmosStore = new Initializer().getLocal(port, mapper);
+        cosmosStore = new LocalCosmosStoreInitializer().createLocalStore(port, mapper);
     }
 }

@@ -11,7 +11,7 @@ public class ParamStringBuilder {
         START, START_PARAM, PARAM_VALUE, END_PARAM
     }
 
-    private StringBuilder builder = new StringBuilder();
+    private final StringBuilder builder = new StringBuilder();
 
     private State state = State.START;
 
