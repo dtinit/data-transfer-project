@@ -22,7 +22,6 @@ import com.flickr4java.flickr.uploader.Uploader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
@@ -32,6 +31,7 @@ import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.ImageStreamProvider;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,8 +60,9 @@ public class FlickrPhotoServiceTest {
   JobDataCache jobDataCache = mock(JobDataCache.class);
   User user = mock(User.class);
   Auth auth = new Auth(Permission.WRITE, user);
+  ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
   FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
-      photosInterface, uploader, auth, jobDataCache);
+      photosInterface, uploader, auth, jobDataCache, imageStreamProvider);
 
   @Test
   public void getPage() {
@@ -126,7 +127,8 @@ public class FlickrPhotoServiceTest {
     assertThat(result.getPhotos()).isEmpty();
     Collection<PhotoAlbum> albums = result.getAlbums();
     assertThat(albums.size()).isEqualTo(1);
-    assertThat(albums).containsExactly(new PhotoAlbum(photosetId, photosetTitle, photosetDescription));
+    assertThat(albums)
+        .containsExactly(new PhotoAlbum(photosetId, photosetTitle, photosetDescription));
 
     // Make sure continuation information is correct
     ContinuationInformation continuationInformation = result.getContinuationInformation();
