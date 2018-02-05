@@ -7,7 +7,11 @@ import org.dataportabilityproject.types.transfer.PortableType;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
-public interface TransferCopier {
+/**
+ * In-memory Copier interface
+ */
+public interface InMemoryTransferCopier {
+  /* Copies the provided dataType from exportService to importService */
   void copyDataType(TransferServiceProviderRegistry registry,
       PortableType dataType,
       String exportService,

@@ -2,7 +2,7 @@ package org.dataportabilityproject.worker;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.dataportabilityproject.spi.transfer.TransferCopier;
+import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -16,10 +16,13 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PortabilityTransferCopier implements TransferCopier {
+/**
+ * Implementation of InMemoryTransferCopier.
+ */
+public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
-  private static final Logger logger = LoggerFactory.getLogger(PortabilityTransferCopier.class);
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryTransferCopier.class);
 
   @Override
   public void copyDataType(TransferServiceProviderRegistry registry,
