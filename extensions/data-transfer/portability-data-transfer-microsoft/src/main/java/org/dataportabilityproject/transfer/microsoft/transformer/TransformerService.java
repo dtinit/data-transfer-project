@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.microsoft.transformer;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-//    compile 'com.microsoft.azure:azure-documentdb:1.15.1'
+/**
+ * Transforms instances into different types.
+ */
+public interface TransformerService {
 
-    compile 'com.datastax.cassandra:cassandra-driver-core:3.4.0'
-    testCompile 'org.apache.cassandra:cassandra-all:3.11.1'
-    testCompile 'org.scassandra:java-client:1.1.2'
+    /**
+     * Transform the input instance into an instance of a result type.
+     *
+     * @param resultType the type to transform to
+     * @param input the input instance
+     */
+    <T> TransformResult<T> transform(Class<T> resultType, Object input);
+
 }

@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.cloud.microsoft.cosmos;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-//    compile 'com.microsoft.azure:azure-documentdb:1.15.1'
+/**
+ * Constants used by the Microsoft cloud extension.
+ */
+public interface MicrosoftCloudConstants {
 
-    compile 'com.datastax.cassandra:cassandra-driver-core:3.4.0'
-    testCompile 'org.apache.cassandra:cassandra-all:3.11.1'
-    testCompile 'org.scassandra:java-client:1.1.2'
+    String KEY_SPACE = "dataportability";
+
+    String JOB_TABLE = KEY_SPACE + ".jobstore";
+
+    String DATA_TABLE = KEY_SPACE + ".datastore";
 }
