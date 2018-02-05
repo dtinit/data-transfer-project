@@ -6,6 +6,7 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
  * Manages {@link TransferServiceProvider}s registered in the system.
+ * Provides client access methods for Importers and Exporters.
  */
 public interface TransferServiceProviderRegistry {
 

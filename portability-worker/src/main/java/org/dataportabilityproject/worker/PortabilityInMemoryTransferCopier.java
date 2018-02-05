@@ -37,8 +37,20 @@ import org.slf4j.LoggerFactory;
 public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
-  private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryTransferCopier.class);
+  private static final Logger logger = LoggerFactory
+      .getLogger(PortabilityInMemoryTransferCopier.class);
 
+  /**
+   * Kicks off the transfer job for the datatype from the export service to the import service.
+   *
+   * @param registry The TransferServiceProviderRegistry to use to lookup the importer and exporter
+   * @param dataType The data type to transfer
+   * @param exportService The export service to transfer from
+   * @param exportAuthData The auth data for the export service
+   * @param importService The import service to transfer to
+   * @param importAuthData The auth data for the import service
+   * @param jobId The job id representing this copy
+   */
   @Override
   public void copyDataType(TransferServiceProviderRegistry registry,
       PortableType dataType,
@@ -51,13 +63,27 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
     Exporter<AuthData, DataModel> exporter = registry.getExporter(exportService, dataType);
     Importer<AuthData, DataModel> importer = registry.getImporter(importService, dataType);
 
-    ExportInformation emptyExportInfo = new ExportInformation(null, null);
     logger.debug("Starting copy job, id: {}, source: {}, destination: {}", jobId, exportService,
         importService);
+
+    // Initial copy, starts off the process with no previous paginationData or containerResource information
+    ExportInformation emptyExportInfo = new ExportInformation(null, null);
     copy(exporter, importer, exportAuthData, importAuthData, emptyExportInfo);
 
   }
 
+  /**
+   * Transfers data fropm the given {@code exporter} optionally starting at the point specified in
+   * the provided {@code exportInformation}. Imports the data using the provided {@code importer}.
+   * If there is more data to required to be exported, recursively copies using the specific {@link
+   * ExportInformation} to continue the process.
+   *
+   * @param exporter The exporter to use
+   * @param importer The importer to use
+   * @param exportAuthData The auth data for the export
+   * @param importAuthData The auth data for the import
+   * @param exportInformation Any pagination or resource information to use for subsequent calls.
+   */
   private void copy(
       Exporter<AuthData, DataModel> exporter,
       Importer<AuthData, DataModel> importer,
