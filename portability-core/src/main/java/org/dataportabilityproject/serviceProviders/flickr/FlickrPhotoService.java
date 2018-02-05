@@ -36,9 +36,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -56,6 +53,7 @@ import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.ImageStreamProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,27 +77,32 @@ public class FlickrPhotoService implements
   private final Uploader uploader;
   private final JobDataCache jobDataCache;
   private Auth auth;
+  private ImageStreamProvider imageStreamProvider;
 
   FlickrPhotoService(AppCredentials appCredentials, Auth auth,
       JobDataCache jobDataCache) throws IOException {
-    this(new Flickr(appCredentials.key(), appCredentials.secret(), new REST()), auth, jobDataCache);
+    this(new Flickr(appCredentials.key(), appCredentials.secret(), new REST()), auth, jobDataCache,
+        new ImageStreamProvider());
     RequestContext.getRequestContext().setAuth(auth);
   }
 
-  private FlickrPhotoService(Flickr flickr, Auth auth, JobDataCache jobDataCache) {
+  private FlickrPhotoService(Flickr flickr, Auth auth, JobDataCache jobDataCache,
+      ImageStreamProvider imageStreamProvider) {
     this(flickr, flickr.getPhotosetsInterface(), flickr.getPhotosInterface(), flickr.getUploader(),
-        auth, jobDataCache);
+        auth, jobDataCache, imageStreamProvider);
   }
 
   @VisibleForTesting
   FlickrPhotoService(Flickr flickr, PhotosetsInterface photosetsInterface,
-      PhotosInterface photosInterface, Uploader uploader, Auth auth, JobDataCache jobDataCache) {
+      PhotosInterface photosInterface, Uploader uploader, Auth auth, JobDataCache jobDataCache,
+      ImageStreamProvider imageStreamProvider) {
     this.flickr = flickr;
     this.photosetsInterface = photosetsInterface;
     this.photosInterface = photosInterface;
     this.uploader = uploader;
     this.jobDataCache = jobDataCache;
     this.auth = auth;
+    this.imageStreamProvider = imageStreamProvider;
   }
 
   @VisibleForTesting
@@ -252,17 +255,10 @@ public class FlickrPhotoService implements
     }
   }
 
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
-  }
-
   private String uploadPhoto(PhotoModel photo)
       throws IOException, FlickrException {
     BufferedInputStream inStream = new BufferedInputStream(
-        getImageAsStream(photo.getFetchableUrl()));
+        imageStreamProvider.get(photo.getFetchableUrl()));
     UploadMetaData uploadMetaData = new UploadMetaData()
         .setAsync(false)
         .setPublicFlag(false)

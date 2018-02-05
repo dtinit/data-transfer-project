@@ -34,6 +34,7 @@ import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.ImageStreamProvider;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,8 +63,9 @@ public class FlickrPhotoServiceTest {
   JobDataCache jobDataCache = mock(JobDataCache.class);
   User user = mock(User.class);
   Auth auth = new Auth(Permission.WRITE, user);
+  ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
   FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
-      photosInterface, uploader, auth, jobDataCache);
+      photosInterface, uploader, auth, jobDataCache, imageStreamProvider);
 
   @Test
   public void getPage() {
