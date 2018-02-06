@@ -142,34 +142,39 @@ final class StartCopyHandler implements HttpHandler {
       job = store.find(jobId);
     }
 
-    logger.debug("Found job after while loop, lookupAssignedWithoutAuthDataJob, id: {}", jobId);
+    logger.debug("Got job {} in state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
 
-    // Ensure job is assigned and has worker key
-    job = store.find(jobId, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    Preconditions.checkNotNull(job.workerInstancePublicKey(),
+        "Expected job " + jobId + " to have a worker instance's public key after being assigned "
+            + "(state ASSIGNED_WITHOUT_AUTH_DATA)");
+    Preconditions.checkState(job.encryptedExportAuthData() == null,
+        "Didn't expect job " + jobId + " to have encrypted export auth data yet in state "
+            + "ASSIGNED_WITHOUT_AUTH_DATA");
+    Preconditions.checkState(job.encryptedImportAuthData() == null,
+        "Didn't expect job " + jobId + " to have encrypted import auth data yet in state "
+            + "ASSIGNED_WITHOUT_AUTH_DATA");
 
-    logger.debug("Found job after lookupAssignedWithoutAuthDataJob, id: {}", jobId);
-    Preconditions.checkNotNull(job.workerInstancePublicKey() != null);
     // Populate job with auth data from cookies encrypted with worker key
-    logger.debug("About to parse: {}", job.workerInstancePublicKey());
+    logger.debug("About to parse worker instance public key: {}", job.workerInstancePublicKey());
     PublicKey publicKey = PublicPrivateKeyPairGenerator
         .parsePublicKey(job.workerInstancePublicKey());
-    logger.debug("Found publicKey: {}", publicKey.getEncoded().length);
+    logger.debug("Parsed publicKey, has length: {}", publicKey.getEncoded().length);
 
     // Encrypt the data with the assigned workers PublicKey and persist
     Crypter crypter = CrypterFactory.create(publicKey);
     String encryptedExportAuthData = crypter.encrypt(exportAuthCookieValue);
-    logger.debug("Created encryptedExportAuthData: {}", encryptedExportAuthData.length());
+    logger.debug("Encrypted export auth data, has length: {}", encryptedExportAuthData.length());
     String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
-    logger.debug("Created encryptedImportAuthData: {}", encryptedImportAuthData.length());
-    Preconditions.checkNotNull(job, "Attempting to update a non-existent job");
-    Preconditions.checkState(job.encryptedExportAuthData() == null);
-    Preconditions.checkState(job.encryptedImportAuthData() == null);
+    logger.debug("Encrypted import auth data, has length: {}", encryptedImportAuthData.length());
     // Populate job with encrypted auth data
     job = job.toBuilder()
         .setEncryptedExportAuthData(encryptedExportAuthData)
         .setEncryptedImportAuthData(encryptedImportAuthData)
         .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
         .build();
+
+    logger.debug("Updating job {} from ASSIGNED_WITHOUT_AUTH_DATA to ASSIGNED_WITH_AUTH_DATA",
+        jobId);
     store.update(job, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
 
     writeResponse(exchange);
