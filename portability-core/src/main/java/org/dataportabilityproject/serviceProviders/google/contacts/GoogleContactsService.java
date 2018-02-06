@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 The Data-Portability Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
@@ -21,6 +22,7 @@ import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.property.Email;
@@ -51,7 +53,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     // TODO(olsona): utilize JobDataCache
   }
 
-  private static VCard convertToModel(Person person) throws IOException {
+  @VisibleForTesting
+  static VCard convertPersonToModel(Person person) throws IOException {
     VCard vcard = new VCard();
 
     /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
@@ -79,7 +82,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return vcard;
   }
 
-  private static List<ezvcard.property.Address> convertToVcardAddresses(
+  @VisibleForTesting
+  static List<ezvcard.property.Address> convertToVcardAddresses(
       List<com.google.api.services.people.v1.model.Address> personAddresses) {
     List<ezvcard.property.Address> vcardAddresses = new LinkedList<>();
     // TODO(olsona): all of this - can use Java 8 streams
@@ -87,7 +91,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return vcardAddresses;
   }
 
-  private static List<Email> convertToVcardEmails(
+  @VisibleForTesting
+  static List<Email> convertToVcardEmails(
       List<EmailAddress> personEmails) {
     List<Email> vcardEmails = new LinkedList<>();
     for (EmailAddress personEmail : personEmails) {
@@ -106,7 +111,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return vcardEmails;
   }
 
-  private static Pair<StructuredName, StructuredName[]> convertToVcardNames(
+  @VisibleForTesting
+  static Pair<StructuredName, StructuredName[]> convertToVcardNames(
       List<Name> personNames) {
     StructuredName primaryVcardName = null;
     LinkedList<StructuredName> alternateVcardNames = new LinkedList<>();
@@ -129,7 +135,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return Pair.of(primaryVcardName, altArray);
   }
 
-  private static StructuredName convertSinglePersonName(Name personName) {
+  @VisibleForTesting
+  static StructuredName convertSinglePersonName(Name personName) {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
@@ -140,7 +147,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return structuredName;
   }
 
-  private static List<Telephone> convertTelephoneNumbers(List<PhoneNumber> personNumbers) {
+  @VisibleForTesting
+  static List<Telephone> convertTelephoneNumbers(List<PhoneNumber> personNumbers) {
     List<Telephone> vcardTelephones = new LinkedList<>();
     for (PhoneNumber personNumber : personNumbers) {
       Telephone telephone = new Telephone(personNumber.getValue());
@@ -159,7 +167,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     List<String> resourceNames = peopleService.contactGroups().batchGet().getResourceNames();
     for (String resourceName : resourceNames) {
       Person person = peopleService.people().get(resourceName).execute();
-      VCard vcard = convertToModel(person);
+      VCard vcard = convertPersonToModel(person);
       vCards.add(vcard);
     }
 
