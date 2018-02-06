@@ -120,18 +120,18 @@ public final class GoogleCloudDatastore implements JobStore {
    */
   @Override
   public String findFirst(JobState jobState) {
-    Query<Entity> query = Query.newEntityQueryBuilder()
+    Query<Key> query = Query.newKeyQueryBuilder()
         .setKind(KIND)
         .setFilter(PropertyFilter.eq(OldPortabilityJobConverter.JOB_STATE, jobState.name()))
         .setOrderBy(OrderBy.asc("created"))
         .setLimit(1)
         .build();
-    QueryResults<Entity> results = datastore.run(query);
+    QueryResults<Key> results = datastore.run(query);
     if (!results.hasNext()) {
       return null;
     }
-    Entity entity = results.next();
-    return (String) entity.getValue(OldPortabilityJobConverter.ID_DATA_KEY).get();
+    Key key = results.next();
+    return key.getName();
   }
 
   /**
