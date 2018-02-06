@@ -48,6 +48,7 @@ configurations {
 
 dependencies {
     compile project(':portability-core')
+    compile project(':portability-spi-transfer')
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")
     compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
