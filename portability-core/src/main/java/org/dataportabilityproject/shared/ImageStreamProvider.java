@@ -16,20 +16,24 @@ limitations under the License.
 
 package org.dataportabilityproject.shared;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * A class containing stream getters for images.
+ * A class containing stream getters for images.  Should be used by photo services to get image
+ * streams.
+ *
+ * Initially created to make testing easier.
  */
 public class ImageStreamProvider {
 
-  public InputStream get(String urlStr) throws IOException {
+  public BufferedInputStream get(String urlStr) throws IOException {
     URL url = new URL(urlStr);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
-    return conn.getInputStream();
+    return new BufferedInputStream(conn.getInputStream());
   }
 }

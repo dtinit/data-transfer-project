@@ -1,12 +1,12 @@
 package org.dataportabilityproject.serviceProviders.flickr;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,7 +27,6 @@ import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -76,7 +75,7 @@ public class FlickrPhotoServiceTest {
   private User user = mock(User.class);
   private Auth auth = new Auth(Permission.WRITE, user);
   private ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
-  private InputStream inputStream = mock(InputStream.class);
+  private BufferedInputStream bufferedInputStream = mock(BufferedInputStream.class);
   private FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
       photosInterface, uploader, auth, jobDataCache, imageStreamProvider);
 
@@ -117,7 +116,7 @@ public class FlickrPhotoServiceTest {
         Collections.singletonList(PHOTO_MODEL), new ContinuationInformation(null, null));
 
     // Set up mocks
-    when(imageStreamProvider.get(FETCHABLE_URL)).thenReturn(inputStream);
+    when(imageStreamProvider.get(FETCHABLE_URL)).thenReturn(bufferedInputStream);
 
     when(uploader
         .upload(any(BufferedInputStream.class), any(UploadMetaData.class)))
@@ -138,14 +137,11 @@ public class FlickrPhotoServiceTest {
     ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor = ArgumentCaptor
         .forClass(UploadMetaData.class);
     verify(uploader)
-        .upload(any(BufferedInputStream.class), uploadMetaDataArgumentCaptor.capture());
+        .upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());
     UploadMetaData actualUploadMetaData = uploadMetaDataArgumentCaptor.getValue();
-    assertEquals(false, actualUploadMetaData.isPublicFlag());
-    assertEquals(false, actualUploadMetaData.isFriendFlag());
-    assertEquals(false, actualUploadMetaData.isFamilyFlag());
-    assertEquals(FlickrPhotoService.FLICKR_PHOTO_PREFIX + PHOTO_TITLE,
-        actualUploadMetaData.getTitle());
-    assertEquals(PHOTO_DESCRIPTION, actualUploadMetaData.getDescription());
+    assertThat(actualUploadMetaData.getTitle())
+        .isEqualTo(FlickrPhotoService.FLICKR_PHOTO_PREFIX + PHOTO_TITLE);
+    assertThat(actualUploadMetaData.getDescription()).isEqualTo(PHOTO_DESCRIPTION);
 
     // Verify the photosets interface got the command to create the correct album
     verify(photosetsInterface).create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID);

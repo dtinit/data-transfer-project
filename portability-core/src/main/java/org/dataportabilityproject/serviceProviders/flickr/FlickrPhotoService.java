@@ -260,8 +260,7 @@ public class FlickrPhotoService implements
 
   private String uploadPhoto(PhotoModel photo)
       throws IOException, FlickrException {
-    BufferedInputStream inStream = new BufferedInputStream(
-        imageStreamProvider.get(photo.getFetchableUrl()));
+    BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
     UploadMetaData uploadMetaData = new UploadMetaData()
         .setAsync(false)
         .setPublicFlag(false)
