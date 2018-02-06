@@ -66,9 +66,7 @@ public class FlickrPhotoService implements
   @VisibleForTesting
   static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
   @VisibleForTesting
-  static final String FLICKR_ALBUM_PREFIX = "Copy of - ";
-  @VisibleForTesting
-  static final String FLICKR_PHOTO_PREFIX = "copy of - ";
+  static final String COPY_PREFIX = "Copy of - ";
   private static final int PHOTO_SETS_PER_PAGE = 500;
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS =
@@ -157,7 +155,7 @@ public class FlickrPhotoService implements
           PhotoAlbum album = jobDataCache.getData(
               CACHE_ALBUM_METADATA_PREFIX + oldAlbumId,
               PhotoAlbum.class);
-          Photoset photoset = photosetsInterface.create(FLICKR_ALBUM_PREFIX + album.getName(),
+          Photoset photoset = photosetsInterface.create(COPY_PREFIX + album.getName(),
               album.getDescription(), photoId);
           jobDataCache.store(oldAlbumId, photoset.getId());
         } else {
@@ -266,7 +264,7 @@ public class FlickrPhotoService implements
         .setPublicFlag(false)
         .setFriendFlag(false)
         .setFamilyFlag(false)
-        .setTitle(FLICKR_PHOTO_PREFIX + photo.getTitle())
+        .setTitle(COPY_PREFIX + photo.getTitle())
         .setDescription(photo.getDescription());
     return uploader.upload(inStream, uploadMetaData);
   }
