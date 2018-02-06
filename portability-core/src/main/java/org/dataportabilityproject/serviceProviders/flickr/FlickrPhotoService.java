@@ -67,6 +67,8 @@ public class FlickrPhotoService implements
   static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
   @VisibleForTesting
   static final String FLICKR_ALBUM_PREFIX = "Copy of - ";
+  @VisibleForTesting
+  static final String FLICKR_PHOTO_PREFIX = "copy of - ";
   private static final int PHOTO_SETS_PER_PAGE = 500;
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS =
@@ -265,7 +267,7 @@ public class FlickrPhotoService implements
         .setPublicFlag(false)
         .setFriendFlag(false)
         .setFamilyFlag(false)
-        .setTitle("copy of - " + photo.getTitle())
+        .setTitle(FLICKR_PHOTO_PREFIX + photo.getTitle())
         .setDescription(photo.getDescription());
     return uploader.upload(inStream, uploadMetaData);
   }
