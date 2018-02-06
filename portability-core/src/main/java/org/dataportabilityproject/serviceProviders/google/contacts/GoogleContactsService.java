@@ -18,7 +18,9 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.ListConnectionsResponse;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
@@ -29,11 +31,10 @@ import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
+import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
@@ -44,13 +45,23 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Importer<ContactsModelWrapper> {
 
   private PeopleService peopleService;
+  private JobDataCache jobDataCache;
+
+  @VisibleForTesting
+  static final String SELF_RESOURCE = "people/me";
 
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
-    this.peopleService = new PeopleService.Builder(
+    // TODO(olsona): add permissions/scopes!
+    this(new PeopleService.Builder(
         GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
-    // TODO(olsona): utilize JobDataCache
+        .build(), jobDataCache);
+  }
+
+  @VisibleForTesting
+  GoogleContactsService(PeopleService peopleService, JobDataCache jobDataCache) {
+    this.peopleService = peopleService;
+    this.jobDataCache = jobDataCache;
   }
 
   @VisibleForTesting
@@ -67,6 +78,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     vcard.setStructuredName(namesPair.first);
     vcard.setStructuredNameAlt(namesPair.second);
 
+    /* TODO(olsona): uncomment when we want to test it
     for (Telephone telephone : convertTelephoneNumbers(person.getPhoneNumbers())) {
       vcard.addTelephoneNumber(telephone);
     }
@@ -78,6 +90,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     for (Email vcardEmail : convertToVcardEmails(person.getEmailAddresses())) {
       vcard.addEmail(vcardEmail);
     }
+    */
 
     return vcard;
   }
@@ -92,18 +105,13 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static List<Email> convertToVcardEmails(
-      List<EmailAddress> personEmails) {
+  static List<Email> convertToVcardEmails(List<EmailAddress> personEmails) {
     List<Email> vcardEmails = new LinkedList<>();
     for (EmailAddress personEmail : personEmails) {
       Email vcardEmail = new Email(personEmail.getValue());
-
-      if (personEmail.getMetadata().getPrimary()) {
-        vcardEmail.setPref(1);
-      }
-
       vcardEmails.add(vcardEmail);
 
+      // TODO(olsona): address primary/secondary email
       // TODO(olsona): address Email.displayName
       // TODO(olsona): address Email.formattedType
     }
@@ -160,22 +168,25 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
-    // TODO(olsona): implement pagination
-
-    Collection<VCard> vCards = new HashSet<>();
-
-    List<String> resourceNames = peopleService.contactGroups().batchGet().getResourceNames();
-    for (String resourceName : resourceNames) {
-      Person person = peopleService.people().get(resourceName).execute();
-      VCard vcard = convertPersonToModel(person);
-      vCards.add(vcard);
+    // TODO(olsona): what about the next page?  We get the token, but how do we use it?
+    Connections.List connectionsListRequest = peopleService.people().connections()
+        .list(SELF_RESOURCE);
+    ListConnectionsResponse response = connectionsListRequest.execute();
+    List<Person> initialPeopleList = response.getConnections();
+    List<VCard> vCards = new LinkedList<>();
+    for (Person initialPerson : initialPeopleList) {
+      Person fullPerson = peopleService.people().get(initialPerson.getResourceName()).execute();
+      vCards.add(convertPersonToModel(fullPerson));
     }
-
-    return new ContactsModelWrapper(vCards, null);
+    GoogleContactsP8nInfo newPage = null;
+    if (response.getTotalItems() > initialPeopleList.size()) {
+      newPage = new GoogleContactsP8nInfo(response.getNextPageToken());
+    }
+    return new ContactsModelWrapper(vCards, new ContinuationInformation(null, newPage));
   }
 
   @Override
   public void importItem(ContactsModelWrapper object) throws IOException {
-    // TODO(olsona): complete this
+    // TODO(olsona)
   }
 }

@@ -35,7 +35,7 @@ public class ContactsModelWrapper implements DataModel {
     return continuationInformation;
   }
 
-  public Collection<VCard> getvCards() {
+  public Collection<VCard> getVCards() {
     return vCards;
   }
 }
