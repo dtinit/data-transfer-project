@@ -57,7 +57,7 @@ public class LocalCloudFactory implements CloudFactory {
               .build(new CacheLoader<String, JobDataCache>() {
                 @Override
                 public JobDataCache load(String service) throws Exception {
-                  return new JobDataCacheImpl();
+                  return new InMemoryJobDataCache();
                 }
               });
         }

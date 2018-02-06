@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 
-final class JobDataCacheImpl implements JobDataCache {
+public final class InMemoryJobDataCache implements JobDataCache {
   private static HashMap<String, byte[]> map = new HashMap<>();
 
   @Override
@@ -43,7 +43,7 @@ final class JobDataCacheImpl implements JobDataCache {
     try {
       return (T) in.readObject();
     } catch (ClassNotFoundException e) {
-      throw new IllegalStateException("problem deserilizing object", e);
+      throw new IllegalStateException("problem deserializing object", e);
     }
   }
 
