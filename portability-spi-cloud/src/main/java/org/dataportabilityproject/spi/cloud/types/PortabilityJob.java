@@ -100,41 +100,48 @@ public class PortabilityJob extends EntityType {
   public void setJobAuthorization(JobAuthorization jobAuthorization) {
     switch (jobAuthorization.getState()) {
       case INITIAL:
-        validateState(jobAuthorization, true, false, false, false, false);
-        break;
       case PENDING_WORKER_ASSIGNMENT:
-        validateState(jobAuthorization, true, false, false, false, false);
+        // SessionKey required to create a job
+        isSet(jobAuthorization.getEncryptedSessionKey());
+        isUnset(jobAuthorization.getEncryptedExportAuthData(),
+            jobAuthorization.getEncryptedImportAuthData(),
+            jobAuthorization.getEncryptedPublicKey(),
+            jobAuthorization.getEncryptedPrivateKey());
         break;
       case ASSIGNED_WITHOUT_AUTH_DATA:
-        validateState(jobAuthorization, true, false, false, true, true);
+        // Expected associated keys from the assigned worker to be present
+        isSet(jobAuthorization.getEncryptedSessionKey(),
+            jobAuthorization.getEncryptedPublicKey(),
+            jobAuthorization.getEncryptedPrivateKey());
+        isUnset(jobAuthorization.getEncryptedExportAuthData(),
+            jobAuthorization.getEncryptedImportAuthData()
+        );
         break;
       case ASSIGNED_WITH_AUTH_DATA:
-        validateState(jobAuthorization, true, true, true, true, true);
+        // Expected all fields set
+        isSet(jobAuthorization.getEncryptedSessionKey(),
+            jobAuthorization.getEncryptedPublicKey(),
+            jobAuthorization.getEncryptedPrivateKey(),
+            jobAuthorization.getEncryptedExportAuthData(),
+            jobAuthorization.getEncryptedImportAuthData());
         break;
     }
     this.jobAuthorization = jobAuthorization;
   }
 
-  /**
-   * Validate the correct data is present for each state transition.
-   */
-  private void validateState(JobAuthorization jobAuthorization,
-      boolean sessionKeyExists,
-      boolean exportAuthDataExists,
-      boolean importAuthDataExists,
-      boolean publicKeyExists,
-      boolean privateKeyExists) {
-    Preconditions.checkState(
-        Strings.isNullOrEmpty(jobAuthorization.getEncryptedSessionKey()) != sessionKeyExists);
-    Preconditions
-        .checkState(Strings.isNullOrEmpty(jobAuthorization.getEncryptedExportAuthData())
-            != exportAuthDataExists);
-    Preconditions.checkState(
-        Strings.isNullOrEmpty(jobAuthorization.getEncryptedImportAuthData())
-            != importAuthDataExists);
-    Preconditions.checkState(
-        Strings.isNullOrEmpty(jobAuthorization.getEncryptedPublicKey()) != publicKeyExists);
-    Preconditions.checkState(
-        Strings.isNullOrEmpty(jobAuthorization.getEncryptedPrivateKey()) != privateKeyExists);
+
+  /** Checks all {@code strings} are null or empty. */
+  private static void isUnset(String... strings) {
+    for (String str : strings) {
+      Preconditions.checkState(Strings.isNullOrEmpty(str));
+    }
   }
+
+  /** Checks all {@code strings} are have non-null and non-empty values. */
+  private static void isSet(String... strings) {
+    for (String str : strings) {
+      Preconditions.checkState(!Strings.isNullOrEmpty(str));
+    }
+  }
+
 }
