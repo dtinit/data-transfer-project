@@ -60,6 +60,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.api.services.people.v1.model.Name;
 
 public class FlickrPhotoServiceTest {
 
