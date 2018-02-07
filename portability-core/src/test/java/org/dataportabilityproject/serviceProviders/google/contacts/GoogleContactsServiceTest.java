@@ -38,6 +38,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ import org.slf4j.LoggerFactory;
 
 public class GoogleContactsServiceTest {
 
-  private final Logger logger = LoggerFactory.getLogger(GoogleContactsServiceTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(GoogleContactsServiceTest.class);
 
   private static final String FIRST_NAME = "Jane";
   private static final String LAST_NAME = "Doe";
@@ -59,11 +60,18 @@ public class GoogleContactsServiceTest {
       .setNames(Collections.singletonList(NAME))
       .setResourceName(RESOURCE_NAME);
 
-  private Connections.List connectionsListRequest = mock(Connections.List.class);
-  private PeopleService peopleService = mock(PeopleService.class, Mockito.RETURNS_DEEP_STUBS);
-  private JobDataCache jobDataCache = new InMemoryJobDataCache();
-  private GoogleContactsService contactsService = new GoogleContactsService(peopleService,
-      jobDataCache);
+  private Connections.List connectionsListRequest;
+  private PeopleService peopleService;
+  private JobDataCache jobDataCache;
+  private GoogleContactsService contactsService;
+
+  @Before
+  public void setup() {
+    connectionsListRequest = mock(Connections.List.class);
+    peopleService = mock(PeopleService.class, Mockito.RETURNS_DEEP_STUBS);
+    jobDataCache = new InMemoryJobDataCache();
+    contactsService = new GoogleContactsService(peopleService, jobDataCache);
+  }
 
   @Test
   public void convertToVCardEmails() {
@@ -81,7 +89,6 @@ public class GoogleContactsServiceTest {
     List<Email> vcardEmails = GoogleContactsService.convertToVcardEmails(googleEmails);
 
     // Check that all emails were converted
-    assertThat(vcardEmails.size()).isEqualTo(numEmails);
     assertThat(vcardEmails).containsExactlyElementsIn(expectedVCardEmails);
   }
 

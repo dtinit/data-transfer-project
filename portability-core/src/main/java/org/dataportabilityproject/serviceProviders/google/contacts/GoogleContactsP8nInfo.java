@@ -22,12 +22,12 @@ import org.dataportabilityproject.dataModels.PaginationInformation;
 public class GoogleContactsP8nInfo implements PaginationInformation {
   private final String pageToken;
 
-  public String getPageToken() {
-    return this.pageToken;
-  }
-
   public GoogleContactsP8nInfo(String pageToken) {
     this.pageToken = pageToken;
+  }
+
+  public String getPageToken() {
+    return this.pageToken;
   }
 
   @Override
