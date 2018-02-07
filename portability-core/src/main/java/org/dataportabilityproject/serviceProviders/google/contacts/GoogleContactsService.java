@@ -175,7 +175,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
-    // TODO(olsona): get next page using pagination token
+    // TODO(olsona): get next page using pagination token, if token is present
     Connections.List connectionsListRequest = peopleService.people().connections()
         .list(SELF_RESOURCE);
     ListConnectionsResponse response = connectionsListRequest.execute();
