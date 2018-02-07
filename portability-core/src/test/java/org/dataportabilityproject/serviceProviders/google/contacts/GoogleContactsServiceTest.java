@@ -21,12 +21,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
+import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
+import com.google.api.services.people.v1.model.PersonResponse;
 import ezvcard.VCard;
 import ezvcard.property.Email;
 import java.io.IOException;
@@ -61,14 +62,12 @@ public class GoogleContactsServiceTest {
       .setNames(Collections.singletonList(NAME))
       .setResourceName(RESOURCE_NAME);
 
-  private Connections.List connectionsListRequest;
   private PeopleService peopleService;
   private JobDataCache jobDataCache;
   private GoogleContactsService contactsService;
 
   @Before
   public void setup() {
-    connectionsListRequest = mock(Connections.List.class);
     peopleService = mock(PeopleService.class, Mockito.RETURNS_DEEP_STUBS);
     jobDataCache = new InMemoryJobDataCache();
     contactsService = new GoogleContactsService(peopleService, jobDataCache);
@@ -109,22 +108,34 @@ public class GoogleContactsServiceTest {
     String nextPageToken = "token";
     ExportInformation emptyExportInformation = new ExportInformation(null, null);
 
-    ListConnectionsResponse response = new ListConnectionsResponse();
-    response.setConnections(connectionsList);
-    response.setTotalItems(totalItems); // More than the size of the list
-    response.setNextPageToken(nextPageToken);
+    ListConnectionsResponse listConnectionsResponse = new ListConnectionsResponse();
+    listConnectionsResponse.setConnections(connectionsList);
+    listConnectionsResponse.setTotalItems(totalItems); // More than the size of the list
+    listConnectionsResponse.setNextPageToken(nextPageToken);
 
-    when(connectionsListRequest.execute()).thenReturn(response);
-    when(peopleService.people().connections().list(GoogleContactsService.SELF_RESOURCE))
-        .thenReturn(connectionsListRequest);
-    when(peopleService.people().get(RESOURCE_NAME).execute()).thenReturn(PERSON);
+    PersonResponse personResponse = new PersonResponse().setPerson(PERSON);
+    GetPeopleResponse batchResponse = new GetPeopleResponse()
+        .setResponses(Collections.singletonList(personResponse));
+
+    when(peopleService.people()
+        .connections()
+        .list(GoogleContactsService.SELF_RESOURCE)
+        .execute())
+        .thenReturn(listConnectionsResponse);
+    when(peopleService.people()
+        .getBatchGet()
+        .setResourceNames(Collections.singletonList(RESOURCE_NAME))
+        .setPersonFields(GoogleContactsService.PERSON_FIELDS)
+        .execute())
+        .thenReturn(batchResponse);
 
     // Run test
     ContactsModelWrapper wrapper = contactsService.export(emptyExportInformation);
 
     // Check continuation information
     assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
-    GooglePaginationInfo googlePaginationInfo = (GooglePaginationInfo) wrapper.getContinuationInformation()
+    GooglePaginationInfo googlePaginationInfo = (GooglePaginationInfo) wrapper
+        .getContinuationInformation()
         .getPaginationInformation();
     assertThat(googlePaginationInfo.getPageToken()).isEqualTo(nextPageToken);
 
