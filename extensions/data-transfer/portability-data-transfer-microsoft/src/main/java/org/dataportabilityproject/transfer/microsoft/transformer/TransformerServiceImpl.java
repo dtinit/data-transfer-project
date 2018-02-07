@@ -17,10 +17,17 @@ package org.dataportabilityproject.transfer.microsoft.transformer;
 
 import ezvcard.VCard;
 import ezvcard.property.Address;
+import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarAttendeeModelTransformer;
+import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarEventModelTransformer;
+import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarEventTimeTransformer;
+import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarModelTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToGraphAddressTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToGraphContactTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToVCardAddressTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToVCardTransformer;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +49,12 @@ public class TransformerServiceImpl implements TransformerService {
 
     @Override
     public <T> TransformResult<T> transform(Class<T> resultType, Object input) {
-        TransformerContext context = new TransformerContextImpl();
+        return transform(resultType, input, new HashMap<>());
+    }
+
+    @Override
+    public <T> TransformResult<T> transform(Class<T> resultType, Object input, Map<String, String> properties) {
+        TransformerContext context = new TransformerContextImpl(properties);
         T dataType = transform(resultType, input, context);
         return new TransformResult<>(dataType, context.getProblems());
     }
@@ -59,14 +71,19 @@ public class TransformerServiceImpl implements TransformerService {
     }
 
     private class TransformerContextImpl implements TransformerContext {
-        private List<String> problems = new ArrayList<>();
+        private final List<String> problems = new ArrayList<>();
+        private final Map<String, String> properties;
+
+        public TransformerContextImpl(Map<String, String> properties) {
+            this.properties = properties;
+        }
 
         @Override
-        public <T> T transform(Class<T> resultType, Object input, TransformerContext context) {
+        public <T> T transform(Class<T> resultType, Object input) {
             if (input == null) {
                 return null;  // support null
             }
-            return TransformerServiceImpl.this.transform(resultType, input, context);
+            return TransformerServiceImpl.this.transform(resultType, input, this);
         }
 
         @Override
@@ -78,11 +95,25 @@ public class TransformerServiceImpl implements TransformerService {
         public List<String> getProblems() {
             return problems;
         }
+
+        @Override
+        public String getProperty(String key) {
+            return properties.get(key);
+        }
+
+        @Override
+        public void setProperty(String key, String value) {
+            properties.put(key, value);
+        }
     }
 
     private void initContactTransformers() {
         cache.put(new TransformKey(LinkedHashMap.class, VCard.class), new ToVCardTransformer());
         cache.put(new TransformKey(LinkedHashMap.class, Address.class), new ToVCardAddressTransformer());
+        cache.put(new TransformKey(LinkedHashMap.class, CalendarModel.class), new ToCalendarModelTransformer());
+        cache.put(new TransformKey(LinkedHashMap.class, CalendarEventModel.class), new ToCalendarEventModelTransformer());
+        cache.put(new TransformKey(LinkedHashMap.class, CalendarEventModel.CalendarEventTime.class), new ToCalendarEventTimeTransformer());
+        cache.put(new TransformKey(LinkedHashMap.class, CalendarAttendeeModel.class), new ToCalendarAttendeeModelTransformer());
         cache.put(new TransformKey(VCard.class, LinkedHashMap.class), new ToGraphContactTransformer());
         cache.put(new TransformKey(Address.class, LinkedHashMap.class), new ToGraphAddressTransformer());
     }

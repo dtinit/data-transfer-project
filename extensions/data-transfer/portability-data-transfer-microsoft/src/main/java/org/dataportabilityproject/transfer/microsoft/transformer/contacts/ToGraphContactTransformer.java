@@ -70,7 +70,7 @@ public class ToGraphContactTransformer implements BiFunction<VCard, TransformerC
     private void copyPersonData(VCard card, Map<String, Object> contact, TransformerContext context) {
         // Addresses are lossy: there is no distinction in VCard between business and home addresses
         if (!card.getAddresses().isEmpty()) {
-            safeSet("homeAddress", context.transform(LinkedHashMap.class, card.getAddresses().get(0), context), contact);
+            safeSet("homeAddress", context.transform(LinkedHashMap.class, card.getAddresses().get(0)), contact);
         }
 
         card.getEmails().stream().filter(v -> v.getValue() != null).forEach(v -> addEmail(v, contact));

@@ -1,26 +1,25 @@
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
+import org.dataportabilityproject.transfer.microsoft.helper.TestTransformerContext;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
+import org.junit.Assert;
 import org.junit.Test;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * 8601
- */
-public class ToCalendarEventModelTransformerTest {
+public class ToCalendarEventTimeTransformerTest {
+    private ToCalendarEventTimeTransformer transformer = new ToCalendarEventTimeTransformer();
 
     @Test
-    public void testTime() {
-        String dateTime = "2018-02-14T18:00:00.0000000";
-        String timeZone = "UTC";
-        OffsetDateTime offsetDateTime = ZonedDateTime.of(LocalDateTime.parse(dateTime), ZoneId.of(timeZone)).toOffsetDateTime();
+    public void testTransform() {
+        Map<String, String> map = new HashMap<>();
+        map.put("dateTime", "2018-02-14T18:00:00.0000000");
+        map.put("timeZone", "UTC");
+        CalendarEventModel.CalendarEventTime time = transformer.apply(map, new TestTransformerContext());
 
-
-//        OffsetDateTime.of(LocalDateTime.parse("2018-02-14T18:00:00.0000000"), ZoneOffset.UTC);
-//       ZonedDateTime zonedDateTime =  ZonedDateTime.of(LocalDateTime.parse(time), ZoneId.of(zone));
-        System.out.println();
+        Assert.assertEquals(18, time.getDateTime().getHour());
+        Assert.assertEquals(2018, time.getDateTime().getYear());
+        Assert.assertEquals(14, time.getDateTime().getDayOfMonth());
     }
 }

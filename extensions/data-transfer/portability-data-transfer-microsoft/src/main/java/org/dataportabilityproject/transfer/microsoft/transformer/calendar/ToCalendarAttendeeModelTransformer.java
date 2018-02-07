@@ -16,39 +16,30 @@
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
+import org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
 
-import java.time.DateTimeException;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
- * Parses microsoft.graph.dateTimeTimeZone defined at https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/dateTimeTimeZone
+ * Maps from a Graph API calendar attendee resource as defined by https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/attendee
  */
-public class ToCalendarEventTimeTransformer implements BiFunction<Map<String, String>, TransformerContext, CalendarEventModel.CalendarEventTime> {
+public class ToCalendarAttendeeModelTransformer implements BiFunction<Map<String, Object>, TransformerContext, CalendarAttendeeModel> {
 
     @Override
-    public CalendarEventModel.CalendarEventTime apply(Map<String, String> time, TransformerContext context) {
-        if (time == null) {
-            return null;
-        }
-        String dateTimeValue = time.get("dateTime");
-        String timeZone = time.get("timeZone");
-        if (dateTimeValue == null || timeZone == null) {
+    @SuppressWarnings("unchecked")
+    public CalendarAttendeeModel apply(Map<String, Object> attendee, TransformerContext context) {
+        if (attendee == null) {
             return null;
         }
 
-        try {
-            OffsetDateTime dateTime = ZonedDateTime.of(LocalDateTime.parse(dateTimeValue), ZoneId.of(timeZone)).toOffsetDateTime();
-            return new CalendarEventModel.CalendarEventTime(dateTime, false);
-        } catch (DateTimeException e) {
-            context.problem(e.getMessage());
-            return null;
-        }
+        boolean optional = !attendee.getOrDefault("type", "false").equals("required");
+        Map<String, ?> emailAddress = (Map<String, ?>) attendee.get("emailAddress");
+        String displayName = TransformerHelper.getString("name", emailAddress).orElse("");
+        String email = TransformerHelper.getString("address", emailAddress).orElse("");
+
+        return new CalendarAttendeeModel(displayName, email, optional);
     }
 
 }

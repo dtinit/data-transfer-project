@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Collections.emptyMap;
+
 /**
  * Utility methods for transforming data.
  */
@@ -31,6 +33,10 @@ public final class TransformerHelper {
     @SuppressWarnings("unchecked")
     public static Optional<Map<String, String>> getMap(String key, Map<String, ?> map) {
         return Optional.ofNullable((Map<String, String>) map.get(key));
+    }
+
+    public static String getOrDefault(String firstKey, String secondKey, Map<String, ?> map, String defaultValue) {
+        return getMap(firstKey, map).orElse(emptyMap()).getOrDefault(secondKey, defaultValue);
     }
 
     @SuppressWarnings("unchecked")
