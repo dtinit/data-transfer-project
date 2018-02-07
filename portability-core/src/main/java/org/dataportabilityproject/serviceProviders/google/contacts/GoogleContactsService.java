@@ -182,6 +182,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     List<Person> initialPeopleList = response.getConnections();
     List<VCard> vCards = new LinkedList<>();
     for (Person initialPerson : initialPeopleList) {
+      // TODO(olsona): look into a batch operation for this, instead of making a call for each person
       Person fullPerson = peopleService.people().get(initialPerson.getResourceName()).execute();
       vCards.add(convertPersonToModel(fullPerson));
     }
