@@ -1,30 +1,10 @@
-/*
- * Copyright 2018 The Data-Portability Project Authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.dataportabilityproject.serviceProviders.flickr;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.flickr4java.flickr.Flickr;
@@ -33,21 +13,18 @@ import com.flickr4java.flickr.auth.Auth;
 import com.flickr4java.flickr.auth.Permission;
 import com.flickr4java.flickr.people.User;
 import com.flickr4java.flickr.photos.Photo;
-import com.flickr4java.flickr.photos.PhotoList;
 import com.flickr4java.flickr.photos.PhotosInterface;
 import com.flickr4java.flickr.photos.Size;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
-import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
-import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
-import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Resource;
@@ -55,46 +32,36 @@ import org.dataportabilityproject.dataModels.photos.PhotoAlbum;
 import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
-import org.dataportabilityproject.shared.ImageStreamProvider;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.api.services.people.v1.model.Name;
 
 public class FlickrPhotoServiceTest {
 
   private final Logger logger = LoggerFactory.getLogger(FlickrPhotoServiceTest.class);
 
-  private static final String PHOTO_TITLE = "Title";
-  private static final String FETCHABLE_URL = "fetchable_url";
-  private static final String PHOTO_DESCRIPTION = "Description";
-  private static final String MEDIA_TYPE = "jpeg";
+  static final String PHOTO_TITLE = "Title";
+  static final String FETCHABLE_URL = "fetchable_url";
+  static final String DESCRIPTION = "Description";
+  static final String MEDIA_TYPE = "jpeg";
 
-  private static final String ALBUM_ID = "Album ID";
-  private static final String ALBUM_NAME = "Album name";
-  private static final String ALBUM_DESCRIPTION = "Album description";
+  static final String ALBUM_ID = "Album ID";
+  static final String ALBUM_NAME = "Album name";
+  static final String ALBUM_DESCRIPTION = "Album description";
 
-  private static final PhotoModel PHOTO_MODEL = new PhotoModel(PHOTO_TITLE, FETCHABLE_URL,
-      PHOTO_DESCRIPTION,
+  static final PhotoModel PHOTO_MODEL = new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, DESCRIPTION,
       MEDIA_TYPE, ALBUM_ID);
-  private static final PhotoAlbum PHOTO_ALBUM = new PhotoAlbum(ALBUM_ID, ALBUM_NAME,
-      ALBUM_DESCRIPTION);
+  static final PhotoAlbum PHOTO_ALBUM = new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
 
-  private static final String FLICKR_PHOTO_ID = "flickrPhotoId";
-  private static final String FLICKR_ALBUM_ID = "flickrAlbumId";
-
-  private Flickr flickr = mock(Flickr.class);
-  private PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
-  private PhotosInterface photosInterface = mock(PhotosInterface.class);
-  private Uploader uploader = mock(Uploader.class);
-  private JobDataCache jobDataCache = new InMemoryJobDataCache();
-  private User user = mock(User.class);
-  private Auth auth = new Auth(Permission.WRITE, user);
-  private ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
-  private BufferedInputStream bufferedInputStream = mock(BufferedInputStream.class);
-  private FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
-      photosInterface, uploader, auth, jobDataCache, imageStreamProvider);
+  Flickr flickr = mock(Flickr.class);
+  PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
+  PhotosInterface photosInterface = mock(PhotosInterface.class);
+  Uploader uploader = mock(Uploader.class);
+  JobDataCache jobDataCache = mock(JobDataCache.class);
+  User user = mock(User.class);
+  Auth auth = new Auth(Permission.WRITE, user);
+  FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
+      photosInterface, uploader, auth, jobDataCache);
 
   @Test
   public void getPage() {
@@ -115,59 +82,15 @@ public class FlickrPhotoServiceTest {
 
   @Test
   public void toCommonPhoto() {
-    Photo photo = initializePhoto(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION);
+    Photo photo = initializePhoto(PHOTO_TITLE, FETCHABLE_URL, DESCRIPTION);
 
     PhotoModel photoModel = FlickrPhotoService.toCommonPhoto(photo, ALBUM_ID);
 
     assertThat(photoModel.getAlbumId()).isEqualTo(ALBUM_ID);
     assertThat(photoModel.getFetchableUrl()).isEqualTo(FETCHABLE_URL);
     assertThat(photoModel.getTitle()).isEqualTo(PHOTO_TITLE);
-    assertThat(photoModel.getDescription()).isEqualTo(PHOTO_DESCRIPTION);
+    assertThat(photoModel.getDescription()).isEqualTo(DESCRIPTION);
     assertThat(photoModel.getMediaType()).isEqualTo("image/jpeg");
-  }
-
-  @Test
-  public void importStoresAlbumsInJobCache() throws IOException, FlickrException {
-    // Set up input: a single photo album with a single photo
-    PhotosModelWrapper wrapper = new PhotosModelWrapper(Collections.singletonList(PHOTO_ALBUM),
-        Collections.singletonList(PHOTO_MODEL), new ContinuationInformation(null, null));
-
-    // Set up mocks
-    when(imageStreamProvider.get(FETCHABLE_URL)).thenReturn(bufferedInputStream);
-
-    when(uploader
-        .upload(any(BufferedInputStream.class), any(UploadMetaData.class)))
-        .thenReturn(FLICKR_PHOTO_ID);
-
-    String flickrAlbumTitle = FlickrPhotoService.COPY_PREFIX + ALBUM_NAME;
-    Photoset photoSet = initializePhotoset(FLICKR_ALBUM_ID, flickrAlbumTitle, ALBUM_DESCRIPTION);
-    when(photosetsInterface.create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID))
-        .thenReturn(photoSet);
-
-    // Run test
-    photoService.importItem(wrapper);
-
-    // Verify the image stream provider got the correct url
-    verify(imageStreamProvider).get(FETCHABLE_URL);
-
-    // Verify the correct photo information was uploaded
-    ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor = ArgumentCaptor
-        .forClass(UploadMetaData.class);
-    verify(uploader)
-        .upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());
-    UploadMetaData actualUploadMetaData = uploadMetaDataArgumentCaptor.getValue();
-    assertThat(actualUploadMetaData.getTitle())
-        .isEqualTo(FlickrPhotoService.COPY_PREFIX + PHOTO_TITLE);
-    assertThat(actualUploadMetaData.getDescription()).isEqualTo(PHOTO_DESCRIPTION);
-
-    // Verify the photosets interface got the command to create the correct album
-    verify(photosetsInterface).create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID);
-
-    // Check jobDataCache contents
-    String expectedAlbumKey = FlickrPhotoService.CACHE_ALBUM_METADATA_PREFIX + ALBUM_ID;
-    assertThat(jobDataCache.hasKey(expectedAlbumKey)).isTrue();
-    assertThat(jobDataCache.getData(expectedAlbumKey, PhotoAlbum.class)).isEqualTo(PHOTO_ALBUM);
-    assertThat(jobDataCache.getData(ALBUM_ID, String.class)).isEqualTo(FLICKR_ALBUM_ID);
   }
 
   @Test
@@ -178,7 +101,7 @@ public class FlickrPhotoServiceTest {
         new ExportInformation(Optional.empty(), Optional.empty());
 
     // Set up auth
-    when(user.getId()).thenReturn("userId");
+    when(user.getId()).thenReturn("id");
 
     // Set up photoset
     String photosetId = "photosetId";
@@ -191,19 +114,19 @@ public class FlickrPhotoServiceTest {
     Photosets photosetList = new Photosets();
     photosetList.setPage(page);
     photosetList.setPages(page + 1);
-    photosetList.setPhotosets(Collections.singletonList(photoset));
+    photosetList.setPhotosets(Arrays.asList(photoset));
     when(photosetsInterface.getList(anyString(), anyInt(), anyInt(), anyString()))
         .thenReturn(photosetList);
 
     // Run test
-    PhotosModelWrapper result = photoService.export(emptyExportInfo);
+    PhotosModelWrapper result = photoService
+        .export(emptyExportInfo);
 
     // Make sure album/photo information is correct
     assertThat(result.getPhotos()).isEmpty();
     Collection<PhotoAlbum> albums = result.getAlbums();
     assertThat(albums.size()).isEqualTo(1);
-    assertThat(albums)
-        .containsExactly(new PhotoAlbum(photosetId, photosetTitle, photosetDescription));
+    assertThat(albums).containsExactly(new PhotoAlbum(photosetId, photosetTitle, photosetDescription));
 
     // Make sure continuation information is correct
     ContinuationInformation continuationInformation = result.getContinuationInformation();
@@ -217,34 +140,18 @@ public class FlickrPhotoServiceTest {
   }
 
   @Test
-  public void exportPhotosFromPhotoset() throws FlickrException, IOException {
-    // Situation: getting photos from a set with id photosetsId and page 1
-    int page = 1;
-    String photosetsId = "photosetsId";
-    ExportInformation exportInformation = new ExportInformation(
-        Optional.of(new IdOnlyResource(photosetsId)), Optional.empty());
+  public void exportNextAlbum() {
+    // TODO(olsona)
+  }
 
-    // Make a bunch of photos, add them to PhotoList, and add pagination information
-    int numPhotos = 4;
-    PhotoList<Photo> listOfPhotos = new PhotoList<>();
-    for (int i = 0; i < numPhotos; i++) {
-      Photo photo = initializePhoto("title" + i, "url" + i, "description" + i);
-      listOfPhotos.add(photo);
-    }
-    listOfPhotos.setPage(page);
-    listOfPhotos.setPages(page + 1);
+  @Test
+  public void exportPhotosFromAlbum() {
+    // TODO(olsona)
+  }
 
-    when(photosetsInterface.getPhotos(anyString(), anySet(), anyInt(), anyInt(), anyInt()))
-        .thenReturn(listOfPhotos);
-
-    // Run test
-    PhotosModelWrapper result = photoService.export(exportInformation);
-
-    assertThat(result.getPhotos().size()).isEqualTo(numPhotos);
-    assertThat(result.getAlbums()).isEmpty();
-    assertThat(result.getContinuationInformation().getSubResources()).isEmpty();
-    assertThat(result.getContinuationInformation().getPaginationInformation())
-        .isEqualTo(new FlickrPaginationInformation(page + 1));
+  @Test
+  public void exportNextPhotosFromAlbum() {
+    // TODO(olsona)
   }
 
   private static Photo initializePhoto(String title, String url, String description) {
@@ -255,7 +162,7 @@ public class FlickrPhotoServiceTest {
     Size size = new Size();
     size.setSource(url);
     size.setLabel(Size.ORIGINAL);
-    photo.setSizes(Collections.singletonList(size));
+    photo.setSizes(Arrays.asList(size));
     return photo;
   }
 
@@ -264,7 +171,6 @@ public class FlickrPhotoServiceTest {
     photoset.setId(id);
     photoset.setTitle(title);
     photoset.setDescription(description);
-
     return photoset;
   }
 }
