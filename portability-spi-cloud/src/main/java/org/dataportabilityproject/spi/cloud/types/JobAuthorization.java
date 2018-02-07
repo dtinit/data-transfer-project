@@ -1,8 +1,6 @@
 package org.dataportabilityproject.spi.cloud.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import org.dataportabilityproject.types.transfer.EntityType;
 
 /**
@@ -20,7 +18,7 @@ public class JobAuthorization extends EntityType {
    * such as the encrypted auth data, in order to begin processing the job.
    */
   public enum State {
-    // The job is in the process of obtaining source and destination authorization credentials.
+    // The job is in the process of obtaining export and import authorization credentials.
     INITIAL,
     // The job has all authorization credentials but is not assigned a worker yet
     PENDING_WORKER_ASSIGNMENT,
@@ -34,10 +32,10 @@ public class JobAuthorization extends EntityType {
   private JobAuthorization.State state;
 
   @JsonProperty
-  private String encryptedSourceAuthData;
+  private String encryptedExportAuthData;
 
   @JsonProperty
-  private String encryptedDestinationAuthData;
+  private String encryptedImportAuthData;
 
   @JsonProperty
   private String encryptedSessionKey;
@@ -48,20 +46,20 @@ public class JobAuthorization extends EntityType {
   @JsonProperty
   private String encryptedPrivateKey;
 
-  public String getEncryptedSourceAuthData() {
-    return encryptedSourceAuthData;
+  public String getEncryptedExportAuthData() {
+    return encryptedExportAuthData;
   }
 
-  public void setEncryptedSourceAuthData(String encryptedSourceAuthData) {
-    this.encryptedSourceAuthData = encryptedSourceAuthData;
+  public void setEncryptedExportAuthData(String encryptedExportAuthData) {
+    this.encryptedExportAuthData = encryptedExportAuthData;
   }
 
-  public String getEncryptedDestinationAuthData() {
-    return encryptedDestinationAuthData;
+  public String getEncryptedImportAuthData() {
+    return encryptedImportAuthData;
   }
 
-  public void setEncryptedDestinationAuthData(String encryptedDestinationAuthData) {
-    this.encryptedDestinationAuthData = encryptedDestinationAuthData;
+  public void setEncryptedImportAuthData(String encryptedImportAuthData) {
+    this.encryptedImportAuthData = encryptedImportAuthData;
   }
 
   public String getEncryptedSessionKey() {
