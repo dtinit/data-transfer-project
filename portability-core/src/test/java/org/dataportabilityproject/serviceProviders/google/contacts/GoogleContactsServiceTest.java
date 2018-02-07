@@ -81,7 +81,7 @@ public class GoogleContactsServiceTest {
     EmailAddress googleEmail = new EmailAddress().setValue(emailAddress);
 
     // Perform conversion
-    Email vCardEmail = GoogleContactsService.convertToVCardEmail_Single(googleEmail);
+    Email vCardEmail = GoogleContactsService.convertToVCardEmailSingle(googleEmail);
   }
 
   @Test

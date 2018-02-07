@@ -109,14 +109,14 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   static List<Email> convertToVCardEmails(List<EmailAddress> personEmails) {
     List<Email> vCardEmails = new LinkedList<>();
     for (EmailAddress personEmail : personEmails) {
-      vCardEmails.add(convertToVCardEmail_Single(personEmail));
+      vCardEmails.add(convertToVCardEmailSingle(personEmail));
     }
 
     return vCardEmails;
   }
 
   @VisibleForTesting
-  static Email convertToVCardEmail_Single(EmailAddress personEmail) {
+  static Email convertToVCardEmailSingle(EmailAddress personEmail) {
     Email vCardEmail = new Email(personEmail.getValue());
 
     // TODO(olsona): address primary/secondary email
@@ -134,9 +134,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     for (Name personName : personNames) {
       if (personName.getMetadata().getPrimary()) {
         // This is the primary name for the Person, so it should be the primary name in the VCard.
-        primaryVCardName = convertToVCardName_Single(personName);
+        primaryVCardName = convertToVCardNameSingle(personName);
       } else {
-        alternateVCardNames.add(convertToVCardName_Single(personName));
+        alternateVCardNames.add(convertToVCardNameSingle(personName));
       }
     }
     if (primaryVCardName == null) {
@@ -151,7 +151,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static StructuredName convertToVCardName_Single(Name personName) {
+  static StructuredName convertToVCardNameSingle(Name personName) {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
