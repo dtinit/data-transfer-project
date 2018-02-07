@@ -28,7 +28,9 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import javax.annotation.Nullable;
+import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -68,17 +70,18 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   }
 
   @Override
-  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
+    String encodedJobId = JobUtils.encodeId(jobId);
     String url = createFlow()
         .newAuthorizationUrl()
         .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
-        .setState(id) // TODO: Encrypt
+        .setState(encodedJobId) // TODO: Encrypt
         .build();
     return AuthFlowInitiator.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
       @Nullable AuthData initialAuthData, @Nullable String extra) throws IOException {
     Preconditions.checkState(initialAuthData == null,
         "Earlier auth data not expected for Google flow");
@@ -88,7 +91,7 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
         .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
-    Credential credential = flow.createAndStoreCredential(response, id);
+    Credential credential = flow.createAndStoreCredential(response, jobId.toString());
     // Extract the Google User ID from the ID token in the auth response
     // GoogleIdToken.Payload payload = ((GoogleTokenResponse) response).parseIdToken().getPayload();
     return toAuthData(credential);

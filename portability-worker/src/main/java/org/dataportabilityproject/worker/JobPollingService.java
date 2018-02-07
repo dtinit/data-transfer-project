@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
@@ -72,7 +73,7 @@ class JobPollingService extends AbstractScheduledService {
    * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() throws IOException {
-    String jobId = store.findFirst(JobState.PENDING_WORKER_ASSIGNMENT);
+    UUID jobId = store.findFirst(JobState.PENDING_WORKER_ASSIGNMENT);
     logger.debug("Polling for a job PENDING_WORKER_ASSIGNMENT");
     if (jobId == null) {
       return;
@@ -99,7 +100,7 @@ class JobPollingService extends AbstractScheduledService {
    * Replaces a unassigned {@link LegacyPortabilityJob} in storage with the provided {@code jobId} in
    * assigned state with {@code publicKey} and {@code privateKey}.
    */
-  private void updateJobStateToAssignedWithoutAuthData(String jobId, PublicKey publicKey,
+  private void updateJobStateToAssignedWithoutAuthData(UUID jobId, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
     // Lookup the job so we can append to its existing properties.
     // update will verify the job is still in the expected state when performing the update.
@@ -116,14 +117,14 @@ class JobPollingService extends AbstractScheduledService {
         .setWorkerInstancePrivateKey(encodedPrivateKey)
         .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
         .build();
-    store.update(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT);
+    store.update(jobId, updatedJob, JobState.PENDING_WORKER_ASSIGNMENT);
   }
 
   /**
    * Polls for job with populated auth data and stops this service when found.
    */
   private void pollUntilJobIsReady() {
-    String jobId = jobMetadata.getJobId();
+    UUID jobId = jobMetadata.getJobId();
     LegacyPortabilityJob job = store.find(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);

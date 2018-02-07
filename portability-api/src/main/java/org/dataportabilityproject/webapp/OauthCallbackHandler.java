@@ -26,6 +26,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
@@ -111,7 +112,7 @@ final class OauthCallbackHandler implements HttpHandler {
       // Valid job must be present
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
-      String jobId = JobUtils.decodeId(encodedIdCookie);
+      UUID jobId = JobUtils.decodeId(encodedIdCookie);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
@@ -147,11 +148,11 @@ final class OauthCallbackHandler implements HttpHandler {
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
         LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        store.update(updatedJob, null);
+        store.update(jobId, updatedJob, null);
       } else {
         // Set new cookie
         cryptoHelper
-            .encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), serviceMode, authData);
+            .encryptAndSetCookie(exchange.getResponseHeaders(), jobId, serviceMode, authData);
       }
 
       redirect =

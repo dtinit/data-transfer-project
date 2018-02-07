@@ -24,6 +24,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +84,7 @@ public class JWTTokenManager implements TokenManager {
   }
 
   @Override
-  public String getData(String token) {
+  public UUID getData(String token) {
     try {
       DecodedJWT jwt = verifier.verify(token);
       // Token is verified, get claim
@@ -91,7 +92,7 @@ public class JWTTokenManager implements TokenManager {
       if (claim.isNull()) {
         return null;
       }
-      return claim.isNull() ? null : claim.asString();
+      return claim.isNull() ? null : UUID.fromString(claim.asString());
     } catch (JWTVerificationException exception) {
 
       throw new RuntimeException("Error verifying token: " + token);
@@ -99,11 +100,11 @@ public class JWTTokenManager implements TokenManager {
   }
 
   @Override
-  public String createNewToken(String uuid) {
+  public String createNewToken(UUID uuid) {
     try {
       return JWT.create()
           .withIssuer(JWTTokenManager.ISSUER)
-          .withClaim(JWTTokenManager.ID_CLAIM_KEY, uuid)
+          .withClaim(JWTTokenManager.ID_CLAIM_KEY, uuid.toString())
           .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MILLIS))
           .sign(algorithm);
     } catch (JWTCreationException e) {

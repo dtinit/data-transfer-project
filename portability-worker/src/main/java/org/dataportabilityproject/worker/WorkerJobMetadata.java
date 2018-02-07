@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.security.KeyPair;
+import java.util.UUID;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 
 /**
@@ -28,7 +29,7 @@ import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 @Singleton
 final class WorkerJobMetadata {
   private static KeyPair keyPair = null;
-  private static String jobId = null;
+  private static UUID jobId = null;
 
   @Inject
   WorkerJobMetadata() {}
@@ -37,7 +38,7 @@ final class WorkerJobMetadata {
     return (jobId != null && keyPair != null);
   }
 
-  void init(String jobId, KeyPair keyPair) {
+  void init(UUID jobId, KeyPair keyPair) {
     Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
     this.jobId = jobId;
     this.keyPair = keyPair;
@@ -48,7 +49,7 @@ final class WorkerJobMetadata {
     return keyPair;
   }
 
-  public String getJobId() {
+  public UUID getJobId() {
     Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
     return jobId;
   }

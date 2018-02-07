@@ -33,6 +33,8 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.UUID;
+import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
@@ -103,17 +105,18 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   }
 
   @Override
-  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
+    String encodedJobId = JobUtils.encodeId(jobId);
     String url = createFlow()
         .newAuthorizationUrl()
         .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
-        .setState(id) // TODO: Encrypt
+        .setState(encodedJobId) // TODO: Encrypt
         .build();
     return AuthFlowInitiator.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
       AuthData initialAuthData,
       String extra) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra),
@@ -126,7 +129,7 @@ final class InstagramAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
         .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) //TODO(chuy): Parameterize
         .execute();
     // Figure out storage
-    Credential credential = flow.createAndStoreCredential(response, id);
+    Credential credential = flow.createAndStoreCredential(response, jobId.toString());
     return toAuthData(credential);
   }
 

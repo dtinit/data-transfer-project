@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
@@ -182,33 +183,38 @@ public class PortabilityApiUtils {
    * Validates that the JobId in the request matches the jobId in the xsrf header and contains
    * Does not validate that the job id itself is valid. Returns JobID.
    */
-  public static String validateJobId(Headers requestHeaders, TokenManager tokenManager) {
+  public static UUID validateJobId(Headers requestHeaders, TokenManager tokenManager) {
     String encodedIdCookie = PortabilityApiUtils
         .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
     // Valid job must be present
-    String jobId = JobUtils.decodeId(encodedIdCookie);
+    UUID jobId = JobUtils.decodeId(encodedIdCookie);
 
     // Validate XSRF token is present in request header and in the token.
     String tokenHeader = parseXsrfTokenHeader(requestHeaders);
-    String tokenCookie = PortabilityApiUtils
-        .getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
+    String tokenCookie = PortabilityApiUtils.getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
 
     // Both header and token should be present
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenHeader), "xsrf token header must be present");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenCookie), "xsrf token cookie must be present");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenHeader),
+        "xsrf token header must be present");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenCookie),
+        "xsrf token cookie must be present");
 
     // The token present in the header should be the same as the token present in the cookie.
-    Preconditions.checkArgument(tokenCookie.equals(tokenHeader), "xsrf token header and cookie must match");
+    Preconditions.checkArgument(tokenCookie.equals(tokenHeader),
+        "xsrf token header and cookie must match");
 
     // Verify that the token is actually valid in the tokenManager
-    Preconditions.checkArgument(tokenManager.verifyToken(tokenHeader), "xsrf token provided is invalid");
+    Preconditions.checkArgument(tokenManager.verifyToken(tokenHeader),
+        "xsrf token provided is invalid");
 
-    // finally make sure the jobId present in the token is also equal to the jobId present in the cookie
-    String jobIdFromToken = tokenManager.getData(tokenHeader);
-    Preconditions.checkArgument(jobId.equals(jobIdFromToken), "encoded job id and job id token must match");
+    // finally make sure the jobId present in the token is also equal to the jobId present in the
+    // cookie
+    UUID jobIdFromToken = tokenManager.getData(tokenHeader);
+    Preconditions.checkArgument(jobId.equals(jobIdFromToken),
+        "encoded job id and job id token must match");
     return jobId;
   }
 

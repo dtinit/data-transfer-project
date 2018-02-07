@@ -39,6 +39,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
@@ -68,9 +69,8 @@ public final class GoogleCloudDatastore implements JobStore {
    * problem inserting the job.
    */
   @Override
-  public void create(LegacyPortabilityJob job) throws IOException {
-    Preconditions.checkNotNull(job.id());
-    String jobId = job.id();
+  public void create(UUID jobId, LegacyPortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
     Entity shouldNotExist = transaction.get(getKey(jobId));
     if (shouldNotExist != null) {
@@ -92,7 +92,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
    */
   @Override
-  public LegacyPortabilityJob find(String jobId) {
+  public LegacyPortabilityJob find(UUID jobId) {
     Entity entity = datastore.get(getKey(jobId));
     if (entity == null) {
       return null;
@@ -105,7 +105,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * state {@code jobState}.
    */
   @Override
-  public LegacyPortabilityJob find(String jobId, JobState jobState) {
+  public LegacyPortabilityJob find(UUID jobId, JobState jobState) {
     LegacyPortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
@@ -122,7 +122,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
-  public String findFirst(JobState jobState) {
+  public UUID findFirst(JobState jobState) {
     Query<Key> query = Query.newKeyQueryBuilder()
         .setKind(KIND)
         .setFilter(PropertyFilter.eq(OldPortabilityJobConverter.JOB_STATE, jobState.name()))
@@ -134,7 +134,7 @@ public final class GoogleCloudDatastore implements JobStore {
       return null;
     }
     Key key = results.next();
-    return key.getName();
+    return UUID.fromString(key.getName());
   }
 
   /**
@@ -143,7 +143,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
   @Override
-  public void remove(String jobId) throws IOException {
+  public void remove(UUID jobId) throws IOException {
     try {
       datastore.delete(getKey(jobId));
     } catch (DatastoreException e) {
@@ -160,10 +160,9 @@ public final class GoogleCloudDatastore implements JobStore {
    * problem updating it.
    */
   @Override
-  public void update(LegacyPortabilityJob job, JobState previousState)
+  public void update(UUID jobId, LegacyPortabilityJob job, JobState previousState)
       throws IOException {
-    Preconditions.checkNotNull(job.id());
-    String jobId = job.id();
+    Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
     Key key = getKey(jobId);
 
@@ -213,7 +212,7 @@ public final class GoogleCloudDatastore implements JobStore {
     return builder.build();
   }
 
-  private Entity createEntity(String jobId, Map<String, Object> data) throws IOException {
+  private Entity createEntity(UUID jobId, Map<String, Object> data) throws IOException {
     return createEntity(getKey(jobId), data);
   }
 
@@ -254,8 +253,8 @@ public final class GoogleCloudDatastore implements JobStore {
     return builder.build();
   }
 
-  private Key getKey(String jobId) {
-    return datastore.newKeyFactory().setKind(KIND).newKey(jobId);
+  private Key getKey(UUID jobId) {
+    return datastore.newKeyFactory().setKind(KIND).newKey(jobId.toString());
   }
 
   /**

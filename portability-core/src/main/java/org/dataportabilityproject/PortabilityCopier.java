@@ -17,6 +17,7 @@ package org.dataportabilityproject;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.DataModel;
@@ -41,7 +42,7 @@ public class PortabilityCopier {
       AuthData exportAuthData,
       String importService,
       AuthData importAuthData,
-      String jobId) throws IOException {
+      UUID jobId) throws IOException {
 
     Exporter<T> exporter = registry.getExporter(exportService, dataType, jobId, exportAuthData);
     Importer<T> importer = registry.getImporter(importService, dataType, jobId, importAuthData);

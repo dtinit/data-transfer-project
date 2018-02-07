@@ -16,6 +16,7 @@
 package org.dataportabilityproject.worker;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
@@ -57,7 +58,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
       AuthData exportAuthData,
       String importService,
       AuthData importAuthData,
-      String jobId) throws IOException {
+      UUID jobId) throws IOException {
 
     Exporter<? extends AuthData, ? extends DataModel> exporter = registry.getExporter(exportService, dataType);
     Importer<? extends AuthData, ? extends DataModel> importer = registry.getImporter(importService, dataType);

@@ -27,8 +27,10 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
+import org.dataportabilityproject.job.IdProvider;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -57,6 +59,7 @@ final class DataTransferHandler implements HttpHandler {
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final JobStore store;
   private final PortabilityJobFactory jobFactory;
+  private final IdProvider idProvider;
   private final CommonSettings commonSettings;
   private final ObjectMapper objectMapper;
 
@@ -65,10 +68,12 @@ final class DataTransferHandler implements HttpHandler {
       ServiceProviderRegistry serviceProviderRegistry,
       CloudFactory cloudFactory,
       PortabilityJobFactory jobFactory,
+      IdProvider idProvider,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.store = cloudFactory.getJobStore();
     this.jobFactory = jobFactory;
+    this.idProvider = idProvider;
     this.commonSettings = commonSettings;
     this.objectMapper = new ObjectMapper();
   }
@@ -118,15 +123,15 @@ final class DataTransferHandler implements HttpHandler {
           "Missing valid importService: %s", importService);
 
       // Create a new job and persist
-      LegacyPortabilityJob newJob = createJob(dataType, exportService, importService);
+      UUID jobId = idProvider.createId();
+      createJob(jobId, dataType, exportService, importService);
 
       // Set new cookie
-      HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
+      HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(jobId));
       exchange.getResponseHeaders()
           .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
 
       // Lookup job, even if just recently created
-      String jobId = newJob.id();
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
@@ -140,8 +145,8 @@ final class DataTransferHandler implements HttpHandler {
           dataType, job.exportService());
 
       // Auth authUrl
-      AuthFlowInitiator authFlowInitiator = generator
-          .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(newJob));
+      AuthFlowInitiator authFlowInitiator =
+          generator.generateAuthUrl(PortabilityApiFlags.baseApiUrl(), jobId);
       Preconditions
           .checkNotNull(authFlowInitiator, "AuthFlowInitiator not found for type: %s, service: %s",
               dataType, job.exportService());
@@ -153,7 +158,7 @@ final class DataTransferHandler implements HttpHandler {
             ServiceMode.EXPORT);
         JobState expectedPreviousState =
             commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
-        store.update(job, expectedPreviousState);
+        store.update(jobId, job, expectedPreviousState);
       }
 
       // Send the authUrl for the client to redirect to export service authorization
@@ -171,18 +176,17 @@ final class DataTransferHandler implements HttpHandler {
   /**
    * Create the initial job in initial state and persist in storage.
    */
-  private LegacyPortabilityJob createJob(PortableDataType dataType, String exportService,
+  private LegacyPortabilityJob createJob(UUID jobId, PortableDataType dataType, String exportService,
       String importService) throws IOException {
     LegacyPortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.dataType()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.exportService()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
       job = job.toBuilder().setJobState(JobState.PENDING_AUTH_DATA).build();
     }
-    store.create(job);
+    store.create(jobId, job);
     return job;
   }
 }
