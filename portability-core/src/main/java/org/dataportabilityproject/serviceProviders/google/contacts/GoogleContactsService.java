@@ -39,6 +39,7 @@ import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
+import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
 import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 
 public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
@@ -66,7 +67,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @VisibleForTesting
   static VCard convertPersonToModel(Person person) throws IOException {
-    VCard vcard = new VCard();
+    VCard vCard = new VCard();
 
     /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
     Google contacts, b) those type options are often wrong, and c) those type options aren't even
@@ -74,77 +75,83 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
-    Pair<StructuredName, StructuredName[]> namesPair = convertToVcardNames(person.getNames());
-    vcard.setStructuredName(namesPair.first);
-    vcard.setStructuredNameAlt(namesPair.second);
+    Pair<StructuredName, StructuredName[]> namesPair = convertToVCardNames(person.getNames());
+    vCard.setStructuredName(namesPair.first);
+    vCard.setStructuredNameAlt(namesPair.second);
 
     /* TODO(olsona): uncomment when we want to test it
-    for (Telephone telephone : convertTelephoneNumbers(person.getPhoneNumbers())) {
+    for (Telephone telephone : convertToVCardTelephoneNumbers(person.getPhoneNumbers())) {
       vcard.addTelephoneNumber(telephone);
     }
 
-    for (ezvcard.property.Address vcardAddress : convertToVcardAddresses(person.getAddresses())) {
+    for (ezvcard.property.Address vcardAddress : convertToVCardAddresses(person.getAddresses())) {
       vcard.addAddress(vcardAddress);
     }
 
-    for (Email vcardEmail : convertToVcardEmails(person.getEmailAddresses())) {
+    for (Email vcardEmail : convertToVCardEmails(person.getEmailAddresses())) {
       vcard.addEmail(vcardEmail);
     }
     */
 
-    return vcard;
+    return vCard;
   }
 
   @VisibleForTesting
-  static List<ezvcard.property.Address> convertToVcardAddresses(
+  static List<ezvcard.property.Address> convertToVCardAddresses(
       List<com.google.api.services.people.v1.model.Address> personAddresses) {
-    List<ezvcard.property.Address> vcardAddresses = new LinkedList<>();
+    List<ezvcard.property.Address> vCardAddresses = new LinkedList<>();
     // TODO(olsona): all of this - can use Java 8 streams
 
-    return vcardAddresses;
+    return vCardAddresses;
   }
 
   @VisibleForTesting
-  static List<Email> convertToVcardEmails(List<EmailAddress> personEmails) {
-    List<Email> vcardEmails = new LinkedList<>();
+  static List<Email> convertToVCardEmails(List<EmailAddress> personEmails) {
+    List<Email> vCardEmails = new LinkedList<>();
     for (EmailAddress personEmail : personEmails) {
-      Email vcardEmail = new Email(personEmail.getValue());
-      vcardEmails.add(vcardEmail);
-
-      // TODO(olsona): address primary/secondary email
-      // TODO(olsona): address Email.displayName
-      // TODO(olsona): address Email.formattedType
+      vCardEmails.add(convertToVCardEmail_Single(personEmail));
     }
 
-    return vcardEmails;
+    return vCardEmails;
   }
 
   @VisibleForTesting
-  static Pair<StructuredName, StructuredName[]> convertToVcardNames(
+  static Email convertToVCardEmail_Single(EmailAddress personEmail) {
+    Email vCardEmail = new Email(personEmail.getValue());
+
+    // TODO(olsona): address primary/secondary email
+    // TODO(olsona): address Email.displayName
+    // TODO(olsona): address Email.formattedType
+
+    return vCardEmail;
+  }
+
+  @VisibleForTesting
+  static Pair<StructuredName, StructuredName[]> convertToVCardNames(
       List<Name> personNames) {
-    StructuredName primaryVcardName = null;
-    LinkedList<StructuredName> alternateVcardNames = new LinkedList<>();
+    StructuredName primaryVCardName = null;
+    LinkedList<StructuredName> alternateVCardNames = new LinkedList<>();
     for (Name personName : personNames) {
       if (personName.getMetadata().getPrimary()) {
         // This is the primary name for the Person, so it should be the primary name in the VCard.
-        primaryVcardName = convertSinglePersonName(personName);
+        primaryVCardName = convertToVCardName_Single(personName);
       } else {
-        alternateVcardNames.add(convertSinglePersonName(personName));
+        alternateVCardNames.add(convertToVCardName_Single(personName));
       }
     }
-    if (primaryVcardName == null) {
+    if (primaryVCardName == null) {
       // No personName was set as primary, so we'll just get the first alternate name
-      primaryVcardName = alternateVcardNames.pop();
+      primaryVCardName = alternateVCardNames.pop();
     }
 
-    StructuredName[] altArray = alternateVcardNames
-        .toArray(new StructuredName[alternateVcardNames.size()]);
+    StructuredName[] altArray = alternateVCardNames
+        .toArray(new StructuredName[alternateVCardNames.size()]);
 
-    return Pair.of(primaryVcardName, altArray);
+    return Pair.of(primaryVCardName, altArray);
   }
 
   @VisibleForTesting
-  static StructuredName convertSinglePersonName(Name personName) {
+  static StructuredName convertToVCardName_Single(Name personName) {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
@@ -156,14 +163,14 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static List<Telephone> convertTelephoneNumbers(List<PhoneNumber> personNumbers) {
-    List<Telephone> vcardTelephones = new LinkedList<>();
+  static List<Telephone> convertToVCardTelephoneNumbers(List<PhoneNumber> personNumbers) {
+    List<Telephone> vCardTelephones = new LinkedList<>();
     for (PhoneNumber personNumber : personNumbers) {
       Telephone telephone = new Telephone(personNumber.getValue());
-      vcardTelephones.add(telephone);
+      vCardTelephones.add(telephone);
     }
 
-    return vcardTelephones;
+    return vCardTelephones;
   }
 
   @Override
@@ -178,9 +185,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
       Person fullPerson = peopleService.people().get(initialPerson.getResourceName()).execute();
       vCards.add(convertPersonToModel(fullPerson));
     }
-    GoogleContactsP8nInfo newPage = null;
+    GooglePaginationInfo newPage = null;
     if (response.getTotalItems() > initialPeopleList.size()) {
-      newPage = new GoogleContactsP8nInfo(response.getNextPageToken());
+      newPage = new GooglePaginationInfo(response.getNextPageToken());
     }
     return new ContactsModelWrapper(vCards, new ContinuationInformation(null, newPage));
   }

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.serviceProviders.google.contacts;
+package org.dataportabilityproject.serviceProviders.google;
 
 import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 
-public class GoogleContactsP8nInfo implements PaginationInformation {
+public class GooglePaginationInfo implements PaginationInformation {
   private final String pageToken;
 
-  public GoogleContactsP8nInfo(String pageToken) {
+  public GooglePaginationInfo(String pageToken) {
     this.pageToken = pageToken;
   }
 
@@ -42,10 +42,10 @@ public class GoogleContactsP8nInfo implements PaginationInformation {
     if (object == null) {
       return false;
     }
-    if (!GoogleContactsP8nInfo.class.isAssignableFrom(object.getClass())) {
+    if (!GooglePaginationInfo.class.isAssignableFrom(object.getClass())) {
       return false;
     }
-    GoogleContactsP8nInfo other = (GoogleContactsP8nInfo) object;
+    GooglePaginationInfo other = (GooglePaginationInfo) object;
     return this.pageToken.equals(other.getPageToken());
   }
 }

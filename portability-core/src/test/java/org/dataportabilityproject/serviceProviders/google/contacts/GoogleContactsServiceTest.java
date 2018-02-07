@@ -38,6 +38,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
+import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -74,22 +75,30 @@ public class GoogleContactsServiceTest {
   }
 
   @Test
+  public void convertToVCardEmail_Single() {
+    // Set up test: single email
+    String emailAddress = "email@google.com";
+    EmailAddress googleEmail = new EmailAddress().setValue(emailAddress);
+
+    // Perform conversion
+    Email vCardEmail = GoogleContactsService.convertToVCardEmail_Single(googleEmail);
+  }
+
+  @Test
   public void convertToVCardEmails() {
     // Set up test
-    int numEmails = 1;
+    int numEmails = 4;
     List<EmailAddress> googleEmails = new LinkedList<>();
-    List<Email> expectedVCardEmails = new LinkedList<>();
     for (int i = 0; i < numEmails; i++) {
       String emailAddress = "email" + i + "@gmail.com";
       googleEmails.add(new EmailAddress().setValue(emailAddress));
-      expectedVCardEmails.add(new Email(emailAddress));
     }
 
     // Run test
-    List<Email> vcardEmails = GoogleContactsService.convertToVcardEmails(googleEmails);
+    List<Email> vCardEmails = GoogleContactsService.convertToVCardEmails(googleEmails);
 
     // Check that all emails were converted
-    assertThat(vcardEmails).containsExactlyElementsIn(expectedVCardEmails);
+    assertThat(vCardEmails.size()).isEqualTo(numEmails);
   }
 
   @Test
@@ -115,9 +124,9 @@ public class GoogleContactsServiceTest {
 
     // Check continuation information
     assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
-    GoogleContactsP8nInfo p8nInfo = (GoogleContactsP8nInfo) wrapper.getContinuationInformation()
+    GooglePaginationInfo googlePaginationInfo = (GooglePaginationInfo) wrapper.getContinuationInformation()
         .getPaginationInformation();
-    assertThat(p8nInfo.getPageToken()).isEqualTo(nextPageToken);
+    assertThat(googlePaginationInfo.getPageToken()).isEqualTo(nextPageToken);
 
     // Check VCard correctness
     Collection<VCard> vCardCollection = wrapper.getVCards();
