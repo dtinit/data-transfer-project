@@ -131,7 +131,7 @@ fi
 echo -e "\nCompiling and packaging...\n"
 
 gradle wrapper
-./gradlew build
+./gradlew clean build
 
 # TODO: Exit in case of error compiling
 
