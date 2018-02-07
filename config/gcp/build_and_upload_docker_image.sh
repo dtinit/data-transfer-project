@@ -128,7 +128,7 @@ fi
 # once uploaded to GCP, pull the image and 'docker inspect' it
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
-COPY $SRC_DIR/target/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
+COPY $SRC_DIR/build/libs/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
 $LOCAL_DEBUG_SETTINGS
 ENTRYPOINT ["java", $OPTIONAL_DEBUG_FLAG "-jar", "/$BINARY.jar"]
 EXPOSE 8080/tcp
