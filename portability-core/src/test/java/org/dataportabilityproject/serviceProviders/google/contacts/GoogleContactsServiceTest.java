@@ -116,7 +116,7 @@ public class GoogleContactsServiceTest {
         secondaryEmail2)); // Making sure order isn't a factor
 
     // Run test - NB, this Person only has emails
-    VCard vCard = GoogleContactsService.convertPersonToModel(person);
+    VCard vCard = GoogleContactsService.convertPersonToVCard(person);
 
     // Check results for correct values and preferences
     List<Email> resultPrimaryEmailList = getPropertiesWithPreference(vCard, Email.class,
@@ -144,7 +144,7 @@ public class GoogleContactsServiceTest {
         .setPhoneNumbers(Arrays.asList(secondaryPhone, primaryPhone1, primaryPhone2));
 
     // Run test
-    VCard vCard = GoogleContactsService.convertPersonToModel(person);
+    VCard vCard = GoogleContactsService.convertPersonToVCard(person);
 
     // Check results for correct values and preferences
     List<Telephone> resultPrimaryPhoneList = getPropertiesWithPreference(vCard, Telephone.class,

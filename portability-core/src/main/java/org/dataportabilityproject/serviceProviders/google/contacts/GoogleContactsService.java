@@ -18,7 +18,6 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
@@ -79,7 +78,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static VCard convertPersonToModel(Person person) {
+  static VCard convertPersonToVCard(Person person) {
     VCard vCard = new VCard();
 
     /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
@@ -95,11 +94,12 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     }
 
     if (person.getPhoneNumbers() != null) {
-      person.getPhoneNumbers()
-          .forEach(n -> vCard.getTelephoneNumbers().add(convertToVCardTelephone(n)));
+      // VCard API does not support adding multiple telephone numbers at once
+      person.getPhoneNumbers().forEach(n -> vCard.addTelephoneNumber(convertToVCardTelephone(n)));
     }
 
     if (person.getEmailAddresses() != null) {
+      // VCard API does not support adding multiple emails at once
       person.getEmailAddresses().forEach(e -> vCard.addEmail(convertToVCardEmail(e)));
     }
 
@@ -165,6 +165,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
+    // TODO(olsona): support pagination
     // Set up connection
     ListConnectionsResponse response = peopleService.people().connections()
         .list(SELF_RESOURCE).execute();
@@ -183,7 +184,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
     // Convert Persons to VCards
     List<VCard> vCards = personResponseList.stream()
-        .map(a -> convertPersonToModel(a.getPerson()))
+        .map(a -> convertPersonToVCard(a.getPerson()))
         .collect(Collectors.toList());
 
     // Determine if there's a next page
