@@ -31,7 +31,7 @@ public class PortabilityJob extends EntityType {
   private String importService;
 
   @JsonProperty
-  private String transferDataType;   // REVIEW: replace old PortableDataType since the latter is an enum and not extensible?
+  private String transferDataType; 
 
   @JsonProperty
   private LocalDateTime createdTimestamp; // ISO 8601 timestamp
