@@ -42,23 +42,30 @@ import static org.dataportabilityproject.transfer.microsoft.transformer.Transfor
  * Exports Outlook calendar information using the Microsoft Graph API.
  */
 public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, CalendarContainerResource> {
-    private static final String CALENDARS_URL = "https://graph.microsoft.com/v1.0/me/calendars";
-    private static final String EVENTS_URL = "https://graph.microsoft.com/v1.0/me/calendars/%s/events";
+    private static final String CALENDARS_URL = "/v1.0/me/calendars";
+    private static final String EVENTS_URL = "/v1.0/me/calendars/%s/events";
     private static final String ODATA_NEXT = "@odata.nextLink";
+
+    private final String baseUrl;
 
     private final OkHttpClient client;
     private final ObjectMapper objectMapper;
     private final TransformerService transformerService;
 
     public MicrosoftCalendarExporter(OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+        this("https://graph.microsoft.com", client, objectMapper, transformerService);
+    }
+
+    public MicrosoftCalendarExporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
         this.client = client;
         this.objectMapper = objectMapper;
         this.transformerService = transformerService;
+        this.baseUrl = baseUrl;
     }
 
     @Override
     public ExportResult<CalendarContainerResource> export(TokenAuthData authData) {
-        Request.Builder calendarsBuilder = getBuilder(CALENDARS_URL, authData);
+        Request.Builder calendarsBuilder = getBuilder(baseUrl + CALENDARS_URL, authData);
 
         List<CalendarModel> calendarModels = new ArrayList<>();
         try (Response graphResponse = client.newCall(calendarsBuilder.build()).execute()) {
@@ -89,19 +96,19 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
             }
         } catch (IOException e) {
             e.printStackTrace();  // FIXME log error
-            return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+            return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving calendar: " + e.getMessage());
         }
 
         List<CalendarEventModel> calendarEventModels = new ArrayList<>();
 
         for (CalendarModel calendarModel : calendarModels) {
             String id = calendarModel.getId();
-            Request.Builder eventsBuilder = getBuilder(String.format(EVENTS_URL, id), authData);
+            Request.Builder eventsBuilder = getBuilder(calculateEventsUrl(id), authData);
 
             try (Response graphResponse = client.newCall(eventsBuilder.build()).execute()) {
                 ResponseBody body = graphResponse.body();
                 if (body == null) {
-                    return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving contacts: response body was null");
+                    return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving calendar: response body was null");
                 }
                 String graphBody = new String(body.bytes());
                 Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
@@ -135,6 +142,10 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
 
         CalendarContainerResource resource = new CalendarContainerResource(calendarModels, calendarEventModels);
         return new ExportResult<>(ExportResult.ResultType.END, resource, null);
+    }
+
+    private String calculateEventsUrl(String eventId) {
+        return baseUrl + String.format(EVENTS_URL, eventId);
     }
 
     @Override

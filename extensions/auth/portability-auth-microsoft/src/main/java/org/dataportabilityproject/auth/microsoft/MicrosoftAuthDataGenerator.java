@@ -51,7 +51,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
         // constructs a request for the Microsoft Graph authorization code.
         String redirectUrl = callbackBaseUrl + redirectPath;
-        String queryPart = constructAuthQueryPart(redirectUrl, id, "user.read", "mail.read", "Contacts.ReadWrite");
+        String queryPart = constructAuthQueryPart(redirectUrl, id, "user.read", "mail.read", "Contacts.ReadWrite", "Calendars.ReadWrite");
         return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart);
     }
 
