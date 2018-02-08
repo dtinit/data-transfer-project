@@ -28,7 +28,6 @@ import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.PhoneNumber;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
@@ -89,9 +88,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     */
 
     if (person.getNames() != null) {
-      Pair<StructuredName, StructuredName[]> namesPair = convertToVCardNames(person.getNames());
-      vCard.setStructuredName(namesPair.first);
-      vCard.setStructuredNameAlt(namesPair.second);
+      convertToVCardNamesAndPopulate(vCard, person.getNames());
     }
 
     if (person.getPhoneNumbers() != null) {
@@ -122,27 +119,24 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  private static Pair<StructuredName, StructuredName[]> convertToVCardNames(
+  private static void convertToVCardNamesAndPopulate(VCard vCard,
       List<Name> personNames) {
-    StructuredName primaryVCardName = null;
     LinkedList<StructuredName> alternateVCardNames = new LinkedList<>();
     for (Name personName : personNames) {
       if (personName.getMetadata().getPrimary()) {
         // This is the primary name for the Person, so it should be the primary name in the VCard.
-        primaryVCardName = convertToVCardNameSingle(personName);
+        vCard.setStructuredName(convertToVCardNameSingle(personName));
       } else {
         alternateVCardNames.add(convertToVCardNameSingle(personName));
       }
     }
-    if (primaryVCardName == null) {
+    if (vCard.getStructuredName() == null) {
       // No personName was set as primary, so we'll just get the first alternate name
-      primaryVCardName = alternateVCardNames.pop();
+      vCard.setStructuredName(alternateVCardNames.pop());
     }
 
-    StructuredName[] altArray = alternateVCardNames
-        .toArray(new StructuredName[alternateVCardNames.size()]);
-
-    return Pair.of(primaryVCardName, altArray);
+    vCard.setStructuredNameAlt(
+        alternateVCardNames.toArray(new StructuredName[alternateVCardNames.size()]));
   }
 
   @VisibleForTesting

@@ -60,6 +60,7 @@ import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
 import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -221,7 +222,7 @@ public class GoogleContactsServiceTest {
 
     ListConnectionsResponse listConnectionsResponse = new ListConnectionsResponse();
     listConnectionsResponse.setConnections(connectionsList);
-    listConnectionsResponse.setNextPageToken(nextPageToken);
+    listConnectionsResponse.setNextPageToken(null);
 
     Connections.List listConnections = mock(Connections.List.class);
 
@@ -231,8 +232,9 @@ public class GoogleContactsServiceTest {
 
     when(peopleService.people()
         .connections()
-        .list(SELF_RESOURCE)
-        .setPageToken(nextPageToken))
+        .list(SELF_RESOURCE))
+        .thenReturn(listConnections);
+    when(listConnections.setPageToken(nextPageToken))
         .thenReturn(listConnections);
     when(listConnections.execute())
         .thenReturn(listConnectionsResponse);
@@ -243,7 +245,17 @@ public class GoogleContactsServiceTest {
         .execute())
         .thenReturn(batchResponse);
 
+    // Run test
     ContactsModelWrapper wrapper = contactsService.export(nextPageExportInformation);
+
+    // Verify correct calls were made - i.e., token was added before execution
+    InOrder inOrder = Mockito.inOrder(listConnections);
+    inOrder.verify(listConnections).setPageToken(nextPageToken);
+    inOrder.verify(listConnections).execute();
+
+    // Check continuation information
+    assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
+    assertThat(wrapper.getContinuationInformation().getPaginationInformation()).isNull();
   }
 
   private static <T extends VCardProperty, V> List<V> getValuesFromProperties(List<T> propertyList,
