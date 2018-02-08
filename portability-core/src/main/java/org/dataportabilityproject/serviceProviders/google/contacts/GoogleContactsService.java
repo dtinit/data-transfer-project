@@ -18,6 +18,7 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
@@ -111,7 +112,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static Email convertToVCardEmail(EmailAddress personEmail) {
+  private static Email convertToVCardEmail(EmailAddress personEmail) {
     // TODO(olsona): address Email.displayName
     // TODO(olsona): address Email.formattedType
     Email email = new Email(personEmail.getValue());
@@ -121,7 +122,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static Pair<StructuredName, StructuredName[]> convertToVCardNames(
+  private static Pair<StructuredName, StructuredName[]> convertToVCardNames(
       List<Name> personNames) {
     StructuredName primaryVCardName = null;
     LinkedList<StructuredName> alternateVCardNames = new LinkedList<>();
@@ -145,7 +146,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static StructuredName convertToVCardNameSingle(Name personName) {
+  private static StructuredName convertToVCardNameSingle(Name personName) {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
@@ -157,7 +158,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static Telephone convertToVCardTelephone(PhoneNumber personNumber) {
+  private static Telephone convertToVCardTelephone(PhoneNumber personNumber) {
     Telephone telephone = new Telephone(personNumber.getValue());
     telephone.setPref(getPref(personNumber.getMetadata()));
     return telephone;
@@ -165,10 +166,19 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
-    // TODO(olsona): support pagination
     // Set up connection
-    ListConnectionsResponse response = peopleService.people().connections()
-        .list(SELF_RESOURCE).execute();
+    Connections.List connectionsList = peopleService.people().connections()
+        .list(SELF_RESOURCE);
+
+    // Get next page, if we have a page token
+    if (continuationInformation.getPaginationInformation().isPresent()) {
+      String pageToken = ((GooglePaginationInfo) continuationInformation.getPaginationInformation()
+          .get()).getPageToken();
+      connectionsList.setPageToken(pageToken);
+    }
+
+    // Get list of connections (nb: not a list containing full info of each Person)
+    ListConnectionsResponse response = connectionsList.execute();
     List<Person> peopleList = response.getConnections();
 
     // Get list of resource names, then get list of Persons

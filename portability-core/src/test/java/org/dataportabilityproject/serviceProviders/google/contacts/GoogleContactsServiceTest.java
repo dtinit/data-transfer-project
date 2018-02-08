@@ -26,9 +26,11 @@ import static org.dataportabilityproject.serviceProviders.google.contacts.Google
 import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService
     .SELF_RESOURCE;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
@@ -169,14 +171,17 @@ public class GoogleContactsServiceTest {
     listConnectionsResponse.setConnections(connectionsList);
     listConnectionsResponse.setNextPageToken(nextPageToken);
 
+    Connections.List listConnections = mock(Connections.List.class);
+
     PersonResponse personResponse = new PersonResponse().setPerson(PERSON);
     GetPeopleResponse batchResponse = new GetPeopleResponse()
         .setResponses(Collections.singletonList(personResponse));
 
     when(peopleService.people()
         .connections()
-        .list(SELF_RESOURCE)
-        .execute())
+        .list(SELF_RESOURCE))
+        .thenReturn(listConnections);
+    when(listConnections.execute())
         .thenReturn(listConnectionsResponse);
     when(peopleService.people()
         .getBatchGet()
@@ -188,6 +193,13 @@ public class GoogleContactsServiceTest {
     // Run test
     ContactsModelWrapper wrapper = contactsService.export(emptyExportInformation);
 
+    // Check the correct calls were made
+    verify(peopleService).people().connections().list(SELF_RESOURCE);
+    verify(listConnections).execute();
+    verify(peopleService).people().getBatchGet()
+        .setResourceNames(Collections.singletonList(RESOURCE_NAME)).setPersonFields(PERSON_FIELDS)
+        .execute();
+
     // Check continuation information
     assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
     GooglePaginationInfo googlePaginationInfo = (GooglePaginationInfo) wrapper
@@ -198,6 +210,40 @@ public class GoogleContactsServiceTest {
     // Check that the right number of VCards was returned
     Collection<VCard> vCardCollection = wrapper.getVCards();
     assertThat(vCardCollection.size()).isEqualTo(connectionsList.size());
+  }
+
+  @Test
+  public void exportSubsequentPage() throws IOException {
+    List<Person> connectionsList = Collections.singletonList(PERSON);
+    String nextPageToken = "token";
+    ExportInformation nextPageExportInformation = new ExportInformation(Optional.empty(),
+        Optional.of(new GooglePaginationInfo(nextPageToken)));
+
+    ListConnectionsResponse listConnectionsResponse = new ListConnectionsResponse();
+    listConnectionsResponse.setConnections(connectionsList);
+    listConnectionsResponse.setNextPageToken(nextPageToken);
+
+    Connections.List listConnections = mock(Connections.List.class);
+
+    PersonResponse personResponse = new PersonResponse().setPerson(PERSON);
+    GetPeopleResponse batchResponse = new GetPeopleResponse()
+        .setResponses(Collections.singletonList(personResponse));
+
+    when(peopleService.people()
+        .connections()
+        .list(SELF_RESOURCE)
+        .setPageToken(nextPageToken))
+        .thenReturn(listConnections);
+    when(listConnections.execute())
+        .thenReturn(listConnectionsResponse);
+    when(peopleService.people()
+        .getBatchGet()
+        .setResourceNames(Collections.singletonList(RESOURCE_NAME))
+        .setPersonFields(PERSON_FIELDS)
+        .execute())
+        .thenReturn(batchResponse);
+
+    ContactsModelWrapper wrapper = contactsService.export(nextPageExportInformation);
   }
 
   private static <T extends VCardProperty, V> List<V> getValuesFromProperties(List<T> propertyList,
