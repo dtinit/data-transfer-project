@@ -53,7 +53,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
    */
   @Override
   public void copyDataType(TransferServiceProviderRegistry registry,
-      PortableType dataType,
+      String dataType,
       String exportService,
       AuthData exportAuthData,
       String importService,
