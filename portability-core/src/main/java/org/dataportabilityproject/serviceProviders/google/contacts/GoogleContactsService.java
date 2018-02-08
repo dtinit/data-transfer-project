@@ -19,6 +19,7 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
 import com.google.api.services.people.v1.model.Name;
@@ -56,6 +57,11 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   @VisibleForTesting
   // List of all fields we want to get from the Google Contacts API
   static final String PERSON_FIELDS = "addresses,emailAddresses,names,phoneNumbers";
+
+  @VisibleForTesting
+  static final int PRIMARY_PREF = 1;
+  @VisibleForTesting
+  static final int SECONDARY_PREF = 2;
 
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
     // TODO(olsona): add permissions/scopes!
@@ -99,12 +105,16 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     return vCard;
   }
 
+  private static int getPref(FieldMetadata metadata) {
+    return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
+  }
+
   @VisibleForTesting
   static Email convertToVCardEmail(EmailAddress personEmail) {
     // TODO(olsona): address Email.displayName
     // TODO(olsona): address Email.formattedType
     Email email = new Email(personEmail.getValue());
-    email.setPref(personEmail.getMetadata().getPrimary() ? 1 : 2);
+    email.setPref(getPref(personEmail.getMetadata()));
 
     return email;
   }
@@ -148,7 +158,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   @VisibleForTesting
   static Telephone convertToVCardTelephone(PhoneNumber personNumber) {
     Telephone telephone = new Telephone(personNumber.getValue());
-    telephone.setPref(personNumber.getMetadata().getPrimary() ? 1 : 2);
+    telephone.setPref(getPref(personNumber.getMetadata()));
     return telephone;
   }
 
