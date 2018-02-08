@@ -23,9 +23,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- */
 public class ToCalendarAttendeeModelTransformerTest {
 
     private ToCalendarAttendeeModelTransformer transformer = new ToCalendarAttendeeModelTransformer();

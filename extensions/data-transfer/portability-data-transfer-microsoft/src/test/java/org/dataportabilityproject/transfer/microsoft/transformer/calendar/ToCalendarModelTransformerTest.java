@@ -26,9 +26,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- *
- */
 public class ToCalendarModelTransformerTest {
     private ToCalendarModelTransformer transformer;
     private ObjectMapper mapper;

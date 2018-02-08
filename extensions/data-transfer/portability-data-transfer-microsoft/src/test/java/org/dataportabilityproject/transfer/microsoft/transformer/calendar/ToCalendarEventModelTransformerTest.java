@@ -28,9 +28,6 @@ import java.util.Map;
 
 import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
 
-/**
- *
- */
 public class ToCalendarEventModelTransformerTest {
     private ToCalendarEventModelTransformer transformer;
     private ObjectMapper mapper;
