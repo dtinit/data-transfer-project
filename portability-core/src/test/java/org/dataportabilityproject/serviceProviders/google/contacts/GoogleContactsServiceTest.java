@@ -38,14 +38,18 @@ import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.PhoneNumber;
 import ezvcard.VCard;
+import ezvcard.parameter.VCardParameters;
 import ezvcard.property.Email;
 import ezvcard.property.Telephone;
 import ezvcard.property.TextProperty;
+import ezvcard.property.VCardProperty;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
@@ -97,7 +101,7 @@ public class GoogleContactsServiceTest {
   }
 
   @Test
-  public void testEmailConversion() {
+  public void testConversionToVCardEmail() {
     // Set up test: person with 1 primary email and 2 secondary emails
     String primaryString = "primary@email.com";
     String secondaryString1 = "secondary1@email.com";
@@ -115,15 +119,17 @@ public class GoogleContactsServiceTest {
     VCard vCard = GoogleContactsService.convertPersonToModel(person);
 
     // Check results for correct values and preferences
-    List<Email> resultPrimaryEmailList = getEmailsByPreference(vCard, PRIMARY_PREF);
+    List<Email> resultPrimaryEmailList = getPropertiesWithPreference(vCard, Email.class,
+        PRIMARY_PREF);
     assertThat(getValuesFromTextProperties(resultPrimaryEmailList)).containsExactly(primaryString);
-    List<Email> resultSecondaryEmailList = getEmailsByPreference(vCard, SECONDARY_PREF);
+    List<Email> resultSecondaryEmailList = getPropertiesWithPreference(vCard, Email.class,
+        SECONDARY_PREF);
     assertThat(getValuesFromTextProperties(resultSecondaryEmailList))
         .containsExactly(secondaryString1, secondaryString2);
   }
 
   @Test
-  public void testPhoneNumberConversion() {
+  public void testConversionToVCardTelephone() {
     // Set up test: person with 2 primary phone numbers and 1 secondary phone number
     String primaryValue1 = "334-844-4244";
     String primaryValue2 = "411";
@@ -141,24 +147,26 @@ public class GoogleContactsServiceTest {
     VCard vCard = GoogleContactsService.convertPersonToModel(person);
 
     // Check results for correct values and preferences
-    List<Telephone> resultPrimaryPhoneList = getTelephonesByPreference(vCard, PRIMARY_PREF);
-    assertThat(getValuesFromTelephones(resultPrimaryPhoneList))
+    List<Telephone> resultPrimaryPhoneList = getPropertiesWithPreference(vCard, Telephone.class,
+        PRIMARY_PREF);
+    assertThat(getValuesFromProperties(resultPrimaryPhoneList, Telephone::getText))
         .containsExactly(primaryValue1, primaryValue2);
-    List<Telephone> resultSecondaryPhoneList = getTelephonesByPreference(vCard, SECONDARY_PREF);
-    assertThat(getValuesFromTelephones(resultSecondaryPhoneList)).containsExactly(secondaryValue);
+    List<Telephone> resultSecondaryPhoneList = getPropertiesWithPreference(vCard, Telephone.class,
+        SECONDARY_PREF);
+    assertThat(getValuesFromProperties(resultSecondaryPhoneList, Telephone::getText))
+        .containsExactly(secondaryValue);
   }
 
   @Test
   public void exportFirstPage() throws IOException {
-    // Set up
+    // Set up: one person in a page, with a next page token set to mimic that there's another page
     List<Person> connectionsList = Collections.singletonList(PERSON);
-    int totalItems = connectionsList.size() + 1;
     String nextPageToken = "token";
-    ExportInformation emptyExportInformation = new ExportInformation(null, null);
+    ExportInformation emptyExportInformation = new ExportInformation(Optional.empty(),
+        Optional.empty()); // first page
 
     ListConnectionsResponse listConnectionsResponse = new ListConnectionsResponse();
     listConnectionsResponse.setConnections(connectionsList);
-    listConnectionsResponse.setTotalItems(totalItems); // More than the size of the list
     listConnectionsResponse.setNextPageToken(nextPageToken);
 
     PersonResponse personResponse = new PersonResponse().setPerson(PERSON);
@@ -192,27 +200,20 @@ public class GoogleContactsServiceTest {
     assertThat(vCardCollection.size()).isEqualTo(connectionsList.size());
   }
 
-  // There is no way to get a list of values for a generic type in VCard, so there has to be a
-  // method for each individual type.
-  private static List<Email> getEmailsByPreference(VCard vCard, int preference) {
-    return vCard.getEmails().stream()
-        .filter(e -> e.getPref() == preference)
-        .collect(Collectors.toList());
-  }
-
-  private static List<Telephone> getTelephonesByPreference(VCard vCard, int preference) {
-    return vCard.getTelephoneNumbers().stream()
-        .filter(t -> t.getPref() == preference)
-        .collect(Collectors.toList());
+  private static <T extends VCardProperty, V> List<V> getValuesFromProperties(List<T> propertyList,
+      Function<T, V> function) {
+    return propertyList.stream().map(function).collect(Collectors.toList());
   }
 
   private static <T extends TextProperty> List<String> getValuesFromTextProperties(
       List<T> propertyList) {
-    return propertyList.stream().map(a -> a.getValue()).collect(Collectors.toList());
+    return getValuesFromProperties(propertyList, T::getValue);
   }
 
-  // Telephones aren't TextProperties, so they get their own method
-  private static List<String> getValuesFromTelephones(List<Telephone> telephoneList) {
-    return telephoneList.stream().map(t -> t.getText()).collect(Collectors.toList());
+  private static <T extends VCardProperty> List<T> getPropertiesWithPreference(VCard vCard,
+      Class<T> clazz, int preference) {
+    return vCard.getProperties(clazz).stream()
+        .filter(p -> p.getParameter(VCardParameters.PREF).equals(Integer.toString(preference)))
+        .collect(Collectors.toList());
   }
 }

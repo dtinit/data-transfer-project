@@ -18,6 +18,7 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
@@ -164,11 +165,23 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
-    // TODO(olsona): get next page using pagination token, if token is present
-    ListConnectionsResponse response = peopleService.people().connections().list(SELF_RESOURCE)
-        .execute();
-    List<Person> initialPeopleList = response.getConnections();
-    List<String> resourceNames = initialPeopleList.stream()
+    // Set up connection
+    Connections.List connectionsList = peopleService.people().connections()
+        .list(SELF_RESOURCE);
+
+    // Get next page, if we have a page token
+    if (continuationInformation.getPaginationInformation().isPresent()) {
+      String pageToken = ((GooglePaginationInfo) continuationInformation.getPaginationInformation()
+          .get()).getPageToken();
+      connectionsList.setPageToken(pageToken);
+    }
+
+    // Get list of connections (nb: not a list containing full info of each Person)
+    ListConnectionsResponse response = connectionsList.execute();
+    List<Person> peopleList = response.getConnections();
+
+    // Get list of resource names, then get list of Persons
+    List<String> resourceNames = peopleList.stream()
         .map(Person::getResourceName)
         .collect(Collectors.toList());
     GetPeopleResponse batchResponse = peopleService.people()
@@ -177,13 +190,18 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
         .setPersonFields(PERSON_FIELDS)
         .execute();
     List<PersonResponse> personResponseList = batchResponse.getResponses();
+
+    // Convert Persons to VCards
     List<VCard> vCards = personResponseList.stream()
         .map(a -> convertPersonToModel(a.getPerson()))
         .collect(Collectors.toList());
+
+    // Determine if there's a next page
     GooglePaginationInfo newPage = null;
-    if (response.getTotalItems() > initialPeopleList.size()) {
+    if (response.getNextPageToken() != null) {
       newPage = new GooglePaginationInfo(response.getNextPageToken());
     }
+
     return new ContactsModelWrapper(vCards, new ContinuationInformation(null, newPage));
   }
 
