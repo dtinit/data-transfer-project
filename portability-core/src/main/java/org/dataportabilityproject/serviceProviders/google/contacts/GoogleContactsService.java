@@ -18,7 +18,6 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
@@ -82,57 +81,32 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
-    Pair<StructuredName, StructuredName[]> namesPair = convertToVCardNames(person.getNames());
-    vCard.setStructuredName(namesPair.first);
-    vCard.setStructuredNameAlt(namesPair.second);
-
-    /* TODO(olsona): uncomment when we want to test it
-    for (Telephone telephone : convertToVCardTelephoneNumbers(person.getPhoneNumbers())) {
-      vcard.addTelephoneNumber(telephone);
+    if (person.getNames() != null) {
+      Pair<StructuredName, StructuredName[]> namesPair = convertToVCardNames(person.getNames());
+      vCard.setStructuredName(namesPair.first);
+      vCard.setStructuredNameAlt(namesPair.second);
     }
 
-    for (ezvcard.property.Address vcardAddress : convertToVCardAddresses(person.getAddresses())) {
-      vcard.addAddress(vcardAddress);
+    if (person.getPhoneNumbers() != null) {
+      person.getPhoneNumbers()
+          .forEach(n -> vCard.getTelephoneNumbers().add(convertToVCardTelephone(n)));
     }
 
-    for (Email vcardEmail : convertToVCardEmails(person.getEmailAddresses())) {
-      vcard.addEmail(vcardEmail);
+    if (person.getEmailAddresses() != null) {
+      person.getEmailAddresses().forEach(e -> vCard.addEmail(convertToVCardEmail(e)));
     }
-    */
 
     return vCard;
   }
 
   @VisibleForTesting
-  static List<ezvcard.property.Address> convertToVCardAddresses(
-      List<com.google.api.services.people.v1.model.Address> personAddresses) {
-    // TODO(olsona): address question of which address is primary
-    return personAddresses.stream()
-        .map(GoogleContactsService::convertToVCardAddressSingle)
-        .collect(Collectors.toList());
-  }
-
-  @VisibleForTesting
-  static ezvcard.property.Address convertToVCardAddressSingle(
-      com.google.api.services.people.v1.model.Address personAddress) {
-    // TODO(olsona)
-    return null;
-  }
-
-  @VisibleForTesting
-  static List<Email> convertToVCardEmails(List<EmailAddress> personEmails) {
-    return personEmails.stream()
-        .map(GoogleContactsService::convertToVCardEmailSingle)
-        .collect(Collectors.toList());
-  }
-
-  @VisibleForTesting
-  static Email convertToVCardEmailSingle(EmailAddress personEmail) {
-    // TODO(olsona): address primary/secondary email
+  static Email convertToVCardEmail(EmailAddress personEmail) {
     // TODO(olsona): address Email.displayName
     // TODO(olsona): address Email.formattedType
+    Email email = new Email(personEmail.getValue());
+    email.setPref(personEmail.getMetadata().getPrimary() ? 1 : 2);
 
-    return new Email(personEmail.getValue());
+    return email;
   }
 
   @VisibleForTesting
@@ -172,17 +146,17 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static List<Telephone> convertToVCardTelephoneNumbers(List<PhoneNumber> personNumbers) {
-    // TODO(olsona): address primary/secondary
-    return personNumbers.stream()
-        .map(a -> new Telephone(a.getValue()))
-        .collect(Collectors.toList());
+  static Telephone convertToVCardTelephone(PhoneNumber personNumber) {
+    Telephone telephone = new Telephone(personNumber.getValue());
+    telephone.setPref(personNumber.getMetadata().getPrimary() ? 1 : 2);
+    return telephone;
   }
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
     // TODO(olsona): get next page using pagination token, if token is present
-    ListConnectionsResponse response = peopleService.people().connections().list(SELF_RESOURCE).execute();
+    ListConnectionsResponse response = peopleService.people().connections().list(SELF_RESOURCE)
+        .execute();
     List<Person> initialPeopleList = response.getConnections();
     List<String> resourceNames = initialPeopleList.stream()
         .map(Person::getResourceName)

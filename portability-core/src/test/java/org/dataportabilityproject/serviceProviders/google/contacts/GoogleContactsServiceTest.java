@@ -28,12 +28,13 @@ import com.google.api.services.people.v1.model.ListConnectionsResponse;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
+import com.google.api.services.people.v1.model.PhoneNumber;
 import ezvcard.VCard;
 import ezvcard.property.Email;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
@@ -50,16 +51,27 @@ public class GoogleContactsServiceTest {
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactsServiceTest.class);
 
+  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
+  private static final FieldMetadata SECONDARY_FIELD_METADATA =
+      new FieldMetadata().setPrimary(false);
+
+  private static final String RESOURCE_NAME = "resource_name";
+
+  private static final PhoneNumber PRIMARY_PHONE = new PhoneNumber().setValue("334-844-4244")
+      .setMetadata(PRIMARY_FIELD_METADATA);
+  private static final PhoneNumber SECONDARY_PHONE = new PhoneNumber().setValue("555-867-5309")
+      .setMetadata(SECONDARY_FIELD_METADATA);
+
   private static final String FIRST_NAME = "Jane";
   private static final String LAST_NAME = "Doe";
-  private static final String RESOURCE_NAME = "resource_name";
-  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final Name NAME = new Name()
       .setGivenName(FIRST_NAME)
       .setFamilyName(LAST_NAME)
       .setMetadata(PRIMARY_FIELD_METADATA);
+
   private static final Person PERSON = new Person()
       .setNames(Collections.singletonList(NAME))
+      .setPhoneNumbers(Arrays.asList(PRIMARY_PHONE, SECONDARY_PHONE))
       .setResourceName(RESOURCE_NAME);
 
   private PeopleService peopleService;
@@ -74,30 +86,18 @@ public class GoogleContactsServiceTest {
   }
 
   @Test
-  public void convertToVCardEmail_Single() {
+  public void convertToVCardEmail() {
     // Set up test: single email
     String emailAddress = "email@google.com";
-    EmailAddress googleEmail = new EmailAddress().setValue(emailAddress);
+    EmailAddress googleEmail = new EmailAddress().setValue(emailAddress)
+        .setMetadata(PRIMARY_FIELD_METADATA);
 
     // Perform conversion
-    Email vCardEmail = GoogleContactsService.convertToVCardEmailSingle(googleEmail);
-  }
+    Email vCardEmail = GoogleContactsService.convertToVCardEmail(googleEmail);
 
-  @Test
-  public void convertToVCardEmails() {
-    // Set up test
-    int numEmails = 4;
-    List<EmailAddress> googleEmails = new LinkedList<>();
-    for (int i = 0; i < numEmails; i++) {
-      String emailAddress = "email" + i + "@gmail.com";
-      googleEmails.add(new EmailAddress().setValue(emailAddress));
-    }
-
-    // Run test
-    List<Email> vCardEmails = GoogleContactsService.convertToVCardEmails(googleEmails);
-
-    // Check that all emails were converted
-    assertThat(vCardEmails.size()).isEqualTo(numEmails);
+    // Check contents
+    assertThat(vCardEmail.getValue()).isEqualTo(emailAddress);
+    assertThat(vCardEmail.getPref()).isEqualTo(1); // primary email
   }
 
   @Test
@@ -142,6 +142,6 @@ public class GoogleContactsServiceTest {
     // Check VCard correctness
     Collection<VCard> vCardCollection = wrapper.getVCards();
     assertThat(vCardCollection.size()).isEqualTo(connectionsList.size());
-    // TODO(olsona): check vcard correctness
+    VCard vCard = (VCard) vCardCollection.toArray()[0]; // TODO(olsona): this is a hack
   }
 }
