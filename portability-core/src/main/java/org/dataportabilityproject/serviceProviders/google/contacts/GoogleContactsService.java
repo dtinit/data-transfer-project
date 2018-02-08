@@ -20,9 +20,12 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.FieldMetadata;
+import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
+import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.PhoneNumber;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gdata.util.common.base.Pair;
@@ -33,6 +36,7 @@ import ezvcard.property.Telephone;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
@@ -51,6 +55,15 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   @VisibleForTesting
   static final String SELF_RESOURCE = "people/me";
 
+  @VisibleForTesting
+  // List of all fields we want to get from the Google Contacts API
+  static final String PERSON_FIELDS = "addresses,emailAddresses,names,phoneNumbers";
+
+  @VisibleForTesting
+  static final int PRIMARY_PREF = 1;
+  @VisibleForTesting
+  static final int SECONDARY_PREF = 2;
+
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
     // TODO(olsona): add permissions/scopes!
     this(new PeopleService.Builder(
@@ -66,7 +79,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static VCard convertPersonToModel(Person person) throws IOException {
+  static VCard convertPersonToModel(Person person) {
     VCard vCard = new VCard();
 
     /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
@@ -75,55 +88,36 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
-    Pair<StructuredName, StructuredName[]> namesPair = convertToVCardNames(person.getNames());
-    vCard.setStructuredName(namesPair.first);
-    vCard.setStructuredNameAlt(namesPair.second);
-
-    /* TODO(olsona): uncomment when we want to test it
-    for (Telephone telephone : convertToVCardTelephoneNumbers(person.getPhoneNumbers())) {
-      vcard.addTelephoneNumber(telephone);
+    if (person.getNames() != null) {
+      Pair<StructuredName, StructuredName[]> namesPair = convertToVCardNames(person.getNames());
+      vCard.setStructuredName(namesPair.first);
+      vCard.setStructuredNameAlt(namesPair.second);
     }
 
-    for (ezvcard.property.Address vcardAddress : convertToVCardAddresses(person.getAddresses())) {
-      vcard.addAddress(vcardAddress);
+    if (person.getPhoneNumbers() != null) {
+      person.getPhoneNumbers()
+          .forEach(n -> vCard.getTelephoneNumbers().add(convertToVCardTelephone(n)));
     }
 
-    for (Email vcardEmail : convertToVCardEmails(person.getEmailAddresses())) {
-      vcard.addEmail(vcardEmail);
+    if (person.getEmailAddresses() != null) {
+      person.getEmailAddresses().forEach(e -> vCard.addEmail(convertToVCardEmail(e)));
     }
-    */
 
     return vCard;
   }
 
-  @VisibleForTesting
-  static List<ezvcard.property.Address> convertToVCardAddresses(
-      List<com.google.api.services.people.v1.model.Address> personAddresses) {
-    List<ezvcard.property.Address> vCardAddresses = new LinkedList<>();
-    // TODO(olsona): all of this - can use Java 8 streams
-
-    return vCardAddresses;
+  private static int getPref(FieldMetadata metadata) {
+    return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
   }
 
   @VisibleForTesting
-  static List<Email> convertToVCardEmails(List<EmailAddress> personEmails) {
-    List<Email> vCardEmails = new LinkedList<>();
-    for (EmailAddress personEmail : personEmails) {
-      vCardEmails.add(convertToVCardEmailSingle(personEmail));
-    }
-
-    return vCardEmails;
-  }
-
-  @VisibleForTesting
-  static Email convertToVCardEmailSingle(EmailAddress personEmail) {
-    Email vCardEmail = new Email(personEmail.getValue());
-
-    // TODO(olsona): address primary/secondary email
+  static Email convertToVCardEmail(EmailAddress personEmail) {
     // TODO(olsona): address Email.displayName
     // TODO(olsona): address Email.formattedType
+    Email email = new Email(personEmail.getValue());
+    email.setPref(getPref(personEmail.getMetadata()));
 
-    return vCardEmail;
+    return email;
   }
 
   @VisibleForTesting
@@ -163,33 +157,41 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @VisibleForTesting
-  static List<Telephone> convertToVCardTelephoneNumbers(List<PhoneNumber> personNumbers) {
-    List<Telephone> vCardTelephones = new LinkedList<>();
-    for (PhoneNumber personNumber : personNumbers) {
-      Telephone telephone = new Telephone(personNumber.getValue());
-      vCardTelephones.add(telephone);
-    }
-
-    return vCardTelephones;
+  static Telephone convertToVCardTelephone(PhoneNumber personNumber) {
+    Telephone telephone = new Telephone(personNumber.getValue());
+    telephone.setPref(getPref(personNumber.getMetadata()));
+    return telephone;
   }
 
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
-    // TODO(olsona): get next page using pagination token, if token is present
-    Connections.List connectionsListRequest = peopleService.people().connections()
-        .list(SELF_RESOURCE);
-    ListConnectionsResponse response = connectionsListRequest.execute();
-    List<Person> initialPeopleList = response.getConnections();
-    List<VCard> vCards = new LinkedList<>();
-    for (Person initialPerson : initialPeopleList) {
-      // TODO(olsona): look into a batch operation for this, instead of making a call for each person
-      Person fullPerson = peopleService.people().get(initialPerson.getResourceName()).execute();
-      vCards.add(convertPersonToModel(fullPerson));
-    }
+    // Set up connection
+    ListConnectionsResponse response = peopleService.people().connections()
+        .list(SELF_RESOURCE).execute();
+    List<Person> peopleList = response.getConnections();
+
+    // Get list of resource names, then get list of Persons
+    List<String> resourceNames = peopleList.stream()
+        .map(Person::getResourceName)
+        .collect(Collectors.toList());
+    GetPeopleResponse batchResponse = peopleService.people()
+        .getBatchGet()
+        .setResourceNames(resourceNames)
+        .setPersonFields(PERSON_FIELDS)
+        .execute();
+    List<PersonResponse> personResponseList = batchResponse.getResponses();
+
+    // Convert Persons to VCards
+    List<VCard> vCards = personResponseList.stream()
+        .map(a -> convertPersonToModel(a.getPerson()))
+        .collect(Collectors.toList());
+
+    // Determine if there's a next page
     GooglePaginationInfo newPage = null;
-    if (response.getTotalItems() > initialPeopleList.size()) {
+    if (response.getNextPageToken() != null) {
       newPage = new GooglePaginationInfo(response.getNextPageToken());
     }
+
     return new ContactsModelWrapper(vCards, new ContinuationInformation(null, newPage));
   }
 
