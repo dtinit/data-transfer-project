@@ -166,18 +166,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   @Override
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
     // Set up connection
-    Connections.List connectionsList = peopleService.people().connections()
-        .list(SELF_RESOURCE);
-
-    // Get next page, if we have a page token
-    if (continuationInformation.getPaginationInformation().isPresent()) {
-      String pageToken = ((GooglePaginationInfo) continuationInformation.getPaginationInformation()
-          .get()).getPageToken();
-      connectionsList.setPageToken(pageToken);
-    }
-
-    // Get list of connections (nb: not a list containing full info of each Person)
-    ListConnectionsResponse response = connectionsList.execute();
+    ListConnectionsResponse response = peopleService.people().connections()
+        .list(SELF_RESOURCE).execute();
     List<Person> peopleList = response.getConnections();
 
     // Get list of resource names, then get list of Persons
