@@ -28,15 +28,17 @@ import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.PortabilityJobFactory;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
@@ -53,18 +55,19 @@ final class DataTransferHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobDao jobDao;
+  private final JobStore store;
   private final PortabilityJobFactory jobFactory;
   private final CommonSettings commonSettings;
   private final ObjectMapper objectMapper;
 
   @Inject
-  DataTransferHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobDao jobDao,
+  DataTransferHandler(
+      ServiceProviderRegistry serviceProviderRegistry,
+      CloudFactory cloudFactory,
       PortabilityJobFactory jobFactory,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobDao = jobDao;
+    this.store = cloudFactory.getJobStore();
     this.jobFactory = jobFactory;
     this.commonSettings = commonSettings;
     this.objectMapper = new ObjectMapper();
@@ -115,7 +118,7 @@ final class DataTransferHandler implements HttpHandler {
           "Missing valid importService: %s", importService);
 
       // Create a new job and persist
-      PortabilityJob newJob = createJob(dataType, exportService, importService);
+      LegacyPortabilityJob newJob = createJob(dataType, exportService, importService);
 
       // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(newJob));
@@ -123,13 +126,10 @@ final class DataTransferHandler implements HttpHandler {
           .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
 
       // Lookup job, even if just recently created
-      PortabilityJob job;
-      if (commonSettings.getEncryptedFlow()) {
-        job = PortabilityApiUtils.lookupJobPendingAuthData(newJob.id(), jobDao);
-      } else {
-        job = PortabilityApiUtils.lookupJob(newJob.id(), jobDao);
-      }
-      Preconditions.checkState(job != null, "Job required");
+      String jobId = newJob.id();
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+      Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Validate job before going further
 
@@ -149,13 +149,11 @@ final class DataTransferHandler implements HttpHandler {
       // Store initial auth data for export services. Any initial auth data for import
       // is done in the SetupHandler in IMPORT mode
       if (authFlowInitiator.initialAuthData() != null) {
-        PortabilityJob updatedJob = JobUtils
-            .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.EXPORT);
-        if (commonSettings.getEncryptedFlow()) {
-          jobDao.updatePendingAuthDataJob(updatedJob);
-        } else {
-          jobDao.updateJob(updatedJob);
-        }
+        job = JobUtils.setInitialAuthData(job, authFlowInitiator.initialAuthData(),
+            ServiceMode.EXPORT);
+        JobState expectedPreviousState =
+            commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
+        store.update(job, expectedPreviousState);
       }
 
       // Send the authUrl for the client to redirect to export service authorization
@@ -173,16 +171,18 @@ final class DataTransferHandler implements HttpHandler {
   /**
    * Create the initial job in initial state and persist in storage.
    */
-  private PortabilityJob createJob(PortableDataType dataType, String exportService,
-      String importService)
-      throws IOException {
-    PortabilityJob job = jobFactory.create(dataType, exportService, importService);
+  private LegacyPortabilityJob createJob(PortableDataType dataType, String exportService,
+      String importService) throws IOException {
+    LegacyPortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
-      jobDao.insertJobInPendingAuthDataState(job);
-    } else {
-      jobDao.insertJob(job);
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(job.dataType()));
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(job.exportService()));
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
+      job = job.toBuilder().setJobState(JobState.PENDING_AUTH_DATA).build();
     }
+    store.create(job);
     return job;
   }
 }

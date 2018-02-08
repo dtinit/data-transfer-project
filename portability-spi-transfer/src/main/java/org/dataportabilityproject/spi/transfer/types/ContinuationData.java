@@ -7,11 +7,10 @@ import org.dataportabilityproject.types.transfer.EntityType;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
 /**
  * Specifies the starting point and context information for an export operation.
- *
- * REVIEW: This combines the original ContinuationInformation and ExportInformation
  */
 @JsonTypeName("org.dataportability:Continuation")
 public class ContinuationData extends EntityType {

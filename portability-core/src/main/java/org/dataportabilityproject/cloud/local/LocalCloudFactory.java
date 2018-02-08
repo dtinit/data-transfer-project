@@ -28,14 +28,14 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.dataportabilityproject.cloud.google.GoogleCloudDatastore;
 import org.dataportabilityproject.cloud.google.GoogleJobDataCache;
-import org.dataportabilityproject.cloud.google.GooglePersistentKeyValueStore;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
-import org.dataportabilityproject.cloud.interfaces.PersistentKeyValueStore;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class LocalCloudFactory implements CloudFactory {
               .build(new CacheLoader<String, JobDataCache>() {
                 @Override
                 public JobDataCache load(String service) throws Exception {
-                  return new JobDataCacheImpl();
+                  return new InMemoryJobDataCache();
                 }
               });
         }
@@ -71,14 +71,17 @@ public class LocalCloudFactory implements CloudFactory {
       .getService();
 
 
-  private final Supplier<PersistentKeyValueStore> keyValueStoreSupplier;
+  private final Supplier<JobStore> jobStoreSupplier;
 
   @Inject
   public LocalCloudFactory(CommonSettings commonSettings) {
-    if(commonSettings.getEncryptedFlow()) {
-      this.keyValueStoreSupplier = Suppliers.memoize( () -> new GooglePersistentKeyValueStore(datastore));
+    if (commonSettings.getEncryptedFlow()) {
+      this.jobStoreSupplier =
+          Suppliers.memoize( () ->
+              new GoogleCloudDatastore(datastore, commonSettings.getEncryptedFlow()));
     } else {
-      this.keyValueStoreSupplier = Suppliers.memoize( () -> new InMemoryPersistentKeyValueStore());
+      this.jobStoreSupplier =
+          Suppliers.memoize( () -> new InMemoryKeyValueStore(commonSettings.getEncryptedFlow()));
     }
   }
 
@@ -89,8 +92,8 @@ public class LocalCloudFactory implements CloudFactory {
   }
 
   @Override
-  public PersistentKeyValueStore getPersistentKeyValueStore() {
-    PersistentKeyValueStore store = keyValueStoreSupplier.get();
+  public JobStore getJobStore() {
+    JobStore store = jobStoreSupplier.get();
     logger.info("Returning local datastore-based key value store, {}", store.getClass().getName());
     return store;
   }

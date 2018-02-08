@@ -37,10 +37,10 @@ final class WorkerJobMetadata {
     return (jobId != null && keyPair != null);
   }
 
-  void init(String jobId) {
+  void init(String jobId, KeyPair keyPair) {
     Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
     this.jobId = jobId;
-    this.keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
+    this.keyPair = keyPair;
   }
 
   public KeyPair getKeyPair() {

@@ -25,7 +25,7 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class PortabilityCopier {
       ExportInformation exportInformation) throws IOException {
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
-    // NOTE: order is important bellow, do the import of all the items, then do continuation
+    // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
 
@@ -76,7 +76,7 @@ public class PortabilityCopier {
 
       // Process the next page of items for the resource
       if (null != continuationInfo.getPaginationInformation()) {
-        logger.debug("start off a new copy iteration with pagination info");
+        logger.debug("Start off a new copy iteration with pagination info");
         copy(exporter, importer,
             new ExportInformation(
                 exportInformation.getResource(), // Resource with additional pages to fetch
@@ -85,7 +85,7 @@ public class PortabilityCopier {
 
       // Start processing sub-resources
       if (continuationInfo.getSubResources() != null && !continuationInfo.getSubResources().isEmpty()) {
-        logger.debug("start off a new copy iterations with a sub resource, size: {}",
+        logger.debug("Start off a new copy iteration with a sub resource, size: {}",
             continuationInfo.getSubResources().size());
         for (Resource resource : continuationInfo.getSubResources()) {
           copy(

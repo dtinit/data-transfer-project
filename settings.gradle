@@ -6,10 +6,13 @@ include ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-
 
 include ':portability-gateway', ':portability-cloud', ':portability-transfer'
 
-include ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
+include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
+
+include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 
 include ':extensions:data-transfer:portability-data-transfer-google', ':extensions:data-transfer:portability-data-transfer-microsoft'
 
 include ':portability-test-utilities'
 
+include ':portability-core', ':portability-worker', ':portability-api'
 

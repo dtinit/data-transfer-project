@@ -34,11 +34,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
-import org.dataportabilityproject.job.JobDao;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.ServiceMode;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 import org.slf4j.Logger;
@@ -140,28 +139,11 @@ public class PortabilityApiUtils {
     return params;
   }
 
-  /**
-   * Looks up job in pending auth data state and verifies it exists.
-   */
-  public static PortabilityJob lookupJobPendingAuthData(String id, JobDao jobDao) {
-    PortabilityJob job = jobDao.lookupJobPendingAuthData(id);
-    Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
-    return job;
-  }
-
-  /**
-   * Looks up job and checks that it exists in the provided jobDao.
-   */
-  public static PortabilityJob lookupJob(String id, JobDao jobDao) {
-    PortabilityJob job = jobDao.findExistingJob(id);
-    Preconditions.checkNotNull(job, "existingJob not found for id: %s", id);
-    return job;
-  }
 
   /**
    * Hack! For now, if we don't have export auth data, assume it's for export.
    */
-  public static ServiceMode getServiceMode(PortabilityJob job, Headers headers,
+  public static ServiceMode getServiceMode(LegacyPortabilityJob job, Headers headers,
       boolean useEncryptedFlow) {
     if (useEncryptedFlow) {
       String exportAuthCookie = PortabilityApiUtils

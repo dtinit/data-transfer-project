@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile project(':portability-types-transfer')
-                                                       
+    compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    compile("com.google.auto.value:auto-value:${autoValueVersion}")
 }

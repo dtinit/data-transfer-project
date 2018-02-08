@@ -31,13 +31,11 @@ import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,12 +53,20 @@ import org.dataportabilityproject.dataModels.photos.PhotoModel;
 import org.dataportabilityproject.dataModels.photos.PhotosModelWrapper;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.dataportabilityproject.shared.ImageStreamProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FlickrPhotoService implements
     Exporter<PhotosModelWrapper>,
     Importer<PhotosModelWrapper> {
 
-  private static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
+  private final Logger logger = LoggerFactory.getLogger(FlickrPhotoService.class);
+
+  @VisibleForTesting
+  static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
+  @VisibleForTesting
+  static final String COPY_PREFIX = "Copy of - ";
   private static final int PHOTO_SETS_PER_PAGE = 500;
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS =
@@ -73,25 +79,43 @@ public class FlickrPhotoService implements
   private final Uploader uploader;
   private final JobDataCache jobDataCache;
   private Auth auth;
+  private ImageStreamProvider imageStreamProvider;
 
   FlickrPhotoService(AppCredentials appCredentials, Auth auth,
       JobDataCache jobDataCache) throws IOException {
-    this.flickr = new Flickr(appCredentials.key(), appCredentials.secret(), new REST());
-    this.photosetsInterface = flickr.getPhotosetsInterface();
-    this.photosInterface = flickr.getPhotosInterface();
-    this.uploader = flickr.getUploader();
-    this.jobDataCache = jobDataCache;
-    this.auth = auth;
+    this(new Flickr(appCredentials.key(), appCredentials.secret(), new REST()), auth, jobDataCache,
+        new ImageStreamProvider());
     RequestContext.getRequestContext().setAuth(auth);
   }
 
-  private static int getPage(Optional<PaginationInformation> paginationInformation) {
+  private FlickrPhotoService(Flickr flickr, Auth auth, JobDataCache jobDataCache,
+      ImageStreamProvider imageStreamProvider) {
+    this(flickr, flickr.getPhotosetsInterface(), flickr.getPhotosInterface(), flickr.getUploader(),
+        auth, jobDataCache, imageStreamProvider);
+  }
+
+  @VisibleForTesting
+  FlickrPhotoService(Flickr flickr, PhotosetsInterface photosetsInterface,
+      PhotosInterface photosInterface, Uploader uploader, Auth auth, JobDataCache jobDataCache,
+      ImageStreamProvider imageStreamProvider) {
+    this.flickr = flickr;
+    this.photosetsInterface = photosetsInterface;
+    this.photosInterface = photosInterface;
+    this.uploader = uploader;
+    this.jobDataCache = jobDataCache;
+    this.auth = auth;
+    this.imageStreamProvider = imageStreamProvider;
+  }
+
+  @VisibleForTesting
+  static int getPage(Optional<PaginationInformation> paginationInformation) {
     return paginationInformation.map(
         paginationInformation1 -> ((FlickrPaginationInformation) paginationInformation1)
             .getPage()).orElse(1);
   }
 
-  private static PhotoModel toCommonPhoto(Photo p, String albumId) {
+  @VisibleForTesting
+  static PhotoModel toCommonPhoto(Photo p, String albumId) {
     checkState(!Strings.isNullOrEmpty(p.getOriginalSize().getSource()),
         "photo %s had a null authUrl", p.getId());
     return new PhotoModel(
@@ -102,7 +126,8 @@ public class FlickrPhotoService implements
         albumId);
   }
 
-  private static String toMimeType(String flickrFormat) {
+  @VisibleForTesting
+  static String toMimeType(String flickrFormat) {
     switch (flickrFormat) {
       case "jpg":
       case "jpeg":
@@ -114,13 +139,14 @@ public class FlickrPhotoService implements
 
   @Override
   public void importItem(PhotosModelWrapper modelWrapper) throws IOException {
-    PhotosetsInterface photosetsInterface = flickr.getPhotosetsInterface();
+    // TODO(olsona): what should we do with the continuation information?
     try {
       for (PhotoAlbum album : modelWrapper.getAlbums()) {
         // Store the data in the cache because Flickr only allows you
         // to create an album with a photo in it so we need to wait for
         // the first photo to create the album.
-        jobDataCache.store(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
+        String key = CACHE_ALBUM_METADATA_PREFIX + album.getId();
+        jobDataCache.store(key, album);
       }
       for (PhotoModel photo : modelWrapper.getPhotos()) {
         String photoId = uploadPhoto(photo);
@@ -129,7 +155,7 @@ public class FlickrPhotoService implements
           PhotoAlbum album = jobDataCache.getData(
               CACHE_ALBUM_METADATA_PREFIX + oldAlbumId,
               PhotoAlbum.class);
-          Photoset photoset = photosetsInterface.create("Copy of - " + album.getName(),
+          Photoset photoset = photosetsInterface.create(COPY_PREFIX + album.getName(),
               album.getDescription(), photoId);
           jobDataCache.store(oldAlbumId, photoset.getId());
         } else {
@@ -230,23 +256,15 @@ public class FlickrPhotoService implements
     }
   }
 
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
-  }
-
   private String uploadPhoto(PhotoModel photo)
       throws IOException, FlickrException {
-    BufferedInputStream inStream = new BufferedInputStream(
-        getImageAsStream(photo.getFetchableUrl()));
+    BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
     UploadMetaData uploadMetaData = new UploadMetaData()
         .setAsync(false)
         .setPublicFlag(false)
         .setFriendFlag(false)
         .setFamilyFlag(false)
-        .setTitle("copy of - " + photo.getTitle())
+        .setTitle(COPY_PREFIX + photo.getTitle())
         .setDescription(photo.getDescription());
     return uploader.upload(inStream, uploadMetaData);
   }

@@ -30,14 +30,16 @@ import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
@@ -53,19 +55,20 @@ abstract class SetupHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(SetupHandler.class);
   private static final ObjectMapper objectMapper = new ObjectMapper();
-  private final JobDao jobDao;
+  private final JobStore store;
   private final ServiceProviderRegistry serviceProviderRegistry;
   private final CommonSettings commonSettings;
   private final Mode mode;
   private final String handlerUrlPath;
   private final TokenManager tokenManager;
 
-  protected SetupHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobDao jobDao,
+  protected SetupHandler(
+      ServiceProviderRegistry serviceProviderRegistry,
+      CloudFactory cloudFactory,
       CommonSettings commonSettings,
       Mode mode,
       String handlerUrlPath, TokenManager tokenManager) {
-    this.jobDao = jobDao;
+    this.store = cloudFactory.getJobStore();
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.commonSettings = commonSettings;
     this.mode = mode;
@@ -87,14 +90,9 @@ abstract class SetupHandler implements HttpHandler {
 
       // Valid job must be present
       String jobId = JobUtils.decodeId(encodedIdCookie);
-      PortabilityJob job;
-      if (commonSettings.getEncryptedFlow()) {
-        job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
-      } else {
-        job = PortabilityApiUtils.lookupJob(jobId, jobDao);
-      }
-
-      Preconditions.checkNotNull(job, "existingJob not found for jobId: %s", jobId);
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+      Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // This page is only valid after the oauth of the export service - export data should exist for
       // all setup Modes.
@@ -111,7 +109,7 @@ abstract class SetupHandler implements HttpHandler {
       DataTransferResponse response;
 
       if (mode == IMPORT) {
-        response = handleImportSetup(exchange.getRequestHeaders(), job, jobDao);
+        response = handleImportSetup(exchange.getRequestHeaders(), job);
       } else {
         response = handleCopySetup(exchange.getRequestHeaders(), job);
         // Valid job is present, generate an XSRF token to pass back via cookie
@@ -132,7 +130,7 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(Headers headers, PortabilityJob job, JobDao jobDao)
+  private DataTransferResponse handleImportSetup(Headers headers, LegacyPortabilityJob job)
       throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
@@ -153,19 +151,17 @@ abstract class SetupHandler implements HttpHandler {
     if (authFlowInitiator.initialAuthData() != null) {
       // Auth data is different for import and export. This is only valid for the /_/importSetup page,
       // so serviceMode is IMPORT
-      PortabilityJob updatedJob = JobUtils
+      job = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
-      if (commonSettings.getEncryptedFlow()) {
-        jobDao.updatePendingAuthDataJob(job);
-      } else {
-        jobDao.updateJob(updatedJob);
-      }
+      JobState expectedPreviousState =
+          commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
+      store.update(job, expectedPreviousState);
     }
     return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
         Status.INPROCESS, authFlowInitiator.authUrl()); // Redirect to auth page of import service
   }
 
-  private DataTransferResponse handleCopySetup(Headers requestHeaders, PortabilityJob job) {
+  private DataTransferResponse handleCopySetup(Headers requestHeaders, LegacyPortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
       String exportAuthCookie = PortabilityApiUtils

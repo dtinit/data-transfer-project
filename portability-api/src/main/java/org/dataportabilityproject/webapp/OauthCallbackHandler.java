@@ -27,13 +27,15 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.util.Map;
 import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.job.JobDao;
+import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.slf4j.Logger;
@@ -51,17 +53,18 @@ final class OauthCallbackHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(OauthCallbackHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
-  private final JobDao jobDao;
+  private final JobStore store;
   private final CryptoHelper cryptoHelper;
   private final CommonSettings commonSettings;
 
   @Inject
-  OauthCallbackHandler(ServiceProviderRegistry serviceProviderRegistry,
-      JobDao jobDao,
+  OauthCallbackHandler(
+      ServiceProviderRegistry serviceProviderRegistry,
+      CloudFactory cloudFactory,
       CryptoHelper cryptoHelper,
       CommonSettings commonSettings) {
     this.serviceProviderRegistry = serviceProviderRegistry;
-    this.jobDao = jobDao;
+    this.store = cloudFactory.getJobStore();
     this.cryptoHelper = cryptoHelper;
     this.commonSettings = commonSettings;
   }
@@ -110,12 +113,9 @@ final class OauthCallbackHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
       String jobId = JobUtils.decodeId(encodedIdCookie);
 
-      PortabilityJob job;
-      if (commonSettings.getEncryptedFlow()) {
-        job = PortabilityApiUtils.lookupJobPendingAuthData(jobId, jobDao);
-      } else {
-        job = PortabilityApiUtils.lookupJob(jobId, jobDao);
-      }
+      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
+          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+      Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
       ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
@@ -146,8 +146,8 @@ final class OauthCallbackHandler implements HttpHandler {
 
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
-        PortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        jobDao.updateJob(updatedJob);
+        LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
+        store.update(updatedJob, null);
       } else {
         // Set new cookie
         cryptoHelper

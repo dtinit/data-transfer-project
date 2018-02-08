@@ -17,4 +17,12 @@
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
+
+    compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
+    compile "com.squareup.okhttp3:logging-interceptor:${okHttpVersion}"
+
+    // REVIEW: We could standardize the version in gradle.propertoes but this would mean all depemdent extensions must be revved at the same time
+    compile 'com.googlecode.ez-vcard:ez-vcard:0.10.3'
+
+    testCompile project(':extensions:auth:portability-auth-harness-microsoft')
 }

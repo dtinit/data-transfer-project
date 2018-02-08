@@ -27,9 +27,7 @@
     <module>portability-cloud</module>
     <module>portability-gateway</module>
     <module>extensions/cloud/portability-cloud-google</module>
-    <module>extensions/cloud/portability-cloud-microsoft</module>
     <module>extensions/data-transfer/portability-data-transfer-google</module>
-    <module>extensions/data-transfer/portability-data-transfer-microsoft</module>
   </modules>
 
   <build>

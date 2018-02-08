@@ -15,7 +15,6 @@
 */
 package org.dataportabilityproject.worker;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -24,10 +23,11 @@ import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
-import org.dataportabilityproject.job.JobDao;
-import org.dataportabilityproject.job.PortabilityJob;
 import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.auth.AuthData;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,20 +37,19 @@ final class WorkerImpl {
 
   private final CloudFactory cloudFactory;
   private final JobPollingService jobPollingService;
-  private final JobDao jobDao;
+  private final JobStore store;
   private final ServiceProviderRegistry registry;
   private final WorkerJobMetadata workerJobMetadata;
 
   @Inject
   WorkerImpl(
       CloudFactory cloudFactory,
-      JobDao jobDao,
       JobPollingService jobPollingService,
       ServiceProviderRegistry registry,
       WorkerJobMetadata workerJobMetadata) {
     this.cloudFactory = cloudFactory;
     this.jobPollingService = jobPollingService;
-    this.jobDao = jobDao;
+    this.store = cloudFactory.getJobStore();
     this.registry = registry;
     this.workerJobMetadata = workerJobMetadata;
   }
@@ -60,11 +59,13 @@ final class WorkerImpl {
     pollForJob();
 
     // Start the processing
-    PortabilityJob job = getJob(jobDao);
+    String jobId = workerJobMetadata.getJobId();
+    logger.debug("Begin processing jobId: {}", jobId);
+    LegacyPortabilityJob job = store.find(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class
-    // name in the DAO.
+    // name in storage.
 
     processJob(job);
     logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
@@ -75,15 +76,7 @@ final class WorkerImpl {
     jobPollingService.awaitTerminated();
   }
 
-  private PortabilityJob getJob(JobDao jobDao) {
-    String jobId = workerJobMetadata.getJobId();
-    logger.debug("Begin processing jobId: {}", jobId);
-    PortabilityJob job = jobDao.lookupAssignedWithAuthDataJob(jobId);
-    Preconditions.checkNotNull(job, "Job not found, id: %s", jobId);
-    return job;
-  }
-
-  private void processJob(PortabilityJob job) {
+  private void processJob(LegacyPortabilityJob job) {
 
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
