@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-gateway')
+package org.dataportabilityproject.transfer;
+
+import org.junit.Test;
+
+public class PortabilityTransferServiceProviderRegistryTest {
+
+  @Test
+  public void getImporterTest(){
+
+  }
 }

@@ -12,4 +12,7 @@ public interface AuthServiceProviderRegistry {
      */
     AuthServiceProvider getServiceProvider(String serviceId);
 
-}
+    AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType) ;
+
+
+  }
