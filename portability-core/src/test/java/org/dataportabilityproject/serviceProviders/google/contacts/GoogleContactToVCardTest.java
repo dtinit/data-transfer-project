@@ -16,17 +16,14 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import com.google.api.services.people.v1.model.EmailAddress;
-import com.google.api.services.people.v1.model.FieldMetadata;
-import com.google.api.services.people.v1.model.Person;
-import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.api.services.people.v1.model.*;
+import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.parameter.VCardParameters;
-import ezvcard.property.Email;
-import ezvcard.property.Telephone;
-import ezvcard.property.TextProperty;
-import ezvcard.property.VCardProperty;
+import ezvcard.property.*;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +35,8 @@ import static org.dataportabilityproject.serviceProviders.google.contacts.Google
 import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCard.SECONDARY_PREF;
 
 public class GoogleContactToVCardTest {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardTest.class);
+
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
           new FieldMetadata().setPrimary(false);
@@ -68,6 +67,54 @@ public class GoogleContactToVCardTest {
             SECONDARY_PREF);
     assertThat(getValuesFromTextProperties(resultSecondaryEmailList))
             .containsExactly(secondaryString1, secondaryString2);
+  }
+
+  @Test
+  public void testConversionToVCardNames() {
+    // Set up Person with a primary name and a secondary name
+    String primaryGivenName = "J. K.";
+    String primaryFamilyName = "Rowling";
+    Name primaryName = new Name().setGivenName(primaryGivenName)
+            .setFamilyName(primaryFamilyName)
+            .setMetadata(PRIMARY_FIELD_METADATA);
+
+    String alternateGivenName1 = "Joanne";
+    String alternateFamilyName1 = "Rowling";
+    Name alternateName1 = new Name().setGivenName(alternateGivenName1)
+            .setFamilyName(alternateFamilyName1)
+            .setMetadata(SECONDARY_FIELD_METADATA);
+    String alternateGivenName2 = "Robert";
+    String alternateFamilyName2 = "Galbraith";
+    Name alternateName2 = new Name().setGivenName(alternateGivenName2).setFamilyName(alternateFamilyName2)
+            .setMetadata(SECONDARY_FIELD_METADATA);
+
+    // Order shouldn't matter
+    Person person = new Person().setNames(Arrays.asList(alternateName2, alternateName1, primaryName));
+
+    // Run test
+    VCard vCard = GoogleContactToVCard.convert(person);
+
+    // Check name conversion correctness
+    List<StructuredName> structuredNames = vCard.getStructuredNames();
+    assertThat(structuredNames.size()).isEqualTo(3);
+
+    // Check primary (non-alternate) names
+    List<StructuredName> actualPrimaryNames = structuredNames.stream().filter(n -> n.getAltId() == null).collect
+            (Collectors.toList());
+    assertThat(actualPrimaryNames.size()).isEqualTo(1);
+    assertThat(getValuesFromProperties(actualPrimaryNames, StructuredName::getGiven)).containsExactly(primaryGivenName);
+    assertThat(getValuesFromProperties(actualPrimaryNames, StructuredName::getFamily)).containsExactly
+            (primaryFamilyName);
+
+    // Check alternate names
+    List<StructuredName> actualAlternateNames = structuredNames.stream().filter(n -> n.getAltId() != null)
+            .collect(Collectors.toList());
+    assertThat(actualAlternateNames.size()).isEqualTo(2);
+    List<Pair<String, String>> firstAndLastNames = actualAlternateNames.stream().map(a -> Pair.of(a.getGiven(), a
+            .getFamily())).collect(Collectors.toList());
+    assertThat(firstAndLastNames).containsExactly(
+            Pair.of(alternateGivenName1, alternateFamilyName1),
+            Pair.of(alternateGivenName2, alternateFamilyName2));
   }
 
   @Test

@@ -6,11 +6,15 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import ezvcard.property.VCardProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
 
 public class GoogleContactToVCard {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCard.class);
 
   @VisibleForTesting
   static final int PRIMARY_PREF = 1;
@@ -43,10 +47,6 @@ public class GoogleContactToVCard {
     return vCard;
   }
 
-  private static int getPref(FieldMetadata metadata) {
-    return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
-  }
-
   private static Email convertToVCardEmail(EmailAddress personEmail) {
     // TODO(olsona): address Email.displayName
     // TODO(olsona): address Email.formattedType
@@ -58,31 +58,32 @@ public class GoogleContactToVCard {
 
   private static void convertToVCardNamesAndPopulate(VCard vCard, List<Name> personNames) {
     // TODO(olsona): what if there's more than one primary name in a Google Contact?
-    LinkedList<StructuredName> alternateVCardNames = new LinkedList<>();
+    StructuredName primaryStructuredName = null;
+    LinkedList<StructuredName> alternateStructuredNames = new LinkedList<>();
     for (Name personName : personNames) {
+      StructuredName structuredName = convertToVCardNameSingle(personName);
       if (personName.getMetadata().getPrimary()) {
-        // This is the primary name for the Person, so it should be the primary name in the VCard.
-        vCard.setStructuredName(convertToVCardNameSingle(personName));
+        // This is the (a?) primary name for the Person, so it should be the primary name in the VCard.
+        primaryStructuredName = structuredName;
       } else {
-        alternateVCardNames.add(convertToVCardNameSingle(personName));
+        alternateStructuredNames.add(structuredName);
       }
     }
-    if (vCard.getStructuredName() == null) {
-      // No personName was set as primary, so we'll just get the first alternate name
-      vCard.setStructuredName(alternateVCardNames.pop());
+
+    if (primaryStructuredName == null) {
+      primaryStructuredName = alternateStructuredNames.pop();
     }
 
-    vCard.setStructuredNameAlt(alternateVCardNames.toArray(new StructuredName[alternateVCardNames.size()]));
+    vCard.addProperty(primaryStructuredName);
+    vCard.addPropertyAlt(StructuredName.class, alternateStructuredNames);
   }
 
   private static StructuredName convertToVCardNameSingle(Name personName) {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
-    structuredName.getPrefixes().add(personName.getHonorificPrefix());
-    structuredName.getSuffixes().add(personName.getHonorificSuffix());
 
-    // TODO(olsona): address formatting, structure, phonetics
+    // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
     return structuredName;
   }
 
@@ -90,5 +91,9 @@ public class GoogleContactToVCard {
     Telephone telephone = new Telephone(personNumber.getValue());
     telephone.setPref(getPref(personNumber.getMetadata()));
     return telephone;
+  }
+
+  private static int getPref(FieldMetadata metadata) {
+    return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
   }
 }

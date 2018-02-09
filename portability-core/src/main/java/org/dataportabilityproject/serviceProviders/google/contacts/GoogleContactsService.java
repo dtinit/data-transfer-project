@@ -50,7 +50,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   @VisibleForTesting
   // List of all fields we want to get from the Google Contacts API
   // NB: this will have to be updated as we support more fields
-  static final String PERSON_FIELDS = "addresses,emailAddresses,names,phoneNumbers";
+  static final String PERSON_FIELDS = "emailAddresses,names,phoneNumbers";
+  // TODO(olsona): addresses next
 
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
     // TODO(olsona): add permissions/scopes!
