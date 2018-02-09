@@ -19,9 +19,7 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 import static com.google.common.truth.Truth.assertThat;
 import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService.PERSON_FIELDS;
 import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService.SELF_RESOURCE;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -103,9 +101,9 @@ public class GoogleContactsServiceTest {
     ContactsModelWrapper wrapper = contactsService.export(emptyExportInformation);
 
     // Check the correct calls were made
-    verify(peopleService).people().connections().list(SELF_RESOURCE);
-    verify(listConnections).execute();
-    verify(peopleService).people().getBatchGet()
+    verify(peopleService, atLeastOnce()).people().connections().list(SELF_RESOURCE);
+    verify(listConnections, atLeastOnce()).execute();
+    verify(peopleService, atLeastOnce()).people().getBatchGet()
             .setResourceNames(Collections.singletonList(RESOURCE_NAME)).setPersonFields(PERSON_FIELDS)
             .execute();
 
