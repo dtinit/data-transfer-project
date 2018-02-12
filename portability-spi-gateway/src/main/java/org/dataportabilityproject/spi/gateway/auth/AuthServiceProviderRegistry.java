@@ -11,8 +11,4 @@ public interface AuthServiceProviderRegistry {
      * @param serviceId the service id
      */
     AuthServiceProvider getServiceProvider(String serviceId);
-
-    AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType) ;
-
-
   }
