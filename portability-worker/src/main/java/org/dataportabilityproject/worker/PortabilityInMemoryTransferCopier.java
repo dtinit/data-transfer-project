@@ -24,7 +24,6 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.types.transfer.PortableType;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.dataportabilityproject.types.transfer.models.DataModel;
@@ -60,8 +59,8 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
       AuthData importAuthData,
       String jobId) throws IOException {
 
-    Exporter<AuthData, DataModel> exporter = registry.getExporter(exportService, dataType);
-    Importer<AuthData, DataModel> importer = registry.getImporter(importService, dataType);
+    Exporter<? extends AuthData, ? extends DataModel> exporter = registry.getExporter(exportService, dataType);
+    Importer<? extends AuthData, ? extends DataModel> importer = registry.getImporter(importService, dataType);
 
     logger.debug("Starting copy job, id: {}, source: {}, destination: {}", jobId, exportService,
         importService);
@@ -85,8 +84,8 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
    * @param exportInformation Any pagination or resource information to use for subsequent calls.
    */
   private void copy(
-      Exporter<AuthData, DataModel> exporter,
-      Importer<AuthData, DataModel> importer,
+      Exporter exporter,
+      Importer importer,
       AuthData exportAuthData,
       AuthData importAuthData,
       ExportInformation exportInformation) throws IOException {
@@ -97,7 +96,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export, ExportInformation: {}", exportInformation);
-    ExportResult<DataModel> exportResult = exporter.export(exportAuthData, exportInformation);
+    ExportResult<?> exportResult = exporter.export(exportAuthData, exportInformation);
     logger.debug("Finished export, results: {}", exportResult);
 
     logger.debug("Starting import");

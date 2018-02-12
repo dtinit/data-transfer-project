@@ -9,8 +9,6 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProvider;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
-import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
  * Maintains the registry for valid TransferServiceProviders in the system
@@ -62,13 +60,13 @@ public class PortabilityTransferServiceProviderRegistry implements TransferServi
    * @param transferDataType the transfer data type
    */
   @Override
-  public Exporter<AuthData, DataModel> getExporter(String serviceId,
+  public Exporter<?, ?> getExporter(String serviceId,
       String transferDataType) {
     Preconditions.checkArgument(supportedExportTypes.contains(transferDataType),
         "TransferDataType [%s] is not valid for export", transferDataType);
     TransferServiceProvider serviceProvider = serviceProviderMap.get(serviceId);
     Preconditions.checkArgument(serviceProvider != null);
-    return (Exporter<AuthData, DataModel>) serviceProvider.getExporter(transferDataType);
+    return serviceProvider.getExporter(transferDataType);
   }
 
   /**
@@ -78,12 +76,12 @@ public class PortabilityTransferServiceProviderRegistry implements TransferServi
    * @param transferDataType the transfer data type
    */
   @Override
-  public Importer<AuthData, DataModel> getImporter(String serviceId,
+  public Importer<?, ?> getImporter(String serviceId,
       String transferDataType) {
     Preconditions.checkArgument(supportedImportTypes.contains(transferDataType),
         "TransferDataType [%s] is not valid for import", transferDataType);
     TransferServiceProvider serviceProvider = serviceProviderMap.get(serviceId);
     Preconditions.checkArgument(serviceProvider != null);
-    return (Importer<AuthData, DataModel>) serviceProvider.getImporter(transferDataType);
+    return serviceProvider.getImporter(transferDataType);
   }
 }

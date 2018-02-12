@@ -16,7 +16,7 @@ public interface TransferServiceProviderRegistry {
    * @param serviceId the service id
    * @param transferDataType the transfer data type
    */
-  Exporter<AuthData, DataModel> getExporter(String serviceId, String transferDataType);
+  Exporter<?, ?> getExporter(String serviceId, String transferDataType);
 
 
   /**
@@ -25,5 +25,5 @@ public interface TransferServiceProviderRegistry {
    * @param serviceId the service id
    * @param transferDataType the transfer data type
    */
-  Importer<AuthData, DataModel> getImporter(String serviceId, String transferDataType);
+  Importer<?, ?> getImporter(String serviceId, String transferDataType);
 }
