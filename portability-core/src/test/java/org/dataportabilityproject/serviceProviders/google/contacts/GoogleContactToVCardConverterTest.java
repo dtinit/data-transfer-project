@@ -31,11 +31,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCard.PRIMARY_PREF;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCard.SECONDARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter.PRIMARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter.SECONDARY_PREF;
 
-public class GoogleContactToVCardTest {
-  private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardTest.class);
+public class GoogleContactToVCardConverterTest {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardConverterTest.class);
 
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
@@ -57,7 +57,7 @@ public class GoogleContactToVCardTest {
             secondaryEmail2)); // Making sure order isn't a factor
 
     // Run test - NB, this Person only has emails
-    VCard vCard = GoogleContactToVCard.convert(person);
+    VCard vCard = GoogleContactToVCardConverter.convert(person);
 
     // Check results for correct values and preferences
     List<Email> resultPrimaryEmailList = getPropertiesWithPreference(vCard, Email.class,
@@ -92,7 +92,7 @@ public class GoogleContactToVCardTest {
     Person person = new Person().setNames(Arrays.asList(alternateName2, alternateName1, primaryName));
 
     // Run test
-    VCard vCard = GoogleContactToVCard.convert(person);
+    VCard vCard = GoogleContactToVCardConverter.convert(person);
 
     // Check name conversion correctness
     List<StructuredName> structuredNames = vCard.getStructuredNames();
@@ -133,7 +133,7 @@ public class GoogleContactToVCardTest {
             .setPhoneNumbers(Arrays.asList(secondaryPhone, primaryPhone1, primaryPhone2));
 
     // Run test
-    VCard vCard = GoogleContactToVCard.convert(person);
+    VCard vCard = GoogleContactToVCardConverter.convert(person);
 
     // Check results for correct values and preferences
     List<Telephone> resultPrimaryPhoneList = getPropertiesWithPreference(vCard, Telephone.class,

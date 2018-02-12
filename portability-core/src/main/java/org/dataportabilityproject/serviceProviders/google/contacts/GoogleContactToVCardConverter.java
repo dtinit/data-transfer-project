@@ -6,15 +6,14 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
-import ezvcard.property.VCardProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class GoogleContactToVCard {
-  private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCard.class);
+public class GoogleContactToVCardConverter {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardConverter.class);
 
   @VisibleForTesting
   static final int PRIMARY_PREF = 1;

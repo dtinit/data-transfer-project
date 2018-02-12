@@ -100,13 +100,6 @@ public class GoogleContactsServiceTest {
     // Run test
     ContactsModelWrapper wrapper = contactsService.export(emptyExportInformation);
 
-    // Check the correct calls were made
-    verify(peopleService, atLeastOnce()).people().connections().list(SELF_RESOURCE);
-    verify(listConnections, atLeastOnce()).execute();
-    verify(peopleService, atLeastOnce()).people().getBatchGet()
-            .setResourceNames(Collections.singletonList(RESOURCE_NAME)).setPersonFields(PERSON_FIELDS)
-            .execute();
-
     // Check continuation information
     assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
     GooglePaginationInfo googlePaginationInfo = (GooglePaginationInfo) wrapper

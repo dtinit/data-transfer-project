@@ -96,7 +96,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
     // Convert Persons to VCards
     List<VCard> vCards = personResponseList.stream()
-        .map(a -> GoogleContactToVCard.convert(a.getPerson()))
+        .map(a -> GoogleContactToVCardConverter.convert(a.getPerson()))
         .collect(Collectors.toList());
 
     // Determine if there's a next page
