@@ -82,7 +82,7 @@ public class GoogleContactToVCardConverterTest {
 
   @Test
   public void testConversionToVCardNames() {
-    // Set up Person with a primary name and a secondary name
+    // Set up Person with a primary name and two secondary names
     String primaryGivenName = "J. K.";
     String primaryFamilyName = "Rowling";
     Name primaryName = new Name().setGivenName(primaryGivenName)
@@ -115,22 +115,20 @@ public class GoogleContactToVCardConverterTest {
     List<StructuredName> actualPrimaryNames = structuredNames.stream()
         .filter(n -> n.getAltId() == null).collect
             (Collectors.toList());
-    assertThat(actualPrimaryNames.size()).isEqualTo(1);
-    assertThat(getValuesFromProperties(actualPrimaryNames, StructuredName::getGiven))
-        .containsExactly(primaryGivenName);
-    assertThat(getValuesFromProperties(actualPrimaryNames, StructuredName::getFamily))
-        .containsExactly
-            (primaryFamilyName);
+    List<Pair<String, String>> actualPrimaryNamesValues = structuredNames.stream()
+        .map(GoogleContactToVCardConverterTest::getGivenAndFamilyNames)
+        .collect(Collectors.toList());
+    assertThat(actualPrimaryNamesValues)
+        .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
 
     // Check alternate names
     List<StructuredName> actualAlternateNames = structuredNames.stream()
         .filter(n -> n.getAltId() != null)
         .collect(Collectors.toList());
-    assertThat(actualAlternateNames.size()).isEqualTo(2);
-    List<Pair<String, String>> firstAndLastNames = actualAlternateNames.stream()
-        .map(a -> Pair.of(a.getGiven(), a
-            .getFamily())).collect(Collectors.toList());
-    assertThat(firstAndLastNames).containsExactly(
+    List<Pair<String, String>> actualAlternateNamesValues = actualAlternateNames.stream()
+        .map(GoogleContactToVCardConverterTest::getGivenAndFamilyNames)
+        .collect(Collectors.toList());
+    assertThat(actualAlternateNamesValues).containsExactly(
         Pair.of(alternateGivenName1, alternateFamilyName1),
         Pair.of(alternateGivenName2, alternateFamilyName2));
   }
@@ -162,6 +160,10 @@ public class GoogleContactToVCardConverterTest {
         SECONDARY_PREF);
     assertThat(getValuesFromProperties(resultSecondaryPhoneList, Telephone::getText))
         .containsExactly(secondaryValue);
+  }
+
+  private static Pair<String, String> getGivenAndFamilyNames(StructuredName structuredName) {
+    return Pair.of(structuredName.getGiven(), structuredName.getFamily());
   }
 
   private static <T extends VCardProperty, V> List<V> getValuesFromProperties(List<T> propertyList,
