@@ -16,5 +16,5 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-public class VCardToGoogleContactConverter {
+public class VCardToGoogleContactConverterTest {
 }
