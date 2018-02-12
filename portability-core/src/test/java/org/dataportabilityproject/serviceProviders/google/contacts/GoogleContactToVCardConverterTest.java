@@ -115,7 +115,7 @@ public class GoogleContactToVCardConverterTest {
     List<StructuredName> actualPrimaryNames = structuredNames.stream()
         .filter(n -> n.getAltId() == null).collect
             (Collectors.toList());
-    List<Pair<String, String>> actualPrimaryNamesValues = structuredNames.stream()
+    List<Pair<String, String>> actualPrimaryNamesValues = actualPrimaryNames.stream()
         .map(GoogleContactToVCardConverterTest::getGivenAndFamilyNames)
         .collect(Collectors.toList());
     assertThat(actualPrimaryNamesValues)
