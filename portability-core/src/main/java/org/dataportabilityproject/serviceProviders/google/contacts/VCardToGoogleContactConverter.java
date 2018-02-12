@@ -16,5 +16,43 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
+import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.FieldMetadata;
+import com.google.api.services.people.v1.model.Person;
+import com.google.common.annotations.VisibleForTesting;
+import ezvcard.VCard;
+import ezvcard.property.Email;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class VCardToGoogleContactConverter {
+  private static final Logger logger = LoggerFactory.getLogger(VCardToGoogleContactConverter.class);
+
+  @VisibleForTesting
+  static final int PRIMARY_PREF = 1;
+  @VisibleForTesting
+  static final int SECONDARY_PREF = 2;
+
+  static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
+  static final FieldMetadata SECONDARY_FIELD_METADATA = new FieldMetadata().setPrimary(false);
+
+  @VisibleForTesting
+  static Person convert(VCard vCard) {
+    Person person = new Person();
+
+    return person;
+  }
+
+  private static EmailAddress convertToGoogleEmail(Email email) {
+    EmailAddress emailAddress = new EmailAddress();
+    emailAddress.setValue(email.getValue());
+    if (email.getPref() == PRIMARY_PREF) {
+      emailAddress.setMetadata(PRIMARY_FIELD_METADATA);
+    } else {
+      emailAddress.setMetadata(SECONDARY_FIELD_METADATA);
+    }
+
+    return emailAddress;
+  }
+
 }
