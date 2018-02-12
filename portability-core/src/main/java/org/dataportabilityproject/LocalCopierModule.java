@@ -24,7 +24,6 @@ public class LocalCopierModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PortabilityCoreModule());
-    install(new GoogleCloudModule());
     bind(IOInterface.class).toInstance(new ConsoleIO());
   }
 }
