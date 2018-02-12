@@ -18,10 +18,6 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
-import com.google.api.services.people.v1.model.Person;
-import com.google.common.annotations.VisibleForTesting;
-import ezvcard.VCard;
-import ezvcard.property.Email;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
@@ -41,8 +37,6 @@ public class VCardToGoogleContactConverter {
 
   @VisibleForTesting
   static final int PRIMARY_PREF = 1;
-  @VisibleForTesting
-  static final int SECONDARY_PREF = 2;
 
   static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   static final FieldMetadata SECONDARY_FIELD_METADATA = new FieldMetadata().setPrimary(false);
