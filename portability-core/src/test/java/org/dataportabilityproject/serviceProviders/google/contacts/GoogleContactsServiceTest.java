@@ -21,11 +21,19 @@ import static org.dataportabilityproject.serviceProviders.google.contacts.Google
     .PERSON_FIELDS;
 import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService
     .SELF_RESOURCE;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
+import com.google.api.services.people.v1.PeopleService.People.Get;
+import com.google.api.services.people.v1.PeopleService.People.GetBatchGet;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
@@ -33,9 +41,11 @@ import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
 import ezvcard.VCard;
+import ezvcard.property.StructuredName;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
@@ -46,6 +56,7 @@ import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.mockito.MockSettings;
 import org.mockito.Mockito;
 
 public class GoogleContactsServiceTest {
@@ -62,8 +73,10 @@ public class GoogleContactsServiceTest {
   private PeopleService peopleService;
   private JobDataCache jobDataCache;
   private GoogleContactsService contactsService;
-
+  private People people;
+  private Connections connections;
   private List<Person> connectionsList;
+  private GetBatchGet getBatchGet;
   private Connections.List listConnectionsRequest;
   private ListConnectionsResponse listConnectionsResponse;
   private PersonResponse personResponse;
@@ -71,15 +84,18 @@ public class GoogleContactsServiceTest {
 
   @Before
   public void setup() throws IOException {
-    peopleService = mock(PeopleService.class, Mockito.RETURNS_DEEP_STUBS);
     jobDataCache = new InMemoryJobDataCache();
     contactsService = new GoogleContactsService(peopleService, jobDataCache);
-    listConnectionsRequest = mock(Connections.List.class);
 
-    when(peopleService.people()
-        .connections()
-        .list(SELF_RESOURCE))
-        .thenReturn(listConnectionsRequest);
+    peopleService = mock(PeopleService.class);
+    people = mock(People.class);
+    connections = mock(Connections.class);
+    listConnectionsRequest = mock(Connections.List.class);
+    getBatchGet = mock(GetBatchGet.class, Mockito.RETURNS_DEEP_STUBS);
+
+    when(peopleService.people()).thenReturn(people);
+    when(people.connections()).thenReturn(connections);
+    when(people.getBatchGet()).thenReturn(getBatchGet);
   }
 
   private void setUpSinglePersonResponse() throws IOException {
@@ -91,9 +107,10 @@ public class GoogleContactsServiceTest {
 
     // This can't go in setup()
     when(listConnectionsRequest.execute()).thenReturn(listConnectionsResponse);
+
     // This is specific to returning a single Person
-    when(peopleService.people()
-        .getBatchGet()
+    when(connections.list(SELF_RESOURCE)).thenReturn(listConnectionsRequest);
+    when(getBatchGet
         .setResourceNames(Collections.singletonList(RESOURCE_NAME))
         .setPersonFields(PERSON_FIELDS)
         .execute())
@@ -149,7 +166,20 @@ public class GoogleContactsServiceTest {
   }
 
   @Test
-  public void importFirstResources() {
-    // TODO(olsona)
+  public void importFirstResources() throws IOException {int numberOfVCards = 5;
+    List<VCard> vCardList = new LinkedList<>();
+    for (int i = 0; i < numberOfVCards; i++) {
+      StructuredName structuredName = new StructuredName();
+      structuredName.setFamily("Family" + i);
+      structuredName.setGiven("Given" + i);
+      VCard vCard = new VCard();
+      vCard.setStructuredName(structuredName);
+      vCardList.add(vCard);
+    }
+    ContactsModelWrapper wrapper = new ContactsModelWrapper(vCardList, null);
+
+    contactsService.importItem(wrapper);
+
+    verify(people, times(numberOfVCards)).createContact(any(Person.class));
   }
 }

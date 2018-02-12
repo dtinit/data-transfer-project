@@ -26,6 +26,7 @@ import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.common.annotations.VisibleForTesting;
 import ezvcard.VCard;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
@@ -72,7 +73,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
     // Set up connection
-    Connections.List connectionsList = peopleService.people().connections()
+    Connections.List connectionsList = peopleService
+        .people()
+        .connections()
         .list(SELF_RESOURCE);
 
     // Get next page, if we have a page token
@@ -112,8 +115,14 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   }
 
   @Override
-  public void importItem(ContactsModelWrapper object) throws IOException {
+  public void importItem(ContactsModelWrapper wrapper) throws IOException {
     // TODO(olsona)
-
+    // First, assume no ContinuationInformation
+    Collection<VCard> vCardCollection = wrapper.getVCards();
+    for (VCard vCard : vCardCollection) {
+      Person person = VCardToGoogleContactConverter.convert(vCard);
+      peopleService.people().createContact(person);
+      logger.debug("Created contact: {}", person.getNames().get(0));
+    }
   }
 }
