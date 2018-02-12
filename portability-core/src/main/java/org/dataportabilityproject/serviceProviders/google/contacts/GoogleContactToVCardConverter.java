@@ -1,18 +1,23 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import com.google.api.services.people.v1.model.*;
+import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.FieldMetadata;
+import com.google.api.services.people.v1.model.Name;
+import com.google.api.services.people.v1.model.Person;
+import com.google.api.services.people.v1.model.PhoneNumber;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.util.LinkedList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.List;
-
 public class GoogleContactToVCardConverter {
+
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardConverter.class);
 
   @VisibleForTesting
@@ -24,14 +29,16 @@ public class GoogleContactToVCardConverter {
   static VCard convert(Person person) {
     VCard vCard = new VCard();
 
-    /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for Google contacts,
-    b) those type options are often wrong, and c) those type options aren't even reliably in the same place.
+    /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
+    Google contacts,
+    b) those type options are often wrong, and c) those type options aren't even reliably in the
+    same place.
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
-    if (person.getNames() != null) {
-      convertToVCardNamesAndPopulate(vCard, person.getNames());
-    }
+    Preconditions.checkArgument(atLeastOneNamePresent(person.getNames()),
+        "At least one name must be present");
+    convertToVCardNamesAndPopulate(vCard, person.getNames());
 
     if (person.getPhoneNumbers() != null) {
       // VCard API does not support adding multiple telephone numbers at once
@@ -62,7 +69,8 @@ public class GoogleContactToVCardConverter {
     for (Name personName : personNames) {
       StructuredName structuredName = convertToVCardNameSingle(personName);
       if (personName.getMetadata().getPrimary()) {
-        // This is the (a?) primary name for the Person, so it should be the primary name in the VCard.
+        // This is the (a?) primary name for the Person, so it should be the primary name in the
+        // VCard.
         primaryStructuredName = structuredName;
       } else {
         alternateStructuredNames.add(structuredName);
@@ -94,5 +102,9 @@ public class GoogleContactToVCardConverter {
 
   private static int getPref(FieldMetadata metadata) {
     return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
+  }
+
+  private static boolean atLeastOneNamePresent(List<Name> personNames) {
+    return personNames.size() >= 1 && !personNames.get(0).isEmpty();
   }
 }
