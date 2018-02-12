@@ -41,13 +41,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GoogleContactToVCardConverterTest {
-
-  private static final Logger logger = LoggerFactory
-      .getLogger(GoogleContactToVCardConverterTest.class);
 
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =

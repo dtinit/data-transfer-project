@@ -47,12 +47,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GoogleContactsServiceTest {
-
-  private static final Logger logger = LoggerFactory.getLogger(GoogleContactsServiceTest.class);
 
   private static final String RESOURCE_NAME = "resource_name";
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
