@@ -26,6 +26,7 @@ import com.flickr4java.flickr.auth.Permission;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 import org.dataportabilityproject.shared.IOInterface;
@@ -87,7 +88,7 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   }
 
   @Override // online case
-  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = authInterface.getRequestToken(
         callbackBaseUrl + "/callback1/flickr");
@@ -97,7 +98,7 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
       AuthData initialAuthData, @Nullable String extra) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions
@@ -106,7 +107,7 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
     Token token = fromAuthData(initialAuthData);
     Token requestToken = authInterface.getAccessToken(token, new Verifier(authCode));
     try {
-      Auth auth = authInterface.checkToken(requestToken);
+      authInterface.checkToken(requestToken);
       return TokenSecretAuthData.create(requestToken.getToken(), requestToken.getSecret());
     } catch (FlickrException e) {
       throw new IOException("Problem verifying auth token", e);

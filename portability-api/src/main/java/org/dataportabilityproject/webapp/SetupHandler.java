@@ -29,6 +29,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
@@ -89,7 +90,7 @@ abstract class SetupHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
       // Valid job must be present
-      String jobId = JobUtils.decodeId(encodedIdCookie);
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
@@ -109,7 +110,7 @@ abstract class SetupHandler implements HttpHandler {
       DataTransferResponse response;
 
       if (mode == IMPORT) {
-        response = handleImportSetup(exchange.getRequestHeaders(), job);
+        response = handleImportSetup(exchange.getRequestHeaders(), job, jobId);
       } else {
         response = handleCopySetup(exchange.getRequestHeaders(), job);
         // Valid job is present, generate an XSRF token to pass back via cookie
@@ -130,8 +131,8 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(Headers headers, LegacyPortabilityJob job)
-      throws IOException {
+  private DataTransferResponse handleImportSetup(Headers headers, LegacyPortabilityJob job,
+      UUID jobId) throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
     } else {
@@ -144,8 +145,8 @@ abstract class SetupHandler implements HttpHandler {
     OnlineAuthDataGenerator generator = serviceProviderRegistry
         .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()),
             ServiceMode.IMPORT);
-    AuthFlowInitiator authFlowInitiator = generator
-        .generateAuthUrl(PortabilityApiFlags.baseApiUrl(), JobUtils.encodeId(job));
+    AuthFlowInitiator authFlowInitiator =
+        generator.generateAuthUrl(PortabilityApiFlags.baseApiUrl(), jobId);
 
     // This is done in DataTransferHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
@@ -155,7 +156,7 @@ abstract class SetupHandler implements HttpHandler {
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
       JobState expectedPreviousState =
           commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
-      store.update(job, expectedPreviousState);
+      store.update(jobId, job, expectedPreviousState);
     }
     return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
         Status.INPROCESS, authFlowInitiator.authUrl()); // Redirect to auth page of import service

@@ -33,9 +33,7 @@ public abstract class LegacyPortabilityJob {
     ASSIGNED_WITH_AUTH_DATA,
   }
 
-  public abstract String id();
-  @Nullable
-  public abstract String dataType();
+  @Nullable public abstract String dataType();
   @Nullable public abstract String exportService();
   @Nullable public abstract String exportAccount();
   @Nullable public abstract AuthData exportInitialAuthData();
@@ -62,7 +60,6 @@ public abstract class LegacyPortabilityJob {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract LegacyPortabilityJob.Builder setId(String id);
     public abstract LegacyPortabilityJob.Builder setDataType(String id);
     public abstract LegacyPortabilityJob.Builder setExportService(String id);
     public abstract LegacyPortabilityJob.Builder setExportAccount(String id);
@@ -86,9 +83,7 @@ public abstract class LegacyPortabilityJob {
 
     /** Validates required values on build. */
     public LegacyPortabilityJob build() {
-      LegacyPortabilityJob job = autoBuild();
-      Preconditions.checkState(!Strings.isNullOrEmpty(job.id()), "Invalid id value");
-      return job;
+      return autoBuild();
     }
   }
 

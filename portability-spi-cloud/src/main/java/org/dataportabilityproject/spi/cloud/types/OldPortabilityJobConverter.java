@@ -15,7 +15,6 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 public final class OldPortabilityJobConverter extends
     Converter<LegacyPortabilityJob, Map<String, Object>> {
   // Keys for specific values in the key value store
-  public static final String ID_DATA_KEY = "UUID";
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
   private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
@@ -38,10 +37,6 @@ public final class OldPortabilityJobConverter extends
   @Override
   protected Map<String, Object> doForward(LegacyPortabilityJob job) {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-
-    // Id is the key so it is required
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()), "Invalid uuid");
-    builder.put(ID_DATA_KEY, job.id());
 
     // Data type may not be set during initial flow
     if(!Strings.isNullOrEmpty(job.dataType())) {
@@ -101,10 +96,8 @@ public final class OldPortabilityJobConverter extends
    */
   @Override
   protected LegacyPortabilityJob doBackward(Map<String, Object> data) {
-    Preconditions.checkArgument(!isStringValueNullOrEmpty(data, ID_DATA_KEY), "uuid missing");
     // Add required data
     LegacyPortabilityJob.Builder builder = LegacyPortabilityJob.builder();
-    builder.setId(getString(data, ID_DATA_KEY));
 
     // newly created sessions will not contain any data type selection
     String dataType = getString(data, DATA_TYPE_DATA_KEY);

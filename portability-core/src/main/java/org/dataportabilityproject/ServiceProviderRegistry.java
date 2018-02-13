@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
@@ -93,7 +94,7 @@ public class ServiceProviderRegistry {
     public <T extends DataModel> Exporter<T> getExporter(
             String serviceProvider,
             PortableDataType portableDataType,
-            String jobId,
+            UUID jobId,
             AuthData authData) throws IOException {
         JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
         Exporter<? extends DataModel> exporter = serviceProviders.get(serviceProvider)
@@ -105,7 +106,7 @@ public class ServiceProviderRegistry {
     public <T extends DataModel> Importer<T> getImporter(
             String serviceProvider,
             PortableDataType portableDataType,
-            String jobId,
+            UUID jobId,
             AuthData authData) throws IOException {
         JobDataCache jobDataCache = cloudFactory.getJobDataCache(jobId, serviceProvider);
         Importer<? extends DataModel> importer = serviceProviders.get(serviceProvider)

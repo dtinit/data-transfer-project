@@ -21,6 +21,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
+import java.util.UUID;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
@@ -34,14 +35,18 @@ import org.slf4j.LoggerFactory;
 public final class JobUtils {
   private static final Logger logger = LoggerFactory.getLogger(JobUtils.class);
 
-  public static String decodeId(String encoded) {
+  public static String decodeBase64(String encoded) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
     return new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8);
   }
 
-  public static String encodeId(LegacyPortabilityJob job) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(job.id()));
-    return BaseEncoding.base64Url().encode(job.id().getBytes(Charsets.UTF_8));
+  public static UUID decodeJobId(String encodedJobId) {
+    return UUID.fromString(decodeBase64(encodedJobId));
+  }
+
+  public static String encodeJobId(UUID jobId) {
+    Preconditions.checkNotNull(jobId);
+    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
   }
 
   /* Returns the initial auth data for export or import determined by the {@code serviceMode} param. */
