@@ -41,6 +41,8 @@ public class ApiMain {
       }
     });
 
+    ApiFlags.parse();
+
     // TODO: Support other server implementations
     Injector injector = Guice.createInjector(new ReferenceApiModule());
 

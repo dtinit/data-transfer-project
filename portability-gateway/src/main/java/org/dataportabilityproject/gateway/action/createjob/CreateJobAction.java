@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.gateway.action.createjob;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
@@ -31,6 +32,10 @@ import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import javax.crypto.SecretKey;
+import java.util.UUID;
+
 /**
  * An {@link Action} that handles the initial creation of a job.
  */
@@ -40,6 +45,7 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
       CreateJobAction.class);
 
   private final JobStore store;
+  private final ObjectMapper objectMapper;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
 
   @Inject
@@ -48,6 +54,7 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
       SymmetricKeyGenerator symmetricKeyGenerator
   ) {
     this.store = store;
+    this.objectMapper = new ObjectMapper();
     this.symmetricKeyGenerator = symmetricKeyGenerator;
   }
 
@@ -74,6 +81,7 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
         "Missing valid importService: %s", importService);
 
     // Create a new job and persist
+
     UUID newId = UUID.randomUUID();
     SecretKey sessionKey = symmetricKeyGenerator.generate();
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
@@ -113,8 +121,8 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
 
     PortabilityJob job = PortabilityJob.builder().build();
     /* ****************************************************************************************************************************************
-
-
+    PortabilityJob job = new PortabilityJob();
+    job.setId(id);
     job.setTransferDataType(dataType);
     job.setExportService(exportService);
     job.setImportService(importService);
@@ -123,8 +131,8 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
     jobAuthorization.setEncryptedSessionKey(sessionKey);
     jobAuthorization.setState(JobAuthorization.State.INITIAL);
     job.setJobAuthorization(jobAuthorization);
-
     */
+
     return job;
   }
 }

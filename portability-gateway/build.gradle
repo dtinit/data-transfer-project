@@ -38,6 +38,7 @@ jar {
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-gateway')
+    compile project(':portability-spi-transfer')
     compile project(':portability-types-client')
     compile("com.google.guava:guava:${guavaVersion}")
     compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")

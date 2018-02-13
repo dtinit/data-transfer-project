@@ -40,3 +40,4 @@ class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
     }
   }
 }
+

@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
-
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+package org.dataportabilityproject.gateway.action;
 
 /**
- * Creates and encodes keys for asymmetric encryption.
+ * Handles an action in the API server.
  */
-public interface AsymmetricKeyGenerator {
+public interface Action<Request, Response> {
 
-  /**
-   * Generates a {@link PublicKey}
-   */
-  KeyPair generate();
+  /** Handles the given {@code Request} and returns a {@code Response}. */
+  Response handle(Request request);
 }
-

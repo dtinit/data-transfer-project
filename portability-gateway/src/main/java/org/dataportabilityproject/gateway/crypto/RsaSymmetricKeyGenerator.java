@@ -45,3 +45,4 @@ class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
     return kpg.genKeyPair();
   }
 }
+

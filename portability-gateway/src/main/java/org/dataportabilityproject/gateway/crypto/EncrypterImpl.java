@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * Provides AES and RSA-based encryption implementations. See {@link EncrypterFactory} to create.
  */
 final class EncrypterImpl implements Encrypter {
+
   private static final Logger logger = LoggerFactory.getLogger(EncrypterImpl.class);
   private static final String SYMMETRIC_ALGORITHM = "AES";
 
@@ -68,8 +69,8 @@ final class EncrypterImpl implements Encrypter {
   public static class EncrypterFactory {
 
     /**
-     * Creates a {@link EncrypterImpl} with the given {@link SecretKey} for use with "AES"-based symmetric
-     * encryption.
+     * Creates a {@link EncrypterImpl} with the given {@link SecretKey} for use with "AES"-based
+     * symmetric encryption.
      */
     public static Encrypter create(SecretKey key) {
       Preconditions.checkArgument(key.getAlgorithm().equals("AES"));
