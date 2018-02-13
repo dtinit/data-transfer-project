@@ -16,6 +16,8 @@
 package org.dataportabilityproject.transfer.microsoft.provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -58,5 +60,15 @@ public class MicrosoftTransferServiceProvider implements TransferServiceProvider
         return importerCache.computeIfAbsent(transferDataType, v -> {
             throw new IllegalArgumentException("Unsupported import type: " + transferDataType);
         });
+    }
+
+    @Override
+    public List<String> getImportTypes(){
+        return ImmutableList.of(CONTACTS);
+    }
+
+    @Override
+    public List<String> getExportTypes(){
+        return ImmutableList.of(CONTACTS);
     }
 }
