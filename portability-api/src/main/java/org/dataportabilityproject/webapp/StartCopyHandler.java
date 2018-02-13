@@ -45,7 +45,6 @@ import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,9 +123,9 @@ final class StartCopyHandler implements HttpHandler {
             "Import auth cookie required");
 
     // We have the data, now update to 'pending worker assignment' so a worker may be assigned
-    job = job.toBuilder().setJobState(JobAuthorization.State.PENDING_WORKER_ASSIGNMENT).build();
+    job = job.toBuilder().setJobState(JobAuthorization.State.CREDS_AVAILABLE).build();
     store.update(jobId, job, JobAuthorization.State.INITIAL);
-    logger.debug("Updated job {} to PENDING_WORKER_ASSIGNMENT", jobId);
+    logger.debug("Updated job {} to CREDS_AVAILABLE", jobId);
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
     // the worker instance key will be populated
@@ -134,8 +133,8 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
     job = store.find(jobId);
-    while (job == null || job.jobState() != JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA) {
-      logger.debug("Waiting for job {} to enter state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
+    while (job == null || job.jobState() != JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED) {
+      logger.debug("Waiting for job {} to enter state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
       try {
         Sleeper.DEFAULT.sleep(10000);
       } catch (InterruptedException e) {
@@ -144,17 +143,17 @@ final class StartCopyHandler implements HttpHandler {
       job = store.find(jobId);
     }
 
-    logger.debug("Got job {} in state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
+    logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
 
     Preconditions.checkNotNull(job.workerInstancePublicKey(),
         "Expected job " + jobId + " to have a worker instance's public key after being assigned "
-            + "(state ASSIGNED_WITHOUT_AUTH_DATA)");
+            + "(state CREDS_ENCRYPTION_KEY_GENERATED)");
     Preconditions.checkState(job.encryptedExportAuthData() == null,
         "Didn't expect job " + jobId + " to have encrypted export auth data yet in state "
-            + "ASSIGNED_WITHOUT_AUTH_DATA");
+            + "CREDS_ENCRYPTION_KEY_GENERATED");
     Preconditions.checkState(job.encryptedImportAuthData() == null,
         "Didn't expect job " + jobId + " to have encrypted import auth data yet in state "
-            + "ASSIGNED_WITHOUT_AUTH_DATA");
+            + "CREDS_ENCRYPTION_KEY_GENERATED");
 
     // Populate job with auth data from cookies encrypted with worker key
     logger.debug("About to parse worker instance public key: {}", job.workerInstancePublicKey());
@@ -172,12 +171,12 @@ final class StartCopyHandler implements HttpHandler {
     job = job.toBuilder()
         .setEncryptedExportAuthData(encryptedExportAuthData)
         .setEncryptedImportAuthData(encryptedImportAuthData)
-        .setJobState(JobAuthorization.State.ASSIGNED_WITH_AUTH_DATA)
+        .setJobState(JobAuthorization.State.CREDS_ENCRYPTED)
         .build();
 
-    logger.debug("Updating job {} from ASSIGNED_WITHOUT_AUTH_DATA to ASSIGNED_WITH_AUTH_DATA",
+    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_ENCRYPTED",
         jobId);
-    store.update(jobId, job, JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA);
+    store.update(jobId, job, JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
 
     writeResponse(exchange);
   }

@@ -99,7 +99,7 @@ public class PortabilityJob extends EntityType {
   public void setJobAuthorization(JobAuthorization jobAuthorization) {
     switch (jobAuthorization.getState()) {
       case INITIAL:
-      case PENDING_WORKER_ASSIGNMENT:
+      case CREDS_AVAILABLE:
         // SessionKey required to create a job
         isSet(jobAuthorization.getEncryptedSessionKey());
         isUnset(jobAuthorization.getEncryptedExportAuthData(),
@@ -107,7 +107,7 @@ public class PortabilityJob extends EntityType {
             jobAuthorization.getEncryptedPublicKey(),
             jobAuthorization.getEncryptedPrivateKey());
         break;
-      case ASSIGNED_WITHOUT_AUTH_DATA:
+      case CREDS_ENCRYPTION_KEY_GENERATED:
         // Expected associated keys from the assigned worker to be present
         isSet(jobAuthorization.getEncryptedSessionKey(),
             jobAuthorization.getEncryptedPublicKey(),
@@ -116,7 +116,7 @@ public class PortabilityJob extends EntityType {
             jobAuthorization.getEncryptedImportAuthData()
         );
         break;
-      case ASSIGNED_WITH_AUTH_DATA:
+      case CREDS_ENCRYPTED:
         // Expected all fields set
         isSet(jobAuthorization.getEncryptedSessionKey(),
             jobAuthorization.getEncryptedPublicKey(),

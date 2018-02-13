@@ -62,7 +62,7 @@ final class WorkerImpl {
     // Start the processing
     UUID jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
-    LegacyPortabilityJob job = store.find(jobId, JobAuthorization.State.ASSIGNED_WITH_AUTH_DATA);
+    LegacyPortabilityJob job = store.find(jobId, JobAuthorization.State.CREDS_ENCRYPTED);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class
