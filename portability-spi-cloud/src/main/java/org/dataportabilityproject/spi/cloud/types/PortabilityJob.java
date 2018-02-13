@@ -3,9 +3,8 @@ package org.dataportabilityproject.spi.cloud.types;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.dataportabilityproject.types.transfer.EntityType;
-
 import java.time.LocalDateTime;
+import org.dataportabilityproject.types.transfer.EntityType;
 
 /**
  * A job that will fulfill a transfer request.
@@ -15,14 +14,23 @@ import java.time.LocalDateTime;
 public class PortabilityJob extends EntityType {
 
   /**
-   * The job states.
+   * The current state of the job.
    */
   public enum State {
-    NEW, COMPLETE, ERROR
+    // The job has not finished the authorization flows.
+    PENDING_AUTH_DATA,
+    // The API has all auth information for the job, but the job is not assigned a worker yet.
+    PENDING_WORKER_ASSIGNMENT,
+    // The job is assigned a worker, which is waiting for the API to encrypt the auth data with its
+    // (the worker's) public key.
+    ASSIGNED_WITHOUT_AUTH_DATA,
+    // The job is assigned a worker and has encrypted auth data from the API.
+    ASSIGNED_WITH_AUTH_DATA,
+    // TODO: Add a COMPLETE state and set appropriately in the worker
   }
 
   @JsonProperty
-  private State state = State.NEW;
+  private State state = State.PENDING_AUTH_DATA;
 
   @JsonProperty
   private String exportService;
@@ -143,5 +151,4 @@ public class PortabilityJob extends EntityType {
       Preconditions.checkState(!Strings.isNullOrEmpty(str));
     }
   }
-
 }

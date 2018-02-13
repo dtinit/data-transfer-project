@@ -19,7 +19,6 @@ import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_
 import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_INSERT;
 import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_QUERY;
 import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_UPDATE;
-import static org.dataportabilityproject.spi.cloud.types.PortabilityJob.State.COMPLETE;
 import static org.scassandra.cql.PrimitiveType.UUID;
 import static org.scassandra.cql.PrimitiveType.VARCHAR;
 import static org.scassandra.matchers.Matchers.preparedStatementRecorded;
@@ -28,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Map;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob.State;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -87,7 +87,7 @@ public class CosmosStoreTest {
         cosmosStore.createJob(jobId, createJob);
 
         PortabilityJob copy = cosmosStore.findJob(jobId);
-        copy.setState(COMPLETE);
+        copy.setState(State.ASSIGNED_WITH_AUTH_DATA);
         cosmosStore.updateJob(jobId, copy);
 
         cosmosStore.remove(jobId);

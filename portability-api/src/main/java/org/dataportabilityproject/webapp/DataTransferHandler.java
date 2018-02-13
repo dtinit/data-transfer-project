@@ -40,7 +40,7 @@ import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
@@ -133,7 +133,7 @@ final class DataTransferHandler implements HttpHandler {
 
       // Lookup job, even if just recently created
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, PortabilityJob.State.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Validate job before going further
@@ -156,8 +156,8 @@ final class DataTransferHandler implements HttpHandler {
       if (authFlowInitiator.initialAuthData() != null) {
         job = JobUtils.setInitialAuthData(job, authFlowInitiator.initialAuthData(),
             ServiceMode.EXPORT);
-        JobState expectedPreviousState =
-            commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
+        PortabilityJob.State expectedPreviousState =
+            commonSettings.getEncryptedFlow() ? PortabilityJob.State.PENDING_AUTH_DATA : null;
         store.update(jobId, job, expectedPreviousState);
       }
 
@@ -176,15 +176,15 @@ final class DataTransferHandler implements HttpHandler {
   /**
    * Create the initial job in initial state and persist in storage.
    */
-  private LegacyPortabilityJob createJob(UUID jobId, PortableDataType dataType, String exportService,
-      String importService) throws IOException {
+  private LegacyPortabilityJob createJob(UUID jobId, PortableDataType dataType,
+      String exportService, String importService) throws IOException {
     LegacyPortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.dataType()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.exportService()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
-      job = job.toBuilder().setJobState(JobState.PENDING_AUTH_DATA).build();
+      job = job.toBuilder().setJobState(PortabilityJob.State.PENDING_AUTH_DATA).build();
     }
     store.create(jobId, job);
     return job;

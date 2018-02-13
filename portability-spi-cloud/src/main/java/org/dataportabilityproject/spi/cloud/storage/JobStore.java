@@ -1,13 +1,11 @@
 package org.dataportabilityproject.spi.cloud.storage;
 
-import java.util.UUID;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.types.transfer.models.DataModel;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
  * Implementations handle storage and retrieval of {@link LegacyPortabilityJob}s.
@@ -46,7 +44,8 @@ public interface JobStore {
      * @throws IOException if the job was not in the expected state in the store, or there was
      * another problem updating it.
      */
-    void update(UUID jobId, LegacyPortabilityJob job, JobState previousState) throws IOException;
+    void update(UUID jobId, LegacyPortabilityJob job, PortabilityJob.State previousState)
+        throws IOException;
 
     /**
      * Atomically updates the entry for {@code job}'s ID to {@code job}.
@@ -83,7 +82,7 @@ public interface JobStore {
      * Gets the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in the store,
      * or null if none found.
      */
-    UUID findFirst(JobState jobState);
+    UUID findFirst(PortabilityJob.State jobState);
 
     default <T extends DataModel> void create(UUID jobId, T model) {
         throw new UnsupportedOperationException();
@@ -114,7 +113,7 @@ public interface JobStore {
      * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, and verify it is
      * in state {@code jobState}.
      */
-    LegacyPortabilityJob find(UUID jobId, JobState jobState);
+    LegacyPortabilityJob find(UUID jobId, PortabilityJob.State jobState);
 
     default void create(UUID jobId, String key, InputStream stream) {
         throw new UnsupportedOperationException();

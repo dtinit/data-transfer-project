@@ -27,7 +27,7 @@ import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +62,7 @@ final class WorkerImpl {
     // Start the processing
     UUID jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
-    LegacyPortabilityJob job = store.find(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
+    LegacyPortabilityJob job = store.find(jobId, PortabilityJob.State.ASSIGNED_WITH_AUTH_DATA);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class

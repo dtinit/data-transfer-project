@@ -15,6 +15,9 @@
  */
 package org.dataportabilityproject.cloud.microsoft.cosmos;
 
+import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.DATA_TABLE;
+import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.JOB_TABLE;
+
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
@@ -22,17 +25,13 @@ import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-
-import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.DATA_TABLE;
-import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.JOB_TABLE;
 
 /**
  * A {@link JobStore} backed by Cosmos DB. This implementation uses the DataStax Cassandra driver to
@@ -131,7 +130,7 @@ public class CosmosStore implements JobStore {
 
     @Override
     public void update(UUID jobId, LegacyPortabilityJob job,
-        LegacyPortabilityJob.JobState previousState) throws IOException {
+        PortabilityJob.State previousState) throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -141,12 +140,12 @@ public class CosmosStore implements JobStore {
     }
 
     @Override
-    public UUID findFirst(LegacyPortabilityJob.JobState jobState) {
+    public UUID findFirst(PortabilityJob.State jobState) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public LegacyPortabilityJob find(UUID jobId, LegacyPortabilityJob.JobState jobState) {
+    public LegacyPortabilityJob find(UUID jobId, PortabilityJob.State jobState) {
         throw new UnsupportedOperationException();
     }
 
