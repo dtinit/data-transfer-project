@@ -55,7 +55,7 @@ public class PortabilityTransferServiceProviderRegistryTest {
     when(mockTransferProvider.getServiceId()).thenReturn("mockServiceProvider");
 
     thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("TransferServiceProviderNotFound");
+    thrown.expectMessage("TransferServiceProvider not found");
 
     TransferServiceProviderRegistry registry = new PortabilityTransferServiceProviderRegistry(ImmutableList.of("ServiceDoesNotExist"),
         ImmutableMap.of("mockServiceProvider", mockTransferProvider));
