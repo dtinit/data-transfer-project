@@ -39,8 +39,8 @@ import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
@@ -92,11 +92,11 @@ abstract class SetupHandler implements HttpHandler {
       // Valid job must be present
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
-      // This page is only valid after the oauth of the export service - export data should exist for
-      // all setup Modes.
+      // This page is only valid after the oauth of the export service - export data should exist
+      // for all setup Modes.
       String exportService = job.exportService();
       Preconditions.checkState(!Strings.isNullOrEmpty(exportService), "Export service is invalid");
 
@@ -150,12 +150,12 @@ abstract class SetupHandler implements HttpHandler {
 
     // This is done in DataTransferHandler as well for export services
     if (authFlowInitiator.initialAuthData() != null) {
-      // Auth data is different for import and export. This is only valid for the /_/importSetup page,
-      // so serviceMode is IMPORT
+      // Auth data is different for import and export. This is only valid for the /_/importSetup
+      // page, so serviceMode is IMPORT
       job = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
-      JobState expectedPreviousState =
-          commonSettings.getEncryptedFlow() ? JobState.PENDING_AUTH_DATA : null;
+      JobAuthorization.State expectedPreviousState =
+          commonSettings.getEncryptedFlow() ? JobAuthorization.State.INITIAL : null;
       store.update(jobId, job, expectedPreviousState);
     }
     return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),

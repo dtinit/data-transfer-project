@@ -27,7 +27,6 @@ import com.google.cloud.datastore.LongValue;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
-import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
@@ -41,9 +40,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJobConverter;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJobConverter;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -105,7 +104,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * state {@code jobState}.
    */
   @Override
-  public LegacyPortabilityJob find(UUID jobId, JobState jobState) {
+  public LegacyPortabilityJob find(UUID jobId, JobAuthorization.State jobState) {
     LegacyPortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
@@ -115,17 +114,17 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore, or null
-   * if none found.
+   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore,
+   * or null if none found.
    *
    * TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
    * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
-  public UUID findFirst(JobState jobState) {
+  public UUID findFirst(JobAuthorization.State jobState) {
     Query<Key> query = Query.newKeyQueryBuilder()
         .setKind(KIND)
-        .setFilter(PropertyFilter.eq(OldPortabilityJobConverter.JOB_STATE, jobState.name()))
+        .setFilter(PropertyFilter.eq(LegacyPortabilityJobConverter.JOB_STATE, jobState.name()))
         //.setOrderBy(OrderBy.asc("created"))
         .setLimit(1)
         .build();
@@ -160,7 +159,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * problem updating it.
    */
   @Override
-  public void update(UUID jobId, LegacyPortabilityJob job, JobState previousState)
+  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
       throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
@@ -258,18 +257,18 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Return {@code entity}'s {@link JobState}, or null if missing.
+   * Return {@code entity}'s {@link JobAuthorization.State}, or null if missing.
    *
    * @param entity a {@link LegacyPortabilityJob}'s representation in {@link #datastore}.
    */
-  private JobState getJobState(Entity entity) {
-    String jobState = entity.getString(OldPortabilityJobConverter.JOB_STATE);
+  private JobAuthorization.State getJobState(Entity entity) {
+    String jobState = entity.getString(LegacyPortabilityJobConverter.JOB_STATE);
     // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
     // in legacy non-encrypted case
     if (!encryptedFlow) {
-      return jobState == null ? null : JobState.valueOf(jobState);
+      return jobState == null ? null : JobAuthorization.State.valueOf(jobState);
     }
     Preconditions.checkNotNull(jobState, "Job should never exist without a state");
-    return JobState.valueOf(jobState);
+    return JobAuthorization.State.valueOf(jobState);
   }
 }

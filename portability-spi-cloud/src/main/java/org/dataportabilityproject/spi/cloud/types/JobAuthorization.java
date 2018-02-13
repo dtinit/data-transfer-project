@@ -9,23 +9,20 @@ import org.dataportabilityproject.types.transfer.EntityType;
 public class JobAuthorization extends EntityType {
 
   /**
-   * The current state of the job.
-   *
-   * <p>The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to
-   * be assigned before sending all the data required for the job.
-   *
-   * <p>The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required,
-   * such as the encrypted auth data, in order to begin processing the job.
+   * The current authorization state of the job.
    */
   public enum State {
-    // The job is in the process of obtaining export and import authorization credentials.
+    // The job is in the process of obtaining export and import authorization credentials via the
+    // gateway auth flow.
     INITIAL,
-    // The job has all authorization credentials but is not assigned a worker yet
-    PENDING_WORKER_ASSIGNMENT,
-    // The job is assigned a worker instance, authorization credentials have not been populated.
-    ASSIGNED_WITHOUT_AUTH_DATA,
-    // The job is assigned a worker and has encrypted authorization credentials populated.
-    ASSIGNED_WITH_AUTH_DATA,
+    // The gateway authorization flow has completed and raw credentials are temporarily available in
+    // the gateway server.
+    CREDS_AVAILABLE,
+    // A worker has spun up and generated a key to encrypt the credentials above so that it (alone)
+    // may use them.
+    CREDS_ENCRYPTION_KEY_GENERATED,
+    // The gateway server has encrypted the credentials for the worker to use.
+    CREDS_ENCRYPTED,
   }
 
   @JsonProperty

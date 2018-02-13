@@ -19,7 +19,6 @@ import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_
 import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_INSERT;
 import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_QUERY;
 import static org.dataportabilityproject.cloud.microsoft.cosmos.CosmosStore.JOB_UPDATE;
-import static org.dataportabilityproject.spi.cloud.types.PortabilityJob.State.COMPLETE;
 import static org.scassandra.cql.PrimitiveType.UUID;
 import static org.scassandra.cql.PrimitiveType.VARCHAR;
 import static org.scassandra.matchers.Matchers.preparedStatementRecorded;
@@ -27,6 +26,7 @@ import static org.scassandra.matchers.Matchers.preparedStatementRecorded;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Map;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,7 +57,8 @@ public class CosmosStoreTest {
 
         PortabilityJob primeJob = new PortabilityJob();
         java.util.UUID jobId = java.util.UUID.randomUUID();
-        Map row = Collections.singletonMap("job_data", new ObjectMapper().writeValueAsString(primeJob));
+        Map row =
+            Collections.singletonMap("job_data", new ObjectMapper().writeValueAsString(primeJob));
 
         PrimingRequest.Then.ThenBuilder thenQuery = PrimingRequest.then();
         PrimingRequest findRequest = PrimingRequest.preparedStatementBuilder()
@@ -87,7 +88,7 @@ public class CosmosStoreTest {
         cosmosStore.createJob(jobId, createJob);
 
         PortabilityJob copy = cosmosStore.findJob(jobId);
-        copy.setState(COMPLETE);
+        copy.setState(PortabilityJob.State.COMPLETE);
         cosmosStore.updateJob(jobId, copy);
 
         cosmosStore.remove(jobId);

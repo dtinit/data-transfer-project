@@ -79,8 +79,8 @@ public final class JobUtils {
   }
 
   /* Sets the service in the correct field of the OldPortabilityJob */
-  public static LegacyPortabilityJob setInitialAuthData(LegacyPortabilityJob job, AuthData initialAuthData,
-      ServiceMode serviceMode) {
+  public static LegacyPortabilityJob setInitialAuthData(LegacyPortabilityJob job,
+      AuthData initialAuthData, ServiceMode serviceMode) {
     logger.debug("Setting initialAuthData: {}, serviceMode: {}", initialAuthData, serviceMode);
     LegacyPortabilityJob.Builder updatedJob = job.toBuilder();
     switch (serviceMode) {

@@ -1,18 +1,16 @@
 package org.dataportabilityproject.spi.cloud.types;
 
 import com.google.common.base.Converter;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
  * Converter from {@link LegacyPortabilityJob} to and from a Map suitable for storing in a key value
  * storage layer.
  */
-public final class OldPortabilityJobConverter extends
+public final class LegacyPortabilityJobConverter extends
     Converter<LegacyPortabilityJob, Map<String, Object>> {
   // Keys for specific values in the key value store
   private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
@@ -148,7 +146,7 @@ public final class OldPortabilityJobConverter extends
       builder.setWorkerInstancePrivateKey(getString(data, WORKER_INSTANCE_PRIVATE_KEY));
     }
     if (data.get(JOB_STATE) != null) {
-      builder.setJobState(JobState.valueOf(getString(data, JOB_STATE)));
+      builder.setJobState(JobAuthorization.State.valueOf(getString(data, JOB_STATE)));
     }
     return builder.build();
   }

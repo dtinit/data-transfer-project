@@ -31,15 +31,15 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.dataportabilityproject.types.client.transfer.SimpleLoginRequest;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +99,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
