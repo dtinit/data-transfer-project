@@ -151,7 +151,7 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob},
+   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job},
    * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
    * {@code previousState}.
    *
@@ -171,7 +171,7 @@ public final class GoogleCloudDatastore implements JobStore {
         transaction.rollback();
         throw new IOException("Could not find record for jobId " + jobId);
       }
-      if (getJobState(previousEntity) != previousState) {
+      if (previousState != null && getJobState(previousEntity) != previousState) {
         throw new IOException("Job " + jobId + " existed in an unexpected state. "
             + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
       }
