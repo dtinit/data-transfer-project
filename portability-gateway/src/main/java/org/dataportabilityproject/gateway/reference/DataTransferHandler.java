@@ -19,6 +19,8 @@ import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.io.BaseEncoding;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpExchange;
@@ -26,10 +28,13 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
+import javax.crypto.SecretKey;
 import org.dataportabilityproject.gateway.ApiSettings;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobAction;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionRequest;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionResponse;
+import org.dataportabilityproject.gateway.crypto.EncrypterFactory;
+import org.dataportabilityproject.gateway.crypto.SymmetricKeyGenerator;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
@@ -57,16 +62,21 @@ final class DataTransferHandler implements HttpHandler {
   private final AuthServiceProviderRegistry registry;
   private final ApiSettings apiSettings;
   private final JobStore store;
+  private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
 
   @Inject
-  DataTransferHandler(CreateJobAction createJobAction, AuthServiceProviderRegistry registry,
+  DataTransferHandler(CreateJobAction createJobAction,
+      AuthServiceProviderRegistry registry,
       ApiSettings apiSettings,
-      JobStore store, TypeManager typeManager) {
+      JobStore store,
+      TypeManager typeManager,
+      SymmetricKeyGenerator symmetricKeyGenerator) {
     this.createJobAction = createJobAction;
     this.registry = registry;
     this.apiSettings = apiSettings;
     this.store = store;
+    this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
   }
 
@@ -86,7 +96,7 @@ final class DataTransferHandler implements HttpHandler {
     CreateJobActionResponse actionResponse = createJobAction.handle(actionRequest);
 
     DataTransferResponse dataTransferResponse;
-    if(actionResponse.getErrorMsg() != null) {
+    if (actionResponse.getErrorMsg() != null) {
       logger.warn("Error during action: {}", actionResponse.getErrorMsg());
       handleError(exchange, request);
       return;
@@ -115,16 +125,40 @@ final class DataTransferHandler implements HttpHandler {
     // If present, store initial auth data for export services, e.g. used for oauth1
     if (authFlowConfiguration.getInitialAuthData() != null) {
 
+
       // Modify the existing JobAuthorization to add initial data
       JobAuthorization.Builder jobAuthorizationBuilder = job.jobAuthorization().toBuilder();
       String serialized = objectMapper
           .writeValueAsString(authFlowConfiguration.getInitialAuthData());
       jobAuthorizationBuilder.setEncryptedInitialExportAuthData(serialized);
       // Persist the updated PortabilityJob with the updated JobAuthorization
+<<<<<<< HEAD
 
       PortabilityJob updatedPortabilityJob = job.toBuilder()
           .setAndValidateJobAuthorization(jobAuthorizationBuilder.build()).build();
       store.updateJob(actionResponse.getId(), updatedPortabilityJob);
+=======
+      job.jobAuthorization(jobAuthorization);
+
+      // Retrieve and parse the session key from the job
+      String sessionKey = job.getJobAuthorization().getEncodedSessionKey();
+      SecretKey key = symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(sessionKey));
+
+      // Serialize and encrypt the initial auth data
+      String serialized = objectMapper
+          .writeValueAsString(authFlowConfiguration.getInitialAuthData());
+      String encryptedInitialAuthData = EncrypterFactory.create(key).encrypt(serialized);
+
+      // Add the serialized and encrypted initial auth data to the job authorization
+      JobAuthorization jobAuthorization = job.getJobAuthorization();
+      // Ensure intial auth data for export has not already been set
+      Preconditions.checkState(Strings.isNullOrEmpty(jobAuthorization.getInitialExportAuthData()));
+
+      // Persist the updated PortabilityJob with the updated JobAuthorization
+      jobAuthorization.setInitialExportAuthData(encryptedInitialAuthData);
+      job.setJobAuthorization(jobAuthorization);
+      store.updateJob(actionResponse.getId(), job);
+>>>>>>> Migrate oauth and submit handlers. Add decrytion.
     }
 
     dataTransferResponse = new DataTransferResponse(request.getSource(),
@@ -139,7 +173,9 @@ final class DataTransferHandler implements HttpHandler {
     objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
   }
 
-  /** Handles error response. TODO: Determine whether to return user facing error message here. */
+  /**
+   * Handles error response. TODO: Determine whether to return user facing error message here.
+   */
   public void handleError(HttpExchange exchange, DataTransferRequest request) throws IOException {
     DataTransferResponse dataTransferResponse = new DataTransferResponse(request.getSource(),
         request.getDestination(), request.getTransferDataType(), Status.ERROR, ERROR_PATH);

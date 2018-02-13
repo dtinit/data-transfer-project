@@ -108,9 +108,9 @@ public final class CreateJobAction implements
   /**
    * Populates the initial state of the {@link PortabilityJob} instance.
    */
-  private static PortabilityJob createJob(String sessionKey,
+  private static PortabilityJob createJob(String encodedSessionKey,
       String dataType, String exportService, String importService) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedSessionKey), "sessionKey missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
@@ -123,7 +123,7 @@ public final class CreateJobAction implements
     job.setImportService(importService);
     // Job auth data
     JobAuthorization jobAuthorization = new JobAuthorization();
-    jobAuthorization.setEncryptedSessionKey(sessionKey);
+    jobAuthorization.setEncodedSessionKey(encodedSessionKey);
     jobAuthorization.setState(JobAuthorization.State.INITIAL);
     job.setJobAuthorization(jobAuthorization);
     */

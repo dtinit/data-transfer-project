@@ -15,10 +15,10 @@
  */
 package org.dataportabilityproject.gateway.crypto;
 
-import com.google.common.io.BaseEncoding;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,5 +40,9 @@ class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
       throw new RuntimeException("Error creating key generator", e);
     }
   }
-}
 
+  @Override
+  public SecretKey parse(byte[] encoded) {
+    return new SecretKeySpec(encoded, 0, encoded.length, ALGORITHM);
+  }
+}

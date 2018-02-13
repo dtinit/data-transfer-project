@@ -15,17 +15,26 @@
 */
 package org.dataportabilityproject.gateway.reference;
 
+import com.google.common.net.HttpHeaders;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.HttpCookie;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
+import javax.crypto.SecretKey;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.simpleframework.http.Cookie;
+import org.simpleframework.http.parse.CookieParser;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -43,10 +52,61 @@ public final class ReferenceApiUtils {
    */
   public final static String COOKIE_ATTRIBUTES = "; Path=/; SameSite=lax";
 
+  public static class FrontendConstantUrls {
+    public static final String URL_NEXT_PAGE = "/next";
+    public static final String URL_COPY_PAGE = "/copy";
+  }
+
+  /** Enumeration of possible modes for transfering data. */
+  public enum TransferMode {
+    EXPORT, IMPORT
+  }
+
   /** Enumeration of http methods supported in the API reference implementation. */
   public enum HttpMethods {
     GET,
     POST
+  }
+
+  /**
+   * Returns a URL representing the resource provided. TODO: remove hardcoded scheme - find a better
+   * way to do this from the HttpExchange.
+   */
+  public static String createURL(String host, String URI, boolean useHttps) {
+    // http is only allowed if this is running a local instance, enforce https instead.
+    String scheme = useHttps ? "https://" : "http://";
+    return scheme + host + URI;
+  }
+
+  /**
+   * Returns the cookie specified in headers for the provided {@code} key.
+   */
+  public static String getCookie(Headers headers, String key) {
+    Map<String, HttpCookie> cookieMap = getCookies(headers);
+    HttpCookie httpCookie = cookieMap.get(key);
+    String cookie = "";
+    if (httpCookie != null) {
+      cookie = httpCookie.getValue();
+    }
+    return cookie;
+  }
+
+  /**
+   * Returns a Map of HttpCookies provided from the headers.
+   */
+  public static Map<String, HttpCookie> getCookies(Headers headers) {
+    List<String> cookies = headers.get(HttpHeaders.COOKIE);
+    Map<String, HttpCookie> cookieMap = new HashMap<>();
+
+    for (String cookieStr : cookies) {
+      CookieParser parser = new CookieParser(cookieStr);
+      for (Cookie c : parser) {
+        HttpCookie httpCookie = new HttpCookie(c.getName(), c.getValue());
+        cookieMap.put(httpCookie.getName(), httpCookie);
+      }
+    }
+
+    return cookieMap;
   }
 
   /**
@@ -65,6 +125,11 @@ public final class ReferenceApiUtils {
   public static String encodeId(UUID id) {
     Preconditions.checkNotNull(id);
     return BaseEncoding.base64Url().encode(id.toString().getBytes(Charsets.UTF_8));
+  }
+
+  public static String decodeId(String encoded) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
+    return new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8);
   }
 
   /**
@@ -88,5 +153,26 @@ public final class ReferenceApiUtils {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Hack! For now, if we don't have export auth data, assume it's for export.
+   */
+  public static TransferMode getTransferMode(Headers headers) {
+    String exportAuthCookie = getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+    return (Strings.isNullOrEmpty(exportAuthCookie) ? TransferMode.EXPORT : TransferMode.IMPORT);
+  }
+
+
+  /**
+   * Encrypts the given {@code authData} with the session-based {@link SecretKey} and stores it as a
+   * cookie in the provided headers.
+   */
+  public static void setCookie(Headers headers, String encrypted, TransferMode transferMode) {
+    String cookieKey = (transferMode == TransferMode.EXPORT)
+        ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
+        : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
+    HttpCookie cookie = new HttpCookie(cookieKey, encrypted);
+    headers.add(HttpHeaders.SET_COOKIE, cookie.toString() + COOKIE_ATTRIBUTES);
   }
 }

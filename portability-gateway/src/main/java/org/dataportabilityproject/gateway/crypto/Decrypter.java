@@ -15,20 +15,13 @@
  */
 package org.dataportabilityproject.gateway.crypto;
 
-import javax.crypto.SecretKey;
-
 /**
- * Creates and encodes keys for symmetric encryption.
+ * Decrypts data for the given key type.
  */
-public interface SymmetricKeyGenerator {
+public interface Decrypter {
 
   /**
-   * Generates a {@link SecretKey}
+   * Decrypts the given {@code data}.
    */
-  SecretKey generate();
-
-  /**
-   * Parses an encoded {@link SecretKey}.
-   */
-  SecretKey parse(byte[] encoded);
+  String decrypt(String data) ;
 }
