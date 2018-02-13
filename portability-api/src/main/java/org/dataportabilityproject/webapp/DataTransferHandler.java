@@ -127,7 +127,7 @@ final class DataTransferHandler implements HttpHandler {
       createJob(jobId, dataType, exportService, importService);
 
       // Set new cookie
-      HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeId(jobId));
+      HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeJobId(jobId));
       exchange.getResponseHeaders()
           .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
 

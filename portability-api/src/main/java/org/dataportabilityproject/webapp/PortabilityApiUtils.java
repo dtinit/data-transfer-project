@@ -190,7 +190,7 @@ public class PortabilityApiUtils {
         .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
     // Valid job must be present
-    UUID jobId = JobUtils.decodeId(encodedIdCookie);
+    UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
     // Validate XSRF token is present in request header and in the token.
     String tokenHeader = parseXsrfTokenHeader(requestHeaders);

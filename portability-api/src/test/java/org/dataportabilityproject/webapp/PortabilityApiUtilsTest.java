@@ -36,7 +36,7 @@ public class PortabilityApiUtilsTest {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies
-    String encodedJobId = JobUtils.encodeId(JOB_ID);;
+    String encodedJobId = JobUtils.encodeJobId(JOB_ID);;
     String token = tokenManager.createNewToken(JOB_ID);
     String cookieStr = String
         .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
@@ -55,7 +55,7 @@ public class PortabilityApiUtilsTest {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies - purposefully create a token thats not for the correct job ID.
-    String encodedJobId = JobUtils.encodeId(JOB_ID);
+    String encodedJobId = JobUtils.encodeJobId(JOB_ID);
     UUID anotherId = UUID.randomUUID();
     while (anotherId.equals(JOB_ID)) {
       anotherId = UUID.randomUUID();
@@ -79,7 +79,7 @@ public class PortabilityApiUtilsTest {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies
-    String encodedJobId = JobUtils.encodeId(JOB_ID);;
+    String encodedJobId = JobUtils.encodeJobId(JOB_ID);;
     String token = tokenManager.createNewToken(JOB_ID);
     String cookieStr = String.format("%s=%s;", JsonKeys.ID_COOKIE_KEY, encodedJobId);
 
@@ -97,7 +97,7 @@ public class PortabilityApiUtilsTest {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies
-    String encodedJobId = JobUtils.encodeId(JOB_ID);
+    String encodedJobId = JobUtils.encodeJobId(JOB_ID);
     String token = tokenManager.createNewToken(JOB_ID);
     String cookieStr = String
         .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);

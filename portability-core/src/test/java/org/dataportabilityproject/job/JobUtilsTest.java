@@ -15,7 +15,7 @@ public class JobUtilsTest {
   @Test
   public void encodeDecodeRoundTrip() throws Exception {
     UUID jobId = UUID.randomUUID();
-    assertThat(JobUtils.decodeId(JobUtils.encodeId(jobId))).isEqualTo(jobId);
+    assertThat(JobUtils.decodeJobId(JobUtils.encodeJobId(jobId))).isEqualTo(jobId);
   }
 
   @Test

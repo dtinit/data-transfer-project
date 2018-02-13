@@ -112,7 +112,7 @@ final class OauthCallbackHandler implements HttpHandler {
       // Valid job must be present
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
-      UUID jobId = JobUtils.decodeId(encodedIdCookie);
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);

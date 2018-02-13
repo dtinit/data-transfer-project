@@ -113,13 +113,12 @@ final class Oauth2CallbackHandler implements HttpHandler {
               encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
               "Encoded Id cookie required");
 
-      UUID jobId = JobUtils.decodeId(encodedIdCookie.getValue());
-      UUID state = JobUtils.decodeId(authResponse.getState());
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie.getValue());
+      String state = JobUtils.decodeBase64(authResponse.getState());
 
       // TODO: Remove sanity check
-      Preconditions
-          .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
-              jobId, state);
+      Preconditions.checkState(state.equals(jobId.toString()),
+          "Job id in cookie [%s] and request [%s] should match", jobId, state);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);

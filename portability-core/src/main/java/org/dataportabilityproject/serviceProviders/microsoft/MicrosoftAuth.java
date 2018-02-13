@@ -78,7 +78,7 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
 
   @Override
   public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
-    String encodedJobId = JobUtils.encodeId(jobId);
+    String encodedJobId = JobUtils.encodeJobId(jobId);
     String url = createFlow()
         .newAuthorizationUrl()
         .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)

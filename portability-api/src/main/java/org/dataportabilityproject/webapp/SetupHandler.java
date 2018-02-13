@@ -90,7 +90,7 @@ abstract class SetupHandler implements HttpHandler {
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
       // Valid job must be present
-      UUID jobId = JobUtils.decodeId(encodedIdCookie);
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);

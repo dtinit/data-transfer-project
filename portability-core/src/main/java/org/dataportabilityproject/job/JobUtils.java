@@ -35,12 +35,16 @@ import org.slf4j.LoggerFactory;
 public final class JobUtils {
   private static final Logger logger = LoggerFactory.getLogger(JobUtils.class);
 
-  public static UUID decodeId(String encoded) {
+  public static String decodeBase64(String encoded) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
-    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8));
+    return new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8);
   }
 
-  public static String encodeId(UUID jobId) {
+  public static UUID decodeJobId(String encodedJobId) {
+    return UUID.fromString(decodeBase64(encodedJobId));
+  }
+
+  public static String encodeJobId(UUID jobId) {
     Preconditions.checkNotNull(jobId);
     return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
   }

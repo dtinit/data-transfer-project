@@ -96,7 +96,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
           .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
-      UUID jobId = JobUtils.decodeId(encodedIdCookie);
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
