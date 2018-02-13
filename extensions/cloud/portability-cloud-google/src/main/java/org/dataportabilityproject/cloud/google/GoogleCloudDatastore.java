@@ -43,6 +43,7 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJobConverter;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -85,6 +86,85 @@ public final class GoogleCloudDatastore implements JobStore {
           "Could not create initial record for jobID " + jobId + " (record: " + entity + ")", e);
     }
     transaction.commit();
+  }
+
+  /**
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in Datastore.
+   *
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
+   *
+   * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
+   * problem inserting the job.
+   */
+  public void createJob(UUID jobId, PortabilityJob job) throws IOException {
+
+  }
+
+
+  /**
+   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job},
+   * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
+   * {@code previousState}.
+   *
+   * @throws IOException if the job was not in the expected state in Datastore, or there was another
+   * problem updating it.
+   */
+  @Override
+  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
+      throws IOException {
+    Preconditions.checkNotNull(jobId);
+    Transaction transaction = datastore.newTransaction();
+    Key key = getKey(jobId);
+
+    try {
+      Entity previousEntity = transaction.get(key);
+      if (previousEntity == null) {
+        transaction.rollback();
+        throw new IOException("Could not find record for jobId " + jobId);
+      }
+      if (previousState != null && getJobState(previousEntity) != previousState) {
+        throw new IOException("Job " + jobId + " existed in an unexpected state. "
+            + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
+      }
+
+      Entity newEntity = createEntity(key, job.asMap());
+      transaction.put(newEntity);
+      transaction.commit();
+    } catch (Throwable t) {
+      transaction.rollback();
+      throw new IOException("Failed atomic update of job " + jobId + " (was state "
+          + previousState + ").", t);
+    }
+  }
+
+  /**
+   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job},
+   * in Datastore using a {@link Transaction}.
+   */
+  public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+  }
+
+  /**
+   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore.
+   *
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   */
+  @Override
+  public void remove(UUID jobId) throws IOException {
+    try {
+      datastore.delete(getKey(jobId));
+    } catch (DatastoreException e) {
+      throw new IOException("Could not remove job " + jobId, e);
+    }
+  }
+
+  /**
+   * Returns the job for the id or null if not found.
+   *
+   * @param id the job id
+   */
+  public PortabilityJob findJob(UUID id) {
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -134,56 +214,6 @@ public final class GoogleCloudDatastore implements JobStore {
     }
     Key key = results.next();
     return UUID.fromString(key.getName());
-  }
-
-  /**
-   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore.
-   *
-   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
-   */
-  @Override
-  public void remove(UUID jobId) throws IOException {
-    try {
-      datastore.delete(getKey(jobId));
-    } catch (DatastoreException e) {
-      throw new IOException("Could not remove job " + jobId, e);
-    }
-  }
-
-  /**
-   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job},
-   * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
-   * {@code previousState}.
-   *
-   * @throws IOException if the job was not in the expected state in Datastore, or there was another
-   * problem updating it.
-   */
-  @Override
-  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
-      throws IOException {
-    Preconditions.checkNotNull(jobId);
-    Transaction transaction = datastore.newTransaction();
-    Key key = getKey(jobId);
-
-    try {
-      Entity previousEntity = transaction.get(key);
-      if (previousEntity == null) {
-        transaction.rollback();
-        throw new IOException("Could not find record for jobId " + jobId);
-      }
-      if (previousState != null && getJobState(previousEntity) != previousState) {
-        throw new IOException("Job " + jobId + " existed in an unexpected state. "
-            + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
-      }
-
-      Entity newEntity = createEntity(key, job.asMap());
-      transaction.put(newEntity);
-      transaction.commit();
-    } catch (Throwable t) {
-      transaction.rollback();
-      throw new IOException("Failed atomic update of job " + jobId + " (was state "
-          + previousState + ").", t);
-    }
   }
 
   private Entity createEntity(Key key, Map<String, Object> data) throws IOException {

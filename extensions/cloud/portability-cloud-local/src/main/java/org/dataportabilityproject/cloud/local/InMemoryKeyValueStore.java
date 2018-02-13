@@ -25,6 +25,7 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJobConverter;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
  * An in-memory {@link JobStore} implementation that uses a concurrent map as its
@@ -57,6 +58,67 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
+   *
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
+   *
+   * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
+   * problem inserting the job.
+   */
+  public void createJob(UUID jobId, PortabilityJob job) throws IOException {
+
+  }
+
+  /**
+   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job}
+   * in the map, and verifies that it was previously in the expected {@code previousState}.
+   *
+   * @throws IOException if the job was not in the expected state in the map, or there was another
+   * problem updating it.
+   */
+  @Override
+  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
+      throws IOException{
+    Preconditions.checkNotNull(jobId);
+    try {
+      Map<String, Object> previousEntry = map.replace(jobId, job.asMap());
+      if (previousEntry == null) {
+        throw new IOException("Job " + jobId + " didn't exist in the map");
+      }
+      if (getJobState(previousEntry) != previousState) {
+        throw new IOException("Job " + jobId + " existed in an unexpected state. "
+            + "Expected: " + previousState + " but was: " + getJobState(previousEntry));
+      }
+    } catch (NullPointerException e) {
+      throw new IOException(
+          "Couldn't update job " + jobId + " from previous state " + previousState, e);
+    }
+  }
+
+  /**
+   * Atomically updates the entry for {@code job}'s ID to {@code job}.
+   *
+   * @throws IOException if the job was not in the expected state in the store, or there was
+   * another problem updating it.
+   */
+  public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+
+  }
+
+  /**
+   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map.
+   *
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   */
+  @Override
+  public void remove(UUID jobId) throws IOException {
+    Map<String, Object> previous = map.remove(jobId);
+    if (previous == null) {
+      throw new IOException("Job " + jobId + " didn't exist in the map");
+    }
+  }
+
+  /**
    * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map, or null if not found.
    */
   @Override
@@ -65,6 +127,15 @@ public final class InMemoryKeyValueStore implements JobStore {
       return null;
     }
     return LegacyPortabilityJob.mapToJob(map.get(jobId));
+  }
+
+  /**
+   * Returns the job for the id or null if not found.
+   *
+   * @param id the job id
+   */
+  public PortabilityJob findJob(UUID id) {
+    return null;
   }
 
   /**
@@ -97,45 +168,6 @@ public final class InMemoryKeyValueStore implements JobStore {
       }
     }
     return null;
-  }
-
-  /**
-   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map.
-   *
-   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
-   */
-  @Override
-  public void remove(UUID jobId) throws IOException {
-    Map<String, Object> previous = map.remove(jobId);
-    if (previous == null) {
-      throw new IOException("Job " + jobId + " didn't exist in the map");
-    }
-  }
-
-  /**
-   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job}
-   * in the map, and verifies that it was previously in the expected {@code previousState}.
-   *
-   * @throws IOException if the job was not in the expected state in the map, or there was another
-   * problem updating it.
-   */
-  @Override
-  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
-      throws IOException{
-    Preconditions.checkNotNull(jobId);
-    try {
-      Map<String, Object> previousEntry = map.replace(jobId, job.asMap());
-      if (previousEntry == null) {
-        throw new IOException("Job " + jobId + " didn't exist in the map");
-      }
-      if (getJobState(previousEntry) != previousState) {
-        throw new IOException("Job " + jobId + " existed in an unexpected state. "
-            + "Expected: " + previousState + " but was: " + getJobState(previousEntry));
-      }
-    } catch (NullPointerException e) {
-      throw new IOException(
-          "Couldn't update job " + jobId + " from previous state " + previousState, e);
-    }
   }
 
   /**
