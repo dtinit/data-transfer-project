@@ -31,9 +31,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Verifies Calendar export/import using mock HTTP endpoints that replay responses from the Microsoft Graph API.
+ * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph API.
  */
-public class MicrosoftCalendarExportImportTest {
+public class MicrosoftCalendarExportTest {
     private MockWebServer server;
     private OkHttpClient client;
     private ObjectMapper mapper;
@@ -41,7 +41,7 @@ public class MicrosoftCalendarExportImportTest {
     private TokenAuthData token;
 
     @Test
-    public void testExportImport() throws Exception {
+    public void testExport() throws Exception {
         server.enqueue(new MockResponse().setBody(CALENDARS_RESPONSE));
         server.enqueue(new MockResponse().setBody(CALENDAR1_EVENTS_RESPONSE));
         server.enqueue(new MockResponse().setBody(CALENDAR2_EVENTS_RESPONSE));
@@ -63,7 +63,7 @@ public class MicrosoftCalendarExportImportTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         client = new OkHttpClient.Builder().build();
         mapper = new ObjectMapper();
         transformerService = new TransformerServiceImpl();

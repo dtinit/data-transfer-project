@@ -53,7 +53,7 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
     private final TransformerService transformerService;
 
     public MicrosoftCalendarExporter(OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
-        this("https://graph.microsoft.com", client, objectMapper, transformerService);
+        this("https://graph.microsoft.com/", client, objectMapper, transformerService);
     }
 
     public MicrosoftCalendarExporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {

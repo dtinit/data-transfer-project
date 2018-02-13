@@ -21,6 +21,8 @@ import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCale
 import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarEventModelTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarEventTimeTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToCalendarModelTransformer;
+import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToGraphCalendarTransformer;
+import org.dataportabilityproject.transfer.microsoft.transformer.calendar.ToGraphEventTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToGraphAddressTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToGraphContactTransformer;
 import org.dataportabilityproject.transfer.microsoft.transformer.contacts.ToVCardAddressTransformer;
@@ -45,6 +47,7 @@ public class TransformerServiceImpl implements TransformerService {
 
     public TransformerServiceImpl() {
         initContactTransformers();
+        initCalendarTransformers();
     }
 
     @Override
@@ -110,12 +113,17 @@ public class TransformerServiceImpl implements TransformerService {
     private void initContactTransformers() {
         cache.put(new TransformKey(LinkedHashMap.class, VCard.class), new ToVCardTransformer());
         cache.put(new TransformKey(LinkedHashMap.class, Address.class), new ToVCardAddressTransformer());
+        cache.put(new TransformKey(VCard.class, LinkedHashMap.class), new ToGraphContactTransformer());
+        cache.put(new TransformKey(Address.class, LinkedHashMap.class), new ToGraphAddressTransformer());
+    }
+
+    private void initCalendarTransformers() {
         cache.put(new TransformKey(LinkedHashMap.class, CalendarModel.class), new ToCalendarModelTransformer());
         cache.put(new TransformKey(LinkedHashMap.class, CalendarEventModel.class), new ToCalendarEventModelTransformer());
         cache.put(new TransformKey(LinkedHashMap.class, CalendarEventModel.CalendarEventTime.class), new ToCalendarEventTimeTransformer());
         cache.put(new TransformKey(LinkedHashMap.class, CalendarAttendeeModel.class), new ToCalendarAttendeeModelTransformer());
-        cache.put(new TransformKey(VCard.class, LinkedHashMap.class), new ToGraphContactTransformer());
-        cache.put(new TransformKey(Address.class, LinkedHashMap.class), new ToGraphAddressTransformer());
+        cache.put(new TransformKey(CalendarModel.class, LinkedHashMap.class), new ToGraphCalendarTransformer());
+        cache.put(new TransformKey(CalendarEventModel.class, LinkedHashMap.class), new ToGraphEventTransformer());
     }
 
     private class TransformKey {
