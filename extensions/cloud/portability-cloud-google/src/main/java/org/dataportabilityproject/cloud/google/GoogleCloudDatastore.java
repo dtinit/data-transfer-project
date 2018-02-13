@@ -40,9 +40,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJobConverter;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -104,7 +104,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * state {@code jobState}.
    */
   @Override
-  public LegacyPortabilityJob find(UUID jobId, PortabilityJob.State jobState) {
+  public LegacyPortabilityJob find(UUID jobId, JobAuthorization.State jobState) {
     LegacyPortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
@@ -114,14 +114,14 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore, or null
-   * if none found.
+   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore,
+   * or null if none found.
    *
    * TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
    * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
-  public UUID findFirst(PortabilityJob.State jobState) {
+  public UUID findFirst(JobAuthorization.State jobState) {
     Query<Key> query = Query.newKeyQueryBuilder()
         .setKind(KIND)
         .setFilter(PropertyFilter.eq(LegacyPortabilityJobConverter.JOB_STATE, jobState.name()))
@@ -159,7 +159,7 @@ public final class GoogleCloudDatastore implements JobStore {
    * problem updating it.
    */
   @Override
-  public void update(UUID jobId, LegacyPortabilityJob job, PortabilityJob.State previousState)
+  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
       throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
@@ -257,18 +257,18 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Return {@code entity}'s {@link PortabilityJob.State}, or null if missing.
+   * Return {@code entity}'s {@link JobAuthorization.State}, or null if missing.
    *
    * @param entity a {@link LegacyPortabilityJob}'s representation in {@link #datastore}.
    */
-  private PortabilityJob.State getJobState(Entity entity) {
+  private JobAuthorization.State getJobState(Entity entity) {
     String jobState = entity.getString(LegacyPortabilityJobConverter.JOB_STATE);
     // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
     // in legacy non-encrypted case
     if (!encryptedFlow) {
-      return jobState == null ? null : PortabilityJob.State.valueOf(jobState);
+      return jobState == null ? null : JobAuthorization.State.valueOf(jobState);
     }
     Preconditions.checkNotNull(jobState, "Job should never exist without a state");
-    return PortabilityJob.State.valueOf(jobState);
+    return JobAuthorization.State.valueOf(jobState);
   }
 }

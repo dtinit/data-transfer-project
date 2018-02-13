@@ -29,7 +29,7 @@ public abstract class LegacyPortabilityJob {
   @Nullable public abstract String workerInstancePublicKey();
   @Nullable public abstract String workerInstancePrivateKey(); // TODO: Consider removing
   // TODO: Remove Nullable - jobState should never be null after we enable encryptedFlow everywhere
-  @Nullable public abstract PortabilityJob.State jobState();
+  @Nullable public abstract JobAuthorization.State jobState();
 
   public static LegacyPortabilityJob.Builder builder() {
     return new AutoValue_LegacyPortabilityJob.Builder();
@@ -55,8 +55,7 @@ public abstract class LegacyPortabilityJob {
     public abstract LegacyPortabilityJob.Builder setSessionKey(String id);
     public abstract LegacyPortabilityJob.Builder setWorkerInstancePublicKey(String id);
     public abstract LegacyPortabilityJob.Builder setWorkerInstancePrivateKey(String id);
-    public abstract LegacyPortabilityJob.Builder setJobState(
-        PortabilityJob.State jobState);
+    public abstract LegacyPortabilityJob.Builder setJobState(JobAuthorization.State jobState);
 
     abstract LegacyPortabilityJob autoBuild(); // not public
 

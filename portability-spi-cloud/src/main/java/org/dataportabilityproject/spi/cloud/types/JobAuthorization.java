@@ -10,17 +10,11 @@ public class JobAuthorization extends EntityType {
 
   /**
    * The current state of the job.
-   *
-   * <p>The value PENDING_WORKER_ASSIGNMENT indicates the client has sent a request for a worker to
-   * be assigned before sending all the data required for the job.
-   *
-   * <p>The value ASSIGNED_WITHOUT_AUTH_DATA indicates the client has submitted all data required,
-   * such as the encrypted auth data, in order to begin processing the job.
    */
   public enum State {
     // The job is in the process of obtaining export and import authorization credentials.
     INITIAL,
-    // The job has all authorization credentials but is not assigned a worker yet
+    // The API has all authorization credentials for the job, but the job is not assigned a worker yet.
     PENDING_WORKER_ASSIGNMENT,
     // The job is assigned a worker instance, authorization credentials have not been populated.
     ASSIGNED_WITHOUT_AUTH_DATA,

@@ -14,23 +14,14 @@ import org.dataportabilityproject.types.transfer.EntityType;
 public class PortabilityJob extends EntityType {
 
   /**
-   * The current state of the job.
+   * The job states.
    */
   public enum State {
-    // The job has not finished the authorization flows.
-    PENDING_AUTH_DATA,
-    // The API has all auth information for the job, but the job is not assigned a worker yet.
-    PENDING_WORKER_ASSIGNMENT,
-    // The job is assigned a worker, which is waiting for the API to encrypt the auth data with its
-    // (the worker's) public key.
-    ASSIGNED_WITHOUT_AUTH_DATA,
-    // The job is assigned a worker and has encrypted auth data from the API.
-    ASSIGNED_WITH_AUTH_DATA,
-    // TODO: Add a COMPLETE state and set appropriately in the worker
+    NEW, COMPLETE, ERROR
   }
 
   @JsonProperty
-  private State state = State.PENDING_AUTH_DATA;
+  private State state = State.NEW;
 
   @JsonProperty
   private String exportService;

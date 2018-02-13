@@ -34,8 +34,8 @@ import org.dataportabilityproject.shared.ServiceMode;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.dataportabilityproject.types.client.transfer.SimpleLoginRequest;
@@ -99,7 +99,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, PortabilityJob.State.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(

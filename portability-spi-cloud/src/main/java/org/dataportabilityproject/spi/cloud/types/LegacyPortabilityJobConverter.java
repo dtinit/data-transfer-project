@@ -146,7 +146,7 @@ public final class LegacyPortabilityJobConverter extends
       builder.setWorkerInstancePrivateKey(getString(data, WORKER_INSTANCE_PRIVATE_KEY));
     }
     if (data.get(JOB_STATE) != null) {
-      builder.setJobState(PortabilityJob.State.valueOf(getString(data, JOB_STATE)));
+      builder.setJobState(JobAuthorization.State.valueOf(getString(data, JOB_STATE)));
     }
     return builder.build();
   }

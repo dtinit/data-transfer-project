@@ -22,9 +22,9 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJobConverter;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
  * An in-memory {@link JobStore} implementation that uses a concurrent map as its
@@ -72,7 +72,7 @@ public final class InMemoryKeyValueStore implements JobStore {
    * state {@code jobState}.
    */
   @Override
-  public LegacyPortabilityJob find(UUID jobId, PortabilityJob.State jobState) {
+  public LegacyPortabilityJob find(UUID jobId, JobAuthorization.State jobState) {
     LegacyPortabilityJob job = find(jobId);
     Preconditions.checkNotNull(job,
         "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
@@ -86,12 +86,12 @@ public final class InMemoryKeyValueStore implements JobStore {
    * if none found.
    */
   @Override
-  public synchronized UUID findFirst(PortabilityJob.State jobState) {
+  public synchronized UUID findFirst(JobAuthorization.State jobState) {
     // Mimic an index lookup
     for (Entry<UUID, Map<String, Object>> job : map.entrySet()) {
       Map<String, Object> properties = job.getValue();
-      if (PortabilityJob.State.valueOf(properties.get(LegacyPortabilityJobConverter.JOB_STATE).toString())
-          == jobState) {
+      if (JobAuthorization.State.valueOf(
+          properties.get(LegacyPortabilityJobConverter.JOB_STATE).toString()) == jobState) {
         UUID jobId = job.getKey();
         return jobId;
       }
@@ -120,7 +120,7 @@ public final class InMemoryKeyValueStore implements JobStore {
    * problem updating it.
    */
   @Override
-  public void update(UUID jobId, LegacyPortabilityJob job, PortabilityJob.State previousState)
+  public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
       throws IOException{
     Preconditions.checkNotNull(jobId);
     try {
@@ -139,18 +139,18 @@ public final class InMemoryKeyValueStore implements JobStore {
   }
 
   /**
-   * Return {@code data}'s {@link PortabilityJob.State}, or null if missing.
+   * Return {@code data}'s {@link JobAuthorization.State}, or null if missing.
    *
    * @param data a {@link LegacyPortabilityJob}'s representation in {@link #map}.
    */
-  private PortabilityJob.State getJobState(Map<String, Object> data) {
+  private JobAuthorization.State getJobState(Map<String, Object> data) {
     Object jobState = data.get(LegacyPortabilityJobConverter.JOB_STATE);
     // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
     // in legacy non-encrypted case
     if (!encryptedFlow) {
-      return jobState == null ? null : PortabilityJob.State.valueOf(jobState.toString());
+      return jobState == null ? null : JobAuthorization.State.valueOf(jobState.toString());
     }
     Preconditions.checkNotNull(jobState, "Job should never exist without a state");
-    return PortabilityJob.State.valueOf(jobState.toString());
+    return JobAuthorization.State.valueOf(jobState.toString());
   }
 }

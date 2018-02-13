@@ -23,6 +23,7 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.junit.Before;
@@ -68,21 +69,21 @@ public class JobPollingServiceTest {
             .setDataType(PortableDataType.PHOTOS.name())
             .setExportService("DummyExportService")
             .setImportService("DummyImportService")
-            .setJobState(PortabilityJob.State.PENDING_AUTH_DATA).build());
+            .setJobState(JobAuthorization.State.INITIAL).build());
 
     // Verify initial state 'pending auth data'
     job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(PortabilityJob.State.PENDING_AUTH_DATA);
+    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.INITIAL);
     assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
     assertThat(job.importAuthData()).isNull();// no auth data should exist yet
 
     // API atomically updates job to from 'pending auth data' to 'pending worker assignment'
-    job = job.toBuilder().setJobState(PortabilityJob.State.PENDING_WORKER_ASSIGNMENT).build();
-    store.update(TEST_ID, job, PortabilityJob.State.PENDING_AUTH_DATA);
+    job = job.toBuilder().setJobState(JobAuthorization.State.PENDING_WORKER_ASSIGNMENT).build();
+    store.update(TEST_ID, job, JobAuthorization.State.INITIAL);
 
     // Verify 'pending worker assignment' state
     job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(PortabilityJob.State.PENDING_WORKER_ASSIGNMENT);
+    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.PENDING_WORKER_ASSIGNMENT);
     assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
     assertThat(job.importAuthData()).isNull();// no auth data should exist yet
 
@@ -93,22 +94,22 @@ public class JobPollingServiceTest {
 
     // Verify assigned without auth data state
     job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(PortabilityJob.State.ASSIGNED_WITHOUT_AUTH_DATA);
+    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA);
     assertThat(job.workerInstancePublicKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
     job = job.toBuilder()
         .setEncryptedExportAuthData("dummy export data")
         .setEncryptedImportAuthData("dummy import data")
-        .setJobState(PortabilityJob.State.ASSIGNED_WITH_AUTH_DATA)
+        .setJobState(JobAuthorization.State.ASSIGNED_WITH_AUTH_DATA)
         .build();
-    store.update(TEST_ID, job, PortabilityJob.State.ASSIGNED_WITHOUT_AUTH_DATA);
+    store.update(TEST_ID, job, JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA);
 
     // Run another iteration of the polling service
     // Worker should pick up encrypted data and update job
     jobPollingService.runOneIteration();
     job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(PortabilityJob.State.ASSIGNED_WITH_AUTH_DATA);
+    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.ASSIGNED_WITH_AUTH_DATA);
     assertThat(job.encryptedExportAuthData()).isNotEmpty();
     assertThat(job.encryptedImportAuthData()).isNotEmpty();
 

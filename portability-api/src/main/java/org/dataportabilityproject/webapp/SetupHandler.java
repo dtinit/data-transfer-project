@@ -39,8 +39,8 @@ import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
@@ -92,7 +92,7 @@ abstract class SetupHandler implements HttpHandler {
       // Valid job must be present
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, PortabilityJob.State.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // This page is only valid after the oauth of the export service - export data should exist
@@ -154,8 +154,8 @@ abstract class SetupHandler implements HttpHandler {
       // page, so serviceMode is IMPORT
       job = JobUtils
           .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
-      PortabilityJob.State expectedPreviousState =
-          commonSettings.getEncryptedFlow() ? PortabilityJob.State.PENDING_AUTH_DATA : null;
+      JobAuthorization.State expectedPreviousState =
+          commonSettings.getEncryptedFlow() ? JobAuthorization.State.INITIAL : null;
       store.update(jobId, job, expectedPreviousState);
     }
     return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),

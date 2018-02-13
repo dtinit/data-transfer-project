@@ -43,6 +43,7 @@ import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
@@ -101,7 +102,7 @@ final class StartCopyHandler implements HttpHandler {
 
     // Lookup job
     LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-        ? store.find(jobId, PortabilityJob.State.PENDING_AUTH_DATA) : store.find(jobId);
+        ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
     Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
     // Validate job
     String exportService = job.exportService();
@@ -123,8 +124,8 @@ final class StartCopyHandler implements HttpHandler {
             "Import auth cookie required");
 
     // We have the data, now update to 'pending worker assignment' so a worker may be assigned
-    job = job.toBuilder().setJobState(PortabilityJob.State.PENDING_WORKER_ASSIGNMENT).build();
-    store.update(jobId, job, PortabilityJob.State.PENDING_AUTH_DATA);
+    job = job.toBuilder().setJobState(JobAuthorization.State.PENDING_WORKER_ASSIGNMENT).build();
+    store.update(jobId, job, JobAuthorization.State.INITIAL);
     logger.debug("Updated job {} to PENDING_WORKER_ASSIGNMENT", jobId);
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
@@ -133,7 +134,7 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
     job = store.find(jobId);
-    while (job == null || job.jobState() != PortabilityJob.State.ASSIGNED_WITHOUT_AUTH_DATA) {
+    while (job == null || job.jobState() != JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA) {
       logger.debug("Waiting for job {} to enter state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
       try {
         Sleeper.DEFAULT.sleep(10000);
@@ -171,12 +172,12 @@ final class StartCopyHandler implements HttpHandler {
     job = job.toBuilder()
         .setEncryptedExportAuthData(encryptedExportAuthData)
         .setEncryptedImportAuthData(encryptedImportAuthData)
-        .setJobState(PortabilityJob.State.ASSIGNED_WITH_AUTH_DATA)
+        .setJobState(JobAuthorization.State.ASSIGNED_WITH_AUTH_DATA)
         .build();
 
     logger.debug("Updating job {} from ASSIGNED_WITHOUT_AUTH_DATA to ASSIGNED_WITH_AUTH_DATA",
         jobId);
-    store.update(jobId, job, PortabilityJob.State.ASSIGNED_WITHOUT_AUTH_DATA);
+    store.update(jobId, job, JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA);
 
     writeResponse(exchange);
   }

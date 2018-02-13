@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +73,7 @@ class JobPollingService extends AbstractScheduledService {
    * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() throws IOException {
-    UUID jobId = store.findFirst(PortabilityJob.State.PENDING_WORKER_ASSIGNMENT);
+    UUID jobId = store.findFirst(JobAuthorization.State.PENDING_WORKER_ASSIGNMENT);
     logger.debug("Polling for a job PENDING_WORKER_ASSIGNMENT");
     if (jobId == null) {
       return;
@@ -115,9 +115,9 @@ class JobPollingService extends AbstractScheduledService {
     LegacyPortabilityJob updatedJob = existingJob.toBuilder()
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
-        .setJobState(PortabilityJob.State.ASSIGNED_WITHOUT_AUTH_DATA)
+        .setJobState(JobAuthorization.State.ASSIGNED_WITHOUT_AUTH_DATA)
         .build();
-    store.update(jobId, updatedJob, PortabilityJob.State.PENDING_WORKER_ASSIGNMENT);
+    store.update(jobId, updatedJob, JobAuthorization.State.PENDING_WORKER_ASSIGNMENT);
   }
 
   /**
@@ -128,7 +128,7 @@ class JobPollingService extends AbstractScheduledService {
     LegacyPortabilityJob job = store.find(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
-    } else if (job.jobState() == PortabilityJob.State.ASSIGNED_WITH_AUTH_DATA) {
+    } else if (job.jobState() == JobAuthorization.State.ASSIGNED_WITH_AUTH_DATA) {
       logger.debug("Polled job {} in state ASSIGNED_WITH_AUTH_DATA", jobId);
       if (!Strings.isNullOrEmpty(job.encryptedExportAuthData())
           && !Strings.isNullOrEmpty(job.encryptedImportAuthData())) {

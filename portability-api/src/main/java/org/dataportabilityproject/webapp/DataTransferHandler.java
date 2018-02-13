@@ -39,8 +39,8 @@ import org.dataportabilityproject.shared.auth.AuthFlowInitiator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
@@ -133,7 +133,7 @@ final class DataTransferHandler implements HttpHandler {
 
       // Lookup job, even if just recently created
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, PortabilityJob.State.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Validate job before going further
@@ -156,8 +156,8 @@ final class DataTransferHandler implements HttpHandler {
       if (authFlowInitiator.initialAuthData() != null) {
         job = JobUtils.setInitialAuthData(job, authFlowInitiator.initialAuthData(),
             ServiceMode.EXPORT);
-        PortabilityJob.State expectedPreviousState =
-            commonSettings.getEncryptedFlow() ? PortabilityJob.State.PENDING_AUTH_DATA : null;
+        JobAuthorization.State expectedPreviousState =
+            commonSettings.getEncryptedFlow() ? JobAuthorization.State.INITIAL : null;
         store.update(jobId, job, expectedPreviousState);
       }
 
@@ -184,7 +184,7 @@ final class DataTransferHandler implements HttpHandler {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.dataType()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.exportService()));
       Preconditions.checkArgument(!Strings.isNullOrEmpty(job.importService()));
-      job = job.toBuilder().setJobState(PortabilityJob.State.PENDING_AUTH_DATA).build();
+      job = job.toBuilder().setJobState(JobAuthorization.State.INITIAL).build();
     }
     store.create(jobId, job);
     return job;

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
@@ -130,7 +131,7 @@ public class CosmosStore implements JobStore {
 
     @Override
     public void update(UUID jobId, LegacyPortabilityJob job,
-        PortabilityJob.State previousState) throws IOException {
+        JobAuthorization.State previousState) throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -140,12 +141,12 @@ public class CosmosStore implements JobStore {
     }
 
     @Override
-    public UUID findFirst(PortabilityJob.State jobState) {
+    public UUID findFirst(JobAuthorization.State jobState) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public LegacyPortabilityJob find(UUID jobId, PortabilityJob.State jobState) {
+    public LegacyPortabilityJob find(UUID jobId, JobAuthorization.State jobState) {
         throw new UnsupportedOperationException();
     }
 
