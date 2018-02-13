@@ -117,13 +117,16 @@ public final class GoogleCloudDatastore implements JobStore {
   /**
    * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore, or null
    * if none found.
+   *
+   * TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
+   * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
   public String findFirst(JobState jobState) {
     Query<Key> query = Query.newKeyQueryBuilder()
         .setKind(KIND)
         .setFilter(PropertyFilter.eq(OldPortabilityJobConverter.JOB_STATE, jobState.name()))
-        .setOrderBy(OrderBy.asc("created"))
+        //.setOrderBy(OrderBy.asc("created"))
         .setLimit(1)
         .build();
     QueryResults<Key> results = datastore.run(query);
