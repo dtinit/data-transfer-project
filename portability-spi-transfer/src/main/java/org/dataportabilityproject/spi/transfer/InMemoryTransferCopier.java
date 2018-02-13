@@ -16,6 +16,7 @@
 package org.dataportabilityproject.spi.transfer;
 
 import java.io.IOException;
+import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProvider;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
 import org.dataportabilityproject.types.transfer.PortableType;
@@ -33,5 +34,5 @@ public interface InMemoryTransferCopier {
       AuthData exportAuthData,
       String importService,
       AuthData importAuthData,
-      String jobId) throws IOException;
+      UUID jobId) throws IOException;
 }

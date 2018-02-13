@@ -23,6 +23,7 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
+import java.util.UUID;
 import javax.inject.Inject;
 import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
@@ -57,7 +58,7 @@ public final class GoogleCloudFactory implements CloudFactory {
   }
 
   @Override
-  public JobDataCache getJobDataCache(String jobId, String service) {
+  public JobDataCache getJobDataCache(UUID jobId, String service) {
     return new GoogleJobDataCache(datastore, jobId, service);
   }
 
@@ -77,12 +78,11 @@ public final class GoogleCloudFactory implements CloudFactory {
   }
 
   @Override
-  public void clearJobData(String jobId) {
+  public void clearJobData(UUID jobId) {
     QueryResults<Key> results = datastore.run(Query.newKeyQueryBuilder()
         .setKind(GoogleJobDataCache.USER_KEY_KIND)
-        .setFilter(PropertyFilter.hasAncestor(
-            datastore.newKeyFactory().setKind(GoogleJobDataCache.JOB_KIND).newKey(jobId)))
-        .build());
+        .setFilter(PropertyFilter.hasAncestor(datastore.newKeyFactory()
+            .setKind(GoogleJobDataCache.JOB_KIND).newKey(jobId.toString()))).build());
     results.forEachRemaining(datastore::delete);
   }
 }

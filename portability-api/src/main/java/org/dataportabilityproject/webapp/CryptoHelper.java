@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import java.net.HttpCookie;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.Crypter;
@@ -67,7 +68,7 @@ class CryptoHelper {
    * Encrypts the given {@code authData} with the session-based {@link SecretKey} and stores it as a
    * cookie in the provided headers.
    */
-  void encryptAndSetCookie(Headers headers, String jobId, ServiceMode serviceMode,
+  void encryptAndSetCookie(Headers headers, UUID jobId, ServiceMode serviceMode,
       AuthData authData) {
     SecretKey sessionKey = getSessionKey(jobId);
     String encrypted = encrypt(sessionKey, authData);
@@ -80,7 +81,7 @@ class CryptoHelper {
     headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
   }
 
-  private SecretKey getSessionKey(String jobId) {
+  private SecretKey getSessionKey(UUID jobId) {
     LegacyPortabilityJob job = store.find(jobId);
     Preconditions.checkState(job != null && job.jobState() == JobState.PENDING_AUTH_DATA);
     String encodedSessionKey = job.sessionKey();

@@ -25,6 +25,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
@@ -95,7 +96,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
           .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
-      String jobId = JobUtils.decodeId(encodedIdCookie);
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
           ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
@@ -131,16 +132,17 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
         LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        store.update(updatedJob, null);
+        store.update(jobId, updatedJob, null);
       }
 
       if (commonSettings.getEncryptedFlow()) {
-        cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), serviceMode, authData);
+        cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), jobId, serviceMode,
+            authData);
       }
 
-      response = new DataTransferResponse(job.exportService(), job.importService(), job.dataType(), Status.INPROCESS,
-          PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT
-              ? FrontendConstantUrls.next : FrontendConstantUrls.copy));
+      response = new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
+          Status.INPROCESS, PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT
+          ? FrontendConstantUrls.next : FrontendConstantUrls.copy));
 
     } catch (Exception e) {
       logger.debug("Exception occurred while trying to handle request: {}", e);

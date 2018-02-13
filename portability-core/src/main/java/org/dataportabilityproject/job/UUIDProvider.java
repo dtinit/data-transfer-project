@@ -21,7 +21,7 @@ import java.util.UUID;
 public class UUIDProvider implements IdProvider {
 
   @Override
-  public String createId() {
-    return UUID.randomUUID().toString();
+  public UUID createId() {
+    return UUID.randomUUID();
   }
 }

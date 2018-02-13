@@ -18,6 +18,7 @@ package org.dataportabilityproject.worker;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
@@ -32,7 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
-  private static final String TEST_ID = "a_test_id";
+  private static final UUID TEST_ID = UUID.randomUUID();
 
   @Mock private CloudFactory cloudFactory;
 
@@ -62,12 +63,12 @@ public class JobPollingServiceTest {
     assertThat(job).isNull(); // No existing ready job
 
     // API inserts an job in state 'pending auth data'
-    store.create(LegacyPortabilityJob.builder()
-        .setId(TEST_ID)
-        .setDataType(PortableDataType.PHOTOS.name())
-        .setExportService("DummyExportService")
-        .setImportService("DummyImportService")
-        .setJobState(JobState.PENDING_AUTH_DATA).build());
+    store.create(TEST_ID,
+        LegacyPortabilityJob.builder()
+            .setDataType(PortableDataType.PHOTOS.name())
+            .setExportService("DummyExportService")
+            .setImportService("DummyImportService")
+            .setJobState(JobState.PENDING_AUTH_DATA).build());
 
     // Verify initial state 'pending auth data'
     job = store.find(TEST_ID);
@@ -77,7 +78,7 @@ public class JobPollingServiceTest {
 
     // API atomically updates job to from 'pending auth data' to 'pending worker assignment'
     job = job.toBuilder().setJobState(JobState.PENDING_WORKER_ASSIGNMENT).build();
-    store.update(job, JobState.PENDING_AUTH_DATA);
+    store.update(TEST_ID, job, JobState.PENDING_AUTH_DATA);
 
     // Verify 'pending worker assignment' state
     job = store.find(TEST_ID);
@@ -101,7 +102,7 @@ public class JobPollingServiceTest {
         .setEncryptedImportAuthData("dummy import data")
         .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
         .build();
-    store.update(job, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    store.update(TEST_ID, job, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
 
     // Run another iteration of the polling service
     // Worker should pick up encrypted data and update job
