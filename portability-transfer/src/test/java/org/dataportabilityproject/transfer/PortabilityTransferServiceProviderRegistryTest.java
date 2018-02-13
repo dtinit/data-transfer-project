@@ -33,7 +33,7 @@ public class PortabilityTransferServiceProviderRegistryTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @Test
-  public void supportImportAndExportTest(){
+  public void requireImportAndExportTest(){
     List<String> supportedImportTypes = ImmutableList.of("photos", "contacts");
     List<String> supportedExportTypes = ImmutableList.of("contacts");
 
@@ -51,12 +51,7 @@ public class PortabilityTransferServiceProviderRegistryTest {
 
   @Test
   public void serviceProviderNotFoundTest(){
-    List<String> supportedImportTypes = ImmutableList.of("photos", "contacts");
-    List<String> supportedExportTypes = ImmutableList.of("contacts");
-
     TransferServiceProvider mockTransferProvider = mock(TransferServiceProvider.class);
-    when(mockTransferProvider.getExportTypes()).thenReturn(supportedExportTypes);
-    when(mockTransferProvider.getImportTypes()).thenReturn(supportedImportTypes);
     when(mockTransferProvider.getServiceId()).thenReturn("mockServiceProvider");
 
     thrown.expect(IllegalArgumentException.class);
