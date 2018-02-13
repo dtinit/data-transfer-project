@@ -212,7 +212,7 @@ public class PortabilityApiUtils {
 
     // finally make sure the jobId present in the token is also equal to the jobId present in the
     // cookie
-    UUID jobIdFromToken = tokenManager.getData(tokenHeader);
+    UUID jobIdFromToken = tokenManager.getJobIdFromToken(tokenHeader);
     Preconditions.checkArgument(jobId.equals(jobIdFromToken),
         "encoded job id and job id token must match");
     return jobId;

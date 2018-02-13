@@ -42,7 +42,7 @@ public class PortabilityJobFactory {
     String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
     LegacyPortabilityJob job =
         createInitialJob(encodedSessionKey, dataType, exportService, importService);
-    logger.info("Creating new OldPortabilityJob to transfer {} from {} to {}",
+    logger.info("Creating new LegacyPortabilityJob to transfer {} from {} to {}",
         dataType, exportService, importService);
     return job;
   }

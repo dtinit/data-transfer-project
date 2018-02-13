@@ -23,9 +23,9 @@ public interface TokenManager {
   /** Verifies if the token is valid. */
   boolean verifyToken(String token);
 
-  /** Verifies and returns the UUID associated with this token. */
-  UUID getData(String token);
+  /** Verifies and returns the jobId associated with this token. */
+  UUID getJobIdFromToken(String token);
 
-  /** Creates a new JWT token with the given {@code uuid}. */
-  String createNewToken(UUID uuid);
+  /** Creates a new JWT token with the given {@code jobId}. */
+  String createNewToken(UUID jobId);
 }

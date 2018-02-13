@@ -84,7 +84,7 @@ public class JWTTokenManager implements TokenManager {
   }
 
   @Override
-  public UUID getData(String token) {
+  public UUID getJobIdFromToken(String token) {
     try {
       DecodedJWT jwt = verifier.verify(token);
       // Token is verified, get claim
@@ -100,15 +100,15 @@ public class JWTTokenManager implements TokenManager {
   }
 
   @Override
-  public String createNewToken(UUID uuid) {
+  public String createNewToken(UUID jobId) {
     try {
       return JWT.create()
           .withIssuer(JWTTokenManager.ISSUER)
-          .withClaim(JWTTokenManager.ID_CLAIM_KEY, uuid.toString())
+          .withClaim(JWTTokenManager.ID_CLAIM_KEY, jobId.toString())
           .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MILLIS))
           .sign(algorithm);
     } catch (JWTCreationException e) {
-      throw new RuntimeException("Error creating token for: " + uuid);
+      throw new RuntimeException("Error creating token for: " + jobId);
     }
   }
 }
