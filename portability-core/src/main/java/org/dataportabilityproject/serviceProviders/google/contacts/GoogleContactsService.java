@@ -18,6 +18,7 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
@@ -121,8 +122,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Collection<VCard> vCardCollection = wrapper.getVCards();
     for (VCard vCard : vCardCollection) {
       Person person = VCardToGoogleContactConverter.convert(vCard);
-      peopleService.people().createContact(person);
-      logger.debug("Created contact: {}", person.getNames().get(0));
+      peopleService
+          .people()
+          .createContact(person);
     }
   }
 }
