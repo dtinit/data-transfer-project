@@ -17,7 +17,6 @@ package org.dataportabilityproject.gateway.reference;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 

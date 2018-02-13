@@ -1,0 +1,4326 @@
+[33mcommit 7f70d23a16f9e6e9c1c712274a30e8106fb1429f[m[33m ([m[1;36mHEAD[m[33m)[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Fri Feb 16 13:34:04 2018 -0600
+
+    rebase with newer auth registery, uuid, and flags changes.
+
+[33mcommit 6ac3880bfde5b54d8ee8d678f118c0456fcde509[m[33m ([m[1;31morigin/gateway[m[33m, [m[1;32mgateway[m[33m)[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Fri Feb 16 12:54:16 2018 -0600
+
+    Use new portability job store and auth data registery in the DataTransferHandler
+
+[33mcommit bfc4b52409458a8cc5fc01de8fcb5eae5f6c6124[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Fri Feb 16 12:49:30 2018 -0600
+
+    added modules for actions, moved to use new AuthServiceProviderRegistry, removed API Flags, general cleanup
+
+[33mcommit d2bbe51aa628a1c4a5bd9e6f2819ae0b3bce55bd[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Feb 13 12:59:10 2018 -0600
+
+    implementation of the api in the gateway package of an initial set of handlers, actions, and supporting classes
+
+[33mcommit 9f7f358de408599d799fbeb1b627e465ee80f788[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Merge: 0043ce7 90e647a
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Feb 15 20:19:49 2018 -0600
+
+    Merge pull request #143 from google/portability-job-worker
+    
+    Migrate worker to PortabilityJob for #132
+
+[33mcommit 90e647aea16edd5d8db9a2a489ef86be8dfeae47[m
+Merge: 81309aa 0043ce7
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Feb 15 20:19:34 2018 -0600
+
+    Merge branch 'master' into portability-job-worker
+
+[33mcommit 0043ce7497c822ac276cd7dfe504e37958a1039d[m
+Merge: c848923 4b4d4d0
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Feb 15 20:18:59 2018 -0600
+
+    Merge pull request #144 from google/portability-job
+    
+    Remove last usage of LegacyPortabilityJob in the new code.
+
+[33mcommit 4b4d4d0876ee86922148d7b8e84741641af4bd7b[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Feb 15 17:14:01 2018 -0600
+
+    Remove last usage of LegacyPortabilityJob in the new code.
+    
+    It is still referenced in the old code.
+
+[33mcommit 81309aa88ac0ae9e8c0c8867e5ee82a1dc90b600[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Feb 15 17:08:56 2018 -0600
+
+    documentation updates
+
+[33mcommit 06e1b8a870c14028b8669622a65e85f6d7a341d5[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Feb 15 17:02:13 2018 -0600
+
+    Migrate WorkerImpl to use PortabilityJob
+
+[33mcommit bafa4204db1993303e9191a6d9cb247264267284[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Feb 15 16:59:12 2018 -0600
+
+    Migrate JobPollingService to use PortabilityJob
+
+[33mcommit c848923be3c227d79e765e5d235ccbfea346f07e[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Thu Feb 15 15:30:27 2018 -0600
+
+    Google contacts (#140)
+
+[33mcommit dc85c0e060cd3f9ba322e482ad7085ea6d62ba41[m
+Merge: d8bb624 978ffd7
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Feb 15 12:24:39 2018 -0600
+
+    Merge pull request #141 from google/portability-job
+    
+    Make JobStore impls use the new PortabilityJob for #126
+
+[33mcommit 978ffd7aec1fe4159a9c0fcdc8ef5c07341227d5[m
+Merge: 4749503 d8bb624
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Feb 15 12:21:18 2018 -0600
+
+    Merge branch 'master' into portability-job
+
+[33mcommit 4749503ad3e80a694e4e5025a61bdcfde132c64e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Feb 15 12:19:39 2018 -0600
+
+    Remove references to LegacyPortabilityJob in documentation.
+    
+    Use consistent param name for jobId in debug statements.
+
+[33mcommit 7e04c61a6fcd1828b92842b2932879fc9583dc86[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Feb 14 17:08:30 2018 -0600
+
+    Make JobStore impls use the new PortabilityJob
+
+[33mcommit d849dac8dc8d12b5d1e2e46fb29b8f15648471b1[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Feb 14 16:36:09 2018 -0600
+
+    Add conversion for PortabilityJob to/from Map<String, Object> as generic format to use for key-value store implementations
+
+[33mcommit d8bb624c43f1ba2a24902be984f5523616f9e38e[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Feb 14 14:55:51 2018 -0600
+
+    AuthRegistry Implementation (#139)
+    
+    * Start of impl for AuthProviderRegistry
+    * Add authMode param to AuthProvider and AuthProviderRegistry
+    * Create test
+
+[33mcommit ef568cb50baa84ca30d298e56e9a7f10388e36ca[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 17:36:30 2018 -0600
+
+    Reorder methods in Google and in-memory JobStore impls, and add empty impls for new PortabilityJob methods
+
+[33mcommit b9d1fa81de3ce336044bfb35f759001ea15e15bb[m
+Merge: 59c5b21 ff12b56
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 17:22:42 2018 -0600
+
+    Merge pull request #136 from google/portability-job
+    
+    Migrate JobState to the new modular structure
+
+[33mcommit ff12b56db001bbed8065e5c81f93dc3b5c683439[m
+Merge: 8124f73 59c5b21
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 17:17:56 2018 -0600
+
+    Merge branch 'master' into portability-job
+
+[33mcommit 8124f7301600b6fd981ee566eb11c62564a42602[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 16:55:44 2018 -0600
+
+    Rename JobAuthorization states to be phrased in terms of authorization state rather than worker
+
+[33mcommit c28a43bf5fbf6265f401d97f477ba37d014f73ca[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 16:51:32 2018 -0600
+
+    Use JobAuthorization.State instead of PortabilityJob.State
+
+[33mcommit e039ff7aadb8208fc57a713a4e94dbd85fe7d3fc[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 15:28:38 2018 -0600
+
+    Migrate JobState to the new modular structure
+
+[33mcommit 59c5b2194d8f534ee6beedce2dd9f248016d549b[m
+Merge: 70dfeb1 7147fef
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 14:05:29 2018 -0600
+
+    Merge pull request #135 from google/datastore-fix
+    
+    Prevent error checking missing property JobState for legacy non-encryption flow
+
+[33mcommit 7147fefa44fb783f5527eddf81761b1144181495[m
+Merge: eac7839 70dfeb1
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 13:59:38 2018 -0600
+
+    Merge branch 'master' into datastore-fix
+
+[33mcommit 70dfeb10680f97f8dc55cb05d626332e01488672[m
+Merge: c7e07cf 46180c0
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 13:57:28 2018 -0600
+
+    Merge pull request #133 from google/portability-job
+    
+    Remove jobId from PortabilityJob, and make it type UUID instead of String
+
+[33mcommit 46180c0b5573b41a5da62176b40dafc049123a68[m
+Merge: 769d185 c7e07cf
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 13:56:57 2018 -0600
+
+    Merge branch 'master' into portability-job
+
+[33mcommit eac7839fbb38f68586efa68c144b171ef4d7ddea[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 13:30:00 2018 -0600
+
+    Prevent error checking missing property JobState for legacy non-encryption flow
+
+[33mcommit 769d18567a9a4914f319fa659167eba6a920cec3[m[33m ([m[1;31morigin/portability-job[m[33m)[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 11:46:13 2018 -0600
+
+    Make it extra clear that TokenManager is storing tokens based on JobId
+
+[33mcommit e4351da3d44e3e80a462f61a1ab3fe4486088de4[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 11:32:06 2018 -0600
+
+    Fix accidental UUID representation of OAuth state token
+
+[33mcommit f27ccaf8f3d888a4bbf52746546a53aba5be93e2[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Feb 7 11:35:30 2018 -0600
+
+    Remove jobId from PortabilityJob (both LegacyPortabilityJob and the new PortabilityJob via EntityType)
+    
+    It is redundant to store it in the job as we are keying off of it in our stores.
+    
+    Also change jobID to be type UUID instead of String, for a few reasons:
+    - UUIDs are used directly in CosmosStore
+    - Prevent confusion around whether String jobIDs passed around are encoded are not
+    - All impls are using UUID anyway and converting to and from String
+    
+    I originally thought this would be necessary for #132, turns out it's not but is still good to do.
+
+[33mcommit c7e07cf38f1307b6fa37250894d6c0c6a162329a[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Tue Feb 13 11:09:56 2018 -0600
+
+    Cleaning up testing (#131)
+
+[33mcommit 586b0dc87cdb22397de3ba36d773193711c918e2[m
+Merge: 2310c85 12081a1
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 10:49:51 2018 -0600
+
+    Merge pull request #129 from google/fix-qa3
+    
+    Stop trying to order Datastore query by creation time
+
+[33mcommit 12081a19e2769c77607e3065fc10c024cefac294[m
+Merge: 65a8cc7 2310c85
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 10:44:59 2018 -0600
+
+    Merge branch 'master' into fix-qa3
+
+[33mcommit 2310c85f33fe5fad1ce492b0233a0268c0c2b3aa[m
+Merge: 661d451 f8aaeed
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 10:41:43 2018 -0600
+
+    Merge pull request #130 from google/update_qa_static
+    
+    Update index.html in QA to reflect the latest changes
+
+[33mcommit f8aaeeddd3c5ca2f86391e1212fd79ba791c4e5f[m
+Merge: efd2051 661d451
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 13 10:36:54 2018 -0600
+
+    Merge branch 'master' into update_qa_static
+
+[33mcommit 661d4513354faee3d3be91bf71272fc809a70bb7[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Feb 13 10:24:09 2018 -0600
+
+    Start of implementation of PortabilityTransferServiceProvider (#122)
+    
+    * Start of implementation of PortabilityTransferServiceProvider
+    * Switch to using generic types in ServiceRegistry and TransferCopier
+    * Add test for TransferServiceProviderRegistry
+
+[33mcommit efd20510447ba5c13b504d465e68c8c98ddbcde2[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 10:23:05 2018 -0600
+
+    Update index.html in QA to reflect the latest changes
+
+[33mcommit 65a8cc7bdab203f6840ea970898f96dcaa3186a0[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Feb 13 10:13:28 2018 -0600
+
+    Stop trying to order Datastore query by creation time
+    
+    This fixes our QA deployment which was broken by https://github.com/google/data-portability/pull/117 (which worked fine with the local Datastore emulator but real Datastore required an index for it, which we don't have set up)
+
+[33mcommit d25168d4b92e66712e561f0159003c00fd20aa8c[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Mon Feb 12 13:51:06 2018 -0600
+
+    Google contacts (#128)
+    
+     First round of VCard -> Google Contact conversion, cleaning up tests.
+
+[33mcommit 3c6485c16566e06c0131158ce76caab1d1bd70be[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Mon Feb 12 11:12:54 2018 -0600
+
+    Google contacts (#125)
+    
+    Some refactoring to break GoogleContact->VCard conversion into its own class, and fixing name conversion and testing. Adding pagination for export.
+
+[33mcommit 70bb2380b92936c50c973566f7164a494e096d41[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Thu Feb 8 16:07:36 2018 -0600
+
+    Update LocalCopierModule.java (#90)
+    
+    This way, we don't bind GoogleCloudModule twice.
+
+[33mcommit 1af613c42bcc4593a1d9d1e90d8847ec57aaae16[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Thu Feb 8 15:03:10 2018 -0600
+
+    cleaning up code (#124)
+
+[33mcommit 276f91198d4efbbbe2297633a6af54718c5a0cf2[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Thu Feb 8 09:34:30 2018 -0600
+
+    Add JobAuthorization data to the new PortabilityJob with associated state validation (#121)
+    
+    * Add JobAuthorization data to the new PortabilityJob with associated state validation.
+    
+    * rename import and export service to be consistent, removed unnecessary comments
+    
+    * clean up validation code
+    
+    * Update PortabilityJob.java
+
+[33mcommit 0f508648dd0e36977aeb1cef4d24060d536d4c8a[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Wed Feb 7 16:01:10 2018 -0600
+
+    Testing, updating GoogleContactsService (#119)
+
+[33mcommit 7991250eb062340fa233ff463271b29faaac4a4c[m
+Merge: 3b27330 dc256f2
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Feb 7 13:13:18 2018 -0600
+
+    Merge pull request #120 from google/fix-qa2
+    
+    Fix a couple deployment-related issues
+
+[33mcommit dc256f2712ff88ae5120edfd82b7d4d075a9ed9f[m[33m ([m[1;31morigin/fix-qa2[m[33m)[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Feb 7 12:58:59 2018 -0600
+
+    Fix a couple deployment-related issues:
+    
+    1. Use a clean build when building a jar
+    2. Copy the correct jar into our Docker images. We were still copying the old Maven jars.
+
+[33mcommit 3b27330aecb76ca521211b5529fae501971027de[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Tue Feb 6 12:26:21 2018 -0600
+
+    More Flickr testing, this time on the import side (#115)
+
+[33mcommit 23b5d753669c1c8825f7ee4a69ba9c52d68f3dfd[m
+Merge: 44fd2e7 f4913cf
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 6 10:22:24 2018 -0600
+
+    Merge pull request #117 from google/datastore-worker-query
+    
+    Use a key query in Datastore for polling
+
+[33mcommit f4913cfc5e9b4da2b8884652d058e8c8bebd5b4c[m[33m ([m[1;31morigin/datastore-worker-query[m[33m)[m
+Merge: 82770fe 44fd2e7
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 6 10:17:41 2018 -0600
+
+    Merge branch 'master' into datastore-worker-query
+
+[33mcommit 44fd2e77766e425a104401e917ddd688c525e70c[m
+Merge: 9228f5c 663248a
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 6 10:17:02 2018 -0600
+
+    Merge pull request #116 from google/logging
+    
+    Update some logging statements to be more readable and not reference old method names
+
+[33mcommit 663248ae5bb63eabe58f3ccec70bf05abe83fa48[m[33m ([m[1;31morigin/logging[m[33m)[m
+Merge: 1bb1d1b 9228f5c
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Feb 6 10:16:54 2018 -0600
+
+    Merge branch 'master' into logging
+
+[33mcommit 9228f5cfa86b5003851a2b1bfbf9e4370a5860dd[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Feb 6 09:55:50 2018 -0600
+
+    Start of implementation of PortabilityCopier using new API modules. (#114)
+    
+    Start of implementation of PortabilityCopier using new API modules.
+
+[33mcommit 82770fec3e62cb17dbedc37667227db56aee34de[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Feb 5 17:48:23 2018 -0600
+
+    Use a key query in Datastore for polling
+
+[33mcommit 1bb1d1b163e03341b6a25f1428b332e52193667d[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Feb 5 17:29:29 2018 -0600
+
+    Update some logging statements to be more readable and not reference old method names
+
+[33mcommit 39600ae64615d34733edeab1efabf58ece65d881[m
+Author: Jim Marino <jim.marino@gmail.com>
+Date:   Mon Feb 5 16:01:51 2018 +0100
+
+    Microsoft import/export and cloud extensions (#104)
+    
+    * Microsoft import/export nd cl;oud extensions
+    
+    * remove MS extensions from Maven build since they are already migrated to Gradle
+    
+    * Fix merge conflicts
+    
+    * Pull request review changes/fixes/suggestions
+
+[33mcommit 377b38e9d3997ca42356d9615b7cb4147e614644[m
+Merge: dffbf0e 91e9708
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Feb 2 17:32:54 2018 -0500
+
+    Merge pull request #112 from google/jobstore2
+    
+    Migrate PortabilityJob, AuthData, and job stores to the new directory structure
+
+[33mcommit 91e970896922e04bd669886d2f6f5cbff80b7e2b[m
+Merge: f5d17ae dffbf0e
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Feb 2 17:28:53 2018 -0500
+
+    Merge branch 'master' into jobstore2
+
+[33mcommit f5d17ae86ac2cc069231384f6248bdd98ce081ed[m
+Merge: c64e9cf 19140d4
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Feb 2 17:25:03 2018 -0500
+
+    Merge pull request #113 from google/migrate-stores
+    
+    Migrate PortabilityJob, AuthData, and job stores to the new directory structure
+
+[33mcommit 19140d4362ce9e09e6f497ed80b174683286b528[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Feb 2 16:09:21 2018 -0600
+
+    fix Autovalue class name
+
+[33mcommit b42274d9071536782b398f0e5456ec257dd100fe[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Feb 2 16:04:04 2018 -0600
+
+    Rename OldPortabilityJob -> LegacyPortabilityJob
+
+[33mcommit eb45872184f055ce2c8f33ea6b6cf8b0c0424e03[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Feb 2 15:16:07 2018 -0600
+
+    fix TODO
+
+[33mcommit dffbf0edac9e6444b70b246f8354336478bdfb3d[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Fri Feb 2 15:03:38 2018 -0600
+
+    Starting Flickr unit testing (#110)
+    
+    * Starting Flickr unit tests
+    
+    * Starting Flickr unit tests
+    
+    * More testing work, starting on testing export continuation information
+    
+    * More testing work, starting on testing export continuation information
+    
+    * Building out tests, adding equality methods
+    
+    * One last fix
+
+[33mcommit c532caef367ae1040335987dcc18644a51932622[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Feb 2 15:03:15 2018 -0600
+
+    Make portability-core call PortabilityJob and AuthData in the new directory structure, and deprecate the old versions.
+    
+    Also replace PersistentKeyValueStore with JobStore, and replace the following impls:
+    - GooglePersistentKeyValueStore -> GoogleCloudDatastore implements JobStore
+    - InMemoryPersistentKeyValueStore -> InMemoryKeyValueStore implements JobStore
+    
+    Tested locally with encryption flow on and off.
+
+[33mcommit c64e9cf5b66a9eacb707aff9a6706fbfdccfcfcc[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Feb 2 12:32:51 2018 -0600
+
+    Make new JobStore and legacy PersistentKeyValueStore have the same interface.
+    
+    This is setup to migrate the existing PersistentKeyValueStore impls (Google Cloud and local in-memory) to JobStore
+
+[33mcommit f113abae39dfd468ece62eb4d8f7551f84b98376[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Feb 2 07:12:32 2018 -0500
+
+    Key jobs in key-value store just by job ID, instead of by 'jobId::jobState' (#109)
+    
+    * Key jobs in key-value store just by job ID instead of by jobId::jobState.
+    
+    Now that db updates are atomic, the job should only ever exist in one state at a given time, so this should be safe.
+    
+    This will also speed up our indexing for the future.
+    
+    Also:
+    - Make JobDao use jobID and PortabilityJob directly, rather than generic key/data, to make the transition to JobStore easier, as JobStore uses jobId and PortabilityJob in its interface (in Jim's latest PR).
+    - Simplify how we check that the job was present in the expected state (do this in PersistentKeyValueStore.atomicUpdate)
+    - Simplify how we check that a new entry doesn’t already exist (do this in the PersistentKeyValueStore.put)
+    * disable encryption flow in local
+    * Update datastore version to fix protobuf issue
+    * Remove JobDao and make clients use storage directly
+    * Verify jobState is only ever null in the legacy non-encrypted case
+
+[33mcommit e2f3518ae3d5cb027df2d0747610a2b35b7e44a1[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Thu Feb 1 14:51:18 2018 -0800
+
+    Re-add in ExportInformation
+    
+    * Add an ExportInformation class
+    
+    * Make a container resource be a data model
+    
+    * update exporter signature
+
+[33mcommit 06586ca146ed3a4b62d46190e75eda4285be429f[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 30 13:40:59 2018 -0600
+
+    Change SimpleSubmitHandler and angular page to use new DataTypes from portability-types-client (#107)
+
+[33mcommit 56c13a8ce48f8153026898e902df802014ae209c[m
+Merge: c41b402 89fd176
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 30 13:23:48 2018 -0500
+
+    Merge pull request #99 from google/encryption-flow-qa
+    
+    Fix race condition so only one worker may poll a given job
+
+[33mcommit 89fd17637fa6763e2a72871833e6f00a3cc6622f[m[33m ([m[1;31morigin/encryption-flow-qa[m[33m)[m
+Merge: 0297b9f c41b402
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 30 13:08:44 2018 -0500
+
+    Merge branch 'master' into encryption-flow-qa
+
+[33mcommit c41b4024f65d7c13a1683ffd3b4bf4c9496bf2c2[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Tue Jan 30 11:49:44 2018 -0600
+
+    Migrate subprojects from Maven to Gradle build  (#100)
+    
+    Build using gradle and remove Maven.
+
+[33mcommit ec2b1d999fc5981a4e4d7469d26b6feac2cc49e0[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 30 10:45:51 2018 -0600
+
+    Update index.html and prod and qa to reflect deployed content (#105)
+    
+    This updates the binary and static content with changes from #97 in prod and in qa
+
+[33mcommit 0297b9fb4649a2b2ed8f17035b300e3dfced3354[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 30 10:41:30 2018 -0600
+
+    Only initialize WorkerJobMetadata when we will use it, rather than initializing and resetting
+
+[33mcommit d564a20b1c6b154fbb37c6879614760aa2d551e8[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Tue Jan 30 07:27:24 2018 -0600
+
+    Add App credentials and factories (#103)
+    
+    * Add app credentials and factory to the new project structure.  This is needed to start bringing over service implementations.
+
+[33mcommit 684066a65fb8a52b2174f714f7f3efd5c766b0f0[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Mon Jan 29 20:35:17 2018 -0600
+
+    Add a copy of the transfer data types to the new project structure (#102)
+    
+    * Create copies of the data models in the gradle project structure.  This jsonfies them, but doesn't refactor the wrapper classes.  (also add truth and guava as common libraries)
+
+[33mcommit f5ea0b066ff8225a301234a0b33801dc38794613[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Mon Jan 29 12:12:31 2018 -0600
+
+    update angular frontend and api server to use types in portability-client-types (#97)
+    
+    * Update angular frontend and api server to Use portability-client-types
+
+[33mcommit 2b4b76206044edbe14d743617be0c6a9bb5680fb[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Jan 29 12:11:47 2018 -0600
+
+    make in memory impl atomic
+
+[33mcommit 55c0178f352a356c9d221feabd7a70ddd069ed1f[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Jan 29 12:02:11 2018 -0600
+
+    Remove unused field
+
+[33mcommit 99d50828fe3de0dfa5f6d9b459417ef3d776f71e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Jan 29 11:59:31 2018 -0600
+
+    Create an atomicUpdate operation on KeyValueStore
+
+[33mcommit 74c99c07fa195bf8c072dbe2f69c9e3f24692ff2[m
+Author: Darío Hereñú <magallania@gmail.com>
+Date:   Mon Jan 29 11:06:00 2018 -0300
+
+    Minor fixes to documentation (#101)
+
+[33mcommit 5cc15401362e281bb646fc3035fe4d4d95b415fc[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:50:13 2018 -0600
+
+    restore a couple settings accidentally changed
+
+[33mcommit 3de9c8ac47801007bb2523736dbe05ae4aef244d[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:48:50 2018 -0600
+
+    Remove partially implemented sychronization. We should revisit that later.
+
+[33mcommit 0b65f4543e0d7f51daccdf43b3e700a195cc5004[m
+Merge: 203ffd3 24f5a69
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:38:21 2018 -0600
+
+    Merge branch 'encryption-flow-qa' of https://github.com/google/data-portability into encryption-flow-qa
+
+[33mcommit 24f5a69bc69944d323344e5217a64ebd90a22d7f[m
+Merge: 1ae49a0 9e100bc
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Jan 26 18:37:16 2018 -0500
+
+    Merge branch 'master' into encryption-flow-qa
+
+[33mcommit 203ffd32912ed40b4f42bcc1cec5177f03de7eac[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:33:48 2018 -0600
+
+    Reorder methods in InMemoryPersistentKeyValueStore
+
+[33mcommit 5e6f133d481c1ae8ad25624012c04dd3bafe2ed1[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:28:39 2018 -0600
+
+    Add documentation
+
+[33mcommit 40013aa10f5aa867b8cf814f65364af7f3f8c125[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:23:53 2018 -0600
+
+    undo QA changes, don't commit those yet
+
+[33mcommit f6cdfd6376d551248cd166b96321ae8681b238ee[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:12:39 2018 -0600
+
+    Fix race condition so only one worker may poll a given job
+
+[33mcommit 3007d96977a5bbdb7355e5cb4ee558a992367e15[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:12:39 2018 -0600
+
+    Fix race condition so only one worker may poll a given job
+
+[33mcommit 1ae49a0e2362aeb75b030538c51b666807a64d9e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:33:48 2018 -0600
+
+    Reorder methods in InMemoryPersistentKeyValueStore
+
+[33mcommit f618d177cdb1e9409d4a0d7d5287ca9bc9d18d01[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:28:39 2018 -0600
+
+    Add documentation
+
+[33mcommit 578c3f81b1ce94178d355d4dfbbb9e5882892e21[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:23:53 2018 -0600
+
+    undo QA changes, don't commit those yet
+
+[33mcommit 55b63a6f807017a5e43994f683d6cf05ba774862[m
+Merge: 9efc642 78e6a2e
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:21:41 2018 -0600
+
+    Merge branch 'encryption-flow-qa' of https://github.com/google/data-portability into encryption-flow-qa
+
+[33mcommit 9efc642ebd50da8b4efb8bf5f951444b1352a1c7[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:12:39 2018 -0600
+
+    Fix race condition so only one worker may poll a given job
+
+[33mcommit 78e6a2ee764e87d64aee35c494779876b0ff9969[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 17:12:39 2018 -0600
+
+    Fix race condition so only one worker may poll a given job
+
+[33mcommit 9e100bcb0e60eaeb2d5bd763bba5da23fcf253de[m
+Merge: 8f88837 e654459
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Jan 26 15:30:08 2018 -0500
+
+    Merge pull request #96 from google/k8s-logs
+    
+    Instructions for tailing Kubernetes container logs
+
+[33mcommit e65445951a4f3306bac51b39e696bc4ace95d0b7[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Jan 26 15:18:30 2018 -0500
+
+    Instructions for tailing Kubernetes container logs
+
+[33mcommit 8f8883705093f8d790c20a0727973fa10dbfc14c[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 26 13:08:01 2018 -0600
+
+    Update index.html for prod and explicity turn off encryptedFlow (#95)
+    
+    This updates the prod binary and static content with changes from #80 and #89
+    
+    Front end changes tracked in: #67
+
+[33mcommit 90266448374c034c93781405cf480e5432c4fc8e[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 26 12:27:11 2018 -0600
+
+    update qa index.html to reflect new content from #80 and #89, explicitly turn off encryptedFlow in qa (#94)
+    
+    * update qa index.html to reflect new content, turn on encryptedFlow in qa
+    * turn encryptedFlow back off for qa
+
+[33mcommit 3823da2a0e68ca207774118073e3c1c8ce292024[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 26 11:31:37 2018 -0600
+
+    Refactor constant frontend urls to be shared across handlers (#92)
+    
+    * Make all handler paths constants to be reused in PortabilityAPIModule.
+    * Move some shared strings to be constants
+
+[33mcommit 325aea686e35ed2bc7a3a09ac3ae453f0758ff69[m
+Merge: 3eb5040 3cc7e38
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Jan 26 11:32:44 2018 -0500
+
+    Merge pull request #91 from google/worker-k8s
+    
+    Kubernetes worker pool config
+
+[33mcommit 3cc7e38024d8526ae771c2894c64463439b65e43[m
+Merge: 4ad0d13 69af35a
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 10:06:53 2018 -0600
+
+    Merge branch 'worker-k8s' of https://github.com/google/data-portability into worker-k8s
+
+[33mcommit 4ad0d13da5c5c22ac8af75dadf278c8df6dea628[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 09:58:36 2018 -0600
+
+    Add documentation and license headers
+
+[33mcommit 50cf39734ffa374c1a3bc5e8026fbb8b4bc93df3[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:50:11 2018 -0600
+
+    Remove debugging statements
+
+[33mcommit 66e193764f724674977319d4f3f64e96b992c07a[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:45:32 2018 -0600
+
+    Cleanup comments
+
+[33mcommit f5d092e4a11365d63ed9c9db8e6b8da31f71d422[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:39:21 2018 -0600
+
+    Configure worker pool for GCP
+
+[33mcommit fcc71334bb9d9fdaa096e54ab210f9b312773cff[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:59:31 2018 -0600
+
+    Use keyword for image name for setup script to substitute in, depending on project name
+
+[33mcommit d0ab5fc667619b7697b47f389e29a8d0a1616892[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:56:39 2018 -0600
+
+    Move health check step to create_backend_pool()
+
+[33mcommit ef809683a55b3c219aa551d5d08eec77308579ac[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:53:00 2018 -0600
+
+    Add some clarifying documentation about service account creds
+
+[33mcommit bdb3c063d29032871e74c3210141601b19fd6e67[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:50:11 2018 -0600
+
+    Remove debugging statements
+
+[33mcommit 34d097f39959de3ff1207eff29beb2b05d4a9d4e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:45:32 2018 -0600
+
+    Cleanup comments
+
+[33mcommit fd3398c565d7f8961739e80dd08f6c22674ae39c[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:39:21 2018 -0600
+
+    Configure worker pool for GCP
+
+[33mcommit 69af35a0b4c48f65e8d233234eadc844ba9d7603[m
+Merge: 99bf54e b103be7
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 10:01:02 2018 -0600
+
+    Merge branch 'worker-k8s' of https://github.com/google/data-portability into worker-k8s
+
+[33mcommit 99bf54e5ebae2634bad74859530a81c25406e89b[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 26 09:58:36 2018 -0600
+
+    Add documentation and license headers
+
+[33mcommit ddb4360085720ca633011419cd89d092e840bbf2[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:59:31 2018 -0600
+
+    Use keyword for image name for setup script to substitute in, depending on project name
+
+[33mcommit ef9b78707d47b39057cdb31acabe4f83e22e1741[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:56:39 2018 -0600
+
+    Move health check step to create_backend_pool()
+
+[33mcommit fa819097d96434f90fc507d09d9f0ab01b21b48b[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:53:00 2018 -0600
+
+    Add some clarifying documentation about service account creds
+
+[33mcommit 535b091eb34b4c9fdebfd78a4590b6807cb78599[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:50:11 2018 -0600
+
+    Remove debugging statements
+
+[33mcommit 178f6a47795172b1ef3b529684cc5b5dc3522ec1[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:45:32 2018 -0600
+
+    Cleanup comments
+
+[33mcommit c172931a65219286a9604a1bf797c3a01095d5e3[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:39:21 2018 -0600
+
+    Configure worker pool for GCP
+
+[33mcommit 3eb5040c46b505e68fab5571a7bcd133d68d034c[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 26 09:15:54 2018 -0600
+
+    Use new DataTypes from portability-client-types in SetupHandler.  (#89)
+    
+    * Use new DataTypes from portability-client-types in SetupHandler.
+
+[33mcommit b103be775e4ddeb776bd3f3bdc77ea3a20366ca5[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:59:31 2018 -0600
+
+    Use keyword for image name for setup script to substitute in, depending on project name
+
+[33mcommit 36e17d612f9267284d7c765884ca3c7a7d839426[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:56:39 2018 -0600
+
+    Move health check step to create_backend_pool()
+
+[33mcommit d2606bd3d13fc7f77b701f04255d0880f6321479[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:53:00 2018 -0600
+
+    Add some clarifying documentation about service account creds
+
+[33mcommit e79ee3e6bdd9b3a8b6435b741b65f2aac11532b1[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:50:11 2018 -0600
+
+    Remove debugging statements
+
+[33mcommit 5f5ee963f91322940dca7997a4791d215f45e2ce[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:45:32 2018 -0600
+
+    Cleanup comments
+
+[33mcommit a0e0097a75775faae08358cc77003d070152e4a6[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Jan 25 17:39:21 2018 -0600
+
+    Configure worker pool for GCP
+
+[33mcommit 95f3763bf3304747533f4473ba83f4234406c9b5[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 25 12:41:28 2018 -0600
+
+    Use new DataTypes module in angular front end  (#80)
+    
+    * angular front end to talk to api with new DataTransferRequest type.
+    Angular XHR doesnt follow redirects from POST without an intial
+    preflight task. To get around this, we dont redirect from configure and
+    instead return a url in the response to follow. (Similar to the way we
+    display a page for import setup and redirect to the auth flow).
+    * rename /configure endpoint to /_/configure
+    * Rename DataTransfer type to DataTransferResponse
+    * Rename ConfigureHandler to DataTransferHandler
+    * Use interface for DataTransferResponse instead of class on angular
+    frontend. This is so that the response of the POST request isnt bound to
+    a type but rather to the interface.
+    * formatting fixes, new lines, license headers
+    
+    This requires a new build and static content deployment (tracked in #67)
+
+[33mcommit f8f1fb52541c41bd5ad1b2057a1fd010a939757d[m
+Merge: e4740a3 f19563f
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 13:35:20 2018 -0500
+
+    Merge pull request #82 from google/git_commit
+    
+    Label docker images with git commit
+
+[33mcommit f19563fef983b52550cc1bba0afe2bfc4eb68449[m
+Merge: 5af0dd2 e4740a3
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 13:30:09 2018 -0500
+
+    Merge branch 'master' into git_commit
+
+[33mcommit e4740a312f25fb3007acf48cf3963da5824f0503[m
+Merge: 4e1dee9 ca27139
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 13:29:48 2018 -0500
+
+    Merge pull request #87 from google/travis-maven-gradle
+    
+    Make Travis build both Maven and Gradle while we transition builds
+
+[33mcommit ca27139af0cf31874c0aeed8177cf8c52dd4dc8d[m
+Merge: f57b183 4e1dee9
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 13:25:11 2018 -0500
+
+    Merge branch 'master' into travis-maven-gradle
+
+[33mcommit 4e1dee989b3e56149305114b0c4cee0cfa6fe553[m
+Merge: 0ead11c 13785bd
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 12:40:07 2018 -0500
+
+    Merge pull request #86 from google/karma-fix
+    
+    Increase timeout for Karma to receive activity from Chrome
+
+[33mcommit 13785bd0a8f5ef2de8c649378c7e0bcbf40fade0[m
+Merge: d989ad5 0ead11c
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 12:25:37 2018 -0500
+
+    Merge branch 'master' into karma-fix
+
+[33mcommit 0ead11cd9ff2c2a78d84b2b6d3141d2c06531b39[m
+Merge: c6ec02c 5052ca0
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 11:53:56 2018 -0500
+
+    Merge pull request #83 from google/ng-e2e
+    
+    Make Travis run Angular end-to-end tests
+
+[33mcommit 5052ca0e81d7d941fed47908edd8c591b1360c9c[m
+Merge: dc78744 c6ec02c
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Thu Jan 25 10:44:53 2018 -0600
+
+    Merge branch 'master' into ng-e2e
+
+[33mcommit f57b18390fdd0a0e419137796ae6904fd7998eec[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 10:00:54 2018 -0500
+
+    Make Travis build both Maven and Gradle while we transition builds
+
+[33mcommit d989ad52008eb8ee82aff90a4f8b50344a6efbb1[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 09:50:21 2018 -0500
+
+    Increase timeout for Karma to wait for Chrome activity
+
+[33mcommit f0739c3c8a25274178188654487ef480dcdf394b[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 25 09:39:43 2018 -0500
+
+    Update timeout for Karma to receive activity from Chrome
+    
+    Test first with a lower timeout to make sure this is the right flag and produces the error:
+    
+    "Disconnected (1 times), because no message in 100 ms."
+
+[33mcommit c6ec02c48464fc133eb77d149e797289b2aecda5[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Wed Jan 24 17:05:12 2018 -0600
+
+    Update Overview.md (#84)
+
+[33mcommit dc787443d9454d317e8d26439c00902cd2542c9e[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 17:14:22 2018 -0500
+
+    Add ng e2e to .travis.yml
+
+[33mcommit ee454e4e4a116ba789cbd87c2c4c2abbe726dfb7[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 17:13:12 2018 -0500
+
+    Create protractor-ci.conf.js
+
+[33mcommit 5af0dd2649789843448cf64d90ba1b8cae2f24f0[m
+Merge: 1eee485 506cb4c
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 17:11:15 2018 -0500
+
+    Merge branch 'master' into git_commit
+
+[33mcommit 1eee48561bb482271fe4a4b6c1ade776f8126369[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Jan 24 16:04:45 2018 -0600
+
+    Label docker images with git commit
+
+[33mcommit 506cb4ce2b3c44b97d7148ce76789be81c95cf09[m
+Merge: 8ed786c 69a6a1e
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 16:45:17 2018 -0500
+
+    Merge pull request #70 from google/ng-travis
+    
+    Include ng test in Travis CI
+
+[33mcommit 69a6a1ea43c8e079c41907b20944c4bf40c5255d[m
+Merge: 7a67122 8ed786c
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 16:26:07 2018 -0500
+
+    Merge branch 'master' into ng-travis
+
+[33mcommit 8ed786c77ebb6422fff8e969e0a9af12aea7dda7[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Wed Jan 24 13:57:03 2018 -0600
+
+    Set correct test expectation so e2e tests pass plus a todo to add more (#79)
+
+[33mcommit 7a67122378fa4fb7eda97e6ffb3e948e26589582[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 12:14:32 2018 -0500
+
+    More documentation in .travis.yml
+
+[33mcommit d720dccb63d519de56739ff0cb123d68c17f2aee[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 12:06:30 2018 -0500
+
+    Add a comment about ChromeNoSandbox
+
+[33mcommit 6b91ec3431192f92ce33cf553539330ec3bad818[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 12:04:36 2018 -0500
+
+    Add license header to .travis.yml
+
+[33mcommit 4095f70d9907983b1e6b5611107658aa0d2d98df[m
+Author: Jim Marino <jim.marino@gmail.com>
+Date:   Wed Jan 24 17:17:52 2018 +0100
+
+    Maven modules (#77)
+    
+    Tentatively add gradle generated pom files to the build in order to bridge maven and gradle portions of the project. Eventually, these will be removed when the build is gradle only.
+    
+    * Add client types module to Maven build
+    
+    * Add transfer types module to Maven build
+    
+    * Add test utilities module to Maven build
+    
+    * Set versions
+    
+    * Add SPI transfer module to Maven build
+    
+    * Add SPI gateway module to Maven build
+    
+    * Add SPI cloud module to Maven build
+    
+    * Add transfer module to Maven build
+    
+    * Add cloud module to Maven build
+    
+    * Add gateway module to Maven build
+    
+    * Add cloud google  module to Maven build
+    
+    * Add cloud microsoft module to Maven build
+    
+    * Add cloud google transfer module to Maven build
+    
+    * Add microsoft transfer module to Maven build
+
+[33mcommit 2075e942ba95296678f2032f2ff8488fdcc3efe1[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 10:15:14 2018 -0500
+
+    Delete protractor-ci.conf.js
+    
+    Not needed til we get e2e tests passing
+
+[33mcommit 748e5e37af75028eaccde0c59282e85fe83053d4[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 10:03:26 2018 -0500
+
+    Update .travis.yml ng script to use ChromeNoSandbox
+
+[33mcommit b20cd8063a9de6304e5247cf8ab185f9e02d0575[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 09:58:57 2018 -0500
+
+    Create protractor-ci.conf.js
+    
+    following instructions at https://github.com/angular/angular-cli/wiki/stories-continuous-integration
+
+[33mcommit 60034585bfdbb7fdce6d68503b15426d2ca501b4[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 24 09:55:12 2018 -0500
+
+    Cleaner way to change karma.conf.js
+
+[33mcommit 2a5474fcbe163e81df2fdee453a4c3793192ede0[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 23 16:14:57 2018 -0500
+
+    A couple more magic commands to get Chrome to start in Travis image
+
+[33mcommit 9a4ecb309d3feaf0f768e94cf1dbbe7b241b04cd[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 23 15:43:45 2018 -0500
+
+    Make karma use the version of Chrome installed in travis docker image
+
+[33mcommit 8dc8a02bb0c60293de1bac938c60e1d86569b962[m[33m ([m[1;31morigin/ng-travis[m[33m)[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 23 09:29:22 2018 -0500
+
+    Make 'npm install' happen in the client directory
+    
+    to reference the local package.json
+
+[33mcommit f0f9aef31bf38a30b63c18bf204f1b39443a15c5[m
+Merge: 07a5e20 6415657
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Tue Jan 23 07:23:22 2018 -0600
+
+    Merge branch 'master' into ng-travis
+
+[33mcommit 07a5e20d8e47cc024b6eedc3c2b1497ec7d88477[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Mon Jan 22 22:57:48 2018 -0500
+
+    npm install karma
+
+[33mcommit 6415657b53cf723191510ea144b5c01628fe1913[m[33m ([m[1;32mworker[m[33m)[m
+Author: Jim Marino <jim.marino@gmail.com>
+Date:   Mon Jan 22 23:30:09 2018 +0100
+
+    Gradle build project structure (#29)
+    
+    Gradle build project structure with new SPI and API interfaces and entity definitions.
+    
+    I left the individual commit history here in case we need to reference.
+    
+    * add Gradle wrapper and initial sample build script
+    * add model subproject project with Jackson annotation dependency
+    * add package-info
+    * add target output ignore
+    * add publish to local Maven repo
+    * add build comment
+    * add SPI module
+    * add gateway API moodule
+    * simplify transitive definition
+    * add cloud extensions modules
+    * only build artifacts for source projects
+    * add connectivity extensions
+    * move cloud extensions under extensions directory
+    * add SPI dependency to connectivity extensions
+    * add worker service subproject
+    * add base sample model types
+    * rename connectivity data-transfer
+    * split SPI module into cloud and data-transfer
+    * rename portability-model to portability-data-transfer-types
+    * rename package for consistency
+    * add client types subproject
+    * add Git attributes to properly set line endings
+    * update Git attributes
+    * fix newline endings
+    * add license headers
+    * add data transfer request type
+    * update gitignore to ignore IntelliJ output directory
+    * add Swagger to model types
+    * add DataTransfer type
+    * add source and destination properties
+    * pull up properties to common abstact type
+    * fix typo
+    * move types to transfer package
+    * add provider type
+    * change name so it does not conflict with existing class
+    * add JSON version of auth data
+    * add base data model type
+    * fix typo
+    * add importer
+    * add exporter placeholder
+    * add registry
+    * rename module
+    * add license headers
+    * add separate gateway SPI as it decouples the worker modules from the front-end API
+    * add type manager for JSON databinding
+    * add license header
+    * add new subproject to contain common cloud-related services (i.e. services that run in both API Server and Worker instances); add type manager based on Jackson
+    * license
+    * add PortabilityJob JSON type; add support for ISO 8601 timestamps; add test utilities module
+    * have DataModel extend EntityType; add JobCache and JobStore interfaces
+    * Rename contentType to transferDataType
+    * Intermediate commit: add in import/export anf auth providers (to be renamed)
+    * rename modules portability-spi-worker -> portability-spi-transfer and portability-worker-service -> portability-transfer
+    * rename portability-datatransfer-types ->  portability-types-transfer for consistency
+    * rename portability-client-types to portability-types-client for consistency
+    * align test package with impl package
+    * Handle continuation information; create subpackages for transfer spi
+    * Combine JobCache and JobStore
+    * Move PortabilityJob and AuthFlowConfiguration types up into their respective SPI packages
+    * Add comment to build file
+    * Make fields final per Chuy's comments
+
+[33mcommit e716d0f08caf4771bef15e5b341565d8300194de[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Mon Jan 22 16:16:10 2018 -0600
+
+    Guice fix (#76)
+    
+    * after npm install
+    
+    * Adding missing @Singleton annotation to LocalCloudFactory, adding debug statements
+
+[33mcommit a6b2a26741acdbb737d8ab4d7a85616225e84e1e[m
+Merge: b81b3ab 5e4f16a
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Mon Jan 22 15:53:27 2018 -0600
+
+    Merge pull request #75 from google/olsona-patch-1
+    
+    Update Developer.md
+
+[33mcommit 5e4f16a9f8331747c794f6a4d0c3c380edeaaded[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Mon Jan 22 15:11:10 2018 -0600
+
+    Update Developer.md
+
+[33mcommit b81b3ab1b4d85f92a4a2f8e7d54620cce66ae344[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Mon Jan 22 14:44:26 2018 -0600
+
+    Remove debug condition. Forgot to add to previous commit (#74)
+    
+    * Remove debug condition. Forgot to add to previous commit
+    
+    * remove redundant try clauses
+
+[33mcommit d145706be801d2b4d314e1b5b822bf85e22cac7f[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Mon Jan 22 14:22:38 2018 -0600
+
+    Add details for Slack and Skype to documentation (#69)
+    
+    * Add details for Slack and Skype to documentation to encourage developer participation
+
+[33mcommit 629700f4c952fb695ed8137c157c696ba76713be[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Mon Jan 22 15:20:45 2018 -0500
+
+    Run npm install and use Chromium instead of Chrome
+    
+    per Angular's Travis instructions: https://github.com/angular/angular-cli/wiki/stories-continuous-integration
+
+[33mcommit 2e32f4b4117767f863a494c158b2327daf1b9790[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Mon Jan 22 13:58:00 2018 -0500
+
+    Add node_js version
+    
+    Use the version I am running on my machine, 8.9.
+    
+    Travis tests failed to install Angular CLI and logged that it had defaulted to version 0.10 of nodejs. Maybe a newer version is needed in order to support Angular and should probably be consistent with our machines anyway.
+
+[33mcommit 5f576beb5d6ecafd4fa4c165003c1b1d7fb0ebcc[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Mon Jan 22 12:03:33 2018 -0500
+
+    Cd to client dir before running angular
+
+[33mcommit 21231d52f7c3300c05f3a408f483a5ac7430b66c[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Mon Jan 22 12:00:53 2018 -0500
+
+    Include ng test in Travis CI
+
+[33mcommit 666333305228d285fa341d7c23d4f1e1c5c978c5[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Mon Jan 22 09:26:18 2018 -0600
+
+    Encrypted Flow - refactor encryption, use shared local datastore based on Google store, add debugging (#61)
+    
+    Complete the asynchronous, storage-driven, encrypted flow.
+    
+    * Use local google datastore emulator for local development when worker and api are running in different process
+    * rename crypto classes
+    * Simplify naming of CrypterFactry creation factory and remove indirection by calling it directly from the StartCopyHandler.
+    * add more documentation
+
+[33mcommit 0215864e33b1015ea32fe6e946bbf884c6528950[m
+Merge: ba09b08 c6a1674
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 18 14:12:12 2018 -0600
+
+    Reformat ServiceProvider directories based on IntelliJ autoformatter
+    
+    Merge pull request #68 from google/reformat
+
+[33mcommit c6a16747bd39db4508722e69bbc51c444279154e[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 13:54:30 2018 -0600
+
+    Reformat smugmug ServiceProvider directory based on Intellij
+    autoformatter
+
+[33mcommit 27fa5a6bab319259e17a582667ff7f8811b78b06[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 13:53:56 2018 -0600
+
+    Reformat rememberTheMilk serviceProvider directory based on Intellij
+    autoformatter
+
+[33mcommit 4eb615cc0993c50067c50e9327b3fb4df151c2af[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 13:53:30 2018 -0600
+
+    Reformat Microsoft ServiceProvider directory based on Intellij
+    autoformatter
+
+[33mcommit 1351910440d3651da658d59f95ab1ad982cc15db[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 13:52:07 2018 -0600
+
+    Reformat Instagram ServiceProvider directory according to Intellij auto
+    reformatter
+
+[33mcommit 8ae7b4e03b77cb7a3d95da2e41225f0e70082d05[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 13:51:26 2018 -0600
+
+    Reformat Google ServiceProvider directory based on IntelliJ
+    autoreformatter
+
+[33mcommit f0c19c64d102585f46c6133343e591b6fad7b4e9[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 13:50:34 2018 -0600
+
+    Reformat flickr ServiceProvider implementations via Intellij auto
+    reformatter.
+
+[33mcommit ba09b087658d551c6323ec0318cfda0ca238c57d[m
+Merge: 21f1aba 021d639
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 18 13:37:51 2018 -0600
+
+    Update qa's index.html to reflect new static content updated.
+    
+    Merge pull request #66 from google/static_updates
+
+[33mcommit 021d63914445eb87c0506f3689e9d5919b7e7aff[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 11:35:09 2018 -0600
+
+    Update qa's index.html to reflect new static content updated.
+
+[33mcommit 21f1abaf38965e199ad6f842745a3feb410ac7c1[m
+Merge: f0a1321 d18b268
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 18 11:11:49 2018 -0600
+
+    Slight refactor to make FlickrServiceProvider more like other Oauth1 providers (Smugmug and RememberTheMilk).
+    
+    Merge pull request #65 from google/refactor
+
+[33mcommit d18b2689e8baeaf55010118a837fd873127b9ee7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 10:45:28 2018 -0600
+
+    Slight refactor to make FlickrServiceProvider more like other Oauth1
+    providers (Smugmug and RememberTheMilk).
+    
+    - Make private members final static
+    - Instantiate authGenerators only upon request
+    - Check dataType is valid before creating or retrieving auth.
+
+[33mcommit f0a1321e2f83fd9035c1fc6cf4718f44956e7a82[m
+Merge: 365967f 0aebf05
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 18 09:30:18 2018 -0600
+
+    Delete deprecated versions of get*AuthDataGenerator that don't use serviceMode
+    
+    Merge pull request #63 from google/serviceMode
+
+[33mcommit 0aebf05f27b7160a2de574a9efdc64c26623a919[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 09:26:40 2018 -0600
+
+    remove leading WARNING from log
+
+[33mcommit 32e1676bd1ddf739e486e10710706935f4f73a44[m
+Merge: 2a7cc02 a6213f6
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 08:58:47 2018 -0600
+
+    Merge branch 'serviceMode' of github.com:google/data-portability into serviceMode
+
+[33mcommit 2a7cc02a8bd4944ff9f0f6aaa924f7fad33a50e7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 18 08:58:15 2018 -0600
+
+    switch to logger.warn().
+
+[33mcommit a6213f6a343994393a4ff83129508dfbb57ad035[m
+Merge: 3fd8e1d 365967f
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 18 08:57:49 2018 -0600
+
+    Merge branch 'master' into serviceMode
+
+[33mcommit 365967f22c817f492f0b34a105fe0ac8e3daf849[m
+Merge: 9c88319 53075c6
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 18 08:54:06 2018 -0600
+
+    Request permissions for Smugmug and RememberTheMilk based on serviceMode.
+    
+    Merge pull request #62 from google/auth
+
+[33mcommit 53075c6048176f0832fdbe351de02b4c949f84e1[m
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 22:01:44 2018 -0600
+
+    add newline
+
+[33mcommit 8755889f63f32ae0acb7cab7c832176791a80319[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 21:59:06 2018 -0600
+
+    Instantiate AuthGenerator only when service is requested.
+
+[33mcommit f54cc584fe7e8fd9bfded976bd73f97190819241[m
+Merge: f946ea7 9c88319
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 20:21:59 2018 -0600
+
+    Merge branch 'master' into auth
+
+[33mcommit 9c883192e7f8a2f1fced050f8b524c871b1649ee[m
+Merge: b4f0b2b 22e4ded
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 20:21:17 2018 -0600
+
+    Slight refactor to make GoogleServiceProvider more similar to MicrosoftServiceProvider.
+    
+    Merge pull request #64 from google/refactor
+
+[33mcommit 22e4ded0bff49981cf5e43336565124a7c7cbc99[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 16:37:04 2018 -0600
+
+    Slight refactor to make GoogleServiceProvider more similar to
+    MicrosoftServiceProvider.
+    
+    - Make private members final and static.
+    - Use ListMultiMap instead of Map.
+    - Check dataType is valid before creating or retrieving auth.
+
+[33mcommit 3fd8e1d4401f200b148c6efa2d28082d77419fc0[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 16:19:30 2018 -0600
+
+    Delete deprecated versions of get*AuthDataGenerator that don't use
+    serviceMode.
+
+[33mcommit f946ea7a27cd1f2545eedf8003597d9c95a3ce7d[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 16:11:40 2018 -0600
+
+    Request permissions for Smugmug and RememberTheMilk based on
+    serviceMode.
+
+[33mcommit b4f0b2ba70766a353c5415b81b3d7c562946b6d3[m
+Merge: 0978301 0db2159
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 15:45:12 2018 -0600
+
+    Limit scopes for AuthDataGenerators for MicrosoftServiceProvider when importing/exporting calendar data.
+    
+    Merge pull request #60 from google/microsoft_auth
+
+[33mcommit 0db21594811470d96f6c91132d21d5dd69f6ec38[m[33m ([m[1;31morigin/microsoft_auth[m[33m)[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 15:19:02 2018 -0600
+
+    Code review comments
+
+[33mcommit f6747403931738c83b4b721e96191f89b7c893ad[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 13:54:39 2018 -0600
+
+    Limit scopes for AuthDataGenerators for MicrosoftServiceProvider when
+    importing/exporting calendar data.
+
+[33mcommit 0978301ca9032a1e43935e83d2a533172ecae9c9[m
+Merge: 6d1bd35 d85c041
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 13:39:52 2018 -0600
+
+    Update MicrosoftServiceProvider to return AuthGenerator based on serviceMode.
+    
+    Merge pull request #59 from google/microsoft_auth
+
+[33mcommit d85c041730c739696a882d2225bf96ceb12295d3[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 13:30:21 2018 -0600
+
+    Code review changes
+
+[33mcommit 7ff155e0df426081aa089466492c1f1a7012929c[m
+Merge: 7d79300 6d1bd35
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 13:17:51 2018 -0600
+
+    Merge branch 'master' of github.com:google/data-portability into microsoft_auth
+
+[33mcommit 6d1bd35a4380ca95d11a3c5d00bd072a0ea759ba[m
+Merge: 0c42987 8f6ddce
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 13:15:20 2018 -0600
+
+    Update InstagramServiceProvider to return auth based on serviceMode.
+    
+    Merge pull request #58 from google/instagram_auth
+
+[33mcommit 8f6ddceea3f1375fe85e10a3b69b3b1a3d2e7931[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 13:11:14 2018 -0600
+
+    Code review changes
+
+[33mcommit de5c721bca0cc82e84ad0bb3141553e7dcd32ec6[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 12:53:00 2018 -0600
+
+    refactor verification of supported datatypes
+
+[33mcommit 7d79300275daf86cd2373b6b365f092ddac7a9e7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 12:04:38 2018 -0600
+
+    add supportedDataTypes variable + code review changes
+
+[33mcommit 8c582dac6a059760e27cd408e25c2781ddd82f26[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 11:20:25 2018 -0600
+
+    Add check for serviceMode in getOfflineAuthDataGenerator
+
+[33mcommit 48d60b1d3665115ae1080a40f6fe55a5c5eba24c[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 10:50:25 2018 -0600
+
+    Update MicrosoftServiceProvider to return AuthGenerator based on
+    serviceMode.
+    
+    Also rename combine Offline and Online PasswordAuthDataGenerators into
+    one class to be consistent with other service provider generators.
+    
+    Note that this does not actually limit the scope. This is only migrating
+    them to the new version of the function.
+
+[33mcommit 2764febc46fd86989527226bb715d013d3c877e6[m[33m ([m[1;31morigin/instagram_auth[m[33m)[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 10:26:40 2018 -0600
+
+    Update InstagramServiceProvider to return auth based on serviceMode.
+    
+    (Instagram currently only supports IMPORT mode so this is functionally a
+    no-op).
+
+[33mcommit 0c42987cf51d4a312a4eb62d8d15b521fd405861[m
+Merge: 3ffc932 6b25e53
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 10:19:21 2018 -0600
+
+    Merge pull request #51 from google/auth_data
+    
+    Limit oauth scope for flickr import/export.
+
+[33mcommit 6b25e5394ff194906fbf6e51597b139bf9001975[m[33m ([m[1;31morigin/auth_data[m[33m)[m
+Merge: bcd87cc 3ffc932
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 10:18:30 2018 -0600
+
+    Merge branch 'master' into auth_data
+
+[33mcommit 3ffc93212b6b5975d3175b667f79edb8e74e3db9[m
+Merge: 3cd1d83 68f07bf
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 10:18:20 2018 -0600
+
+    Merge pull request #52 from google/google_auth
+    
+    Limit oauth scope requested for google APIs based on dataType and serviceMode
+
+[33mcommit bcd87cca254bf2ad9015da7db7f04798cf50330e[m
+Merge: c702f85 3cd1d83
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 10:04:42 2018 -0600
+
+    Merge branch 'master' into auth_data
+
+[33mcommit 68f07bf263330d8c5c19729abe54ce24a1a2ce52[m
+Merge: 44991e6 3cd1d83
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 10:04:15 2018 -0600
+
+    Merge branch 'master' into google_auth
+
+[33mcommit 3cd1d830e5b6f3ed2b38bae7a614a188596d2aa8[m
+Merge: c9f95e8 c2caff7
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 10:02:30 2018 -0600
+
+    Merge pull request #57 from google/gcp_update
+    
+    Update index.html in prod to reflect updated content.
+
+[33mcommit c2caff7a7bb88da357fb57088b7764ead7c9fd09[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 17 09:56:13 2018 -0600
+
+    Update index.html in prod to reflect updated content.
+
+[33mcommit c702f8511699402eb6b8974977e1280b61c2ef11[m
+Merge: 149a9b8 c9f95e8
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 09:20:14 2018 -0600
+
+    Merge branch 'master' into auth_data
+
+[33mcommit 44991e6f174be8fc539bcc4408fb0fc3ca9b2887[m
+Merge: beeaab3 c9f95e8
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 17 09:17:24 2018 -0600
+
+    Merge branch 'master' into google_auth
+
+[33mcommit c9f95e82b44eaee627562ddb543462272fef6f3a[m
+Merge: 1944be1 1945b0b
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 16 23:46:06 2018 -0500
+
+    Merge pull request #56 from google/project-id2
+    
+    Fix local environment pointing to GCP & update documentation
+
+[33mcommit 1945b0b98815b74d97aab5ea701f78171e4f15c0[m[33m ([m[1;31morigin/project-id2[m[33m)[m
+Merge: ab0d253 1944be1
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 16 23:26:16 2018 -0500
+
+    Merge branch 'master' into project-id2
+
+[33mcommit ab0d253ba7f4a0a702556f25ff735b5c0e664934[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 16 20:55:53 2018 -0600
+
+    Put back @ProjectId String projectId instead of the wrapper class
+    
+    Move some Google-specific conventions inside the Google implementation classes for bucket name and crypto key for app credentials
+
+[33mcommit beeaab37f30b0495fbe52dabb2a427c222279a05[m[33m ([m[1;31morigin/google_auth[m[33m)[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 20:51:32 2018 -0600
+
+    Initialize GoogleAuth for serviceMode and dataType only when the pair is requested.
+
+[33mcommit cc628e3e2a6de2ee3ca37c142e6d3734d3f786f8[m
+Merge: 617a73a 1944be1
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 20:22:10 2018 -0600
+
+    Merge branch 'master' into google_auth
+
+[33mcommit 149a9b85a8f451349ee33b0f39caba601fbe60e4[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 20:20:52 2018 -0600
+
+    Support serviceMode in offlineDataGenerator for flickr
+
+[33mcommit 13d71d3dcc35d786c617505336fcd67b2f35b684[m
+Merge: 9cd5daa 1944be1
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 20:15:05 2018 -0600
+
+    Merge branch 'master' into auth_data
+
+[33mcommit 1944be15d1753da6dc63681f5de7216707ea0b41[m
+Merge: a5ae323 723e68b
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 20:14:18 2018 -0600
+
+    Merge pull request #53 from google/offline_auth
+    
+    Add serviceMode to getOfflineAuthDataGenerator for serviceProviders.
+
+[33mcommit 004bbc282f18f1392996453347884c7f5655f962[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 16 20:09:41 2018 -0600
+
+    add a requireBinding for CommonSettings in GoogleCloudModule
+
+[33mcommit 4fb9047984f8a1872dd3524a0d6bf120cc3de3c5[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 16 19:56:43 2018 -0600
+
+    more code review
+
+[33mcommit e87acf75af3b2110d3ef73ad401eda9d5e38adfa[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 16 19:54:12 2018 -0600
+
+    more code review
+
+[33mcommit 7cc7b14fada9d2b6d93db9bf793602eddc36fb25[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 16 19:47:59 2018 -0600
+
+    code review
+
+[33mcommit 723e68b41ffbecffda681162e5f0efff937e4fa4[m
+Merge: 71c7be6 a5ae323
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 19:47:49 2018 -0600
+
+    Merge branch 'master' into offline_auth
+
+[33mcommit a5ae3237b9bea0eb89db4a8936159da36d55cc32[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Tue Jan 16 18:16:05 2018 -0600
+
+    Fix angular tests  (#55)
+    
+    * complete tests so that ng tests pass
+    
+    * add documentation on command line for running tests
+    
+    * revert JobDaoTest
+
+[33mcommit 18f5be2be8d9a60cdaad219d00149d5debc1c0db[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Jan 16 17:21:43 2018 -0600
+
+    Fix local environment pointing to GCP & update documentation
+    
+    Now that we're on Guice, also inject project ID into Google implementation classes instead of using static util method
+    
+    Store keys & secrets in a LoadingCache since they were being read a ton of times on startup
+    
+    Tested locally pointing to cloud=GOOGLE, and pointing to LOCAL verified we don't initialize any of the Google impls.
+
+[33mcommit 71c7be6995500422f83a4573c504d56784b4388f[m[33m ([m[1;31morigin/offline_auth[m[33m)[m
+Merge: 48e8753 772c538
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 14:13:27 2018 -0600
+
+    Merge branch 'master' into offline_auth
+
+[33mcommit 772c5383a1103f5420315439c3dd36fc858be00e[m
+Merge: cb4346b 54b4077
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 14:12:31 2018 -0600
+
+    Merge pull request #34 from google/sihamh
+    
+    hook up XSRF protection in client app
+
+[33mcommit 48e87530a62039bd24c150fe454adde67acc6e6d[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 13:56:49 2018 -0600
+
+    Add serviceMode to getOfflineAuthDataGenerator for serviceProviders.
+
+[33mcommit 617a73a838739a1885c598297f8feff4cd05fbbd[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 12:53:48 2018 -0600
+
+    Limit oauth scope requested for google APIs based on dataType and
+    serviceMode
+
+[33mcommit 54b4077515eb53b8a8d4c071e8393f9e9138bf5f[m[33m ([m[1;31morigin/sihamh[m[33m)[m
+Merge: 10fd81e cb4346b
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 11:05:57 2018 -0600
+
+    Merge branch 'master' into sihamh
+
+[33mcommit 10fd81e97f415aaac481fe9fb4a137053f07bfa2[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 11:04:29 2018 -0600
+
+    Remove unused test constructor from StartCopyHandler
+
+[33mcommit 9cd5daa5e040c4cdc569aea8db7a7deb60b918f7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 11:00:35 2018 -0600
+
+    Limit oauth scope for flickr import/export.
+
+[33mcommit cb4346b3215b857cab73f0778ba3e593fd71e69b[m
+Merge: ed7892a 3876d8f
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 09:48:39 2018 -0600
+
+    Merge pull request #47 from google/auth_data
+    
+    Add overloaded function for getOnlineAuthData that specifies ServiceMode
+
+[33mcommit 3876d8f239f6f32b0782bda4f19f204a4ab02707[m
+Merge: c0c9fe6 ed7892a
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 16 09:46:25 2018 -0600
+
+    Merge branch 'master' into auth_data
+
+[33mcommit c0c9fe6361f316772f6f8b3a7087aa4ffc54f4df[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 16 09:45:38 2018 -0600
+
+    Mark getOnlineAuthDataGenerator(dataType) as deprecated in favor of
+    getOnlineAuthDataGenerator(dataType, serviceMode)
+
+[33mcommit ed7892a6c7cd38e496251e81f7e4d8c2cef35348[m
+Merge: 4e24df9 691f30d
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 16 09:50:51 2018 -0500
+
+    Merge pull request #50 from google/metrics
+    
+    Add Stackdriver instructions to the GKE setup script
+
+[33mcommit 691f30dffd417afa96a3c9e815925d5440714c14[m[33m ([m[1;31morigin/metrics[m[33m)[m
+Merge: 8975513 4e24df9
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 16 09:50:27 2018 -0500
+
+    Merge branch 'master' into metrics
+
+[33mcommit 4e24df90ae3432deda5635bede54ce91bbdcfa7b[m
+Merge: 7a009c0 44aabbe
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 16 09:50:08 2018 -0500
+
+    Merge pull request #48 from google/ng-fixes
+    
+    A couple fixes to get 'ng test' working for #22
+
+[33mcommit 8975513a68c68956952071dd7bc0f5edb30981fc[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Sun Jan 14 14:46:03 2018 -0600
+
+    Add Stackdriver instructions to the GKE setup script for #49
+    
+    This does not appear to be scriptable unfortunately
+
+[33mcommit 44aabbe686464fb2a59b2d41243b82c15faa416b[m[33m ([m[1;31morigin/ng-fixes[m[33m)[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 12 16:54:24 2018 -0600
+
+    Fix router error in Angular tests
+
+[33mcommit 96339c68edb42fa4c3f62ff6ce382d4ebe2bca6d[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 12 16:26:43 2018 -0600
+
+    Fix simplelogin
+
+[33mcommit 83576de5583604386475169602fb580a2ac9eb7a[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 12 15:59:49 2018 -0600
+
+    Add overloaded function for getOnlineAuthData that specifies ServiceMode
+
+[33mcommit 7a009c0621621bf29fc0f1ac7936411508e8947f[m
+Merge: 6f39b79 3bdbd4a
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 12 14:50:47 2018 -0600
+
+    Merge pull request #46 from google/auth_data
+    
+    Add ServiceMode enum for passing around instead of boolean isExport.
+
+[33mcommit 3bdbd4aa7e26cb1479318e130d6dd2c6bbbba64e[m
+Merge: 4b97e67 6f39b79
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 12 13:04:31 2018 -0600
+
+    Merge branch 'master' into auth_data
+
+[33mcommit 4b97e67de76798e5de2c862968d8b49c854a7f30[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 12 13:03:19 2018 -0600
+
+    Add default case and update comment for serviceMode
+
+[33mcommit 6f39b79a4ccbac9c81a769acd40ede61f043f87b[m
+Merge: 0f9ceb8 ace6ed0
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Jan 12 13:55:44 2018 -0500
+
+    Merge pull request #45 from google/client-updates
+    
+    README updates and rename everything to data-portability
+
+[33mcommit 2a8ca7c980c4919004f5bf20ec4e67537e166819[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 12 11:59:54 2018 -0600
+
+    Add JWT key and secret to be uploaded via the gcp script
+
+[33mcommit ace6ed09e51014f4135fb2a318a48aa388ed2d33[m[33m ([m[1;31morigin/client-updates[m[33m)[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 12 11:56:50 2018 -0600
+
+    fix
+
+[33mcommit 907f33f948801b5d4a1918c2db8aa27a391bead5[m
+Merge: 4490fcd 0f9ceb8
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Fri Jan 12 12:52:53 2018 -0500
+
+    Merge branch 'master' into client-updates
+
+[33mcommit bff1c52d4818180230e34ad445b0e4b6d276834a[m
+Merge: dd6073d 0f9ceb8
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Fri Jan 12 11:50:44 2018 -0600
+
+    Merge branch 'master' into sihamh
+
+[33mcommit dd6073d874ea0007c50afb62f0295acd2341d196[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 12 11:49:37 2018 -0600
+
+    Move parsing of xsrf token header to separate function to comment.
+
+[33mcommit 45a46d1f477bc57969d93717240d60db0ad77f70[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 12 11:44:59 2018 -0600
+
+    Move validateJobId to PortabilityAPI Utils.
+
+[33mcommit 4490fcd790d67b2c0335589603c71a603aaeec32[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Jan 12 11:39:44 2018 -0600
+
+    Rename everything to reflect new data-portability name, even though that may change, but stop using old internal project name.
+    
+    Also minor update to README to reflect angular environments. Need to use --environment local or else we default to dev, which doesn't exist.
+
+[33mcommit 2d0287e2469b52672d9a30ba5f9f0036aab7a629[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 12 10:26:57 2018 -0600
+
+    Add ServiceMode enum for passing around instead of boolean isExport.
+    
+    This is in prep for limiting Oauth scopes
+
+[33mcommit 0f9ceb8a4f7499c3570c9b45ccd9cafb61dba0b9[m
+Merge: c12f635 e33b41c
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 11 22:40:57 2018 -0500
+
+    Merge pull request #44 from google/travis-slack-notifications
+    
+    Customize Travis Slack notifications
+
+[33mcommit e33b41cae965484064fe6c16cc7b6e0202de03b7[m[33m ([m[1;31morigin/travis-slack-notifications[m[33m)[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 11 18:12:24 2018 -0500
+
+    Customize Travis Slack notifications
+    
+    to be less spammy for #22
+
+[33mcommit b867ed23386d0aacbad3bab170a98b667e68b320[m
+Merge: 6742df9 c12f635
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 11 10:22:50 2018 -0600
+
+    Merge branch 'master' of github.com:google/data-portability into sihamh
+
+[33mcommit c12f6355a329d6b48fcbee6f50017a1199ec6baa[m
+Merge: 4d3e570 a0bb73a
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 11 10:21:09 2018 -0600
+
+    Merge pull request #40 from google/logging
+    
+    Switch PortabilityCopier to use Logger class instead of System.out
+
+[33mcommit a0bb73a8ade2883a23fb1fb4c693fd754acf8555[m
+Merge: aec7fef 4d3e570
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Thu Jan 11 10:14:59 2018 -0600
+
+    Merge branch 'master' into logging
+
+[33mcommit 4d3e5705758bd76a511ce603a4397d7bbf08232a[m
+Merge: f9f5ef1 74c998b
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Thu Jan 11 11:03:18 2018 -0500
+
+    Merge pull request #39 from google/travis-slack-2
+    
+    Make Travis notify Slack for #22
+
+[33mcommit aec7fef6f4867949dba83946cf212d89501712fc[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Jan 11 09:14:24 2018 -0600
+
+    Switch PortabilityCopier to use Logger class instead of System.out
+
+[33mcommit 74c998b815bfea8666782149360518a2a4723464[m[33m ([m[1;31morigin/travis-slack-2[m[33m)[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Jan 10 16:38:49 2018 -0500
+
+    encrypt regenerated token since I leaked the last one
+
+[33mcommit 9994cd75bda525e239aa6378fdb533d7902bf408[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Jan 10 16:32:22 2018 -0500
+
+    Make Travis notify Slack
+
+[33mcommit 6742df94fbb5f2bf668fac9c5b3cbd4970ae1759[m
+Merge: 9854253 f9f5ef1
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 10 15:00:01 2018 -0600
+
+    Merge branch 'master' into sihamh
+
+[33mcommit 9854253703fd6814ccc179d75343fd6e43d32935[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 10 14:58:28 2018 -0600
+
+    Add test for StartCopyHandler's verification of XSRF cookie.
+
+[33mcommit f9f5ef17838546ad13877c94ebbe2656d9b85dc4[m
+Merge: 0769409 4b82048
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 10 15:42:20 2018 -0500
+
+    Merge pull request #36 from google/travis-yml
+    
+    Create .travis.yml
+
+[33mcommit 4b82048021eeb3d3ece113e998b6e7e3d60aa6f4[m
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Wed Jan 10 15:37:26 2018 -0500
+
+    Create .travis.yml
+    
+    for #22.
+    
+    Travis should automatically detect that we use Maven based on the presence of pom.xml.
+
+[33mcommit 39c4df5d73a97a406484db152ea917ffa1264385[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 10 13:27:12 2018 -0600
+
+    Add expiration on JWT Tokens upon creation. Also verify the data in the
+    token matches the expected data in the cookie.
+
+[33mcommit af2d63a7780e298809b3484eecd5a6c954f63b1f[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 10 11:35:16 2018 -0600
+
+    Update comment around double quote handling when parsing xsrf header
+
+[33mcommit ade771a1eca8416d67b866da326a008e5913d01c[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 10 10:17:55 2018 -0600
+
+    Guicify TokenManager
+
+[33mcommit d343c7b0f3a7fde5703cd6cfe1fd715c004fbb12[m
+Merge: 76d82b3 0769409
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Wed Jan 10 09:24:13 2018 -0600
+
+    Merge branch 'master' into sihamh
+
+[33mcommit 76d82b302825f5935b56b20784aadcd57e8f7f03[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 10 09:20:13 2018 -0600
+
+    Explicitly add expected xsrf cookie and header keys to angular
+    configuration.
+
+[33mcommit 0769409e60636d7327b68de1629449050eaaf94c[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Wed Jan 10 09:14:04 2018 -0600
+
+    Switch to using Guice (#32)
+    
+    * Switch to using Guice, closes #1
+
+[33mcommit b3c221295cc2d95247d5675b90a0bf3a2d273e44[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Tue Jan 9 17:44:52 2018 -0600
+
+    Fix bugs when encryption flow is enabled in the API (#33)
+    
+    * Add logging and todo while WorkerMain is being developed
+    
+    * add logging to flag settings on startup
+    
+    * Fix update job logic for encrypted flow and add test
+    
+    * fix job dao errors and update job polling service test
+    
+    * bug fix to update the job with the correct settings
+    
+    * bugfix - add session key to job on creation
+    
+    * Use correct cookie API
+    
+    * Create and use a common method for determining export vs. import stages in the flow.
+    
+    * Add precondition to the correct branch of the flow.
+    
+    * Check for empty cookie string value
+    
+    * ignore generated yaml files
+    
+    * Remove unused import
+    
+    * Add header
+    
+    * Annotate testing only modifier
+    
+    * delete generated file
+
+[33mcommit 71e1dec08e1ea2823c9e95386f87b46d3bbf1355[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 9 17:29:53 2018 -0600
+
+    Hook up JWTTokenManager to generate XSRF cookies based on JobId.
+    This isn't ready as we use a fake secret and is purely for testing
+    purposes.
+
+[33mcommit 61c11619a4e2f9278ad48cc0c0b6fbe8638ac114[m
+Merge: ab5c10d 99a7566
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 9 14:45:03 2018 -0500
+
+    Merge pull request #30 from google/issue-28
+    
+    Use a different debug port for different binaries so they don't conflict
+
+[33mcommit 99a7566348809f0771c5b657b29f740a904099f6[m[33m ([m[1;31morigin/issue-28[m[33m)[m
+Merge: c302d49 ab5c10d
+Author: Rachel Tannenbaum <rmtannenbaum@gmail.com>
+Date:   Tue Jan 9 14:44:54 2018 -0500
+
+    Merge branch 'master' into issue-28
+
+[33mcommit 0d6b12167bb7e93b516d045a33b84a628d88d2f2[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 9 13:15:51 2018 -0600
+
+    Add XSRF token and header name to JsonKeys
+
+[33mcommit efdc104b5eb00b8fbb089113fb3c1720975bbbc7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 9 13:12:02 2018 -0600
+
+    Hook up automagical angular xsrf header additions to client application
+
+[33mcommit ab5c10d28cffaa998de046347caa29ebfec8a4b7[m
+Merge: d1ec93e 276caf3
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Tue Jan 9 11:26:27 2018 -0600
+
+    Merge pull request #31 from google/sihamh
+    
+    Add path manually to COOKIE_Attributes.
+
+[33mcommit 276caf32d70288da16426ca8db5116710b3f74ff[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 9 11:17:39 2018 -0600
+
+    Add path manually to COOKIE_Attributes. The way HttpCookie.toString()
+    formats the path is incorrect and doesn't get parsed by the browser.
+
+[33mcommit c302d49feaa194659242cf37ba109ed8dabeaa5f[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Jan 8 16:02:37 2018 -0600
+
+    Use a different debug port for different binaries so they don't conflict
+
+[33mcommit d1ec93ef318ce5871b82bc307a562216b0ef3ee0[m
+Merge: 28fdbc3 83c4d81
+Author: Siham Hussein <seehamrun@users.noreply.github.com>
+Date:   Mon Jan 8 09:16:18 2018 -0600
+
+    Merge pull request #16 from google/sihamh-angular
+    
+    Switch to HttpClient from angular/common/http
+
+[33mcommit 83c4d818e4616dd007dfd102069691bf8b3f65b6[m[33m ([m[1;31morigin/sihamh-angular[m[33m)[m
+Merge: 18e4301 28fdbc3
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Fri Jan 5 16:05:26 2018 -0600
+
+    Merge branch 'master' into sihamh-angular
+
+[33mcommit 28fdbc3532c6ffcca4ff1cd089bf29a4d55c947d[m
+Merge: 8955cd3 6994606
+Author: Anne Wang <35151385+aawang500@users.noreply.github.com>
+Date:   Fri Jan 5 15:53:35 2018 -0600
+
+    Merge pull request #18 from google/aawang500-patch-1
+    
+    Update Overview.md
+
+[33mcommit 18e430186d9c5372b87f605b9a23de1a120d1ea0[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 5 15:46:37 2018 -0600
+
+    Add typechecking to httpclient.get requests where needed.
+
+[33mcommit 699460614904de43eab7cba6127561771a603302[m
+Author: Anne Wang <35151385+aawang500@users.noreply.github.com>
+Date:   Fri Jan 5 15:41:16 2018 -0600
+
+    Update Overview.md
+
+[33mcommit 8955cd36133f3dd7021db6051e937117b3a24320[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Fri Jan 5 15:01:10 2018 -0600
+
+    Switch logging framework to slf4j (#17)
+    
+    * Switch to slf4j and log4j, this should also allow us to hook in stackdriver, and other cloud logging systems fairly easily latter.
+
+[33mcommit 03029dbbcb9de967905d547db1265a35419bb765[m
+Merge: eb3624e ec7c8d9
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 5 12:20:22 2018 -0600
+
+    Merge branch 'sihamh-angular' of github.com:google/data-portability into sihamh-angular
+
+[33mcommit eb3624e0e78a54a86457e82f62324927d0aaf3aa[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 5 12:09:04 2018 -0600
+
+    Switch to using HttpClient from angular/common/http. This should provide us with client side support for xsrf and is also preferred over Http from angular/http. See https://angular.io/guide/http
+
+[33mcommit ec7c8d9b7e7a053a99019bee55a6f9e6064e8e2a[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Jan 5 12:09:04 2018 -0600
+
+    Switch to using HttpClient from angular/common/http. This should provide us with client side support for xsrf and is also preferred over Http from angular/http. See https://angular.io/guide/http
+
+[33mcommit ac94d981374072f86b7b22bee655ad7873b4de1d[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Fri Jan 5 10:57:26 2018 -0600
+
+    Update angular cli setup documentation with specific directory and module installation step which seems to be required for new setup (#14)
+
+[33mcommit 842ee30d630f0c1e4d2a67b53bb20c96c9215014[m
+Merge: c5fbfae 8c9664e
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Fri Jan 5 10:53:56 2018 -0600
+
+    Merge pull request #15 from google/olsona-patch-1
+    
+    Update CODE_OF_CONDUCT.md
+
+[33mcommit 8c9664e68469997d3b4822b58013fe9d9906f347[m
+Author: olsona <olsona@users.noreply.github.com>
+Date:   Fri Jan 5 10:46:44 2018 -0600
+
+    Update CODE_OF_CONDUCT.md
+
+[33mcommit c5fbfaed915f96e7b91d2f8bec853b65a6751413[m
+Merge: 51b1546 dc9d863
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Fri Jan 5 09:47:22 2018 -0600
+
+    Merge pull request #13 from google/add-tests
+    
+    Add tests for JobUtils
+
+[33mcommit dc9d863e2e3edaa827092aafa5d05fa02d5d2a7c[m
+Merge: 5b01693 51b1546
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Fri Jan 5 09:45:07 2018 -0600
+
+    Merge branch 'master' into add-tests
+
+[33mcommit 5b016935d4fdabbcb765628f5dad30f8c6b4e967[m
+Merge: 6a5e526 8fdb3f4
+Author: Brian Willard <willard@google.com>
+Date:   Fri Jan 5 09:34:45 2018 -0600
+
+    Add tests for JobUtils to address issue #5.
+
+[33mcommit 6a5e5268c6f8573929e629bbc86bb9079f718d6b[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Jan 5 09:32:34 2018 -0600
+
+    Add tests for JobUtils to address issue #5
+
+[33mcommit 8fdb3f4e671fa431a44dd20d1887e92c28fd93a6[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Jan 5 09:32:34 2018 -0600
+
+    Add tests for JobUtils to address issue #5
+
+[33mcommit 51b15463f88977938d333556c62c15bcc6eed6cd[m
+Author: Chuy <jchavezbaz@gmail.com>
+Date:   Fri Jan 5 09:04:27 2018 -0600
+
+    Add link to discussion group (#12)
+    
+    I'm thinking we want to use the portability-discuss group for open discussion and reserve maintainers for internal team coordination? Thoughts?
+
+[33mcommit 8770b35140c03a65d8d4a5a4a000356a6fd18633[m
+Author: Brian Willard <bwillard@gmail.com>
+Date:   Fri Jan 5 08:20:13 2018 -0600
+
+    Add a test for CrypterImplTest (#11)
+    
+    * Add a test for CrypterImplTest
+
+[33mcommit 4e95e9774f8a234c082349353ffcb44510c14181[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Jan 5 08:17:02 2018 -0600
+
+    Add special charecters to the test as per chuy's request
+
+[33mcommit 98f1913f76354f74411c3a3ceb7f395b33b04fd3[m
+Author: Brian Willard <willard@google.com>
+Date:   Thu Jan 4 17:01:08 2018 -0600
+
+    Add a test for CrypterImplTest
+
+[33mcommit 9c47b268628bfd805ffb279985bc914be915978b[m
+Author: holachuy <jchavezbaz@gmail.com>
+Date:   Thu Jan 4 15:45:25 2018 -0600
+
+    Update README with new master repository location
+
+[33mcommit 201bd7814b9e22d9840d8f36e1fb3ec751f68f17[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 3 14:27:13 2018 -0600
+
+    Update index.html files to reflect webapp changes (this has already been
+    deployed to our gcp buckets).
+    
+    Change-Id: I09c4e0869ca3f3983d3496c60dbae55c757acee2
+
+[33mcommit 97e3a060ec7d5f7c23f63b0aebafd5cb3d7ff003[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Jan 3 14:06:05 2018 -0600
+
+    Make startCopy a post request as it is state changing
+    
+    Also delete some logging from the backend service module to avoid
+    cluttering logs and leaking data.
+    
+    Change-Id: I6d96903c4abcd512a94af1bdee0c061d1f2a1d74
+
+[33mcommit e21c67622f2dab49b7483be878c22ffee7bf6833[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 2 15:40:52 2018 -0600
+
+    Fix Java 9 compilation error for portability-core
+    java.lang.NoClassDefFoundError: javax/annotation/Generated: javax.annotation.Generated
+    
+    Tested=I was able to reproduce this when compiling on my mac. Adding the dep explicitly fixed it.
+    
+    Change-Id: I411e2a9bf218997f13a0fbf44e59d94718095b28
+
+[33mcommit 6f96b801690121fe08e4e9a10eb2b5dba6147797[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 2 13:14:11 2018 -0600
+
+    re-add guava dependency - the newer version is needed for java
+    preconditions
+    
+    Change-Id: I7e0c0f997e13a53abbff241d7cdebd676c1e7e68
+
+[33mcommit a152869d48d62bf9502ad1762d5130cd8217cf34[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Jan 2 11:20:11 2018 -0600
+
+    Explicitly include apache httpclient library to portability-core to
+    prevent an older version from being pulled in with dependencies on
+    google-http-client.
+    
+    This prevents a NoSuchMethod Exception that occurs for older versions of
+    the httpclient.
+    
+    Change-Id: I330640a3146753a30664799e5666d127d6509b7c
+
+[33mcommit 43919bd63234b18d262450d943605c07db173628[m
+Merge: 1c01ce5 429b728
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Dec 22 19:06:09 2017 +0000
+
+    Merge "Use SimpleFrameworks cookie parser instead of HttpCookie.parse()"
+
+[33mcommit 429b728c4885ad8540c218687d3d87604cf774a9[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Dec 22 11:49:15 2017 -0600
+
+    Use SimpleFrameworks cookie parser instead of HttpCookie.parse()
+    
+    HttpCookie.parse() assumes either a "Set-Cookie" or "Set-Cookie2" header
+    which is used for setting cookies from the api to the browser. Cookies
+    from the browser are sent in the "Cookie" header which has a different
+    specification than the "Set-Cookie*" headers.
+    
+    Also added unit test for this method.
+    
+    Change-Id: I3b90664fc6b9e5c789519b66b496526e6ae59445
+
+[33mcommit 1c01ce5b288c7e5d87f2472207374ddf7cca518f[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 22 12:50:16 2017 -0600
+
+    Fix broken link
+    
+    Change-Id: I722a3a8a9b10e6f97094b6849f614a99f1f81831
+
+[33mcommit c7485b47f962bcd1e7cf7d1e057a767977e1d8fa[m
+Merge: 8b4d0ae 95f9663
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 22 18:44:30 2017 +0000
+
+    Merge "Update references to new repo name"
+
+[33mcommit 95f9663deb1a457e52c145061b8b721995ba756f[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 22 12:39:41 2017 -0600
+
+    Update references to new repo name
+    
+    Change-Id: I851a9bf95d681ae8d7fd67e6564c3565158ef952
+
+[33mcommit 8b4d0aecc0220f472098e569d2dda675a3d24a40[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 22 12:05:40 2017 -0600
+
+    Update GCP documentation
+    
+    Change-Id: I47cbf54db830e35be4d022514c2469e54a38501f
+
+[33mcommit efe79289a088ebee9a741a9e4ed21e4dfd0ee2b7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Dec 21 10:32:13 2017 -0600
+
+    Update developer docs to use build script instead of maven commands.
+    Also make core CLI buildable with the build script.
+    Change-Id: Ic9f203a940aa2996571891d88201d5d997c15295
+
+[33mcommit 5aa6925bf3d4cfbea1df5c88bf61a33fe691d52c[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Dec 21 11:01:45 2017 -0600
+
+    Move build script, rename, and add debug flags.
+    
+    Change-Id: Ib5e5430507df270a1bddfb381acaa540180be23a
+
+[33mcommit dd22f491233a7ad9ed8fe0a4eb836e88b47fea98[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Dec 18 16:13:02 2017 -0600
+
+    Integration encryption and the flow between the api and worker jobs managed via storage.
+    
+    Change-Id: I83b68f2761dd1a9606df35dc92a010691b5bc905
+
+[33mcommit e9cd1d8b9a180b88f639a5462e84267dbfa934f9[m
+Merge: cd1628c ef69544
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Dec 21 16:21:04 2017 +0000
+
+    Merge "Split build and upload image scripts per Siham's suggestion in an earlier CL"
+
+[33mcommit ef69544934974495ee61b9eeb1d2957ca86250cd[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Dec 20 16:14:31 2017 -0600
+
+    Split build and upload image scripts per Siham's suggestion in an earlier CL
+    
+    Also a few unrelated minor GCP fixes/cleanups after creating the latest project
+    
+    Change-Id: Ibec5fc6ec91922cdcc0c716a99c136319bd1b292
+
+[33mcommit cd1628c99d75856840d7f86d0ae880ff07646510[m
+Author: Brian Willard <willard@google.com>
+Date:   Wed Dec 20 16:34:49 2017 -0600
+
+    Add a current state section as well as a contact email address to the readme file
+    
+    Change-Id: If51c2fcd3e49b5d569eb94af5a56a7981b97b399
+
+[33mcommit 9fb300a7f0b8d99675287b3420b4ee1bad67b787[m
+Merge: f820273 94e4102
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Wed Dec 20 21:23:45 2017 +0000
+
+    Merge "Fix Datastore link"
+
+[33mcommit 94e41027dbe31c6d1d69eb4f22ab334f95919c94[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Dec 20 15:22:17 2017 -0600
+
+    Fix Datastore link
+    
+    Change-Id: I4920816f7678bfb24dc5045cd75e10693b5a1ff3
+
+[33mcommit f8202736ad99ec209446754e5018da5d0cde9d25[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Wed Dec 20 11:16:09 2017 -0600
+
+    Add missing header files
+    
+    Change-Id: Id9f024dd5ed1ef6482e04371b1c773a47e181287
+
+[33mcommit e98167d51885c92062404a48a1a8466ad9d5c8bb[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Dec 19 13:50:01 2017 -0600
+
+    Update readme documentation with overview, developer doc, and code of conduct.
+    
+    Change-Id: Ifd1b8264cb2f3403971a6bf4a3200ca0ed41cd53
+
+[33mcommit 98f4f7bfa861a4dc4e8ac52daf4ad71b9920bf2b[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Dec 19 10:05:38 2017 -0600
+
+    Remove deprecated portability-web
+    
+    portability-api is now in a good state that supports what we had before
+    with Spring.
+    portability-api is deployed on cloud in the project world-takeout-qa
+    (corresponding to http://gardenswithoutwalls.net. Once this is
+    submitted, I will deploy portability-api to the remaining
+    gcloud projects.
+    
+    Change-Id: I6700d725eea8e2d8bfd5fe9aac03a82b916e3855
+
+[33mcommit 3076d8690379c0fa1b679f1f293dabf61e407c68[m
+Author: Brian Willard <willard@google.com>
+Date:   Mon Dec 18 20:04:05 2017 -0600
+
+    Make loading of service provider be handled by reflection so only needed services are loaded
+    
+    Change-Id: Ic518ddf91f01d12d4933c311751a50811fd67abb
+
+[33mcommit 3584b0f71158eeddef05f3359e1c7a92e78dc8bf[m
+Author: Brian Willard <willard@google.com>
+Date:   Mon Dec 18 18:52:23 2017 -0600
+
+    Update the README.txt with first steps
+    
+    Change-Id: Ifde159014dfa33f0d3be82cf72e97019a3a997cf
+
+[33mcommit f2ff832600b8e265140f3b3b00980645414ff4b1[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Dec 18 14:43:58 2017 -0600
+
+    Remove secrets.csv
+    
+    Change-Id: I1f4ecd789b72a444f8030d01a162d210c1f50b56
+
+[33mcommit ec29aaaa1554fa8aa9bbd51b17f48e1b36b68659[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Dec 15 13:52:35 2017 -0600
+
+    Consolidate importSetupHandler and copySetupHandler into one class as
+    they do mostly the same thing.
+    
+    Change-Id: Ia9b4d8219e3b407a36579cdb025675d9e42423eb
+
+[33mcommit 0a6e374980549ec0e065dc4377619593290fded4[m
+Merge: 2b716d9 9804e61
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 15 17:57:27 2017 +0000
+
+    Merge "Update app-data bucket used in our binary based on fix in https://portability-review.googlesource.com/c/googleplex-portability/+/3880"
+
+[33mcommit 9804e61dfc9d1da179fc2d30ae02cd649581a61a[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Dec 14 13:47:54 2017 -0600
+
+    Update app-data bucket used in our binary based on fix in https://portability-review.googlesource.com/c/googleplex-portability/+/3880
+    
+    Refactor usage of project ID
+    
+    Change-Id: I058b12d012dee51003ec4cbe766bddb8e660f6f0
+
+[33mcommit 2b716d914e0964f6b1de674f958c27ab0576ae5b[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Dec 14 15:17:57 2017 -0600
+
+    update jackson desps in portability-core to the same version.
+    
+    Change-Id: I0e09061efa3311e2be39c408875869b23dc5476c
+
+[33mcommit 7e1dea9cc2bf6e1a87b1604d8f09dad5e2bb0727[m
+Merge: fecd3d0 de1b58a
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Dec 14 20:52:43 2017 +0000
+
+    Merge "Parse settings directly from yaml instead of command line"
+
+[33mcommit fecd3d0413b20205d2b58ee757343cd621492bfa[m
+Merge: bdfb57d d36f004
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Dec 14 19:40:31 2017 +0000
+
+    Merge "Add project_id as part of the gs bucket name. Bucket names are global across projects so we need this unique identifier in place."
+
+[33mcommit d36f004e88a5f9bebecc88ee6c669c537d811a40[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Dec 14 12:57:34 2017 -0600
+
+    Add project_id as part of the gs bucket name. Bucket names are global
+    across projects so we need this unique identifier in place.
+    
+    Change-Id: I1909d9cc361d147b8bee23fc52f8c362f7e432c2
+
+[33mcommit bdfb57df378279f7901d7775f89cb4b4945bdec3[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Dec 14 12:27:24 2017 -0600
+
+    Make sure gsutil is using the correct project-id when we can, but it doesn't always let us
+    
+    Change-Id: I3c0d646036dd5844e90aca4a95cde9202b4dad8e
+
+[33mcommit de1b58ad5477ac1186ce4bb21aa48b5833c616ac[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Dec 13 18:49:27 2017 -0600
+
+    Parse settings directly from yaml instead of command line
+    
+    Binaries will fail with unrecognized or missing required flags
+    
+    More maintainable this way and gets rid of manual flag checking
+    
+    Change-Id: Id934252771237e092c7ba7042e92594a360fc678
+
+[33mcommit 7730b3b61c294826abccc1e5728eb8e90d17a581[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 13 14:54:35 2017 -0600
+
+    Rename PortabilityServerUtils to PortabilityApiUtils to be consistent
+    with naming scheme in portability-api
+    
+    Change-Id: I417c309e1661e2b110303c3166eecc329a7cfbe2
+
+[33mcommit b35076488b3285bd491223ebc973f00b9d1c20a1[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 13 14:31:58 2017 -0600
+
+    Set SameSite attribute on cookies set from PortabilityAPI - this means
+    that our app will on receive cookies if it is a top level GET request or
+    the request is from within our app. See
+    https://www.owasp.org/index.php/SameSite for more information. This
+    isn't implemented across all browsers yet (according to:
+    https://caniuse.com/#search=samesite) but it's a good basic start for
+    CSRF prevention.
+    
+    Change-Id: Ie7c6d295f3db122a3eb3a3fcf1f86e40cf4da30b
+
+[33mcommit 7eb88624d5fdced492bd19704d725c82bab58a54[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 13 12:44:54 2017 -0600
+
+    Fix parsing of multiple flag libraries in portability-api and
+    portability-web main. This came up with the splitting of
+    PortabilityFlags into PortabilityServerFlags and PortabilityApiFlags.
+    The CommandLineParser throws an exception if there are any unrecognized options at the time
+    that it runs so we can't parse the same arguments twice - moved the
+    parsing into the main class by combining the options needed.
+    
+    Change-Id: Ia858e3c9a0bf234b7409d8fda9025242e9a472a1
+
+[33mcommit 4a1f949a3ca7288e29e177e450c289a427eab157[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Dec 13 13:07:34 2017 -0600
+
+    Temporary fix for flags in build script
+    
+    Better solution will be to parse settings from yaml directly since command line args are getting unmanageable
+    
+    Change-Id: I7507fcc97951782b028b56e734df1697424206d3
+
+[33mcommit 09da89a15e1a928f93326a097af6786efb70e470[m
+Author: Anna Olson <olsona@google.com>
+Date:   Tue Dec 12 16:17:31 2017 -0600
+
+    Expanding service and fixing content model.
+    
+    Change-Id: If49386a420c1e2d5469baabe1d1d4e153d64ccc4
+
+[33mcommit 235ec49883087435f077e8a7d8da614a1be16946[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Dec 12 14:30:21 2017 -0600
+
+    Minor cleanups for the worker, api, and documentation
+    
+    Change-Id: I8662fda275cb0d6d0ec1200e5948b20ee250fb24
+
+[33mcommit df742c0044fbca1acc9536eb8ce313201f476080[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Dec 11 15:30:13 2017 -0600
+
+    Move base url and base api url flags to PortabilityApiFlags since they are only used in the API.
+    
+    Created a tentative PortabililtyServerFlags so Spring can work until it is removed.
+    
+    Change-Id: Ie963ab17cfedf454778e66c81db7f124b2319f48
+
+[33mcommit c84b7cf1c34bd403a1689246dcce9fcaa343380e[m
+Merge: de1418c e53b1be
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Dec 12 16:26:19 2017 +0000
+
+    Merge "refactor backend service"
+
+[33mcommit de1418c4f4cbde068ff04e23b8e16b378676311f[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Dec 11 16:22:12 2017 -0600
+
+    Deprecate secrets.csv for non-local environments
+    
+    Change-Id: I6621f8af3b91a464fc0998b97ae9647967a633a6
+
+[33mcommit 595fc4bfbf45c928ff86e30e2a16a06807f496b7[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Dec 11 13:41:04 2017 -0600
+
+    Binary changes to use keys/secrets from GCS and decrypt secrets with KMS
+    
+    Change-Id: Ide025749cfe95fd9a77d05e71baa5366f8fabfc5
+
+[33mcommit 8eaed382bc5ac720779ca595b01dbe3d04b93c6a[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Dec 11 14:24:51 2017 -0600
+
+    copy JsonKeys and CryptoHelper from portability-web to portability-api
+    and remove dependencies to portability-web from portability-api.
+    This is to prepare for the deprecation of portability-web.
+    
+    Change-Id: If5f0fda1150b2d0163cac2d18f31a850bc2321ae
+
+[33mcommit e032c3298b44e8c70b0be8f56be4fcc5a0bbff02[m
+Merge: 1604992 2ef34f8
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Mon Dec 11 20:25:37 2017 +0000
+
+    Merge "Rename misnamed SelectDataTypeService to BackendService to indicate all backend calls are made through the service"
+
+[33mcommit 2ef34f8c063af15a88eb9f53fc49a572aba90078[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Dec 11 14:22:19 2017 -0600
+
+    Rename misnamed SelectDataTypeService to BackendService to indicate all backend calls are made through the service
+    
+    Change-Id: Ia4c98e41987c75189792cf20c307d2bdf06593e7
+
+[33mcommit e53b1be014ee151b390bf5c19fcf8736048eaaa4[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Dec 11 14:21:12 2017 -0600
+
+    refactor backend service
+    
+    Change-Id: I4e50ddc005a553702300812985b2e05ae144d894
+
+[33mcommit 160499287a51d94b2eb88d7c0274a8e7837976c9[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Dec 11 14:09:03 2017 -0600
+
+    Move JobUtils from org.dataportabilityproject.webapp to
+    org.dataportabilityproject.job.
+    
+    Change-Id: I6828c7df00d3bd85cf9f5a26e158d4bec67d2321
+
+[33mcommit 59e912f1919d9598867299ab808bfa17dae59dc9[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 8 16:38:31 2017 -0600
+
+    Encrypt secrets with Cloud KMS and store keys and encrypted secrets in GCS
+    
+    Binary changes are working, will submit in separate change.
+    
+    Change-Id: I0772ddbee0e5d64db092b5a601a5de7ad4fc007c
+
+[33mcommit 8174ff38ba7f105a26bef4cd520122751af2f82a[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Dec 11 11:37:53 2017 -0600
+
+    Clean up logging and add exception handling in some of the POST
+    handlers. This doesn't add any more logging than we were doing before.
+    
+    Change-Id: I20c60913a69a6262916f2b43e17624ce42e51440
+
+[33mcommit 630a939001ddd8673810b7a0dfa6a916bc714476[m
+Merge: d9abc26 e0a6d63
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Dec 8 20:25:01 2017 +0000
+
+    Merge "Allow local instance to connect to GCP services using credentials file"
+
+[33mcommit e0a6d63822354846e491b9545a67afbb75238c8c[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Dec 6 17:20:56 2017 -0600
+
+    Allow local instance to connect to GCP services using credentials file
+    
+    Deployed environments now store creds in Kubernetes Secrets (https://portability-review.googlesource.com/3420), which we can't do locally
+    
+    Allowing local instance to connect to GCP is useful for local debugging and also avoiding the need to make local implementations for each service.
+    
+    Change-Id: I98cf468046e6c04c6da1c7632553e1a233b017fa
+
+[33mcommit d9abc2617901b8b68ccd6927318c358ccf777a44[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Dec 8 14:11:41 2017 -0600
+
+    Change the way the scheme is generated for the OauthCallbackHandlers.
+    Previous change didn't work as the protocol is always going to be HTTP
+    since this is a web application.
+    Provide the scheme manually until I can figure out how to retrieve this
+    information from the given HTTPExchange.
+    
+    Change-Id: I87c638c8632d59f98becb5c4c0f6a74ffb59015a
+
+[33mcommit d6ca9fe18cf52ecf6fd2685632048e180507a747[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Dec 7 10:54:06 2017 -0600
+
+    Couple small fix to GCP setup script
+    
+    Billing needs to be enabled in order for some APIs to be enabled so move that step before
+    
+    Also fix typo in one command
+    
+    Change-Id: I3136b1042a432eded9019ba1c88f1c836bf7a21a
+
+[33mcommit 905c1b8635333f9b908a7e8f7f6ca3c4e76b52a7[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 6 14:53:59 2017 -0600
+
+    Include instructions on how to set kubectl config vars if they are
+    incorrect or if modifying an existing project
+    
+    Change-Id: Ie251cd767db2f55e3a7efeef19e49388f2b46742
+
+[33mcommit fcce0fc1258448c644d8f331f597055cb74df062[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 6 11:14:02 2017 -0600
+
+    readd PortabilityFlags import - not sure why intellij autoformatter marked it as
+    unused previously.
+    
+    Change-Id: I66af74a1098d20de417624f30d71cde5d1922a59
+
+[33mcommit bd8fc7a056dd40948d887d08c6fff5558ec1ae2c[m
+Merge: 92388bb 85da51e
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 6 16:36:16 2017 +0000
+
+    Merge "auto-format and remove unused imports from portability-api java classes."
+
+[33mcommit 85da51e37a9a64fc46dd2419a6ee152b03e260ea[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Dec 6 09:45:59 2017 -0600
+
+    auto-format and remove unused imports from portability-api java classes.
+    
+    Change-Id: I38d943d3999cfea8b6a616a7b933a5c835d21f9a
+
+[33mcommit 92388bb3f9fe9d9f7378d006a303c6f6e5e3c7cd[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Dec 4 16:42:59 2017 -0600
+
+    Create service account creds and expose as a Kubernetes Secret
+    
+    This exposes them as an environment variable inside the container, based on instructions at https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform
+    
+    Also expose Google project ID as an environment variable in our container.
+    
+    Also update deploy script to setup DataStore. We were previously accidentally using DataStore from a different project.
+    
+    Part 2 of deprecating secrets.csv as creds file name & project ID used to be part of it.
+    
+    Change-Id: Id748bb079b41ca7c0847f9dfc818f111e182dc7e
+
+[33mcommit 1c6d5319047605d93cc6b46d6029dd5a5f891e1a[m
+Merge: f80d417 e10ee1e
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Dec 4 22:21:15 2017 +0000
+
+    Merge "Move baseUrl and baseApiUrl from secrets.csv to settings.yaml"
+
+[33mcommit e10ee1e9f964dfd4ecb3e1efc3a14fc65229651b[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Dec 4 13:38:18 2017 -0600
+
+    Move baseUrl and baseApiUrl from secrets.csv to settings.yaml
+    
+    Part 1 of deprecating secrets.csv
+    
+    Change-Id: I83943313dd6146afad29830f6c0ea8b7c3716897
+
+[33mcommit f80d4173d3cdb3ef37afd1e3d0aaaf71563f6a7e[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Thu Nov 30 10:57:51 2017 -0600
+
+    Implement ViewHandler to serve the static index.html page.
+    
+    Change-Id: I74723da6cb79773d1d32848c0a25814a145f7b5d
+
+[33mcommit 16c46698d11cb672142c27f6fe243358e48ea002[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Nov 29 16:25:25 2017 -0600
+
+    Document why we are using gcloud instead of HTTP API
+    
+    Change-Id: I3c168ad1ed67ac86a445da9f1e13b0b7a5cfc974
+
+[33mcommit fe10cabc3f56bcfb94ac30556aa921a1ed99d151[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Nov 29 15:14:40 2017 -0600
+
+    Create separate index.html versions for each environment.
+    
+    This reflects the different versions that are already deployed to each environment but were swapping out in resources/static/ before each deploy.
+    
+    Make build script copy correct index.html into our jar like what we do for secrets.csv
+    
+    Make static deploy script update bundle versions in index.html
+    
+    Tested out on the new prod env which is also included here
+    
+    Change-Id: I94cd1486b193f023283a9d1d65c15c01a9ff0dc4
+
+[33mcommit 9c7d7151b87334bf80761e627c037df2e0c38ab8[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Nov 29 13:26:35 2017 -0600
+
+    add dependency reduced pom to git ignore.
+    These get generated from the maven shade plugin for creating the jar file.
+    
+    Change-Id: I25ee0a11fa791ab0776cd4400811432a58b2002a
+
+[33mcommit 5e39f98ccae8f34625921423adae0660cee0d438[m
+Merge: 7e268b3 24eb27a
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Nov 29 18:27:57 2017 +0000
+
+    Merge "Modify build and deploy script to also build portability-api and portability-worker. This also prompt the user if they would like to run the jar before deploying to docker."
+
+[33mcommit 24eb27a1bcd05130ed62944480d92297d21e4bec[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 27 11:13:53 2017 -0600
+
+    Modify build and deploy script to also build portability-api and portability-worker.
+    This also prompt the user if they would like to run the jar before
+    deploying to docker.
+    
+    Example usage:
+    $ ./build_portability_server.sh local
+    $ java -jar portability-server/target/portability-server-1.0-SNAPSHOT.jar
+    -cloud LOCAL -environment LOCAL
+    
+    Change-Id: I1035bd8b677ad6aa4375307fd9595df7c01fbf65
+
+[33mcommit 7e268b3121be4a106e447c6bd92b45cd33471bed[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Nov 29 09:44:39 2017 -0600
+
+    Add build plugin to create a runnable jar for portability-worker
+    
+    Change-Id: I12936e5cbeca8b7d0d7f25cbc3069f2dd44a70cd
+
+[33mcommit e672256684fbd4da8af107779ffa3a255a95f8de[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 28 14:42:08 2017 -0600
+
+    Add apache open source license to java source files under portability-api.
+    
+    Change-Id: I245a285dbb221a134495935ebb92d0ad3a32f712
+
+[33mcommit 4b6ad85669bf34c9367faae98f9d96f5118e7ff3[m
+Merge: 8e11b09 36765d2
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 28 20:34:02 2017 +0000
+
+    Merge "rename portability-server module to portability-api"
+
+[33mcommit 36765d2595e3f02bb3e7182e6a54a2f13fb1eacf[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 28 11:07:15 2017 -0600
+
+    rename portability-server module to portability-api
+    
+    Change-Id: I639d8db38b95d729286c78547fbbea56e5e916da
+
+[33mcommit 8e11b094384b2d9db9b0640f3dbc475f7e13466e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Nov 28 12:56:55 2017 -0600
+
+    Move GCE enforcer step into Google internal script
+    
+    Change-Id: Ib829a65211b955ca225dc952cf524f20f4c328dc
+
+[33mcommit e2d2501822751e635460569db22e6bbcd71f71f8[m
+Merge: bc5191a 1734884
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Nov 28 15:42:48 2017 +0000
+
+    Merge "Set IAM policy from file"
+
+[33mcommit 173488437ee40a01ff24685983f9a62643609762[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 27 16:17:22 2017 -0600
+
+    Set IAM policy from file
+    
+    Change-Id: Ibd2b52f6b4f1bfd72a10f139ad960e8a05a5d7c1
+
+[33mcommit bc5191a93f2230bc1b4ede8e16715ab8ee1a87b6[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 27 16:15:30 2017 -0600
+
+    Modify portability-server pom to allow creation of runnable jar file.
+    
+    Example usage:
+    $ mvn clean install package -pl portability-server
+    $ java -jar portability-server/target/portability-server-1.0-SNAPSHOT.jar -cloud LOCAL -environment LOCAL
+    
+    Note this requires you to still copy over the secrets file into
+    portability-server/src/resources/ in order to compile them into the jar.
+    
+    Change-Id: I751fccdbe692195a0a823aec7a4177b64167e47f
+
+[33mcommit 14e424d4d9f8a11aeaf199fdaa7463a7567b8de2[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 27 13:17:08 2017 -0600
+
+    Script our firewall setup on GCP. Also fix health check on instance group.
+    
+    Change-Id: I6d36835d01791ce2354654bd7a5fefc92a9bb075
+
+[33mcommit 9139b19d2fc6b21aff4cb6f48d1282fb3cf54a08[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 27 11:24:40 2017 -0600
+
+    Set up test and qa environments for ng
+    
+    Change-Id: I4c6e8e85d597bff8e086850f9c0bd5f9e1daf211
+
+[33mcommit 87efe33703ca06c3ecbc9897c3cd56cfbd9bec30[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Nov 22 13:39:49 2017 -0600
+
+    Document our deployment with a README and reorganize files
+    
+    References in the scripts need to be updated but will wait to do that once the dir structure looks good.
+    
+    Change-Id: I4fded31a7008fa059bd86f82f9972116f93145fb
+
+[33mcommit 4e773e51754a111ee89872391b880b0076b8a5f9[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Nov 22 10:02:40 2017 -0600
+
+    Setup a Kubernetes deployment in our cloud setup script
+    
+    Change-Id: Ifc46ab7d24b02419345f444627a5a63b2ba89c87
+
+[33mcommit 7398ef884b2d2d8e5ce03e04e95b00c80a4b9aa2[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Nov 21 14:31:43 2017 -0600
+
+    New script to build & deploy static content to GCS bucket
+    
+    Rename container to portability-api so worker may be separated out into its own later
+    
+    Update build script to deploy container to GCP
+    
+    Add qa/settings.yaml
+    
+    Change-Id: I54723a71d8630f91f6409bc0c2cd5212560bfbc0
+
+[33mcommit 66f05d5c18c65fd453b48990f090135d65e044b2[m
+Merge: 494795f f97a4a7
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Nov 21 21:05:30 2017 +0000
+
+    Merge "Add encrypted flow flag and being wrapping logic for new flow in the app."
+
+[33mcommit f97a4a79509641a1176f2771dd6898040a091736[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Nov 21 13:48:00 2017 -0600
+
+    Add encrypted flow flag and being wrapping logic for new flow in the app.
+    
+    Change-Id: I921a3d8aca095c8987c7fc9eeea7525fe83900e4
+
+[33mcommit 494795f12eb8b5c0adad6bffd24f854af102ef44[m
+Merge: 423ffe5 b4bf191
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Nov 21 19:49:55 2017 +0000
+
+    Merge "Ignore secrets file in git"
+
+[33mcommit 423ffe556f2123cd791340728bb028a62901f4ef[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 20 20:51:24 2017 -0600
+
+    Add a bunch of steps to the cloud setup script
+    
+    Change-Id: I3f479fdbd26c6c749e813404eacd1b712963079b
+
+[33mcommit b4bf191f347335457b091409514347a33fcd3f47[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Nov 21 13:13:08 2017 -0600
+
+    Ignore secrets file in git
+    
+    Change-Id: I1a394fc6e1450f7ecd3b61fba204b7e7115483a1
+
+[33mcommit a7fda7a0c1cda80acc239dcd1feb7d5945262b74[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 21 12:58:41 2017 -0600
+
+    Implement SimpleLoginSubmitHandler
+    
+    Change-Id: Ife930630e792057f942b1c8f9627a087d1bf33d4
+
+[33mcommit fab1ba7ea5019f45dfa86be86d3bc4aeee6ed285[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Nov 20 12:14:46 2017 -0600
+
+    Add state management to polling, job manager, and key value store.  Add test for the JobPollingService.
+    
+    Change-Id: I12a916fa42c69b29abf5d21eea8cd74faceb4894
+
+[33mcommit 33aed8013b8b86eac82e371d799ad5173e6b105b[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 21 12:13:50 2017 -0600
+
+    small bug fix in ImportSetupController to store initial auth data for
+    import authorization.
+    
+    Change-Id: Ic077fe78d8ec47fe12c256c3b541020ad2be6340
+
+[33mcommit ee8e9caad43216b49e322a1c9aa29fc0212d5d22[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 21 11:07:14 2017 -0600
+
+    Implement OauthCallbackHandler for Oauth1 enabled applications.
+    
+    Change-Id: I035f295431093d892cc49f39cc613530e57b1b34
+
+[33mcommit daf24824120873e273219b8a82a782142959150c[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 20 12:39:52 2017 -0600
+
+    Use base url and base api url from secrets.csv
+    
+    Change-Id: Ib2a30a74dbb15f6e70507f9f2b53efd81e7b22c2
+
+[33mcommit e5089c09f4b3eac0d75a1c6d55cb3cfaf97dfadc[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 21 09:29:45 2017 -0600
+
+    implement StartCopyHandler and CopySetupHandler, with these two
+    implemented, we have all that we need to start a copy between any oauth2
+    enabled application. Tested with Instagram -> Google Photos.
+    
+    Change-Id: I87417a83273f592764925a8ba63fc8ee1cb24850
+
+[33mcommit bf9ed45d0a2668e6d732e4f678a1ffd70e0c8bb9[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 20 15:59:08 2017 -0600
+
+    disable setting new cookie in CryptoHelper. This outputs an invalid
+    cookie, which causes parsing errors later in the auth flow.
+    
+    Change-Id: I3d74cf5beb5e1560ee6ed122f3bd9c7b15b7fdf1
+
+[33mcommit 04acaa472d3ae6fad51205a0e53341913a155596[m
+Merge: 4ae8b6e 94a683b
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 20 18:32:45 2017 +0000
+
+    Merge "Create importSetup Handler. This gets requested after the first export authorization. Redirects client to the next import authorization link. I've tested that after authorization this comes back to the Oauth2callback, but after that the flow is incomplete. Change-Id: Ia93f062beb98df5e2de960e73ac9791552a5ce70"
+
+[33mcommit 4ae8b6e363ccb55795005877630364f61571c48e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Nov 17 15:43:10 2017 -0600
+
+    Clean up parsing/validation of secrets.csv
+    
+    Require that BASE_URL and BASE_API_URL are present in secrets.csv. I'll make us actually use those in a separate change.
+    
+    Make the error clearer for when API keys or secrets are wrong/missing. Error is now something like "Missing or incorrect values for GOOGLE_KEY or GOOGLE_SECRET in secrets.csv" instead of a plain NullPointerException
+    
+    Make key/secret names and some class names consistent across providers
+    
+    Change-Id: I9bd9f62af40ab1236af626423c70432968d90336
+
+[33mcommit 94a683b19a031db6cabeb050e89994d547b3d8ff[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 20 10:43:10 2017 -0600
+
+    Create importSetup Handler. This gets requested after the first export
+    authorization. Redirects client to the next import authorization link.
+    I've tested that after authorization this comes back to the
+    Oauth2callback, but after that the flow is incomplete.
+    Change-Id: Ia93f062beb98df5e2de960e73ac9791552a5ce70
+
+[33mcommit cc33e494d0bb754fc4ab12583c02722fff1865e2[m
+Merge: 2eec4fa 4a203cc
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Nov 17 22:09:51 2017 +0000
+
+    Merge "Create Oauth2CallbackHandler - this gets called after the user has authenticated with the import and export services. Redirects them to either the next authorization or the copy page."
+
+[33mcommit 4a203cc7ae7d0a4001e34c9b76cfbbc57f5f63dc[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Nov 17 14:59:22 2017 -0600
+
+    Create Oauth2CallbackHandler - this gets called after the user has
+    authenticated with the import and export services. Redirects them to
+    either the next authorization or the copy page.
+    
+    There's still some wonkyness around the generation of the request URL, and
+    I haven't tested the auth flow after the first authorization (since the
+    importSetup handler isn't ready yet).
+    
+    Change-Id: I18bc0ee76eee66857510cd680888d51d09bdff46
+
+[33mcommit 2eec4fae43b9a08d16fd5eb8ac111c13d28fbada[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Nov 17 15:58:15 2017 -0600
+
+    Use flag to determine which cloud to use in PortabilityConfiguration
+    
+    Change-Id: I3c88b5d1b10182b7497a5443a8171dad55a83d56
+
+[33mcommit 0e4ba1ba94645e6eb3d6682826ce5da8c61f577f[m
+Merge: 5e02754 f4cc03a
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Nov 17 16:48:46 2017 +0000
+
+    Merge "ConfigureHandler: Parse post parameters from request body instead of relying on query parameters passed in."
+
+[33mcommit f4cc03adb7cba7de02927dc8349573d5f6b4d2d6[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Fri Nov 17 10:04:23 2017 -0600
+
+    ConfigureHandler: Parse post parameters from request body instead of
+    relying on query parameters passed in.
+    
+    Change-Id: I25c6b154a08449ba3588a22d4e06a43177a24c02
+
+[33mcommit 5e0275494fe9dd0c7975f3ea64f1796cfad26975[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Nov 16 19:10:42 2017 -0600
+
+    Update script to build a docker image
+    
+    If non-local, grabs latest version from GCP
+    
+    Sample output: https://docs.google.com/a/google.com/document/d/1WGnZt3ci-lL7OnOR9b6_4RAHO9ufVAmX30qbfhWMb1Q/edit?usp=sharing
+    
+    Change-Id: I109636c57957bf115bcf5578fdedf6d13fa606c3
+
+[33mcommit 00fed961f075e85c36ad2cbb87b7787e117df22e[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Nov 16 16:02:27 2017 -0600
+
+    Parse flags from settings files
+    
+    Tested local and test env settings and ran a migration locally to make sure correct secrets were compiled into jar.
+    
+    Change-Id: I4a6305c23e19cb2367bbd8cfbc298f848e01b579
+
+[33mcommit c4f89e19aca36e63c881fc0606a2d01ac0e31527[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Nov 16 15:11:26 2017 -0600
+
+    Build script and associated changes.
+    
+    This stores environment settings in separate config directories per environment, and builds them into the binary and Dockerfile.
+    
+    Change-Id: Iced3f992cb2bce5c02fc00854ca87797f09bf3e3
+
+[33mcommit 8b3cd7b77e6dfd9492046e2a6dd023ee979fbab7[m
+Merge: 283bb91 1623cf4
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Nov 16 20:58:25 2017 +0000
+
+    Merge "Refactor worker code into it's own module. Configure maven pom files with minor fixes."
+
+[33mcommit 1623cf41fad88c2c00c65a99f28adb0ee36c0172[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Nov 16 12:17:43 2017 -0600
+
+    Refactor worker code into it's own module. Configure maven pom files with minor fixes.
+    
+    Change-Id: I8185b8ea0360817bf77f829813c20bb75e4fe4fb
+
+[33mcommit 283bb91c12e0375b11ab712197ff2731c4343a52[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Wed Nov 15 08:33:34 2017 -0600
+
+    Context matching in HttpServer is done literally and with longest
+    matching prefix.
+    Therefore a contex for "/_/listDataTypes" will match
+    "/_/listDataTypesThisIsNotValid". To prevent for this, manually check
+    that the resource matches what is expected for each handler.
+    
+    For more details see:
+    https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html
+    
+    Change-Id: I7f14eae1be298c8c21fd9e2ca166a95f1b36b759
+
+[33mcommit 97e4b7663a075617db5ace8beed6fda6d075edf9[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Nov 14 15:39:44 2017 -0600
+
+    Script for setting up a new GCP environment
+    
+    Change-Id: I76d9ed4e6460f8fd2e1d89259e30cbff1376a009
+
+[33mcommit cdd7f92171355af81ab2bdbded0df4a20647194f[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 14 14:57:17 2017 -0600
+
+    Implement ConfigureHandler to process requests for new jobs.
+    
+    Change-Id: I5bd212595767e393a8a358815d4f05ec072899b3
+
+[33mcommit d30d6f6fa99630cb74dd35da517cd3fcb215eee0[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Tue Nov 14 13:11:47 2017 -0600
+
+    Cleanup some of the handlers by using LogUtils instead of System.out...
+    and create some more utility functions (to be used by future handlers).
+    
+    Change-Id: Id911e67b1a1fe80de617e2748d8726f4f7df61bb
+
+[33mcommit cbbcafc5920b77071d0f0d4309ac1688302caf51[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Nov 14 10:25:42 2017 -0600
+
+    Move flag parsing code into a common location and use in all main binary entry points.
+    
+    Change-Id: I88b3d1a7534b58343954263f1154657e528ee99c
+
+[33mcommit e8cce70d5cd67318608c6f306f6e6b859aadbd3c[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Nov 13 16:14:30 2017 -0600
+
+    Cleanup unused imports.
+    
+    Change-Id: I980663eb75a55b8b3450309a26d0aa08a49baeb1
+
+[33mcommit 9e4ce6b83076b6efe7ab63e4bbab1c825df4d240[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Nov 13 16:09:58 2017 -0600
+
+    Make the complete Instagram flow work by making refresh token nullable for instagram and fix null pointers.
+    
+    Change-Id: I1b0ad2362d0f8b0dc72952a2eff285fa80d2339c
+
+[33mcommit efd7e15075cb19c6b5f5ceadcd0454e08c1fc2ad[m
+Merge: 398885b 44f7e59
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 13 21:47:41 2017 +0000
+
+    Merge "Create portability-server module and implement HttpHandlers for ListDataTypes and ListServices. This will eventually replace the portability-web module."
+
+[33mcommit 44f7e591e21322dce7880ea9c536d5ebf95993fb[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 13 12:35:04 2017 -0600
+
+    Create portability-server module and implement HttpHandlers for
+    ListDataTypes and ListServices. This will eventually replace the
+    portability-web module.
+    
+    Change-Id: Ib9d28177b738d75ecf8e4a3295ec5e017d2c6a05
+
+[33mcommit 398885bae6eee280ec114ad51769a99ca89aa7b4[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 13 11:40:43 2017 -0600
+
+    Parse flags from the commandline
+    
+    Change-Id: I391cd0ad3968f44c447dea35be286464e43ede5a
+
+[33mcommit 40a9c9ea85c8a825cebef36505dcdbaf0e5cbb9e[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 13 16:15:15 2017 +0000
+
+    Revert "Create new portability-server module to contain webapp."
+    
+    This reverts commit fa550d1a2bb1819d044b8512f61661f78f207c88.
+    
+    Reason for revert: accidental merge
+    
+    Change-Id: I56c16950284bb4a47c3b623a2f21b3389987f58a
+
+[33mcommit fa550d1a2bb1819d044b8512f61661f78f207c88[m
+Author: Siham Hussein <sihamh@google.com>
+Date:   Mon Nov 13 09:55:46 2017 -0600
+
+    Create new portability-server module to contain webapp.
+    Also implement ListServices and ListDataTypes handlers.
+    
+    Change-Id: I49bef0bf2ee8901359171f7b8c86f77a1c551c5b
+
+[33mcommit a13ed58b3426e6041df886ddf3d520f73378eb47[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Nov 9 15:42:59 2017 -0600
+
+    Implementing Instagram Oauth2 flow.
+    
+    Change-Id: I3704d37f2addd5162465f9559a013d3316d64f47
+
+[33mcommit 13245927b4355b28750bc2d44b160d0c9b59766f[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Nov 8 17:59:47 2017 -0600
+
+    Enable DataStore. Fix NPE. Remove bad cookie. This is already deployed to cloud.
+    
+    Change-Id: Id244cdb57bd72d1e09621516e6375dfa2370ae61
+
+[33mcommit 510c2158abedc16194b0dff91c4d3235682887d1[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Tue Nov 7 18:10:02 2017 -0600
+
+    Fix static links for local development. Make cloud and local references consistent and remove v2/. Use hashes instead for versioning. Note that this means old logos may be cached at CDN but I think this is OK, the important thing is that our bundled code is properly versioned.
+    
+    New index.html has been deployed to cloud app and is working. I left v1/ and v2/ in our bucket for now but nothing is using. I will remove them if this looks OK.
+    
+    Note, ng build --prod no longer takes a deploy-url arg
+    
+    Change-Id: I9a46919190ee4c768dcfa46481f005ce0f183e8f
+
+[33mcommit 6a36f762e14388d2fe1e1595e46b51fd8b4c1404[m
+Merge: 9b175a9 1bf3027
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Nov 7 22:04:59 2017 +0000
+
+    Merge "Add worker main class and polling service. Small fixes."
+
+[33mcommit 1bf3027ade0e76add5b87e8c0809a5564409fa33[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Nov 7 09:07:51 2017 -0600
+
+    Add worker main class and polling service. Small fixes.
+    
+    Change-Id: Ic3ad8e74e15d11da7d76d7ea1e95e5c1a43c2323
+
+[33mcommit 9b175a9aae156340b3e64fef5322fd889b2548f3[m
+Author: Siham Hussein <sihamh@sihamh.chi.corp.google.com>
+Date:   Tue Nov 7 09:18:53 2017 -0600
+
+    Fix operator typo in Config.java
+    
+    Change-Id: I77bc821e2f05241f434753380b289bfb04c21a60
+
+[33mcommit 8e134dfac39add6c212c3d7c4858e41527cdc348[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Nov 6 17:14:33 2017 -0600
+
+    Update URLs in Angular environment. That has now been pushed to v2/ in our static bucket. Update index.html to point to v2/ static resources.
+    
+    Change-Id: I4bb288be713d7c4d4fcd6d979a69499f1b54abff
+
+[33mcommit dd6ca6efaceae4bc49fa904125e46e8c5374156d[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Nov 3 17:04:24 2017 -0500
+
+    Update URLs in Angular environment. That has now been pushed to v2/ in our static bucket.
+    
+    Update index.html to point to v2/ static resources.
+    
+    Change-Id: I57538c54a59763f3ac136eb3eb0457e6be2c2dee
+
+[33mcommit dc74e9529938f64971d978c7b49ee2716e30a4d3[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Fri Nov 3 16:29:12 2017 -0500
+
+    Fix
+    
+    Change-Id: Iceb6fb31895e4b9fd09c3accd3216bf41e220442
+
+[33mcommit aa1125a9a1ac4e9842161b7853a0fa3b2c17e639[m
+Merge: 7da5c18 68016f2
+Author: Anna Olson <olsona@google.com>
+Date:   Fri Oct 27 16:01:48 2017 +0000
+
+    Merge "Started LinkedIn folder"
+
+[33mcommit 7da5c18b7d190ef30bffa0759599a2f0388f9776[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Oct 26 15:29:16 2017 -0500
+
+    Move index.html to the right directory linked from <resources> in pom.xml
+    
+    Change-Id: I52454df3a76e95a7c11640dde164ae2bbabb3e8b
+
+[33mcommit ebb60152d672c73ab78694ad7eacc94077ec72f7[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Oct 26 14:40:06 2017 -0500
+
+    Add index.html to our repo to be served by our web server
+    
+    Change-Id: Ia4a043a9eaa83fd5da3fa01aae9533362716bf29
+
+[33mcommit 2aa78f870fdf1ed20a93c3969610dd8fb7241e5d[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Oct 26 10:20:42 2017 -0500
+
+    Clean up directory references and add correct language for open sourcing code.
+    
+    Change-Id: Ie893468a6eb76afc731f2a39ff463b494fec312c
+
+[33mcommit 595fbda9ba74e24cde29aef3391c23bfda7d30b6[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Oct 24 13:09:24 2017 -0500
+
+    Add license header to javascript client files in preparation for open sourcing.
+    
+    Change-Id: I6a1c3f19c6834f9cb2fce6ce0aed178cded5541e
+
+[33mcommit 2492fa24adb5caeb9a2a91b231c16d6f16bb9b1e[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Oct 24 11:05:49 2017 -0500
+
+    Add Apache license to java source code in preparation for open sourcing.
+    
+    Change-Id: I6f0442a2b2680cce8ea24c18377859c60f854712
+
+[33mcommit 68016f27cb62c32280d60d923203f380cebf949c[m
+Author: Anna Olson <olsona@google.com>
+Date:   Tue Oct 24 11:19:52 2017 -0500
+
+    Started LinkedIn folder
+    
+    Change-Id: I9096eaf2be014d23e988de042f25dfbd89f4155d
+
+[33mcommit ad0e8f2c8d4b238fa3b8e0627a4c9b3d755158d8[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Fri Oct 13 10:59:17 2017 -0500
+
+    Add basic flow for to encrypt and store auth data in cookies after being received from the external authorization flow.
+    
+    Change-Id: I20262027a1b52cffb61b9e7448c1f44e3dd8b762
+
+[33mcommit ff0d74613c65a56615864ac834a0be5ec585edf5[m
+Merge: 1d6149d d98f160
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Mon Oct 16 15:44:47 2017 +0000
+
+    Merge "Refactor job creation and remove the job token."
+
+[33mcommit d98f160b6e50c9aae0449773876b806b5ac70b9c[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Oct 10 17:55:42 2017 -0500
+
+    Refactor job creation and remove the job token.
+    
+    Change-Id: I28aee68f1ffba3cbf699427f960fbc32ebe18892
+
+[33mcommit 1d6149d190f5c6ba236636699fae01084c756cdb[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Mon Oct 9 11:32:58 2017 -0500
+
+    remove unneeded file
+    
+    Change-Id: I4a0fb71856f300677b4aeb16db6915dd7f8e97ed
+
+[33mcommit d1d87689683aa1e5401a140b63eb02deea048e40[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Oct 5 16:41:32 2017 -0500
+
+    rename webapp -> client
+    
+    Change-Id: Ie4e6990e4cc3fc3455fbab29150ad1f886710c5e
+
+[33mcommit 7655c4f17e28b40d54f95ef066c74a13739f80ed[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Thu Oct 5 16:21:09 2017 -0500
+
+    Move contents of wt-demo/ up a level to webapp/, and then move webapp/ out of portability-web/ to the root source dir
+    
+    Change-Id: I20dd7d4bef7e60351157463a310f0fc2792df791
+
+[33mcommit cc175979112704533ea8e7f54a243db77acccfda[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Oct 5 13:58:51 2017 -0500
+
+    Actually move job related functions and directories to the core project along with one dependency.
+    
+    Change-Id: I2da2cfc6684606d3b41e1cce6d5f57bfa3fde582
+
+[33mcommit 96700cda3c578df821770395d1118d8192cf1be0[m
+Merge: c072e7d 3999ead
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Oct 5 17:46:23 2017 +0000
+
+    Merge changes Iac8c3923,I8fc1646f
+    
+    * changes:
+      Move job into core library
+      configure urls
+
+[33mcommit 3999ead2e56b03fc19ed01b89d797358d736a782[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Oct 5 10:22:39 2017 -0500
+
+    Move job into core library
+    
+    Change-Id: Iac8c39239aaff6c7c530a686b107c98fc295fc4b
+
+[33mcommit c072e7d433d94035db5f71254a314e0762b0f141[m
+Author: Rachel Tannenbaum <rtannenbaum@google.com>
+Date:   Wed Oct 4 16:08:49 2017 -0500
+
+    Update .gitignore to ignore log files. In particular npm-debug.log
+    
+    Change-Id: I0d6ae4543fa8003073c334a81443328b507543ad
+
+[33mcommit 6fa031a11a8b6acc8e1c78662717a1cf40123e97[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Sep 28 12:16:26 2017 -0500
+
+    configure urls
+    
+    Change-Id: I8fc1646f0052c473d3f9090470e107eea77838a1
+
+[33mcommit 9635c831504b24dba46be4dffc1d40bd87d408aa[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Tue Sep 26 11:29:50 2017 -0500
+
+    Update secrets code to be able to read creds file from jar or file system.
+    
+    Change-Id: Ie4a4c4ed13949c2eb8fadaf03a1c036e21aeba51
+
+[33mcommit b2964226187dd21d0e64ff6f2c71b25887cd1ffb[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Sep 25 15:28:04 2017 -0500
+
+    Properly read from the Google persistence store
+    
+    Change-Id: Iedcccc977b77772df11fe394c5d5a546dd598d69
+
+[33mcommit 1e67c58ac0b215e23db0163c6990838612e06d6f[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Mon Sep 25 15:03:37 2017 -0500
+
+    update angular cli version
+    
+    Change-Id: I6a6a5747ce0e72934ac701f1392a6f151430ab46
+
+[33mcommit 17ccf3da858d3c822f743524667e97f1331a3a51[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Fri Sep 8 09:12:30 2017 -0500
+
+    Address additional comments on previous changelist
+    
+    Change-Id: I4d7438b9cb08ef16f5a9588778e892ec79ce488b
+
+[33mcommit 0f4f3b0726ed76272124352b30d39b90ee3659a3[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Sep 7 20:29:31 2017 -0500
+
+    Clean up imports from previous change
+    
+    Change-Id: I0e2f43778be273ac98a426d607d1037322eae0b0
+
+[33mcommit 564d06f83c7e5de37d839ef74657084aeee069eb[m
+Author: Jessie "Chuy" Chavez <chuy@google.com>
+Date:   Thu Sep 7 14:34:15 2017 -0500
+
+    Docker config and modifications for the webapp to run in docker
+    
+    Change-Id: Iff4e7b44f7336b9b5ee662b48778504d2e928032
+
+[33mcommit bc6c40dd1f7d06352e6c3ebff9e0acfd8cd4b11b[m
+Author: Jessie Chavez <chuy@rodete-desktop-imager.corp.google.com>
+Date:   Fri Sep 1 11:43:33 2017 -0500
+
+    IMAP pagination
+    
+    Change-Id: I284383025f0f77079e1164509150d7dba8510197
+
+[33mcommit 8a0ae80130b22f7921a4495a1397149d4011f8e8[m
+Author: Jessie Chavez <chuy@rodete-desktop-imager.corp.google.com>
+Date:   Thu Aug 24 12:26:20 2017 -0500
+
+    create multiple environment configuration for api server and externalize cross origin config
+    
+    Change-Id: I1b42d99e51b1ebaf2e3446360e2d0bd5053690c5
+
+[33mcommit ea4892ef0b79db48fdae54cf3992ae1214691475[m
+Author: Jessie Chavez <chuy@rodete-desktop-imager.corp.google.com>
+Date:   Wed Aug 23 16:26:34 2017 -0500
+
+    Parameterize domain in the UI by environment
+    
+    Change-Id: Id2153487c7f80015f49ded368de8ecfc43830e40
+
+[33mcommit d4a645a31ac787a1597e25974831e5e68c602f46[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Wed Jul 26 13:42:19 2017 -0500
+
+    Additional mail export support for IMAP, add container model to mail DataModel, add additional loggin.
+    
+    Change-Id: I432ae31aa2c260f6b17efa82a7775c8491a5fa3e
+
+[33mcommit d25140160f6b4310a6942cc08a172f90c8dc39fd[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jul 21 15:28:26 2017 -0500
+
+    Mail flow working including username/password simple login page
+    
+    Change-Id: I2aa60791993ea0538d6e9a1b0874719e5661f9cb
+
+[33mcommit b1824e2af6e0b08655b857c9be4c9a0bcf4f316b[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Wed Jul 19 14:20:26 2017 -0500
+
+    Microsoft Oauth working (with https localhost manual intervention) along with some cleanup of the custom error controller and logging copy steps.
+    
+    Change-Id: Iaedcc0845b3a3a3135906852454de761c9442e5e
+
+[33mcommit 2cac65e9292300ab1a619ec9573c2d9c71b97034[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Jul 18 09:30:09 2017 -0500
+
+    Add error check and report error data in the frontend
+    
+    Change-Id: I21941ddcdc95e7b5f991479a5bbc9afef2213ba9
+
+[33mcommit c6501770dd9c24a4a41e4a724cc673a11f962b07[m
+Author: chuy <chuy@chuy2.roam.corp.google.com>
+Date:   Mon Jul 17 09:57:38 2017 -0500
+
+    docs and minor cleanup
+    
+    Change-Id: I90abd62fef70891f85cd6915e0db33854126835f
+
+[33mcommit b0da07f6cf1c3c6a4690adf055b84166b63f5084[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Jul 6 13:53:29 2017 -0500
+
+    Cleanup previous ui iteration which is no longer used
+    
+    Change-Id: I7d7dbb6a154997e9c59db1d92afdc831178d7eff
+
+[33mcommit ab2ef1e68bbe608d9b68ee5659ce1c6187357476[m
+Merge: 6478c6d 5255237
+Author: Brian Willard <willard@google.com>
+Date:   Thu Jul 6 09:53:55 2017 -0500
+
+    Merge branch 'master' of sso://portability/googleplex-portability
+    
+    Change-Id: Ie5eb9cc01532810cc9df023cbe38eeef02b8125c
+
+[33mcommit 5255237c755be5a4d520afb5aaea04623693ac58[m
+Merge: 5420d58 976f689
+Author: Jessie Chavez <chuy@google.com>
+Date:   Thu Jul 6 14:50:18 2017 +0000
+
+    Merge "Complete authorization flow from demo-next-copy. Renamed and implemented controllers to validate and render data for each step."
+
+[33mcommit 6478c6d23450650d0da3dc09df897e14554b8dd7[m
+Author: Brian Willard <willard@google.com>
+Date:   Thu Jul 6 09:23:06 2017 -0500
+
+    Add logos for all the hooked up companies to the landing page.
+    
+    Change-Id: Icebf0efd0f75a729c8d999300f60e4818a1e2006
+
+[33mcommit 976f6895d25c3ca075f05dbaa6803d5cc8da209e[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Jul 6 07:53:27 2017 -0500
+
+    Complete authorization flow from demo-next-copy. Renamed and implemented controllers to validate and render data for each step.
+    
+    Change-Id: I65a51859b4636b547e8b23a62af09cd0f7e78c0a
+
+[33mcommit 5420d5831731df20bb078e14f90ed722fac689fe[m
+Author: Brian Willard <willard@google.com>
+Date:   Wed Jul 5 20:39:53 2017 -0500
+
+    Add an extra throw to a method that was missing it
+    
+    Change-Id: I7fdb45220faf06d1c5e195f7624939e3c57a77df
+
+[33mcommit fc02603228defda04bf0a9365a73754ebc1c2147[m
+Merge: e4f581b 6fd8e31
+Author: Brian Willard <willard@google.com>
+Date:   Wed Jul 5 15:27:57 2017 +0000
+
+    Merge "Add the ability to use Google Cloud Datastore as our backing store"
+
+[33mcommit 6fd8e312f7a2db83e38f858d912225e6b3bc8077[m
+Author: Brian Willard <willard@google.com>
+Date:   Wed Jul 5 09:21:42 2017 -0500
+
+    Add the ability to use Google Cloud Datastore as our backing store
+    
+    Change-Id: I55e8fa9e785e7dbbcdad91afc2441a09a0a6eb00
+
+[33mcommit e4f581b67c3d03d516456c8ee5cef0f503605571[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jun 30 16:34:51 2017 -0500
+
+    Try#2 Create next component to render status and url for import auth step after redirecting back from the export auth step.
+    
+    Change-Id: I7626c6ba76227cd3b22bd2a487f13bcc9c02ab56
+
+[33mcommit d70f24b87c1a20e388ee7f85c187672e3daddf0e[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jun 30 16:26:26 2017 -0500
+
+    Revert indavertently submitted next component
+    
+    Change-Id: I6fa7687a1eef643c2238703a36c55a990119b3c4
+
+[33mcommit 5fdcdfb9e2028a130e11c26dfd724fb74899960f[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jun 30 16:14:52 2017 -0500
+
+    Create next component to render status and url for import auth step after redirecting back from the export auth step.
+    
+    Change-Id: Ib3a76b9d374c7ea66c09d0f4e0235d22367fd380
+
+[33mcommit 988266b390625e0c4c7510804bcf994a32d82f7e[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jun 30 08:26:24 2017 -0500
+
+    Wire up demo single page ui to backend ConfigureController. Support oauth 1 flow for flickr.
+    
+    Change-Id: I27c75daa9c9aace965f1a107a3cceadfaddd5f18
+
+[33mcommit 8f78a86becda6a62bba3aa5cd3211b1dd494ac94[m
+Author: Brian Willard <willard@google.com>
+Date:   Tue Jun 27 21:47:03 2017 -0500
+
+    Add (most of) Cat's styling to the page
+    
+    Change-Id: I5c159f668850898a000711ddb622cbf2bf8625c3
+
+[33mcommit bcccac222944915e81997310a5e4d7477340c49a[m
+Author: Brian Willard <willard@google.com>
+Date:   Tue Jun 27 20:18:01 2017 -0500
+
+    Remove comment from .angular-cli.json, json can't have comments
+    
+    Change-Id: Ie06e03b87a4ebe57656ae5b695c00506adc2e02f
+
+[33mcommit be346ae97587161c8ea06061d3eaa9184f41b1da[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Jun 27 14:54:30 2017 -0500
+
+    Single page demo site with single form submission and nascent styles applied. Removed job/cookie management in read only data controllers.
+    
+    Change-Id: Ieffd247c2fb88f0f7083acdbdfbbfa57934f7afe
+
+[33mcommit 0913ca1e5bc41d4724b5b9d383b7a2379ccb68ca[m
+Author: Brian Willard <willard@google.com>
+Date:   Tue Jun 27 09:20:58 2017 -0500
+
+    Move all of the cloud specific logic into one place and behind interfaces so we can add new cloud implementations transparently in the future.
+    
+    Change-Id: Iaeaa1f2a3fe74331699c1a1465ef7d451f06f586
+
+[33mcommit c393f3ebb5fc9068df914e8cbedf1673e3933426[m
+Merge: 7c996fc 457cc52
+Author: Brian Willard <willard@google.com>
+Date:   Mon Jun 26 19:21:46 2017 +0000
+
+    Merge "Add logo from Cat's mocks"
+
+[33mcommit 457cc528f6fdf132673e4f3d41cd29ffc9527ad3[m
+Author: Brian Willard <willard@google.com>
+Date:   Mon Jun 26 14:12:15 2017 -0500
+
+    Add logo from Cat's mocks
+    
+    Change-Id: Icce2d6ba679b9f6d2a90083a0096af9a1a7aece2
+
+[33mcommit 7c996fc737cb9d7c79eaa7fde07ac473f02fc837[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Jun 22 16:33:05 2017 -0500
+
+    Fix typo in picasa url
+    
+    Change-Id: I276853668a609247345b0ab922e1c5379a9d4541
+
+[33mcommit 722e35d4e464116a8d17bd3a0ae872c9276e6d31[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Jun 22 08:25:24 2017 -0500
+
+    Quick and dirty move of start copy code to a common location. Start copy in it's own thread from the webapp.
+    
+    Change-Id: I3b1875d4f305fbadd72ded4325590fc67289ee01
+
+[33mcommit ee4b3711131f8970a7b776588d2002237e7a4738[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Wed Jun 21 23:56:20 2017 -0500
+
+    Add copy step loading and initiation after import account is selected.
+    
+    Change-Id: I82b13301865b22a3847130114d4842e324b7fd8a
+
+[33mcommit 439601ac2155e760e0a1997bb34a990291600817[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Wed Jun 21 15:46:07 2017 -0500
+
+    Fix callback url.
+    
+    Change-Id: Iec88a28c958cdd4175b4750820a185aa9a9f5db7
+
+[33mcommit 6fd57d86e661ad7a14677f780a0db2dc05778722[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Wed Jun 21 08:57:27 2017 -0500
+
+    Fix wildcard matching in request mapping for oauth handler
+    
+    Change-Id: Ie5e8b2bede8dc429eed9198bee45c6aa2a4e7800
+
+[33mcommit 196861699a03b8aba70bb403a64b9ddfc1887bbf[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Jun 20 15:18:38 2017 -0500
+
+    Enable online auth generation for Google case using oauth2
+    
+    Change-Id: I070c107cf19bbd0424d7dd10b27c49b70556ba55
+
+[33mcommit 99e305ec22afb5b4c390608a317a7272cfc53cc8[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Jun 16 07:53:48 2017 -0500
+
+    Wire up the offline auth providers and convert the service registry to work better in the online case.
+    
+    Change-Id: I8b4f569d5151fdbc3d4c600c658a0d9c425b5ff3
+
+[33mcommit 1d1381c6a49e295eca56ed4161c2e523e1f8e198[m
+Author: Brian Willard <willard@google.com>
+Date:   Thu Jun 15 15:47:00 2017 -0500
+
+    mend
+    
+    Change-Id: I6bd662438c1d6d63d8096fb4d8febb175ffaed7a
+
+[33mcommit 2eca612fe4cdb29c8b87de8c9aca79a75939f46e[m
+Author: Brian Willard <willard@google.com>
+Date:   Thu Jun 15 14:17:47 2017 -0500
+
+    Add an abstraction layer for auth so that services can support online and offline flows.  This change just does the serfices specific fixes, the next cl will change how the service registry works to support it.
+    
+    Change-Id: I64627907837713fe90d916ef1dfb213e07401eb1
+
+[33mcommit 483f9e786bc74cedd43cb46b55ac7fddcdc698c1[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Thu Jun 15 12:00:01 2017 -0500
+
+    Add job management, inmemory storage, and client-server communication via proxy.
+    
+    Change-Id: I7710c17eae702e22ff7a26c4958d7831e02b143c
+
+[33mcommit cf3d06fa07ba9e18d3d5ce3d95734c412741169e[m
+Author: Brian Willard <willard@google.com>
+Date:   Thu Jun 15 07:10:39 2017 -0500
+
+    small tweaks missed in last code review
+    
+    Change-Id: I29603bff4a4fdc4b8b770bd8147a99d4e1450de4
+
+[33mcommit 1fbc80b34d3fa7e870cff08272089031bbfc673d[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jun 9 14:21:37 2017 -0500
+
+    Add SmugMug support
+    
+    Change-Id: I35d6064cbce06fa3d51b146acbaca528607c0d16
+
+[33mcommit 1ca693c6939ac9ca430b04baf1bc3e0536f63728[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Fri Jun 9 14:21:37 2017 -0500
+
+    Setup Angular Routing and make each screen and data lookup independent.
+    
+    Change-Id: Ia5e545842d5f16f389793518a2cf1514162f88e4
+
+[33mcommit d767c6da3efdbbb80906c0bc7b1ab1ecfd88399d[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Jun 6 11:47:09 2017 -0500
+
+    Add dependency injection on the server side to allow ServiceProviderRegistry to be used in multiple controllers. Add a new controller for listing services and wire it up.
+    
+    Change-Id: I11cb5be8c2aa4825456e9d7aa557181b28d3dfb0
+
+[33mcommit 1342cc159620d7e5b40f0eb80f98c527807db8a6[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Mon Jun 5 13:25:24 2017 -0500
+
+    Add exclusion of servlet dependency when using the core library in the webapp
+    
+    Change-Id: I60bd490eb5fecb26bd1a6b1df36373afe14a2e31
+
+[33mcommit eef77cc65661f43092dc21e4aff981e2237a4064[m
+Author: Jessie Chavez <chuy@chuy-desk.chi.corp.google.com>
+Date:   Tue May 30 16:53:34 2017 -0500
+
+    Move the angular webapp into the portability-web project and wire up for development against the Spring-based backend
+    
+    Change-Id: I312c20beac016a22a4d2ec9c825eb89e97b03b05
+
+[33mcommit 44fa3e41fe82b3be68fb8155763795eee0246d19[m
+Author: Jessie Chavez <chuy@chuy-desk.chi.corp.google.com>
+Date:   Tue May 30 11:25:40 2017 -0500
+
+    Setup webapp subproject and initial code
+    
+    Change-Id: I23d7852e66551e377f14cc814fc4c5a871270415
+
+[33mcommit c6fbbf80889b9e20eef32f8b86b88ffa039a82fc[m
+Author: Jessie Chavez <chuy@chuy-desk.chi.corp.google.com>
+Date:   Fri May 26 11:21:27 2017 -0500
+
+    Configure multi-module project for portability-core library and command line tool
+    
+    Change-Id: Ia52e75220420e2393a53887da7663607e3285f9c
+
+[33mcommit 33e3f795833e34c45982e05ce5d7595c79b07027[m
+Author: Jessie Chavez <chuy@chuy-desk.chi.corp.google.com>
+Date:   Wed May 24 12:56:55 2017 -0500
+
+    Moved under new parent directory to prep for multiple modules
+    
+    Change-Id: I0d833144717ff1806d9dc40bf8ee4cc498a9e928
+
+[33mcommit 575e132e06cde7d9af6276780b9c843ae7098e57[m
+Author: Jessie Chavez <chuy@chuy-desk.chi.corp.google.com>
+Date:   Tue May 23 11:58:59 2017 -0500
+
+    Angular webapp with servlet communication for local development
+    
+    Change-Id: Ib80b52d8184cf6916ed35cdf222a99a645a9ffb5
+
+[33mcommit 5513415bb6ba00563d398d3da737fe7b06446725[m
+Author: Jessie Chavez <chuy@chuy-desk.chi.corp.google.com>
+Date:   Mon May 15 14:48:53 2017 -0500
+
+    empty webapp
+    
+    Change-Id: I1f97bb1682ffd44868627880717bc477f131d26e
+
+[33mcommit 0e9e8e33a5efb2e77869d3bb4128ebe98622fe96[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue May 9 14:05:31 2017 -0500
+
+    Working imap export code for Microsfot
+    
+    Change-Id: I08360fd9edc672c4464675dd3dd00f7c5bc3fea1
+
+[33mcommit b091355900fa504fd153885f17fbf9ff1877f565[m
+Author: Brian Willard <willard@google.com>
+Date:   Sun Apr 30 20:42:07 2017 -0500
+
+    Add file left out on previous commit
+    
+    Change-Id: Ifc84c70d35384c2207290b6084c29ff6f9134c34
+
+[33mcommit 40825e159516fa93331f6215406fdaaa07e2b677[m
+Merge: 4d971d4 e31d3d6
+Author: Brian Willard <willard@google.com>
+Date:   Sun Apr 30 20:37:28 2017 -0500
+
+    Merge branch 'master' of sso://portability/googleplex-portability
+
+[33mcommit e31d3d60f7dd8a45b57787ef1e00eea6d99f3ad3[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Apr 25 15:37:28 2017 -0500
+
+    Use GoogleAuthorizationCodeFlow with offline access type
+    
+    Change-Id: Ib35b84587ef07413b9a55966b09d32aff2c5840a
+
+[33mcommit 4d971d4e29a0e62233768869b6f0921cf205baa0[m
+Author: Brian Willard <willard@google.com>
+Date:   Mon Apr 3 22:34:42 2017 -0500
+
+    Switch to a data passing model that supports paging
+    and multiple levels of data.
+    
+    Change-Id: I2848dfd095364d24fded29c5848a3cbb731476c0
+
+[33mcommit dd061c04fad1375878bd0c667e1b80f44783787d[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 31 12:47:34 2017 -0500
+
+    Remove an unused method from the data model.
+    
+    Change-Id: I39dab12989050577879c01ae854d7da338e8f3e5
+
+[33mcommit 57453389e2e4af23deff846ad0e8b0ac2a64b838[m
+Merge: 94cd495 613fc88
+Author: Brian Willard <willard@google.com>
+Date:   Thu Mar 30 15:20:22 2017 +0000
+
+    Merge "Add instagram, this only allows export."
+
+[33mcommit 613fc88d0ba1ee30d6d2d1fa811924c2d05c67bb[m
+Author: Brian Willard <willard@google.com>
+Date:   Wed Mar 29 20:58:46 2017 -0500
+
+    Add instagram, this only allows export.
+    
+    Change-Id: I0c8332fe7e33526d85ece8751cc764145d9b74a8
+
+[33mcommit 94cd495bd12035e9553d6c4f3eafaf7134506a29[m
+Author: Brian Willard <willard@google.com>
+Date:   Sun Mar 26 21:29:19 2017 -0500
+
+    Export Microsoft Calendar Events work-in-progress
+    
+    Change-Id: I57dc99305ea4a0490dd9269d487c75fdd71b6d42
+
+[33mcommit faf2feb93a19c9dd73786af828194ab5e4defbc5[m
+Author: Brian Willard <willard@google.com>
+Date:   Sun Mar 26 21:29:19 2017 -0500
+
+    Add the ability to migrate mail.
+    
+    This implimentation is fairly limited in that it just does one page of data for one provider.
+    
+    Change-Id: I36e29a81fbc47c7cb3553da6afa7c440b387030c
+
+[33mcommit 3fef835fdcdc81078ad07a88c0290ee59ebd73aa[m
+Author: Brian Willard <willard@google.com>
+Date:   Sat Mar 25 23:01:56 2017 -0500
+
+    Make the Microsoft auth model ask for an account instead of hard coding one.
+    
+    Change-Id: I3bae3f9abac3d1cf81dfaad50c229b507b3c9404
+
+[33mcommit 6bc715b73dbc81dde18da905ff1e68a3ef0acedf[m
+Author: Brian Willard <willard@google.com>
+Date:   Sat Mar 25 22:43:35 2017 -0500
+
+    Update git ignore to ignore intellij files
+    
+    Change-Id: I98b32b867405ff563de3dad05b8cc5652eed0ab8
+
+[33mcommit a7a5739cec42a520bd1284baf8286a968196fa4f[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 24 21:27:23 2017 -0500
+
+    Update readme with instructions for running code
+    
+    Change-Id: Iae220549250fcd0e2d195d5c3809e9fff19c2f7b
+
+[33mcommit 3cdb6c3aa236d9cec62cc0740fb0025198044d26[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 24 21:26:15 2017 -0500
+
+    Fix a prompt about importer
+    
+    Change-Id: I5b680836842ffe794e84957b7710328f630f471f
+
+[33mcommit 18596c8b3608b0dbf2ce7241a12b1918d53dcd6f[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 24 21:24:24 2017 -0500
+
+    Update secrets_template to include commas.
+    
+    Change-Id: I6c5bb896f1e6fb9b7cada62b2a89ff5c30fdc3ec
+
+[33mcommit c1470ec92e74127e1ea7a4d3478901eb8d329bad[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 24 21:21:10 2017 -0500
+
+    Update the pom to support executing the java binary via maven using
+    exec:java
+    
+    Change-Id: I440028fa04c9950e6bfae5aa20f488ab0712ef03
+
+[33mcommit 8bed9c4e9b23dbacd400ee9d43850d81cd8d1aa1[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 24 21:05:06 2017 -0500
+
+    Add a template for secrets.csv and update the readme to tell users what to do
+    
+    Change-Id: I3ddba9f4563f317c9c4cbf7ea852794ade452c1b
+
+[33mcommit 7672e69854ddd21f2d910c0c1a9c03a3b3095828[m
+Author: Brian Willard <willard@google.com>
+Date:   Fri Mar 24 20:55:58 2017 -0500
+
+    Add a gitignore file
+    
+    Change-Id: Ie5615205255e5e888a3c376343004d5e01590c44
+
+[33mcommit 8dfb14b38604db4fdf0a63ca325048097f185343[m
+Author: Jessie 'Chuy' Chavez <chuy@google.com>
+Date:   Tue Mar 21 21:06:49 2017 -0500
+
+    Working MS calendar with auth commit
+    
+    Change-Id: If1442c2439efb1725ea4480c51aa147e06f934de
+
+[33mcommit 4e887b5308fc83e73248d68d3a114238bc0e380d[m
+Author: Jessie Chavez <chuy@google.com>
+Date:   Mon Mar 20 14:52:03 2017 -0500
+
+    initial commit from test repo.
+    
+    Change-Id: Ib49df49efc77f8fa23ba75deb2fca671cb63d90a
+
+[33mcommit 550ede593ea1d4f6a54c79e558e2369e9d4e7396[m
+Author: Jessie Chavez <chuy@google.com>
+Date:   Mon Mar 20 19:23:57 2017 +0000
+
+    Initial empty repository

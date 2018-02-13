@@ -36,7 +36,6 @@ import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;

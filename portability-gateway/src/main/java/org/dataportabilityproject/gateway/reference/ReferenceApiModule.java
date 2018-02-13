@@ -71,7 +71,6 @@ public class ReferenceApiModule extends AbstractModule {
   protected void configure() {
     // TODO: Bind ApiSettings or migrate to launcher api context
     // TODO: Bind actions in single or multiple modules
-
     MapBinder<String, HttpHandler> mapbinder
         = MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
 
@@ -91,6 +90,13 @@ public class ReferenceApiModule extends AbstractModule {
       mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
       mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
       mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
+
+      mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
+      mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
+      mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
+      mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
+      mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
+      mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
       */
   }
 }

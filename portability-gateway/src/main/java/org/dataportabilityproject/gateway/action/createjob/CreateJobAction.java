@@ -37,7 +37,8 @@ import java.util.UUID;
 /**
  * An {@link Action} that handles the initial creation of a job.
  */
-public final class CreateJobAction implements Action<CreateJobActionRequest, CreateJobActionResponse> {
+public final class CreateJobAction implements
+    Action<CreateJobActionRequest, CreateJobActionResponse> {
 
   private static final Logger logger = LoggerFactory.getLogger(
       CreateJobAction.class);

@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
-
-import javax.crypto.SecretKey;
+package org.dataportabilityproject.gateway.action;
 
 /**
- * Creates and encodes keys for symmetric encryption.
+ * Handles an action in the API server.
  */
-public interface SymmetricKeyGenerator {
+public interface Action<Request, Response> {
 
-  /**
-   * Generates a {@link SecretKey}
-   */
-  SecretKey generate();
+  /** Handles the given {@code Request} and returns a {@code Response}. */
+  Response handle(Request request);
 }
-
