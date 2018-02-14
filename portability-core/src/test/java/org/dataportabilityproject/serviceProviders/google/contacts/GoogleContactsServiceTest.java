@@ -16,17 +16,6 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService
-    .PERSON_FIELDS;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService
-    .SELF_RESOURCE;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -37,15 +26,8 @@ import com.google.api.services.people.v1.model.ListConnectionsResponse;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
-import com.sun.org.apache.regexp.internal.RE;
 import ezvcard.VCard;
 import ezvcard.property.StructuredName;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
@@ -55,6 +37,22 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService.PERSON_FIELDS;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService.SELF_RESOURCE;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class GoogleContactsServiceTest {
 
