@@ -170,7 +170,7 @@ public class PortabilityJob extends EntityType {
       builder.put(WORKER_INSTANCE_PRIVATE_KEY, jobAuthorization.getEncryptedPrivateKey());
     }
     if (null != jobAuthorization.getState()) {
-      builder.put(AUTHORIZATION_STATE, jobAuthorization.getState());
+      builder.put(AUTHORIZATION_STATE, jobAuthorization.getState().toString());
     }
     return builder.build();
   }
