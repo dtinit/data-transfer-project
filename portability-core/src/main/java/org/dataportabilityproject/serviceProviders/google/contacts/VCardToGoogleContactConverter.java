@@ -16,10 +16,12 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter
-    .SOURCE_PARAM_NAME_ID;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
     .SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .VCARD_PRIMARY_PREF;
 
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
@@ -33,6 +35,8 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,20 +45,20 @@ public class VCardToGoogleContactConverter {
 
   private static final Logger logger = LoggerFactory.getLogger(VCardToGoogleContactConverter.class);
 
-  @VisibleForTesting
-  static final int PRIMARY_PREF = 1;
-
-  static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
-  static final FieldMetadata SECONDARY_FIELD_METADATA = new FieldMetadata().setPrimary(false);
+  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
+  private static final FieldMetadata SECONDARY_FIELD_METADATA = new FieldMetadata().setPrimary
+      (false);
 
   @VisibleForTesting
   static Person convert(VCard vCard) {
     Person person = new Person();
 
     Preconditions.checkArgument(atLeastOneNamePresent(vCard), "At least one name must be present");
-    person.setNames(vCard.getStructuredNames().stream()
-        .map(VCardToGoogleContactConverter::convertToGoogleName)
-        .collect(Collectors.toList()));
+    person.setNames(Collections.singletonList(getPrimaryGoogleName(vCard.getStructuredNames())));
+    // TODO(olsona): nicknames for other source-typed names?
+    // TODO(olsona): can we *actually* add more than one name?
+      // No two names from the same source can be uploaded, and only names with source type CONTACT
+      // can be uploaded, but what about names with source type null?
 
     if (vCard.getTelephoneNumbers() != null) {
       person.setPhoneNumbers(vCard.getTelephoneNumbers().stream()
@@ -76,26 +80,45 @@ public class VCardToGoogleContactConverter {
     name.setFamilyName(vCardName.getFamily());
     name.setGivenName(vCardName.getGiven());
 
-    Source source = new Source()
-        .setId(vCardName.getParameter(SOURCE_PARAM_NAME_ID))
-        .setType(vCardName.getParameter(SOURCE_PARAM_NAME_TYPE));
     FieldMetadata fieldMetadata = new FieldMetadata();
-    fieldMetadata.setSource(source);
     if (vCardName.getAltId() == null) {
       fieldMetadata.setPrimary(true);
     } else {
       fieldMetadata.setPrimary(false);
     }
+
+    String vCardNameSource = vCardName.getParameter(SOURCE_PARAM_NAME_TYPE);
+    if (vCardNameSource == null || vCardNameSource.equals(CONTACT_SOURCE_TYPE)) {
+      Source source = new Source().setType(vCardNameSource);
+      fieldMetadata.setSource(source);
+    }
+
     name.setMetadata(fieldMetadata);
     // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
 
     return name;
   }
 
+  private static Name getPrimaryGoogleName(List<StructuredName> vCardNameList) {
+    StructuredName primaryVCardName;
+
+    // first look if there's a primary name (or names)
+    // if no primary name exists, simply pick the first "alt" name
+    List<StructuredName> primaryNames = vCardNameList.stream()
+        .filter(a -> a.getAltId() == null).collect(Collectors.toList());
+    if (primaryNames.size() > 0) {
+      primaryVCardName = primaryNames.get(0);
+    } else {
+      primaryVCardName = vCardNameList.get(0);
+    }
+
+    return convertToGoogleName(primaryVCardName);
+  }
+
   private static PhoneNumber convertToGooglePhoneNumber(Telephone vCardTelephone) {
     PhoneNumber phoneNumber = new PhoneNumber();
     phoneNumber.setValue(vCardTelephone.getText());
-    if (vCardTelephone.getPref() == PRIMARY_PREF) {
+    if (vCardTelephone.getPref() == VCARD_PRIMARY_PREF) {
       phoneNumber.setMetadata(PRIMARY_FIELD_METADATA);
     } else {
       phoneNumber.setMetadata(SECONDARY_FIELD_METADATA);
@@ -107,7 +130,7 @@ public class VCardToGoogleContactConverter {
   private static EmailAddress convertToGoogleEmail(Email vCardEmail) {
     EmailAddress emailAddress = new EmailAddress();
     emailAddress.setValue(vCardEmail.getValue());
-    if (vCardEmail.getPref() == PRIMARY_PREF) {
+    if (vCardEmail.getPref() == VCARD_PRIMARY_PREF) {
       emailAddress.setMetadata(PRIMARY_FIELD_METADATA);
     } else {
       emailAddress.setMetadata(SECONDARY_FIELD_METADATA);

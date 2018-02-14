@@ -50,17 +50,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   private PeopleService peopleService;
   private JobDataCache jobDataCache;
 
-  @VisibleForTesting
-  static final String SELF_RESOURCE = "people/me";
-
-  @VisibleForTesting
-  // List of all fields we want to get from the Google Contacts API
-  // NB: this will have to be updated as we support more fields
-  static final String PERSON_FIELDS = "emailAddresses,names,phoneNumbers";
   // TODO(olsona): addresses next
 
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
-    // TODO(olsona): add permissions/scopes!
     this(new PeopleService.Builder(
         GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
@@ -78,7 +70,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Connections.List connectionsList = peopleService
         .people()
         .connections()
-        .list(SELF_RESOURCE);
+        .list(GoogleContactsConstants.SELF_RESOURCE);
 
     // Get next page, if we have a page token
     if (continuationInformation.getPaginationInformation().isPresent()) {
@@ -88,7 +80,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     }
 
     // Get list of connections (nb: not a list containing full info of each Person)
-    ListConnectionsResponse response = connectionsList.setPersonFields(PERSON_FIELDS).execute();
+    ListConnectionsResponse response = connectionsList.setPersonFields(
+        GoogleContactsConstants.PERSON_FIELDS).execute();
     List<Person> peopleList = response.getConnections();
 
     // Get list of resource names, then get list of Persons
@@ -98,7 +91,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     GetPeopleResponse batchResponse = peopleService.people()
         .getBatchGet()
         .setResourceNames(resourceNames)
-        .setPersonFields(PERSON_FIELDS)
+        .setPersonFields(GoogleContactsConstants.PERSON_FIELDS)
         .execute();
     List<PersonResponse> personResponseList = batchResponse.getResponses();
 
@@ -122,7 +115,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   @Override
   public void importItem(ContactsModelWrapper wrapper) throws IOException {
-    // TODO(olsona)
+    // TODO(olsona): continuation information
     // First, assume no ContinuationInformation
     Collection<VCard> vCardCollection = wrapper.getVCards();
     for (VCard vCard : vCardCollection) {

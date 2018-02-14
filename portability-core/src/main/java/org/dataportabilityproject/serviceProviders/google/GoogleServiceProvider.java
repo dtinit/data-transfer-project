@@ -23,8 +23,8 @@ import static org.dataportabilityproject.shared.PortableDataType.TASKS;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.CalendarScopes;
-import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -89,7 +89,8 @@ final class GoogleServiceProvider implements ServiceProvider {
               .build())
           .build();
 
-  private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new HashMap<>();
+  private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new
+      HashMap<>();
 
   private final AppCredentials appCredentials;
 

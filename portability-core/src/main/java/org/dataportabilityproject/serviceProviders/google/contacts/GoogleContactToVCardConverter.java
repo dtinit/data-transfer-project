@@ -1,5 +1,10 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .VCARD_PRIMARY_PREF;
+
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
@@ -21,20 +26,13 @@ public class GoogleContactToVCardConverter {
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardConverter.class);
 
   @VisibleForTesting
-  static final int PRIMARY_PREF = 1;
-  @VisibleForTesting
-  static final int SECONDARY_PREF = 2;
-  @VisibleForTesting
-  static final String SOURCE_PARAM_NAME_ID = "Source_id";
-  @VisibleForTesting
-  static final String SOURCE_PARAM_NAME_TYPE = "Source_type";
-
-  @VisibleForTesting
   static VCard convert(Person person) {
     VCard vCard = new VCard();
 
-    /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for Google contacts,
-    b) those type options are often wrong, and c) those type options aren't even reliably in the same place.
+    /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
+    Google contacts,
+    b) those type options are often wrong, and c) those type options aren't even reliably in the
+    same place.
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
@@ -91,8 +89,8 @@ public class GoogleContactToVCardConverter {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
-    structuredName.setParameter(SOURCE_PARAM_NAME_ID, personName.getMetadata().getSource().getId());
-    structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, personName.getMetadata().getSource().getType());
+    structuredName
+        .setParameter(SOURCE_PARAM_NAME_TYPE, personName.getMetadata().getSource().getType());
 
     // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
     return structuredName;
@@ -105,7 +103,7 @@ public class GoogleContactToVCardConverter {
   }
 
   private static int getPref(FieldMetadata metadata) {
-    return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
+    return metadata.getPrimary() ? VCARD_PRIMARY_PREF : VCARD_PRIMARY_PREF + 1;
   }
 
   private static boolean atLeastOneNamePresent(List<Name> personNames) {
