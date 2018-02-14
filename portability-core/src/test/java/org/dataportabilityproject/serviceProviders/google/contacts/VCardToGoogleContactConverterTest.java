@@ -35,6 +35,7 @@ import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,25 +54,21 @@ public class VCardToGoogleContactConverterTest {
 
   @Test
   public void testConversionToGoogleNames() {
-    // Set up Person with a primary name and two secondary names
+    // Set up Person with a primary name and one secondary name
     String primaryGivenName = "Mark";
     String primaryFamilyName = "Twain";
     String primarySourceType = "CONTACT";
     StructuredName primaryName = makeStructuredName(primaryGivenName, primaryFamilyName,
         primarySourceType);
 
-    String altGivenName1 = "Samuel";
-    String altFamilyName1 = "Clemens";
-    String altSourceType1 = "PROFILE";
-    StructuredName altName1 = makeStructuredName(altGivenName1, altFamilyName1, altSourceType1);
-    String altGivenName2 = "Louis";
-    String altFamilyName2 = "de Conte";
-    String altSourceType2 = "PEN_NAME";
-    StructuredName altName2 = makeStructuredName(altGivenName2, altFamilyName2, altSourceType2);
+    String altGivenName = "Samuel";
+    String altFamilyName = "Clemens";
+    String altSourceType = "PROFILE";
+    StructuredName altName = makeStructuredName(altGivenName, altFamilyName, altSourceType);
 
     VCard vCard = new VCard();
     vCard.addProperty(primaryName);
-    vCard.addPropertyAlt(StructuredName.class, Arrays.asList(altName2, altName1));
+    vCard.addPropertyAlt(StructuredName.class, Collections.singleton(altName));
 
     // Run test
     Person person = VCardToGoogleContactConverter.convert(vCard);
