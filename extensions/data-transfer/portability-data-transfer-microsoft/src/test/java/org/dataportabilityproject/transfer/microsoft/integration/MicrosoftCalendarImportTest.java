@@ -40,6 +40,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -48,7 +49,7 @@ import static java.util.Collections.singletonList;
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph API.
  */
 public class MicrosoftCalendarImportTest {
-    private static final String JOB_ID = "1";
+    private static final UUID JOB_ID = UUID.randomUUID();
     private MockWebServer server;
     private OkHttpClient client;
     private ObjectMapper mapper;
@@ -73,7 +74,7 @@ public class MicrosoftCalendarImportTest {
         CalendarEventModel eventModel = new CalendarEventModel("OldId1", "Event1", "Test Notes", singletonList(attendeeModel), "Location1", start, end);
         CalendarContainerResource resource = new CalendarContainerResource(singleton(calendarModel), singleton(eventModel));
 
-        ImportResult result = importer.importItem(JOB_ID, token, resource);
+        ImportResult result = importer.importItem(JOB_ID.toString(), token, resource);
 
         Assert.assertEquals(ImportResult.ResultType.OK, result.getType());
 

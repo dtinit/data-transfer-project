@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
 
@@ -66,10 +67,11 @@ public class MicrosoftCalendarImporter implements Importer<TokenAuthData, Calend
     @SuppressWarnings("unchecked")
     @Override
     public ImportResult importItem(String jobId, TokenAuthData authData, CalendarContainerResource data) {
-        TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
+        UUID id = UUID.fromString(jobId);
+        TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, id);
         if (calendarMappings == null) {
             calendarMappings = new TempCalendarData(jobId);
-            jobStore.create(jobId, calendarMappings);
+            jobStore.create(id, calendarMappings);
         }
 
         Map<String, String> requestIdToExportedId = new HashMap<>();
@@ -117,7 +119,7 @@ public class MicrosoftCalendarImporter implements Importer<TokenAuthData, Calend
             calendarMappings.addIdMapping(requestIdToExportedId.get(batchRequestId), (String) body.get("id"));
 
         }
-        jobStore.update(jobId, calendarMappings);
+        jobStore.update(UUID.fromString(jobId), calendarMappings);
 
         List<Map<String, Object>> eventRequests = new ArrayList<>();
         requestId = 1;
