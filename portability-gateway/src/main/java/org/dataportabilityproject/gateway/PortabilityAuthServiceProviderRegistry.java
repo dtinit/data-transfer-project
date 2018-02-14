@@ -28,31 +28,56 @@ import org.dataportabilityproject.types.transfer.PortableType;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
 
-  private ImmutableMap<String, AuthServiceProvider> authServiceProviders;
-  private ImmutableSet<PortableType> supportedTypes;
+  private final ImmutableMap<String, AuthServiceProvider> authServiceProviderMap;
+  private final ImmutableSet<String> supportedImportTypes;
+  private final ImmutableSet<String> supportedExportTypes;
 
-  PortabilityAuthServiceProviderRegistry(Map<String, AuthServiceProvider> serviceProviderMap, List<String> enabledServices){
-    ImmutableSet.Builder<PortableType> supportedTypeBuilder = ImmutableSet.builder();
-    ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder = ImmutableMap.builder();
+  // The parameters to the constructor are provided via dependency injection
+  public PortabilityAuthServiceProviderRegistry(List<String> enabledServices,
+      Map<String, AuthServiceProvider> serviceProviderMap){
+    ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder = ImmutableMap
+        .builder();
+    ImmutableSet.Builder<String> supportedImportTypesBuilder = ImmutableSet.builder();
+    ImmutableSet.Builder<String> supportedExportTypesBuilder = ImmutableSet.builder();
 
     for(String service : enabledServices){
       AuthServiceProvider authServiceProvider = serviceProviderMap.get(service);
-      Preconditions.checkArgument(authServiceProvider != null, "AuthService %s not found", service);
+      Preconditions.checkArgument(authServiceProvider != null, "AuthServiceProvider not found for [%s]", service);
+
+      List<String> importTypes = authServiceProvider.getImportTypes();
+      List<String> exportTypes = authServiceProvider.getExportTypes();
+
+      for (String type : importTypes) {
+        Preconditions.checkArgument(exportTypes.contains(type),
+            "TransferDataType [%s] is available for import but not export in [%s] AuthServiceProvider",
+            type, service);
+        supportedImportTypesBuilder.add(type);
+      }
+
+      supportedExportTypesBuilder.addAll(exportTypes);
       serviceProviderBuilder.put(service, authServiceProvider);
     }
-  }
-  /**
-   * Returns the provider that supports the service id.
-   *
-   * @param serviceId the service id
-   */
-  @Override
-  public AuthServiceProvider getServiceProvider(String serviceId) {
-    return null;
+
+    authServiceProviderMap = serviceProviderBuilder.build();
+    supportedImportTypes = supportedImportTypesBuilder.build();
+    supportedExportTypes = supportedExportTypesBuilder.build();
   }
 
   @Override
-  public AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType) {
-    return null;
+  public AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType, AuthMode mode) {
+    AuthServiceProvider provider = authServiceProviderMap.get(serviceId);
+    Preconditions.checkArgument(provider!=null, "AuthServiceProvider not found for serviceId [%s]", serviceId);
+    switch(mode) {
+      case EXPORT:
+        Preconditions.checkArgument(supportedExportTypes.contains(transferDataType), "AuthMode [%s] not valid for TransferDataType [%s]", mode, transferDataType);
+        break;
+      case IMPORT:
+        Preconditions.checkArgument(supportedImportTypes.contains(transferDataType), "AuthMode [%s] not valid for TransferDataType [%s]", mode, transferDataType);
+        break;
+      default:
+        throw new IllegalArgumentException("AuthMode [" + mode + "] not supported");
+    }
+
+    return provider.getAuthDataGenerator(transferDataType, mode);
   }
 }
