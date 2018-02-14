@@ -100,7 +100,6 @@ public final class GoogleCloudDatastore implements JobStore {
 
   }
 
-
   /**
    * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job},
    * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
