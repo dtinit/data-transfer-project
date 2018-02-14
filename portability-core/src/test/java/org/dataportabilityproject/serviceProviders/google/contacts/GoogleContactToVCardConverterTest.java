@@ -17,16 +17,15 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts
-    .GoogleContactToVCardConverter.PRIMARY_PREF;
-import static org.dataportabilityproject.serviceProviders.google.contacts
-    .GoogleContactToVCardConverter.SECONDARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter.PRIMARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter.SECONDARY_PREF;
 
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.api.services.people.v1.model.Source;
 import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.parameter.VCardParameters;
@@ -44,9 +43,11 @@ import org.junit.Test;
 
 public class GoogleContactToVCardConverterTest {
 
-  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
+  private static final Source DEFAULT_SOURCE = new Source().setId("id").setType("CONTACT");
+  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setSource(DEFAULT_SOURCE)
+      .setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
-      new FieldMetadata().setPrimary(false);
+      new FieldMetadata().setSource(DEFAULT_SOURCE).setPrimary(false);
   private static final Name DEFAULT_NAME = new Name().setFamilyName("Church").setGivenName("Alonzo")
       .setMetadata(PRIMARY_FIELD_METADATA);
   private static final Person DEFAULT_PERSON = new Person()
@@ -93,12 +94,14 @@ public class GoogleContactToVCardConverterTest {
     String alternateFamilyName1 = "Rowling";
     Name alternateName1 = new Name().setGivenName(alternateGivenName1)
         .setFamilyName(alternateFamilyName1)
-        .setMetadata(SECONDARY_FIELD_METADATA);
+        .setMetadata(new FieldMetadata().setPrimary(false)
+            .setSource(new Source().setId("id1").setType("IRL")));
     String alternateGivenName2 = "Robert";
     String alternateFamilyName2 = "Galbraith";
     Name alternateName2 = new Name().setGivenName(alternateGivenName2)
         .setFamilyName(alternateFamilyName2)
-        .setMetadata(SECONDARY_FIELD_METADATA);
+        .setMetadata(new FieldMetadata().setPrimary(false)
+            .setSource(new Source().setId("id2").setType("PEN_NAME")));
 
     // Order shouldn't matter
     Person person = new Person()

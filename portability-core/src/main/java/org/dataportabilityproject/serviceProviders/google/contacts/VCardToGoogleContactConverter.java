@@ -16,11 +16,17 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter
+    .SOURCE_PARAM_NAME_ID;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactToVCardConverter
+    .SOURCE_PARAM_NAME_TYPE;
+
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.api.services.people.v1.model.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import ezvcard.VCard;
@@ -47,8 +53,8 @@ public class VCardToGoogleContactConverter {
 
     Preconditions.checkArgument(atLeastOneNamePresent(vCard), "At least one name must be present");
     person.setNames(vCard.getStructuredNames().stream()
-            .map(VCardToGoogleContactConverter::convertToGoogleName)
-            .collect(Collectors.toList()));
+        .map(VCardToGoogleContactConverter::convertToGoogleName)
+        .collect(Collectors.toList()));
 
     if (vCard.getTelephoneNumbers() != null) {
       person.setPhoneNumbers(vCard.getTelephoneNumbers().stream()
@@ -69,11 +75,18 @@ public class VCardToGoogleContactConverter {
     Name name = new Name();
     name.setFamilyName(vCardName.getFamily());
     name.setGivenName(vCardName.getGiven());
+
+    Source source = new Source()
+        .setId(vCardName.getParameter(SOURCE_PARAM_NAME_ID))
+        .setType(vCardName.getParameter(SOURCE_PARAM_NAME_TYPE));
+    FieldMetadata fieldMetadata = new FieldMetadata();
+    fieldMetadata.setSource(source);
     if (vCardName.getAltId() == null) {
-      name.setMetadata(PRIMARY_FIELD_METADATA);
+      fieldMetadata.setPrimary(true);
     } else {
-      name.setMetadata(SECONDARY_FIELD_METADATA);
+      fieldMetadata.setPrimary(false);
     }
+    name.setMetadata(fieldMetadata);
     // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
 
     return name;

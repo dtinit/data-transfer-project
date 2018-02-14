@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
+import com.google.api.services.people.v1.PeopleService.People.CreateContact;
 import com.google.api.services.people.v1.PeopleService.People.GetBatchGet;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
@@ -76,6 +77,7 @@ public class GoogleContactsServiceTest {
   private GetBatchGet getBatchGet;
   private Connections.List listConnectionsRequest;
   private ListConnectionsResponse listConnectionsResponse;
+  private CreateContact createContact;
 
   @Before
   public void setup() throws IOException {
@@ -84,6 +86,7 @@ public class GoogleContactsServiceTest {
     people = mock(People.class);
     peopleService = mock(PeopleService.class);
     listConnectionsRequest = mock(Connections.List.class);
+    createContact = mock(CreateContact.class);
 
     jobDataCache = new InMemoryJobDataCache();
     contactsService = new GoogleContactsService(peopleService, jobDataCache);
@@ -91,6 +94,7 @@ public class GoogleContactsServiceTest {
     when(getBatchGet.setPersonFields(PERSON_FIELDS)).thenReturn(getBatchGet);
     when(people.connections()).thenReturn(connections);
     when(people.getBatchGet()).thenReturn(getBatchGet);
+    when(people.createContact(any(Person.class))).thenReturn(createContact);
     when(peopleService.people()).thenReturn(people);
   }
 
@@ -103,6 +107,7 @@ public class GoogleContactsServiceTest {
         .setResponses(Collections.singletonList(personResponse));
 
     // This can't go in setup()
+    when(listConnectionsRequest.setPersonFields(PERSON_FIELDS)).thenReturn(listConnectionsRequest);
     when(listConnectionsRequest.execute()).thenReturn(listConnectionsResponse);
 
     // This is specific to returning a single Person
@@ -163,8 +168,7 @@ public class GoogleContactsServiceTest {
     inOrder.verify(listConnectionsRequest).execute();
 
     // Check continuation information
-    assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
-    assertThat(wrapper.getContinuationInformation().getPaginationInformation()).isNull();
+    assertThat(wrapper.getContinuationInformation()).isNull();
   }
 
   @Test
@@ -186,5 +190,6 @@ public class GoogleContactsServiceTest {
 
     // Check that the right methods were called
     verify(people, times(numberOfVCards)).createContact(any(Person.class));
+    verify(createContact, times(numberOfVCards)).execute();
   }
 }

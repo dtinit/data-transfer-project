@@ -24,15 +24,17 @@ public class GoogleContactToVCardConverter {
   static final int PRIMARY_PREF = 1;
   @VisibleForTesting
   static final int SECONDARY_PREF = 2;
+  @VisibleForTesting
+  static final String SOURCE_PARAM_NAME_ID = "Source_id";
+  @VisibleForTesting
+  static final String SOURCE_PARAM_NAME_TYPE = "Source_type";
 
   @VisibleForTesting
   static VCard convert(Person person) {
     VCard vCard = new VCard();
 
-    /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for
-    Google contacts,
-    b) those type options are often wrong, and c) those type options aren't even reliably in the
-    same place.
+    /* Reluctant to set the VCard.Kind value, since a) there aren't that many type options for Google contacts,
+    b) those type options are often wrong, and c) those type options aren't even reliably in the same place.
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
@@ -68,7 +70,7 @@ public class GoogleContactToVCardConverter {
     LinkedList<StructuredName> alternateStructuredNames = new LinkedList<>();
     for (Name personName : personNames) {
       StructuredName structuredName = convertToVCardNameSingle(personName);
-      if (personName.getMetadata().getPrimary()) {
+      if (personName.getMetadata().getPrimary() != null && personName.getMetadata().getPrimary()) {
         // This is the (a?) primary name for the Person, so it should be the primary name in the
         // VCard.
         primaryStructuredName = structuredName;
@@ -89,6 +91,8 @@ public class GoogleContactToVCardConverter {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
+    structuredName.setParameter(SOURCE_PARAM_NAME_ID, personName.getMetadata().getSource().getId());
+    structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, personName.getMetadata().getSource().getType());
 
     // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
     return structuredName;

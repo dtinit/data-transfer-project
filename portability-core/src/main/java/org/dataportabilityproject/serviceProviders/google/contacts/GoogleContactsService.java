@@ -18,7 +18,6 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
@@ -43,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Importer<ContactsModelWrapper> {
+
+  // TODO(olsona): next step is to merge existing contacts.
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactsService.class);
 
@@ -87,7 +88,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     }
 
     // Get list of connections (nb: not a list containing full info of each Person)
-    ListConnectionsResponse response = connectionsList.execute();
+    ListConnectionsResponse response = connectionsList.setPersonFields(PERSON_FIELDS).execute();
     List<Person> peopleList = response.getConnections();
 
     // Get list of resource names, then get list of Persons
@@ -112,7 +113,11 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
       newPage = new GooglePaginationInfo(response.getNextPageToken());
     }
 
-    return new ContactsModelWrapper(vCards, new ContinuationInformation(null, newPage));
+    ContinuationInformation newContinuationInformation = null;
+    if (newPage != null) {
+      newContinuationInformation = new ContinuationInformation(null, newPage);
+    }
+    return new ContactsModelWrapper(vCards, newContinuationInformation);
   }
 
   @Override
@@ -124,7 +129,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
       Person person = VCardToGoogleContactConverter.convert(vCard);
       peopleService
           .people()
-          .createContact(person);
+          .createContact(person)
+          .execute();
+      logger.debug("Imported {}", person);
     }
   }
 }
