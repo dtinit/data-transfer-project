@@ -26,6 +26,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.json.Json;
@@ -42,8 +43,8 @@ import org.dataportabilityproject.job.TokenManager;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +77,7 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkArgument(
         PortabilityApiUtils.validateRequest(exchange, HttpMethods.POST, PATH));
 
-    String jobId = PortabilityApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
+    UUID jobId = PortabilityApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
 
     if (commonSettings.getEncryptedFlow()) {
       handleWorkerAssignmentFlow(exchange, jobId);
@@ -89,7 +90,7 @@ final class StartCopyHandler implements HttpHandler {
    * Handles flow for assigning a worker instance, encrypting data with the assigned worker key, and
    * persisting the auth data, which will result in the worker starting the copy.
    */
-  private void handleWorkerAssignmentFlow(HttpExchange exchange, String jobId) throws IOException {
+  private void handleWorkerAssignmentFlow(HttpExchange exchange, UUID jobId) throws IOException {
 
     // Encrypted job initiation flow
     //   - Validate auth data is present in cookies
@@ -100,7 +101,7 @@ final class StartCopyHandler implements HttpHandler {
 
     // Lookup job
     LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-        ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+        ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
     Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
     // Validate job
     String exportService = job.exportService();
@@ -122,9 +123,9 @@ final class StartCopyHandler implements HttpHandler {
             "Import auth cookie required");
 
     // We have the data, now update to 'pending worker assignment' so a worker may be assigned
-    job = job.toBuilder().setJobState(JobState.PENDING_WORKER_ASSIGNMENT).build();
-    store.update(job, JobState.PENDING_AUTH_DATA);
-    logger.debug("Updated job {} to PENDING_WORKER_ASSIGNMENT", jobId);
+    job = job.toBuilder().setJobState(JobAuthorization.State.CREDS_AVAILABLE).build();
+    store.update(jobId, job, JobAuthorization.State.INITIAL);
+    logger.debug("Updated job {} to CREDS_AVAILABLE", jobId);
 
     // Loop until the worker updates it to assigned without auth data state, e.g. at that point
     // the worker instance key will be populated
@@ -132,8 +133,8 @@ final class StartCopyHandler implements HttpHandler {
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
     job = store.find(jobId);
-    while (job == null || job.jobState() != JobState.ASSIGNED_WITHOUT_AUTH_DATA) {
-      logger.debug("Waiting for job {} to enter state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
+    while (job == null || job.jobState() != JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED) {
+      logger.debug("Waiting for job {} to enter state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
       try {
         Sleeper.DEFAULT.sleep(10000);
       } catch (InterruptedException e) {
@@ -142,17 +143,17 @@ final class StartCopyHandler implements HttpHandler {
       job = store.find(jobId);
     }
 
-    logger.debug("Got job {} in state ASSIGNED_WITHOUT_AUTH_DATA", jobId);
+    logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
 
     Preconditions.checkNotNull(job.workerInstancePublicKey(),
         "Expected job " + jobId + " to have a worker instance's public key after being assigned "
-            + "(state ASSIGNED_WITHOUT_AUTH_DATA)");
+            + "(state CREDS_ENCRYPTION_KEY_GENERATED)");
     Preconditions.checkState(job.encryptedExportAuthData() == null,
         "Didn't expect job " + jobId + " to have encrypted export auth data yet in state "
-            + "ASSIGNED_WITHOUT_AUTH_DATA");
+            + "CREDS_ENCRYPTION_KEY_GENERATED");
     Preconditions.checkState(job.encryptedImportAuthData() == null,
         "Didn't expect job " + jobId + " to have encrypted import auth data yet in state "
-            + "ASSIGNED_WITHOUT_AUTH_DATA");
+            + "CREDS_ENCRYPTION_KEY_GENERATED");
 
     // Populate job with auth data from cookies encrypted with worker key
     logger.debug("About to parse worker instance public key: {}", job.workerInstancePublicKey());
@@ -170,12 +171,12 @@ final class StartCopyHandler implements HttpHandler {
     job = job.toBuilder()
         .setEncryptedExportAuthData(encryptedExportAuthData)
         .setEncryptedImportAuthData(encryptedImportAuthData)
-        .setJobState(JobState.ASSIGNED_WITH_AUTH_DATA)
+        .setJobState(JobAuthorization.State.CREDS_ENCRYPTED)
         .build();
 
-    logger.debug("Updating job {} from ASSIGNED_WITHOUT_AUTH_DATA to ASSIGNED_WITH_AUTH_DATA",
+    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_ENCRYPTED",
         jobId);
-    store.update(job, JobState.ASSIGNED_WITHOUT_AUTH_DATA);
+    store.update(jobId, job, JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
 
     writeResponse(exchange);
   }
@@ -183,7 +184,7 @@ final class StartCopyHandler implements HttpHandler {
   /**
    * Validates job information, starts the copy job inline, and returns status to the client.
    */
-  private void handleStartCopyInApi(HttpExchange exchange, String jobId) throws IOException {
+  private void handleStartCopyInApi(HttpExchange exchange, UUID jobId) throws IOException {
     // Lookup job
     LegacyPortabilityJob job = store.find(jobId);
     Preconditions.checkState(null != job, "existing job not found for id: %s", jobId);
@@ -201,12 +202,12 @@ final class StartCopyHandler implements HttpHandler {
       public void run() {
         try {
           PortabilityCopier.copyDataType(serviceProviderRegistry, type, exportService,
-              job.exportAuthData(), importService, job.importAuthData(), job.id());
+              job.exportAuthData(), importService, job.importAuthData(), jobId);
         } catch (IOException e) {
           logger.error("copyDataType failed", e);
           e.printStackTrace();
         } finally {
-          cloudFactory.clearJobData(job.id());
+          cloudFactory.clearJobData(jobId);
         }
       }
     };

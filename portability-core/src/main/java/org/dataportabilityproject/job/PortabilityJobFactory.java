@@ -17,6 +17,8 @@ package org.dataportabilityproject.job;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.io.IOException;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
@@ -26,72 +28,37 @@ import org.slf4j.LoggerFactory;
 /**
  * Provides methods for the creation of new {@link LegacyPortabilityJob} objects in correct initial state.
  */
+@Singleton
 public class PortabilityJobFactory {
   private final Logger logger = LoggerFactory.getLogger(PortabilityJobFactory.class);
-  // Keys for specific values in data store
-  private static final String ID_DATA_KEY = "UUID";
-  private static final String TOKEN_DATA_KEY = "TOKEN";
-  private static final String DATA_TYPE_DATA_KEY = "DATA_TYPE";
-  private static final String EXPORT_SERVICE_DATA_KEY = "EXPORT_SERVICE";
-  private static final String EXPORT_ACCOUNT_DATA_KEY = "EXPORT_ACCOUNT";
-  private static final String EXPORT_INITIAL_AUTH_DATA_KEY = "EXPORT_INITIAL_AUTH_DATA";
-  private static final String EXPORT_AUTH_DATA_KEY = "EXPORT_AUTH_DATA";
-  private static final String IMPORT_SERVICE_DATA_KEY = "IMPORT_SERVICE";
-  private static final String IMPORT_ACCOUNT_DATA_KEY = "IMPORT_ACCOUNT";
-  private static final String IMPORT_INITIAL_AUTH_DATA_KEY = "IMPORT_INITIAL_AUTH_DATA";
-  private static final String IMPORT_AUTH_DATA_KEY = "IMPORT_AUTH_DATA";
 
-  private final IdProvider idProvider;
-
-  public PortabilityJobFactory(IdProvider idProvider) {
-    this.idProvider = idProvider;
-  }
+  @Inject public PortabilityJobFactory() {}
 
   /**
    * Creates a new user job in initial state with session key.
    */
   public LegacyPortabilityJob create(PortableDataType dataType, String exportService,
       String importService) throws IOException {
-    String newId = idProvider.createId();
     String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
-    LegacyPortabilityJob job = createInitialJob(newId, encodedSessionKey, dataType, exportService, importService);
-    logger.info("Creating new OldPortabilityJob, id: {}", newId);
+    LegacyPortabilityJob job =
+        createInitialJob(encodedSessionKey, dataType, exportService, importService);
+    logger.info("Creating new LegacyPortabilityJob to transfer {} from {} to {}",
+        dataType, exportService, importService);
     return job;
   }
 
   /** Creates the initial data entry to persist. */
-  private static LegacyPortabilityJob createInitialJob(String id, String sessionKey,
+  private static LegacyPortabilityJob createInitialJob(String sessionKey,
       PortableDataType dataType, String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
     return LegacyPortabilityJob.builder()
-        .setId(id)
         .setDataType(dataType.name())
         .setExportService(exportService)
         .setImportService(importService)
         .setSessionKey(sessionKey)
         .build();
-  }
-
-  /**
-   * Creates the initial data entry to persist.
-   * @deprecated Remove when encrypted flow complete.
-   */
-  @Deprecated
-  private static LegacyPortabilityJob createInitialJob(String id, PortableDataType dataType,
-      String exportService, String importService) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
-    Preconditions.checkNotNull(dataType, "dataType missing");
-    return LegacyPortabilityJob.builder()
-      .setId(id)
-      .setDataType(dataType.name())
-      .setExportService(exportService)
-      .setImportService(importService)
-      .build();
   }
 }

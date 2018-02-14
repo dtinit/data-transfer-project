@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
@@ -61,10 +62,10 @@ public final class GoogleJobDataCache implements JobDataCache {
         }
       });
 
-  public GoogleJobDataCache(Datastore datastore, String jobId, String service) {
+  public GoogleJobDataCache(Datastore datastore, UUID jobId, String service) {
     this.datastore = datastore;
     this.ancestors = ImmutableList.of(
-        PathElement.of(JOB_KIND, jobId),
+        PathElement.of(JOB_KIND, jobId.toString()),
         PathElement.of(SERVICE_KIND, service));
   }
 

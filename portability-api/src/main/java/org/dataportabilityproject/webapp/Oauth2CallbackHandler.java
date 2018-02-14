@@ -28,18 +28,19 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Map;
+import java.util.UUID;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.JobUtils;
 import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.shared.ServiceMode;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.shared.settings.CommonSettings;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,17 +113,15 @@ final class Oauth2CallbackHandler implements HttpHandler {
               encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
               "Encoded Id cookie required");
 
-      String jobId = JobUtils.decodeId(encodedIdCookie.getValue());
-      String state = JobUtils.decodeId(authResponse.getState());
+      UUID jobId = JobUtils.decodeJobId(encodedIdCookie.getValue());
+      String state = JobUtils.decodeBase64(authResponse.getState());
 
       // TODO: Remove sanity check
-      Preconditions
-          .checkState(state.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
-              jobId, state);
-
+      Preconditions.checkState(state.equals(jobId.toString()),
+          "Job id in cookie [%s] and request [%s] should match", jobId, state);
 
       LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobState.PENDING_AUTH_DATA) : store.find(jobId);
+          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
@@ -154,11 +153,11 @@ final class Oauth2CallbackHandler implements HttpHandler {
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
         LegacyPortabilityJob updatedJob = JobUtils.setAuthData(job, authData, serviceMode);
-        store.update(updatedJob, null);
+        store.update(jobId, updatedJob, null);
       } else {
         // Set new cookie
         cryptoHelper
-            .encryptAndSetCookie(exchange.getResponseHeaders(), job.id(), serviceMode, authData);
+            .encryptAndSetCookie(exchange.getResponseHeaders(), jobId, serviceMode, authData);
       }
 
       redirect =

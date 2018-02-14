@@ -23,12 +23,13 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,8 +73,8 @@ class JobPollingService extends AbstractScheduledService {
    * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() throws IOException {
-    String jobId = store.findFirst(JobState.PENDING_WORKER_ASSIGNMENT);
-    logger.debug("Polling for a job PENDING_WORKER_ASSIGNMENT");
+    UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
+    logger.debug("Polling for a job CREDS_AVAILABLE");
     if (jobId == null) {
       return;
     }
@@ -87,7 +88,7 @@ class JobPollingService extends AbstractScheduledService {
     try {
       updateJobStateToAssignedWithoutAuthData(jobId, publicKey, privateKey);
       jobMetadata.init(jobId, keyPair);
-      logger.debug("Updated job {} to ASSIGNED_WITHOUT_AUTH_DATA, publicKey length: {}",
+      logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
           jobId, publicKey.getEncoded().length);
     } catch (IOException e) {
       logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
@@ -99,7 +100,7 @@ class JobPollingService extends AbstractScheduledService {
    * Replaces a unassigned {@link LegacyPortabilityJob} in storage with the provided {@code jobId} in
    * assigned state with {@code publicKey} and {@code privateKey}.
    */
-  private void updateJobStateToAssignedWithoutAuthData(String jobId, PublicKey publicKey,
+  private void updateJobStateToAssignedWithoutAuthData(UUID jobId, PublicKey publicKey,
       PrivateKey privateKey) throws IOException {
     // Lookup the job so we can append to its existing properties.
     // update will verify the job is still in the expected state when performing the update.
@@ -114,21 +115,21 @@ class JobPollingService extends AbstractScheduledService {
     LegacyPortabilityJob updatedJob = existingJob.toBuilder()
         .setWorkerInstancePublicKey(encodedPublicKey)
         .setWorkerInstancePrivateKey(encodedPrivateKey)
-        .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
+        .setJobState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
         .build();
-    store.update(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT);
+    store.update(jobId, updatedJob, JobAuthorization.State.CREDS_AVAILABLE);
   }
 
   /**
    * Polls for job with populated auth data and stops this service when found.
    */
   private void pollUntilJobIsReady() {
-    String jobId = jobMetadata.getJobId();
+    UUID jobId = jobMetadata.getJobId();
     LegacyPortabilityJob job = store.find(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
-    } else if (job.jobState() == JobState.ASSIGNED_WITH_AUTH_DATA) {
-      logger.debug("Polled job {} in state ASSIGNED_WITH_AUTH_DATA", jobId);
+    } else if (job.jobState() == JobAuthorization.State.CREDS_ENCRYPTED) {
+      logger.debug("Polled job {} in state CREDS_ENCRYPTED", jobId);
       if (!Strings.isNullOrEmpty(job.encryptedExportAuthData())
           && !Strings.isNullOrEmpty(job.encryptedImportAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
@@ -138,7 +139,7 @@ class JobPollingService extends AbstractScheduledService {
       }
       this.stopAsync();
     } else {
-      logger.debug("Polling job {} until it's in state ASSIGNED_WITH_AUTH_DATA. "
+      logger.debug("Polling job {} until it's in state CREDS_ENCRYPTED. "
           + "It's currently in state: {}", jobId, job.jobState());
     }
   }

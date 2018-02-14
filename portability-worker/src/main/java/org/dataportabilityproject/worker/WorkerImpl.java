@@ -18,6 +18,7 @@ package org.dataportabilityproject.worker;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.UUID;
 import org.dataportabilityproject.PortabilityCopier;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
@@ -25,8 +26,8 @@ import org.dataportabilityproject.job.Crypter;
 import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,15 +60,15 @@ final class WorkerImpl {
     pollForJob();
 
     // Start the processing
-    String jobId = workerJobMetadata.getJobId();
+    UUID jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
-    LegacyPortabilityJob job = store.find(jobId, JobState.ASSIGNED_WITH_AUTH_DATA);
+    LegacyPortabilityJob job = store.find(jobId, JobAuthorization.State.CREDS_ENCRYPTED);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class
     // name in storage.
 
-    processJob(job);
+    processJob(jobId, job);
     logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
   }
 
@@ -76,8 +77,7 @@ final class WorkerImpl {
     jobPollingService.awaitTerminated();
   }
 
-  private void processJob(LegacyPortabilityJob job) {
-
+  private void processJob(UUID jobId, LegacyPortabilityJob job) {
     PortableDataType dataType = PortableDataType.valueOf(job.dataType());
     try {
       Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
@@ -87,11 +87,11 @@ final class WorkerImpl {
       AuthData importAuthData = deSerialize(serializedImportAuthData);
       PortabilityCopier
           .copyDataType(registry, dataType, job.exportService(), exportAuthData,
-              job.importService(), importAuthData, job.id());
+              job.importService(), importAuthData, jobId);
     } catch (IOException e) {
-      logger.error("Error processing jobId: {}" + workerJobMetadata.getJobId(), e);
+      logger.error("Error processing jobId: {}" + jobId, e);
     } finally {
-      cloudFactory.clearJobData(job.id());
+      cloudFactory.clearJobData(jobId);
     }
   }
 

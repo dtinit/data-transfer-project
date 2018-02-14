@@ -75,7 +75,7 @@ final class LocalCopier {
           .generateAuthData(ioInterface);
     }
 
-    String jobId = UUID.randomUUID().toString();
+    UUID jobId = UUID.randomUUID();
 
     try {
       logger.info("Starting job {}", jobId);
