@@ -1,6 +1,6 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-public class GoogleContactsConstants {
+class GoogleContactsConstants {
 
   static final String SELF_RESOURCE = "people/me";
 
