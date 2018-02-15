@@ -92,9 +92,7 @@ public class JobPollingServiceTest {
     // no auth data should exist yet
     assertThat(job.getJobAuthorization().getEncryptedExportAuthData()).isNull();
     assertThat(job.getJobAuthorization().getEncryptedImportAuthData()).isNull();
-
-    //HERE
-
+    
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
     assertThat(metadata.isInitialized()).isTrue();

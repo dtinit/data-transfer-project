@@ -29,7 +29,6 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,9 +84,10 @@ class JobPollingService extends AbstractScheduledService {
     PublicKey publicKey = keyPair.getPublic();
     // TODO: Move storage of private key to a different location
     PrivateKey privateKey = keyPair.getPrivate();
-    // Executing Job State Transition from Unassigned to Assigned
+    // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth state
+    // CREDS_ENCRYPTION_KEY_GENERATED).
     try {
-      updateKeysGenerated(jobId, publicKey, privateKey);
+      keyGenerated(jobId, publicKey, privateKey);
       jobMetadata.init(jobId, keyPair);
       logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
           jobId, publicKey.getEncoded().length);
@@ -98,10 +98,10 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   /**
-   * Replaces a unassigned {@link LegacyPortabilityJob} in storage with the provided {@code jobId} in
-   * assigned state with {@code publicKey} and {@code privateKey}.
+   * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
+   * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
    */
-  private void updateKeysGenerated(UUID jobId, PublicKey publicKey, PrivateKey privateKey)
+  private void keyGenerated(UUID jobId, PublicKey publicKey, PrivateKey privateKey)
       throws IOException {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
