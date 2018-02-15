@@ -49,7 +49,7 @@ public class VCardToGoogleContactConverterTest {
   @Before
   public void setup() {
     defaultVCard = new VCard();
-    defaultVCard.setStructuredName(makeStructuredName("Haskell", "Curry", null));
+    defaultVCard.setStructuredName(makeStructuredName("Haskell", "Curry", CONTACT_SOURCE_TYPE));
   }
 
   @Test

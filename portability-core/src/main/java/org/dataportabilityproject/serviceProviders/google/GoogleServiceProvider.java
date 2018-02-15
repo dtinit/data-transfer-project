@@ -59,8 +59,8 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
  */
 final class GoogleServiceProvider implements ServiceProvider {
 
-  private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
-      .of(CALENDAR, MAIL, PHOTOS, TASKS, CONTACTS);
+  private static final ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES =
+      ImmutableList.of(CALENDAR, MAIL, PHOTOS, TASKS, CONTACTS);
 
   // The scopes necessary to read or write each PortableDataType and ServiceMode pair
   // Scopes for EXPORT should contain READONLY permissions

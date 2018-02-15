@@ -35,6 +35,7 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,8 +58,8 @@ public class VCardToGoogleContactConverter {
     person.setNames(Collections.singletonList(getPrimaryGoogleName(vCard.getStructuredNames())));
     // TODO(olsona): nicknames for other source-typed names?
     // TODO(olsona): can we *actually* add more than one name?
-      // No two names from the same source can be uploaded, and only names with source type CONTACT
-      // can be uploaded, but what about names with source type null?
+    // No two names from the same source can be uploaded, and only names with source type CONTACT
+    // can be uploaded, but what about names with source type null?
 
     if (vCard.getTelephoneNumbers() != null) {
       person.setPhoneNumbers(vCard.getTelephoneNumbers().stream()
@@ -81,14 +82,11 @@ public class VCardToGoogleContactConverter {
     name.setGivenName(vCardName.getGiven());
 
     FieldMetadata fieldMetadata = new FieldMetadata();
-    if (vCardName.getAltId() == null) {
-      fieldMetadata.setPrimary(true);
-    } else {
-      fieldMetadata.setPrimary(false);
-    }
+    boolean isPrimary = (vCardName.getAltId() == null);
+    fieldMetadata.setPrimary(isPrimary);
 
     String vCardNameSource = vCardName.getParameter(SOURCE_PARAM_NAME_TYPE);
-    if (vCardNameSource == null || vCardNameSource.equals(CONTACT_SOURCE_TYPE)) {
+    if (vCardNameSource.equals(CONTACT_SOURCE_TYPE)) {
       Source source = new Source().setType(vCardNameSource);
       fieldMetadata.setSource(source);
     }

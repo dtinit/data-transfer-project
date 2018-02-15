@@ -68,7 +68,8 @@ public class GoogleContactToVCardConverter {
     LinkedList<StructuredName> alternateStructuredNames = new LinkedList<>();
     for (Name personName : personNames) {
       StructuredName structuredName = convertToVCardNameSingle(personName);
-      if (personName.getMetadata().getPrimary() != null && personName.getMetadata().getPrimary()) {
+      Boolean isNamePrimary = personName.getMetadata().getPrimary();
+      if (isNamePrimary != null && isNamePrimary) {
         // This is the (a?) primary name for the Person, so it should be the primary name in the
         // VCard.
         primaryStructuredName = structuredName;

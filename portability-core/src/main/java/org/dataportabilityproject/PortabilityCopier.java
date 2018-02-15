@@ -86,8 +86,8 @@ public class PortabilityCopier {
       }
 
       // Start processing sub-resources
-      if (continuationInfo.getSubResources() != null && !continuationInfo.getSubResources()
-          .isEmpty()) {
+      if (continuationInfo.getSubResources() != null
+          && !continuationInfo.getSubResources().isEmpty()) {
         logger.debug("Start off a new copy iteration with a sub resource, size: {}",
             continuationInfo.getSubResources().size());
         for (Resource resource : continuationInfo.getSubResources()) {
