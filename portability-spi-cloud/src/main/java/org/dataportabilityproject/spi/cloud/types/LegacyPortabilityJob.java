@@ -64,15 +64,5 @@ public abstract class LegacyPortabilityJob {
       return autoBuild();
     }
   }
-
-  /** Represents this job as Map of key value pairs. */
-  public Map<String, Object> asMap() {
-    return new LegacyPortabilityJobConverter().doForward(this);
-  }
-
-  /** Creates a {@link LegacyPortabilityJob} from the data in the given {@code map}. */
-  public static LegacyPortabilityJob mapToJob(Map<String, Object> map) {
-    return new LegacyPortabilityJobConverter().doBackward(map);
-  }
 }
 

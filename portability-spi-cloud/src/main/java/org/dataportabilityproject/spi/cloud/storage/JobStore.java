@@ -24,7 +24,11 @@ public interface JobStore {
      * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
      * problem inserting the job.
      */
-    void create(UUID jobId, LegacyPortabilityJob job) throws IOException;
+    @Deprecated
+    default void create(UUID jobId, LegacyPortabilityJob job) throws IOException {
+        throw new UnsupportedOperationException(
+            "This shouldn't be called any more from the new, modular code");
+    }
 
     /**
      * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
@@ -34,9 +38,7 @@ public interface JobStore {
      * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
      * problem inserting the job.
      */
-    default void createJob(UUID jobId, PortabilityJob job) throws IOException {
-
-    }
+    void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
     /**
      * Atomically updates the entry for {@code job}'s ID to {@code job}, and verifies that it
@@ -45,8 +47,12 @@ public interface JobStore {
      * @throws IOException if the job was not in the expected state in the store, or there was
      * another problem updating it.
      */
-    void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
-        throws IOException;
+    @Deprecated
+    default void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState)
+        throws IOException {
+        throw new UnsupportedOperationException(
+            "This shouldn't be called any more from the new, modular code");
+    }
 
     /**
      * Atomically updates the entry for {@code job}'s ID to {@code job}.
@@ -54,8 +60,7 @@ public interface JobStore {
      * @throws IOException if the job was not in the expected state in the store, or there was
      * another problem updating it.
      */
-    default void updateJob(UUID jobId, PortabilityJob job) throws IOException {
-    }
+    void updateJob(UUID jobId, PortabilityJob job) throws IOException;
 
     /**
      * Removes the {@link LegacyPortabilityJob} in the store keyed by {@code jobId}.
@@ -67,17 +72,29 @@ public interface JobStore {
     /**
      * Returns the job for the id or null if not found.
      *
-     * @param id the job id
+     * @param jobId the job id
      */
-    default PortabilityJob findJob(UUID id) {
-        throw new UnsupportedOperationException();
-    }
+    PortabilityJob findJob(UUID jobId);
 
     /**
      * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, or null if none
      * found.
      */
-    LegacyPortabilityJob find(UUID jobId);
+    @Deprecated
+    default LegacyPortabilityJob find(UUID jobId) {
+        throw new UnsupportedOperationException(
+            "This shouldn't be called any more from the new, modular code");
+    }
+
+    /**
+     * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, and verify it is
+     * in state {@code jobState}.
+     */
+    @Deprecated
+    default LegacyPortabilityJob find(UUID jobId, JobAuthorization.State jobState) {
+        throw new UnsupportedOperationException(
+            "This shouldn't be called any more from the new, modular code");
+    }
 
     /**
      * Gets the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in the store,
@@ -109,12 +126,6 @@ public interface JobStore {
     default void removeData(UUID id) {
         throw new UnsupportedOperationException();
     }
-
-    /**
-     * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the store, and verify it is
-     * in state {@code jobState}.
-     */
-    LegacyPortabilityJob find(UUID jobId, JobAuthorization.State jobState);
 
     default void create(UUID jobId, String key, InputStream stream) {
         throw new UnsupportedOperationException();

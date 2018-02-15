@@ -79,10 +79,10 @@ public class LocalCloudFactory implements CloudFactory {
     if (commonSettings.getEncryptedFlow()) {
       this.jobStoreSupplier =
           Suppliers.memoize( () ->
-              new GoogleCloudDatastore(datastore, commonSettings.getEncryptedFlow()));
+              new GoogleCloudDatastore(datastore));
     } else {
       this.jobStoreSupplier =
-          Suppliers.memoize( () -> new InMemoryKeyValueStore(commonSettings.getEncryptedFlow()));
+          Suppliers.memoize( () -> new InMemoryKeyValueStore());
     }
   }
 

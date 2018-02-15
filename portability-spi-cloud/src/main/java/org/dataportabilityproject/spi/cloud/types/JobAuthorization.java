@@ -26,7 +26,7 @@ public class JobAuthorization extends EntityType {
   }
 
   @JsonProperty
-  private JobAuthorization.State state;
+  private State state;
 
   @JsonProperty
   private String encryptedExportAuthData;
