@@ -48,7 +48,7 @@ public final class InMemoryKeyValueStore implements JobStore {
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
     if (map.get(jobId) != null) {
-      throw new IOException("An entry already exists for job " + jobId);
+      throw new IOException("An entry already exists for jobId: " + jobId);
     }
     map.put(jobId, job.toMap());
   }
@@ -70,11 +70,11 @@ public final class InMemoryKeyValueStore implements JobStore {
     try {
       Map<String, Object> previousEntry = map.replace(jobId, job.toMap());
       if (previousEntry == null) {
-        throw new IOException("Job " + jobId + " didn't exist in the map");
+        throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
     } catch (NullPointerException e) {
       throw new IOException(
-          "Couldn't update job " + jobId, e);
+          "Couldn't update jobId: " + jobId, e);
     }
   }
 
@@ -87,7 +87,7 @@ public final class InMemoryKeyValueStore implements JobStore {
   public void remove(UUID jobId) throws IOException {
     Map<String, Object> previous = map.remove(jobId);
     if (previous == null) {
-      throw new IOException("Job " + jobId + " didn't exist in the map");
+      throw new IOException("jobId: " + jobId + " didn't exist in the map");
     }
   }
 

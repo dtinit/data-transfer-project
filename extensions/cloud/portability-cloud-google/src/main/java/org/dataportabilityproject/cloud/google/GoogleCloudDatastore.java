@@ -41,7 +41,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
@@ -72,7 +71,8 @@ public final class GoogleCloudDatastore implements JobStore {
     Entity shouldNotExist = transaction.get(getKey(jobId));
     if (shouldNotExist != null) {
       transaction.rollback();
-      throw new IOException("Record already exists for jobID " + jobId + ": " + shouldNotExist);
+      throw new IOException("Record already exists for jobID: " + jobId + ". Record: "
+          + shouldNotExist);
     }
     Entity entity = createEntity(jobId, job.toMap());
     try {
@@ -80,13 +80,13 @@ public final class GoogleCloudDatastore implements JobStore {
     } catch (DatastoreException e) {
       transaction.rollback();
       throw new IOException(
-          "Could not create initial record for jobID " + jobId + " (record: " + entity + ")", e);
+          "Could not create initial record for jobID: " + jobId + ". Record: " + entity, e);
     }
     transaction.commit();
   }
 
   /**
-   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code job},
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code job},
    * in Datastore using a {@link Transaction}.
    *
    * TODO(rtannenbaum): Consider validating authorization state was the previous one, when updating
@@ -104,7 +104,7 @@ public final class GoogleCloudDatastore implements JobStore {
       Entity previousEntity = transaction.get(key);
       if (previousEntity == null) {
         transaction.rollback();
-        throw new IOException("Could not find record for jobId " + jobId);
+        throw new IOException("Could not find record for jobId: " + jobId);
       }
 
       Entity newEntity = createEntity(key, job.toMap());
@@ -112,7 +112,7 @@ public final class GoogleCloudDatastore implements JobStore {
       transaction.commit();
     } catch (Throwable t) {
       transaction.rollback();
-      throw new IOException("Failed atomic update of job " + jobId, t);
+      throw new IOException("Failed atomic update of jobId: " + jobId, t);
     }
   }
 
@@ -126,7 +126,7 @@ public final class GoogleCloudDatastore implements JobStore {
     try {
       datastore.delete(getKey(jobId));
     } catch (DatastoreException e) {
-      throw new IOException("Could not remove job " + jobId, e);
+      throw new IOException("Could not remove jobId: " + jobId, e);
     }
   }
 
@@ -145,7 +145,7 @@ public final class GoogleCloudDatastore implements JobStore {
   }
 
   /**
-   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore,
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore,
    * or null if none found.
    *
    * TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
