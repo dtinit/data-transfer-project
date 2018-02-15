@@ -1,5 +1,8 @@
 package org.dataportabilityproject.spi.gateway.auth;
 
+import java.util.List;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
+
 /**
  * Factory responsible for providing {@link AuthDataGenerator} implementations.
  *
@@ -17,5 +20,17 @@ public interface AuthServiceProvider {
      *
      * @param transferDataType the data type
      */
-    AuthDataGenerator getAuthDataGenerator(String transferDataType);
+    AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode);
+
+    /**
+     * get supported import types
+     * @return The list of types that are supported for IMPORT AuthMode
+     */
+    List<String> getImportTypes();
+
+    /**
+     * get supported export types
+     * @return The list of types that are supported for EXPORT AuthMode
+     */
+    List<String> getExportTypes();
 }
