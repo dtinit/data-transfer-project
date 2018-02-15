@@ -17,70 +17,65 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts
-    .VCardToGoogleContactConverter.PRIMARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .VCARD_PRIMARY_PREF;
 
 import com.google.api.services.people.v1.model.EmailAddress;
-import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.gdata.util.common.base.Nullable;
 import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VCardToGoogleContactConverterTest {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(VCardToGoogleContactConverterTest.class);
-
-  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
-  private static final FieldMetadata SECONDARY_FIELD_METADATA =
-      new FieldMetadata().setPrimary(false);
-
-  private StructuredName defaultName;
   private VCard defaultVCard;
 
   @Before
   public void setup() {
     defaultVCard = new VCard();
-    defaultVCard.setStructuredName(makeStructuredName("Haskell", "Curry"));
+    defaultVCard.setStructuredName(makeStructuredName("Haskell", "Curry", CONTACT_SOURCE_TYPE));
   }
 
   @Test
   public void testConversionToGoogleNames() {
-    // Set up Person with a primary name and two secondary names
-    String primaryGivenName = "J. K.";
-    String primaryFamilyName = "Rowling";
-    StructuredName primaryName = makeStructuredName(primaryGivenName, primaryFamilyName);
+    // Set up Person with a primary name and one secondary name
+    String primaryGivenName = "Mark";
+    String primaryFamilyName = "Twain";
+    String primarySourceType = "CONTACT";
+    StructuredName primaryName = makeStructuredName(primaryGivenName, primaryFamilyName,
+        primarySourceType);
 
-    String alternateGivenName1 = "Joanne";
-    String alternateFamilyName1 = "Rowling";
-    StructuredName alternateName1 = makeStructuredName(alternateGivenName1, alternateFamilyName1);
-    String alternateGivenName2 = "Robert";
-    String alternateFamilyName2 = "Galbraith";
-    StructuredName alternateName2 = makeStructuredName(alternateGivenName2, alternateFamilyName2);
+    String altGivenName = "Samuel";
+    String altFamilyName = "Clemens";
+    String altSourceType = "PROFILE";
+    StructuredName altName = makeStructuredName(altGivenName, altFamilyName, altSourceType);
 
     VCard vCard = new VCard();
     vCard.addProperty(primaryName);
-    vCard.addPropertyAlt(StructuredName.class, Arrays.asList(alternateName2, alternateName1));
+    vCard.addPropertyAlt(StructuredName.class, Collections.singleton(altName));
 
     // Run test
     Person person = VCardToGoogleContactConverter.convert(vCard);
 
     // Check results
     // Correct number of names
-    assertThat(person.getNames().size()).isEqualTo(3);
+    assertThat(person.getNames().size()).isEqualTo(1);
 
     // Check primary names
     List<Name> actualPrimaryNames = person.getNames().stream()
@@ -88,18 +83,17 @@ public class VCardToGoogleContactConverterTest {
     List<Pair<String, String>> actualPrimaryNameValues = actualPrimaryNames.stream()
         .map(VCardToGoogleContactConverterTest::getGivenAndFamilyValues)
         .collect(Collectors.toList());
-    assertThat(actualPrimaryNameValues)
-        .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
+    assertThat(actualPrimaryNameValues).containsExactly(
+        Pair.of(primaryGivenName, primaryFamilyName));
+    List<String> actualPrimaryNameSourceValues = actualPrimaryNames.stream()
+        .map(a -> a.getMetadata().getSource().getType())
+        .collect(Collectors.toList());
+    assertThat(actualPrimaryNameSourceValues).containsExactly(primarySourceType);
 
-    // Check secondary names
+    // Check secondary names - there shouldn't be any
     List<Name> actualSecondaryNames = person.getNames().stream()
         .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<Pair<String, String>> actualSecondaryNameValues = actualSecondaryNames.stream()
-        .map(VCardToGoogleContactConverterTest::getGivenAndFamilyValues)
-        .collect(Collectors.toList());
-    assertThat(actualSecondaryNameValues)
-        .containsExactly(Pair.of(alternateGivenName1, alternateFamilyName1),
-            Pair.of(alternateGivenName2, alternateFamilyName2));
+    assertThat(actualSecondaryNames).isEmpty();
   }
 
   @Test
@@ -109,11 +103,11 @@ public class VCardToGoogleContactConverterTest {
     String secondaryString1 = "secondary1@email.com";
     String secondaryString2 = "secondary2@email.com";
     Email primaryEmail = new Email(primaryString);
-    primaryEmail.setPref(PRIMARY_PREF);
+    primaryEmail.setPref(VCARD_PRIMARY_PREF);
     Email secondaryEmail1 = new Email(secondaryString1);
-    secondaryEmail1.setPref(PRIMARY_PREF + 1);
+    secondaryEmail1.setPref(VCARD_PRIMARY_PREF + 1);
     Email secondaryEmail2 = new Email(secondaryString2);
-    secondaryEmail2.setPref(PRIMARY_PREF + 1);
+    secondaryEmail2.setPref(VCARD_PRIMARY_PREF + 1);
 
     // Add emails to vCard.  Order shouldn't matter.
     VCard vCard = defaultVCard;
@@ -150,11 +144,11 @@ public class VCardToGoogleContactConverterTest {
     String primaryValue2 = "411";
     String secondaryValue = "(555) 867-5309";
     Telephone primaryTelephone1 = new Telephone(primaryValue1);
-    primaryTelephone1.setPref(PRIMARY_PREF);
+    primaryTelephone1.setPref(VCARD_PRIMARY_PREF);
     Telephone primaryTelephone2 = new Telephone(primaryValue2);
-    primaryTelephone2.setPref(PRIMARY_PREF);
+    primaryTelephone2.setPref(VCARD_PRIMARY_PREF);
     Telephone secondaryTelephone = new Telephone(secondaryValue);
-    secondaryTelephone.setPref(PRIMARY_PREF + 1);
+    secondaryTelephone.setPref(VCARD_PRIMARY_PREF + 1);
 
     // Add numbers to vCard.  Order shouldn't matter.
     VCard vCard = defaultVCard;
@@ -188,10 +182,14 @@ public class VCardToGoogleContactConverterTest {
     return Pair.of(name.getGivenName(), name.getFamilyName());
   }
 
-  private static StructuredName makeStructuredName(String givenName, String familyName) {
+  private static StructuredName makeStructuredName(String givenName, String familyName,
+      @Nullable String sourceType) {
     StructuredName structuredName = new StructuredName();
     structuredName.setGiven(givenName);
     structuredName.setFamily(familyName);
+    if (sourceType != null) {
+      structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, sourceType);
+    }
     return structuredName;
   }
 

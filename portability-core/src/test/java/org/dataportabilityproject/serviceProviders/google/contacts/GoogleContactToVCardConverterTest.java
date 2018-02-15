@@ -17,16 +17,17 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts
-    .GoogleContactToVCardConverter.PRIMARY_PREF;
-import static org.dataportabilityproject.serviceProviders.google.contacts
-    .GoogleContactToVCardConverter.SECONDARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .VCARD_PRIMARY_PREF;
 
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.api.services.people.v1.model.Source;
 import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.parameter.VCardParameters;
@@ -44,9 +45,13 @@ import org.junit.Test;
 
 public class GoogleContactToVCardConverterTest {
 
-  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
+  private static final String DEFAULT_SOURCE_TYPE = "CONTACT";
+  private static final Source DEFAULT_SOURCE = new Source().setType(DEFAULT_SOURCE_TYPE);
+  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata()
+      .setSource(DEFAULT_SOURCE)
+      .setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
-      new FieldMetadata().setPrimary(false);
+      new FieldMetadata().setSource(DEFAULT_SOURCE).setPrimary(false);
   private static final Name DEFAULT_NAME = new Name().setFamilyName("Church").setGivenName("Alonzo")
       .setMetadata(PRIMARY_FIELD_METADATA);
   private static final Person DEFAULT_PERSON = new Person()
@@ -72,10 +77,10 @@ public class GoogleContactToVCardConverterTest {
 
     // Check results for correct values and preferences
     List<Email> resultPrimaryEmailList = getPropertiesWithPreference(vCard, Email.class,
-        PRIMARY_PREF);
+        VCARD_PRIMARY_PREF);
     assertThat(getValuesFromTextProperties(resultPrimaryEmailList)).containsExactly(primaryString);
     List<Email> resultSecondaryEmailList = getPropertiesWithPreference(vCard, Email.class,
-        SECONDARY_PREF);
+        VCARD_PRIMARY_PREF + 1);
     assertThat(getValuesFromTextProperties(resultSecondaryEmailList))
         .containsExactly(secondaryString1, secondaryString2);
   }
@@ -83,22 +88,26 @@ public class GoogleContactToVCardConverterTest {
   @Test
   public void testConversionToVCardNames() {
     // Set up Person with a primary name and two secondary names
-    String primaryGivenName = "J. K.";
-    String primaryFamilyName = "Rowling";
+    String primaryGivenName = "Mark";
+    String primaryFamilyName = "Twain";
     Name primaryName = new Name().setGivenName(primaryGivenName)
         .setFamilyName(primaryFamilyName)
         .setMetadata(PRIMARY_FIELD_METADATA);
 
-    String alternateGivenName1 = "Joanne";
-    String alternateFamilyName1 = "Rowling";
+    String alternateGivenName1 = "Samuel";
+    String alternateFamilyName1 = "Clemens";
+    String alternateSourceType1 = "PROFILE";
     Name alternateName1 = new Name().setGivenName(alternateGivenName1)
         .setFamilyName(alternateFamilyName1)
-        .setMetadata(SECONDARY_FIELD_METADATA);
-    String alternateGivenName2 = "Robert";
-    String alternateFamilyName2 = "Galbraith";
+        .setMetadata(new FieldMetadata().setPrimary(false)
+            .setSource(new Source().setType(alternateSourceType1)));
+    String alternateGivenName2 = "Louis";
+    String alternateFamilyName2 = "de Conte";
+    String alternateSourceType2 = "PEN_NAME";
     Name alternateName2 = new Name().setGivenName(alternateGivenName2)
         .setFamilyName(alternateFamilyName2)
-        .setMetadata(SECONDARY_FIELD_METADATA);
+        .setMetadata(new FieldMetadata().setPrimary(false)
+            .setSource(new Source().setType(alternateSourceType2)));
 
     // Order shouldn't matter
     Person person = new Person()
@@ -120,6 +129,10 @@ public class GoogleContactToVCardConverterTest {
         .collect(Collectors.toList());
     assertThat(actualPrimaryNamesValues)
         .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
+    List<String> actualPrimarySourceValues = actualPrimaryNames.stream()
+        .map(a -> a.getParameter(SOURCE_PARAM_NAME_TYPE))
+        .collect(Collectors.toList());
+    assertThat(actualPrimarySourceValues).containsExactly(DEFAULT_SOURCE_TYPE);
 
     // Check alternate names
     List<StructuredName> actualAlternateNames = structuredNames.stream()
@@ -131,6 +144,11 @@ public class GoogleContactToVCardConverterTest {
     assertThat(actualAlternateNamesValues).containsExactly(
         Pair.of(alternateGivenName1, alternateFamilyName1),
         Pair.of(alternateGivenName2, alternateFamilyName2));
+    List<String> actualAlternateSourceValues = actualAlternateNames.stream()
+        .map(a -> a.getParameter(SOURCE_PARAM_NAME_TYPE))
+        .collect(Collectors.toList());
+    assertThat(actualAlternateSourceValues)
+        .containsExactly(alternateSourceType1, alternateSourceType2);
   }
 
   @Test
@@ -153,11 +171,11 @@ public class GoogleContactToVCardConverterTest {
 
     // Check results for correct values and preferences
     List<Telephone> resultPrimaryPhoneList = getPropertiesWithPreference(vCard, Telephone.class,
-        PRIMARY_PREF);
+        VCARD_PRIMARY_PREF);
     assertThat(getValuesFromProperties(resultPrimaryPhoneList, Telephone::getText))
         .containsExactly(primaryValue1, primaryValue2);
     List<Telephone> resultSecondaryPhoneList = getPropertiesWithPreference(vCard, Telephone.class,
-        SECONDARY_PREF);
+        VCARD_PRIMARY_PREF + 1);
     assertThat(getValuesFromProperties(resultSecondaryPhoneList, Telephone::getText))
         .containsExactly(secondaryValue);
   }

@@ -23,4 +23,5 @@ public enum PortableDataType {
     MAIL,
     PHOTOS,
     TASKS,
+    CONTACTS,
 }
