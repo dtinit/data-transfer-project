@@ -41,7 +41,6 @@ public final class GoogleCloudFactory implements CloudFactory {
 
   @Inject
   public GoogleCloudFactory(
-      CommonSettings commonSettings,
       GoogleBucketStore googleBucketStore,
       GoogleCredentials googleCredentials,
       GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
@@ -52,7 +51,7 @@ public final class GoogleCloudFactory implements CloudFactory {
         .setCredentials(googleCredentials)
         .build()
         .getService();
-    this.jobStore = new GoogleCloudDatastore(datastore, commonSettings.getEncryptedFlow());
+    this.jobStore = new GoogleCloudDatastore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
   }
