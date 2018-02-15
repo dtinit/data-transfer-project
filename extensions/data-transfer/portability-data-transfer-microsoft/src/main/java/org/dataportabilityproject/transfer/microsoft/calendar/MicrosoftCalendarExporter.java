@@ -16,6 +16,7 @@
 package org.dataportabilityproject.transfer.microsoft.calendar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -56,6 +57,7 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
         this("https://graph.microsoft.com/", client, objectMapper, transformerService);
     }
 
+    @VisibleForTesting
     public MicrosoftCalendarExporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
         this.client = client;
         this.objectMapper = objectMapper;

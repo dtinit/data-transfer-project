@@ -42,7 +42,7 @@ import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper
 public class MicrosoftContactsImporter implements Importer<TokenAuthData, ContactsModelWrapper> {
     private static final String CONTACTS_URL = "me/contacts"; //must be relative for batch operations
 
-    private String baseUrl;
+    private final String baseUrl;
     private final OkHttpClient client;
     private final ObjectMapper objectMapper;
     private final TransformerService transformerService;

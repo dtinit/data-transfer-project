@@ -34,7 +34,7 @@ public class ToCalendarModelTransformerTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testTransform() throws IOException {
-        Map<String, Object> rawEvent = mapper.readValue(JSON, Map.class);
+        Map<String, Object> rawEvent = mapper.readValue(SAMPLE_CALENDAR, Map.class);
 
         CalendarModel calendar = transformer.apply(rawEvent, context);
         
@@ -50,7 +50,7 @@ public class ToCalendarModelTransformerTest {
         context = new TestTransformerContext();
     }
 
-    private static final String JSON = "{\n" +
+    private static final String SAMPLE_CALENDAR = "{\n" +
             "            \"id\": \"123\",\n" +
             "            \"name\": \"Calendar\",\n" +
             "            \"color\": \"auto\",\n" +

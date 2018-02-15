@@ -37,7 +37,7 @@ public class ToCalendarEventModelTransformerTest {
     @Test
     public void testTransform() throws IOException {
         context.setProperty(CALENDAR_ID, "123");
-        Map<String, Object> rawEvent = mapper.readValue(JSON, Map.class);
+        Map<String, Object> rawEvent = mapper.readValue(SAMPLE_CALENDAR_EVENT, Map.class);
 
         CalendarEventModel event = transformer.apply(rawEvent, context);
 
@@ -67,7 +67,7 @@ public class ToCalendarEventModelTransformerTest {
         context = new TestTransformerContext();
     }
 
-    private static final String JSON =
+    private static final String SAMPLE_CALENDAR_EVENT =
             "        {\n" +
                     "            \"@odata.etag\": \"W/\\\"J9QFpZ0REkSkaxRkN3kHHwAB54nFgA==\\\"\",\n" +
                     "            \"id\": \"567=\",\n" +

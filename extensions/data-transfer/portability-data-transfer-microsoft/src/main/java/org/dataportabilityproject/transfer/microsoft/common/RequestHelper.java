@@ -98,16 +98,16 @@ public class RequestHelper {
 
     public static class BatchResponse {
         private final ImportResult result;
-        private final List<Map<String, Object>> batchRespoonse;
+        private final List<Map<String, Object>> batchResponse;
 
-        public BatchResponse(ImportResult result, List<Map<String, Object>> batchRespoonse) {
+        public BatchResponse(ImportResult result, List<Map<String, Object>> batchResponse) {
             this.result = result;
-            this.batchRespoonse = batchRespoonse;
+            this.batchResponse = batchResponse;
         }
 
         public BatchResponse(ImportResult result) {
             this.result = result;
-            this.batchRespoonse = null;
+            this.batchResponse = null;
         }
 
         public ImportResult getResult() {
@@ -115,7 +115,7 @@ public class RequestHelper {
         }
 
         public List<Map<String, Object>> getBatchResponse() {
-            return batchRespoonse;
+            return batchResponse;
         }
     }
 

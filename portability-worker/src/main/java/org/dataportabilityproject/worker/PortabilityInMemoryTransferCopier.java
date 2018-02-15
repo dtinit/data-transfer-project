@@ -102,6 +102,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
     logger.debug("Finished export, results: {}", exportResult);
 
     logger.debug("Starting import");
+    // TODO, use job Id?
     importer.importItem("1", importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
 
