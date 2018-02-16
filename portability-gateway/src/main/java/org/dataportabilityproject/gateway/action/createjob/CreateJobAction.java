@@ -15,12 +15,13 @@
  */
 package org.dataportabilityproject.gateway.action.createjob;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
 import org.dataportabilityproject.gateway.crypto.SymmetricKeyGenerator;
@@ -29,9 +30,6 @@ import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.crypto.SecretKey;
-import java.util.UUID;
 
 /**
  * An {@link Action} that handles the initial creation of a job.
@@ -42,7 +40,6 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
       CreateJobAction.class);
 
   private final JobStore store;
-  private final ObjectMapper objectMapper;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
 
   @Inject
@@ -51,7 +48,6 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
       SymmetricKeyGenerator symmetricKeyGenerator
   ) {
     this.store = store;
-    this.objectMapper = new ObjectMapper();
     this.symmetricKeyGenerator = symmetricKeyGenerator;
   }
 
@@ -78,14 +74,14 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
         "Missing valid importService: %s", importService);
 
     // Create a new job and persist
-    String newId = UUID.randomUUID().toString();
+    UUID newId = UUID.randomUUID();
     SecretKey sessionKey = symmetricKeyGenerator.generate();
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
 
-    PortabilityJob job = createJob(newId, encodedSessionKey, dataType, exportService,
+    PortabilityJob job = createJob(encodedSessionKey, dataType, exportService,
         importService);
     try {
-      store.createJob(job);
+      store.createJob(newId, job);
     } catch (IOException e) {
       logger.warn("Error creating job with id: {}", newId, e);
       return CreateJobActionResponse.createWithError("Unable to create a new job");
@@ -101,23 +97,21 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
     String newId = UUID.randomUUID().toString();
     SecretKey sessionKey = symmetricKeyGenerator.generate();
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
-    return createJob(newId, encodedSessionKey, dataType, exportService, importService);
+    return createJob(encodedSessionKey, dataType, exportService, importService);
   }
 
 
   /**
    * Populates the initial state of the {@link PortabilityJob} instance.
    */
-  private static PortabilityJob createJob(String id, String sessionKey,
+  private static PortabilityJob createJob(String sessionKey,
       String dataType, String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "id missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
 
     PortabilityJob job = new PortabilityJob();
-    job.setId(id);
     job.setTransferDataType(dataType);
     job.setExportService(exportService);
     job.setImportService(importService);

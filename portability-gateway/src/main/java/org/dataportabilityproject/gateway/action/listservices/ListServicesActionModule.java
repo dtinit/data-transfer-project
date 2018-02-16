@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.action;
+package org.dataportabilityproject.gateway.action.listservices;
+
+import com.google.inject.AbstractModule;
+import org.dataportabilityproject.gateway.action.Action;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
 /**
- * Handles an action in the API server.
+ * Dependencies for the {@link ListServicesAction} and related classes.
  */
-public interface Action<Request, Response> {
+public final class ListServicesActionModule extends AbstractModule {
 
-  /** Handles the given {@code Request} and returns a {@code Response}. */
-  Response handle(Request request);
+  @Override
+  protected void configure() {
+    requireBinding(AuthServiceProviderRegistry.class);
+  }
 }

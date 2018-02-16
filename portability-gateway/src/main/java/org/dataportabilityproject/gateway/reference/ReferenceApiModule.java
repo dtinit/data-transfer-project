@@ -69,6 +69,8 @@ public class ReferenceApiModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    // TODO: Bind ApiSettings or migrate to launcher api context
+
     MapBinder<String, HttpHandler> mapbinder
         = MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
 
@@ -77,12 +79,13 @@ public class ReferenceApiModule extends AbstractModule {
     // all be handled by the ListServicesHandler below. To prevent this, each handler below should
     // validate the request URI that it is getting passed in.
     mapbinder.addBinding(DataTransferHandler.PATH).to(DataTransferHandler.class);
+    mapbinder.addBinding(ListDataTypesHandler.PATH).to(ListDataTypesHandler.class);
+    mapbinder.addBinding(ListServicesHandler.PATH).to(ListServicesHandler.class);
 
+    // TODO: Add additional bindings when ready
       /*
       mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
       mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
-      mapbinder.addBinding(ListDataTypesHandler.PATH).to(ListDataTypesHandler.class);
-      mapbinder.addBinding(ListServicesHandler.PATH).to(ListServicesHandler.class);
       mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
       mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
       mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);

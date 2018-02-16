@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
+package org.dataportabilityproject.gateway.action.listdatatypes;
 
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import com.google.inject.AbstractModule;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
 /**
- * Creates and encodes keys for asymmetric encryption.
+ * Dependencies for the {@link ListDataTypesAction} and related classes.
  */
-public interface AsymmetricKeyGenerator {
+public final class ListDataTypesActionModule extends AbstractModule {
 
-  /**
-   * Generates a {@link PublicKey}
-   */
-  KeyPair generate();
+  @Override
+  protected void configure() {
+    requireBinding(AuthServiceProviderRegistry.class);
+  }
 }

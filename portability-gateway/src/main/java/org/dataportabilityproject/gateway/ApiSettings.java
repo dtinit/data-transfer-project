@@ -22,7 +22,7 @@ import com.google.common.base.MoreObjects;
 
 
 /**
- * Settings for {@code PortabilityApiServer}.
+ * Settings for {@code ApiServer}.
  */
 public class ApiSettings {
   // TODO(rtannenbaum): Change these to URL types instead of String

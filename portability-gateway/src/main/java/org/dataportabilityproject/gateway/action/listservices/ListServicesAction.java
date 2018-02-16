@@ -19,7 +19,7 @@ import com.google.inject.Inject;
 import java.util.Set;
 import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
-import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,11 +33,11 @@ public final class ListServicesAction implements
   private static final Logger logger = LoggerFactory.getLogger(
       ListServicesAction.class);
 
-  private final TransferServiceProviderRegistry registry;
+  private final AuthServiceProviderRegistry registry;
 
   @Inject
   ListServicesAction(
-      TransferServiceProviderRegistry registry
+      AuthServiceProviderRegistry registry
   ) {
     this.registry = registry;
   }

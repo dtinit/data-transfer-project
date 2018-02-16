@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
+package org.dataportabilityproject.gateway.action.createjob;
 
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import com.google.inject.AbstractModule;
+import org.dataportabilityproject.gateway.crypto.SymmetricKeyGenerator;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /**
- * Creates and encodes keys for asymmetric encryption.
+ * Dependencies for the {@link CreateJobAction} and related classes.
  */
-public interface AsymmetricKeyGenerator {
+public final class CreateJobActionModule extends AbstractModule {
 
-  /**
-   * Generates a {@link PublicKey}
-   */
-  KeyPair generate();
+  @Override
+  protected void configure() {
+    requireBinding(JobStore.class);
+    requireBinding(SymmetricKeyGenerator.class);
+  }
 }

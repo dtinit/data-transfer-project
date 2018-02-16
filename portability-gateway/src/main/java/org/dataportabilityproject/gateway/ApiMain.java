@@ -40,7 +40,6 @@ public class ApiMain {
         logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
       }
     });
-    ApiFlags.parse();
 
     // TODO: Support other server implementations
     Injector injector = Guice.createInjector(new ReferenceApiModule());
