@@ -15,6 +15,7 @@
 */
 package org.dataportabilityproject.worker;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -27,7 +28,7 @@ import org.dataportabilityproject.job.CrypterFactory;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +63,9 @@ final class WorkerImpl {
     // Start the processing
     UUID jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
-    LegacyPortabilityJob job = store.find(jobId, JobAuthorization.State.CREDS_ENCRYPTED);
+    PortabilityJob job = store.findJob(jobId);
+    Preconditions.checkState(
+        job.getJobAuthorization().getState() == JobAuthorization.State.CREDS_ENCRYPTED);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class
@@ -77,17 +80,20 @@ final class WorkerImpl {
     jobPollingService.awaitTerminated();
   }
 
-  private void processJob(UUID jobId, LegacyPortabilityJob job) {
-    PortableDataType dataType = PortableDataType.valueOf(job.dataType());
+  private void processJob(UUID jobId, PortabilityJob job) {
+    PortableDataType dataType = PortableDataType.valueOf(job.getTransferDataType());
     try {
       Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
-      String serializedExportAuthData = decrypter.decrypt(job.encryptedExportAuthData());
+      JobAuthorization jobAuthorization = job.getJobAuthorization();
+      String serializedExportAuthData =
+          decrypter.decrypt(jobAuthorization.getEncryptedExportAuthData());
       AuthData exportAuthData = deSerialize(serializedExportAuthData);
-      String serializedImportAuthData = decrypter.decrypt(job.encryptedImportAuthData());
+      String serializedImportAuthData =
+          decrypter.decrypt(jobAuthorization.getEncryptedImportAuthData());
       AuthData importAuthData = deSerialize(serializedImportAuthData);
       PortabilityCopier
-          .copyDataType(registry, dataType, job.exportService(), exportAuthData,
-              job.importService(), importAuthData, jobId);
+          .copyDataType(registry, dataType, job.getExportService(), exportAuthData,
+              job.getImportService(), importAuthData, jobId);
     } catch (IOException e) {
       logger.error("Error processing jobId: {}" + jobId, e);
     } finally {

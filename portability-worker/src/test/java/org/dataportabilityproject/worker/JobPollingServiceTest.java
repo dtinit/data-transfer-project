@@ -25,7 +25,6 @@ import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,34 +92,36 @@ public class JobPollingServiceTest {
     // no auth data should exist yet
     assertThat(job.getJobAuthorization().getEncryptedExportAuthData()).isNull();
     assertThat(job.getJobAuthorization().getEncryptedImportAuthData()).isNull();
-
-    // TODO: Update this test once worker is using the new PortabilityJob
+    
     // Worker initiates the JobPollingService
-    // jobPollingService.runOneIteration();
-    // assertThat(metadata.isInitialized()).isTrue();
-    // assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
-    //
+    jobPollingService.runOneIteration();
+    assertThat(metadata.isInitialized()).isTrue();
+    assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
+
     // Verify assigned without auth data state
-    // job = store.find(TEST_ID);
-    // assertThat(job.jobState()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    // assertThat(job.workerInstancePublicKey()).isNotEmpty();
-    //
-    // // Client encrypts data and updates the job
-    // job = job.toBuilder()
-    //     .setEncryptedExportAuthData("dummy export data")
-    //     .setEncryptedImportAuthData("dummy import data")
-    //     .setJobState(JobAuthorization.State.CREDS_ENCRYPTED)
-    //     .build();
-    // store.update(TEST_ID, job, JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    //
-    // // Run another iteration of the polling service
-    // // Worker should pick up encrypted data and update job
-    // jobPollingService.runOneIteration();
-    // job = store.find(TEST_ID);
-    // assertThat(job.jobState()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
-    // assertThat(job.encryptedExportAuthData()).isNotEmpty();
-    // assertThat(job.encryptedImportAuthData()).isNotEmpty();
-    //
-    // store.remove(TEST_ID);
+    job = store.findJob(TEST_ID);
+    assertThat(job.getJobAuthorization().getState())
+        .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
+    assertThat(job.getJobAuthorization().getEncryptedPublicKey()).isNotEmpty();
+    assertThat(job.getJobAuthorization().getEncryptedPrivateKey()).isNotEmpty();
+
+    // Client encrypts data and updates the job
+    jobAuthorization = job.getJobAuthorization();
+    jobAuthorization.setEncryptedExportAuthData("dummy export data");
+    jobAuthorization.setEncryptedImportAuthData("dummy import data");
+    jobAuthorization.setState(State.CREDS_ENCRYPTED);
+    job.setJobAuthorization(jobAuthorization);
+    store.updateJob(TEST_ID, job);
+
+    // Run another iteration of the polling service
+    // Worker should pick up encrypted data and update job
+    jobPollingService.runOneIteration();
+    job = store.findJob(TEST_ID);
+    jobAuthorization = job.getJobAuthorization();
+    assertThat(jobAuthorization.getState()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
+    assertThat(jobAuthorization.getEncryptedExportAuthData()).isNotEmpty();
+    assertThat(jobAuthorization.getEncryptedExportAuthData()).isNotEmpty();
+
+    store.remove(TEST_ID);
   }
 }
