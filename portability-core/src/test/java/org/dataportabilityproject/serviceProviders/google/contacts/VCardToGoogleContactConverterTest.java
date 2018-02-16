@@ -24,6 +24,7 @@ import static org.dataportabilityproject.serviceProviders.google.contacts.Google
 import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
     .VCARD_PRIMARY_PREF;
 
+import com.google.api.services.people.v1.model.Address;
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
@@ -54,7 +55,7 @@ public class VCardToGoogleContactConverterTest {
 
   @Test
   public void testConversionToGoogleNames() {
-    // Set up Person with a primary name and one secondary name
+    // Set up vCard with a primary name and one secondary name
     String primaryGivenName = "Mark";
     String primaryFamilyName = "Twain";
     String primarySourceType = "CONTACT";
@@ -97,44 +98,49 @@ public class VCardToGoogleContactConverterTest {
   }
 
   @Test
-  public void testConversionToGoogleEmails() {
-    // Set up test: person with 1 primary email and 2 secondary emails
-    String primaryString = "primary@email.com";
-    String secondaryString1 = "secondary1@email.com";
-    String secondaryString2 = "secondary2@email.com";
-    Email primaryEmail = new Email(primaryString);
-    primaryEmail.setPref(VCARD_PRIMARY_PREF);
-    Email secondaryEmail1 = new Email(secondaryString1);
-    secondaryEmail1.setPref(VCARD_PRIMARY_PREF + 1);
-    Email secondaryEmail2 = new Email(secondaryString2);
-    secondaryEmail2.setPref(VCARD_PRIMARY_PREF + 1);
+  public void testConversionToGoogleAddresses() {
+    // Set up vCard with a primary address and a secondary address
+    String primaryStreet = "221B Baker St";
+    String primaryLocality = "London";
+    ezvcard.property.Address primaryAddress = new ezvcard.property.Address();
+    primaryAddress.setStreetAddress(primaryStreet);
+    primaryAddress.setLocality(primaryLocality);
+    primaryAddress.setPref(VCARD_PRIMARY_PREF);
 
-    // Add emails to vCard.  Order shouldn't matter.
+    String altStreet = "42 Wallaby Way";
+    String altLocality = "Sydney";
+    ezvcard.property.Address altAddress = new ezvcard.property.Address();
+    altAddress.setStreetAddress(altStreet);
+    altAddress.setLocality(altLocality);
+    altAddress.setPref(VCARD_PRIMARY_PREF + 1);
+
+    // Add addresses to vCard.  Order shouldn't matter.
     VCard vCard = defaultVCard;
-    vCard.addEmail(secondaryEmail1);
-    vCard.addEmail(primaryEmail);
-    vCard.addEmail(secondaryEmail2);
+    vCard.addAddress(primaryAddress);
+    vCard.addAddress(altAddress);
 
     // Run test
     Person person = VCardToGoogleContactConverter.convert(vCard);
 
     // Check results
-    // Correct number of emails
-    assertThat(person.getEmailAddresses().size()).isEqualTo(3);
+    // Check correct number of addresses
+    assertThat(person.getAddresses().size()).isEqualTo(2);
 
-    // Check primary email addresses
-    List<EmailAddress> actualPrimaryEmails = person.getEmailAddresses().stream()
+    // Check primary address
+    List<Address> actualPrimaryAddresses = person.getAddresses().stream()
         .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualPrimaryEmailsStrings = getValuesFromFields(actualPrimaryEmails,
-        EmailAddress::getValue);
-    assertThat(actualPrimaryEmailsStrings).containsExactly(primaryString);
+    assertThat(actualPrimaryAddresses.size()).isEqualTo(1);
+    List<String> actualPrimaryAddressStreets
+        = getValuesFromFields(actualPrimaryAddresses, Address::getStreetAddress);
+    assertThat(actualPrimaryAddressStreets).containsExactly(primaryStreet);
 
-    // Check secondary email addresses
-    List<EmailAddress> actualSecondaryEmails = person.getEmailAddresses().stream()
+    // Check secondary address
+    List<Address> actualSecondaryAddresses = person.getAddresses().stream()
         .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualSecondaryEmailsStrings = getValuesFromFields(actualSecondaryEmails,
-        EmailAddress::getValue);
-    assertThat(actualSecondaryEmailsStrings).containsExactly(secondaryString1, secondaryString2);
+    assertThat(actualSecondaryAddresses.size()).isEqualTo(1);
+    List<String> actualSecondaryAddressStreets =
+        getValuesFromFields(actualSecondaryAddresses, Address::getStreetAddress);
+    assertThat(actualSecondaryAddressStreets).containsExactly(altStreet);
   }
 
   @Test
@@ -176,6 +182,47 @@ public class VCardToGoogleContactConverterTest {
     List<String> actualSecondaryNumberStrings = getValuesFromFields(actualSecondaryNumbers,
         PhoneNumber::getValue);
     assertThat(actualSecondaryNumberStrings).containsExactly(secondaryValue);
+  }
+
+  @Test
+  public void testConversionToGoogleEmails() {
+    // Set up test: person with 1 primary email and 2 secondary emails
+    String primaryString = "primary@email.com";
+    String secondaryString1 = "secondary1@email.com";
+    String secondaryString2 = "secondary2@email.com";
+    Email primaryEmail = new Email(primaryString);
+    primaryEmail.setPref(VCARD_PRIMARY_PREF);
+    Email secondaryEmail1 = new Email(secondaryString1);
+    secondaryEmail1.setPref(VCARD_PRIMARY_PREF + 1);
+    Email secondaryEmail2 = new Email(secondaryString2);
+    secondaryEmail2.setPref(VCARD_PRIMARY_PREF + 1);
+
+    // Add emails to vCard.  Order shouldn't matter.
+    VCard vCard = defaultVCard;
+    vCard.addEmail(secondaryEmail1);
+    vCard.addEmail(primaryEmail);
+    vCard.addEmail(secondaryEmail2);
+
+    // Run test
+    Person person = VCardToGoogleContactConverter.convert(vCard);
+
+    // Check results
+    // Correct number of emails
+    assertThat(person.getEmailAddresses().size()).isEqualTo(3);
+
+    // Check primary email addresses
+    List<EmailAddress> actualPrimaryEmails = person.getEmailAddresses().stream()
+        .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
+    List<String> actualPrimaryEmailsStrings = getValuesFromFields(actualPrimaryEmails,
+        EmailAddress::getValue);
+    assertThat(actualPrimaryEmailsStrings).containsExactly(primaryString);
+
+    // Check secondary email addresses
+    List<EmailAddress> actualSecondaryEmails = person.getEmailAddresses().stream()
+        .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
+    List<String> actualSecondaryEmailsStrings = getValuesFromFields(actualSecondaryEmails,
+        EmailAddress::getValue);
+    assertThat(actualSecondaryEmailsStrings).containsExactly(secondaryString1, secondaryString2);
   }
 
   private static Pair<String, String> getGivenAndFamilyValues(Name name) {
