@@ -15,10 +15,11 @@
 */
 package org.dataportabilityproject.gateway.reference;
 
-import com.google.common.net.HttpHeaders;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
+import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
@@ -29,17 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIBuilder;
-
 /**
- * Contains utility functions for use by the PortabilityServer HttpHandlers
+ * Contains utility functions for use by the ReferenceApiServer HttpHandlers
  */
 public final class ReferenceApiUtils {
 
@@ -55,11 +54,6 @@ public final class ReferenceApiUtils {
   public static class FrontendConstantUrls {
     public static final String URL_NEXT_PAGE = "/next";
     public static final String URL_COPY_PAGE = "/copy";
-  }
-
-  /** Enumeration of possible modes for transfering data. */
-  public enum TransferMode {
-    EXPORT, IMPORT
   }
 
   /** Enumeration of http methods supported in the API reference implementation. */
@@ -127,9 +121,9 @@ public final class ReferenceApiUtils {
     return BaseEncoding.base64Url().encode(id.toString().getBytes(Charsets.UTF_8));
   }
 
-  public static String decodeId(String encoded) {
+  public static UUID decodeId(String encoded) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
-    return new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8);
+    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8));
   }
 
   /**
@@ -158,9 +152,9 @@ public final class ReferenceApiUtils {
   /**
    * Hack! For now, if we don't have export auth data, assume it's for export.
    */
-  public static TransferMode getTransferMode(Headers headers) {
+  public static AuthMode getAuthMode(Headers headers) {
     String exportAuthCookie = getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-    return (Strings.isNullOrEmpty(exportAuthCookie) ? TransferMode.EXPORT : TransferMode.IMPORT);
+    return (Strings.isNullOrEmpty(exportAuthCookie) ? AuthMode.EXPORT : AuthMode.IMPORT);
   }
 
 
@@ -168,8 +162,8 @@ public final class ReferenceApiUtils {
    * Encrypts the given {@code authData} with the session-based {@link SecretKey} and stores it as a
    * cookie in the provided headers.
    */
-  public static void setCookie(Headers headers, String encrypted, TransferMode transferMode) {
-    String cookieKey = (transferMode == TransferMode.EXPORT)
+  public static void setCookie(Headers headers, String encrypted, AuthMode authMode) {
+    String cookieKey = (authMode == AuthMode.EXPORT)
         ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
         : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
     HttpCookie cookie = new HttpCookie(cookieKey, encrypted);

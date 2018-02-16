@@ -40,13 +40,8 @@ public class ApiMain {
         logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
       }
     });
-<<<<<<< HEAD
 
-    ApiFlags.parse();
-=======
->>>>>>> added modules for actions, moved to use new AuthServiceProviderRegistry, removed API Flags, general cleanup
-
-    // TODO: Support other server implementations
+    // TODO: Support other server implementations, e.g. Jetty, Tomcat
     Injector injector = Guice.createInjector(new ReferenceApiModule());
 
     // Launch the application

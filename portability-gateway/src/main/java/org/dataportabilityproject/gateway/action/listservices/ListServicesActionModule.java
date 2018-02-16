@@ -16,7 +16,6 @@
 package org.dataportabilityproject.gateway.action.listservices;
 
 import com.google.inject.AbstractModule;
-import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
 /**

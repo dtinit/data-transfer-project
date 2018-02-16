@@ -18,7 +18,7 @@ package org.dataportabilityproject.gateway.action;
 import com.google.common.base.Strings;
 
 /**
- * Handles an action in the API server.
+ * Helper functions for validating action related data.
  */
 public final class ActionUtils {
 

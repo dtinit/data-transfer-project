@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 The Data-Portability Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,10 +52,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * HttpHandler for the {@link CreateJobAction}.
+ * TODO: rename to CreateJobHandler as well as client code as well
  */
 final class DataTransferHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
+  // TODO: rename to CreateJob as well as client code as well
   public static final String PATH = "/_/DataTransfer";
   public static final String ERROR_PATH = "/error";
   private final CreateJobAction createJobAction;
@@ -125,24 +127,12 @@ final class DataTransferHandler implements HttpHandler {
     // If present, store initial auth data for export services, e.g. used for oauth1
     if (authFlowConfiguration.getInitialAuthData() != null) {
 
-
-      // Modify the existing JobAuthorization to add initial data
-      JobAuthorization.Builder jobAuthorizationBuilder = job.jobAuthorization().toBuilder();
-      String serialized = objectMapper
-          .writeValueAsString(authFlowConfiguration.getInitialAuthData());
-      jobAuthorizationBuilder.setEncryptedInitialExportAuthData(serialized);
-      // Persist the updated PortabilityJob with the updated JobAuthorization
-<<<<<<< HEAD
-
-      PortabilityJob updatedPortabilityJob = job.toBuilder()
-          .setAndValidateJobAuthorization(jobAuthorizationBuilder.build()).build();
-      store.updateJob(actionResponse.getId(), updatedPortabilityJob);
-=======
-      job.jobAuthorization(jobAuthorization);
-
       // Retrieve and parse the session key from the job
-      String sessionKey = job.getJobAuthorization().getEncodedSessionKey();
+      String sessionKey = job.jobAuthorization().encryptedSessionKey();
       SecretKey key = symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(sessionKey));
+
+      // Ensure intial auth data for export has not already been set
+      Preconditions.checkState(Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
 
       // Serialize and encrypt the initial auth data
       String serialized = objectMapper
@@ -150,15 +140,14 @@ final class DataTransferHandler implements HttpHandler {
       String encryptedInitialAuthData = EncrypterFactory.create(key).encrypt(serialized);
 
       // Add the serialized and encrypted initial auth data to the job authorization
-      JobAuthorization jobAuthorization = job.getJobAuthorization();
-      // Ensure intial auth data for export has not already been set
-      Preconditions.checkState(Strings.isNullOrEmpty(jobAuthorization.getInitialExportAuthData()));
+      JobAuthorization updatedJobAuthorization = job.jobAuthorization().toBuilder()
+          .setEncryptedInitialExportAuthData(encryptedInitialAuthData).build();
 
       // Persist the updated PortabilityJob with the updated JobAuthorization
-      jobAuthorization.setInitialExportAuthData(encryptedInitialAuthData);
-      job.setJobAuthorization(jobAuthorization);
-      store.updateJob(actionResponse.getId(), job);
->>>>>>> Migrate oauth and submit handlers. Add decrytion.
+      PortabilityJob updatedPortabilityJob = job.toBuilder()
+          .setAndValidateJobAuthorization(updatedJobAuthorization).build();
+
+      store.updateJob(actionResponse.getId(), updatedPortabilityJob);
     }
 
     dataTransferResponse = new DataTransferResponse(request.getSource(),

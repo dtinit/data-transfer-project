@@ -18,7 +18,7 @@ group = 'org.dataportabilityproject'
 version = '1.0-SNAPSHOT'
 
 jar {
-    // TODO: consider fatjar plugin
+    // TODO: consider using the gradle fatjar plugin rather than this dependency jar building logic
     // Add dependencies
     from({
         (configurations.runtime).collect {
