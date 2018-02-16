@@ -42,8 +42,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VCardToGoogleContactConverterTest {
+
+  private static final Logger logger = LoggerFactory.getLogger(VCardToGoogleContactConverter.class);
 
   private VCard defaultVCard;
 
@@ -129,7 +133,6 @@ public class VCardToGoogleContactConverterTest {
     // Check primary address
     List<Address> actualPrimaryAddresses = person.getAddresses().stream()
         .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
-    assertThat(actualPrimaryAddresses.size()).isEqualTo(1);
     List<String> actualPrimaryAddressStreets
         = getValuesFromFields(actualPrimaryAddresses, Address::getStreetAddress);
     assertThat(actualPrimaryAddressStreets).containsExactly(primaryStreet);
@@ -137,7 +140,6 @@ public class VCardToGoogleContactConverterTest {
     // Check secondary address
     List<Address> actualSecondaryAddresses = person.getAddresses().stream()
         .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
-    assertThat(actualSecondaryAddresses.size()).isEqualTo(1);
     List<String> actualSecondaryAddressStreets =
         getValuesFromFields(actualSecondaryAddresses, Address::getStreetAddress);
     assertThat(actualSecondaryAddressStreets).containsExactly(altStreet);

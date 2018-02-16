@@ -153,13 +153,11 @@ public class GoogleContactToVCardConverterTest {
     // Check results for correct values and preferences
     List<Address> actualPrimaryAddressList =
         getPropertiesWithPreference(vCard, Address.class, VCARD_PRIMARY_PREF);
-    assertThat(actualPrimaryAddressList.size()).isEqualTo(1);
     assertThat(actualPrimaryAddressList.stream()
         .map(Address::getStreetAddress).collect(Collectors.toList()))
         .containsExactly(primaryStreet);
     List<Address> actualAltAddressList =
         getPropertiesWithPreference(vCard, Address.class, VCARD_PRIMARY_PREF + 1);
-    assertThat(actualAltAddressList.size()).isEqualTo(1);
     assertThat(actualAltAddressList.stream()
         .map(Address::getRegion).collect(Collectors.toList()))
         .containsExactly(altRegion);
