@@ -13,10 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.spi.cloud.extension;
 
-dependencies {
-    compile project(':portability-types-transfer')
-    compile project(':portability-api-launcher')
-    compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    compile("com.google.auto.value:auto-value:${autoValueVersion}")
+import org.dataportabilityproject.api.launcher.AbstractExtension;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+
+/**
+ * Cloud extensions implement this interface to be loaded in either a gateway or worker process.
+ */
+public interface CloudExtension extends AbstractExtension {
+
+    /**
+     * Returns the {@link JobStore} provided by the extension.
+     */
+    JobStore getJobStore();
+
 }
