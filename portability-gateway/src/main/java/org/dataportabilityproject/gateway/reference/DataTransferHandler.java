@@ -38,6 +38,7 @@ import org.dataportabilityproject.spi.cloud.types.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
@@ -99,11 +100,8 @@ final class DataTransferHandler implements HttpHandler {
         .add(HttpHeaders.SET_COOKIE, cookie.toString() + ReferenceApiUtils.COOKIE_ATTRIBUTES);
 
     // Initial auth flow url
-    AuthServiceProvider provider = registry.getServiceProvider(request.getSource());
-    Preconditions.checkNotNull(provider, "Provider not found for type: %s, service: %s",
-        request.getTransferDataType(), request.getSource());
-
-    AuthDataGenerator generator = provider.getAuthDataGenerator(request.getTransferDataType());
+    AuthDataGenerator generator = registry.getAuthDataGenerator(request.getSource(), request.getTransferDataType(),
+        AuthMode.EXPORT);
     Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
         request.getTransferDataType(), request.getSource());
 
@@ -125,7 +123,7 @@ final class DataTransferHandler implements HttpHandler {
       jobAuthorization.setInitialExportAuthData(serialized);
       // Persist the updated PortabilityJob with the updated JobAuthorization
       job.setJobAuthorization(jobAuthorization);
-      store.updateJob(job);
+      store.updateJob(actionResponse.getId(), job);
     }
 
     dataTransferResponse = new DataTransferResponse(request.getSource(),

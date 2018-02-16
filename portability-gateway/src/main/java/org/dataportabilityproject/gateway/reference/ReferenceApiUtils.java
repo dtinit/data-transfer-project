@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.apache.http.NameValuePair;
@@ -63,9 +64,9 @@ public final class ReferenceApiUtils {
     return params;
   }
 
-  public static String encodeId(String id) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(id));
-    return BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
+  public static String encodeId(UUID id) {
+    Preconditions.checkNotNull(id);
+    return BaseEncoding.base64Url().encode(id.toString().getBytes(Charsets.UTF_8));
   }
 
   /**
