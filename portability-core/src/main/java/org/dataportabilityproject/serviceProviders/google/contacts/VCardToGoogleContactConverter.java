@@ -35,20 +35,21 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VCardToGoogleContactConverter {
+class VCardToGoogleContactConverter {
 
   private static final Logger logger = LoggerFactory.getLogger(VCardToGoogleContactConverter.class);
 
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA = new FieldMetadata().setPrimary
       (false);
+
+  // TODO(olsona): can we guarantee that <VCARDPROPERTY>.getPref() will always return a value?
 
   @VisibleForTesting
   static Person convert(VCard vCard) {
@@ -60,6 +61,12 @@ public class VCardToGoogleContactConverter {
     // TODO(olsona): can we *actually* add more than one name?
     // No two names from the same source can be uploaded, and only names with source type CONTACT
     // can be uploaded, but what about names with source type null?
+
+    if (vCard.getAddresses() != null) {
+      person.setAddresses(vCard.getAddresses().stream()
+          .map(VCardToGoogleContactConverter::convertToGoogleAddress)
+          .collect(Collectors.toList()));
+    }
 
     if (vCard.getTelephoneNumbers() != null) {
       person.setPhoneNumbers(vCard.getTelephoneNumbers().stream()
@@ -111,6 +118,24 @@ public class VCardToGoogleContactConverter {
     }
 
     return convertToGoogleName(primaryVCardName);
+  }
+
+  private static com.google.api.services.people.v1.model.Address convertToGoogleAddress(ezvcard
+      .property.Address vCardAddress) {
+    com.google.api.services.people.v1.model.Address personAddress = new com.google.api.services
+        .people.v1.model.Address();
+
+    personAddress.setCountry(vCardAddress.getCountry());
+    personAddress.setRegion(vCardAddress.getRegion());
+    personAddress.setCity(vCardAddress.getLocality());
+    personAddress.setPostalCode(vCardAddress.getPostalCode());
+    personAddress.setStreetAddress(vCardAddress.getStreetAddress());
+    personAddress.setPoBox(vCardAddress.getPoBox());
+    personAddress.setExtendedAddress(vCardAddress.getExtendedAddress());
+    personAddress.setMetadata(vCardAddress.getPref() == VCARD_PRIMARY_PREF ?
+        PRIMARY_FIELD_METADATA : SECONDARY_FIELD_METADATA);
+
+    return personAddress;
   }
 
   private static PhoneNumber convertToGooglePhoneNumber(Telephone vCardTelephone) {
