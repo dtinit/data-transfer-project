@@ -17,6 +17,7 @@ package org.dataportabilityproject;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.DataModel;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PortabilityCopier {
+
   // TODO: Use better monitoring, this is a hack!
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityCopier.class);
@@ -41,7 +43,7 @@ public class PortabilityCopier {
       AuthData exportAuthData,
       String importService,
       AuthData importAuthData,
-      String jobId) throws IOException {
+      UUID jobId) throws IOException {
 
     Exporter<T> exporter = registry.getExporter(exportService, dataType, jobId, exportAuthData);
     Importer<T> importer = registry.getImporter(importService, dataType, jobId, importAuthData);
@@ -84,7 +86,8 @@ public class PortabilityCopier {
       }
 
       // Start processing sub-resources
-      if (continuationInfo.getSubResources() != null && !continuationInfo.getSubResources().isEmpty()) {
+      if (continuationInfo.getSubResources() != null
+          && !continuationInfo.getSubResources().isEmpty()) {
         logger.debug("Start off a new copy iteration with a sub resource, size: {}",
             continuationInfo.getSubResources().size());
         for (Resource resource : continuationInfo.getSubResources()) {

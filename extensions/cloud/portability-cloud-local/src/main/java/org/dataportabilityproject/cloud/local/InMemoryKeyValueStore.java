@@ -19,139 +19,106 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJobConverter;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
  * An in-memory {@link JobStore} implementation that uses a concurrent map as its
  * store.
  */
 public final class InMemoryKeyValueStore implements JobStore {
-  private final ConcurrentHashMap<String, Map<String, Object>> map;
-  private final boolean encryptedFlow;
+  private final ConcurrentHashMap<UUID, Map<String, Object>> map;
 
-  public InMemoryKeyValueStore(boolean encryptedFlow) {
+  public InMemoryKeyValueStore() {
     this.map = new ConcurrentHashMap<>();
-    this.encryptedFlow = encryptedFlow;
   }
 
   /**
-   * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in the map.
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
    *
-   * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
-   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
+   * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
    * problem inserting the job.
    */
   @Override
-  public synchronized void create(LegacyPortabilityJob job) throws IOException {
-    Preconditions.checkNotNull(job.id());
-    String jobId = job.id();
+  public void createJob(UUID jobId, PortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(jobId);
     if (map.get(jobId) != null) {
-      throw new IOException("An entry already exists for job " + jobId);
+      throw new IOException("An entry already exists for jobId: " + jobId);
     }
-    map.put(jobId, job.asMap());
+    map.put(jobId, job.toMap());
   }
 
   /**
-   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map, or null if not found.
+   * Atomically updates the entry for {@code job}'s ID to {@code job}.
+   *
+   * @throws IOException if the job was not in the expected state in the store, or there was
+   * another problem updating it.
+   *
+   * TODO(rtannenbaum): Consider validating authorization state was the previous one, when updating
+   * authorization state within this transaction. Previous API allowed for passing in of a previous
+   * expected state, but we shouldn't need to pass that in, given the context of the new state we
+   * should know what comes before it.
    */
   @Override
-  public LegacyPortabilityJob find(String key) {
-    if (!map.containsKey(key)) {
-      return null;
-    }
-    return LegacyPortabilityJob.mapToJob(map.get(key));
-  }
-
-  /**
-   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map, and verify it is in
-   * state {@code jobState}.
-   */
-  @Override
-  public LegacyPortabilityJob find(String jobId, JobState jobState) {
-    LegacyPortabilityJob job = find(jobId);
-    Preconditions.checkNotNull(job,
-        "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
-    Preconditions.checkState(job.jobState() == jobState,
-        "Expected job {} to be in state {}, but was {}", jobState, job.jobState());
-    return job;
-  }
-
-  /**
-   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in the map, or null
-   * if none found.
-   */
-  @Override
-  public synchronized String findFirst(JobState jobState) {
-    // Mimic an index lookup
-    for (Entry<String, Map<String, Object>> job : map.entrySet()) {
-      Map<String, Object> properties = job.getValue();
-      if (JobState.valueOf(properties.get(OldPortabilityJobConverter.JOB_STATE).toString())
-          == jobState) {
-        String jobId = job.getKey();
-        return jobId;
+  public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(jobId);
+    try {
+      Map<String, Object> previousEntry = map.replace(jobId, job.toMap());
+      if (previousEntry == null) {
+        throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
+    } catch (NullPointerException e) {
+      throw new IOException(
+          "Couldn't update jobId: " + jobId, e);
     }
-    return null;
   }
 
   /**
-   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in the map.
+   * Removes the {@link PortabilityJob} keyed by {@code jobId} in the map.
    *
    * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
    */
   @Override
-  public void remove(String jobId) throws IOException {
+  public void remove(UUID jobId) throws IOException {
     Map<String, Object> previous = map.remove(jobId);
     if (previous == null) {
-      throw new IOException("Job " + jobId + " didn't exist in the map");
+      throw new IOException("jobId: " + jobId + " didn't exist in the map");
     }
   }
 
   /**
-   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob}
-   * in the map, and verifies that it was previously in the expected {@code previousState}.
+   * Returns the job for the id or null if not found.
    *
-   * @throws IOException if the job was not in the expected state in the map, or there was another
-   * problem updating it.
+   * @param jobId the job id
    */
   @Override
-  public void update(LegacyPortabilityJob job, JobState previousState)
-      throws IOException{
-    Preconditions.checkNotNull(job.id());
-    String jobId = job.id();
-    try {
-      Map<String, Object> previousEntry = map.replace(jobId, job.asMap());
-      if (previousEntry == null) {
-        throw new IOException("Job " + jobId + " didn't exist in the map");
-      }
-      if (getJobState(previousEntry) != previousState) {
-        throw new IOException("Job " + jobId + " existed in an unexpected state. "
-            + "Expected: " + previousState + " but was: " + getJobState(previousEntry));
-      }
-    } catch (NullPointerException e) {
-      throw new IOException(
-          "Couldn't update job " + jobId + " from previous state " + previousState, e);
+  public PortabilityJob findJob(UUID jobId) {
+    if (!map.containsKey(jobId)) {
+      return null;
     }
+    return PortabilityJob.fromMap(map.get(jobId));
   }
 
   /**
-   * Return {@code data}'s {@link JobState}, or null if missing.
-   *
-   * @param data a {@link LegacyPortabilityJob}'s representation in {@link #map}.
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in the map, or null
+   * if none found.
    */
-  private JobState getJobState(Map<String, Object> data) {
-    Object jobState = data.get(OldPortabilityJobConverter.JOB_STATE);
-    // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
-    // in legacy non-encrypted case
-    if (!encryptedFlow) {
-      return jobState == null ? null : JobState.valueOf(jobState.toString());
+  @Override
+  public synchronized UUID findFirst(JobAuthorization.State jobState) {
+    // Mimic an index lookup
+    for (Entry<UUID, Map<String, Object>> job : map.entrySet()) {
+      Map<String, Object> properties = job.getValue();
+      if (JobAuthorization.State.valueOf(
+          properties.get(PortabilityJob.AUTHORIZATION_STATE).toString()) == jobState) {
+        UUID jobId = job.getKey();
+        return jobId;
+      }
     }
-    Preconditions.checkNotNull(jobState, "Job should never exist without a state");
-    return JobState.valueOf(jobState.toString());
+    return null;
   }
 }

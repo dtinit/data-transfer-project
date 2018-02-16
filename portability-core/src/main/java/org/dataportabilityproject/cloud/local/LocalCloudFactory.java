@@ -26,6 +26,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.dataportabilityproject.cloud.google.GoogleCloudDatastore;
@@ -52,12 +53,12 @@ public class LocalCloudFactory implements CloudFactory {
       CacheBuilder.newBuilder()
       .build(new CacheLoader<String, LoadingCache<String, JobDataCache>>() {
         @Override
-        public LoadingCache<String, JobDataCache> load(String jobId) throws Exception {
+        public LoadingCache<String, JobDataCache> load(String id) throws Exception {
           return CacheBuilder.newBuilder()
               .build(new CacheLoader<String, JobDataCache>() {
                 @Override
                 public JobDataCache load(String service) throws Exception {
-                  return new JobDataCacheImpl();
+                  return new InMemoryJobDataCache();
                 }
               });
         }
@@ -78,15 +79,15 @@ public class LocalCloudFactory implements CloudFactory {
     if (commonSettings.getEncryptedFlow()) {
       this.jobStoreSupplier =
           Suppliers.memoize( () ->
-              new GoogleCloudDatastore(datastore, commonSettings.getEncryptedFlow()));
+              new GoogleCloudDatastore(datastore));
     } else {
       this.jobStoreSupplier =
-          Suppliers.memoize( () -> new InMemoryKeyValueStore(commonSettings.getEncryptedFlow()));
+          Suppliers.memoize( () -> new InMemoryKeyValueStore());
     }
   }
 
   @Override
-  public JobDataCache getJobDataCache(String jobId, String service) {
+  public JobDataCache getJobDataCache(UUID jobId, String service) {
     logger.info("Returning local google datastore-based cache");
     return new GoogleJobDataCache(datastore, jobId, service);
   }
@@ -109,11 +110,11 @@ public class LocalCloudFactory implements CloudFactory {
   }
 
   @Override
-  public void clearJobData(String jobId) {
+  public void clearJobData(UUID jobId) {
     QueryResults<Key> results = datastore.run(Query.newKeyQueryBuilder()
         .setKind(USER_KEY_KIND)
         .setFilter(PropertyFilter.hasAncestor(
-            datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId)))
+            datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId.toString())))
         .build());
     results.forEachRemaining(datastore::delete);
   }

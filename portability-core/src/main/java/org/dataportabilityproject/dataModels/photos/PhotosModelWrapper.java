@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.dataModels.photos;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
@@ -46,5 +47,14 @@ public class PhotosModelWrapper implements DataModel {
   @Override
   public ContinuationInformation getContinuationInformation() {
     return continuationInformation;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("albums", albums)
+        .add("photos", photos)
+        .add("continuationInformation", continuationInformation)
+        .toString();
   }
 }

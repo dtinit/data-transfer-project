@@ -16,6 +16,7 @@
 package org.dataportabilityproject.serviceProviders.google;
 
 import static org.dataportabilityproject.shared.PortableDataType.CALENDAR;
+import static org.dataportabilityproject.shared.PortableDataType.CONTACTS;
 import static org.dataportabilityproject.shared.PortableDataType.MAIL;
 import static org.dataportabilityproject.shared.PortableDataType.PHOTOS;
 import static org.dataportabilityproject.shared.PortableDataType.TASKS;
@@ -23,6 +24,7 @@ import static org.dataportabilityproject.shared.PortableDataType.TASKS;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -39,6 +41,7 @@ import org.dataportabilityproject.dataModels.DataModel;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.serviceProviders.google.calendar.GoogleCalendarService;
+import org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsService;
 import org.dataportabilityproject.serviceProviders.google.mail.GoogleMailService;
 import org.dataportabilityproject.serviceProviders.google.piccasa.GooglePhotosService;
 import org.dataportabilityproject.serviceProviders.google.tasks.GoogleTaskService;
@@ -56,8 +59,8 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
  */
 final class GoogleServiceProvider implements ServiceProvider {
 
-  private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
-      .of(CALENDAR, MAIL, PHOTOS, TASKS);
+  private static final ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES =
+      ImmutableList.of(CALENDAR, MAIL, PHOTOS, TASKS, CONTACTS);
 
   // The scopes necessary to read or write each PortableDataType and ServiceMode pair
   // Scopes for EXPORT should contain READONLY permissions
@@ -80,9 +83,14 @@ final class GoogleServiceProvider implements ServiceProvider {
               .putAll(ServiceMode.IMPORT, Arrays.asList(TasksScopes.TASKS))
               .putAll(ServiceMode.EXPORT, Arrays.asList(TasksScopes.TASKS_READONLY))
               .build())
+          .put(CONTACTS, ImmutableListMultimap.<ServiceMode, String>builder()
+              .putAll(ServiceMode.IMPORT, Arrays.asList(PeopleServiceScopes.CONTACTS))
+              .putAll(ServiceMode.EXPORT, Arrays.asList(PeopleServiceScopes.CONTACTS_READONLY))
+              .build())
           .build();
 
-  private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new HashMap<>();
+  private final static Map<PortableDataType, Map<ServiceMode, GoogleAuth>> DATA_TYPE_AUTHS = new
+      HashMap<>();
 
   private final AppCredentials appCredentials;
 
@@ -141,6 +149,8 @@ final class GoogleServiceProvider implements ServiceProvider {
         return new GooglePhotosService(cred, jobDataCache);
       case TASKS:
         return new GoogleTaskService(cred, jobDataCache);
+      case CONTACTS:
+        return new GoogleContactsService(cred, jobDataCache);
       default:
         throw new IllegalArgumentException("Type " + type + " is not supported");
     }
@@ -164,6 +174,8 @@ final class GoogleServiceProvider implements ServiceProvider {
         return new GooglePhotosService(cred, jobDataCache);
       case TASKS:
         return new GoogleTaskService(cred, jobDataCache);
+      case CONTACTS:
+        return new GoogleContactsService(cred, jobDataCache);
       default:
         throw new IllegalArgumentException("Type " + type + " is not supported");
     }

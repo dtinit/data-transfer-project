@@ -17,6 +17,7 @@ package org.dataportabilityproject.shared.auth;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.UUID;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
@@ -30,12 +31,12 @@ public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator,
   }
 
   @Override
-  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, String id) throws IOException {
+  public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
     return AuthFlowInitiator.create(callbackBaseUrl + "/simplelogin");
   }
 
   @Override // online
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
+  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
       AuthData initialAuthData, String extra) throws IOException {
     Preconditions.checkArgument(initialAuthData == null, "initial auth data not expected");
     return PasswordAuthData.create(authCode, extra);

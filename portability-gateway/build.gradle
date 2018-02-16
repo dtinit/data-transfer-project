@@ -16,4 +16,8 @@
 
 dependencies {
     compile project(':portability-spi-cloud')
+    compile project(':portability-spi-gateway')
+
+    testCompile("junit:junit:${junitVersion}")
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }

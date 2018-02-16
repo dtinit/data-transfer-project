@@ -23,12 +23,13 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,8 +73,8 @@ class JobPollingService extends AbstractScheduledService {
    * object for this running instance of the worker.
    */
   private void pollForUnassignedJob() throws IOException {
-    String jobId = store.findFirst(JobState.PENDING_WORKER_ASSIGNMENT);
-    logger.debug("Polling for a job PENDING_WORKER_ASSIGNMENT");
+    UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
+    logger.debug("Polling for a job CREDS_AVAILABLE");
     if (jobId == null) {
       return;
     }
@@ -83,11 +84,12 @@ class JobPollingService extends AbstractScheduledService {
     PublicKey publicKey = keyPair.getPublic();
     // TODO: Move storage of private key to a different location
     PrivateKey privateKey = keyPair.getPrivate();
-    // Executing Job State Transition from Unassigned to Assigned
+    // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth state
+    // CREDS_ENCRYPTION_KEY_GENERATED).
     try {
-      updateJobStateToAssignedWithoutAuthData(jobId, publicKey, privateKey);
+      keyGenerated(jobId, publicKey, privateKey);
       jobMetadata.init(jobId, keyPair);
-      logger.debug("Updated job {} to ASSIGNED_WITHOUT_AUTH_DATA, publicKey length: {}",
+      logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
           jobId, publicKey.getEncoded().length);
     } catch (IOException e) {
       logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
@@ -96,41 +98,43 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   /**
-   * Replaces a unassigned {@link LegacyPortabilityJob} in storage with the provided {@code jobId} in
-   * assigned state with {@code publicKey} and {@code privateKey}.
+   * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
+   * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
    */
-  private void updateJobStateToAssignedWithoutAuthData(String jobId, PublicKey publicKey,
-      PrivateKey privateKey) throws IOException {
+  private void keyGenerated(UUID jobId, PublicKey publicKey, PrivateKey privateKey)
+      throws IOException {
     // Lookup the job so we can append to its existing properties.
-    // update will verify the job is still in the expected state when performing the update.
-    LegacyPortabilityJob existingJob = store.find(jobId);
+    PortabilityJob existingJob = store.findJob(jobId);
     // Verify no worker key
-    Preconditions.checkState(existingJob.workerInstancePublicKey() == null);
-    Preconditions.checkState(existingJob.workerInstancePrivateKey() == null);
+    JobAuthorization jobAuthorization = existingJob.getJobAuthorization();
+    Preconditions.checkNotNull(jobAuthorization);
+    Preconditions.checkState(jobAuthorization.getEncryptedPublicKey() == null);
+    Preconditions.checkState(jobAuthorization.getEncryptedPrivateKey() == null);
     // Populate job with keys to persist
     String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
     String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
 
-    LegacyPortabilityJob updatedJob = existingJob.toBuilder()
-        .setWorkerInstancePublicKey(encodedPublicKey)
-        .setWorkerInstancePrivateKey(encodedPrivateKey)
-        .setJobState(JobState.ASSIGNED_WITHOUT_AUTH_DATA)
-        .build();
-    store.update(updatedJob, JobState.PENDING_WORKER_ASSIGNMENT);
+    PortabilityJob updatedJob = existingJob;
+    jobAuthorization.setEncryptedPublicKey(encodedPublicKey);
+    jobAuthorization.setEncryptedPrivateKey(encodedPrivateKey);
+    jobAuthorization.setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
+    updatedJob.setJobAuthorization(jobAuthorization);
+    store.updateJob(jobId, updatedJob);
   }
 
   /**
    * Polls for job with populated auth data and stops this service when found.
    */
   private void pollUntilJobIsReady() {
-    String jobId = jobMetadata.getJobId();
-    LegacyPortabilityJob job = store.find(jobId);
+    UUID jobId = jobMetadata.getJobId();
+    PortabilityJob job = store.findJob(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
-    } else if (job.jobState() == JobState.ASSIGNED_WITH_AUTH_DATA) {
-      logger.debug("Polled job {} in state ASSIGNED_WITH_AUTH_DATA", jobId);
-      if (!Strings.isNullOrEmpty(job.encryptedExportAuthData())
-          && !Strings.isNullOrEmpty(job.encryptedImportAuthData())) {
+    } else if (job.getJobAuthorization().getState() == JobAuthorization.State.CREDS_ENCRYPTED) {
+      logger.debug("Polled job {} in state CREDS_ENCRYPTED", jobId);
+      JobAuthorization jobAuthorization = job.getJobAuthorization();
+      if (!Strings.isNullOrEmpty(jobAuthorization.getEncryptedExportAuthData())
+          && !Strings.isNullOrEmpty(jobAuthorization.getEncryptedImportAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
       } else {
         logger.warn("Polled job {} does not have auth data as expected. "
@@ -138,8 +142,8 @@ class JobPollingService extends AbstractScheduledService {
       }
       this.stopAsync();
     } else {
-      logger.debug("Polling job {} until it's in state ASSIGNED_WITH_AUTH_DATA. "
-          + "It's currently in state: {}", jobId, job.jobState());
+      logger.debug("Polling job {} until it's in state CREDS_ENCRYPTED. "
+          + "It's currently in state: {}", jobId, job.getJobAuthorization().getState());
     }
   }
 }

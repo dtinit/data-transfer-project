@@ -27,7 +27,6 @@ import com.google.cloud.datastore.LongValue;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
-import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
@@ -39,10 +38,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob.JobState;
-import org.dataportabilityproject.spi.cloud.types.OldPortabilityJobConverter;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -52,115 +51,52 @@ public final class GoogleCloudDatastore implements JobStore {
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
-  private final boolean encryptedFlow;
 
-  public GoogleCloudDatastore(Datastore datastore, boolean encryptedFlow) {
+  public GoogleCloudDatastore(Datastore datastore) {
     this.datastore = datastore;
-    this.encryptedFlow = encryptedFlow;
   }
 
   /**
-   * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in Datastore.
+   * Inserts a new {@link PortabilityJob} keyed by its job ID in Datastore.
    *
-   * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
-   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
+   * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
    * problem inserting the job.
    */
   @Override
-  public void create(LegacyPortabilityJob job) throws IOException {
-    Preconditions.checkNotNull(job.id());
-    String jobId = job.id();
+  public void createJob(UUID jobId, PortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
     Entity shouldNotExist = transaction.get(getKey(jobId));
     if (shouldNotExist != null) {
       transaction.rollback();
-      throw new IOException("Record already exists for jobID " + jobId + ": " + shouldNotExist);
+      throw new IOException("Record already exists for jobID: " + jobId + ". Record: "
+          + shouldNotExist);
     }
-    Entity entity = createEntity(jobId, job.asMap());
+    Entity entity = createEntity(jobId, job.toMap());
     try {
       transaction.put(entity);
     } catch (DatastoreException e) {
       transaction.rollback();
       throw new IOException(
-          "Could not create initial record for jobID " + jobId + " (record: " + entity + ")", e);
+          "Could not create initial record for jobID: " + jobId + ". Record: " + entity, e);
     }
     transaction.commit();
   }
 
   /**
-   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore, or null if none found.
-   */
-  @Override
-  public LegacyPortabilityJob find(String jobId) {
-    Entity entity = datastore.get(getKey(jobId));
-    if (entity == null) {
-      return null;
-    }
-    return LegacyPortabilityJob.mapToJob(getProperties(entity));
-  }
-
-  /**
-   * Finds the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore, and verify it is in
-   * state {@code jobState}.
-   */
-  @Override
-  public LegacyPortabilityJob find(String jobId, JobState jobState) {
-    LegacyPortabilityJob job = find(jobId);
-    Preconditions.checkNotNull(job,
-        "Expected job {} to be in state {}, but the job was not found", jobId, jobState);
-    Preconditions.checkState(job.jobState() == jobState,
-        "Expected job {} to be in state {}, but was {}", jobState, job.jobState());
-    return job;
-  }
-
-  /**
-   * Finds the ID of the first {@link LegacyPortabilityJob} in state {@code jobState} in Datastore, or null
-   * if none found.
-   */
-  @Override
-  public String findFirst(JobState jobState) {
-    Query<Entity> query = Query.newEntityQueryBuilder()
-        .setKind(KIND)
-        .setFilter(PropertyFilter.eq(OldPortabilityJobConverter.JOB_STATE, jobState.name()))
-        .setOrderBy(OrderBy.asc("created"))
-        .setLimit(1)
-        .build();
-    QueryResults<Entity> results = datastore.run(query);
-    if (!results.hasNext()) {
-      return null;
-    }
-    Entity entity = results.next();
-    return (String) entity.getValue(OldPortabilityJobConverter.ID_DATA_KEY).get();
-  }
-
-  /**
-   * Removes the {@link LegacyPortabilityJob} keyed by {@code jobId} in Datastore.
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code job},
+   * in Datastore using a {@link Transaction}.
    *
-   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   * TODO(rtannenbaum): Consider validating authorization state was the previous one, when updating
+   * authorization state within this transaction. Previous API allowed for passing in of a previous
+   * expected state, but we shouldn't need to pass that in, given the context of the new state we
+   * should know what comes before it.
    */
   @Override
-  public void remove(String jobId) throws IOException {
-    try {
-      datastore.delete(getKey(jobId));
-    } catch (DatastoreException e) {
-      throw new IOException("Could not remove job " + jobId, e);
-    }
-  }
-
-  /**
-   * Atomically updates the {@link LegacyPortabilityJob} keyed by {@code jobId} to {@code OldPortabilityJob},
-   * in Datastore using a {@link Transaction}, and verifies that it was previously in the expected
-   * {@code previousState}.
-   *
-   * @throws IOException if the job was not in the expected state in Datastore, or there was another
-   * problem updating it.
-   */
-  @Override
-  public void update(LegacyPortabilityJob job, JobState previousState)
-      throws IOException {
-    Preconditions.checkNotNull(job.id());
-    String jobId = job.id();
+  public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+    Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
     Key key = getKey(jobId);
 
@@ -168,21 +104,67 @@ public final class GoogleCloudDatastore implements JobStore {
       Entity previousEntity = transaction.get(key);
       if (previousEntity == null) {
         transaction.rollback();
-        throw new IOException("Could not find record for jobId " + jobId);
-      }
-      if (getJobState(previousEntity) != previousState) {
-        throw new IOException("Job " + jobId + " existed in an unexpected state. "
-            + "Expected: " + previousState + " but was: " + getJobState(previousEntity));
+        throw new IOException("Could not find record for jobId: " + jobId);
       }
 
-      Entity newEntity = createEntity(key, job.asMap());
+      Entity newEntity = createEntity(key, job.toMap());
       transaction.put(newEntity);
       transaction.commit();
     } catch (Throwable t) {
       transaction.rollback();
-      throw new IOException("Failed atomic update of job " + jobId + " (was state "
-          + previousState + ").", t);
+      throw new IOException("Failed atomic update of jobId: " + jobId, t);
     }
+  }
+
+  /**
+   * Removes the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
+   *
+   * @throws IOException if the job doesn't exist, or there was a different problem deleting it.
+   */
+  @Override
+  public void remove(UUID jobId) throws IOException {
+    try {
+      datastore.delete(getKey(jobId));
+    } catch (DatastoreException e) {
+      throw new IOException("Could not remove jobId: " + jobId, e);
+    }
+  }
+
+  /**
+   * Returns the job for the id or null if not found.
+   *
+   * @param jobId the job id
+   */
+  @Override
+  public PortabilityJob findJob(UUID jobId) {
+    Entity entity = datastore.get(getKey(jobId));
+    if (entity == null) {
+      return null;
+    }
+    return PortabilityJob.fromMap(getProperties(entity));
+  }
+
+  /**
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore,
+   * or null if none found.
+   *
+   * TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
+   * OrderBy.asc("created") currently fails because we don't yet have an index set up.
+   */
+  @Override
+  public UUID findFirst(JobAuthorization.State jobState) {
+    Query<Key> query = Query.newKeyQueryBuilder()
+        .setKind(KIND)
+        .setFilter(PropertyFilter.eq(PortabilityJob.AUTHORIZATION_STATE, jobState.name()))
+        //.setOrderBy(OrderBy.asc("created"))
+        .setLimit(1)
+        .build();
+    QueryResults<Key> results = datastore.run(query);
+    if (!results.hasNext()) {
+      return null;
+    }
+    Key key = results.next();
+    return UUID.fromString(key.getName());
   }
 
   private Entity createEntity(Key key, Map<String, Object> data) throws IOException {
@@ -210,7 +192,7 @@ public final class GoogleCloudDatastore implements JobStore {
     return builder.build();
   }
 
-  private Entity createEntity(String jobId, Map<String, Object> data) throws IOException {
+  private Entity createEntity(UUID jobId, Map<String, Object> data) throws IOException {
     return createEntity(getKey(jobId), data);
   }
 
@@ -251,23 +233,7 @@ public final class GoogleCloudDatastore implements JobStore {
     return builder.build();
   }
 
-  private Key getKey(String jobId) {
-    return datastore.newKeyFactory().setKind(KIND).newKey(jobId);
-  }
-
-  /**
-   * Return {@code entity}'s {@link JobState}, or null if missing.
-   *
-   * @param entity a {@link LegacyPortabilityJob}'s representation in {@link #datastore}.
-   */
-  private JobState getJobState(Entity entity) {
-    String jobState = entity.getString(OldPortabilityJobConverter.JOB_STATE);
-    // TODO: Remove null check once we enable encryptedFlow everywhere. Null should only be allowed
-    // in legacy non-encrypted case
-    if (!encryptedFlow) {
-      return jobState == null ? null : JobState.valueOf(jobState);
-    }
-    Preconditions.checkNotNull(jobState, "Job should never exist without a state");
-    return JobState.valueOf(jobState);
+  private Key getKey(UUID jobId) {
+    return datastore.newKeyFactory().setKind(KIND).newKey(jobId.toString());
   }
 }

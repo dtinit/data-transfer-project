@@ -15,26 +15,10 @@
  */
 package org.dataportabilityproject.types.transfer;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * A uniquely identifiable entity in the system.
+ *
+ * TODO(rtannenbaum): Remove this class (current PR has a lot in it, do it in a separate one)
  */
 public abstract class EntityType extends PortableType {
-    @JsonProperty
-    private String id;
-
-    /**
-     * Returns the unique identifier. A null value indicates the entity has not been persisted.
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Sets the unique identifier.
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
 }

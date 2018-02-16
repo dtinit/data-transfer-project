@@ -15,37 +15,46 @@
  */
 package org.dataportabilityproject.cloud.microsoft.cosmos;
 
+import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.DATA_TABLE;
+import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.JOB_TABLE;
+
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.types.transfer.models.DataModel;
-
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
-
-import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.DATA_TABLE;
-import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.JOB_TABLE;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * A {@link JobStore} backed by Cosmos DB. This implementation uses the DataStax Cassandra driver to communicate with Cosmos DB.
+ * A {@link JobStore} backed by Cosmos DB. This implementation uses the DataStax Cassandra driver to
+ * communicate with Cosmos DB.
  */
 public class CosmosStore implements JobStore {
-    static final String JOB_INSERT = String.format("INSERT INTO  %s (job_id, job_data) VALUES (?,?)", JOB_TABLE);
-    static final String JOB_QUERY = String.format("SELECT * FROM %s WHERE job_id = ?", JOB_TABLE);
-    static final String JOB_DELETE = String.format("DELETE FROM %s WHERE job_id = ?", JOB_TABLE);
-    static final String JOB_UPDATE = String.format("UPDATE %s SET job_data = ? WHERE job_id = ?", JOB_TABLE);
+    static final String JOB_INSERT =
+        String.format("INSERT INTO  %s (job_id, job_data) VALUES (?,?)", JOB_TABLE);
+    static final String JOB_QUERY =
+        String.format("SELECT * FROM %s WHERE job_id = ?", JOB_TABLE);
+    static final String JOB_DELETE =
+        String.format("DELETE FROM %s WHERE job_id = ?", JOB_TABLE);
+    static final String JOB_UPDATE =
+        String.format("UPDATE %s SET job_data = ? WHERE job_id = ?", JOB_TABLE);
 
-    static final String DATA_INSERT = String.format("INSERT INTO  %s (data_id, data_model) VALUES (?,?)", DATA_TABLE);
-    static final String DATA_QUERY = String.format("SELECT * FROM %s WHERE data_id = ?", DATA_TABLE);
-    static final String DATA_DELETE = String.format("DELETE FROM %s WHERE data_id = ?", DATA_TABLE);
-    static final String DATA_UPDATE = String.format("UPDATE %s SET data_model = ? WHERE data_id = ?", DATA_TABLE);
+    static final String DATA_INSERT =
+        String.format("INSERT INTO  %s (data_id, data_model) VALUES (?,?)", DATA_TABLE);
+    static final String DATA_QUERY =
+        String.format("SELECT * FROM %s WHERE data_id = ?", DATA_TABLE);
+    static final String DATA_DELETE =
+        String.format("DELETE FROM %s WHERE data_id = ?", DATA_TABLE);
+    static final String DATA_UPDATE =
+        String.format("UPDATE %s SET data_model = ? WHERE data_id = ?", DATA_TABLE);
 
     private final Session session;
     private final ObjectMapper mapper;
@@ -62,87 +71,60 @@ public class CosmosStore implements JobStore {
     }
 
     @Override
-    public void createJob(PortabilityJob job) {
-        if (job.getId() != null) {
-            throw new IllegalStateException("Job already created: " + job.getId());
-        }
-        UUID uuid = UUID.randomUUID();
-        job.setId(uuid.toString());
-        create(uuid, job, JOB_INSERT);
+    public void createJob(UUID jobId, PortabilityJob job) {
+        create(jobId, job, JOB_INSERT);
     }
 
     @Override
-    public void updateJob(PortabilityJob job) {
-        if (job.getId() == null) {
-            throw new IllegalStateException("Job not persisted: " + job.getId());
-        }
-        update(job.getId(), job, JOB_UPDATE);
+    public void updateJob(UUID jobId, PortabilityJob job) {
+        Preconditions.checkNotNull(jobId, "Job not persisted");
+        update(jobId, job, JOB_UPDATE);
     }
 
     @Override
-    public PortabilityJob findJob(String id) {
+    public PortabilityJob findJob(UUID id) {
         return findData(PortabilityJob.class, id, JOB_QUERY, "job_data");
     }
 
     @Override
-    public void remove(String id) {
+    public void remove(UUID id) {
         remove(id, JOB_DELETE);
     }
 
     @Override
-    public <T extends DataModel> void create(String jobId, T model) {
-        create(UUID.fromString(jobId), model, DATA_INSERT);
+    public <T extends DataModel> void create(UUID jobId, T model) {
+        create(jobId, model, DATA_INSERT);
     }
 
     @Override
-    public <T extends DataModel> void update(String jobId, T model) {
+    public <T extends DataModel> void update(UUID jobId, T model) {
         update(jobId, model, DATA_UPDATE);
     }
 
     @Override
-    public <T extends DataModel> T findData(Class<T> type, String id) {
+    public <T extends DataModel> T findData(Class<T> type, UUID id) {
         return findData(type, id, DATA_QUERY, "data_model");
     }
 
     @Override
-    public void removeData(String id) {
+    public void removeData(UUID id) {
         remove(id, DATA_DELETE);
     }
 
     @Override
-    public void create(String jobId, String key, InputStream stream) {
+    public void create(UUID jobId, String key, InputStream stream) {
         // TODO implement with Azure Blob Storage
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
-    public InputStream getStream(String jobId, String key) {
+    public InputStream getStream(UUID jobId, String key) {
         // TODO implement with Azure Blob Storage
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
-    public void create(LegacyPortabilityJob job) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void update(LegacyPortabilityJob job, LegacyPortabilityJob.JobState previousState) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LegacyPortabilityJob find(String jobId) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String findFirst(LegacyPortabilityJob.JobState jobState) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LegacyPortabilityJob find(String jobId, LegacyPortabilityJob.JobState jobState) {
+    public UUID findFirst(JobAuthorization.State jobState) {
         throw new UnsupportedOperationException();
     }
 
@@ -158,22 +140,22 @@ public class CosmosStore implements JobStore {
         }
     }
 
-    private void update(String id, Object instance, String query) {
+    private void update(UUID id, Object instance, String query) {
         PreparedStatement statement = session.prepare(query);
         BoundStatement boundStatement = new BoundStatement(statement);
         try {
             boundStatement.setString(0, mapper.writeValueAsString(instance));
-            boundStatement.setUUID(1, UUID.fromString(id));
+            boundStatement.setUUID(1, id);
             session.execute(boundStatement);
         } catch (JsonProcessingException e) {
             throw new MicrosoftStorageException("Error deleting data: " + id, e);
         }
     }
 
-    private <T> T findData(Class<T> type, String id, String query, String column) {
+    private <T> T findData(Class<T> type, UUID id, String query, String column) {
         PreparedStatement statement = session.prepare(query);
         BoundStatement boundStatement = new BoundStatement(statement);
-        boundStatement.bind(UUID.fromString(id));
+        boundStatement.bind(id);
 
         Row row = session.execute(boundStatement).one();
         String serialized = row.getString(column);
@@ -184,12 +166,10 @@ public class CosmosStore implements JobStore {
         }
     }
 
-    private void remove(String id, String query) {
+    private void remove(UUID id, String query) {
         PreparedStatement statement = session.prepare(query);
         BoundStatement boundStatement = new BoundStatement(statement);
-        boundStatement.setUUID(0, UUID.fromString(id));
+        boundStatement.setUUID(0, id);
         session.execute(boundStatement);
     }
-
-
 }
