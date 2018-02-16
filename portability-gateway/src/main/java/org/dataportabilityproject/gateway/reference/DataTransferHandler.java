@@ -122,6 +122,7 @@ final class DataTransferHandler implements HttpHandler {
           .writeValueAsString(authFlowConfiguration.getInitialAuthData());
       jobAuthorizationBuilder.setEncryptedInitialExportAuthData(serialized);
       // Persist the updated PortabilityJob with the updated JobAuthorization
+
       PortabilityJob updatedPortabilityJob = job.toBuilder()
           .setAndValidateJobAuthorization(jobAuthorizationBuilder.build()).build();
       store.updateJob(actionResponse.getId(), updatedPortabilityJob);
