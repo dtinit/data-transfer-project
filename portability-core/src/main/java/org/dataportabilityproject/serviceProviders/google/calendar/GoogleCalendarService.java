@@ -16,22 +16,15 @@
 package org.dataportabilityproject.serviceProviders.google.calendar;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventAttendee;
-import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
@@ -39,7 +32,6 @@ import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 import org.dataportabilityproject.dataModels.Resource;
-import org.dataportabilityproject.dataModels.calendar.CalendarAttendeeModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarEventModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
@@ -60,56 +52,6 @@ public class GoogleCalendarService
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
     this.jobDataCache = jobDataCache;
-  }
-
-  private static CalendarAttendeeModel transformToModelAttendee(EventAttendee attendee) {
-    return new CalendarAttendeeModel(attendee.getDisplayName(), attendee.getEmail(),
-        Boolean.TRUE.equals(attendee.getOptional()));
-  }
-
-  private static EventAttendee transformToEventAttendee(CalendarAttendeeModel attendee) {
-    return new EventAttendee()
-        .setDisplayName(attendee.getDisplayName())
-        .setEmail(attendee.getEmail())
-        .setOptional(attendee.isOptional());
-  }
-
-  private static CalendarEventModel.CalendarEventTime getEventTime(EventDateTime dateTime) {
-    if (dateTime == null) {
-      return null;
-    }
-
-    OffsetDateTime offsetDateTime;
-
-    if (dateTime.getDate() == null) {
-      offsetDateTime = OffsetDateTime.parse(dateTime.getDateTime().toString());
-    } else {
-      offsetDateTime = OffsetDateTime.from(
-          LocalDate.parse(dateTime.getDate().toString()).atStartOfDay(ZoneId.of("UTC")));
-    }
-
-    return new CalendarEventModel.CalendarEventTime(offsetDateTime, dateTime.getDate() != null);
-  }
-
-  private static EventDateTime getEventDateTime(CalendarEventModel.CalendarEventTime dateTime) {
-    if (dateTime == null) {
-      return null;
-    }
-
-    EventDateTime eventDateTime = new EventDateTime();
-
-    // google's APIs want millisecond from epoch, and the timezone offset in minutes.
-    if (dateTime.isDateOnly()) {
-      eventDateTime.setDate(new DateTime(true,
-          dateTime.getDateTime().toEpochSecond() * 1000,
-          dateTime.getDateTime().getOffset().getTotalSeconds() / 60));
-    } else {
-      eventDateTime.setDateTime(new DateTime(
-          dateTime.getDateTime().toEpochSecond() * 1000,
-          dateTime.getDateTime().getOffset().getTotalSeconds() / 60));
-    }
-
-    return eventDateTime;
   }
 
   @Override
@@ -134,10 +76,7 @@ public class GoogleCalendarService
     List<CalendarModel> calendarModels = new ArrayList<>(listResult.getItems().size());
     List<Resource> resources = new ArrayList<>(listResult.getItems().size());
     for (CalendarListEntry calendarData : listResult.getItems()) {
-      CalendarModel model = new CalendarModel(
-          calendarData.getId(),
-          calendarData.getSummary(),
-          calendarData.getDescription());
+      CalendarModel model = GoogleCalendarToModelConverter.convertToCalendarModel(calendarData);
       resources.add(new IdOnlyResource(calendarData.getId()));
       calendarModels.add(model);
     }
@@ -163,17 +102,8 @@ public class GoogleCalendarService
     Events listResult = listRequest.execute();
     List<CalendarEventModel> results = new ArrayList<>(listResult.getItems().size());
     for (Event eventData : listResult.getItems()) {
-      List<EventAttendee> attendees = eventData.getAttendees();
-      CalendarEventModel model = new CalendarEventModel(
-          id,
-          eventData.getDescription(),
-          eventData.getSummary(),
-          attendees == null ? null : attendees.stream()
-              .map(GoogleCalendarService::transformToModelAttendee)
-              .collect(Collectors.toList()),
-          eventData.getLocation(),
-          getEventTime(eventData.getStart()),
-          getEventTime(eventData.getEnd()));
+      CalendarEventModel model = GoogleCalendarToModelConverter
+          .convertToCalendarEventModel(id, eventData);
       results.add(model);
     }
 
@@ -193,26 +123,14 @@ public class GoogleCalendarService
   public void importItem(CalendarModelWrapper wrapper) throws IOException {
     for (CalendarModel calendar : wrapper.getCalendars()) {
       com.google.api.services.calendar.model.Calendar toInsert =
-          new com.google.api.services.calendar.model.Calendar()
-              .setSummary("Copy of - " + calendar.getName())
-              .setDescription(calendar.getDescription());
+          ModelToGoogleCalendarConverter.convertToGoogleCalendar(calendar);
       com.google.api.services.calendar.model.Calendar calendarResult =
           calendarClient.calendars().insert(toInsert).execute();
       jobDataCache.store(calendar.getId(), calendarResult.getId());
     }
 
     for (CalendarEventModel eventModel : wrapper.getEvents()) {
-      Event event = new Event()
-          .setLocation(eventModel.getLocation())
-          .setDescription(eventModel.getTitle())
-          .setSummary(eventModel.getNotes())
-          .setStart(getEventDateTime(eventModel.getStartTime()))
-          .setEnd(getEventDateTime(eventModel.getEndTime()));
-      if (eventModel.getAttendees() != null) {
-        event.setAttendees(eventModel.getAttendees().stream()
-            .map(GoogleCalendarService::transformToEventAttendee)
-            .collect(Collectors.toList()));
-      }
+      Event event = ModelToGoogleCalendarConverter.convertToGoogleCalendarEvent(eventModel);
       String newCalendarId = jobDataCache.getData(eventModel.getCalendarId(), String.class);
       calendarClient.events().insert(newCalendarId, event).execute();
     }
