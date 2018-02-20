@@ -35,8 +35,8 @@ import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
-import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
 import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
+import org.dataportabilityproject.shared.StringPaginationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,8 +74,8 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
     // Get next page, if we have a page token
     if (continuationInformation.getPaginationInformation().isPresent()) {
-      String pageToken = ((GooglePaginationInfo) continuationInformation.getPaginationInformation()
-          .get()).getPageToken();
+      String pageToken = ((StringPaginationToken) continuationInformation.getPaginationInformation()
+          .get()).getId();
       connectionsList.setPageToken(pageToken);
     }
 
@@ -101,9 +101,9 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
         .collect(Collectors.toList());
 
     // Determine if there's a next page
-    GooglePaginationInfo newPage = null;
+    StringPaginationToken newPage = null;
     if (response.getNextPageToken() != null) {
-      newPage = new GooglePaginationInfo(response.getNextPageToken());
+      newPage = new StringPaginationToken(response.getNextPageToken());
     }
 
     ContinuationInformation newContinuationInformation = null;
