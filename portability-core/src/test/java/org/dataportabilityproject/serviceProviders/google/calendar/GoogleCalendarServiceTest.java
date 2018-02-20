@@ -17,6 +17,7 @@ package org.dataportabilityproject.serviceProviders.google.calendar;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.calendar.Calendar;
@@ -38,6 +39,8 @@ import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
 import org.dataportabilityproject.shared.StringPaginationToken;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 
 public class GoogleCalendarServiceTest {
   private static final String CALENDAR_ID = "calendar_id";
@@ -58,7 +61,6 @@ public class GoogleCalendarServiceTest {
 
   @Before
   public void setup() throws IOException {
-    listResponse = mock(CalendarList.class);
     calendarCalendarList = mock(Calendar.CalendarList.class);
     listRequest = mock(Calendar.CalendarList.List.class);
 
@@ -69,22 +71,32 @@ public class GoogleCalendarServiceTest {
 
     when(calendarClient.calendarList()).thenReturn(calendarCalendarList);
     when(calendarCalendarList.list()).thenReturn(listRequest);
+  }
+
+  private void setUpSingleCalendarResponse() throws IOException {
+    listResponse = new CalendarList().setItems(Collections.singletonList(CALENDAR_LIST_ENTRY));
+
     when(listRequest.execute()).thenReturn(listResponse);
   }
 
   @Test
   public void testExportFirstSet() throws IOException {
+    setUpSingleCalendarResponse();
+
     // Looking at first page, with at least one page after it
     ExportInformation emptyExportInformation = new ExportInformation(Optional.empty(),
         Optional.empty());
     listResponse.setNextPageToken(NEXT_TOKEN);
 
-    when(listResponse.getItems()).thenReturn(Collections.singletonList(CALENDAR_LIST_ENTRY));
-
     // Run test
     CalendarModelWrapper wrapper = calendarService.export(emptyExportInformation);
 
     // Check results
+    // Verify correct methods were called
+    verify(calendarClient).calendarList();
+    verify(calendarCalendarList).list();
+    verify(listRequest).execute();
+
     // Check pagination token
     StringPaginationToken paginationToken = (StringPaginationToken) wrapper
         .getContinuationInformation().getPaginationInformation();
@@ -102,17 +114,22 @@ public class GoogleCalendarServiceTest {
 
   @Test
   public void testExportSubsequentSet() throws IOException {
+    setUpSingleCalendarResponse();
+
     // Looking at subsequent page, with no page after it
     ExportInformation nextPageExportInformation = new ExportInformation(Optional.empty(),
         Optional.of(new StringPaginationToken(NEXT_TOKEN)));
     listResponse.setNextPageToken(null);
 
-    when(listResponse.getItems()).thenReturn(Collections.singletonList(CALENDAR_LIST_ENTRY));
-
     // Run test
     CalendarModelWrapper wrapper = calendarService.export(nextPageExportInformation);
 
     // Check results
+    // Verify correct calls were made
+    InOrder inOrder = Mockito.inOrder(listRequest);
+    inOrder.verify(listRequest).setPageToken(NEXT_TOKEN);
+    inOrder.verify(listRequest).execute();
+
     // Check pagination token
     StringPaginationToken paginationToken = (StringPaginationToken) wrapper
         .getContinuationInformation().getPaginationInformation();
