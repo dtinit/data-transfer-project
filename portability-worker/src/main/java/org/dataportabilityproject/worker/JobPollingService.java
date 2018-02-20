@@ -111,7 +111,6 @@ class JobPollingService extends AbstractScheduledService {
     String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
 
     PortabilityJob updatedJob = existingJob.toBuilder()
-        // build() will validate that the appropriate fields are set for the new state
         .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
             .setEncryptedPublicKey(encodedPublicKey)
             .setEncryptedPrivateKey(encodedPrivateKey)
