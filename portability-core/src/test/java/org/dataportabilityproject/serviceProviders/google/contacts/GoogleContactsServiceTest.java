@@ -55,7 +55,7 @@ import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
-import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
+import org.dataportabilityproject.shared.StringPaginationToken;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -144,10 +144,10 @@ public class GoogleContactsServiceTest {
 
     // Check continuation information
     assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
-    GooglePaginationInfo googlePaginationInfo = (GooglePaginationInfo) wrapper
+    StringPaginationToken paginationToken = (StringPaginationToken) wrapper
         .getContinuationInformation()
         .getPaginationInformation();
-    assertThat(googlePaginationInfo.getPageToken()).isEqualTo(NEXT_PAGE_TOKEN);
+    assertThat(paginationToken.getId()).isEqualTo(NEXT_PAGE_TOKEN);
 
     // Check that the right number of VCards was returned
     Collection<VCard> vCardCollection = wrapper.getVCards();
@@ -160,7 +160,7 @@ public class GoogleContactsServiceTest {
 
     // Looking at a subsequent page, with no pages after it
     ExportInformation nextPageExportInformation = new ExportInformation(Optional.empty(),
-        Optional.of(new GooglePaginationInfo(NEXT_PAGE_TOKEN)));
+        Optional.of(new StringPaginationToken(NEXT_PAGE_TOKEN)));
     listConnectionsResponse.setNextPageToken(null);
 
     when(listConnectionsRequest.setPageToken(NEXT_PAGE_TOKEN)).thenReturn(listConnectionsRequest);

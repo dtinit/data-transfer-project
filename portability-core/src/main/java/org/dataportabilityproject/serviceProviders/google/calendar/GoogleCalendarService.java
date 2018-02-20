@@ -47,10 +47,14 @@ public class GoogleCalendarService
   private final JobDataCache jobDataCache;
 
   public GoogleCalendarService(Credential credential, JobDataCache jobDataCache) {
-    this.calendarClient = new Calendar.Builder(
+    this(new Calendar.Builder(
         GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
+        .build(), jobDataCache);
+  }
+
+  GoogleCalendarService(Calendar calendarClient, JobDataCache jobDataCache) {
+    this.calendarClient = calendarClient;
     this.jobDataCache = jobDataCache;
   }
 
@@ -116,7 +120,6 @@ public class GoogleCalendarService
         null,
         results,
         new ContinuationInformation(null, newPageInfo));
-
   }
 
   @Override
