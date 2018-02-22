@@ -106,19 +106,17 @@ class JobPollingService extends AbstractScheduledService {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
     // Verify no worker key
-    JobAuthorization jobAuthorization = existingJob.getJobAuthorization();
-    Preconditions.checkNotNull(jobAuthorization);
-    Preconditions.checkState(jobAuthorization.getEncryptedPublicKey() == null);
-    Preconditions.checkState(jobAuthorization.getEncryptedPrivateKey() == null);
     // Populate job with keys to persist
     String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
     String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
 
-    PortabilityJob updatedJob = existingJob;
-    jobAuthorization.setEncryptedPublicKey(encodedPublicKey);
-    jobAuthorization.setEncryptedPrivateKey(encodedPrivateKey);
-    jobAuthorization.setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    updatedJob.setJobAuthorization(jobAuthorization);
+    PortabilityJob updatedJob = existingJob.toBuilder()
+        .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
+            .setEncryptedPublicKey(encodedPublicKey)
+            .setEncryptedPrivateKey(encodedPrivateKey)
+            .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
+            .build())
+        .build();
     store.updateJob(jobId, updatedJob);
   }
 
@@ -130,11 +128,11 @@ class JobPollingService extends AbstractScheduledService {
     PortabilityJob job = store.findJob(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
-    } else if (job.getJobAuthorization().getState() == JobAuthorization.State.CREDS_ENCRYPTED) {
+    } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED) {
       logger.debug("Polled job {} in state CREDS_ENCRYPTED", jobId);
-      JobAuthorization jobAuthorization = job.getJobAuthorization();
-      if (!Strings.isNullOrEmpty(jobAuthorization.getEncryptedExportAuthData())
-          && !Strings.isNullOrEmpty(jobAuthorization.getEncryptedImportAuthData())) {
+      JobAuthorization jobAuthorization = job.jobAuthorization();
+      if (!Strings.isNullOrEmpty(jobAuthorization.encryptedExportAuthData())
+          && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
       } else {
         logger.warn("Polled job {} does not have auth data as expected. "
@@ -143,7 +141,7 @@ class JobPollingService extends AbstractScheduledService {
       this.stopAsync();
     } else {
       logger.debug("Polling job {} until it's in state CREDS_ENCRYPTED. "
-          + "It's currently in state: {}", jobId, job.getJobAuthorization().getState());
+          + "It's currently in state: {}", jobId, job.jobAuthorization().state());
     }
   }
 }

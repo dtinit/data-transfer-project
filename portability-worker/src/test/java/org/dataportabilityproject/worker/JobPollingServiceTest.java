@@ -64,34 +64,38 @@ public class JobPollingServiceTest {
     assertThat(job).isNull(); // No existing ready job
 
     // API inserts an job in initial authorization state
-    job = new PortabilityJob();
-    job.setTransferDataType(PortableDataType.PHOTOS.name());
-    job.setExportService("DummyExportService");
-    job.setImportService("DummyImportService");
-    JobAuthorization jobAuthorization = new JobAuthorization();
-    jobAuthorization.setState(State.INITIAL);
-    jobAuthorization.setEncryptedSessionKey("fooBar");
-    job.setJobAuthorization(jobAuthorization);
+    job = PortabilityJob.builder()
+        .setTransferDataType(PortableDataType.PHOTOS.name())
+        .setExportService("DummyExportService")
+        .setImportService("DummyImportService")
+        .setAndValidateJobAuthorization(JobAuthorization.builder()
+            .setState(State.INITIAL)
+            .setEncryptedSessionKey("fooBar")
+            .build())
+        .build();
     store.createJob(TEST_ID, job);
 
     // Verify initial authorization state
     job = store.findJob(TEST_ID);
-    assertThat(job.getJobAuthorization().getState()).isEqualTo(State.INITIAL);
+    assertThat(job.jobAuthorization().state()).isEqualTo(State.INITIAL);
     // no auth data should exist yet
-    assertThat(job.getJobAuthorization().getEncryptedExportAuthData()).isNull();
-    assertThat(job.getJobAuthorization().getEncryptedImportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
 
     // API atomically updates job to from 'initial' to 'creds available'
-    jobAuthorization.setState(State.CREDS_AVAILABLE);
-    job.setJobAuthorization(jobAuthorization);
+    job = job.toBuilder()
+        .setAndValidateJobAuthorization(job.jobAuthorization().toBuilder()
+            .setState(State.CREDS_AVAILABLE)
+            .build())
+        .build();
     store.updateJob(TEST_ID, job);
 
     // Verify 'creds available' state
     job = store.findJob(TEST_ID);
-    assertThat(job.getJobAuthorization().getState()).isEqualTo(State.CREDS_AVAILABLE);
+    assertThat(job.jobAuthorization().state()).isEqualTo(State.CREDS_AVAILABLE);
     // no auth data should exist yet
-    assertThat(job.getJobAuthorization().getEncryptedExportAuthData()).isNull();
-    assertThat(job.getJobAuthorization().getEncryptedImportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
     
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
@@ -100,27 +104,29 @@ public class JobPollingServiceTest {
 
     // Verify assigned without auth data state
     job = store.findJob(TEST_ID);
-    assertThat(job.getJobAuthorization().getState())
+    assertThat(job.jobAuthorization().state())
         .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    assertThat(job.getJobAuthorization().getEncryptedPublicKey()).isNotEmpty();
-    assertThat(job.getJobAuthorization().getEncryptedPrivateKey()).isNotEmpty();
+    assertThat(job.jobAuthorization().encryptedPublicKey()).isNotEmpty();
+    assertThat(job.jobAuthorization().encryptedPrivateKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
-    jobAuthorization = job.getJobAuthorization();
-    jobAuthorization.setEncryptedExportAuthData("dummy export data");
-    jobAuthorization.setEncryptedImportAuthData("dummy import data");
-    jobAuthorization.setState(State.CREDS_ENCRYPTED);
-    job.setJobAuthorization(jobAuthorization);
+    job = job.toBuilder()
+        .setAndValidateJobAuthorization(job.jobAuthorization().toBuilder()
+            .setEncryptedExportAuthData("dummy export data")
+            .setEncryptedImportAuthData("dummy import data")
+            .setState(State.CREDS_ENCRYPTED)
+            .build())
+        .build();
     store.updateJob(TEST_ID, job);
 
     // Run another iteration of the polling service
     // Worker should pick up encrypted data and update job
     jobPollingService.runOneIteration();
     job = store.findJob(TEST_ID);
-    jobAuthorization = job.getJobAuthorization();
-    assertThat(jobAuthorization.getState()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
-    assertThat(jobAuthorization.getEncryptedExportAuthData()).isNotEmpty();
-    assertThat(jobAuthorization.getEncryptedExportAuthData()).isNotEmpty();
+    JobAuthorization jobAuthorization = job.jobAuthorization();
+    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
+    assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
+    assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
 
     store.remove(TEST_ID);
   }
