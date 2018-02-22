@@ -65,7 +65,7 @@ final class WorkerImpl {
     logger.debug("Begin processing jobId: {}", jobId);
     PortabilityJob job = store.findJob(jobId);
     Preconditions.checkState(
-        job.getJobAuthorization().getState() == JobAuthorization.State.CREDS_ENCRYPTED);
+        job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
 
     // Only load the two providers that are doing actually work.
     // TODO(willard): Only load two needed services here, after converting service name to class
@@ -81,19 +81,19 @@ final class WorkerImpl {
   }
 
   private void processJob(UUID jobId, PortabilityJob job) {
-    PortableDataType dataType = PortableDataType.valueOf(job.getTransferDataType());
+    PortableDataType dataType = PortableDataType.valueOf(job.transferDataType());
     try {
       Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
-      JobAuthorization jobAuthorization = job.getJobAuthorization();
+      JobAuthorization jobAuthorization = job.jobAuthorization();
       String serializedExportAuthData =
-          decrypter.decrypt(jobAuthorization.getEncryptedExportAuthData());
+          decrypter.decrypt(jobAuthorization.encryptedExportAuthData());
       AuthData exportAuthData = deSerialize(serializedExportAuthData);
       String serializedImportAuthData =
-          decrypter.decrypt(jobAuthorization.getEncryptedImportAuthData());
+          decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
       AuthData importAuthData = deSerialize(serializedImportAuthData);
       PortabilityCopier
-          .copyDataType(registry, dataType, job.getExportService(), exportAuthData,
-              job.getImportService(), importAuthData, jobId);
+          .copyDataType(registry, dataType, job.exportService(), exportAuthData,
+              job.importService(), importAuthData, jobId);
     } catch (IOException e) {
       logger.error("Error processing jobId: {}" + jobId, e);
     } finally {
