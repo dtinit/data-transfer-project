@@ -21,6 +21,24 @@
  * Install Angular: `npm install -g @angular/cli`
  * Install modules: `npm install`
  * Test `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
+ 
+## IntelliJ setup
+The following instructions work for IntelliJ IDEA version 2017.2.6.
+ * Open IntelliJ -> Import Project
+ * Navigate to the 'data-portability' directory where you have git cloned the repo
+ * Import project from external model (Gradle) -> uncheck 'Create separate module per source set' -> Finish
+ * Enable annotation processing.
+    * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
+    * Check 'Enable annotation processing'
+    * Store generated sources relative to: 'Module content root' (not the default)
+ 
+#### Optional: Make IDE recognize generated AutoValue classes
+At this point, generated classes from AutoValue will currently be unrecognized by the IDE, which will make them appear underlined in red, but shouldn't cause any further problems. The following steps will make the IDE recognize the generated classes, but note that occasionally you need to do this multiple times since IntelliJ seems to forget the setting.
+ * Verify an AutoValue class is not recognized yet. e.g. in `PortabilityJob.java`, the generated class `AutoValue_PortabilityJob` should be unrecognized (underlined in red)
+ * In the left-hand project menu (Alt+1), right click on the class's module, e.g. `portability-spi-cloud`, and click "Build Module..."
+ * Verify there is now a `build/` directory inside the module
+ * Right click on `build/classes/java/main` -> Mark Directory as -> Generated sources root
+ * Verify `AutoValue_PortabilityJob` is now recognized
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored
