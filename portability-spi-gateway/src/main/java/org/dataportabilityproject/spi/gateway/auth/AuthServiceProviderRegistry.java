@@ -1,5 +1,7 @@
 package org.dataportabilityproject.spi.gateway.auth;
 
+import java.util.Set;
+
 /**
  * Manages {@link AuthServiceProvider}s registered in the system.
  */
@@ -15,6 +17,18 @@ public interface AuthServiceProviderRegistry {
    * requested.
    */
   AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType, AuthMode mode);
+
+  /**
+   * Returns the set of service ids that can transfered for the given {@code transferDataType}.
+   *
+   * @param transferDataType the transfer data type
+   */
+  Set<String> getServices(String transferDataType);
+
+  /**
+   * Returns the set of data types that support both import and export.
+   */
+  Set<String> getTransferDataTypes();
 
   /**
    * The AuthorizationMode to use for lookups.

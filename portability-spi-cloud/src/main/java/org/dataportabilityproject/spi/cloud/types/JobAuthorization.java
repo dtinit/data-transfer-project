@@ -33,6 +33,15 @@ public abstract class JobAuthorization {
   public abstract JobAuthorization.State state();
 
   @Nullable
+  @JsonProperty("encryptedInitialExportAuthData")
+  public abstract String encryptedInitialExportAuthData();
+
+  @Nullable
+  @JsonProperty("encryptedInitialImportAuthData")
+  public abstract String encryptedInitialImportAuthData();
+
+
+  @Nullable
   @JsonProperty("encryptedExportAuthData")
   public abstract String encryptedExportAuthData();
 
@@ -66,6 +75,12 @@ public abstract class JobAuthorization {
 
     @JsonProperty("state")
     public abstract Builder setState(JobAuthorization.State state);
+
+    @JsonProperty("encryptedInitialExportAuthData")
+    public abstract Builder setEncryptedInitialExportAuthData(String authData);
+
+    @JsonProperty("encryptedInitialImportAuthData")
+    public abstract Builder setEncryptedInitialImportAuthData(String authData);
 
     @JsonProperty("encryptedExportAuthData")
     public abstract Builder setEncryptedExportAuthData(String authData);
