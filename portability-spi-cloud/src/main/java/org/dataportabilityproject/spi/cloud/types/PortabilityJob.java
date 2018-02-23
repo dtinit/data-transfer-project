@@ -59,7 +59,7 @@ public abstract class PortabilityJob {
 
   public static PortabilityJob.Builder builder() {
     LocalDateTime now = LocalDateTime.now();
-    return new AutoValue_PortabilityJob.Builder()
+    return new org.dataportabilityproject.spi.cloud.types.AutoValue_PortabilityJob.Builder()
         .setState(State.NEW)
         .setCreatedTimestamp(now)
         .setLastUpdateTimestamp(now);

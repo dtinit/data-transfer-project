@@ -20,3 +20,16 @@ dependencies {
     compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
 }
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['build/classes/java','src/main/java']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
+}
