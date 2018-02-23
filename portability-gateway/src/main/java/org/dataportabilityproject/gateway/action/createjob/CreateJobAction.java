@@ -111,7 +111,10 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
 
-    PortabilityJob job = new PortabilityJob();
+    PortabilityJob job = PortabilityJob.builder().build();
+    /* ****************************************************************************************************************************************
+
+
     job.setTransferDataType(dataType);
     job.setExportService(exportService);
     job.setImportService(importService);
@@ -120,6 +123,8 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
     jobAuthorization.setEncryptedSessionKey(sessionKey);
     jobAuthorization.setState(JobAuthorization.State.INITIAL);
     job.setJobAuthorization(jobAuthorization);
+
+    */
     return job;
   }
 }

@@ -117,13 +117,14 @@ final class DataTransferHandler implements HttpHandler {
     if (authFlowConfiguration.getInitialAuthData() != null) {
 
       // Modify the existing JobAuthorization to add initial data
-      JobAuthorization jobAuthorization = job.getJobAuthorization();
+      JobAuthorization.Builder jobAuthorizationBuilder = job.jobAuthorization().toBuilder();
       String serialized = objectMapper
           .writeValueAsString(authFlowConfiguration.getInitialAuthData());
-      jobAuthorization.setInitialExportAuthData(serialized);
+      jobAuthorizationBuilder.setEncryptedInitialExportAuthData(serialized);
       // Persist the updated PortabilityJob with the updated JobAuthorization
-      job.setJobAuthorization(jobAuthorization);
-      store.updateJob(actionResponse.getId(), job);
+      PortabilityJob updatedPortabilityJob = job.toBuilder()
+          .setAndValidateJobAuthorization(jobAuthorizationBuilder.build()).build();
+      store.updateJob(actionResponse.getId(), updatedPortabilityJob);
     }
 
     dataTransferResponse = new DataTransferResponse(request.getSource(),

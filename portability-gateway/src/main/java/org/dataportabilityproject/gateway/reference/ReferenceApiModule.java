@@ -70,6 +70,7 @@ public class ReferenceApiModule extends AbstractModule {
   @Override
   protected void configure() {
     // TODO: Bind ApiSettings or migrate to launcher api context
+    // TODO: Bind actions in single or multiple modules
 
     MapBinder<String, HttpHandler> mapbinder
         = MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);

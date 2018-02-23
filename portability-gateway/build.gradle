@@ -48,6 +48,7 @@ dependencies {
     compile("com.google.inject.extensions:guice-multibindings:${guiceVersion}")
     compile("com.google.inject:guice:${guiceVersion}")
     compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
+    // Logging
     compile("org.slf4j:slf4j-api:${slf4jVersion}")
     compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 
