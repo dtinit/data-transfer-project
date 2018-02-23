@@ -24,11 +24,13 @@ dependencies {
 sourceSets {
     main {
         java {
+            // Includes generated AutoValue_ classes (build/classes/java) as source
             srcDirs = ['build/classes/java','src/main/java']
         }
     }
     test {
         java {
+            // Include test directories so we can build and run tests in IDE.
             srcDirs = ['src/test/java']
         }
     }
