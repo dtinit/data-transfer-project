@@ -6,6 +6,8 @@ target/
 .../gradle/
 **/gradlew
 **/gradlew.bat
+**/generated/
+**/src/main/resources/
 *.iml
 *.log
 config/local/secrets.csv
