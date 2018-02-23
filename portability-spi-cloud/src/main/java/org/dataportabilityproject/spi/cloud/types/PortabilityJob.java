@@ -59,7 +59,10 @@ public abstract class PortabilityJob {
 
   public static PortabilityJob.Builder builder() {
     LocalDateTime now = LocalDateTime.now();
-    return new AutoValue_PortabilityJob.Builder()
+    // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
+    // the class name due to a conflict in package names for our generated code, but the conflict
+    // doesn't cause any actual problems with building.
+    return new org.dataportabilityproject.spi.cloud.types.AutoValue_PortabilityJob.Builder()
         .setState(State.NEW)
         .setCreatedTimestamp(now)
         .setLastUpdateTimestamp(now);
