@@ -46,13 +46,13 @@ import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
  */
-public final class GoogleCloudDatastore implements JobStore {
+public final class GoogleJobStore implements JobStore {
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
 
-  public GoogleCloudDatastore(Datastore datastore) {
+  public GoogleJobStore(Datastore datastore) {
     this.datastore = datastore;
   }
 

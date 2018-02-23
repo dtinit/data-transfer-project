@@ -29,8 +29,8 @@ import com.google.common.cache.LoadingCache;
 import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.dataportabilityproject.cloud.google.GoogleCloudDatastore;
 import org.dataportabilityproject.cloud.google.GoogleJobDataCache;
+import org.dataportabilityproject.cloud.google.GoogleJobStore;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
@@ -79,7 +79,7 @@ public class LocalCloudFactory implements CloudFactory {
     if (commonSettings.getEncryptedFlow()) {
       this.jobStoreSupplier =
           Suppliers.memoize( () ->
-              new GoogleCloudDatastore(datastore));
+              new GoogleJobStore(datastore));
     } else {
       this.jobStoreSupplier =
           Suppliers.memoize( () -> new InMemoryKeyValueStore());

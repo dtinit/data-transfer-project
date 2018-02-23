@@ -18,6 +18,8 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
 
+    compile("com.google.apis:google-api-services-cloudkms:${googleKmsVersion}")
     compile("com.google.cloud:google-cloud-storage:${googleDatastoreVersion}")
     compile("com.google.cloud:google-cloud-datastore:${googleDatastoreVersion}")
+    compile("com.google.inject:guice:${guiceVersion}")
 }
