@@ -82,7 +82,7 @@ public class LocalCloudFactory implements CloudFactory {
               new GoogleJobStore(datastore));
     } else {
       this.jobStoreSupplier =
-          Suppliers.memoize( () -> new InMemoryKeyValueStore());
+          Suppliers.memoize( () -> new LocalJobStore());
     }
   }
 
