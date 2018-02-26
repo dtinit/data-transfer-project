@@ -3,8 +3,10 @@ package org.dataportabilityproject.transfer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProvider;
@@ -83,5 +85,27 @@ public class PortabilityTransferServiceProviderRegistry implements TransferServi
     TransferServiceProvider serviceProvider = serviceProviderMap.get(serviceId);
     Preconditions.checkArgument(serviceProvider != null);
     return serviceProvider.getImporter(transferDataType);
+  }
+
+  /**
+   * Returns the set of service ids that can transfered for the given {@code transferDataType}.
+   *
+   * @param transferDataType the transfer data type
+   */
+  @Override
+  public Set<String> getServices(String transferDataType) {
+    Preconditions.checkArgument(supportedExportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for export", transferDataType);
+    Preconditions.checkArgument(supportedImportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for import", transferDataType);
+    return serviceProviderMap.keySet();
+  }
+
+  /**
+   * Returns the set of data types that support both import and export.
+   */
+  @Override
+  public Set<String> getTransferDataTypes() {
+    return Sets.intersection(supportedExportTypes, supportedImportTypes);
   }
 }

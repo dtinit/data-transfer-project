@@ -16,12 +16,12 @@
 package org.dataportabilityproject.gateway.crypto;
 
 /**
- * Provides functionality to encrypt raw data.
+ * Provides functionality to decrypt encrypted data.
  */
-public interface Encrypter {
+public interface Decrypter {
 
   /**
-   * Encrypts the given {@code data}.
+   * Decrypts the given {@code encryptedData}.
    */
-  String encrypt(String data) ;
+  String decrypt(String encryptedData) ;
 }

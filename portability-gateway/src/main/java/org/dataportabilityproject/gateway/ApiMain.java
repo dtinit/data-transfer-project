@@ -41,7 +41,7 @@ public class ApiMain {
       }
     });
 
-    // TODO: Support other server implementations
+    // TODO: Support other server implementations, e.g. Jetty, Tomcat
     Injector injector = Guice.createInjector(new ReferenceApiModule());
 
     // Launch the application
