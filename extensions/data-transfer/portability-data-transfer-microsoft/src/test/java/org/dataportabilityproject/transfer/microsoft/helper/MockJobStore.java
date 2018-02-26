@@ -18,6 +18,7 @@ package org.dataportabilityproject.transfer.microsoft.helper;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 import java.io.IOException;
@@ -47,13 +48,28 @@ public class MockJobStore implements JobStore {
     }
 
     @Override
+    public void createJob(UUID jobId, PortabilityJob job) throws IOException {
+
+    }
+
+    @Override
     public void update(UUID jobId, LegacyPortabilityJob job, JobAuthorization.State previousState) throws IOException {
 
     }
 
     @Override
+    public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+        
+    }
+
+    @Override
     public void remove(UUID jobId) throws IOException {
 
+    }
+
+    @Override
+    public PortabilityJob findJob(UUID jobId) {
+        return null;
     }
 
     @Override

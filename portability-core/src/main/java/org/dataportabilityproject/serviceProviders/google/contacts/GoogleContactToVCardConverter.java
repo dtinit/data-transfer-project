@@ -1,5 +1,10 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
+    .VCARD_PRIMARY_PREF;
+
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
@@ -8,6 +13,7 @@ import com.google.api.services.people.v1.model.PhoneNumber;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import ezvcard.VCard;
+import ezvcard.property.Address;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
@@ -16,14 +22,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GoogleContactToVCardConverter {
+class GoogleContactToVCardConverter {
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactToVCardConverter.class);
-
-  @VisibleForTesting
-  static final int PRIMARY_PREF = 1;
-  @VisibleForTesting
-  static final int SECONDARY_PREF = 2;
 
   @VisibleForTesting
   static VCard convert(Person person) {
@@ -40,6 +41,11 @@ public class GoogleContactToVCardConverter {
         "At least one name must be present");
     convertToVCardNamesAndPopulate(vCard, person.getNames());
 
+    if (person.getAddresses() != null) {
+      // VCard API does not support adding multiple addresses at once
+      person.getAddresses().forEach(a -> vCard.addAddress(convertToVCardAddress(a)));
+    }
+
     if (person.getPhoneNumbers() != null) {
       // VCard API does not support adding multiple telephone numbers at once
       person.getPhoneNumbers().forEach(n -> vCard.addTelephoneNumber(convertToVCardTelephone(n)));
@@ -53,22 +59,14 @@ public class GoogleContactToVCardConverter {
     return vCard;
   }
 
-  private static Email convertToVCardEmail(EmailAddress personEmail) {
-    // TODO(olsona): address Email.displayName
-    // TODO(olsona): address Email.formattedType
-    Email email = new Email(personEmail.getValue());
-    email.setPref(getPref(personEmail.getMetadata()));
-
-    return email;
-  }
-
   private static void convertToVCardNamesAndPopulate(VCard vCard, List<Name> personNames) {
     // TODO(olsona): what if there's more than one primary name in a Google Contact?
     StructuredName primaryStructuredName = null;
     LinkedList<StructuredName> alternateStructuredNames = new LinkedList<>();
     for (Name personName : personNames) {
       StructuredName structuredName = convertToVCardNameSingle(personName);
-      if (personName.getMetadata().getPrimary()) {
+      Boolean isNamePrimary = personName.getMetadata().getPrimary();
+      if (isNamePrimary != null && isNamePrimary) {
         // This is the (a?) primary name for the Person, so it should be the primary name in the
         // VCard.
         primaryStructuredName = structuredName;
@@ -89,9 +87,27 @@ public class GoogleContactToVCardConverter {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
+    structuredName
+        .setParameter(SOURCE_PARAM_NAME_TYPE, personName.getMetadata().getSource().getType());
 
     // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
     return structuredName;
+  }
+
+  private static ezvcard.property.Address convertToVCardAddress(
+      com.google.api.services.people.v1.model.Address personAddress) {
+    ezvcard.property.Address vCardAddress = new ezvcard.property.Address();
+
+    vCardAddress.setCountry(personAddress.getCountry());
+    vCardAddress.setRegion(personAddress.getRegion());
+    vCardAddress.setLocality(personAddress.getCity());
+    vCardAddress.setPostalCode(personAddress.getPostalCode());
+    vCardAddress.setStreetAddress(personAddress.getStreetAddress());
+    vCardAddress.setPoBox(personAddress.getPoBox());
+    vCardAddress.setExtendedAddress(personAddress.getExtendedAddress());
+    vCardAddress.setPref(getPref(personAddress.getMetadata()));
+
+    return vCardAddress;
   }
 
   private static Telephone convertToVCardTelephone(PhoneNumber personNumber) {
@@ -100,8 +116,17 @@ public class GoogleContactToVCardConverter {
     return telephone;
   }
 
+  private static Email convertToVCardEmail(EmailAddress personEmail) {
+    // TODO(olsona): address Email.displayName
+    // TODO(olsona): address Email.formattedType
+    Email email = new Email(personEmail.getValue());
+    email.setPref(getPref(personEmail.getMetadata()));
+
+    return email;
+  }
+
   private static int getPref(FieldMetadata metadata) {
-    return metadata.getPrimary() ? PRIMARY_PREF : SECONDARY_PREF;
+    return metadata.getPrimary() ? VCARD_PRIMARY_PREF : VCARD_PRIMARY_PREF + 1;
   }
 
   private static boolean atLeastOneNamePresent(List<Name> personNames) {

@@ -21,6 +21,16 @@
  * Install Angular: `npm install -g @angular/cli`
  * Install modules: `npm install`
  * Test `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
+ 
+## IntelliJ setup
+The following instructions work for IntelliJ IDEA version 2017.2.6.
+ * Open IntelliJ -> Import Project
+ * Navigate to the 'data-portability' directory where you have git cloned the repo
+ * Import project from external model (Gradle) -> uncheck 'Create separate module per source set' -> Finish
+ * Enable annotation processing.
+    * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
+    * Check 'Enable annotation processing'
+    * Store generated sources relative to: 'Module content root' (not the default)
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored

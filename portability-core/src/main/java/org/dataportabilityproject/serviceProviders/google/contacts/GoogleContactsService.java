@@ -18,7 +18,6 @@ package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
 import com.google.api.services.people.v1.model.GetPeopleResponse;
 import com.google.api.services.people.v1.model.ListConnectionsResponse;
@@ -26,40 +25,35 @@ import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.common.annotations.VisibleForTesting;
 import ezvcard.VCard;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.Exporter;
 import org.dataportabilityproject.dataModels.Importer;
 import org.dataportabilityproject.dataModels.contacts.ContactsModelWrapper;
-import org.dataportabilityproject.serviceProviders.google.GooglePaginationInfo;
 import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
+import org.dataportabilityproject.shared.StringPaginationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Importer<ContactsModelWrapper> {
+
+  // TODO(olsona): next step is to merge existing contacts.
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactsService.class);
 
   private PeopleService peopleService;
   private JobDataCache jobDataCache;
 
-  @VisibleForTesting
-  static final String SELF_RESOURCE = "people/me";
-
-  @VisibleForTesting
-  // List of all fields we want to get from the Google Contacts API
-  // NB: this will have to be updated as we support more fields
-  static final String PERSON_FIELDS = "emailAddresses,names,phoneNumbers";
   // TODO(olsona): addresses next
 
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
-    // TODO(olsona): add permissions/scopes!
     this(new PeopleService.Builder(
         GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
@@ -77,17 +71,18 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Connections.List connectionsList = peopleService
         .people()
         .connections()
-        .list(SELF_RESOURCE);
+        .list(GoogleContactsConstants.SELF_RESOURCE);
 
     // Get next page, if we have a page token
     if (continuationInformation.getPaginationInformation().isPresent()) {
-      String pageToken = ((GooglePaginationInfo) continuationInformation.getPaginationInformation()
-          .get()).getPageToken();
+      String pageToken = ((StringPaginationToken) continuationInformation.getPaginationInformation()
+          .get()).getId();
       connectionsList.setPageToken(pageToken);
     }
 
     // Get list of connections (nb: not a list containing full info of each Person)
-    ListConnectionsResponse response = connectionsList.execute();
+    ListConnectionsResponse response = connectionsList.setPersonFields(
+        GoogleContactsConstants.PERSON_FIELDS).execute();
     List<Person> peopleList = response.getConnections();
 
     // Get list of resource names, then get list of Persons
@@ -97,7 +92,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     GetPeopleResponse batchResponse = peopleService.people()
         .getBatchGet()
         .setResourceNames(resourceNames)
-        .setPersonFields(PERSON_FIELDS)
+        .setPersonFields(GoogleContactsConstants.PERSON_FIELDS)
         .execute();
     List<PersonResponse> personResponseList = batchResponse.getResponses();
 
@@ -107,24 +102,30 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
         .collect(Collectors.toList());
 
     // Determine if there's a next page
-    GooglePaginationInfo newPage = null;
+    StringPaginationToken newPage = null;
     if (response.getNextPageToken() != null) {
-      newPage = new GooglePaginationInfo(response.getNextPageToken());
+      newPage = new StringPaginationToken(response.getNextPageToken());
     }
 
-    return new ContactsModelWrapper(vCards, new ContinuationInformation(null, newPage));
+    ContinuationInformation newContinuationInformation = null;
+    if (newPage != null) {
+      newContinuationInformation = new ContinuationInformation(null, newPage);
+    }
+    return new ContactsModelWrapper(vCards, newContinuationInformation);
   }
 
   @Override
   public void importItem(ContactsModelWrapper wrapper) throws IOException {
-    // TODO(olsona)
+    // TODO(olsona): continuation information
     // First, assume no ContinuationInformation
     Collection<VCard> vCardCollection = wrapper.getVCards();
     for (VCard vCard : vCardCollection) {
       Person person = VCardToGoogleContactConverter.convert(vCard);
       peopleService
           .people()
-          .createContact(person);
+          .createContact(person)
+          .execute();
+      logger.debug("Imported {}", person);
     }
   }
 }

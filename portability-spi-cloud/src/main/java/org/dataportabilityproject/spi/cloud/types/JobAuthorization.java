@@ -1,13 +1,17 @@
 package org.dataportabilityproject.spi.cloud.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.dataportabilityproject.types.transfer.EntityType;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.auto.value.AutoValue;
+import javax.annotation.Nullable;
 
 /**
  * Authorization data related to a job.
  */
-public class JobAuthorization extends EntityType {
-
+@AutoValue
+@JsonDeserialize(builder = JobAuthorization.Builder.class)
+public abstract class JobAuthorization {
   /**
    * The current authorization state of the job.
    */
@@ -25,70 +29,78 @@ public class JobAuthorization extends EntityType {
     CREDS_ENCRYPTED,
   }
 
-  @JsonProperty
-  private JobAuthorization.State state;
+  @JsonProperty("state")
+  public abstract JobAuthorization.State state();
 
-  @JsonProperty
-  private String encryptedExportAuthData;
+  @Nullable
+  @JsonProperty("encryptedInitialExportAuthData")
+  public abstract String encryptedInitialExportAuthData();
 
-  @JsonProperty
-  private String encryptedImportAuthData;
+  @Nullable
+  @JsonProperty("encryptedInitialImportAuthData")
+  public abstract String encryptedInitialImportAuthData();
 
-  @JsonProperty
-  private String encryptedSessionKey;
 
-  @JsonProperty
-  private String encryptedPublicKey;
+  @Nullable
+  @JsonProperty("encryptedExportAuthData")
+  public abstract String encryptedExportAuthData();
 
-  @JsonProperty
-  private String encryptedPrivateKey;
+  @Nullable
+  @JsonProperty("encryptedImportAuthData")
+  public abstract String encryptedImportAuthData();
 
-  public String getEncryptedExportAuthData() {
-    return encryptedExportAuthData;
+  @JsonProperty("encryptedSessionKey")
+  public abstract String encryptedSessionKey();
+
+  @Nullable
+  @JsonProperty("encryptedPublicKey")
+  public abstract String encryptedPublicKey();
+
+  @Nullable
+  @JsonProperty("encryptedPrivateKey")
+  public abstract String encryptedPrivateKey();
+
+  public static Builder builder() {
+    // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
+    // the class name due to a conflict in package names for our generated code, but the conflict
+    // doesn't cause any actual problems with building.
+    return new org.dataportabilityproject.spi.cloud.types.AutoValue_JobAuthorization.Builder()
+        .setState(State.INITIAL);
   }
 
-  public void setEncryptedExportAuthData(String encryptedExportAuthData) {
-    this.encryptedExportAuthData = encryptedExportAuthData;
-  }
+  public abstract Builder toBuilder();
 
-  public String getEncryptedImportAuthData() {
-    return encryptedImportAuthData;
-  }
+  @AutoValue.Builder
+  public abstract static class Builder {
+    @JsonCreator
+    private static Builder create() {
+      return JobAuthorization.builder();
+    }
 
-  public void setEncryptedImportAuthData(String encryptedImportAuthData) {
-    this.encryptedImportAuthData = encryptedImportAuthData;
-  }
+    @JsonProperty("state")
+    public abstract Builder setState(JobAuthorization.State state);
 
-  public String getEncryptedSessionKey() {
-    return encryptedSessionKey;
-  }
+    @JsonProperty("encryptedInitialExportAuthData")
+    public abstract Builder setEncryptedInitialExportAuthData(String authData);
 
-  public void setEncryptedSessionKey(String encryptedSessionKey) {
-    this.encryptedSessionKey = encryptedSessionKey;
-  }
+    @JsonProperty("encryptedInitialImportAuthData")
+    public abstract Builder setEncryptedInitialImportAuthData(String authData);
 
-  public String getEncryptedPublicKey() {
-    return encryptedPublicKey;
-  }
+    @JsonProperty("encryptedExportAuthData")
+    public abstract Builder setEncryptedExportAuthData(String authData);
 
-  public void setEncryptedPublicKey(String encryptedPublicKey) {
-    this.encryptedPublicKey = encryptedPublicKey;
-  }
+    @JsonProperty("encryptedImportAuthData")
+    public abstract Builder setEncryptedImportAuthData(String authData);
 
-  public String getEncryptedPrivateKey() {
-    return encryptedPrivateKey;
-  }
+    @JsonProperty("encryptedSessionKey")
+    public abstract Builder setEncryptedSessionKey(String sessionKey);
 
-  public void setEncryptedPrivateKey(String encryptedPrivateKey) {
-    this.encryptedPrivateKey = encryptedPrivateKey;
-  }
+    @JsonProperty("encryptedPublicKey")
+    public abstract Builder setEncryptedPublicKey(String publicKey);
 
-  public JobAuthorization.State getState() {
-    return state;
-  }
+    @JsonProperty("encryptedPrivateKey")
+    public abstract Builder setEncryptedPrivateKey(String privateKey);
 
-  public void setState(State state) {
-    this.state = state;
+    public abstract JobAuthorization build();
   }
-
 }

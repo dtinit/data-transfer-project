@@ -24,7 +24,8 @@ import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +41,7 @@ public class JobPollingServiceTest {
   private JobPollingService jobPollingService;
   private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
-  JobStore store = new InMemoryKeyValueStore(true);
+  JobStore store = new InMemoryKeyValueStore();
 
   @Before
   public void setUp()  throws Exception {
@@ -59,58 +60,73 @@ public class JobPollingServiceTest {
     // Run once with no data in the database
     jobPollingService.runOneIteration();
     assertThat(metadata.isInitialized()).isFalse();
-    LegacyPortabilityJob job = store.find(TEST_ID);
+    PortabilityJob job = store.findJob(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
-    // API inserts an job in state 'pending auth data'
-    store.create(TEST_ID,
-        LegacyPortabilityJob.builder()
-            .setDataType(PortableDataType.PHOTOS.name())
-            .setExportService("DummyExportService")
-            .setImportService("DummyImportService")
-            .setJobState(JobAuthorization.State.INITIAL).build());
+    // API inserts an job in initial authorization state
+    job = PortabilityJob.builder()
+        .setTransferDataType(PortableDataType.PHOTOS.name())
+        .setExportService("DummyExportService")
+        .setImportService("DummyImportService")
+        .setAndValidateJobAuthorization(JobAuthorization.builder()
+            .setState(State.INITIAL)
+            .setEncryptedSessionKey("fooBar")
+            .build())
+        .build();
+    store.createJob(TEST_ID, job);
 
-    // Verify initial state 'pending auth data'
-    job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.INITIAL);
-    assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
-    assertThat(job.importAuthData()).isNull();// no auth data should exist yet
+    // Verify initial authorization state
+    job = store.findJob(TEST_ID);
+    assertThat(job.jobAuthorization().state()).isEqualTo(State.INITIAL);
+    // no auth data should exist yet
+    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
 
-    // API atomically updates job to from 'pending auth data' to 'pending worker assignment'
-    job = job.toBuilder().setJobState(JobAuthorization.State.CREDS_AVAILABLE).build();
-    store.update(TEST_ID, job, JobAuthorization.State.INITIAL);
+    // API atomically updates job to from 'initial' to 'creds available'
+    job = job.toBuilder()
+        .setAndValidateJobAuthorization(job.jobAuthorization().toBuilder()
+            .setState(State.CREDS_AVAILABLE)
+            .build())
+        .build();
+    store.updateJob(TEST_ID, job);
 
-    // Verify 'pending worker assignment' state
-    job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.CREDS_AVAILABLE);
-    assertThat(job.exportAuthData()).isNull(); // no auth data should exist yet
-    assertThat(job.importAuthData()).isNull();// no auth data should exist yet
-
+    // Verify 'creds available' state
+    job = store.findJob(TEST_ID);
+    assertThat(job.jobAuthorization().state()).isEqualTo(State.CREDS_AVAILABLE);
+    // no auth data should exist yet
+    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+    
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
     assertThat(metadata.isInitialized()).isTrue();
     assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
 
     // Verify assigned without auth data state
-    job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    assertThat(job.workerInstancePublicKey()).isNotEmpty();
+    job = store.findJob(TEST_ID);
+    assertThat(job.jobAuthorization().state())
+        .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
+    assertThat(job.jobAuthorization().encryptedPublicKey()).isNotEmpty();
+    assertThat(job.jobAuthorization().encryptedPrivateKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
     job = job.toBuilder()
-        .setEncryptedExportAuthData("dummy export data")
-        .setEncryptedImportAuthData("dummy import data")
-        .setJobState(JobAuthorization.State.CREDS_ENCRYPTED)
+        .setAndValidateJobAuthorization(job.jobAuthorization().toBuilder()
+            .setEncryptedExportAuthData("dummy export data")
+            .setEncryptedImportAuthData("dummy import data")
+            .setState(State.CREDS_ENCRYPTED)
+            .build())
         .build();
-    store.update(TEST_ID, job, JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
+    store.updateJob(TEST_ID, job);
 
     // Run another iteration of the polling service
     // Worker should pick up encrypted data and update job
     jobPollingService.runOneIteration();
-    job = store.find(TEST_ID);
-    assertThat(job.jobState()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
-    assertThat(job.encryptedExportAuthData()).isNotEmpty();
-    assertThat(job.encryptedImportAuthData()).isNotEmpty();
+    job = store.findJob(TEST_ID);
+    JobAuthorization jobAuthorization = job.jobAuthorization();
+    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
+    assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
+    assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
 
     store.remove(TEST_ID);
   }
