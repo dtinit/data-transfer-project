@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 The Data-Portability Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
 import org.dataportabilityproject.gateway.crypto.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,19 +112,17 @@ public final class CreateJobAction implements
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
 
-    PortabilityJob job = PortabilityJob.builder().build();
-    /* ****************************************************************************************************************************************
-    PortabilityJob job = new PortabilityJob();
-    job.setTransferDataType(dataType);
-    job.setExportService(exportService);
-    job.setImportService(importService);
     // Job auth data
-    JobAuthorization jobAuthorization = new JobAuthorization();
-    jobAuthorization.setEncodedSessionKey(encodedSessionKey);
-    jobAuthorization.setState(JobAuthorization.State.INITIAL);
-    job.setJobAuthorization(jobAuthorization);
-    */
+    JobAuthorization jobAuthorization = JobAuthorization.builder()
+        .setEncryptedSessionKey(encodedSessionKey)
+        .setState(JobAuthorization.State.INITIAL)
+        .build();
 
-    return job;
+    return PortabilityJob.builder()
+        .setTransferDataType(dataType)
+        .setExportService(exportService)
+        .setImportService(importService)
+        .setAndValidateJobAuthorization(jobAuthorization)
+        .build();
   }
 }

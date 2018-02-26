@@ -187,3 +187,4 @@ final class Oauth2CallbackHandler implements HttpHandler {
     return redirect;
   }
 }
+

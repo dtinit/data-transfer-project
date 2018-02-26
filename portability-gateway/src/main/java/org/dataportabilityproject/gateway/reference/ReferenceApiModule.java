@@ -82,23 +82,16 @@ public class ReferenceApiModule extends AbstractModule {
     mapbinder.addBinding(DataTransferHandler.PATH).to(DataTransferHandler.class);
     mapbinder.addBinding(ListDataTypesHandler.PATH).to(ListDataTypesHandler.class);
     mapbinder.addBinding(ListServicesHandler.PATH).to(ListServicesHandler.class);
+    mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
+    mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
+    mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
 
     // TODO: Add additional bindings when ready
-      /*
+    /*
       mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
       mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
-      mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
       mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
-      mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
-      mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
-
-      mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
-      mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
-      mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
-      mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
-      mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
-      mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
-      */
+    */
   }
 }
 

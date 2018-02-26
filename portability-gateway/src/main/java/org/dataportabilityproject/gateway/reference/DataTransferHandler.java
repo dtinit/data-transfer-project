@@ -132,7 +132,8 @@ final class DataTransferHandler implements HttpHandler {
       SecretKey key = symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(sessionKey));
 
       // Ensure intial auth data for export has not already been set
-      Preconditions.checkState(Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
+      Preconditions.checkState(
+          Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
 
       // Serialize and encrypt the initial auth data
       String serialized = objectMapper
