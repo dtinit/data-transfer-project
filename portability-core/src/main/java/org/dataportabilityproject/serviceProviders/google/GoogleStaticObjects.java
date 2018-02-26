@@ -26,7 +26,6 @@ import com.google.api.client.util.store.FileDataStoreFactory;
  * Static objects shared with all Google services.
  */
 public final class GoogleStaticObjects {
-
   /**
    * Global instance of the JSON factory.
    */
@@ -64,4 +63,9 @@ public final class GoogleStaticObjects {
   public static FileDataStoreFactory getDataStoreFactory() {
     return DATA_STORE_FACTORY;
   }
+
+  /**
+   * Static values used in converters
+   */
+  public static final int MAX_ATTENDEES = 100;
 }

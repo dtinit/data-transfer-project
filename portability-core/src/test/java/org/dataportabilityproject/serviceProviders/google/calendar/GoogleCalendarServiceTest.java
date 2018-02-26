@@ -16,7 +16,6 @@
 package org.dataportabilityproject.serviceProviders.google.calendar;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +37,7 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.calendar.CalendarEventModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
+import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;
 import org.junit.Before;
@@ -50,8 +50,8 @@ public class GoogleCalendarServiceTest {
   private static final String CALENDAR_ID = "calendar_id";
   private static final CalendarListEntry CALENDAR_LIST_ENTRY = new CalendarListEntry().setId
       (CALENDAR_ID);
-  private static final String EVENT_ID = "event_id";
-  private static final Event EVENT = new Event().setId(EVENT_ID);
+  private static final String EVENT_DESCRIPTION = "event_description";
+  private static final Event EVENT = new Event().setDescription(EVENT_DESCRIPTION);
 
   private static final String NEXT_TOKEN = "next_token";
 
@@ -62,6 +62,7 @@ public class GoogleCalendarServiceTest {
   private Calendar.CalendarList calendarCalendarList;
   private Calendar.CalendarList.List calendarListRequest;
   private CalendarList calendarListResponse;
+  private Calendar.Events calendarEvents;
   private Calendar.Events.List eventListRequest;
   private Events eventListResponse;
 
@@ -69,6 +70,7 @@ public class GoogleCalendarServiceTest {
   public void setup() throws IOException {
     calendarCalendarList = mock(Calendar.CalendarList.class);
     calendarListRequest = mock(Calendar.CalendarList.List.class);
+    calendarEvents = mock(Calendar.Events.class);
     eventListRequest = mock(Calendar.Events.List.class);
 
     calendarClient = mock(Calendar.class);
@@ -77,12 +79,18 @@ public class GoogleCalendarServiceTest {
     calendarService = new GoogleCalendarService(calendarClient, jobDataCache);
 
     when(calendarClient.calendarList()).thenReturn(calendarCalendarList);
-    when(calendarClient.events().list(CALENDAR_ID).setMaxAttendees(anyInt())).thenReturn
-        (eventListRequest);
     when(calendarCalendarList.list()).thenReturn(calendarListRequest);
+    when(calendarClient.events()).thenReturn(calendarEvents);
+    when(calendarEvents.list(CALENDAR_ID)).thenReturn(eventListRequest);
+    when(eventListRequest.setMaxAttendees(GoogleStaticObjects.MAX_ATTENDEES))
+        .thenReturn(eventListRequest);
   }
 
+  /**
+   * Sets up a response with a single calendar, containing a single event
+   */
   private void setUpSingleCalendarResponse() throws IOException {
+    setUpSingleEventResponse();
     calendarListResponse = new CalendarList()
         .setItems(Collections.singletonList(CALENDAR_LIST_ENTRY));
 
@@ -122,9 +130,14 @@ public class GoogleCalendarServiceTest {
     assertThat(calendars.stream().map(CalendarModel::getId).collect(Collectors.toList()))
         .containsExactly(CALENDAR_ID);
 
-    // Check events (should be empty)
+    // Check events (should be empty, even though there is an event in the calendar)
     Collection<CalendarEventModel> events = wrapper.getEvents();
     assertThat(events).isEmpty();
+    // Should be one event in the resource list
+    Collection<? extends Resource> subResources = wrapper.getContinuationInformation()
+        .getSubResources();
+    assertThat(subResources.stream().map(a -> ((IdOnlyResource) a).getId()).collect(Collectors
+        .toList())).containsExactly(CALENDAR_ID);
   }
 
   @Test
@@ -157,15 +170,55 @@ public class GoogleCalendarServiceTest {
 
     // Looking at first page, with at least one page after it
     Resource resource = new IdOnlyResource(CALENDAR_ID);
-    PaginationInformation pageInfo = new StringPaginationToken(NEXT_TOKEN);
     ExportInformation resourceExportInformation = new ExportInformation(Optional.of(resource),
-        Optional.of(pageInfo));
+        Optional.empty());
+    eventListResponse.setNextPageToken(NEXT_TOKEN);
 
     // Run test
     CalendarModelWrapper wrapper = calendarService.export(resourceExportInformation);
 
     // Check results
     // Verify correct methods were called
-    verify(calendarClient).events().list(CALENDAR_ID).setMaxAttendees(anyInt());
+    verify(calendarEvents).list(CALENDAR_ID);
+    verify(eventListRequest).setMaxAttendees(GoogleStaticObjects.MAX_ATTENDEES);
+    verify(eventListRequest).execute();
+
+    // Check events
+    Collection<CalendarEventModel> events = wrapper.getEvents();
+    assertThat(events.stream().map(CalendarEventModel::getCalendarId).collect(Collectors.toList()))
+        .containsExactly(CALENDAR_ID);
+    assertThat(events.stream().map(CalendarEventModel::getTitle).collect(Collectors.toList()))
+        .containsExactly(EVENT_DESCRIPTION);
+
+    // Check pagination token
+    StringPaginationToken paginationToken = (StringPaginationToken) wrapper
+        .getContinuationInformation().getPaginationInformation();
+    assertThat(paginationToken.getId()).isEqualTo(NEXT_TOKEN);
+  }
+
+  @Test
+  public void testExportEventSubsequentSet() throws IOException {
+    setUpSingleEventResponse();;
+
+    // Looking at subsequent page, with no pages after it
+    Resource resource = new IdOnlyResource(CALENDAR_ID);
+    PaginationInformation paginationInformation = new StringPaginationToken(NEXT_TOKEN);
+    ExportInformation resourceExportInformation = new ExportInformation(Optional.of(resource),
+        Optional.of(paginationInformation));
+    eventListResponse.setNextPageToken(null);
+
+    // Run test
+    CalendarModelWrapper wrapper = calendarService.export(resourceExportInformation);
+
+    // Check results
+    // Verify correct methods were called in order
+    InOrder inOrder = Mockito.inOrder(eventListRequest);
+    inOrder.verify(eventListRequest).setPageToken(NEXT_TOKEN);
+    inOrder.verify(eventListRequest).execute();
+
+    // Check pagination token
+    StringPaginationToken paginationToken = (StringPaginationToken) wrapper
+        .getContinuationInformation().getPaginationInformation();
+    assertThat(paginationToken).isNull();
   }
 }
