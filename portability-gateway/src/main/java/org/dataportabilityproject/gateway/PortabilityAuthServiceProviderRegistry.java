@@ -19,8 +19,10 @@ package org.dataportabilityproject.gateway;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
@@ -79,5 +81,27 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
     }
 
     return provider.getAuthDataGenerator(transferDataType, mode);
+  }
+
+  /**
+   * Returns the set of service ids that can transfered for the given {@code transferDataType}.
+   *
+   * @param transferDataType the transfer data type
+   */
+  @Override
+  public Set<String> getServices(String transferDataType) {
+    Preconditions.checkArgument(supportedExportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for export", transferDataType);
+    Preconditions.checkArgument(supportedImportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for import", transferDataType);
+    return authServiceProviderMap.keySet();
+  }
+
+  /**
+   * Returns the set of data types that support both import and export.
+   */
+  @Override
+  public Set<String> getTransferDataTypes() {
+    return Sets.intersection(supportedExportTypes, supportedImportTypes);
   }
 }

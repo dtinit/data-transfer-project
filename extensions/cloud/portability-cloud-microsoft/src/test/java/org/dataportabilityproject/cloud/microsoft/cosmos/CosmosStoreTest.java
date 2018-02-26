@@ -55,7 +55,7 @@ public class CosmosStoreTest {
 
         cassandra.primingClient().prime(createRequest);
 
-        PortabilityJob primeJob = new PortabilityJob();
+        PortabilityJob primeJob = PortabilityJob.builder().build();
         java.util.UUID jobId = java.util.UUID.randomUUID();
         Map row =
             Collections.singletonMap("job_data", new ObjectMapper().writeValueAsString(primeJob));
@@ -84,11 +84,11 @@ public class CosmosStoreTest {
             .withQuery(JOB_DELETE).withThen(thenRemove).build();
         cassandra.primingClient().prime(removeRequest);
 
-        PortabilityJob createJob = new PortabilityJob();
+        PortabilityJob createJob = PortabilityJob.builder().build();
         cosmosStore.createJob(jobId, createJob);
 
-        PortabilityJob copy = cosmosStore.findJob(jobId);
-        copy.setState(PortabilityJob.State.COMPLETE);
+        PortabilityJob copy = cosmosStore.findJob(jobId).toBuilder()
+            .setState(PortabilityJob.State.COMPLETE).build();
         cosmosStore.updateJob(jobId, copy);
 
         cosmosStore.remove(jobId);
