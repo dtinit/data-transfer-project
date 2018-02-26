@@ -29,7 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Bindings the reference api server.
+ * Bindings the reference api server, a sample implementation using Sun's http library to
+ * serve requests for the api actions.
  */
 public class ReferenceApiModule extends AbstractModule {
 
