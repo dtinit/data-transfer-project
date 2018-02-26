@@ -33,6 +33,15 @@ public abstract class JobAuthorization {
   public abstract JobAuthorization.State state();
 
   @Nullable
+  @JsonProperty("encryptedInitialExportAuthData")
+  public abstract String encryptedInitialExportAuthData();
+
+  @Nullable
+  @JsonProperty("encryptedInitialImportAuthData")
+  public abstract String encryptedInitialImportAuthData();
+
+
+  @Nullable
   @JsonProperty("encryptedExportAuthData")
   public abstract String encryptedExportAuthData();
 
@@ -52,7 +61,11 @@ public abstract class JobAuthorization {
   public abstract String encryptedPrivateKey();
 
   public static Builder builder() {
-    return new AutoValue_JobAuthorization.Builder().setState(State.INITIAL);
+    // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
+    // the class name due to a conflict in package names for our generated code, but the conflict
+    // doesn't cause any actual problems with building.
+    return new org.dataportabilityproject.spi.cloud.types.AutoValue_JobAuthorization.Builder()
+        .setState(State.INITIAL);
   }
 
   public abstract Builder toBuilder();
@@ -66,6 +79,12 @@ public abstract class JobAuthorization {
 
     @JsonProperty("state")
     public abstract Builder setState(JobAuthorization.State state);
+
+    @JsonProperty("encryptedInitialExportAuthData")
+    public abstract Builder setEncryptedInitialExportAuthData(String authData);
+
+    @JsonProperty("encryptedInitialImportAuthData")
+    public abstract Builder setEncryptedInitialImportAuthData(String authData);
 
     @JsonProperty("encryptedExportAuthData")
     public abstract Builder setEncryptedExportAuthData(String authData);

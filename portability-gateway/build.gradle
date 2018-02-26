@@ -14,9 +14,43 @@
  * limitations under the License.
  */
 
+group = 'org.dataportabilityproject'
+version = '1.0-SNAPSHOT'
+
+jar {
+    // TODO: consider fatjar plugin
+    // Add dependencies
+    from({
+        (configurations.runtime).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }) {
+        // Exclude signature files to avoid SecurityException
+        exclude '**/META-INF/*.SF'
+        exclude '**/META-INF/*.DSA'
+        exclude '**/META-INF/*.RSA'
+    }
+    manifest {
+        attributes 'Main-Class': 'org.dataportabilityproject.gateway.ApiMain'
+    }
+}
+
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-gateway')
+    compile project(':portability-types-client')
+    compile("com.google.guava:guava:${guavaVersion}")
+    compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
+    compile("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
+    compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+    compile("com.google.guava:guava:${guavaVersion}")
+    compile("com.google.inject.extensions:guice-multibindings:${guiceVersion}")
+    compile("com.google.inject:guice:${guiceVersion}")
+    compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
+    // Logging
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
