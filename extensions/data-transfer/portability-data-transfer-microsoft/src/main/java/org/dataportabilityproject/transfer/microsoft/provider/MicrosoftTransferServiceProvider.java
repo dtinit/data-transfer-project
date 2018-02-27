@@ -40,7 +40,7 @@ public class MicrosoftTransferServiceProvider implements TransferServiceProvider
 
     public MicrosoftTransferServiceProvider(OkHttpClient client, ObjectMapper mapper, TransformerService transformerService) {
         exporterCache.put(CONTACTS, new MicrosoftContactsExporter(client, mapper, transformerService));
-        importerCache.put(CONTACTS, new MicrosoftContactsImporter(client, mapper, transformerService));
+        importerCache.put(CONTACTS, new MicrosoftContactsImporter("", client, mapper, transformerService));
     }
 
     @Override

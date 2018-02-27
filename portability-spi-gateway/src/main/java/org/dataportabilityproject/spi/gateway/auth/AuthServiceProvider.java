@@ -1,7 +1,8 @@
 package org.dataportabilityproject.spi.gateway.auth;
 
-import java.util.List;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
+
+import java.util.List;
 
 /**
  * Factory responsible for providing {@link AuthDataGenerator} implementations.

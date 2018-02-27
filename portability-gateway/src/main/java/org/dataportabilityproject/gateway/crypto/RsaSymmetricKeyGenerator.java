@@ -15,14 +15,12 @@
  */
 package org.dataportabilityproject.gateway.crypto;
 
-import com.google.common.io.BaseEncoding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * RSA-based implementation for {@link KeyPair} creation and encoding.

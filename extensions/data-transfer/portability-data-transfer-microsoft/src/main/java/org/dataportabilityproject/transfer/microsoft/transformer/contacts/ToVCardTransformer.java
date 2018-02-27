@@ -79,7 +79,7 @@ public class ToVCardTransformer implements BiFunction<Map<String, Object>, Trans
     }
 
     private void copyPersonData(Map<String, Object> map, VCard card, TransformerContext context) {
-        getMap("homeAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v, context)));
+        getMap("homeAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
 
         copyEmail(map, card);
 
@@ -96,8 +96,8 @@ public class ToVCardTransformer implements BiFunction<Map<String, Object>, Trans
     }
 
     private void copyBusinessData(Map<String, Object> map, VCard card, TransformerContext context) {
-        getMap("businessAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v, context)));
-        getMap("otherAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v, context)));
+        getMap("businessAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
+        getMap("otherAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
 
         getString("jobTitle", map).ifPresent(card::addTitle);
 

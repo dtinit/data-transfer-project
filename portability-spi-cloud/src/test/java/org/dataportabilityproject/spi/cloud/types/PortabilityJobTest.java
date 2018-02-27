@@ -16,13 +16,14 @@
 
 package org.dataportabilityproject.spi.cloud.types;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob.State;
 import org.dataportabilityproject.test.types.ObjectMapperFactory;
 import org.junit.Test;
+
+import java.time.LocalDateTime;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /**
  * Tests serialization and deserialization of a {@link PortabilityJob}.

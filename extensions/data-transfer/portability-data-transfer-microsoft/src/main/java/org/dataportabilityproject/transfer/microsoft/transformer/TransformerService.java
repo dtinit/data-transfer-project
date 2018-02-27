@@ -15,6 +15,8 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer;
 
+import java.util.Map;
+
 /**
  * Transforms instances into different types.
  */
@@ -27,5 +29,14 @@ public interface TransformerService {
      * @param input the input instance
      */
     <T> TransformResult<T> transform(Class<T> resultType, Object input);
+
+    /**
+     * Transform the input instance into an instance of a result type.
+     *
+     * @param resultType the type to transform to
+     * @param input the input instance
+     * @param properties the context properties
+     */
+    <T> TransformResult<T> transform(Class<T> resultType, Object input, Map<String, String> properties);
 
 }
