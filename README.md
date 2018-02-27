@@ -1,10 +1,10 @@
-# Data Portability Project
+# Data Transfer Project
 
 ## Overview
-The goal of the Data Portability Project (name is a work in progress) is to make it easy to transfer data
+The goal of the Data Transfer Project (name is a work in progress) is to make it easy to transfer data
 from one service provider (e.g. Google) to another (e.g. Microsoft).
 
-See [Data Portability Project Overview](Documentation/Overview.md)
+See [Data Transfer Project Overview](Documentation/Overview.md)
 
 ## More info
 
