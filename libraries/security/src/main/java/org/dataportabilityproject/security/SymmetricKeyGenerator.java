@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
+package org.dataportabilityproject.security;
+
+import javax.crypto.SecretKey;
 
 /**
- * Provides functionality to decrypt encrypted data.
+ * Creates and encodes keys for symmetric encryption.
  */
-public interface Decrypter {
+public interface SymmetricKeyGenerator {
 
   /**
-   * Decrypts the given {@code encryptedData}.
+   * Generates a {@link SecretKey}
    */
-  String decrypt(String encryptedData) ;
+  SecretKey generate();
+
+  /**
+   * Parses an encoded {@link SecretKey}.
+   */
+  SecretKey parse(byte[] encoded);
 }
