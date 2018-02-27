@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
+import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
 import org.dataportabilityproject.dataModels.PaginationInformation;
 import org.dataportabilityproject.dataModels.Resource;
@@ -59,28 +60,37 @@ public class GoogleCalendarServiceTest {
 
   private Calendar calendarClient;
   private JobDataCache jobDataCache;
+  private Calendar.Calendars calendarCalendars;
   private Calendar.CalendarList calendarCalendarList;
   private Calendar.CalendarList.List calendarListRequest;
+  private Calendar.Calendars.Insert calendarInsertRequest;
   private CalendarList calendarListResponse;
   private Calendar.Events calendarEvents;
   private Calendar.Events.List eventListRequest;
+  private Calendar.Events.Insert eventInsertRequest;
   private Events eventListResponse;
 
   @Before
   public void setup() throws IOException {
+    calendarCalendars = mock(Calendar.Calendars.class);
     calendarCalendarList = mock(Calendar.CalendarList.class);
     calendarListRequest = mock(Calendar.CalendarList.List.class);
+    calendarInsertRequest = mock(Calendar.Calendars.Insert.class);
     calendarEvents = mock(Calendar.Events.class);
     eventListRequest = mock(Calendar.Events.List.class);
+    eventInsertRequest = mock(Calendar.Events.Insert.class);
 
     calendarClient = mock(Calendar.class);
-    jobDataCache = mock(JobDataCache.class);
+    jobDataCache = new InMemoryJobDataCache();
 
     calendarService = new GoogleCalendarService(calendarClient, jobDataCache);
+
+    when(calendarClient.calendars()).thenReturn(calendarCalendars);
 
     when(calendarClient.calendarList()).thenReturn(calendarCalendarList);
     when(calendarCalendarList.list()).thenReturn(calendarListRequest);
     when(calendarClient.events()).thenReturn(calendarEvents);
+
     when(calendarEvents.list(CALENDAR_ID)).thenReturn(eventListRequest);
     when(eventListRequest.setMaxAttendees(GoogleStaticObjects.MAX_ATTENDEES))
         .thenReturn(eventListRequest);
@@ -97,6 +107,9 @@ public class GoogleCalendarServiceTest {
     when(calendarListRequest.execute()).thenReturn(calendarListResponse);
   }
 
+  /**
+   * Sets up a response for a single event
+   */
   private void setUpSingleEventResponse() throws IOException {
     eventListResponse = new Events().setItems(Collections.singletonList(EVENT));
     when(eventListRequest.execute()).thenReturn(eventListResponse);
@@ -198,7 +211,8 @@ public class GoogleCalendarServiceTest {
 
   @Test
   public void testExportEventSubsequentSet() throws IOException {
-    setUpSingleEventResponse();;
+    setUpSingleEventResponse();
+    ;
 
     // Looking at subsequent page, with no pages after it
     Resource resource = new IdOnlyResource(CALENDAR_ID);
@@ -220,5 +234,44 @@ public class GoogleCalendarServiceTest {
     StringPaginationToken paginationToken = (StringPaginationToken) wrapper
         .getContinuationInformation().getPaginationInformation();
     assertThat(paginationToken).isNull();
+  }
+
+  @Test
+  public void importCalendarAndEvent() throws IOException {
+    String modelCalendarId = "modelCalendarId";
+    String googleCalendarId = "googleCalendarId";
+
+    // Set up calendar, events, and mocks
+    CalendarModel calendarModel = new CalendarModel(modelCalendarId, null, null);
+    com.google.api.services.calendar.model.Calendar calendarToInsert =
+        ModelToGoogleCalendarConverter.convertToGoogleCalendar(calendarModel);
+    com.google.api.services.calendar.model.Calendar responseCalendar = new com.google.api.services
+        .calendar.model.Calendar().setId(googleCalendarId);
+
+    CalendarEventModel eventModel = new CalendarEventModel(modelCalendarId, null, null,
+        null, null, null, null);
+    Event eventToInsert = ModelToGoogleCalendarConverter.convertToGoogleCalendarEvent(eventModel);
+    Event responseEvent = new Event();
+
+    when(calendarInsertRequest.execute()).thenReturn(responseCalendar);
+    when(calendarCalendars.insert(calendarToInsert)).thenReturn(calendarInsertRequest);
+    when(eventInsertRequest.execute()).thenReturn(responseEvent);
+    when(calendarEvents.insert(googleCalendarId, eventToInsert)).thenReturn(eventInsertRequest);
+
+    CalendarModelWrapper wrapper = new CalendarModelWrapper(Collections.singleton(calendarModel),
+        Collections.singleton(eventModel),
+        null);
+
+    // Run test
+    calendarService.importItem(wrapper);
+
+    // Check the right methods were called
+    verify(calendarCalendars).insert(calendarToInsert);
+    verify(calendarInsertRequest).execute();
+    verify(calendarEvents).insert(googleCalendarId, eventToInsert);
+    verify(eventInsertRequest).execute();
+
+    // Check jobDataCache contents
+    assertThat(jobDataCache.getData(modelCalendarId, String.class)).isEqualTo(googleCalendarId);
   }
 }
