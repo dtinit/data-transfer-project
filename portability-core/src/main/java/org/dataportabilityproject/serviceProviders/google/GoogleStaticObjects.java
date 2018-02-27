@@ -67,5 +67,6 @@ public final class GoogleStaticObjects {
   /**
    * Static values used in converters
    */
+  // TODO(olsona): find optimum value
   public static final int MAX_ATTENDEES = 100;
 }
