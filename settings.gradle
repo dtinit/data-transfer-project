@@ -14,6 +14,8 @@ include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portabi
 
 include ':extensions:data-transfer:portability-data-transfer-google', ':extensions:data-transfer:portability-data-transfer-microsoft'
 
+include ':libraries:security'
+
 include ':portability-test-utilities'
 
 include ':portability-core', ':portability-worker', ':portability-api'
