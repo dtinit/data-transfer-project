@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
+package org.dataportabilityproject.security;
 
-import javax.crypto.SecretKey;
+
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 /**
- * Creates and encodes keys for symmetric encryption.
+ * Creates and encodes keys for asymmetric encryption.
  */
-public interface SymmetricKeyGenerator {
+public interface AsymmetricKeyGenerator {
 
   /**
-   * Generates a {@link SecretKey}
+   * Generates a {@link KeyPair}
    */
-  SecretKey generate();
-
-  /**
-   * Parses an encoded {@link SecretKey}.
-   */
-  SecretKey parse(byte[] encoded);
+  KeyPair generate();
 }
+
