@@ -78,8 +78,8 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
             String graphBody = new String(body.bytes());
             Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
-            // String nextLink = (String) graphMap.get(ODATA_NEXT);
-            // ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
+            // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
+            // TODO ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
 
             @SuppressWarnings("unchecked") List<Map<String, Object>> rawCalendars = (List<Map<String, Object>>) graphMap.get("value");
             if (rawCalendars == null) {
@@ -115,8 +115,8 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
                 String graphBody = new String(body.bytes());
                 Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
-                // String nextLink = (String) graphMap.get(ODATA_NEXT);
-                // ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
+                // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
+                // TODO ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
 
                 @SuppressWarnings("unchecked") List<Map<String, Object>> rawEvents = (List<Map<String, Object>>) graphMap.get("value");
                 if (rawEvents == null) {
@@ -152,6 +152,7 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
 
     @Override
     public ExportResult<CalendarContainerResource> export(TokenAuthData authData, ExportInformation exportInformation) {
+        // TODO support pagination
         throw new UnsupportedOperationException();
     }
 
