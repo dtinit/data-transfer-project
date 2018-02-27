@@ -1,13 +1,13 @@
 # Contributors Code of Conduct
-The Data Portability team are committed to preserving and fostering a diverse, welcoming and open
-community. The Data Portability project is open to contributors from all  walks of life and should be a
+The Data Transfer Project team are committed to preserving and fostering a diverse, welcoming and open
+community. The Data Transfer project is open to contributors from all  walks of life and should be a
 harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender
 identity and expression, level of experience, nationality, personal appearance, race, religion, or
 sexual identity and orientation.
 
 ## Scope
 This Code of Conduct applies to our repos and organizations, mailing lists, blog content, and any
-other Data Portability-supported communication group, as well as any private communication initiated in the
+other Data Transfer Project-supported communication group, as well as any private communication initiated in the
 context of these spaces.
 
 ## Standards
@@ -31,9 +31,9 @@ You are empowered to politely engage when you feel that you or others are disres
 making you feel uncomfortable may not be aware of what they are doing - politely bringing their
 behavior to their attention is encouraged.
 If you are uncomfortable speaking up, or feel that your concerns are not being duly considered, you
-can email the Data Portability mailing list to request involvement from a community manager. All concerns shared
+can email the Data Transfer Project mailing list to request involvement from a community manager. All concerns shared
 with community managers will be kept confidential. While all reports will be taken seriously, the
-Data Portability community managers may not act on complaints that they feel are not violations of this code
+Data Transfer Project community managers may not act on complaints that they feel are not violations of this code
 of conduct.
 
 ## Enforcement
