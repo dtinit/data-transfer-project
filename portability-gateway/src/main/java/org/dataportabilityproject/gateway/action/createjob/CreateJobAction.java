@@ -21,7 +21,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
-import org.dataportabilityproject.gateway.crypto.SymmetricKeyGenerator;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;

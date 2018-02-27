@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.crypto;
+package org.dataportabilityproject.security;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
@@ -29,35 +29,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides AES and RSA-based encryption implementations for decryption. See {@link DecrypterFactory} to create.
+ * Provides AES and RSA-based encryption implementations. See {@link EncrypterFactory} to create.
  */
-final class DecrypterImpl implements Decrypter {
-  private static final Logger logger = LoggerFactory.getLogger(DecrypterImpl.class);
+final class EncrypterImpl implements Encrypter {
 
+  private static final Logger logger = LoggerFactory.getLogger(EncrypterImpl.class);
   private final Key key;
   private final String transformation;
 
-  DecrypterImpl(String transformation, Key key) {
+  EncrypterImpl(String transformation, Key key) {
     this.key = key;
     this.transformation = transformation;
   }
 
   @Override
-  public String decrypt(String encrypted) {
+  public String encrypt(String data) {
     try {
-      byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
       Cipher cipher = Cipher.getInstance(transformation);
-      cipher.init(Cipher.DECRYPT_MODE, key);
-      byte[] decrypted = cipher.doFinal(decoded);
-      if (decrypted == null || decrypted.length <= 8) {
-        throw new RuntimeException("incorrect decrypted text.");
-      }
-      byte[] data = new byte[decrypted.length - 8];
-      System.arraycopy(decrypted, 8, data, 0, data.length);
-      return new String(data, Charsets.UTF_8);
+      cipher.init(Cipher.ENCRYPT_MODE, key);
+      byte[] salt = new byte[8];
+      SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+      random.nextBytes(salt);
+      cipher.update(salt);
+      byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
+      return BaseEncoding.base64Url().encode(encrypted);
     } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
         | NoSuchAlgorithmException | NoSuchPaddingException e) {
-      logger.error("Error decrypting data, length: {}", encrypted.length(), e);
+      logger.error("Exception encrypting data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     }
   }

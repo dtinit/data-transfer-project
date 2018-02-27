@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.action.createjob;
 
-import com.google.inject.AbstractModule;
-import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-
-/**
- * Dependencies for the {@link CreateJobAction} and related classes.
- */
-public final class CreateJobActionModule extends AbstractModule {
-
-  @Override
-  protected void configure() {
-    requireBinding(JobStore.class);
-    requireBinding(SymmetricKeyGenerator.class);
-  }
+dependencies {
+    // Logging
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 }
+
+
