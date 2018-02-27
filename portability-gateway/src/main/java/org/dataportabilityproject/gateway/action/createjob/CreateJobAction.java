@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 The Data-Portability Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,8 @@ import java.util.UUID;
 /**
  * An {@link Action} that handles the initial creation of a job.
  */
-public final class CreateJobAction implements Action<CreateJobActionRequest, CreateJobActionResponse> {
+public final class CreateJobAction implements
+    Action<CreateJobActionRequest, CreateJobActionResponse> {
 
   private static final Logger logger = LoggerFactory.getLogger(
       CreateJobAction.class);
@@ -104,27 +105,24 @@ public final class CreateJobAction implements Action<CreateJobActionRequest, Cre
   /**
    * Populates the initial state of the {@link PortabilityJob} instance.
    */
-  private static PortabilityJob createJob(String sessionKey,
+  private static PortabilityJob createJob(String encodedSessionKey,
       String dataType, String exportService, String importService) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedSessionKey), "sessionKey missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
     Preconditions.checkNotNull(dataType, "dataType missing");
 
-    PortabilityJob job = PortabilityJob.builder().build();
-    /* ****************************************************************************************************************************************
-
-
-    job.setTransferDataType(dataType);
-    job.setExportService(exportService);
-    job.setImportService(importService);
     // Job auth data
-    JobAuthorization jobAuthorization = new JobAuthorization();
-    jobAuthorization.setEncryptedSessionKey(sessionKey);
-    jobAuthorization.setState(JobAuthorization.State.INITIAL);
-    job.setJobAuthorization(jobAuthorization);
+    JobAuthorization jobAuthorization = JobAuthorization.builder()
+        .setEncryptedSessionKey(encodedSessionKey)
+        .setState(JobAuthorization.State.INITIAL)
+        .build();
 
-    */
-    return job;
+    return PortabilityJob.builder()
+        .setTransferDataType(dataType)
+        .setExportService(exportService)
+        .setImportService(importService)
+        .setAndValidateJobAuthorization(jobAuthorization)
+        .build();
   }
 }

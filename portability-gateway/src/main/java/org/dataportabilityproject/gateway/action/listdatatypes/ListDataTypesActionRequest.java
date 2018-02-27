@@ -15,8 +15,6 @@
  */
 package org.dataportabilityproject.gateway.action.listdatatypes;
 
-import org.dataportabilityproject.types.client.transfer.AbstractDataTransfer;
-
 /**
  * A request to list data types available for export and import.
  */
