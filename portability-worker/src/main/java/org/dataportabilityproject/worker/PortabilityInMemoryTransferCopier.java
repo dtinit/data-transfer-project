@@ -15,9 +15,6 @@
 */
 package org.dataportabilityproject.worker;
 
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -30,6 +27,10 @@ import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementation of InMemoryTransferCopier.
@@ -101,7 +102,8 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
     logger.debug("Finished export, results: {}", exportResult);
 
     logger.debug("Starting import");
-    importer.importItem(importAuthData, exportResult.getExportedData());
+    // TODO, use job Id?
+    importer.importItem("1", importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
 
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();

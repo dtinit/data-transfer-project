@@ -25,10 +25,6 @@ import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.common.annotations.VisibleForTesting;
 import ezvcard.VCard;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
@@ -39,6 +35,11 @@ import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 import org.dataportabilityproject.shared.StringPaginationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Importer<ContactsModelWrapper> {

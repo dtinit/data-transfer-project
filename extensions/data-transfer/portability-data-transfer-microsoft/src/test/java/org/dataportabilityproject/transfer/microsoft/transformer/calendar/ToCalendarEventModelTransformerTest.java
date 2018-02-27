@@ -1,0 +1,138 @@
+/*
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dataportabilityproject.transfer.microsoft.helper.TestTransformerContext;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.Map;
+
+import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
+
+public class ToCalendarEventModelTransformerTest {
+    private ToCalendarEventModelTransformer transformer;
+    private ObjectMapper mapper;
+    private TestTransformerContext context;
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testTransform() throws IOException {
+        context.setProperty(CALENDAR_ID, "123");
+        Map<String, Object> rawEvent = mapper.readValue(SAMPLE_CALENDAR_EVENT, Map.class);
+
+        CalendarEventModel event = transformer.apply(rawEvent, context);
+
+        Assert.assertEquals("123", event.getCalendarId());
+
+        Assert.assertEquals("Some Place", event.getLocation());
+        Assert.assertEquals("Test Appointment 1", event.getTitle());
+        Assert.assertTrue(event.getNotes().length() > 5);
+        Assert.assertEquals(1, event.getAttendees().size());
+
+        CalendarAttendeeModel attendee = event.getAttendees().get(0);
+        Assert.assertEquals("Test Test1", attendee.getDisplayName());
+        Assert.assertEquals("foo@foo.com", attendee.getEmail());
+        Assert.assertFalse(attendee.getOptional());
+
+        Assert.assertEquals(18, event.getStartTime().getDateTime().getHour());
+        Assert.assertEquals(0, event.getStartTime().getDateTime().getMinute());
+
+        Assert.assertEquals(18, event.getEndTime().getDateTime().getHour());
+        Assert.assertEquals(30, event.getEndTime().getDateTime().getMinute());
+    }
+
+    @Before
+    public void setUp() {
+        transformer = new ToCalendarEventModelTransformer();
+        mapper = new ObjectMapper();
+        context = new TestTransformerContext();
+    }
+
+    private static final String SAMPLE_CALENDAR_EVENT =
+            "        {\n" +
+                    "            \"@odata.etag\": \"W/\\\"J9QFpZ0REkSkaxRkN3kHHwAB54nFgA==\\\"\",\n" +
+                    "            \"id\": \"567=\",\n" +
+                    "            \"createdDateTime\": \"2018-02-07T09:11:50.9516391Z\",\n" +
+                    "            \"lastModifiedDateTime\": \"2018-02-07T09:11:50.982889Z\",\n" +
+                    "            \"changeKey\": \"key==\",\n" +
+                    "            \"categories\": [],\n" +
+                    "            \"originalStartTimeZone\": \"Pacific Standard Time\",\n" +
+                    "            \"originalEndTimeZone\": \"Pacific Standard Time\",\n" +
+                    "            \"iCalUId\": \"id123\",\n" +
+                    "            \"reminderMinutesBeforeStart\": 15,\n" +
+                    "            \"isReminderOn\": true,\n" +
+                    "            \"hasAttachments\": false,\n" +
+                    "            \"subject\": \"Test Appointment 1\",\n" +
+                    "            \"bodyPreview\": \"\",\n" +
+                    "            \"importance\": \"normal\",\n" +
+                    "            \"sensitivity\": \"normal\",\n" +
+                    "            \"isAllDay\": false,\n" +
+                    "            \"isCancelled\": false,\n" +
+                    "            \"isOrganizer\": true,\n" +
+                    "            \"responseRequested\": true,\n" +
+                    "            \"seriesMasterId\": null,\n" +
+                    "            \"showAs\": \"busy\",\n" +
+                    "            \"type\": \"singleInstance\",\n" +
+                    "            \"webLink\": \"https://outlook.live.com/owa/?itemid=link%3D&exvsurl=1&path=/calendar/item\",\n" +
+                    "            \"onlineMeetingUrl\": null,\n" +
+                    "            \"responseStatus\": {\n" +
+                    "                \"response\": \"organizer\",\n" +
+                    "                \"time\": \"0001-01-01T00:00:00Z\"\n" +
+                    "            },\n" +
+                    "            \"body\": {\n" +
+                    "                \"contentType\": \"html\",\n" +
+                    "                \"content\": \"<html>\\r\\n<head>\\r\\n<meta http-equiv=\\\"Content-Type\\\" content=\\\"text/html; charset=utf-8\\\">\\r\\n<meta content=\\\"text/html; charset=us-ascii\\\">\\r\\n<style type=\\\"text/css\\\" style=\\\"display:none\\\">\\r\\n<!--\\r\\np\\r\\n\\t{margin-top:0;\\r\\n\\tmargin-bottom:0}\\r\\n-->\\r\\n</style>\\r\\n</head>\\r\\n<body dir=\\\"ltr\\\">\\r\\n<div id=\\\"divtagdefaultwrapper\\\" dir=\\\"ltr\\\" style=\\\"font-size:12pt; color:#000000; font-family:Calibri,Helvetica,sans-serif\\\">\\r\\n<p style=\\\"margin-top:0; margin-bottom:0\\\"><br>\\r\\n</p>\\r\\n</div>\\r\\n</body>\\r\\n</html>\\r\\n\"\n" +
+                    "            },\n" +
+                    "            \"start\": {\n" +
+                    "                \"dateTime\": \"2018-02-14T18:00:00.0000000\",\n" +
+                    "                \"timeZone\": \"UTC\"\n" +
+                    "            },\n" +
+                    "            \"end\": {\n" +
+                    "                \"dateTime\": \"2018-02-14T18:30:00.0000000\",\n" +
+                    "                \"timeZone\": \"UTC\"\n" +
+                    "            },\n" +
+                    "            \"location\": {\n" +
+                    "                \"displayName\": \"Some Place\",\n" +
+                    "                \"address\": {}\n" +
+                    "            },\n" +
+                    "            \"recurrence\": null,\n" +
+                    "            \"attendees\": [\n" +
+                    "                {\n" +
+                    "                    \"type\": \"required\",\n" +
+                    "                    \"status\": {\n" +
+                    "                        \"response\": \"none\",\n" +
+                    "                        \"time\": \"0001-01-01T00:00:00Z\"\n" +
+                    "                    },\n" +
+                    "                    \"emailAddress\": {\n" +
+                    "                        \"name\": \"Test Test1\",\n" +
+                    "                        \"address\": \"foo@foo.com\"\n" +
+                    "                    }\n" +
+                    "                }\n" +
+                    "            ],\n" +
+                    "            \"organizer\": {\n" +
+                    "                \"emailAddress\": {\n" +
+                    "                    \"name\": \"Foo\",\n" +
+                    "                    \"address\": \"outlook_123@outlook.com\"\n" +
+                    "                }\n" +
+                    "            }\n" +
+                    "        }\n";
+}

@@ -30,7 +30,22 @@ public interface TransformerContext {
      * @param resultType the type to transform to
      * @param input the input instance
      */
-    <T> T transform(Class<T> resultType, Object input, TransformerContext context);
+    <T> T transform(Class<T> resultType, Object input);
+
+    /**
+     * Returns the property value for the key or null.
+     *
+     * @param key the key
+     */
+    String getProperty(String key);
+
+    /**
+     * Sets the property.
+     *
+     * @param key the key
+     * @param value the value
+     */
+    void setProperty(String key, String value);
 
     /**
      * Adds a problem to the current processing context.
