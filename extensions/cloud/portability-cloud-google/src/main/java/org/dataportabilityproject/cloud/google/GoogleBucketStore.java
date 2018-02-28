@@ -28,8 +28,8 @@ import org.dataportabilityproject.spi.cloud.storage.BucketStore;
 final class GoogleBucketStore implements BucketStore {
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
 
-  private Storage storage;
-  private String bucketName;
+  private final Storage storage;
+  private final String bucketName;
 
   @Inject
   GoogleBucketStore(

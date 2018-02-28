@@ -22,6 +22,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -36,12 +37,33 @@ import org.dataportabilityproject.api.launcher.ExtensionContext;
 
 /** Bindings for cloud platform components using Google Cloud Platform. **/
 final class GoogleCloudModule extends AbstractModule {
+  // The value for the 'cloud' flag when hosting on Google Cloud Platform.
+  private static final String GOOGLE_CLOUD_NAME = "GOOGLE";
+  // Environment variable where GCP project ID is stored. The value is set in
+  // config/k8s/api-deployment.yaml.
+  private static final String GCP_PROJECT_ID_ENV_VAR = "GOOGLE_PROJECT_ID";
+  // Environment variable for path where GCP credentials are stored. The value of the environment
+  // variable (i.e. the path to creds) is configured in config/k8s/api-deployment.yaml. The creds
+  // themselves are exposed as a Kubernetes secret.
+  private static final String GCP_CREDENTIALS_PATH_ENV_VAR = "GOOGLE_APPLICATION_CREDENTIALS";
+  // The path where Kubernetes stores Secrets.
+  private static final String KUBERNETES_SECRETS_PATH_ROOT = "/var/secrets/";
+
+  @VisibleForTesting enum Environment {
+    LOCAL,
+    TEST,
+    QA,
+    PROD
+  }
+
   @BindingAnnotation
   @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
   public @interface ProjectId {}
 
   @Override
-  protected void configure() {}
+  protected void configure() {
+    requireBinding(ExtensionContext.class);
+  }
 
   @Provides
   @Inject
@@ -49,18 +71,21 @@ final class GoogleCloudModule extends AbstractModule {
       throws GoogleCredentialException {
     validateUsingGoogle(context);
 
-    String env = context.getConfiguration("environment", "LOCAL");
-    if (env.equals("LOCAL")) { // Running locally
+    // TODO(rtannenbaum): Make env a direct parameter, maybe using @Named annotations
+    Environment env =
+        Environment.valueOf(context.getConfiguration("environment", Environment.LOCAL.name()));
+    if (env == Environment.LOCAL) { // Running locally
       // This is a crude check to make sure we are only pointing to test projects when running
       // locally and connecting to GCP
-      Preconditions.checkArgument(
-          projectId.endsWith("-local") || projectId.endsWith("-test") || projectId.endsWith("-qa"),
+      Environment projectIdEnvironment = getProjectEnvironment(projectId);
+      Preconditions.checkArgument(projectIdEnvironment == Environment.LOCAL
+          || projectIdEnvironment == Environment.TEST || projectIdEnvironment == Environment.QA,
           "Invalid project to connect to with env=LOCAL. " + projectId + " doesn't appear to"
               + " be a local/test project since it doesn't end in -local, -test, or -qa.");
     } else { // Assume running on GCP
       // TODO: Check whether we are actually running on GCP once we find out how
-      String credsLocation = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-      if (!credsLocation.startsWith("/var/secrets/")) {
+      String credsLocation = System.getenv(GCP_CREDENTIALS_PATH_ENV_VAR);
+      if (!credsLocation.startsWith(KUBERNETES_SECRETS_PATH_ROOT)) {
         String cause = String.format("You are attempting to obtain credentials from somewhere "
             + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
             + "into your image, which we provide as a local debugging mechanism only. See GCP "
@@ -91,7 +116,7 @@ final class GoogleCloudModule extends AbstractModule {
     validateUsingGoogle(context);
     String projectId;
     try {
-      projectId = System.getenv("GOOGLE_PROJECT_ID");
+      projectId = System.getenv(GCP_PROJECT_ID_ENV_VAR);
     } catch (NullPointerException e) {
       throw new IllegalArgumentException("Need to specify a project ID when using Google Cloud. "
           + "This should be exposed as an environment variable by Kubernetes, see "
@@ -113,8 +138,24 @@ final class GoogleCloudModule extends AbstractModule {
    * Google cloud?
    */
   private void validateUsingGoogle(ExtensionContext context) {
-    if (!context.getConfiguration("cloud", "").equals("GOOGLE")) {
+    // TODO: "cloud" should be a global flag name once we decide the proper place(s) for those
+    if (!context.getConfiguration("cloud", "").equals(GOOGLE_CLOUD_NAME)) {
       throw new IllegalStateException("Injecting Google objects when cloud != Google!");
     }
+  }
+
+  /**
+   * Return the {@link Environment} we are running in based on our convention of Project ID's
+   * ending in "-" followed by lower-case environment name.
+   *
+   * <p>Throws {@link IllegalArgumentException} if projectId does not have a valid environment
+   * suffix.
+   */
+  @VisibleForTesting static Environment getProjectEnvironment(String projectId) {
+    String[] projectIdComponents = projectId.split("-");
+    Preconditions.checkArgument(projectIdComponents.length > 1, "Invalid project ID - does not end"
+        + " in '-' followed by a lower-case environment, e.g. acme-qa");
+    String endComponent = projectIdComponents[projectIdComponents.length - 1];
+    return Environment.valueOf(endComponent.toUpperCase());
   }
 }
