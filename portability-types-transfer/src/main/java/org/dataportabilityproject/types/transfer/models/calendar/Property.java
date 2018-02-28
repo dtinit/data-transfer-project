@@ -1,5 +1,7 @@
 package org.dataportabilityproject.types.transfer.models.calendar;
 
+// This interface could be used by other models.  If so, we should move it out and make it more
+// broadly useful.
 interface Property<T> {
   T getValue();
 }

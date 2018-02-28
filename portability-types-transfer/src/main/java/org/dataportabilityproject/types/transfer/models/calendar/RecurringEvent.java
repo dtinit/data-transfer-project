@@ -7,6 +7,7 @@ public class RecurringEvent {
 
   public class RRule {
     Freq freq;
+    // The "until" field could also just be a string, based on what's returned by the APIs
     CalendarEventModel.CalendarEventTime until;
     int count;
     int interval;
@@ -25,6 +26,7 @@ public class RecurringEvent {
   }
 
   public class ExDate {
+    // If we go with a string for "until" field, we should use a string here too
     List<CalendarEventModel.CalendarEventTime> exDateList;
 
     public ExDate(List<CalendarEventModel.CalendarEventTime> exDateList) {
