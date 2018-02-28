@@ -1,6 +1,6 @@
 # Contributors Code of Conduct
 The Data Transfer Project team are committed to preserving and fostering a diverse, welcoming and open
-community. The Data Transfer project is open to contributors from all  walks of life and should be a
+community. The Data Transfer Project is open to contributors from all  walks of life and should be a
 harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender
 identity and expression, level of experience, nationality, personal appearance, race, religion, or
 sexual identity and orientation.
