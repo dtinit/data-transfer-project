@@ -2,6 +2,7 @@ package org.dataportabilityproject.types.transfer.models.calendar;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class RecurringEvent {
 
@@ -25,6 +26,25 @@ public class RecurringEvent {
     }
   }
 
+  public class RDate {
+    Optional<TimeType> value;
+    // If we go with a string for "until" field, we should use a string here too
+    List<CalendarEventModel.CalendarEventTime> rdtparam;
+
+    public RDate(Optional<TimeType> value, List<CalendarEventModel.CalendarEventTime> rdtparam) {
+      this.value = value;
+      this.rdtparam = rdtparam;
+    }
+
+    public RDate(List<CalendarEventModel.CalendarEventTime> rdtparam) {
+      this.value = Optional.empty();
+      this.rdtparam = rdtparam;
+    }
+
+    // There is a lot of opportunity for sanity checking here, but as we will be getting extant
+    // rdates, I'm not sure we need to do that yet.
+  }
+
   public class ExDate {
     // If we go with a string for "until" field, we should use a string here too
     List<CalendarEventModel.CalendarEventTime> exDateList;
@@ -39,4 +59,21 @@ public class RecurringEvent {
   enum ByRule {BYSECOND, BYMINUTE, BYHOUR, BYDAY, BYMONTHDAY, BYYEARDAY, BYWEEKNO, BYMONTH, BYSETPOS}
 
   enum Day {SU, MO, TU, WE, TH, FR, SA}
+
+  enum TimeType {
+    DATETIME("DATE-TIME"),
+    DATE("DATE"),
+    PERIOD("PERIOD");
+
+    private String title;
+
+    TimeType(String title) {
+      this.title = title;
+    }
+
+    @Override
+    public String toString() {
+      return title;
+    }
+  }
 }
