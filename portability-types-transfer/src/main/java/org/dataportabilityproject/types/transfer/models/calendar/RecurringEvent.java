@@ -7,13 +7,13 @@ import java.util.Optional;
 public class RecurringEvent {
 
   public class RRule {
-    Freq freq;
+    final Freq freq;
     // The "until" field could also just be a string, based on what's returned by the APIs
-    CalendarEventModel.CalendarEventTime until;
-    int count;
-    int interval;
-    Map<ByRule, List<Property>> byRuleMap;
-    Day wkst;
+    final CalendarEventModel.CalendarEventTime until;
+    final int count;
+    final int interval;
+    final Map<ByRule, List<Property>> byRuleMap;
+    final Day wkst;
 
     public RRule(Freq freq, CalendarEventModel.CalendarEventTime until, int count, int interval,
           Map<ByRule, List<Property>> byRuleMap, Day wkst) {
@@ -27,9 +27,9 @@ public class RecurringEvent {
   }
 
   public class RDate {
-    TimeType value;
+    final TimeType value;
     // If we go with a string for "until" field, we should use a string here too
-    List<CalendarEventModel.CalendarEventTime> rdtparam;
+    final List<CalendarEventModel.CalendarEventTime> rdtparam;
 
     public RDate(TimeType value, List<CalendarEventModel.CalendarEventTime> rdtparam) {
       this.value = value;
@@ -47,7 +47,7 @@ public class RecurringEvent {
 
   public class ExDate {
     // If we go with a string for "until" field, we should use a string here too
-    List<CalendarEventModel.CalendarEventTime> exDateList;
+    final List<CalendarEventModel.CalendarEventTime> exDateList;
 
     public ExDate(List<CalendarEventModel.CalendarEventTime> exDateList) {
       this.exDateList = exDateList;
@@ -66,7 +66,7 @@ public class RecurringEvent {
     PERIOD("PERIOD"),
     UNDEFINED("UNDEFINED");
 
-    private String title;
+    private final String title;
 
     TimeType(String title) {
       this.title = title;

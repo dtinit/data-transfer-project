@@ -6,7 +6,7 @@ interface Property<T> {
   T getValue();
 }
 
-class RuleDay implements Property<RecurringEvent.Day> {
+final class RuleDay implements Property<RecurringEvent.Day> {
   private RecurringEvent.Day day;
 
   RuleDay(RecurringEvent.Day day) {
@@ -19,7 +19,7 @@ class RuleDay implements Property<RecurringEvent.Day> {
   }
 }
 
-class RuleNumber implements Property<Integer> {
+final class RuleNumber implements Property<Integer> {
   private Integer number;
 
   RuleNumber(Integer number) {
@@ -32,7 +32,7 @@ class RuleNumber implements Property<Integer> {
   }
 }
 
-class RuleByDay implements Property<ByDay> {
+final class RuleByDay implements Property<ByDay> {
   private ByDay byDay;
 
   RuleByDay(ByDay byDay) {
@@ -45,7 +45,7 @@ class RuleByDay implements Property<ByDay> {
   }
 }
 
-class ByDay {
+final class ByDay {
   private boolean isNegative;
   private RuleNumber number;
   private RuleDay day;
