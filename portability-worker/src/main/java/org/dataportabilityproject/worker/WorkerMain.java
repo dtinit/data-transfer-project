@@ -63,21 +63,21 @@ public class WorkerMain {
 
     private static ExtensionContext getExtensionContext() {
         return new ExtensionContext() {
-                @Override
-                public Logger getLogger() {
-                    return new Logger() {{
-                    }};
-                }
+            @Override
+            public Logger getLogger() {
+                return new Logger() {{
+                }};
+            }
 
-                @Override
-                public <T> T getService(Class<T> type) {
-                    return null;
-                }
+            @Override
+            public <T> T getService(Class<T> type) {
+                return null;
+            }
 
-                @Override
-                public <T> T getConfiguration(String key, String defaultValue) {
-                    return null;
-                }
-            };
+            @Override
+            public <T> T getConfiguration(String key, String defaultValue) {
+                return null;
+            }
+        };
     }
 }
