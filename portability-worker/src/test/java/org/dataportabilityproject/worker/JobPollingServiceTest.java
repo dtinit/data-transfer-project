@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
+import org.dataportabilityproject.cloud.local.LocalJobStore;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
@@ -41,7 +41,7 @@ public class JobPollingServiceTest {
   private JobPollingService jobPollingService;
   private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
-  JobStore store = new InMemoryKeyValueStore();
+  JobStore store = new LocalJobStore();
 
   @Before
   public void setUp()  throws Exception {

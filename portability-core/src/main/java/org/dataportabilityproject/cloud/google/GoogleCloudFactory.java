@@ -30,7 +30,6 @@ import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
-import org.dataportabilityproject.shared.settings.CommonSettings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 public final class GoogleCloudFactory implements CloudFactory {
@@ -51,7 +50,7 @@ public final class GoogleCloudFactory implements CloudFactory {
         .setCredentials(googleCredentials)
         .build()
         .getService();
-    this.jobStore = new GoogleCloudDatastore(datastore);
+    this.jobStore = new GoogleJobStore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
   }
