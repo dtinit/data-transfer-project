@@ -23,8 +23,8 @@ dependencies {
     compile("com.google.cloud:google-cloud-datastore:${googleDatastoreVersion}")
     compile("com.google.inject:guice:${guiceVersion}")
 
-    testCompile("org.mockito:mockito-all:${mockitoVersion}")
-    testCompile("junit:junit:${junitVersion}")
     testCompile("com.google.truth:truth:${truthVersion}")
+    testCompile("junit:junit:${junitVersion}")
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+    testCompile("org.mockito:mockito-all:${mockitoVersion}")
 }

@@ -18,9 +18,7 @@ package org.dataportabilityproject.cloud.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.cloudkms.v1.CloudKMS;
 import com.google.api.services.cloudkms.v1.CloudKMSScopes;
 import com.google.api.services.cloudkms.v1.model.DecryptRequest;
@@ -38,13 +36,14 @@ final class GoogleCryptoKeyManagementSystem implements CryptoKeyStore {
   private static final String SECRETS_CRYPTO_KEY_FMT_STRING = "projects/%s/locations/global/"
       + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
 
-  private CloudKMS cloudKMS;
-  private String secretsCryptoKey;
+  private final CloudKMS cloudKMS;
+  private final String secretsCryptoKey;
 
   @Inject
-  GoogleCryptoKeyManagementSystem(@ProjectId String projectId) throws GoogleCredentialException {
-    HttpTransport transport = new NetHttpTransport();
-    JsonFactory jsonFactory = new JacksonFactory();
+  GoogleCryptoKeyManagementSystem(
+      HttpTransport transport,
+      JsonFactory jsonFactory,
+      @ProjectId String projectId) throws GoogleCredentialException {
     GoogleCredential credential;
     try {
       credential = GoogleCredential.getApplicationDefault(transport, jsonFactory);

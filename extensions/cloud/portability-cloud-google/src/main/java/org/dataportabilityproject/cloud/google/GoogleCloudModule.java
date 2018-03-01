@@ -21,6 +21,10 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -49,6 +53,7 @@ final class GoogleCloudModule extends AbstractModule {
   // The path where Kubernetes stores Secrets.
   private static final String KUBERNETES_SECRETS_PATH_ROOT = "/var/secrets/";
 
+  // TODO(rtannenbaum): Consolidate with core Environment enum once that is defined in new dirs
   @VisibleForTesting enum Environment {
     LOCAL,
     TEST,
@@ -66,7 +71,6 @@ final class GoogleCloudModule extends AbstractModule {
   }
 
   @Provides
-  @Inject
   GoogleCredentials getCredentials(ExtensionContext context, @ProjectId String projectId)
       throws GoogleCredentialException {
     validateUsingGoogle(context);
@@ -126,6 +130,16 @@ final class GoogleCloudModule extends AbstractModule {
         + "ID when using Google Cloud. This should be exposed as an environment variable by "
         + "Kubernetes, see k8s/api-deployment.yaml");
     return projectId;
+  }
+
+  @Provides
+  HttpTransport getHttpTransport() {
+    return new NetHttpTransport();
+  }
+
+  @Provides
+  JsonFactory getJsonFactory() {
+    return new JacksonFactory();
   }
 
   /**
