@@ -27,17 +27,17 @@ public class RecurringEvent {
   }
 
   public class RDate {
-    Optional<TimeType> value;
+    TimeType value;
     // If we go with a string for "until" field, we should use a string here too
     List<CalendarEventModel.CalendarEventTime> rdtparam;
 
-    public RDate(Optional<TimeType> value, List<CalendarEventModel.CalendarEventTime> rdtparam) {
+    public RDate(TimeType value, List<CalendarEventModel.CalendarEventTime> rdtparam) {
       this.value = value;
       this.rdtparam = rdtparam;
     }
 
     public RDate(List<CalendarEventModel.CalendarEventTime> rdtparam) {
-      this.value = Optional.empty();
+      this.value = TimeType.UNDEFINED;
       this.rdtparam = rdtparam;
     }
 
@@ -63,7 +63,8 @@ public class RecurringEvent {
   enum TimeType {
     DATETIME("DATE-TIME"),
     DATE("DATE"),
-    PERIOD("PERIOD");
+    PERIOD("PERIOD"),
+    UNDEFINED("UNDEFINED");
 
     private String title;
 
