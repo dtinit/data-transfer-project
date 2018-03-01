@@ -56,10 +56,6 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedPublicKey")
     public abstract String encryptedPublicKey();
 
-    @Nullable
-    @JsonProperty("encryptedPrivateKey")
-    public abstract String encryptedPrivateKey();
-
     public static Builder builder() {
         // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
         // the class name due to a conflict in package names for our generated code, but the conflict
@@ -97,9 +93,6 @@ public abstract class JobAuthorization {
 
         @JsonProperty("encryptedPublicKey")
         public abstract Builder setEncryptedPublicKey(String publicKey);
-
-        @JsonProperty("encryptedPrivateKey")
-        public abstract Builder setEncryptedPrivateKey(String privateKey);
 
         public abstract JobAuthorization build();
     }

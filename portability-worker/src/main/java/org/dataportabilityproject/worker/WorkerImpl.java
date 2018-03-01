@@ -15,46 +15,43 @@
  */
 package org.dataportabilityproject.worker;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
-
-import java.io.IOException;
-import java.util.UUID;
-
-import org.dataportabilityproject.PortabilityCopier;
-import org.dataportabilityproject.ServiceProviderRegistry;
-import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.job.Crypter;
-import org.dataportabilityproject.job.CrypterFactory;
-import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.security.Decrypter;
+import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
+import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.UUID;
+
 final class WorkerImpl {
     private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
-    private static final Gson GSON = new Gson();
 
-    private final CloudFactory cloudFactory;
     private final JobPollingService jobPollingService;
     private final JobStore store;
-    private final ServiceProviderRegistry registry;
+    private final TransferServiceProviderRegistry registry;
+    private final ObjectMapper objectMapper;
     private final WorkerJobMetadata workerJobMetadata;
 
     @Inject
     WorkerImpl(
-            CloudFactory cloudFactory,
+            JobStore store,
             JobPollingService jobPollingService,
-            ServiceProviderRegistry registry,
+            TransferServiceProviderRegistry registry,
+            ObjectMapper objectMapper,
             WorkerJobMetadata workerJobMetadata) {
-        this.cloudFactory = cloudFactory;
+        this.store = store;
         this.jobPollingService = jobPollingService;
-        this.store = cloudFactory.getJobStore();
         this.registry = registry;
+        this.objectMapper = objectMapper;
         this.workerJobMetadata = workerJobMetadata;
     }
 
@@ -83,9 +80,8 @@ final class WorkerImpl {
     }
 
     private void processJob(UUID jobId, PortabilityJob job) {
-        PortableDataType dataType = PortableDataType.valueOf(job.transferDataType());
         try {
-            Crypter decrypter = CrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
+            Decrypter decrypter = DecrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
             JobAuthorization jobAuthorization = job.jobAuthorization();
             String serializedExportAuthData =
                     decrypter.decrypt(jobAuthorization.encryptedExportAuthData());
@@ -93,19 +89,22 @@ final class WorkerImpl {
             String serializedImportAuthData =
                     decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
             AuthData importAuthData = deSerialize(serializedImportAuthData);
-            PortabilityCopier
-                    .copyDataType(registry, dataType, job.exportService(), exportAuthData,
-                            job.importService(), importAuthData, jobId);
+            // TODO: Refactor copy logic
+            InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier(registry);
+            copier.copyDataType(job.transferDataType(), job.exportService(), exportAuthData,
+                    job.importService(), importAuthData, jobId);
         } catch (IOException e) {
             logger.error("Error processing jobId: {}" + jobId, e);
         } finally {
-            cloudFactory.clearJobData(jobId);
+            store.removeData(jobId);
         }
     }
 
-
-    // TODO: Switch to using Jackson in the new transfer types
-    private static AuthData deSerialize(String serialized) {
-        return GSON.fromJson(serialized, AuthData.class);
+    private AuthData deSerialize(String serialized) throws IOException {
+        try {
+            return objectMapper.readValue(serialized, AuthData.class);
+        } catch (IOException e) {
+            throw new IOException("Unable to deserialize AuthData", e);
+        }
     }
 }
