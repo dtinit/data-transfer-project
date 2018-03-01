@@ -19,12 +19,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -36,112 +38,112 @@ import org.slf4j.LoggerFactory;
 /**
  * A service that polls storage for a job to process in two steps:
  * <br>
- *   (1) find an unassigned job for this worker
+ * (1) find an unassigned job for this worker
  * <br>
- *   (2) wait until the job is ready to process (i.e. creds are available)
+ * (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
-  private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
-  private final JobStore store;
-  private final WorkerJobMetadata jobMetadata;
+    private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
+    private final JobStore store;
+    private final WorkerJobMetadata jobMetadata;
 
-  @Inject
-  JobPollingService(CloudFactory cloudFactory, WorkerJobMetadata jobMetadata) {
-    this.store = cloudFactory.getJobStore();
-    this.jobMetadata = jobMetadata;
-  }
-
-  @Override
-  protected void runOneIteration() throws Exception {
-    if (jobMetadata.isInitialized()) {
-      pollUntilJobIsReady();
-    } else {
-      // Poll for an unassigned job to process with this worker instance.
-      // Once a worker instance is assigned, the client will populate storage with
-      // auth data encrypted with this instances public key and the copy process can begin
-      pollForUnassignedJob();
+    @Inject
+    JobPollingService(CloudFactory cloudFactory, WorkerJobMetadata jobMetadata) {
+        this.store = cloudFactory.getJobStore();
+        this.jobMetadata = jobMetadata;
     }
-  }
 
-  @Override
-  protected Scheduler scheduler() {
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
-  }
-
-  /**
-   * Polls for an unassigned job, and once found, initializes the global singleton job metadata
-   * object for this running instance of the worker.
-   */
-  private void pollForUnassignedJob() throws IOException {
-    UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
-    logger.debug("Polling for a job CREDS_AVAILABLE");
-    if (jobId == null) {
-      return;
+    @Override
+    protected void runOneIteration() throws Exception {
+        if (jobMetadata.isInitialized()) {
+            pollUntilJobIsReady();
+        } else {
+            // Poll for an unassigned job to process with this worker instance.
+            // Once a worker instance is assigned, the client will populate storage with
+            // auth data encrypted with this instances public key and the copy process can begin
+            pollForUnassignedJob();
+        }
     }
-    logger.debug("Polled job {}", jobId);
-    Preconditions.checkState(!jobMetadata.isInitialized());
-    KeyPair keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
-    PublicKey publicKey = keyPair.getPublic();
-    // TODO: Move storage of private key to a different location
-    PrivateKey privateKey = keyPair.getPrivate();
-    // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth state
-    // CREDS_ENCRYPTION_KEY_GENERATED).
-    try {
-      keyGenerated(jobId, publicKey, privateKey);
-      jobMetadata.init(jobId, keyPair);
-      logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
-          jobId, publicKey.getEncoded().length);
-    } catch (IOException e) {
-      logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
-          jobId);
+
+    @Override
+    protected Scheduler scheduler() {
+        return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
     }
-  }
 
-  /**
-   * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
-   * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
-   */
-  private void keyGenerated(UUID jobId, PublicKey publicKey, PrivateKey privateKey)
-      throws IOException {
-    // Lookup the job so we can append to its existing properties.
-    PortabilityJob existingJob = store.findJob(jobId);
-    // Verify no worker key
-    // Populate job with keys to persist
-    String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
-    String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
-
-    PortabilityJob updatedJob = existingJob.toBuilder()
-        .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
-            .setEncryptedPublicKey(encodedPublicKey)
-            .setEncryptedPrivateKey(encodedPrivateKey)
-            .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
-            .build())
-        .build();
-    store.updateJob(jobId, updatedJob);
-  }
-
-  /**
-   * Polls for job with populated auth data and stops this service when found.
-   */
-  private void pollUntilJobIsReady() {
-    UUID jobId = jobMetadata.getJobId();
-    PortabilityJob job = store.findJob(jobId);
-    if (job == null) {
-      logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
-    } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED) {
-      logger.debug("Polled job {} in state CREDS_ENCRYPTED", jobId);
-      JobAuthorization jobAuthorization = job.jobAuthorization();
-      if (!Strings.isNullOrEmpty(jobAuthorization.encryptedExportAuthData())
-          && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
-        logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
-      } else {
-        logger.warn("Polled job {} does not have auth data as expected. "
-            + "Done polling this job since it's in a bad state! Starting over.", jobId);
-      }
-      this.stopAsync();
-    } else {
-      logger.debug("Polling job {} until it's in state CREDS_ENCRYPTED. "
-          + "It's currently in state: {}", jobId, job.jobAuthorization().state());
+    /**
+     * Polls for an unassigned job, and once found, initializes the global singleton job metadata
+     * object for this running instance of the worker.
+     */
+    private void pollForUnassignedJob() throws IOException {
+        UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
+        logger.debug("Polling for a job CREDS_AVAILABLE");
+        if (jobId == null) {
+            return;
+        }
+        logger.debug("Polled job {}", jobId);
+        Preconditions.checkState(!jobMetadata.isInitialized());
+        KeyPair keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
+        PublicKey publicKey = keyPair.getPublic();
+        // TODO: Move storage of private key to a different location
+        PrivateKey privateKey = keyPair.getPrivate();
+        // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth state
+        // CREDS_ENCRYPTION_KEY_GENERATED).
+        try {
+            keyGenerated(jobId, publicKey, privateKey);
+            jobMetadata.init(jobId, keyPair);
+            logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
+                    jobId, publicKey.getEncoded().length);
+        } catch (IOException e) {
+            logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
+                    jobId);
+        }
     }
-  }
+
+    /**
+     * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
+     * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
+     */
+    private void keyGenerated(UUID jobId, PublicKey publicKey, PrivateKey privateKey)
+            throws IOException {
+        // Lookup the job so we can append to its existing properties.
+        PortabilityJob existingJob = store.findJob(jobId);
+        // Verify no worker key
+        // Populate job with keys to persist
+        String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
+        String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
+
+        PortabilityJob updatedJob = existingJob.toBuilder()
+                .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
+                        .setEncryptedPublicKey(encodedPublicKey)
+                        .setEncryptedPrivateKey(encodedPrivateKey)
+                        .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
+                        .build())
+                .build();
+        store.updateJob(jobId, updatedJob);
+    }
+
+    /**
+     * Polls for job with populated auth data and stops this service when found.
+     */
+    private void pollUntilJobIsReady() {
+        UUID jobId = jobMetadata.getJobId();
+        PortabilityJob job = store.findJob(jobId);
+        if (job == null) {
+            logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
+        } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED) {
+            logger.debug("Polled job {} in state CREDS_ENCRYPTED", jobId);
+            JobAuthorization jobAuthorization = job.jobAuthorization();
+            if (!Strings.isNullOrEmpty(jobAuthorization.encryptedExportAuthData())
+                    && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
+                logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
+            } else {
+                logger.warn("Polled job {} does not have auth data as expected. "
+                        + "Done polling this job since it's in a bad state! Starting over.", jobId);
+            }
+            this.stopAsync();
+        } else {
+            logger.debug("Polling job {} until it's in state CREDS_ENCRYPTED. "
+                    + "It's currently in state: {}", jobId, job.jobAuthorization().state());
+        }
+    }
 }
