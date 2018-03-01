@@ -7,7 +7,7 @@ interface Property<T> {
 }
 
 final class RuleDay implements Property<RecurringEvent.Day> {
-  private RecurringEvent.Day day;
+  private final RecurringEvent.Day day;
 
   RuleDay(RecurringEvent.Day day) {
     this.day = day;
@@ -20,7 +20,7 @@ final class RuleDay implements Property<RecurringEvent.Day> {
 }
 
 final class RuleNumber implements Property<Integer> {
-  private Integer number;
+  private final Integer number;
 
   RuleNumber(Integer number) {
     this.number = number;
@@ -33,7 +33,7 @@ final class RuleNumber implements Property<Integer> {
 }
 
 final class RuleByDay implements Property<ByDay> {
-  private ByDay byDay;
+  private final ByDay byDay;
 
   RuleByDay(ByDay byDay) {
     this.byDay = byDay;
@@ -46,13 +46,19 @@ final class RuleByDay implements Property<ByDay> {
 }
 
 final class ByDay {
-  private boolean isNegative;
-  private RuleNumber number;
-  private RuleDay day;
+  private final boolean isNegative;
+  private final RuleNumber number;
+  private final RuleDay day;
 
   ByDay(boolean isNegative, RuleNumber number, RuleDay day) {
     this.isNegative = isNegative;
     this.number = number;
     this.day = day;
   }
+
+  boolean getIsNegative() { return isNegative; }
+
+  RuleNumber getNumber() { return number; }
+
+  RuleDay getDay() { return day; }
 }
