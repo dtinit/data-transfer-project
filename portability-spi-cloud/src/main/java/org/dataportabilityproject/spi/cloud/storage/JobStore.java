@@ -9,7 +9,7 @@ import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * Implementations handle storage and retrieval of {@link LegacyPortabilityJob}s.
+ * A store for {@link PortabilityJob}s.
  *
  * This class is intended to be implemented by extensions that support storage in various back-end
  * services.

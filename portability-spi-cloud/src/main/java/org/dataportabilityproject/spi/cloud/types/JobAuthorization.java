@@ -40,7 +40,6 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedInitialImportAuthData")
   public abstract String encryptedInitialImportAuthData();
 
-
   @Nullable
   @JsonProperty("encryptedExportAuthData")
   public abstract String encryptedExportAuthData();

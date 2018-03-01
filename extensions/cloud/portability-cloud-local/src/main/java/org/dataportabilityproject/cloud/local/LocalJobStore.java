@@ -29,10 +29,10 @@ import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
  * An in-memory {@link JobStore} implementation that uses a concurrent map as its
  * store.
  */
-public final class InMemoryKeyValueStore implements JobStore {
+public final class LocalJobStore implements JobStore {
   private final ConcurrentHashMap<UUID, Map<String, Object>> map;
 
-  public InMemoryKeyValueStore() {
+  public LocalJobStore() {
     this.map = new ConcurrentHashMap<>();
   }
 
