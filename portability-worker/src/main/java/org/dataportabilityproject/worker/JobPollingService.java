@@ -110,7 +110,7 @@ class JobPollingService extends AbstractScheduledService {
         // Lookup the job so we can append to its existing properties.
         PortabilityJob existingJob = store.findJob(jobId);
         // Verify no worker key
-        Preconditions.checkArgument(existingJob.jobAuthorization().encryptedPublicKey() == null,
+        Preconditions.checkArgument(existingJob.jobAuthorization().encodedPublicKey() == null,
                 "public key cannot be persisted again");
         // Populate job with public key to persist
         String encodedPublicKey = BaseEncoding.base64Url().encode(publicKey.getEncoded());

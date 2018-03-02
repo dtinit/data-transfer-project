@@ -91,7 +91,7 @@ public abstract class JobAuthorization {
         @JsonProperty("encryptedSessionKey")
         public abstract Builder setEncryptedSessionKey(String sessionKey);
 
-        @JsonProperty("encryptedPublicKey")
+        @JsonProperty("encodedPublicKey")
         public abstract Builder setEncodedPublicKey(String publicKey);
 
         public abstract JobAuthorization build();

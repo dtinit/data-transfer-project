@@ -106,12 +106,12 @@ public abstract class PortabilityJob {
                     isSet(jobAuthorization.encryptedSessionKey());
                     isUnset(jobAuthorization.encryptedExportAuthData(),
                             jobAuthorization.encryptedImportAuthData(),
-                            jobAuthorization.encryptedPublicKey());
+                            jobAuthorization.encodedPublicKey());
                     break;
                 case CREDS_ENCRYPTION_KEY_GENERATED:
                     // Expected associated keys from the assigned worker to be present
                     isSet(jobAuthorization.encryptedSessionKey(),
-                            jobAuthorization.encryptedPublicKey());
+                            jobAuthorization.encodedPublicKey());
                     isUnset(jobAuthorization.encryptedExportAuthData(),
                             jobAuthorization.encryptedImportAuthData()
                     );
@@ -119,7 +119,7 @@ public abstract class PortabilityJob {
                 case CREDS_ENCRYPTED:
                     // Expected all fields set
                     isSet(jobAuthorization.encryptedSessionKey(),
-                            jobAuthorization.encryptedPublicKey(),
+                            jobAuthorization.encodedPublicKey(),
                             jobAuthorization.encryptedExportAuthData(),
                             jobAuthorization.encryptedImportAuthData());
                     break;
@@ -145,8 +145,8 @@ public abstract class PortabilityJob {
         if (null != jobAuthorization().encryptedImportAuthData()) {
             builder.put(IMPORT_ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedImportAuthData());
         }
-        if (null != jobAuthorization().encryptedPublicKey()) {
-            builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().encryptedPublicKey());
+        if (null != jobAuthorization().encodedPublicKey()) {
+            builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().encodedPublicKey());
         }
         return builder.build();
     }
@@ -157,7 +157,7 @@ public abstract class PortabilityJob {
                 (String) properties.get(EXPORT_ENCRYPTED_CREDS_KEY) : null;
         String encryptedImportAuthData = properties.containsKey(IMPORT_ENCRYPTED_CREDS_KEY) ?
                 (String) properties.get(IMPORT_ENCRYPTED_CREDS_KEY) : null;
-        String encryptedPublicKey = properties.containsKey(WORKER_INSTANCE_PUBLIC_KEY) ?
+        String encodedPublicKey = properties.containsKey(WORKER_INSTANCE_PUBLIC_KEY) ?
                 (String) properties.get(WORKER_INSTANCE_PUBLIC_KEY) : null;
 
         return PortabilityJob.builder()
@@ -172,7 +172,7 @@ public abstract class PortabilityJob {
                         .setEncryptedExportAuthData(encryptedExportAuthData)
                         .setEncryptedImportAuthData(encryptedImportAuthData)
                         .setEncryptedSessionKey((String) properties.get(ENCRYPTED_SESSION_KEY))
-                        .setEncodedPublicKey(encryptedPublicKey)
+                        .setEncodedPublicKey(encodedPublicKey)
                         .build()).build();
     }
 
