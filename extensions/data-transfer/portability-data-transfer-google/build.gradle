@@ -17,4 +17,6 @@
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
+
+    compile "com.google.api-client:google-api-client:${googleApiClient}"
 }
