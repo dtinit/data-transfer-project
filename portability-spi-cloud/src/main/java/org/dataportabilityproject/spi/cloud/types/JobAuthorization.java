@@ -53,8 +53,8 @@ public abstract class JobAuthorization {
     public abstract String encryptedSessionKey();
 
     @Nullable
-    @JsonProperty("encryptedPublicKey")
-    public abstract String encryptedPublicKey();
+    @JsonProperty("encodedPublicKey")
+    public abstract String encodedPublicKey();
 
     public static Builder builder() {
         // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
