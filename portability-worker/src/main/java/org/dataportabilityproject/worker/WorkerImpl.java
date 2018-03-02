@@ -89,7 +89,7 @@ final class WorkerImpl {
             String serializedImportAuthData =
                     decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
             AuthData importAuthData = deSerialize(serializedImportAuthData);
-            // TODO: Refactor copy logic
+            // TODO: Refactor copy logic, inject the appropriate copier type
             InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier(registry);
             copier.copyDataType(job.transferDataType(), job.exportService(), exportAuthData,
                     job.importService(), importAuthData, jobId);
