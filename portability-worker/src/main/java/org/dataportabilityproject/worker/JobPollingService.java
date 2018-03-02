@@ -45,14 +45,14 @@ class JobPollingService extends AbstractScheduledService {
     private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
     private final JobStore store;
     private final WorkerJobMetadata jobMetadata;
-    private final AsymmetricKeyGenerator aymmetricKeyGenerator;
+    private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
     @Inject
     JobPollingService(JobStore store, WorkerJobMetadata jobMetadata,
-                      AsymmetricKeyGenerator aymmetricKeyGenerator) {
+                      AsymmetricKeyGenerator asymmetricKeyGenerator) {
         this.store = store;
         this.jobMetadata = jobMetadata;
-        this.aymmetricKeyGenerator = aymmetricKeyGenerator;
+        this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     }
 
     @Override
@@ -84,7 +84,7 @@ class JobPollingService extends AbstractScheduledService {
         }
         logger.debug("Polled job {}", jobId);
         Preconditions.checkState(!jobMetadata.isInitialized());
-        KeyPair keyPair = aymmetricKeyGenerator.generate();
+        KeyPair keyPair = asymmetricKeyGenerator.generate();
         PublicKey publicKey = keyPair.getPublic();
         // TODO: Move storage of private key to a different location
         PrivateKey privateKey = keyPair.getPrivate();
@@ -110,14 +110,14 @@ class JobPollingService extends AbstractScheduledService {
         // Lookup the job so we can append to its existing properties.
         PortabilityJob existingJob = store.findJob(jobId);
         // Verify no worker key
-        // Populate job with keys to persist
-        Preconditions.checkArgument(existingJob.jobAuthorization().encryptedPublicKey() == null);
+        Preconditions.checkArgument(existingJob.jobAuthorization().encryptedPublicKey() == null,
+                "public key cannot be persisted again");
         // Populate job with public key to persist
         String encodedPublicKey = BaseEncoding.base64Url().encode(publicKey.getEncoded());
 
         PortabilityJob updatedJob = existingJob.toBuilder()
                 .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
-                        .setEncryptedPublicKey(encodedPublicKey)
+                        .setEncodedPublicKey(encodedPublicKey)
                         .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                         .build())
                 .build();

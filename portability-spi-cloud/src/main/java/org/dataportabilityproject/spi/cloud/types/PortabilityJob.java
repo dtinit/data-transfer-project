@@ -172,7 +172,7 @@ public abstract class PortabilityJob {
                         .setEncryptedExportAuthData(encryptedExportAuthData)
                         .setEncryptedImportAuthData(encryptedImportAuthData)
                         .setEncryptedSessionKey((String) properties.get(ENCRYPTED_SESSION_KEY))
-                        .setEncryptedPublicKey(encryptedPublicKey)
+                        .setEncodedPublicKey(encryptedPublicKey)
                         .build()).build();
     }
 
