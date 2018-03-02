@@ -28,6 +28,7 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,6 +44,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
 
     private final TransferServiceProviderRegistry registry;
 
+    @Inject
     public PortabilityInMemoryTransferCopier(TransferServiceProviderRegistry registry) {
         this.registry = registry;
     }
