@@ -38,6 +38,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
     private static final UUID TEST_ID = UUID.randomUUID();
+    private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
 
     @Mock
     private AsymmetricKeyGenerator asymmetricKeyGenerator;
@@ -58,7 +59,7 @@ public class JobPollingServiceTest {
     @Test
     public void pollingLifeCycle() throws Exception {
 
-        when(asymmetricKeyGenerator.generate()).thenReturn(createTestKeyPair());
+        when(asymmetricKeyGenerator.generate()).thenReturn(TEST_KEY_PAIR);
         // Initial state
         assertThat(metadata.isInitialized()).isFalse();
 
