@@ -1,15 +1,25 @@
-package org.dataportabilityproject.datatransfer.google;
+package org.dataportabilityproject.datatransfer.google.calendar;
 
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.client.util.DateTime;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult;
+import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
-public class GoogleCalendarImporter {
+public class GoogleCalendarImporter implements Importer<AuthData, CalendarContainerResource> {
+
+  @Override
+  public ImportResult importItem(String jobId, AuthData authData, CalendarContainerResource data) {
+    return null;
+  }
+
   static EventAttendee transformToEventAttendee(CalendarAttendeeModel attendee) {
     return new EventAttendee()
         .setDisplayName(attendee.getDisplayName())
@@ -40,11 +50,9 @@ public class GoogleCalendarImporter {
 
   static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(CalendarModel
       calendarModel) {
-    com.google.api.services.calendar.model.Calendar calendar =
-        new com.google.api.services.calendar.model.Calendar()
+    return new com.google.api.services.calendar.model.Calendar()
             .setSummary("Copy of - " + calendarModel.getName())
             .setDescription(calendarModel.getDescription());
-    return calendar;
   }
 
   static Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
