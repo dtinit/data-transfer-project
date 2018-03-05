@@ -15,14 +15,8 @@
  */
 package org.dataportabilityproject.worker;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.util.UUID;
-
-import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalJobStore;
-import org.dataportabilityproject.shared.PortableDataType;
+import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
@@ -33,22 +27,30 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
     private static final UUID TEST_ID = UUID.randomUUID();
+    private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
 
     @Mock
-    private CloudFactory cloudFactory;
+    private AsymmetricKeyGenerator asymmetricKeyGenerator;
 
+    private JobStore store;
     private JobPollingService jobPollingService;
     private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
-    JobStore store = new LocalJobStore();
-
     @Before
     public void setUp() throws Exception {
-        when(cloudFactory.getJobStore()).thenReturn(store);
-        jobPollingService = new JobPollingService(cloudFactory, metadata);
+        store = new LocalJobStore();
+        jobPollingService = new JobPollingService(store, metadata, asymmetricKeyGenerator);
     }
 
     // TODO(data-portability/issues/43): Make this an integration test which uses both the API and
@@ -56,6 +58,8 @@ public class JobPollingServiceTest {
     // actually does.
     @Test
     public void pollingLifeCycle() throws Exception {
+
+        when(asymmetricKeyGenerator.generate()).thenReturn(TEST_KEY_PAIR);
         // Initial state
         assertThat(metadata.isInitialized()).isFalse();
 
@@ -67,7 +71,7 @@ public class JobPollingServiceTest {
 
         // API inserts an job in initial authorization state
         job = PortabilityJob.builder()
-                .setTransferDataType(PortableDataType.PHOTOS.name())
+                .setTransferDataType("photo")
                 .setExportService("DummyExportService")
                 .setImportService("DummyImportService")
                 .setAndValidateJobAuthorization(JobAuthorization.builder()
@@ -108,8 +112,7 @@ public class JobPollingServiceTest {
         job = store.findJob(TEST_ID);
         assertThat(job.jobAuthorization().state())
                 .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-        assertThat(job.jobAuthorization().encryptedPublicKey()).isNotEmpty();
-        assertThat(job.jobAuthorization().encryptedPrivateKey()).isNotEmpty();
+        assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
 
         // Client encrypts data and updates the job
         job = job.toBuilder()
@@ -131,5 +134,41 @@ public class JobPollingServiceTest {
         assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
 
         store.remove(TEST_ID);
+    }
+
+    private static final KeyPair createTestKeyPair() {
+        PublicKey publicKey = new PublicKey() {
+            @Override
+            public String getAlgorithm() {
+                return "RSA";
+            }
+
+            @Override
+            public String getFormat() {
+                return "";
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return "DummyPublicKey".getBytes();
+            }
+        };
+        PrivateKey privateKey = new PrivateKey() {
+            @Override
+            public String getAlgorithm() {
+                return "RSA";
+            }
+
+            @Override
+            public String getFormat() {
+                return "";
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return "DummyPrivateKey".getBytes();
+            }
+        };
+        return new KeyPair(publicKey, privateKey);
     }
 }

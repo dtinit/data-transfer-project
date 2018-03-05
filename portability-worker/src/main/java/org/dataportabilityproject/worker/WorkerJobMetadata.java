@@ -22,8 +22,6 @@ import com.google.inject.Singleton;
 import java.security.KeyPair;
 import java.util.UUID;
 
-import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
-
 /**
  * A class that contains the value of the job and key for a worker instance. This classes uses
  * the initialization-on-demand holder idiom to ensure it is a singleton.

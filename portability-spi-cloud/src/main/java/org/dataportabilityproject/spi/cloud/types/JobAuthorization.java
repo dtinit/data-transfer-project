@@ -53,12 +53,8 @@ public abstract class JobAuthorization {
     public abstract String encryptedSessionKey();
 
     @Nullable
-    @JsonProperty("encryptedPublicKey")
-    public abstract String encryptedPublicKey();
-
-    @Nullable
-    @JsonProperty("encryptedPrivateKey")
-    public abstract String encryptedPrivateKey();
+    @JsonProperty("encodedPublicKey")
+    public abstract String encodedPublicKey();
 
     public static Builder builder() {
         // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
@@ -95,11 +91,8 @@ public abstract class JobAuthorization {
         @JsonProperty("encryptedSessionKey")
         public abstract Builder setEncryptedSessionKey(String sessionKey);
 
-        @JsonProperty("encryptedPublicKey")
-        public abstract Builder setEncryptedPublicKey(String publicKey);
-
-        @JsonProperty("encryptedPrivateKey")
-        public abstract Builder setEncryptedPrivateKey(String privateKey);
+        @JsonProperty("encodedPublicKey")
+        public abstract Builder setEncodedPublicKey(String publicKey);
 
         public abstract JobAuthorization build();
     }

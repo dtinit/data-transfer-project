@@ -47,8 +47,9 @@ configurations {
 }
 
 dependencies {
-    compile project(':portability-core')
+    compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
+    compile project(':libraries:security')
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")
     compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
@@ -60,13 +61,20 @@ dependencies {
     }
     compile("com.google.code.gson:gson:${gsonVersion}")
     compile("com.google.guava:guava:${guavaVersion}")
+    compile("com.google.inject.extensions:guice-multibindings:${guiceVersion}")
+    compile("com.google.inject:guice:${guiceVersion}")
     compile("com.google.http-client:google-http-client:${googleApiClient}")
     compile("com.google.http-client:google-http-client-xml:${googleApiClient}")
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
+    // Logging
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+
 
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.mockito:mockito-all:${mockitoVersion}")
+    testCompile project(':extensions:cloud:portability-cloud-local')
 }

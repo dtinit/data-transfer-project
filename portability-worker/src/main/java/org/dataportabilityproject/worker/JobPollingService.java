@@ -17,8 +17,15 @@ package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import org.dataportabilityproject.security.AsymmetricKeyGenerator;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -26,14 +33,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import org.dataportabilityproject.cloud.interfaces.CloudFactory;
-import org.dataportabilityproject.job.PublicPrivateKeyPairGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A service that polls storage for a job to process in two steps:
@@ -46,11 +45,14 @@ class JobPollingService extends AbstractScheduledService {
     private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
     private final JobStore store;
     private final WorkerJobMetadata jobMetadata;
+    private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
     @Inject
-    JobPollingService(CloudFactory cloudFactory, WorkerJobMetadata jobMetadata) {
-        this.store = cloudFactory.getJobStore();
+    JobPollingService(JobStore store, WorkerJobMetadata jobMetadata,
+                      AsymmetricKeyGenerator asymmetricKeyGenerator) {
+        this.store = store;
         this.jobMetadata = jobMetadata;
+        this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     }
 
     @Override
@@ -82,14 +84,14 @@ class JobPollingService extends AbstractScheduledService {
         }
         logger.debug("Polled job {}", jobId);
         Preconditions.checkState(!jobMetadata.isInitialized());
-        KeyPair keyPair = PublicPrivateKeyPairGenerator.generateKeyPair();
+        KeyPair keyPair = asymmetricKeyGenerator.generate();
         PublicKey publicKey = keyPair.getPublic();
         // TODO: Move storage of private key to a different location
         PrivateKey privateKey = keyPair.getPrivate();
         // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth state
         // CREDS_ENCRYPTION_KEY_GENERATED).
         try {
-            keyGenerated(jobId, publicKey, privateKey);
+            keyGenerated(jobId, publicKey);
             jobMetadata.init(jobId, keyPair);
             logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
                     jobId, publicKey.getEncoded().length);
@@ -103,19 +105,19 @@ class JobPollingService extends AbstractScheduledService {
      * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
      * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
      */
-    private void keyGenerated(UUID jobId, PublicKey publicKey, PrivateKey privateKey)
+    private void keyGenerated(UUID jobId, PublicKey publicKey)
             throws IOException {
         // Lookup the job so we can append to its existing properties.
         PortabilityJob existingJob = store.findJob(jobId);
         // Verify no worker key
-        // Populate job with keys to persist
-        String encodedPublicKey = PublicPrivateKeyPairGenerator.encodeKey(publicKey);
-        String encodedPrivateKey = PublicPrivateKeyPairGenerator.encodeKey(privateKey);
+        Preconditions.checkArgument(existingJob.jobAuthorization().encodedPublicKey() == null,
+                "public key cannot be persisted again");
+        // Populate job with public key to persist
+        String encodedPublicKey = BaseEncoding.base64Url().encode(publicKey.getEncoded());
 
         PortabilityJob updatedJob = existingJob.toBuilder()
                 .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
-                        .setEncryptedPublicKey(encodedPublicKey)
-                        .setEncryptedPrivateKey(encodedPrivateKey)
+                        .setEncodedPublicKey(encodedPublicKey)
                         .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                         .build())
                 .build();
