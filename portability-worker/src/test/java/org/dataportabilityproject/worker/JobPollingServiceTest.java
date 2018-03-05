@@ -15,7 +15,7 @@
  */
 package org.dataportabilityproject.worker;
 
-import org.dataportabilityproject.cloud.local.InMemoryKeyValueStore;
+import org.dataportabilityproject.cloud.local.LocalJobStore;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
@@ -44,7 +44,7 @@ public class JobPollingServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        store = new InMemoryKeyValueStore();
+        store = new LocalJobStore();
         jobPollingService = new JobPollingService(store, metadata, asymmetricKeyGenerator);
     }
 
@@ -105,7 +105,7 @@ public class JobPollingServiceTest {
         job = store.findJob(TEST_ID);
         assertThat(job.jobAuthorization().state())
                 .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-        assertThat(job.jobAuthorization().encryptedPublicKey()).isNotEmpty();
+        assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
 
         // Client encrypts data and updates the job
         job = job.toBuilder()
