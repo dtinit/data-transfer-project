@@ -27,9 +27,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.UUID;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
@@ -53,6 +57,8 @@ public class JobPollingServiceTest {
     // actually does.
     @Test
     public void pollingLifeCycle() throws Exception {
+
+        when(asymmetricKeyGenerator.generate()).thenReturn(createTestKeyPair());
         // Initial state
         assertThat(metadata.isInitialized()).isFalse();
 
@@ -127,5 +133,41 @@ public class JobPollingServiceTest {
         assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
 
         store.remove(TEST_ID);
+    }
+
+    private static final KeyPair createTestKeyPair() {
+        PublicKey publicKey = new PublicKey() {
+            @Override
+            public String getAlgorithm() {
+                return "RSA";
+            }
+
+            @Override
+            public String getFormat() {
+                return "";
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return "DummyPublicKey".getBytes();
+            }
+        };
+        PrivateKey privateKey = new PrivateKey() {
+            @Override
+            public String getAlgorithm() {
+                return "RSA";
+            }
+
+            @Override
+            public String getFormat() {
+                return "";
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return "DummyPrivateKey".getBytes();
+            }
+        };
+        return new KeyPair(publicKey, privateKey);
     }
 }
