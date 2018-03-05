@@ -18,7 +18,6 @@ package org.dataportabilityproject.worker;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import java.security.KeyPair;
 import java.util.UUID;
 
@@ -30,19 +29,31 @@ import java.util.UUID;
 final class WorkerJobMetadata {
     private static KeyPair keyPair = null;
     private static UUID jobId = null;
+    private static String dataType = null;
+    private static String exportService = null;
+    private static String importService = null;
 
     @Inject
     WorkerJobMetadata() {
     }
 
     boolean isInitialized() {
-        return (jobId != null && keyPair != null);
+        return (jobId != null && keyPair != null && dataType != null && exportService != null
+            && importService != null);
     }
 
-    void init(UUID jobId, KeyPair keyPair) {
+    void init(
+        UUID jobId,
+        KeyPair keyPair,
+        String dataType,
+        String exportService,
+        String importService) {
         Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
         this.jobId = jobId;
         this.keyPair = keyPair;
+        this.dataType = dataType;
+        this.exportService = exportService;
+        this.importService = importService;
     }
 
     public KeyPair getKeyPair() {
@@ -53,5 +64,20 @@ final class WorkerJobMetadata {
     public UUID getJobId() {
         Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
         return jobId;
+    }
+
+    public String getDataType() {
+        Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+        return dataType;
+    }
+
+    public String getExportService() {
+        Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+        return exportService;
+    }
+
+    public String getImportService() {
+        Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+        return importService;
     }
 }

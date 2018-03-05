@@ -27,6 +27,7 @@ import org.dataportabilityproject.spi.transfer.provider.TransferServiceProvider;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
 
 /**
  *
@@ -38,8 +39,11 @@ public class MicrosoftTransferServiceProvider implements TransferServiceProvider
     private Map<String, Exporter<?, ?>> exporterCache = new HashMap<>();
     private Map<String, Importer<?, ?>> importerCache = new HashMap<>();
 
-    public MicrosoftTransferServiceProvider(OkHttpClient client, ObjectMapper mapper,
-        TransformerService transformerService) {
+    public MicrosoftTransferServiceProvider() {
+        // TODO: inject these params
+        OkHttpClient client = new OkHttpClient.Builder().build();
+        ObjectMapper mapper = new ObjectMapper();
+        TransformerService transformerService = new TransformerServiceImpl();
         exporterCache.put(CONTACTS,
             new MicrosoftContactsExporter(client, mapper, transformerService));
         importerCache.put(CONTACTS,
