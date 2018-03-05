@@ -65,8 +65,7 @@ public class WorkerMain {
         return new ExtensionContext() {
             @Override
             public Logger getLogger() {
-                return new Logger() {{
-                }};
+                return new Logger() {};
             }
 
             @Override

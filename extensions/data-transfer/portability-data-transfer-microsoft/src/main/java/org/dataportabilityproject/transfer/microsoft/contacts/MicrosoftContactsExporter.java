@@ -48,7 +48,8 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
     private final ObjectMapper objectMapper;
     private final TransformerService transformerService;
 
-    public MicrosoftContactsExporter(OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+    public MicrosoftContactsExporter(OkHttpClient client, ObjectMapper objectMapper,
+        TransformerService transformerService) {
         this.client = client;
         this.objectMapper = objectMapper;
         this.transformerService = transformerService;
@@ -60,7 +61,8 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
     }
 
     @Override
-    public ExportResult<ContactsModelWrapper> export(TokenAuthData authData, ExportInformation continuationData) {
+    public ExportResult<ContactsModelWrapper> export(TokenAuthData authData,
+        ExportInformation continuationData) {
         GraphPagination graphPagination = (GraphPagination) continuationData.getPaginationData();
         return doExport(authData, graphPagination.getNextLink());
     }
@@ -73,15 +75,18 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
         try (Response graphResponse = client.newCall(graphReqBuilder.build()).execute()) {
             ResponseBody body = graphResponse.body();
             if (body == null) {
-                return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving contacts: response body was null");
+                return new ExportResult<>(ExportResult.ResultType.ERROR,
+                    "Error retrieving contacts: response body was null");
             }
             String graphBody = new String(body.bytes());
             Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
             String nextLink = (String) graphMap.get(ODATA_NEXT);
-            ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
+            ContinuationData continuationData = nextLink == null
+                ? null : new ContinuationData(new GraphPagination(nextLink));
 
-            List<Map<String, Object>> rawContacts = (List<Map<String, Object>>) graphMap.get("value");
+            List<Map<String, Object>> rawContacts =
+                (List<Map<String, Object>>) graphMap.get("value");
             if (rawContacts == null) {
                 return new ExportResult<>(ExportResult.ResultType.END);
             }
@@ -90,7 +95,8 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
             return new ExportResult<>(ExportResult.ResultType.CONTINUE, wrapper, continuationData);
         } catch (IOException e) {
             e.printStackTrace();  // FIXME log error
-            return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+            return new ExportResult<>(ExportResult.ResultType.ERROR,
+                "Error retrieving contacts: " + e.getMessage());
         }
     }
 
@@ -98,7 +104,8 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
         StringWriter stringWriter = new StringWriter();
         try (JCardWriter writer = new JCardWriter(stringWriter);) {
             for (Map<String, Object> rawContact : rawContacts) {
-                TransformResult<VCard> result = transformerService.transform(VCard.class, rawContact);
+                TransformResult<VCard> result =
+                    transformerService.transform(VCard.class, rawContact);
                 if (result.hasProblems()) {
                     // discard
                     // FIXME log problem
@@ -114,6 +121,4 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
         return new ContactsModelWrapper(stringWriter.toString());
 
     }
-
-
 }

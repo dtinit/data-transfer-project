@@ -35,5 +35,4 @@ public interface GatewayExtension extends AbstractExtension {
      * Returns initialized extension exporters.
      */
     List<AuthServiceProvider> getAuthServiceProviders();
-
 }

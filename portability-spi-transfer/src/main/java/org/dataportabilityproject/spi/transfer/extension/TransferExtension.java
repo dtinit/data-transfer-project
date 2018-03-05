@@ -35,5 +35,4 @@ public interface TransferExtension extends AbstractExtension {
      * Returns initialized extension importers.
      */
     List<Importer<?, ?>> getImporters();
-
 }
