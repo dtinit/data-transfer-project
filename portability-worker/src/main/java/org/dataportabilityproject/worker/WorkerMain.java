@@ -23,13 +23,12 @@ import com.google.inject.Injector;
 import java.util.List;
 import java.util.ServiceLoader;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.provider.TransferServiceProvider;
 import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferServiceProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main class to bootstrap a portability worker that will operate on a single job whose state
@@ -40,8 +39,6 @@ public class WorkerMain {
         Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
         ExtensionContext extensionContext = getExtensionContext();
-        // TODO: logger = extensionContext.getLogger();
-        Logger logger = LoggerFactory.getLogger(WorkerMain.class);
 
         Injector injector = Guice.createInjector(new WorkerModule());
         WorkerImpl worker = injector.getInstance(WorkerImpl.class);
@@ -55,47 +52,19 @@ public class WorkerMain {
         Exporter<?, ?> exporter = null;
         Importer<?, ?> importer = null;
 
+        // TODO: dynamically load the correct Importer & Exporter based on META-INF file name match.
         for (TransferServiceProvider transferServiceProvider : listAllTransferServiceProviders()) {
             if (transferServiceProvider.getServiceId().equals(exportService)) {
-                logger.info("Found transfer service provider for export service {}: {}",
-                exportService, transferServiceProvider.getClass().getName());
-                Preconditions.checkState(exporter == null, "We should only have one valid exporter "
-                    + "for this job, but already have another one: "
-                    + exporter.getClass().getName() + " and the exporter for "
-                    + transferServiceProvider.getServiceId() + " also matches");
-
                 exporter = transferServiceProvider.getExporter(dataType);
-
-                Preconditions.checkNotNull(importer, String.format("Export TransferServiceProvider "
-                        + "%s does not contain an exporter for job %s's dataType, %s!",
-                    transferServiceProvider.getClass().toString(), metadata.getJobId(),
-                    dataType));
-                logger.info("Found exporter for dataType {}: {}", dataType,
-                    exporter.getClass().getName());
             } else if (transferServiceProvider.getServiceId().equals(importService)) {
-                logger.info("Found transfer service provider for import service {}: {}",
-                    importService, transferServiceProvider.getClass().getName());
-                Preconditions.checkState(exporter == null, "We should only have one valid importer "
-                    + "for this job. We already have one (" + importer.getClass().getName()
-                    + ") but the service provider for " + transferServiceProvider.getServiceId()
-                    + " also matches");
-
                 importer = transferServiceProvider.getImporter(dataType);
-
-                Preconditions.checkNotNull(importer, String.format("Import TransferServiceProvider "
-                        + "%s does not contain an importer for job %s's dataType, %s!",
-                        transferServiceProvider.getClass().toString(), metadata.getJobId(),
-                        dataType));
-                logger.info("Found importer for dataType {}: {}", dataType,
-                    importer.getClass().getName());
             }
         }
         Preconditions.checkNotNull(exporter, String.format("No %s exporter found for %s",
             dataType, exportService));
         Preconditions.checkNotNull(importer, String.format("No %s importer found for %s",
             dataType, importService));
-        // Dynamically create a TransferExtension with the correct importer and exporter, based on
-        // our polled job
+        // Create a TransferExtension with the correct importer and exporter, based on polled job
         // TODO: load this as a single class rather than list, need to figure out the syntax
         List<TransferExtension> extensions =
             ImmutableList.of(createTransferExtension(exporter, importer));
@@ -117,9 +86,11 @@ public class WorkerMain {
         System.exit(0);
     }
 
-    // TODO: consider getting this dynamically rather than hardcoding
+    // TODO: list file names in META-INF - do not hardcode service provider class names! The point
+    // of this service loading is to minimize footprint of arbitrary code. We should only load the
+    // classes directly related to this worker's job.
     private static List<TransferServiceProvider> listAllTransferServiceProviders() {
-        // TODO if we get these dynamically, consider validating all service names unique
+        // TODO consider validating all service names unique
         return ImmutableList.of(new MicrosoftTransferServiceProvider());
     }
 
@@ -152,8 +123,8 @@ public class WorkerMain {
     private static ExtensionContext getExtensionContext() {
         return new ExtensionContext() {
             @Override
-            public org.dataportabilityproject.api.launcher.Logger getLogger() {
-                return new org.dataportabilityproject.api.launcher.Logger() {};
+            public Logger getLogger() {
+                return new Logger() {};
             }
 
             @Override
