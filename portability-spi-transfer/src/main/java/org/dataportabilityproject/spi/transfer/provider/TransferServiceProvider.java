@@ -3,7 +3,8 @@ package org.dataportabilityproject.spi.transfer.provider;
 import java.util.List;
 
 /**
- * Factory responsible for providing {@link Exporter} and {@link Importer} implementations that transfer data from and to a particular service.
+ * Factory responsible for providing {@link Exporter} and {@link Importer} implementations that
+ * transfer data from and to a particular service.
  */
 public interface TransferServiceProvider {
 

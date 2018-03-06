@@ -55,10 +55,10 @@ final class WorkerImpl {
         this.workerJobMetadata = workerJobMetadata;
     }
 
+    /**
+     * Start processing the job we've already polled.
+     */
     void processJob() {
-        // Start the polling service to poll for an unassigned job and when it's ready.
-        pollForJob();
-
         // Start the processing
         UUID jobId = workerJobMetadata.getJobId();
         logger.debug("Begin processing jobId: {}", jobId);
@@ -66,17 +66,23 @@ final class WorkerImpl {
         Preconditions.checkState(
                 job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
 
-        // Only load the two providers that are doing actually work.
-        // TODO(willard): Only load two needed services here, after converting service name to class
-        // name in storage.
-
         processJob(jobId, job);
         logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
     }
 
-    private void pollForJob() {
+    /**
+     * Start the polling service to poll for an unassigned job when it's ready.
+     */
+    void pollForJob() {
         jobPollingService.startAsync();
         jobPollingService.awaitTerminated();
+    }
+
+    /**
+     * Get the metadata for the polled job.
+     */
+    WorkerJobMetadata getWorkerJobMetadata() {
+        return workerJobMetadata;
     }
 
     private void processJob(UUID jobId, PortabilityJob job) {

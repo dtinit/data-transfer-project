@@ -42,7 +42,8 @@ import static org.dataportabilityproject.transfer.microsoft.transformer.Transfor
 /**
  * Exports Outlook calendar information using the Microsoft Graph API.
  */
-public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, CalendarContainerResource> {
+public class MicrosoftCalendarExporter implements
+    Exporter<TokenAuthData, CalendarContainerResource> {
     private static final String CALENDARS_URL = "/v1.0/me/calendars";
     private static final String EVENTS_URL = "/v1.0/me/calendars/%s/events";
     private static final String ODATA_NEXT = "@odata.nextLink";
@@ -53,12 +54,14 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
     private final ObjectMapper objectMapper;
     private final TransformerService transformerService;
 
-    public MicrosoftCalendarExporter(OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+    public MicrosoftCalendarExporter(OkHttpClient client, ObjectMapper objectMapper,
+        TransformerService transformerService) {
         this("https://graph.microsoft.com/", client, objectMapper, transformerService);
     }
 
     @VisibleForTesting
-    public MicrosoftCalendarExporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+    public MicrosoftCalendarExporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper,
+        TransformerService transformerService) {
         this.client = client;
         this.objectMapper = objectMapper;
         this.transformerService = transformerService;
@@ -73,21 +76,25 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
         try (Response graphResponse = client.newCall(calendarsBuilder.build()).execute()) {
             ResponseBody body = graphResponse.body();
             if (body == null) {
-                return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving contacts: response body was null");
+                return new ExportResult<>(ExportResult.ResultType.ERROR,
+                    "Error retrieving contacts: response body was null");
             }
             String graphBody = new String(body.bytes());
             Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
             // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
-            // TODO ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
+            // TODO ContinuationData continuationData = nextLink == null
+            // ? null : new ContinuationData(new GraphPagination(nextLink));
 
-            @SuppressWarnings("unchecked") List<Map<String, Object>> rawCalendars = (List<Map<String, Object>>) graphMap.get("value");
+            @SuppressWarnings("unchecked") List<Map<String, Object>> rawCalendars =
+                (List<Map<String, Object>>) graphMap.get("value");
             if (rawCalendars == null) {
                 return new ExportResult<>(ExportResult.ResultType.END);
             }
             for (Map<String, Object> rawCalendar : rawCalendars) {
 
-                TransformResult<CalendarModel> result = transformerService.transform(CalendarModel.class, rawCalendar);
+                TransformResult<CalendarModel> result =
+                    transformerService.transform(CalendarModel.class, rawCalendar);
                 if (result.hasProblems()) {
                     // discard
                     // FIXME log problem
@@ -98,7 +105,8 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
             }
         } catch (IOException e) {
             e.printStackTrace();  // FIXME log error
-            return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving calendar: " + e.getMessage());
+            return new ExportResult<>(ExportResult.ResultType.ERROR,
+                "Error retrieving calendar: " + e.getMessage());
         }
 
         List<CalendarEventModel> calendarEventModels = new ArrayList<>();
@@ -110,15 +118,18 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
             try (Response graphResponse = client.newCall(eventsBuilder.build()).execute()) {
                 ResponseBody body = graphResponse.body();
                 if (body == null) {
-                    return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving calendar: response body was null");
+                    return new ExportResult<>(ExportResult.ResultType.ERROR,
+                        "Error retrieving calendar: response body was null");
                 }
                 String graphBody = new String(body.bytes());
                 Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
                 // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
-                // TODO ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
+                // TODO ContinuationData continuationData = nextLink == null
+                // ? null : new ContinuationData(new GraphPagination(nextLink));
 
-                @SuppressWarnings("unchecked") List<Map<String, Object>> rawEvents = (List<Map<String, Object>>) graphMap.get("value");
+                @SuppressWarnings("unchecked") List<Map<String, Object>> rawEvents =
+                    (List<Map<String, Object>>) graphMap.get("value");
                 if (rawEvents == null) {
                     return new ExportResult<>(ExportResult.ResultType.END);
                 }
@@ -126,7 +137,9 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
                 for (Map<String, Object> rawEvent : rawEvents) {
                     Map<String, String> properties = new HashMap<>();
                     properties.put(CALENDAR_ID, id);
-                    TransformResult<CalendarEventModel> result = transformerService.transform(CalendarEventModel.class, rawEvent, properties);
+                    TransformResult<CalendarEventModel> result =
+                        transformerService.transform(CalendarEventModel.class, rawEvent,
+                            properties);
                     if (result.hasProblems()) {
                         // discard
                         // FIXME log problem
@@ -137,12 +150,14 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
 
             } catch (IOException e) {
                 e.printStackTrace();  // FIXME log error
-                return new ExportResult<>(ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+                return new ExportResult<>(ExportResult.ResultType.ERROR,
+                    "Error retrieving contacts: " + e.getMessage());
             }
         }
 
 
-        CalendarContainerResource resource = new CalendarContainerResource(calendarModels, calendarEventModels);
+        CalendarContainerResource resource =
+            new CalendarContainerResource(calendarModels, calendarEventModels);
         return new ExportResult<>(ExportResult.ResultType.END, resource, null);
     }
 
@@ -151,7 +166,8 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
     }
 
     @Override
-    public ExportResult<CalendarContainerResource> export(TokenAuthData authData, ExportInformation exportInformation) {
+    public ExportResult<CalendarContainerResource> export(TokenAuthData authData,
+        ExportInformation exportInformation) {
         // TODO support pagination
         throw new UnsupportedOperationException();
     }
@@ -161,5 +177,4 @@ public class MicrosoftCalendarExporter implements Exporter<TokenAuthData, Calend
         calendarsRequestBuilder.header("Authorization", "Bearer " + authData.getToken());
         return calendarsRequestBuilder;
     }
-
 }

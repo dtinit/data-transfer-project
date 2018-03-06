@@ -27,7 +27,8 @@ public interface AbstractExtension {
     void initialize(ExtensionContext context);
 
     /**
-     * Sginals to the extension to prepare for receiving requests. For example, implementations may open sockets or other resources.
+     * Signals to the extension to prepare for receiving requests. For example, implementations may
+     * open sockets or other resources.
      */
     default void start() {
     }
