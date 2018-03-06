@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * Crypto key management.
  *
- * This class is intended to be implemented by extensions that support key management in various
+ * <p>This class is intended to be implemented by extensions that support key management in various
  * back-end services.
  */
 public interface CryptoKeyStore {
