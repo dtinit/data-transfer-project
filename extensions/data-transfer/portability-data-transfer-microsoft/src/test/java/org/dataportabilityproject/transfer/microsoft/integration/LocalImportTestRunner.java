@@ -15,22 +15,17 @@
  */
 package org.dataportabilityproject.transfer.microsoft.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardWriter;
 import ezvcard.property.StructuredName;
-import okhttp3.OkHttpClient;
+import java.io.IOException;
+import java.io.StringWriter;
 import org.dataportabilityproject.auth.microsoft.harness.AuthTestDriver;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferServiceProvider;
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
+import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
-
-import java.io.IOException;
-import java.io.StringWriter;
 
 /**
  *
@@ -40,20 +35,13 @@ public class LocalImportTestRunner {
     public static void main(String... args) throws Exception {
         AuthTestDriver authTestDriver = new AuthTestDriver();
 
-        OkHttpClient client = new OkHttpClient.Builder().build();
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        TransformerService transformerService = new TransformerServiceImpl();
-
-        MicrosoftTransferServiceProvider serviceProvider = new MicrosoftTransferServiceProvider(client, mapper, transformerService);
+        MicrosoftTransferExtension serviceProvider = new MicrosoftTransferExtension();
         TokenAuthData token = authTestDriver.getOAuthTokenCode();
 
         Importer<TokenAuthData, ContactsModelWrapper> contacts = (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter("contacts");
 
         ContactsModelWrapper wrapper = new ContactsModelWrapper(createCards());
         ImportResult result = contacts.importItem("1", token, wrapper);
-
     }
 
     private static String createCards() throws IOException {

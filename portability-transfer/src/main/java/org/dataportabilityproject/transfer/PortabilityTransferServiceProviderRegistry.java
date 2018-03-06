@@ -26,69 +26,23 @@ public class PortabilityTransferServiceProviderRegistry implements TransferServi
       Map<String, TransferServiceProvider> serviceProviderMap) {
     ImmutableMap.Builder<String, TransferServiceProvider> serviceProviderBuilder = ImmutableMap
         .builder();
-    ImmutableSet.Builder<String> supportedImportTypes = ImmutableSet.builder();
-    ImmutableSet.Builder<String> supportedExportTypes = ImmutableSet.builder();
 
     for (String service : enabledServices) {
       TransferServiceProvider provider = serviceProviderMap.get(service);
       Preconditions
           .checkArgument(provider != null, "TransferServiceProvider not found for [%s]", service);
 
-      List<String> importTypes = provider.getImportTypes();
-      List<String> exportTypes = provider.getExportTypes();
-
-      // Check that each registered service has export if it has import.
-      // We do not allow for import only types
-      for (String type : importTypes) {
-        Preconditions.checkArgument(exportTypes.contains(type),
-            "TransferDataType [%s] is available for import but not export in [%s] TransferServiceProvider",
-            type, service);
-        supportedImportTypes.add(type);
-      }
-
-      supportedExportTypes.addAll(exportTypes);
       serviceProviderBuilder.put(service, provider);
     }
 
     this.serviceProviderMap = serviceProviderBuilder.build();
-    this.supportedExportTypes = supportedExportTypes.build();
-    this.supportedImportTypes = supportedImportTypes.build();
+    // TODO(seehamrun): Populate these lists without loading up transfer code
+    this.supportedExportTypes = ImmutableSet.<String>builder().build();
+    this.supportedImportTypes = ImmutableSet.<String>builder().build();
   }
 
   /**
-   * Returns the exporter that supports the serviceId and transferDataType.
-   *
-   * @param serviceId the service id
-   * @param transferDataType the transfer data type
-   */
-  @Override
-  public Exporter<?, ?> getExporter(String serviceId,
-      String transferDataType) {
-    Preconditions.checkArgument(supportedExportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for export", transferDataType);
-    TransferServiceProvider serviceProvider = serviceProviderMap.get(serviceId);
-    Preconditions.checkArgument(serviceProvider != null);
-    return serviceProvider.getExporter(transferDataType);
-  }
-
-  /**
-   * Returns the exporter that supports the serviceId and transferDataType.
-   *
-   * @param serviceId the service id
-   * @param transferDataType the transfer data type
-   */
-  @Override
-  public Importer<?, ?> getImporter(String serviceId,
-      String transferDataType) {
-    Preconditions.checkArgument(supportedImportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for import", transferDataType);
-    TransferServiceProvider serviceProvider = serviceProviderMap.get(serviceId);
-    Preconditions.checkArgument(serviceProvider != null);
-    return serviceProvider.getImporter(transferDataType);
-  }
-
-  /**
-   * Returns the set of service ids that can transfered for the given {@code transferDataType}.
+   * Returns the set of service ids that can transferred for the given {@code transferDataType}.
    *
    * @param transferDataType the transfer data type
    */

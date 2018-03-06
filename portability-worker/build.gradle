@@ -49,6 +49,7 @@ configurations {
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
+    compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':libraries:security')
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")

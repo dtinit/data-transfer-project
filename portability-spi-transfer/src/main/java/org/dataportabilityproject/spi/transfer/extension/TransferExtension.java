@@ -19,21 +19,26 @@ import org.dataportabilityproject.api.launcher.AbstractExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 
-import java.util.List;
-
 /**
  * Transfer extensions implement this contract to be loaded in a worker process.
+ *
+ * <p>They are dynamically created based on the data type, and export and import service of the
+ * worker's polled job.
  */
 public interface TransferExtension extends AbstractExtension {
 
     /**
-     * Returns initialized extension exporters.
+     * Returns the id of the service this factory supports.
      */
-    List<Exporter<?, ?>> getExporters();
+    String getServiceId();
 
     /**
-     * Returns initialized extension importers.
+     * Returns initialized extension exporter.
      */
-    List<Importer<?, ?>> getImporters();
+    Exporter<?, ?> getExporter(String transferDataType);
 
+    /**
+     * Returns initialized extension importer.
+     */
+    Importer<?, ?> getImporter(String transferDataType);
 }

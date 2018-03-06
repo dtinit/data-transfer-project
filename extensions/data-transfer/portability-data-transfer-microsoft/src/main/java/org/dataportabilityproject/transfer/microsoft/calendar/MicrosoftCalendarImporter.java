@@ -21,6 +21,7 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.transfer.microsoft.common.RequestHelper;
+import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.transfer.microsoft.types.TempCalendarData;
@@ -62,6 +63,11 @@ public class MicrosoftCalendarImporter implements Importer<TokenAuthData, Calend
         this.transformerService = transformerService;
         this.baseUrl = baseUrl;
         this.jobStore = jobStore;
+    }
+
+    @Override
+    public String getServiceId() {
+        return MicrosoftTransferExtension.SERVICE_ID;
     }
 
     @SuppressWarnings("unchecked")

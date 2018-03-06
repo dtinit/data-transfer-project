@@ -86,18 +86,18 @@ class JobPollingService extends AbstractScheduledService {
         Preconditions.checkState(!jobMetadata.isInitialized());
         KeyPair keyPair = asymmetricKeyGenerator.generate();
         PublicKey publicKey = keyPair.getPublic();
-        // TODO: Move storage of private key to a different location
+        // TODO: Move storage of private key to a different location. One option is to manage this
+        // key pair within our cloud platform's key management system rather than generating here.
         PrivateKey privateKey = keyPair.getPrivate();
-        // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth state
-        // CREDS_ENCRYPTION_KEY_GENERATED).
+        // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth
+        // state CREDS_ENCRYPTION_KEY_GENERATED).
         try {
-            keyGenerated(jobId, publicKey);
-            jobMetadata.init(jobId, keyPair);
+            keyGenerated(jobId, keyPair);
             logger.debug("Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
                     jobId, publicKey.getEncoded().length);
         } catch (IOException e) {
-            logger.debug("Failed to claim job {}; it was probably already claimed by another worker",
-                    jobId);
+            logger.debug(
+                "Failed to claim job {}; it was probably already claimed by another worker", jobId);
         }
     }
 
@@ -105,15 +105,15 @@ class JobPollingService extends AbstractScheduledService {
      * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
      * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
      */
-    private void keyGenerated(UUID jobId, PublicKey publicKey)
-            throws IOException {
+    private void keyGenerated(UUID jobId, KeyPair keyPair) throws IOException {
         // Lookup the job so we can append to its existing properties.
         PortabilityJob existingJob = store.findJob(jobId);
         // Verify no worker key
-        Preconditions.checkArgument(existingJob.jobAuthorization().encodedPublicKey() == null,
-                "public key cannot be persisted again");
+        if (existingJob.jobAuthorization().encodedPublicKey() != null) {
+            throw new IOException("public key cannot be persisted again");
+        }
         // Populate job with public key to persist
-        String encodedPublicKey = BaseEncoding.base64Url().encode(publicKey.getEncoded());
+        String encodedPublicKey = BaseEncoding.base64Url().encode(keyPair.getPublic().getEncoded());
 
         PortabilityJob updatedJob = existingJob.toBuilder()
                 .setAndValidateJobAuthorization(existingJob.jobAuthorization().toBuilder()
@@ -122,6 +122,8 @@ class JobPollingService extends AbstractScheduledService {
                         .build())
                 .build();
         store.updateJob(jobId, updatedJob);
+        jobMetadata.init(jobId, keyPair, existingJob.transferDataType(),
+            existingJob.exportService(), existingJob.importService());
     }
 
     /**
