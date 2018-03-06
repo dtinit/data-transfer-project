@@ -19,23 +19,27 @@ public class CalendarContainerResourceTest {
 
     CalendarEventTime today = new CalendarEventTime(OffsetDateTime.now(), true);
 
-    List<CalendarModel> calendars = ImmutableList.of(
-        new CalendarModel("id1", "name", "description")
-    );
+    List<CalendarModel> calendars =
+        ImmutableList.of(new CalendarModel("id1", "name", "description"));
 
-    List<CalendarEventModel> events = ImmutableList.of(
-        new CalendarEventModel("id1", "event1", "A note",
-            null, "Place1", today, today),
-        new CalendarEventModel("id1", "event2", null,
-            ImmutableList.of(new CalendarAttendeeModel("Person", "a@gmail.com", false)),
-            "place 2", today, today)
-    );
+    List<CalendarEventModel> events =
+        ImmutableList.of(
+            new CalendarEventModel("id1", "event1", "A note", null, "Place1", today, today),
+            new CalendarEventModel(
+                "id1",
+                "event2",
+                null,
+                ImmutableList.of(new CalendarAttendeeModel("Person", "a@gmail.com", false)),
+                "place 2",
+                today,
+                today));
 
     ContainerResource data = new CalendarContainerResource(calendars, events);
 
     String serialized = objectMapper.writeValueAsString(data);
 
-    ContainerResource deserializedModel = objectMapper.readValue(serialized, ContainerResource.class);
+    ContainerResource deserializedModel =
+        objectMapper.readValue(serialized, ContainerResource.class);
 
     Truth.assertThat(deserializedModel).isNotNull();
     Truth.assertThat(deserializedModel).isInstanceOf(CalendarContainerResource.class);

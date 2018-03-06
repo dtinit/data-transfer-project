@@ -56,9 +56,15 @@ final class ByDay {
     this.day = day;
   }
 
-  boolean getIsNegative() { return isNegative; }
+  boolean getIsNegative() {
+    return isNegative;
+  }
 
-  RuleNumber getNumber() { return number; }
+  RuleNumber getNumber() {
+    return number;
+  }
 
-  RuleDay getDay() { return day; }
+  RuleDay getDay() {
+    return day;
+  }
 }

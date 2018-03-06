@@ -38,7 +38,8 @@ import org.dataportabilityproject.shared.auth.SecretAuthData;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /**
- * Generates a token using the flow described: https://www.rememberthemilk.com/services/api/authentication.rtm
+ * Generates a token using the flow described:
+ * https://www.rememberthemilk.com/services/api/authentication.rtm
  */
 public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
 
@@ -48,8 +49,8 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
   private final ServiceMode serviceMode;
   private AuthElement authElement;
 
-  RememberTheMilkAuth(RememberTheMilkSignatureGenerator signatureGenerator,
-      ServiceMode serviceMode) {
+  RememberTheMilkAuth(
+      RememberTheMilkSignatureGenerator signatureGenerator, ServiceMode serviceMode) {
     this.signatureGenerator = signatureGenerator;
     this.serviceMode = serviceMode;
   }
@@ -60,7 +61,8 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
   }
 
   String getToken(AuthData authData) {
-    checkArgument(authData instanceof SecretAuthData,
+    checkArgument(
+        authData instanceof SecretAuthData,
         "authData expected to be SecretAuthData not %s",
         authData.getClass().getCanonicalName());
     return ((SecretAuthData) authData).secret();
@@ -92,8 +94,8 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
 
     AuthElement authElement = response.parseAs(AuthElement.class);
     checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
-    checkState(!Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty",
-        authElement);
+    checkState(
+        !Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty", authElement);
     return authElement;
   }
 
@@ -122,8 +124,8 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
     URL authUrlUnsigned = new URL(AUTH_URL + "?perms=" + perms + "&frob=" + frob);
     URL authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
 
-    ioInterface
-        .ask("Please visit " + authUrlSigned + " and flow the flow there then hit return/enter");
+    ioInterface.ask(
+        "Please visit " + authUrlSigned + " and flow the flow there then hit return/enter");
   }
 
   private AuthElement getAuthToken(String frob) throws IOException {
@@ -141,8 +143,8 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
     }
     AuthElement authElement = response.parseAs(AuthElement.class);
     checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
-    checkState(!Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty",
-        authElement);
+    checkState(
+        !Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty", authElement);
     System.out.println("Auth Token: " + authElement);
     return authElement;
   }

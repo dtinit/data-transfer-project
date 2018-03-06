@@ -44,9 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to:
- *   - the next authorization (if this is after the source service auth) or
- *   - the copy page (if this is after the destination service auth)
+ * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to: - the next
+ * authorization (if this is after the source service auth) or - the copy page (if this is after the
+ * destination service auth)
  */
 final class SimpleLoginSubmitHandler implements HttpHandler {
 
@@ -78,7 +78,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     logger.debug("simpleLoginSubmit, redirecting to: {}", response.getNextUrl());
     // Mark the response as type Json and send
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
 
@@ -89,43 +90,56 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     DataTransferResponse response;
 
     try {
-      SimpleLoginRequest request = objectMapper
-          .readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
+      SimpleLoginRequest request =
+          objectMapper.readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
 
-      String encodedIdCookie = PortabilityApiUtils
-          .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
+      String encodedIdCookie =
+          PortabilityApiUtils.getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id Cookie required");
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
-      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
+      LegacyPortabilityJob job =
+          commonSettings.getEncryptedFlow()
+              ? store.find(jobId, JobAuthorization.State.INITIAL)
+              : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
-      ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
-          job, exchange.getRequestHeaders(), commonSettings.getEncryptedFlow());
+      ServiceMode serviceMode =
+          PortabilityApiUtils.getServiceMode(
+              job, exchange.getRequestHeaders(), commonSettings.getEncryptedFlow());
 
       String service =
           (serviceMode == ServiceMode.EXPORT) ? job.exportService() : job.importService();
-      Preconditions.checkState(!Strings.isNullOrEmpty(service),
-          "service not found, service: %s serviceMode: %s, job id: %s", service, serviceMode,
+      Preconditions.checkState(
+          !Strings.isNullOrEmpty(service),
+          "service not found, service: %s serviceMode: %s, job id: %s",
+          service,
+          serviceMode,
           jobId);
 
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(request.getUsername()), "Missing valid username");
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(request.getPassword()), "Missing password");
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(request.getUsername()), "Missing valid username");
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(request.getPassword()), "Missing password");
 
-      OnlineAuthDataGenerator generator = serviceProviderRegistry
-          .getOnlineAuth(job.exportService(), dataType, serviceMode);
-      Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
-          dataType, job.exportService());
+      OnlineAuthDataGenerator generator =
+          serviceProviderRegistry.getOnlineAuth(job.exportService(), dataType, serviceMode);
+      Preconditions.checkNotNull(
+          generator,
+          "Generator not found for type: %s, service: %s",
+          dataType,
+          job.exportService());
 
       // Generate and store auth data
-      AuthData authData = generator
-          .generateAuthData(PortabilityApiFlags.baseApiUrl(), request.getUsername(), jobId, null,
+      AuthData authData =
+          generator.generateAuthData(
+              PortabilityApiFlags.baseApiUrl(),
+              request.getUsername(),
+              jobId,
+              null,
               request.getPassword());
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
@@ -136,13 +150,20 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       }
 
       if (commonSettings.getEncryptedFlow()) {
-        cryptoHelper.encryptAndSetCookie(exchange.getResponseHeaders(), jobId, serviceMode,
-            authData);
+        cryptoHelper.encryptAndSetCookie(
+            exchange.getResponseHeaders(), jobId, serviceMode, authData);
       }
 
-      response = new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
-          Status.INPROCESS, PortabilityApiFlags.baseUrl() + (serviceMode == ServiceMode.EXPORT
-          ? FrontendConstantUrls.next : FrontendConstantUrls.copy));
+      response =
+          new DataTransferResponse(
+              job.exportService(),
+              job.importService(),
+              job.dataType(),
+              Status.INPROCESS,
+              PortabilityApiFlags.baseUrl()
+                  + (serviceMode == ServiceMode.EXPORT
+                      ? FrontendConstantUrls.next
+                      : FrontendConstantUrls.copy));
 
     } catch (Exception e) {
       logger.debug("Exception occurred while trying to handle request: {}", e);

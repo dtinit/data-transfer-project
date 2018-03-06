@@ -29,9 +29,7 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Utility methods for handling data in the related to jobss.
- */
+/** Utility methods for handling data in the related to jobss. */
 public final class JobUtils {
   private static final Logger logger = LoggerFactory.getLogger(JobUtils.class);
 
@@ -62,8 +60,8 @@ public final class JobUtils {
   }
 
   /* Sets the service in the correct field of the OldPortabilityJob */
-  public static LegacyPortabilityJob setAuthData(LegacyPortabilityJob job, AuthData authData,
-      ServiceMode serviceMode) {
+  public static LegacyPortabilityJob setAuthData(
+      LegacyPortabilityJob job, AuthData authData, ServiceMode serviceMode) {
     LegacyPortabilityJob.Builder updatedJob = job.toBuilder();
     switch (serviceMode) {
       case EXPORT:
@@ -79,8 +77,8 @@ public final class JobUtils {
   }
 
   /* Sets the service in the correct field of the OldPortabilityJob */
-  public static LegacyPortabilityJob setInitialAuthData(LegacyPortabilityJob job,
-      AuthData initialAuthData, ServiceMode serviceMode) {
+  public static LegacyPortabilityJob setInitialAuthData(
+      LegacyPortabilityJob job, AuthData initialAuthData, ServiceMode serviceMode) {
     logger.debug("Setting initialAuthData: {}, serviceMode: {}", initialAuthData, serviceMode);
     LegacyPortabilityJob.Builder updatedJob = job.toBuilder();
     switch (serviceMode) {
@@ -96,19 +94,15 @@ public final class JobUtils {
     return updatedJob.build();
   }
 
-  /**
-   * Parse and validate the data type .
-   */
+  /** Parse and validate the data type . */
   public static PortableDataType getDataType(String dataType) {
-    Optional<PortableDataType> dataTypeOption = Enums
-        .getIfPresent(PortableDataType.class, dataType);
+    Optional<PortableDataType> dataTypeOption =
+        Enums.getIfPresent(PortableDataType.class, dataType);
     Preconditions.checkState(dataTypeOption.isPresent(), "Data type not found: %s", dataType);
     return dataTypeOption.get();
   }
 
-  /**
-   * Determines whether the current service is a valid service
-   */
+  /** Determines whether the current service is a valid service */
   public static boolean isValidService(String serviceName, ServiceMode serviceMode) {
     if (!Strings.isNullOrEmpty(serviceName)) {
       // TODO: Use service registry to validate the service is valid for import or export

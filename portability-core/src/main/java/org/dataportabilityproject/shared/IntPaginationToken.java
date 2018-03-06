@@ -32,8 +32,6 @@ public class IntPaginationToken implements PaginationInformation {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("start", start)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("start", start).toString();
   }
 }

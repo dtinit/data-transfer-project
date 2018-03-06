@@ -15,28 +15,31 @@
  */
 package org.dataportabilityproject.cloud.microsoft.cosmos;
 
-import com.datastax.driver.core.Session;
-
 import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.DATA_TABLE;
 import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.JOB_TABLE;
 import static org.dataportabilityproject.cloud.microsoft.cosmos.MicrosoftCloudConstants.KEY_SPACE;
 
-/**
- * Base {@link CosmosStore} initializer.
- */
+import com.datastax.driver.core.Session;
+
+/** Base {@link CosmosStore} initializer. */
 public abstract class AbstractCosomosStoreInitializer {
 
-    protected void createKeyspace(Session session) {
-        String query = "CREATE KEYSPACE IF NOT EXISTS " + KEY_SPACE + " WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'datacenter1' : 1 }";
-        session.execute(query);
-    }
+  protected void createKeyspace(Session session) {
+    String query =
+        "CREATE KEYSPACE IF NOT EXISTS "
+            + KEY_SPACE
+            + " WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'datacenter1' : 1 }";
+    session.execute(query);
+  }
 
-    protected void createTables(Session session) {
-        String jobTableQuery = "CREATE TABLE IF NOT EXISTS " + JOB_TABLE + " (job_id uuid PRIMARY KEY, job_data text)";
-        session.execute(jobTableQuery);
-        String dataTableQuery = "CREATE TABLE IF NOT EXISTS " + DATA_TABLE + " (data_id uuid  PRIMARY KEY, data_model text)";
-        session.execute(dataTableQuery);
-    }
-
-
+  protected void createTables(Session session) {
+    String jobTableQuery =
+        "CREATE TABLE IF NOT EXISTS " + JOB_TABLE + " (job_id uuid PRIMARY KEY, job_data text)";
+    session.execute(jobTableQuery);
+    String dataTableQuery =
+        "CREATE TABLE IF NOT EXISTS "
+            + DATA_TABLE
+            + " (data_id uuid  PRIMARY KEY, data_model text)";
+    session.execute(dataTableQuery);
+  }
 }

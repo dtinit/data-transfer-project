@@ -17,15 +17,14 @@ package org.dataportabilityproject.shared;
 
 import com.google.auto.value.AutoValue;
 
-/**
- * Holder for an application key and secret.
- */
+/** Holder for an application key and secret. */
 @AutoValue
 public abstract class AppCredentials {
-    public abstract String key();
-    public abstract String secret();
+  public static AppCredentials create(String key, String secret) {
+    return new AutoValue_AppCredentials(key, secret);
+  }
 
-    public static AppCredentials create(String key, String secret) {
-        return new AutoValue_AppCredentials(key, secret);
-    }
+  public abstract String key();
+
+  public abstract String secret();
 }

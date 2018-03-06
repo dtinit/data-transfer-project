@@ -23,16 +23,13 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 
 public class MicrosoftStaticObjects {
 
-  /**
-   * Global instance of the JSON factory.
-   */
+  /** Global instance of the JSON factory. */
   public static final JsonFactory JSON_FACTORY = new JacksonFactory();
+
   public static final String APP_NAME = "Portability";
   private static final java.io.File DATA_STORE_DIR =
       new java.io.File(System.getProperty("user.home"), ".store/ms_creds");
-  /**
-   * Global instance of the HTTP transport.
-   */
+  /** Global instance of the HTTP transport. */
   private static HttpTransport HTTP_TRANSPORT;
   /**
    * Global instance of the {@link FileDataStoreFactory}. The best practice is to make it a single
@@ -50,8 +47,7 @@ public class MicrosoftStaticObjects {
     }
   }
 
-  private MicrosoftStaticObjects() {
-  }
+  private MicrosoftStaticObjects() {}
 
   public static HttpTransport getHttpTransport() {
     return HTTP_TRANSPORT;

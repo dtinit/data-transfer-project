@@ -34,20 +34,15 @@ import org.slf4j.LoggerFactory;
  * <p>Should only be used for local development.
  */
 public class LocalSecrets {
-  private final Logger logger = LoggerFactory.getLogger(LocalSecrets.class);
-
   private static final String SECRETS_FILENAME = "secrets.csv";
-
+  private final Logger logger = LoggerFactory.getLogger(LocalSecrets.class);
   private final ImmutableMap<String, String> secrets;
-
-  public String get(String key) {
-    return secrets.get(key);
-  }
 
   @Inject
   LocalSecrets(CommonSettings commonSettings) {
     // DO NOT REMOVE this security check! For prod, we should read secrets from the cloud.
-    checkState(commonSettings.getEnv() == Environment.LOCAL,
+    checkState(
+        commonSettings.getEnv() == Environment.LOCAL,
         "Secrets from secrets.csv is only supported for local development");
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     try {
@@ -57,11 +52,14 @@ public class LocalSecrets {
       while ((line = reader.readLine()) != null) {
         // allow for comments
         String trimmedLine = line.trim();
-        if (!trimmedLine.startsWith("//") && !trimmedLine.startsWith("#")
+        if (!trimmedLine.startsWith("//")
+            && !trimmedLine.startsWith("#")
             && !trimmedLine.isEmpty()) {
           String[] parts = trimmedLine.split(",");
-          checkState(parts.length == 2,
-              "Each line should have exactly 2 string seperated by a ,: %s", line);
+          checkState(
+              parts.length == 2,
+              "Each line should have exactly 2 string seperated by a ,: %s",
+              line);
           builder.put(parts[0].trim(), parts[1].trim());
         }
       }
@@ -79,5 +77,9 @@ public class LocalSecrets {
       throw new IOException("Could not create input stream, filePath: " + filePath);
     }
     return in;
+  }
+
+  public String get(String key) {
+    return secrets.get(key);
   }
 }

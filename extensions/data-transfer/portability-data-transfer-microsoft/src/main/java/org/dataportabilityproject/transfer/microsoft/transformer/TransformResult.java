@@ -17,27 +17,25 @@ package org.dataportabilityproject.transfer.microsoft.transformer;
 
 import java.util.List;
 
-/**
- * The result of a transformation operation.
- */
+/** The result of a transformation operation. */
 public class TransformResult<T> {
-    private final List<String> problems;
-    private final T transformed;
+  private final List<String> problems;
+  private final T transformed;
 
-    public TransformResult(T transformed, List<String> problems) {
-        this.problems = problems;
-        this.transformed = transformed;
-    }
+  public TransformResult(T transformed, List<String> problems) {
+    this.problems = problems;
+    this.transformed = transformed;
+  }
 
-    public boolean hasProblems() {
-        return !problems.isEmpty();
-    }
+  public boolean hasProblems() {
+    return !problems.isEmpty();
+  }
 
-    public List<String> getProblems() {
-        return problems;
-    }
+  public List<String> getProblems() {
+    return problems;
+  }
 
-    public T getTransformed() {
-        return transformed;
-    }
+  public T getTransformed() {
+    return transformed;
+  }
 }

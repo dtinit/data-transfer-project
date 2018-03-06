@@ -17,9 +17,7 @@ package org.dataportabilityproject.serviceProviders.smugmug.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Results from https://api.smugmug.com/api/v2!authuser
- */
+/** Results from https://api.smugmug.com/api/v2!authuser */
 public class SmugMugUserResponse {
 
   @JsonProperty("Url")

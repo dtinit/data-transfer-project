@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.cloud.google;
 
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
@@ -44,12 +43,12 @@ public final class GoogleCloudFactory implements CloudFactory {
       GoogleCredentials googleCredentials,
       GoogleCryptoKeyManagementSystem googleCryptoKeyManagementSystem,
       @ProjectId String projectId) {
-    this.datastore = DatastoreOptions
-        .newBuilder()
-        .setProjectId(projectId)
-        .setCredentials(googleCredentials)
-        .build()
-        .getService();
+    this.datastore =
+        DatastoreOptions.newBuilder()
+            .setProjectId(projectId)
+            .setCredentials(googleCredentials)
+            .build()
+            .getService();
     this.jobStore = new GoogleJobStore(datastore);
     this.cryptoKeyManagementSystem = googleCryptoKeyManagementSystem;
     this.bucketStore = googleBucketStore;
@@ -77,10 +76,17 @@ public final class GoogleCloudFactory implements CloudFactory {
 
   @Override
   public void clearJobData(UUID jobId) {
-    QueryResults<Key> results = datastore.run(Query.newKeyQueryBuilder()
-        .setKind(GoogleJobDataCache.USER_KEY_KIND)
-        .setFilter(PropertyFilter.hasAncestor(datastore.newKeyFactory()
-            .setKind(GoogleJobDataCache.JOB_KIND).newKey(jobId.toString()))).build());
+    QueryResults<Key> results =
+        datastore.run(
+            Query.newKeyQueryBuilder()
+                .setKind(GoogleJobDataCache.USER_KEY_KIND)
+                .setFilter(
+                    PropertyFilter.hasAncestor(
+                        datastore
+                            .newKeyFactory()
+                            .setKind(GoogleJobDataCache.JOB_KIND)
+                            .newKey(jobId.toString())))
+                .build());
     results.forEachRemaining(datastore::delete);
   }
 }

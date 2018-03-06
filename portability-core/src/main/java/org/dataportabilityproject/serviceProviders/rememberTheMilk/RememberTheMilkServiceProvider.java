@@ -38,9 +38,9 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
  */
 final class RememberTheMilkServiceProvider implements ServiceProvider {
 
-  private final static ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES = ImmutableList
-      .of(PortableDataType.TASKS);
-  private final static Map<ServiceMode, RememberTheMilkAuth> AUTH_MAP = new HashMap<>();
+  private static final ImmutableList<PortableDataType> SUPPORTED_DATA_TYPES =
+      ImmutableList.of(PortableDataType.TASKS);
+  private static final Map<ServiceMode, RememberTheMilkAuth> AUTH_MAP = new HashMap<>();
   private final AppCredentials appCredentials;
 
   @Inject
@@ -64,42 +64,47 @@ final class RememberTheMilkServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
-      ServiceMode serviceMode) {
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(
+      PortableDataType dataType, ServiceMode serviceMode) {
     return lookupAndCreateAuth(dataType, serviceMode);
   }
 
   @Override
-  public Exporter<? extends DataModel> getExporter(PortableDataType type,
-      AuthData authData, JobDataCache jobDataCache) throws IOException {
-    return getInstanceOfService(authData, jobDataCache,
-        lookupAndCreateAuth(type, ServiceMode.EXPORT));
+  public Exporter<? extends DataModel> getExporter(
+      PortableDataType type, AuthData authData, JobDataCache jobDataCache) throws IOException {
+    return getInstanceOfService(
+        authData, jobDataCache, lookupAndCreateAuth(type, ServiceMode.EXPORT));
   }
 
   @Override
-  public Importer<? extends DataModel> getImporter(PortableDataType type,
-      AuthData authData, JobDataCache jobDataCache) throws IOException {
-    return getInstanceOfService(authData, jobDataCache,
-        lookupAndCreateAuth(type, ServiceMode.IMPORT));
+  public Importer<? extends DataModel> getImporter(
+      PortableDataType type, AuthData authData, JobDataCache jobDataCache) throws IOException {
+    return getInstanceOfService(
+        authData, jobDataCache, lookupAndCreateAuth(type, ServiceMode.IMPORT));
   }
 
   private synchronized RememberTheMilkTaskService getInstanceOfService(
       AuthData authData, JobDataCache jobDataCache, RememberTheMilkAuth rememberTheMilkAuth)
       throws IOException {
-    RememberTheMilkSignatureGenerator signer = new RememberTheMilkSignatureGenerator(
-        appCredentials,
-        rememberTheMilkAuth.getToken(authData));
+    RememberTheMilkSignatureGenerator signer =
+        new RememberTheMilkSignatureGenerator(
+            appCredentials, rememberTheMilkAuth.getToken(authData));
 
     return new RememberTheMilkTaskService(signer, jobDataCache);
   }
 
-  private RememberTheMilkAuth lookupAndCreateAuth(PortableDataType dataType,
-      ServiceMode serviceMode) {
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(dataType),
-        "[%s] mode not supported for dataType [%s]", serviceMode, dataType);
+  private RememberTheMilkAuth lookupAndCreateAuth(
+      PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(
+        SUPPORTED_DATA_TYPES.contains(dataType),
+        "[%s] mode not supported for dataType [%s]",
+        serviceMode,
+        dataType);
     if (!AUTH_MAP.containsKey(serviceMode)) {
-      AUTH_MAP.put(serviceMode, new RememberTheMilkAuth(
-          new RememberTheMilkSignatureGenerator(appCredentials, null), serviceMode));
+      AUTH_MAP.put(
+          serviceMode,
+          new RememberTheMilkAuth(
+              new RememberTheMilkSignatureGenerator(appCredentials, null), serviceMode));
     }
     return AUTH_MAP.get(serviceMode);
   }

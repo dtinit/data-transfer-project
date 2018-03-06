@@ -23,18 +23,18 @@ import org.dataportabilityproject.spi.transfer.types.PaginationData;
 /**
  * Encapsulates the Microsoft Graph API OData next link.
  *
- * FIXME: This needs to be registered with the system-wide TypeManager.
+ * <p>FIXME: This needs to be registered with the system-wide TypeManager.
  */
 @JsonTypeName("org.dataportability:GraphPagination")
 public class GraphPagination extends PaginationData {
-    private final String nextLink;
+  private final String nextLink;
 
-    @JsonCreator
-    public GraphPagination(@JsonProperty("nextLink") String nextLink) {
-        this.nextLink = nextLink;
-    }
+  @JsonCreator
+  public GraphPagination(@JsonProperty("nextLink") String nextLink) {
+    this.nextLink = nextLink;
+  }
 
-    public String getNextLink() {
-        return nextLink;
-    }
+  public String getNextLink() {
+    return nextLink;
+  }
 }

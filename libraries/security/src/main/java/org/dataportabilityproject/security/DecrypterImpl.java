@@ -28,7 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides AES and RSA-based encryption implementations for decryption. See {@link DecrypterFactory} to create.
+ * Provides AES and RSA-based encryption implementations for decryption. See {@link
+ * DecrypterFactory} to create.
  */
 final class DecrypterImpl implements Decrypter {
   private static final Logger logger = LoggerFactory.getLogger(DecrypterImpl.class);
@@ -54,8 +55,11 @@ final class DecrypterImpl implements Decrypter {
       byte[] data = new byte[decrypted.length - 8];
       System.arraycopy(decrypted, 8, data, 0, data.length);
       return new String(data, Charsets.UTF_8);
-    } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
-        | NoSuchAlgorithmException | NoSuchPaddingException e) {
+    } catch (BadPaddingException
+        | IllegalBlockSizeException
+        | InvalidKeyException
+        | NoSuchAlgorithmException
+        | NoSuchPaddingException e) {
       logger.error("Error decrypting data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     }

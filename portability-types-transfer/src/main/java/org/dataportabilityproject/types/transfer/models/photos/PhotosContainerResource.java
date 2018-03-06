@@ -22,9 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
-/**
- * A Wrapper for all the possible objects that can be returned by a photos exporter.
- */
+/** A Wrapper for all the possible objects that can be returned by a photos exporter. */
 @JsonTypeName("PhotosContainerResource")
 public class PhotosContainerResource extends ContainerResource {
   private final Collection<PhotoAlbum> albums;

@@ -35,8 +35,11 @@ class CrypterImpl implements Crypter {
       cipher.update(salt);
       byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
       return BaseEncoding.base64Url().encode(encrypted);
-    } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
-        | NoSuchAlgorithmException | NoSuchPaddingException e) {
+    } catch (BadPaddingException
+        | IllegalBlockSizeException
+        | InvalidKeyException
+        | NoSuchAlgorithmException
+        | NoSuchPaddingException e) {
       logger.error("Exception encrypting data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     }
@@ -55,8 +58,11 @@ class CrypterImpl implements Crypter {
       byte[] data = new byte[decrypted.length - 8];
       System.arraycopy(decrypted, 8, data, 0, data.length);
       return new String(data, Charsets.UTF_8);
-    } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
-        | NoSuchAlgorithmException | NoSuchPaddingException e) {
+    } catch (BadPaddingException
+        | IllegalBlockSizeException
+        | InvalidKeyException
+        | NoSuchAlgorithmException
+        | NoSuchPaddingException e) {
       logger.error("Error decrypting data, length: {}", encrypted.length(), e);
       throw new RuntimeException(e);
     }

@@ -18,9 +18,7 @@ package org.dataportabilityproject.shared.auth;
 import com.google.auto.value.AutoValue;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
-/**
- * A simple implimentation of {@link AuthData} that contains just a secret.
- */
+/** A simple implimentation of {@link AuthData} that contains just a secret. */
 @AutoValue
 public abstract class SecretAuthData extends AuthData {
 

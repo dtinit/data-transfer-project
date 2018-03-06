@@ -22,9 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
-/**
- * A Wrapper for all the possible objects that can be returned by a calendar exporter.
- */
+/** A Wrapper for all the possible objects that can be returned by a calendar exporter. */
 @JsonTypeName("CalendarContainerResource")
 public class CalendarContainerResource extends ContainerResource {
   private final Collection<CalendarModel> calendars;
@@ -37,6 +35,7 @@ public class CalendarContainerResource extends ContainerResource {
     this.calendars = calendars == null ? ImmutableList.of() : calendars;
     this.events = events == null ? ImmutableList.of() : events;
   }
+
   public Collection<CalendarModel> getCalendars() {
     return calendars;
   }

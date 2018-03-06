@@ -16,7 +16,9 @@ import org.dataportabilityproject.dataModels.calendar.CalendarModel;
 public class GoogleCalendarToModelConverter {
 
   static CalendarAttendeeModel transformToModelAttendee(EventAttendee attendee) {
-    return new CalendarAttendeeModel(attendee.getDisplayName(), attendee.getEmail(),
+    return new CalendarAttendeeModel(
+        attendee.getDisplayName(),
+        attendee.getEmail(),
         Boolean.TRUE.equals(attendee.getOptional()));
   }
 
@@ -30,33 +32,37 @@ public class GoogleCalendarToModelConverter {
     if (dateTime.getDate() == null) {
       offsetDateTime = OffsetDateTime.parse(dateTime.getDateTime().toString());
     } else {
-      offsetDateTime = OffsetDateTime.from(
-          LocalDate.parse(dateTime.getDate().toString()).atStartOfDay(ZoneId.of("UTC")));
+      offsetDateTime =
+          OffsetDateTime.from(
+              LocalDate.parse(dateTime.getDate().toString()).atStartOfDay(ZoneId.of("UTC")));
     }
 
     return new CalendarEventModel.CalendarEventTime(offsetDateTime, dateTime.getDate() != null);
   }
 
   static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
-    CalendarModel model = new CalendarModel(
-        calendarData.getId(),
-        calendarData.getSummary(),
-        calendarData.getDescription());
+    CalendarModel model =
+        new CalendarModel(
+            calendarData.getId(), calendarData.getSummary(), calendarData.getDescription());
     return model;
   }
 
   static CalendarEventModel convertToCalendarEventModel(String id, Event eventData) {
     List<EventAttendee> attendees = eventData.getAttendees();
-    CalendarEventModel model = new CalendarEventModel(
-        id,
-        eventData.getDescription(),
-        eventData.getSummary(),
-        attendees == null ? null : attendees.stream()
-            .map(GoogleCalendarToModelConverter::transformToModelAttendee)
-            .collect(Collectors.toList()),
-        eventData.getLocation(),
-        getEventTime(eventData.getStart()),
-        getEventTime(eventData.getEnd()));
+    CalendarEventModel model =
+        new CalendarEventModel(
+            id,
+            eventData.getDescription(),
+            eventData.getSummary(),
+            attendees == null
+                ? null
+                : attendees
+                    .stream()
+                    .map(GoogleCalendarToModelConverter::transformToModelAttendee)
+                    .collect(Collectors.toList()),
+            eventData.getLocation(),
+            getEventTime(eventData.getStart()),
+            getEventTime(eventData.getEnd()));
     return model;
   }
 }

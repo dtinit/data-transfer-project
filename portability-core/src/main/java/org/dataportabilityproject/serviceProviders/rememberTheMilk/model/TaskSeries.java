@@ -19,9 +19,7 @@ import com.google.api.client.util.Joiner;
 import com.google.api.client.util.Key;
 import java.util.List;
 
-/**
- * A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm
- */
+/** A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm */
 public class TaskSeries {
 
   @Key("@id")
@@ -61,7 +59,13 @@ public class TaskSeries {
   public String toString() {
     return String.format(
         "TaskSeries(id=%d created=%s modified=%s name=%s source=%s authUrl=%s, notes=%s tasks:%s)",
-        id, created, modified, name, source, url, notes,
+        id,
+        created,
+        modified,
+        name,
+        source,
+        url,
+        notes,
         (tasks == null || tasks.isEmpty()) ? "" : Joiner.on('\n').join(tasks));
   }
 }

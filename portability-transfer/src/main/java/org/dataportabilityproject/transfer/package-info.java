@@ -13,8 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Implements a worker service that dispatches jobs to service provider extensions.
- */
+/** Implements a worker service that dispatches jobs to service provider extensions. */
 package org.dataportabilityproject.transfer;
-

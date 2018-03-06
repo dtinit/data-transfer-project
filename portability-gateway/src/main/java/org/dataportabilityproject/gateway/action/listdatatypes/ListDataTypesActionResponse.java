@@ -17,9 +17,7 @@ package org.dataportabilityproject.gateway.action.listdatatypes;
 
 import java.util.Set;
 
-/**
- * The result of a request to list data types available for export and import.
- */
+/** The result of a request to list data types available for export and import. */
 public class ListDataTypesActionResponse {
 
   private final Set<String> transferDataTypes;
@@ -30,19 +28,19 @@ public class ListDataTypesActionResponse {
     this.errorMsg = errorMsg;
   }
 
-  public Set<String> getTransferDataTypes() {
-    return transferDataTypes;
-  }
-
-  public String getErrorMsg() {
-    return errorMsg;
-  }
-
   public static final ListDataTypesActionResponse create(Set<String> dataTypes) {
     return new ListDataTypesActionResponse(dataTypes, null);
   }
 
   public static final ListDataTypesActionResponse createWithError(String errorMsg) {
     return new ListDataTypesActionResponse(null, errorMsg);
+  }
+
+  public Set<String> getTransferDataTypes() {
+    return transferDataTypes;
+  }
+
+  public String getErrorMsg() {
+    return errorMsg;
   }
 }

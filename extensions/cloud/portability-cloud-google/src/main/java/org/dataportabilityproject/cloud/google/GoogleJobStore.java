@@ -43,9 +43,7 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
-/**
- * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
- */
+/** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
 public final class GoogleJobStore implements JobStore {
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
@@ -56,13 +54,50 @@ public final class GoogleJobStore implements JobStore {
     this.datastore = datastore;
   }
 
+  private static Map<String, Object> getProperties(Entity entity) {
+    if (entity == null) return null;
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+    for (String property : entity.getNames()) {
+      // builder.put(property, entity.getValue(property));
+      if (entity.getValue(property) instanceof StringValue) {
+        builder.put(property, (String) entity.getString(property));
+      } else if (entity.getValue(property) instanceof LongValue) {
+        // This conversion is safe because of integer to long conversion above
+        builder.put(property, new Long(entity.getLong(property)).intValue());
+      } else if (entity.getValue(property) instanceof DoubleValue) {
+        builder.put(property, (Double) entity.getDouble(property));
+      } else if (entity.getValue(property) instanceof BooleanValue) {
+        builder.put(property, (Boolean) entity.getBoolean(property));
+      } else if (entity.getValue(property) instanceof TimestampValue) {
+        builder.put(property, (Timestamp) entity.getTimestamp(property));
+      } else {
+        Blob blob = entity.getBlob(property);
+        Object obj = null;
+        try {
+          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+            try {
+              obj = in.readObject();
+            } catch (ClassNotFoundException e) {
+              e.printStackTrace();
+            }
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        builder.put(property, obj); // BlobValue
+      }
+    }
+
+    return builder.build();
+  }
+
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in Datastore.
    *
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
-   * problem inserting the job.
+   *     problem inserting the job.
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -71,8 +106,8 @@ public final class GoogleJobStore implements JobStore {
     Entity shouldNotExist = transaction.get(getKey(jobId));
     if (shouldNotExist != null) {
       transaction.rollback();
-      throw new IOException("Record already exists for jobID: " + jobId + ". Record: "
-          + shouldNotExist);
+      throw new IOException(
+          "Record already exists for jobID: " + jobId + ". Record: " + shouldNotExist);
     }
     Entity entity = createEntity(jobId, job.toMap());
     try {
@@ -86,13 +121,13 @@ public final class GoogleJobStore implements JobStore {
   }
 
   /**
-   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code job},
-   * in Datastore using a {@link Transaction}.
+   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code job}, in
+   * Datastore using a {@link Transaction}.
    *
-   * TODO(rtannenbaum): Consider validating authorization state was the previous one, when updating
-   * authorization state within this transaction. Previous API allowed for passing in of a previous
-   * expected state, but we shouldn't need to pass that in, given the context of the new state we
-   * should know what comes before it.
+   * <p>TODO(rtannenbaum): Consider validating authorization state was the previous one, when
+   * updating authorization state within this transaction. Previous API allowed for passing in of a
+   * previous expected state, but we shouldn't need to pass that in, given the context of the new
+   * state we should know what comes before it.
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -145,20 +180,21 @@ public final class GoogleJobStore implements JobStore {
   }
 
   /**
-   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore,
-   * or null if none found.
+   * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or
+   * null if none found.
    *
-   * TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
+   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
    * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
   public UUID findFirst(JobAuthorization.State jobState) {
-    Query<Key> query = Query.newKeyQueryBuilder()
-        .setKind(KIND)
-        .setFilter(PropertyFilter.eq(PortabilityJob.AUTHORIZATION_STATE, jobState.name()))
-        //.setOrderBy(OrderBy.asc("created"))
-        .setLimit(1)
-        .build();
+    Query<Key> query =
+        Query.newKeyQueryBuilder()
+            .setKind(KIND)
+            .setFilter(PropertyFilter.eq(PortabilityJob.AUTHORIZATION_STATE, jobState.name()))
+            // .setOrderBy(OrderBy.asc("created"))
+            .setLimit(1)
+            .build();
     QueryResults<Key> results = datastore.run(query);
     if (!results.hasNext()) {
       return null;
@@ -194,43 +230,6 @@ public final class GoogleJobStore implements JobStore {
 
   private Entity createEntity(UUID jobId, Map<String, Object> data) throws IOException {
     return createEntity(getKey(jobId), data);
-  }
-
-  private static Map<String, Object> getProperties(Entity entity) {
-    if (entity == null) return null;
-    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-    for (String property : entity.getNames()) {
-      // builder.put(property, entity.getValue(property));
-      if (entity.getValue(property) instanceof StringValue) {
-        builder.put(property, (String) entity.getString(property));
-      } else if (entity.getValue(property) instanceof LongValue) {
-        // This conversion is safe because of integer to long conversion above
-        builder.put(property, new Long(entity.getLong(property)).intValue());
-      } else if (entity.getValue(property) instanceof DoubleValue) {
-        builder.put(property, (Double) entity.getDouble(property));
-      } else if (entity.getValue(property) instanceof BooleanValue) {
-        builder.put(property, (Boolean) entity.getBoolean(property));
-      } else if (entity.getValue(property) instanceof TimestampValue) {
-        builder.put(property, (Timestamp) entity.getTimestamp(property));
-      } else {
-        Blob blob = entity.getBlob(property);
-        Object obj = null;
-        try {
-          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-            try {
-              obj = in.readObject();
-            } catch (ClassNotFoundException e) {
-              e.printStackTrace();
-            }
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        builder.put(property, obj); // BlobValue
-      }
-    }
-
-    return builder.build();
   }
 
   private Key getKey(UUID jobId) {

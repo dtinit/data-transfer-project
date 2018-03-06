@@ -28,9 +28,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Utility methods for token creation and verification.
- */
+/** Utility methods for token creation and verification. */
 public class JWTTokenManager implements TokenManager {
 
   public static final String JWT_KEY_NAME = "JWT_KEY";
@@ -51,18 +49,12 @@ public class JWTTokenManager implements TokenManager {
     this.verifier = createVerifier(secret, ISSUER);
   }
 
-  /**
-   * Create an instance of the token verifier.
-   */
+  /** Create an instance of the token verifier. */
   private static JWTVerifier createVerifier(String secret, String issuer) {
-    return JWT.require(createAlgorithm(secret))
-        .withIssuer(issuer)
-        .build();
+    return JWT.require(createAlgorithm(secret)).withIssuer(issuer).build();
   }
 
-  /**
-   * Create the {@link Algorithm} to be used for signing and parsing tokens.
-   */
+  /** Create the {@link Algorithm} to be used for signing and parsing tokens. */
   private static Algorithm createAlgorithm(String secret) {
     try {
       return Algorithm.HMAC256(secret);

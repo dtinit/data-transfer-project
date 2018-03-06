@@ -16,16 +16,17 @@
 
 package org.dataportabilityproject.dataModels.contacts;
 
-import org.dataportabilityproject.dataModels.ContinuationInformation;
-import org.dataportabilityproject.dataModels.DataModel;
 import ezvcard.VCard;
 import java.util.Collection;
+import org.dataportabilityproject.dataModels.ContinuationInformation;
+import org.dataportabilityproject.dataModels.DataModel;
 
 public class ContactsModelWrapper implements DataModel {
   private final Collection<VCard> vCards;
   private final ContinuationInformation continuationInformation;
 
-  public ContactsModelWrapper(Collection<VCard> vCards, ContinuationInformation continuationInformation) {
+  public ContactsModelWrapper(
+      Collection<VCard> vCards, ContinuationInformation continuationInformation) {
     this.vCards = vCards;
     this.continuationInformation = continuationInformation;
   }

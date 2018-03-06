@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile ("io.swagger:swagger-annotations:${swaggerVersion}")
-    testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    compile("io.swagger:swagger-annotations:${swaggerVersion}")
+    testCompile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
 }
                                                                  

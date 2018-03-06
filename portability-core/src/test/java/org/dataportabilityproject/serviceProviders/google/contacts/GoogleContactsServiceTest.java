@@ -16,6 +16,17 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.PERSON_FIELDS;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SELF_RESOURCE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -30,6 +41,12 @@ import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.Source;
 import ezvcard.VCard;
 import ezvcard.property.StructuredName;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.cloud.local.InMemoryJobDataCache;
 import org.dataportabilityproject.dataModels.ExportInformation;
@@ -40,34 +57,16 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.CONTACT_SOURCE_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.PERSON_FIELDS;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SELF_RESOURCE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class GoogleContactsServiceTest {
 
   private static final String RESOURCE_NAME = "resource_name";
   private static final Source SOURCE = new Source().setType("CONTACT");
-  private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setSource(SOURCE)
-      .setPrimary(true);
-  private static final Name NAME = new Name().setFamilyName("Turing").setGivenName("Alan")
-      .setMetadata(PRIMARY_FIELD_METADATA);
-  private static final Person PERSON = new Person().setNames(Collections.singletonList(NAME))
-      .setResourceName(RESOURCE_NAME);
+  private static final FieldMetadata PRIMARY_FIELD_METADATA =
+      new FieldMetadata().setSource(SOURCE).setPrimary(true);
+  private static final Name NAME =
+      new Name().setFamilyName("Turing").setGivenName("Alan").setMetadata(PRIMARY_FIELD_METADATA);
+  private static final Person PERSON =
+      new Person().setNames(Collections.singletonList(NAME)).setResourceName(RESOURCE_NAME);
 
   private static final String NEXT_PAGE_TOKEN = "nextPageToken";
 
@@ -106,8 +105,8 @@ public class GoogleContactsServiceTest {
     listConnectionsResponse = new ListConnectionsResponse();
     listConnectionsResponse.setConnections(connectionsList);
     PersonResponse personResponse = new PersonResponse().setPerson(PERSON);
-    GetPeopleResponse batchResponse = new GetPeopleResponse()
-        .setResponses(Collections.singletonList(personResponse));
+    GetPeopleResponse batchResponse =
+        new GetPeopleResponse().setResponses(Collections.singletonList(personResponse));
 
     // This can't go in setup()
     when(listConnectionsRequest.setPersonFields(PERSON_FIELDS)).thenReturn(listConnectionsRequest);
@@ -125,8 +124,8 @@ public class GoogleContactsServiceTest {
     setUpSinglePersonResponse();
 
     // Looking at first page, with at least one page after it
-    ExportInformation emptyExportInformation = new ExportInformation(Optional.empty(),
-        Optional.empty());
+    ExportInformation emptyExportInformation =
+        new ExportInformation(Optional.empty(), Optional.empty());
     listConnectionsResponse.setNextPageToken(NEXT_PAGE_TOKEN);
 
     // Run test
@@ -141,9 +140,8 @@ public class GoogleContactsServiceTest {
 
     // Check continuation information
     assertThat(wrapper.getContinuationInformation().getSubResources()).isEmpty();
-    StringPaginationToken paginationToken = (StringPaginationToken) wrapper
-        .getContinuationInformation()
-        .getPaginationInformation();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) wrapper.getContinuationInformation().getPaginationInformation();
     assertThat(paginationToken.getId()).isEqualTo(NEXT_PAGE_TOKEN);
 
     // Check that the right number of VCards was returned
@@ -156,8 +154,9 @@ public class GoogleContactsServiceTest {
     setUpSinglePersonResponse();
 
     // Looking at a subsequent page, with no pages after it
-    ExportInformation nextPageExportInformation = new ExportInformation(Optional.empty(),
-        Optional.of(new StringPaginationToken(NEXT_PAGE_TOKEN)));
+    ExportInformation nextPageExportInformation =
+        new ExportInformation(
+            Optional.empty(), Optional.of(new StringPaginationToken(NEXT_PAGE_TOKEN)));
     listConnectionsResponse.setNextPageToken(null);
 
     when(listConnectionsRequest.setPageToken(NEXT_PAGE_TOKEN)).thenReturn(listConnectionsRequest);

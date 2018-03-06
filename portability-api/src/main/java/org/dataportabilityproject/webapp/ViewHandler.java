@@ -23,9 +23,7 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Handler to redirect all paths to the angular view.
- */
+/** Handler to redirect all paths to the angular view. */
 public class ViewHandler implements HttpHandler {
   private final Logger logger = LoggerFactory.getLogger(ViewHandler.class);
 

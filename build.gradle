@@ -33,7 +33,7 @@ buildscript {
 }
 
 plugins {
-  id 'java'
+    id 'java'
 }
 
 def sourceProjects() {

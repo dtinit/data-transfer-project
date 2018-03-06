@@ -18,9 +18,7 @@ package org.dataportabilityproject.gateway.action.listservices;
 import com.google.inject.AbstractModule;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
-/**
- * Dependencies for the {@link ListServicesAction} and related classes.
- */
+/** Dependencies for the {@link ListServicesAction} and related classes. */
 public final class ListServicesActionModule extends AbstractModule {
 
   @Override

@@ -26,30 +26,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides methods for the creation of new {@link LegacyPortabilityJob} objects in correct initial state.
+ * Provides methods for the creation of new {@link LegacyPortabilityJob} objects in correct initial
+ * state.
  */
 @Singleton
 public class PortabilityJobFactory {
   private final Logger logger = LoggerFactory.getLogger(PortabilityJobFactory.class);
 
-  @Inject public PortabilityJobFactory() {}
-
-  /**
-   * Creates a new user job in initial state with session key.
-   */
-  public LegacyPortabilityJob create(PortableDataType dataType, String exportService,
-      String importService) throws IOException {
-    String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
-    LegacyPortabilityJob job =
-        createInitialJob(encodedSessionKey, dataType, exportService, importService);
-    logger.info("Creating new LegacyPortabilityJob to transfer {} from {} to {}",
-        dataType, exportService, importService);
-    return job;
-  }
+  @Inject
+  public PortabilityJobFactory() {}
 
   /** Creates the initial data entry to persist. */
-  private static LegacyPortabilityJob createInitialJob(String sessionKey,
-      PortableDataType dataType, String exportService, String importService) {
+  private static LegacyPortabilityJob createInitialJob(
+      String sessionKey, PortableDataType dataType, String exportService, String importService) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(sessionKey), "sessionKey missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
@@ -60,5 +49,19 @@ public class PortabilityJobFactory {
         .setImportService(importService)
         .setSessionKey(sessionKey)
         .build();
+  }
+
+  /** Creates a new user job in initial state with session key. */
+  public LegacyPortabilityJob create(
+      PortableDataType dataType, String exportService, String importService) throws IOException {
+    String encodedSessionKey = SecretKeyGenerator.generateKeyAndEncode();
+    LegacyPortabilityJob job =
+        createInitialJob(encodedSessionKey, dataType, exportService, importService);
+    logger.info(
+        "Creating new LegacyPortabilityJob to transfer {} from {} to {}",
+        dataType,
+        exportService,
+        importService);
+    return job;
   }
 }

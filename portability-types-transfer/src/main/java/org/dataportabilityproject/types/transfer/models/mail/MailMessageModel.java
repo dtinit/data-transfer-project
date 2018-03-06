@@ -33,12 +33,14 @@ public final class MailMessageModel {
     this.containerIds = (containerIds == null) ? ImmutableList.of() : containerIds;
   }
 
-  /** RFC 2822 formatted and base64url encoded string **/
+  /** RFC 2822 formatted and base64url encoded string * */
   public String getRawString() {
     return rawString;
   }
-  /** Container, e.g. folder or label, this message belongs to **/
-  public List<String> getContainerIds() { return containerIds; }
+  /** Container, e.g. folder or label, this message belongs to * */
+  public List<String> getContainerIds() {
+    return containerIds;
+  }
 
   @Override
   public String toString() {

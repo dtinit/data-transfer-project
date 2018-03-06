@@ -15,6 +15,8 @@
  */
 package org.dataportabilityproject.webapp;
 
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Enums;
 import com.google.common.base.Optional;
@@ -24,22 +26,17 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.types.client.transfer.ListServicesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
-
-/**
- * HttpHandler for the ListServices service
- */
+/** HttpHandler for the ListServices service */
 final class ListServicesHandler implements HttpHandler {
 
   public static final String PATH = "/_/listServices";
@@ -62,8 +59,7 @@ final class ListServicesHandler implements HttpHandler {
     Headers headers = exchange.getResponseHeaders();
     headers.set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
 
-    String dataTypeParam = PortabilityApiUtils.getRequestParams(exchange)
-        .get(JsonKeys.DATA_TYPE);
+    String dataTypeParam = PortabilityApiUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeParam), "Missing data type");
 
     ListServicesResponse response = generateGetResponse(dataTypeParam);
@@ -88,25 +84,23 @@ final class ListServicesHandler implements HttpHandler {
     }
 
     if (exportServices.isEmpty() || importServices.isEmpty()) {
-      logger.warn("Empty service list found, export size: {}, import size: {}",
-          exportServices.size(), importServices.size());
+      logger.warn(
+          "Empty service list found, export size: {}, import size: {}",
+          exportServices.size(),
+          importServices.size());
     }
 
-    return new ListServicesResponse(dataTypeParam,
+    return new ListServicesResponse(
+        dataTypeParam,
         exportServices.toArray(new String[exportServices.size()]),
         importServices.toArray(new String[importServices.size()]));
-
-
   }
 
-  /**
-   * Parse and validate the data type .
-   */
+  /** Parse and validate the data type . */
   private PortableDataType getDataType(String dataType) {
-    Optional<PortableDataType> dataTypeOption = Enums
-        .getIfPresent(PortableDataType.class, dataType);
+    Optional<PortableDataType> dataTypeOption =
+        Enums.getIfPresent(PortableDataType.class, dataType);
     Preconditions.checkState(dataTypeOption.isPresent(), "Data type not found: %s", dataType);
     return dataTypeOption.get();
   }
-
 }

@@ -95,32 +95,36 @@ final class DataTransferHandler implements HttpHandler {
     logger.debug("redirecting to: {}", dataTransferResponse.getNextUrl());
 
     // Mark the response as type Json and send
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
     objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
   }
 
-
   DataTransferResponse handleExchange(HttpExchange exchange) throws IOException {
     String redirect = "/error";
-    DataTransferRequest request = objectMapper
-        .readValue(exchange.getRequestBody(), DataTransferRequest.class);
+    DataTransferRequest request =
+        objectMapper.readValue(exchange.getRequestBody(), DataTransferRequest.class);
 
     try {
       String dataTypeStr = request.getTransferDataType();
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(dataTypeStr),
-          "Missing valid dataTypeParam: %s", dataTypeStr);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(dataTypeStr), "Missing valid dataTypeParam: %s", dataTypeStr);
 
       PortableDataType dataType = JobUtils.getDataType(dataTypeStr);
 
       String exportService = request.getSource();
-      Preconditions.checkArgument(JobUtils.isValidService(exportService, ServiceMode.EXPORT),
-          "Missing valid exportService: %s", exportService);
+      Preconditions.checkArgument(
+          JobUtils.isValidService(exportService, ServiceMode.EXPORT),
+          "Missing valid exportService: %s",
+          exportService);
 
       String importService = request.getDestination();
-      Preconditions.checkArgument(JobUtils.isValidService(importService, ServiceMode.IMPORT),
-          "Missing valid importService: %s", importService);
+      Preconditions.checkArgument(
+          JobUtils.isValidService(importService, ServiceMode.IMPORT),
+          "Missing valid importService: %s",
+          importService);
 
       // Create a new job and persist
       UUID jobId = idProvider.createId();
@@ -128,34 +132,43 @@ final class DataTransferHandler implements HttpHandler {
 
       // Set new cookie
       HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, JobUtils.encodeJobId(jobId));
-      exchange.getResponseHeaders()
+      exchange
+          .getResponseHeaders()
           .add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
 
       // Lookup job, even if just recently created
-      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
+      LegacyPortabilityJob job =
+          commonSettings.getEncryptedFlow()
+              ? store.find(jobId, JobAuthorization.State.INITIAL)
+              : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Validate job before going further
 
       // Obtain the OnlineAuthDataGenerator for export service
-      OnlineAuthDataGenerator generator = serviceProviderRegistry
-          .getOnlineAuth(job.exportService(), dataType, ServiceMode.EXPORT);
-      Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
-          dataType, job.exportService());
+      OnlineAuthDataGenerator generator =
+          serviceProviderRegistry.getOnlineAuth(job.exportService(), dataType, ServiceMode.EXPORT);
+      Preconditions.checkNotNull(
+          generator,
+          "Generator not found for type: %s, service: %s",
+          dataType,
+          job.exportService());
 
       // Auth authUrl
       AuthFlowInitiator authFlowInitiator =
           generator.generateAuthUrl(PortabilityApiFlags.baseApiUrl(), jobId);
-      Preconditions
-          .checkNotNull(authFlowInitiator, "AuthFlowInitiator not found for type: %s, service: %s",
-              dataType, job.exportService());
+      Preconditions.checkNotNull(
+          authFlowInitiator,
+          "AuthFlowInitiator not found for type: %s, service: %s",
+          dataType,
+          job.exportService());
 
       // Store initial auth data for export services. Any initial auth data for import
       // is done in the SetupHandler in IMPORT mode
       if (authFlowInitiator.initialAuthData() != null) {
-        job = JobUtils.setInitialAuthData(job, authFlowInitiator.initialAuthData(),
-            ServiceMode.EXPORT);
+        job =
+            JobUtils.setInitialAuthData(
+                job, authFlowInitiator.initialAuthData(), ServiceMode.EXPORT);
         JobAuthorization.State expectedPreviousState =
             commonSettings.getEncryptedFlow() ? JobAuthorization.State.INITIAL : null;
         store.update(jobId, job, expectedPreviousState);
@@ -168,16 +181,18 @@ final class DataTransferHandler implements HttpHandler {
       throw e;
     }
 
-    return new DataTransferResponse(request.getSource(), request.getDestination(),
+    return new DataTransferResponse(
+        request.getSource(),
+        request.getDestination(),
         request.getTransferDataType(),
-        Status.INPROCESS, redirect); // to the auth url for the export service
+        Status.INPROCESS,
+        redirect); // to the auth url for the export service
   }
 
-  /**
-   * Create the initial job in initial state and persist in storage.
-   */
-  private LegacyPortabilityJob createJob(UUID jobId, PortableDataType dataType,
-      String exportService, String importService) throws IOException {
+  /** Create the initial job in initial state and persist in storage. */
+  private LegacyPortabilityJob createJob(
+      UUID jobId, PortableDataType dataType, String exportService, String importService)
+      throws IOException {
     LegacyPortabilityJob job = jobFactory.create(dataType, exportService, importService);
     if (commonSettings.getEncryptedFlow()) {
       // This is the initial population of the row in storage

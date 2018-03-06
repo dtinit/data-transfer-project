@@ -26,10 +26,9 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-
 /**
- * Implements a SingPost {@link oauth.signpost.http.HttpRequest} that knows how to interact
- * with a a Google {@link HttpRequest}.
+ * Implements a SingPost {@link oauth.signpost.http.HttpRequest} that knows how to interact with a a
+ * Google {@link HttpRequest}.
  */
 final class GoogleConnectionRequestAdapter implements oauth.signpost.http.HttpRequest {
   private final HttpRequest httpRequest;

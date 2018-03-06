@@ -18,9 +18,7 @@ package org.dataportabilityproject.shared;
 import com.google.common.base.MoreObjects;
 import org.dataportabilityproject.dataModels.Resource;
 
-/**
- * A {@link Resource} containing only a string id.
- */
+/** A {@link Resource} containing only a string id. */
 public class IdOnlyResource implements Resource {
   private final String id;
 
@@ -34,9 +32,7 @@ public class IdOnlyResource implements Resource {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("id", id)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("id", id).toString();
   }
 
   @Override

@@ -48,9 +48,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Common logic for job setup handlers. This handler is meant to retrieve the current status via a
- * DataTransferResponse Directs the frontend to:
- *   - The destination services authorization page (in case of IMPORT mode)
- *   - The startCopy page (in case of COPY mode)
+ * DataTransferResponse Directs the frontend to: - The destination services authorization page (in
+ * case of IMPORT mode) - The startCopy page (in case of COPY mode)
  */
 abstract class SetupHandler implements HttpHandler {
 
@@ -68,7 +67,8 @@ abstract class SetupHandler implements HttpHandler {
       CloudFactory cloudFactory,
       CommonSettings commonSettings,
       Mode mode,
-      String handlerUrlPath, TokenManager tokenManager) {
+      String handlerUrlPath,
+      TokenManager tokenManager) {
     this.store = cloudFactory.getJobStore();
     this.serviceProviderRegistry = serviceProviderRegistry;
     this.commonSettings = commonSettings;
@@ -84,15 +84,17 @@ abstract class SetupHandler implements HttpHandler {
       Preconditions.checkArgument(
           PortabilityApiUtils.validateRequest(exchange, HttpMethods.GET, handlerUrlPath));
 
-      String encodedIdCookie = PortabilityApiUtils
-          .getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+      String encodedIdCookie =
+          PortabilityApiUtils.getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
       // Valid job must be present
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
-      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
+      LegacyPortabilityJob job =
+          commonSettings.getEncryptedFlow()
+              ? store.find(jobId, JobAuthorization.State.INITIAL)
+              : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // This page is only valid after the oauth of the export service - export data should exist
@@ -120,7 +122,8 @@ abstract class SetupHandler implements HttpHandler {
       }
 
       // Mark the response as type Json and send
-      exchange.getResponseHeaders()
+      exchange
+          .getResponseHeaders()
           .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
       exchange.sendResponseHeaders(200, 0);
 
@@ -131,20 +134,20 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(Headers headers, LegacyPortabilityJob job,
-      UUID jobId) throws IOException {
+  private DataTransferResponse handleImportSetup(
+      Headers headers, LegacyPortabilityJob job, UUID jobId) throws IOException {
     if (!commonSettings.getEncryptedFlow()) {
       Preconditions.checkState(job.importAuthData() == null, "Import AuthData should not exist");
     } else {
-      String exportAuthCookie = PortabilityApiUtils
-          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+      String exportAuthCookie =
+          PortabilityApiUtils.getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
     }
 
-    OnlineAuthDataGenerator generator = serviceProviderRegistry
-        .getOnlineAuth(job.importService(), JobUtils.getDataType(job.dataType()),
-            ServiceMode.IMPORT);
+    OnlineAuthDataGenerator generator =
+        serviceProviderRegistry.getOnlineAuth(
+            job.importService(), JobUtils.getDataType(job.dataType()), ServiceMode.IMPORT);
     AuthFlowInitiator authFlowInitiator =
         generator.generateAuthUrl(PortabilityApiFlags.baseApiUrl(), jobId);
 
@@ -152,42 +155,49 @@ abstract class SetupHandler implements HttpHandler {
     if (authFlowInitiator.initialAuthData() != null) {
       // Auth data is different for import and export. This is only valid for the /_/importSetup
       // page, so serviceMode is IMPORT
-      job = JobUtils
-          .setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
+      job =
+          JobUtils.setInitialAuthData(job, authFlowInitiator.initialAuthData(), ServiceMode.IMPORT);
       JobAuthorization.State expectedPreviousState =
           commonSettings.getEncryptedFlow() ? JobAuthorization.State.INITIAL : null;
       store.update(jobId, job, expectedPreviousState);
     }
-    return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
-        Status.INPROCESS, authFlowInitiator.authUrl()); // Redirect to auth page of import service
+    return new DataTransferResponse(
+        job.exportService(),
+        job.importService(),
+        job.dataType(),
+        Status.INPROCESS,
+        authFlowInitiator.authUrl()); // Redirect to auth page of import service
   }
 
   private DataTransferResponse handleCopySetup(Headers requestHeaders, LegacyPortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     if (commonSettings.getEncryptedFlow()) {
-      String exportAuthCookie = PortabilityApiUtils
-          .getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+      String exportAuthCookie =
+          PortabilityApiUtils.getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
 
-      String importAuthCookie = PortabilityApiUtils
-          .getCookie(requestHeaders, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
+      String importAuthCookie =
+          PortabilityApiUtils.getCookie(requestHeaders, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
     } else {
       Preconditions.checkNotNull(job.importAuthData(), "Import AuthData is required");
-
     }
 
-    return new DataTransferResponse(job.exportService(), job.importService(), job.dataType(),
-        Status.INPROCESS, StartCopyHandler.PATH); // frontend  should redirect to startCopy handler
+    return new DataTransferResponse(
+        job.exportService(),
+        job.importService(),
+        job.dataType(),
+        Status.INPROCESS,
+        StartCopyHandler.PATH); // frontend  should redirect to startCopy handler
   }
-
 
   // Which Setup flow to configure.
   // IMPORT mode sets up the import authorization flow.
   // COPY mode sets up the copy setup flow.
   public enum Mode {
-    IMPORT, COPY
+    IMPORT,
+    COPY
   }
 }

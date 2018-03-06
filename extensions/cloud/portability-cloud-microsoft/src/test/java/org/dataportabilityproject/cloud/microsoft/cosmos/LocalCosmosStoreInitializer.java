@@ -18,26 +18,20 @@ package org.dataportabilityproject.cloud.microsoft.cosmos;
 import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Creates and initializes a {@link CosmosStore} instance. Supports Azure and local setup.
- */
-public class LocalCosmosStoreInitializer extends AbstractCosomosStoreInitializer{
+/** Creates and initializes a {@link CosmosStore} instance. Supports Azure and local setup. */
+public class LocalCosmosStoreInitializer extends AbstractCosomosStoreInitializer {
 
-    /**
-     * Returns a new {@link CosmosStore} instance configured for local use.
-     */
-    public CosmosStore createLocalStore(int port, ObjectMapper mapper) {
-        CassandraCluster.Builder builder = CassandraCluster.Builder.newInstance();
-        builder.port(port);
-        CassandraCluster cassandraCluster = builder.build();
+  /** Returns a new {@link CosmosStore} instance configured for local use. */
+  public CosmosStore createLocalStore(int port, ObjectMapper mapper) {
+    CassandraCluster.Builder builder = CassandraCluster.Builder.newInstance();
+    builder.port(port);
+    CassandraCluster cassandraCluster = builder.build();
 
-        Session session = cassandraCluster.createSession(false);
+    Session session = cassandraCluster.createSession(false);
 
-        createKeyspace(session);
-        createTables(session);
+    createKeyspace(session);
+    createTables(session);
 
-        return new CosmosStore(session, mapper);
-    }
-
-
+    return new CosmosStore(session, mapper);
+  }
 }

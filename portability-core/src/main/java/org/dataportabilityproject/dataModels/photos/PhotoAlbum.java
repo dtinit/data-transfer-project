@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.dataModels.photos;
 
-
 import com.google.common.base.MoreObjects;
 import java.io.Serializable;
 
@@ -25,9 +24,7 @@ public class PhotoAlbum implements Serializable {
   private final String name;
   private final String description;
 
-  /**
-   * The {@code id} is used to associate photos with this album.
-   **/
+  /** The {@code id} is used to associate photos with this album. */
   public PhotoAlbum(String id, String name, String description) {
     this.id = id;
     this.name = name;

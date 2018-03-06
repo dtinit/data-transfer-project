@@ -17,47 +17,41 @@ package org.dataportabilityproject.transfer.microsoft.transformer;
 
 import java.util.List;
 
-/**
- * Provides facilities for performing recursive transformations and collated error reporting.
- */
+/** Provides facilities for performing recursive transformations and collated error reporting. */
 public interface TransformerContext {
 
-    /**
-     * Transform the input instance into an instance of a result type.
-     * <p>
-     * This method supports null input values; if the input is null, the same will be returned.
-     *
-     * @param resultType the type to transform to
-     * @param input the input instance
-     */
-    <T> T transform(Class<T> resultType, Object input);
+  /**
+   * Transform the input instance into an instance of a result type.
+   *
+   * <p>This method supports null input values; if the input is null, the same will be returned.
+   *
+   * @param resultType the type to transform to
+   * @param input the input instance
+   */
+  <T> T transform(Class<T> resultType, Object input);
 
-    /**
-     * Returns the property value for the key or null.
-     *
-     * @param key the key
-     */
-    String getProperty(String key);
+  /**
+   * Returns the property value for the key or null.
+   *
+   * @param key the key
+   */
+  String getProperty(String key);
 
-    /**
-     * Sets the property.
-     *
-     * @param key the key
-     * @param value the value
-     */
-    void setProperty(String key, String value);
+  /**
+   * Sets the property.
+   *
+   * @param key the key
+   * @param value the value
+   */
+  void setProperty(String key, String value);
 
-    /**
-     * Adds a problem to the current processing context.
-     *
-     * @param message the problem
-     */
-    void problem(String message);
+  /**
+   * Adds a problem to the current processing context.
+   *
+   * @param message the problem
+   */
+  void problem(String message);
 
-    /**
-     * Returns problems encountered during transformation.
-     */
-    List<String> getProblems();
-
-
+  /** Returns problems encountered during transformation. */
+  List<String> getProblems();
 }

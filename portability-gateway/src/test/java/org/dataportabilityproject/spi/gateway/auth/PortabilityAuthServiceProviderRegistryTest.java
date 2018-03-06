@@ -29,11 +29,10 @@ import org.junit.rules.ExpectedException;
 
 public class PortabilityAuthServiceProviderRegistryTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
-  public void requireImportAndExportTest(){
+  public void requireImportAndExportTest() {
     List<String> supportedImportTypes = ImmutableList.of("photos", "contacts");
     List<String> supportedExportTypes = ImmutableList.of("contacts");
 
@@ -44,20 +43,23 @@ public class PortabilityAuthServiceProviderRegistryTest {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("available for import but not export");
 
-    AuthServiceProviderRegistry registry = new PortabilityAuthServiceProviderRegistry(ImmutableList.of("mockServiceProvider"),
-        ImmutableMap.of("mockServiceProvider", mockAuthProvider));
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableList.of("mockServiceProvider"),
+            ImmutableMap.of("mockServiceProvider", mockAuthProvider));
   }
 
   @Test
-  public void serviceProviderNotFoundTest(){
+  public void serviceProviderNotFoundTest() {
     AuthServiceProvider mockAuthProvider = mock(AuthServiceProvider.class);
     when(mockAuthProvider.getServiceId()).thenReturn("mockAuthProvider");
 
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("AuthServiceProvider not found");
 
-    AuthServiceProviderRegistry registry = new PortabilityAuthServiceProviderRegistry(ImmutableList.of("ServiceDoesNotExist"),
-        ImmutableMap.of("mockServiceProvider", mockAuthProvider));
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableList.of("ServiceDoesNotExist"),
+            ImmutableMap.of("mockServiceProvider", mockAuthProvider));
   }
-
 }

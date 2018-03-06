@@ -55,30 +55,29 @@ import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.TaskSer
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.model.TimelineCreateResponse;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
-/**
- * List the lists that exist in RTM.
- */
-final class RememberTheMilkTaskService implements
-    Importer<TaskModelWrapper>,
-    Exporter<TaskModelWrapper> {
+/** List the lists that exist in RTM. */
+final class RememberTheMilkTaskService
+    implements Importer<TaskModelWrapper>, Exporter<TaskModelWrapper> {
 
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private final RememberTheMilkSignatureGenerator signatureGenerator;
   private final JobDataCache jobDataCache;
 
-  RememberTheMilkTaskService(RememberTheMilkSignatureGenerator signatureGenerator,
-      JobDataCache jobDataCache) throws IOException {
+  RememberTheMilkTaskService(
+      RememberTheMilkSignatureGenerator signatureGenerator, JobDataCache jobDataCache)
+      throws IOException {
     this.signatureGenerator = signatureGenerator;
     this.jobDataCache = jobDataCache;
   }
 
   private GetListsResponse getLists() throws IOException {
-    return makeRequest(RememberTheMilkMethods.LISTS_GET_LIST, ImmutableMap.of(),
-        GetListsResponse.class);
+    return makeRequest(
+        RememberTheMilkMethods.LISTS_GET_LIST, ImmutableMap.of(), GetListsResponse.class);
   }
 
   private GetListResponse getList(int id) throws IOException {
-    return makeRequest(RememberTheMilkMethods.TASKS_GET_LIST,
+    return makeRequest(
+        RememberTheMilkMethods.TASKS_GET_LIST,
         ImmutableMap.of("list_id", Long.toString(id)),
         GetListResponse.class);
   }
@@ -92,8 +91,7 @@ final class RememberTheMilkTaskService implements
     }
     for (TaskModel task : wrapper.getTasks()) {
       int newList = jobDataCache.getData(task.getTaskListId(), Integer.class);
-      TaskSeries addedTask = createTask(
-          task.getText(), timeline, newList);
+      TaskSeries addedTask = createTask(task.getText(), timeline, newList);
       // TODO add note here
     }
   }
@@ -102,15 +100,14 @@ final class RememberTheMilkTaskService implements
   public TaskModelWrapper export(ExportInformation exportInformation) throws IOException {
     if (exportInformation.getResource().isPresent()) {
       return exportTaskList(
-          exportInformation.getResource().get(),
-          exportInformation.getPaginationInformation());
+          exportInformation.getResource().get(), exportInformation.getPaginationInformation());
     } else {
       return exportTaskLists(exportInformation.getPaginationInformation());
     }
   }
 
-  private TaskModelWrapper exportTaskLists(
-      Optional<PaginationInformation> paginationInformation) throws IOException {
+  private TaskModelWrapper exportTaskLists(Optional<PaginationInformation> paginationInformation)
+      throws IOException {
     List<TaskListModel> lists = new ArrayList<>();
     List<Resource> subResources = new ArrayList<>();
     for (ListInfo oldListInfo : getLists().listInfoList.lists) {
@@ -119,17 +116,14 @@ final class RememberTheMilkTaskService implements
         // don't copy that over.
         continue;
       }
-      lists.add(new TaskListModel(
-          Integer.toString(oldListInfo.id),
-          oldListInfo.name));
+      lists.add(new TaskListModel(Integer.toString(oldListInfo.id), oldListInfo.name));
       subResources.add(new IdOnlyResource(Integer.toString(oldListInfo.id)));
     }
     return new TaskModelWrapper(lists, null, new ContinuationInformation(subResources, null));
   }
 
   private TaskModelWrapper exportTaskList(
-      Resource resource,
-      Optional<PaginationInformation> paginationInformation) throws IOException {
+      Resource resource, Optional<PaginationInformation> paginationInformation) throws IOException {
     int oldListId = Integer.parseInt(((IdOnlyResource) resource).getId());
     GetListResponse oldList = getList(oldListId);
     List<TaskList> taskLists = oldList.tasks.list;
@@ -137,10 +131,9 @@ final class RememberTheMilkTaskService implements
     for (TaskList taskList : taskLists) {
       if (taskList.taskSeriesList != null) {
         for (TaskSeries taskSeries : taskList.taskSeriesList) {
-          tasks.add(new TaskModel(
-              Integer.toString(oldListId),
-              taskSeries.name,
-              taskSeries.notes.toString()));
+          tasks.add(
+              new TaskModel(
+                  Integer.toString(oldListId), taskSeries.name, taskSeries.notes.toString()));
           for (Task task : taskSeries.tasks) {
             // Do something here with completion date, but its odd there can be more than one.
           }
@@ -152,46 +145,42 @@ final class RememberTheMilkTaskService implements
 
   private String createTimeline() throws IOException {
     TimelineCreateResponse timelineCreateResponse =
-        makeRequest(RememberTheMilkMethods.TIMELINES_CREATE, ImmutableMap.of(),
+        makeRequest(
+            RememberTheMilkMethods.TIMELINES_CREATE,
+            ImmutableMap.of(),
             TimelineCreateResponse.class);
     checkState(!Strings.isNullOrEmpty(timelineCreateResponse.timeline));
     return timelineCreateResponse.timeline;
   }
 
   private ListInfo createTaskList(String name, String timeline) throws IOException {
-    Map<String, String> params = ImmutableMap.of(
-        "timeline", timeline,
-        "name", ("Copy of: " + name)
-    );
-    ListAddResponse response = makeRequest(RememberTheMilkMethods.LISTS_ADD, params,
-        ListAddResponse.class);
+    Map<String, String> params =
+        ImmutableMap.of("timeline", timeline, "name", ("Copy of: " + name));
+    ListAddResponse response =
+        makeRequest(RememberTheMilkMethods.LISTS_ADD, params, ListAddResponse.class);
     checkState(response.listInfo != null, "Added list is null");
     checkState(response.listInfo.id != 0, "Added list has id of zero");
     return response.listInfo;
   }
 
   private TaskSeries createTask(String name, String timeline, long listId) throws IOException {
-    Map<String, String> params = ImmutableMap.of(
-        "timeline", timeline,
-        "name", name,
-        "list_id", Long.toString(listId)
-    );
-    TaskAddResponse taskAddResponse = makeRequest(RememberTheMilkMethods.TASK_ADD, params,
-        TaskAddResponse.class);
+    Map<String, String> params =
+        ImmutableMap.of(
+            "timeline", timeline,
+            "name", name,
+            "list_id", Long.toString(listId));
+    TaskAddResponse taskAddResponse =
+        makeRequest(RememberTheMilkMethods.TASK_ADD, params, TaskAddResponse.class);
     return taskAddResponse.taskList.taskSeriesList.get(0);
   }
 
-  private <T extends RememberTheMilkResponse> T makeRequest(RememberTheMilkMethods method,
-      Map<String, String> parameters,
-      Class<T> dataClass) throws IOException {
+  private <T extends RememberTheMilkResponse> T makeRequest(
+      RememberTheMilkMethods method, Map<String, String> parameters, Class<T> dataClass)
+      throws IOException {
 
     StringBuilder parameterString = new StringBuilder();
     for (String key : parameters.keySet()) {
-      parameterString
-          .append("&")
-          .append(key)
-          .append("=")
-          .append(parameters.get(key));
+      parameterString.append("&").append(key).append("=").append(parameters.get(key));
     }
 
     URL url = new URL(method.getUrl() + parameterString);
@@ -216,5 +205,4 @@ final class RememberTheMilkTaskService implements
 
     return parsedResponse;
   }
-
 }

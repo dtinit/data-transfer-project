@@ -18,9 +18,7 @@ package org.dataportabilityproject.dataModels;
 import com.google.common.base.MoreObjects;
 import java.util.Optional;
 
-/**
- * Information about what data to export.
- */
+/** Information about what data to export. */
 public class ExportInformation {
   private final Optional<Resource> resource;
   private final Optional<PaginationInformation> pageInfo;

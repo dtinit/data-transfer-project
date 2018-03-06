@@ -22,10 +22,10 @@ description = """Portability API Server"""
 jar {
     // TODO: consider fatjar plugin
     // Add dependencies to jar
-    from ({
-      (configurations.runtime).collect {
-        it.isDirectory() ? it : zipTree(it)
-      }
+    from({
+        (configurations.runtime).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
     }) {
         // Exclude signature files to avoid SecurityException
         exclude '**/META-INF/*.SF'
@@ -33,7 +33,7 @@ jar {
         exclude '**/META-INF/*.RSA'
     }
     manifest {
-      attributes 'Main-Class': 'org.dataportabilityproject.webapp.PortabilityApiMain'
+        attributes 'Main-Class': 'org.dataportabilityproject.webapp.PortabilityApiMain'
     }
 }
 
@@ -46,7 +46,7 @@ dependencies {
 
     compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
     compile("org.simpleframework:simple:${simpleFrameworkVersion}")
-    
+
     testCompile("junit:junit:${junitVersion}")
     testCompile("com.google.truth:truth:${truthVersion}")
 }

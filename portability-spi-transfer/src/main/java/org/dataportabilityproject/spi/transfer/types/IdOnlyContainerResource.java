@@ -5,25 +5,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
-/**
- * A resource container referenced by id.
- */
+/** A resource container referenced by id. */
 @JsonTypeName("org.dataportability:IdOnlyContainerResource")
 public class IdOnlyContainerResource extends ContainerResource {
-    private final String id;
+  private final String id;
 
-    /**
-     * Ctor.
-     *
-     * @param id the container id.
-     */
-    @JsonCreator
-    public IdOnlyContainerResource(@JsonProperty("id") String id) {
-        this.id = id;
-    }
+  /**
+   * Ctor.
+   *
+   * @param id the container id.
+   */
+  @JsonCreator
+  public IdOnlyContainerResource(@JsonProperty("id") String id) {
+    this.id = id;
+  }
 
-    public String getId() {
-        return id;
-    }
-
+  public String getId() {
+    return id;
+  }
 }

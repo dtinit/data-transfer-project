@@ -15,21 +15,14 @@
  */
 package org.dataportabilityproject.shared.settings;
 
-import static org.dataportabilityproject.cloud.SupportedCloud.GOOGLE;
-import static org.dataportabilityproject.shared.Config.Environment.LOCAL;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
 import org.dataportabilityproject.cloud.SupportedCloud;
 import org.dataportabilityproject.shared.Config.Environment;
 
-/**
- * Common settings across multiple servers.
- */
+/** Common settings across multiple servers. */
 public class CommonSettings {
   private static final String PROVIDER_PREFIX = "org.dataportabilityproject.serviceProviders";
 
@@ -42,10 +35,11 @@ public class CommonSettings {
 
   @JsonCreator
   public CommonSettings(
-      @JsonProperty(value="env", required=true) Environment env,
-      @JsonProperty(value="cloud", required=true) SupportedCloud cloud,
-      @JsonProperty(value="serviceProviderClasses", required=true) String[] serviceProviderClasses,
-      @JsonProperty(value="encryptedFlow") Boolean encryptedFlow) {
+      @JsonProperty(value = "env", required = true) Environment env,
+      @JsonProperty(value = "cloud", required = true) SupportedCloud cloud,
+      @JsonProperty(value = "serviceProviderClasses", required = true)
+          String[] serviceProviderClasses,
+      @JsonProperty(value = "encryptedFlow") Boolean encryptedFlow) {
     this.env = env;
     this.cloud = cloud;
     for (String providerClass : serviceProviderClasses) {

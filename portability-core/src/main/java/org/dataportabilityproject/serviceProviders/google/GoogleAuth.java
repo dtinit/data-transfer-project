@@ -38,20 +38,15 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
-/**
- * A generator of Google {@link Credential}
- */
+/** A generator of Google {@link Credential} */
 class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
 
-  /**
-   * Port in the "Callback URL".
-   */
+  /** Port in the "Callback URL". */
   private static final int PORT = 8080;
+
   private static final String CALLBACK_PATH = "/callback/google";
 
-  /**
-   * Domain name in the "Callback URL".
-   */
+  /** Domain name in the "Callback URL". */
   private static final String DOMAIN = "127.0.0.1";
 
   private final AppCredentials appCredentials;
@@ -72,24 +67,30 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
   @Override
   public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
     String encodedJobId = JobUtils.encodeJobId(jobId);
-    String url = createFlow()
-        .newAuthorizationUrl()
-        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
-        .setState(encodedJobId) // TODO: Encrypt
-        .build();
+    String url =
+        createFlow()
+            .newAuthorizationUrl()
+            .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
+            .setState(encodedJobId) // TODO: Encrypt
+            .build();
     return AuthFlowInitiator.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
-      @Nullable AuthData initialAuthData, @Nullable String extra) throws IOException {
-    Preconditions.checkState(initialAuthData == null,
-        "Earlier auth data not expected for Google flow");
+  public AuthData generateAuthData(
+      String callbackBaseUrl,
+      String authCode,
+      UUID jobId,
+      @Nullable AuthData initialAuthData,
+      @Nullable String extra)
+      throws IOException {
+    Preconditions.checkState(
+        initialAuthData == null, "Earlier auth data not expected for Google flow");
     AuthorizationCodeFlow flow = createFlow();
-    TokenResponse response = flow
-        .newTokenRequest(authCode)
-        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) //TODO(chuy): Parameterize
-        .execute();
+    TokenResponse response =
+        flow.newTokenRequest(authCode)
+            .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) // TODO(chuy): Parameterize
+            .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, jobId.toString());
     // Extract the Google User ID from the ID token in the auth response
@@ -97,9 +98,9 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     return toAuthData(credential);
   }
 
-
   Credential getCredential(AuthData authData) {
-    Preconditions.checkArgument(authData instanceof GoogleTokenData,
+    Preconditions.checkArgument(
+        authData instanceof GoogleTokenData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     GoogleTokenData tokenData = (GoogleTokenData) authData;
@@ -107,8 +108,8 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
         .setTransport(GoogleStaticObjects.getHttpTransport())
         .setJsonFactory(JSON_FACTORY)
-        .setClientAuthentication(new ClientParametersAuthentication(appCredentials.key(),
-            appCredentials.secret()))
+        .setClientAuthentication(
+            new ClientParametersAuthentication(appCredentials.key(), appCredentials.secret()))
         .setTokenServerEncodedUrl(tokenData.tokenServerEncodedUrl())
         .build()
         .setAccessToken(tokenData.accessToken())
@@ -128,24 +129,19 @@ class GoogleAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
     GoogleAuthorizationCodeFlow flow = createFlow();
 
     // authorize
-    LocalServerReceiver receiver = new LocalServerReceiver.Builder()
-        .setHost(DOMAIN)
-        .setPort(PORT)
-        .build();
+    LocalServerReceiver receiver =
+        new LocalServerReceiver.Builder().setHost(DOMAIN).setPort(PORT).build();
     return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
   }
 
-  /**
-   * Creates an AuthorizationCodeFlow for use in online and offline mode.
-   */
-  private GoogleAuthorizationCodeFlow createFlow()
-      throws IOException {
+  /** Creates an AuthorizationCodeFlow for use in online and offline mode. */
+  private GoogleAuthorizationCodeFlow createFlow() throws IOException {
     return new GoogleAuthorizationCodeFlow.Builder(
-        GoogleStaticObjects.getHttpTransport(),
-        JSON_FACTORY,
-        appCredentials.key(),
-        appCredentials.secret(),
-        scopes)
+            GoogleStaticObjects.getHttpTransport(),
+            JSON_FACTORY,
+            appCredentials.key(),
+            appCredentials.secret(),
+            scopes)
         .setAccessType("offline")
         .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
         .setApprovalPrompt("force")

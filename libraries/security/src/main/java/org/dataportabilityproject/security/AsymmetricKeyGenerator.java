@@ -15,19 +15,11 @@
  */
 package org.dataportabilityproject.security;
 
-
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
-/**
- * Creates and encodes keys for asymmetric encryption.
- */
+/** Creates and encodes keys for asymmetric encryption. */
 public interface AsymmetricKeyGenerator {
 
-  /**
-   * Generates a {@link KeyPair}
-   */
+  /** Generates a {@link KeyPair} */
   KeyPair generate();
 }
-

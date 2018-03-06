@@ -15,47 +15,45 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.common;
 
+import static java.util.Collections.emptyMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.Collections.emptyMap;
-
-/**
- * Utility methods for transforming data.
- */
+/** Utility methods for transforming data. */
 public final class TransformerHelper {
 
-    public static Optional<String> getString(String key, Map<String, ?> map) {
-        return Optional.ofNullable((String) map.get(key));
-    }
+  private TransformerHelper() {}
 
-    @SuppressWarnings("unchecked")
-    public static Optional<Map<String, String>> getMap(String key, Map<String, ?> map) {
-        return Optional.ofNullable((Map<String, String>) map.get(key));
-    }
+  public static Optional<String> getString(String key, Map<String, ?> map) {
+    return Optional.ofNullable((String) map.get(key));
+  }
 
-    public static String getOrDefault(String firstKey, String secondKey, Map<String, ?> map, String defaultValue) {
-        return getMap(firstKey, map).orElse(emptyMap()).getOrDefault(secondKey, defaultValue);
-    }
+  @SuppressWarnings("unchecked")
+  public static Optional<Map<String, String>> getMap(String key, Map<String, ?> map) {
+    return Optional.ofNullable((Map<String, String>) map.get(key));
+  }
 
-    @SuppressWarnings("unchecked")
-    public static Optional<List<String>> getList(String key, Map<String, ?> map) {
-        return Optional.ofNullable((List<String>) map.get(key));
-    }
+  public static String getOrDefault(
+      String firstKey, String secondKey, Map<String, ?> map, String defaultValue) {
+    return getMap(firstKey, map).orElse(emptyMap()).getOrDefault(secondKey, defaultValue);
+  }
 
-    @SuppressWarnings("unchecked")
-    public static Optional<List<Map<String, String>>> getListMap(String key, Map<String, ?> map) {
-        return Optional.ofNullable((List<Map<String, String>>) map.get(key));
-    }
+  @SuppressWarnings("unchecked")
+  public static Optional<List<String>> getList(String key, Map<String, ?> map) {
+    return Optional.ofNullable((List<String>) map.get(key));
+  }
 
-    public static <K, V> void safeSet(K key, V value, Map<K, V> map) {
-        if (value == null) {
-            return;
-        }
-        map.put(key, value);
-    }
+  @SuppressWarnings("unchecked")
+  public static Optional<List<Map<String, String>>> getListMap(String key, Map<String, ?> map) {
+    return Optional.ofNullable((List<Map<String, String>>) map.get(key));
+  }
 
-    private TransformerHelper() {
+  public static <K, V> void safeSet(K key, V value, Map<K, V> map) {
+    if (value == null) {
+      return;
     }
+    map.put(key, value);
+  }
 }

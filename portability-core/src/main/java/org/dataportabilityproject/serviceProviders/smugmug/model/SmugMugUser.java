@@ -18,9 +18,7 @@ package org.dataportabilityproject.serviceProviders.smugmug.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
-/**
- * A SmugMug user object.
- */
+/** A SmugMug user object. */
 public class SmugMugUser {
 
   @JsonProperty("Name")

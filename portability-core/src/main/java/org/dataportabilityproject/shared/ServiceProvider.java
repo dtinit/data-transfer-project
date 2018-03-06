@@ -27,47 +27,46 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A service provider that supports importing and export different data types.
- */
+/** A service provider that supports importing and export different data types. */
 public interface ServiceProvider {
-    Logger logger = LoggerFactory.getLogger(ServiceProvider.class);
+  Logger logger = LoggerFactory.getLogger(ServiceProvider.class);
 
-    String getName();
+  String getName();
 
-    ImmutableList<PortableDataType> getExportTypes();
+  ImmutableList<PortableDataType> getExportTypes();
 
-    ImmutableList<PortableDataType> getImportTypes();
+  ImmutableList<PortableDataType> getImportTypes();
 
-    /**
-     * Return an OfflineAuthDataGenerator for the provided dataType. The returned generator will
-     * have permissions based on the serviceMode provided.
-     */
-    default OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      logger.warn(
-          "getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
-          dataType, serviceMode, getName());
-      return null;
-    }
+  /**
+   * Return an OfflineAuthDataGenerator for the provided dataType. The returned generator will have
+   * permissions based on the serviceMode provided.
+   */
+  default OfflineAuthDataGenerator getOfflineAuthDataGenerator(
+      PortableDataType dataType, ServiceMode serviceMode) {
+    logger.warn(
+        "getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {}, service: {}",
+        dataType,
+        serviceMode,
+        getName());
+    return null;
+  }
 
+  /* Return an OnlineAuthDataGenerator for the provided  dataType. The returned generator will
+   * have permissions based on the serviceMode provided.
+   */
+  default OnlineAuthDataGenerator getOnlineAuthDataGenerator(
+      PortableDataType dataType, ServiceMode serviceMode) {
+    logger.warn(
+        "getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
+        dataType,
+        serviceMode,
+        getName());
+    return null;
+  }
 
-    /* Return an OnlineAuthDataGenerator for the provided  dataType. The returned generator will
-     * have permissions based on the serviceMode provided.
-     */
-    default OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType, ServiceMode serviceMode) {
-      logger.warn(
-          "getOnlineAuthDataGenerator not implemented for type: {}, serviceMode: {} service: {}",
-          dataType, serviceMode, getName());
-      return null;
-    }
+  Exporter<? extends DataModel> getExporter(
+      PortableDataType type, AuthData authData, JobDataCache jobDataCache) throws IOException;
 
-    Exporter<? extends DataModel> getExporter(
-            PortableDataType type,
-            AuthData authData,
-            JobDataCache jobDataCache) throws IOException;
-
-    Importer<? extends DataModel> getImporter(
-            PortableDataType type,
-            AuthData authData,
-            JobDataCache jobDataCache) throws IOException;
+  Importer<? extends DataModel> getImporter(
+      PortableDataType type, AuthData authData, JobDataCache jobDataCache) throws IOException;
 }

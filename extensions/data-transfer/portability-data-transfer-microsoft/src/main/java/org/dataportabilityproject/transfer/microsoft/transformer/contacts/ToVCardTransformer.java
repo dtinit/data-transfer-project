@@ -15,6 +15,11 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.contacts;
 
+import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getList;
+import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getListMap;
+import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getMap;
+import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getString;
+
 import ezvcard.VCard;
 import ezvcard.parameter.TelephoneType;
 import ezvcard.property.Address;
@@ -22,108 +27,112 @@ import ezvcard.property.Birthday;
 import ezvcard.property.Email;
 import ezvcard.property.Organization;
 import ezvcard.property.StructuredName;
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
-
 import java.util.Map;
 import java.util.function.BiFunction;
-
-import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getList;
-import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getListMap;
-import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getMap;
-import static org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper.getString;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
 
 /**
- * Transforms from a Microsoft Graph contacts resource to a VCard as defined by https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/contact.
+ * Transforms from a Microsoft Graph contacts resource to a VCard as defined by
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/contact.
  *
- * TODO: Handle contact lists (folders)
+ * <p>TODO: Handle contact lists (folders)
  */
-public class ToVCardTransformer implements BiFunction<Map<String, Object>, TransformerContext, VCard> {
+public class ToVCardTransformer
+    implements BiFunction<Map<String, Object>, TransformerContext, VCard> {
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public VCard apply(Map<String, Object> map, TransformerContext context) {
-        VCard card = new VCard();
+  @Override
+  @SuppressWarnings("unchecked")
+  public VCard apply(Map<String, Object> map, TransformerContext context) {
+    VCard card = new VCard();
 
-        copyNames(map, card);
+    copyNames(map, card);
 
-        copyPersonData(map, card, context);
+    copyPersonData(map, card, context);
 
-        copyBusinessData(map, card, context);
+    copyBusinessData(map, card, context);
 
-        getList("categories", map).ifPresent(v -> v.forEach(card::setCategories));
+    getList("categories", map).ifPresent(v -> v.forEach(card::setCategories));
 
-        getString("personalNotes", map).ifPresent(card::addNote);
+    getString("personalNotes", map).ifPresent(card::addNote);
 
-        copyExtendedData(map, card);
+    copyExtendedData(map, card);
 
-        return card;
-    }
+    return card;
+  }
 
-    private void copyNames(Map<String, Object> map, VCard card) {
-        String givenName = (String) map.get("givenName");
-        String surname = (String) map.get("surname");
-        StructuredName structuredName = new StructuredName();
-        structuredName.setFamily(surname);
-        structuredName.setGiven(givenName);
+  private void copyNames(Map<String, Object> map, VCard card) {
+    String givenName = (String) map.get("givenName");
+    String surname = (String) map.get("surname");
+    StructuredName structuredName = new StructuredName();
+    structuredName.setFamily(surname);
+    structuredName.setGiven(givenName);
 
-        getString("middleName", map).ifPresent(v -> structuredName.getAdditionalNames().add(v));
+    getString("middleName", map).ifPresent(v -> structuredName.getAdditionalNames().add(v));
 
-        getString("title", map).ifPresent(v -> structuredName.getPrefixes().add(v));
+    getString("title", map).ifPresent(v -> structuredName.getPrefixes().add(v));
 
-        card.setStructuredName(structuredName);
+    card.setStructuredName(structuredName);
 
-        getString("displayName", map).ifPresent(card::setFormattedName);
+    getString("displayName", map).ifPresent(card::setFormattedName);
 
-        getString("nickName", map).ifPresent(card::setNickname);
+    getString("nickName", map).ifPresent(card::setNickname);
+  }
 
-    }
+  private void copyPersonData(Map<String, Object> map, VCard card, TransformerContext context) {
+    getMap("homeAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
 
-    private void copyPersonData(Map<String, Object> map, VCard card, TransformerContext context) {
-        getMap("homeAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
+    copyEmail(map, card);
 
-        copyEmail(map, card);
+    copyPhones("homePhones", TelephoneType.HOME, map, card);
 
-        copyPhones("homePhones", TelephoneType.HOME, map, card);
+    getString("mobilePhone", map).ifPresent(v -> card.addTelephoneNumber(v, TelephoneType.CELL));
 
-        getString("mobilePhone", map).ifPresent(v -> card.addTelephoneNumber(v, TelephoneType.CELL));
+    getString("birthday", map).ifPresent(v -> card.setBirthday(new Birthday(v)));
+  }
 
-        getString("birthday", map).ifPresent(v -> card.setBirthday(new Birthday(v)));
-    }
+  @SuppressWarnings("unchecked")
+  private void copyEmail(Map<String, Object> map, VCard card) {
+    getListMap("emailAddresses", map)
+        .ifPresent(
+            v ->
+                v.forEach(
+                    email ->
+                        getString("address", email)
+                            .ifPresent(addr -> card.addEmail(new Email(addr)))));
+  }
 
-    @SuppressWarnings("unchecked")
-    private void copyEmail(Map<String, Object> map, VCard card) {
-        getListMap("emailAddresses", map).ifPresent(v -> v.forEach(email -> getString("address", email).ifPresent(addr -> card.addEmail(new Email(addr)))));
-    }
+  private void copyBusinessData(Map<String, Object> map, VCard card, TransformerContext context) {
+    getMap("businessAddress", map)
+        .ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
+    getMap("otherAddress", map)
+        .ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
 
-    private void copyBusinessData(Map<String, Object> map, VCard card, TransformerContext context) {
-        getMap("businessAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
-        getMap("otherAddress", map).ifPresent(v -> card.addAddress(context.transform(Address.class, v)));
+    getString("jobTitle", map).ifPresent(card::addTitle);
 
-        getString("jobTitle", map).ifPresent(card::addTitle);
+    getString("companyName", map)
+        .ifPresent(
+            v -> {
+              Organization organization = new Organization();
+              organization.getValues().add(v);
+              card.addOrganization(organization);
+            });
 
-        getString("companyName", map).ifPresent(v -> {
-            Organization organization = new Organization();
-            organization.getValues().add(v);
-            card.addOrganization(organization);
-        });
+    getString("profession", map).ifPresent(card::addExpertise);
 
-        getString("profession", map).ifPresent(card::addExpertise);
+    copyPhones("businessPhones", TelephoneType.WORK, map, card);
+  }
 
-        copyPhones("businessPhones", TelephoneType.WORK, map, card);
-    }
+  private void copyPhones(
+      String fieldName, TelephoneType type, Map<String, Object> map, VCard card) {
+    getList(fieldName, map)
+        .ifPresent(v -> v.forEach(number -> card.addTelephoneNumber(number, type)));
+  }
 
-    private void copyPhones(String fieldName, TelephoneType type, Map<String, Object> map, VCard card) {
-        getList(fieldName, map).ifPresent(v -> v.forEach(number -> card.addTelephoneNumber(number, type)));
-    }
-
-    private void copyExtendedData(Map<String, Object> map, VCard card) {
-        getString("manager", map).ifPresent(v -> card.setExtendedProperty("X-Manager", v));
-        getString("spouseName", map).ifPresent(v -> card.setExtendedProperty("X-Spouse", v));
-    }
-
-
+  private void copyExtendedData(Map<String, Object> map, VCard card) {
+    getString("manager", map).ifPresent(v -> card.setExtendedProperty("X-Manager", v));
+    getString("spouseName", map).ifPresent(v -> card.setExtendedProperty("X-Spouse", v));
+  }
 }
-
 
 /*
 TODO Investigate:

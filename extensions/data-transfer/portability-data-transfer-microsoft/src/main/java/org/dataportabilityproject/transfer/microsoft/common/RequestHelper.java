@@ -16,6 +16,11 @@
 package org.dataportabilityproject.transfer.microsoft.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -25,100 +30,101 @@ import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-/**
- * Provides request operations.
- */
+/** Provides request operations. */
 public class RequestHelper {
-    private static final String BATCH_URL = "beta/$batch";
+  private static final String BATCH_URL = "beta/$batch";
 
-    /**
-     * Creates a Graph API request object with required headers.
-     *
-     * @param id the request id
-     * @param url the request URL
-     * @param data the data
-     */
-    public static Map<String, Object> createRequest(int id, String url, LinkedHashMap data) {
-        Map<String, Object> request = new LinkedHashMap<>();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/json");
-        request.put("headers", headers);
-        request.put("id", id + "");
-        request.put("method", "POST");
-        request.put("url", url);
-        request.put("body", data);
-        return request;
+  private RequestHelper() {}
+
+  /**
+   * Creates a Graph API request object with required headers.
+   *
+   * @param id the request id
+   * @param url the request URL
+   * @param data the data
+   */
+  public static Map<String, Object> createRequest(int id, String url, LinkedHashMap data) {
+    Map<String, Object> request = new LinkedHashMap<>();
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Content-Type", "application/json");
+    request.put("headers", headers);
+    request.put("id", id + "");
+    request.put("method", "POST");
+    request.put("url", url);
+    request.put("body", data);
+    return request;
+  }
+
+  /**
+   * Creates a Graph API batch request with required the authorization header.
+   *
+   * @param authData the auth token
+   * @param requests the batch request data
+   * @param client the client to construct the request with
+   * @param objectMapper the mapper to serialize data
+   */
+  @SuppressWarnings("unchecked")
+  public static BatchResponse batchRequest(
+      TokenAuthData authData,
+      List<Map<String, Object>> requests,
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper) {
+    try {
+      Map<String, Object> batch = new LinkedHashMap<>();
+      batch.put("requests", requests);
+
+      Request.Builder requestBuilder = new Request.Builder().url(baseUrl + BATCH_URL);
+      requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+      requestBuilder.post(
+          RequestBody.create(
+              MediaType.parse("application/json"), objectMapper.writeValueAsString(batch)));
+      try (Response response = client.newCall(requestBuilder.build()).execute()) {
+        int code = response.code();
+        if (code >= 200 && code <= 299) {
+          ResponseBody body = response.body();
+          if (body == null) {
+            // FIXME evaluate HTTP response and return whether to retry
+            return new BatchResponse(new ImportResult(ImportResult.ResultType.ERROR));
+          }
+          Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
+          return new BatchResponse(
+              new ImportResult(ImportResult.ResultType.OK),
+              (List<Map<String, Object>>) responseData.get("responses"));
+        } else {
+          // FIXME evaluate HTTP response and return whether to retry
+          return new BatchResponse(new ImportResult(ImportResult.ResultType.ERROR));
+        }
+      }
+    } catch (IOException e) {
+      // TODO log
+      e.printStackTrace();
+      return new BatchResponse(
+          new ImportResult(
+              ImportResult.ResultType.ERROR, "Error batching request: " + e.getMessage()));
+    }
+  }
+
+  public static class BatchResponse {
+    private final ImportResult result;
+    private final List<Map<String, Object>> batchResponse;
+
+    public BatchResponse(ImportResult result, List<Map<String, Object>> batchResponse) {
+      this.result = result;
+      this.batchResponse = batchResponse;
     }
 
-    /**
-     * Creates a Graph API batch request with required the authorization header.
-     *
-     * @param authData the auth token
-     * @param requests the batch request data
-     * @param client the client to construct the request with
-     * @param objectMapper the mapper to serialize data
-     */
-    @SuppressWarnings("unchecked")
-    public static BatchResponse batchRequest(TokenAuthData authData, List<Map<String, Object>> requests, String baseUrl, OkHttpClient client, ObjectMapper objectMapper) {
-        try {
-            Map<String, Object> batch = new LinkedHashMap<>();
-            batch.put("requests", requests);
-
-            Request.Builder requestBuilder = new Request.Builder().url(baseUrl + BATCH_URL);
-            requestBuilder.header("Authorization", "Bearer " + authData.getToken());
-            requestBuilder.post(RequestBody.create(MediaType.parse("application/json"), objectMapper.writeValueAsString(batch)));
-            try (Response response = client.newCall(requestBuilder.build()).execute()) {
-                int code = response.code();
-                if (code >= 200 && code <= 299) {
-                    ResponseBody body = response.body();
-                    if (body == null) {
-                        // FIXME evaluate HTTP response and return whether to retry
-                        return new BatchResponse(new ImportResult(ImportResult.ResultType.ERROR));
-                    }
-                    Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
-                    return new BatchResponse(new ImportResult(ImportResult.ResultType.OK), (List<Map<String, Object>>) responseData.get("responses"));
-                } else {
-                    // FIXME evaluate HTTP response and return whether to retry
-                    return new BatchResponse(new ImportResult(ImportResult.ResultType.ERROR));
-                }
-
-            }
-        } catch (IOException e) {
-            // TODO log
-            e.printStackTrace();
-            return new BatchResponse(new ImportResult(ImportResult.ResultType.ERROR, "Error batching request: " + e.getMessage()));
-        }
+    public BatchResponse(ImportResult result) {
+      this.result = result;
+      this.batchResponse = null;
     }
 
-    public static class BatchResponse {
-        private final ImportResult result;
-        private final List<Map<String, Object>> batchResponse;
-
-        public BatchResponse(ImportResult result, List<Map<String, Object>> batchResponse) {
-            this.result = result;
-            this.batchResponse = batchResponse;
-        }
-
-        public BatchResponse(ImportResult result) {
-            this.result = result;
-            this.batchResponse = null;
-        }
-
-        public ImportResult getResult() {
-            return result;
-        }
-
-        public List<Map<String, Object>> getBatchResponse() {
-            return batchResponse;
-        }
+    public ImportResult getResult() {
+      return result;
     }
 
-    private RequestHelper() {
+    public List<Map<String, Object>> getBatchResponse() {
+      return batchResponse;
     }
+  }
 }

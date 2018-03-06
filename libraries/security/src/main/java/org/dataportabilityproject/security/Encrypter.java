@@ -15,13 +15,9 @@
  */
 package org.dataportabilityproject.security;
 
-/**
- * Provides functionality to encrypt raw data.
- */
+/** Provides functionality to encrypt raw data. */
 public interface Encrypter {
 
-  /**
-   * Encrypts the given {@code data}.
-   */
-  String encrypt(String data) ;
+  /** Encrypts the given {@code data}. */
+  String encrypt(String data);
 }

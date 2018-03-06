@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    testCompile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
 }
 
 

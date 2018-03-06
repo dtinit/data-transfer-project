@@ -26,7 +26,6 @@ import static org.scassandra.matchers.Matchers.preparedStatementRecorded;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.Map;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,78 +37,91 @@ import org.scassandra.http.client.PreparedStatementExecution;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.types.ColumnMetadata;
 
-/**
- * Verifies the CosmosStore implementation against a mock Cassandra instance.
- */
+/** Verifies the CosmosStore implementation against a mock Cassandra instance. */
 public class CosmosStoreTest {
-    private CosmosStore cosmosStore;
-    private Scassandra cassandra;
+  private CosmosStore cosmosStore;
+  private Scassandra cassandra;
 
-    @Test
-    @Ignore
-    public void verifyCreateAndFind() throws Exception {
-        PrimingRequest.Then.ThenBuilder thenInsert = PrimingRequest.then();
-        thenInsert.withVariableTypes(UUID, VARCHAR);
-        PrimingRequest createRequest = PrimingRequest.preparedStatementBuilder()
-            .withQuery(JOB_INSERT).withThen(thenInsert).build();
+  @Test
+  @Ignore
+  public void verifyCreateAndFind() throws Exception {
+    PrimingRequest.Then.ThenBuilder thenInsert = PrimingRequest.then();
+    thenInsert.withVariableTypes(UUID, VARCHAR);
+    PrimingRequest createRequest =
+        PrimingRequest.preparedStatementBuilder()
+            .withQuery(JOB_INSERT)
+            .withThen(thenInsert)
+            .build();
 
-        cassandra.primingClient().prime(createRequest);
+    cassandra.primingClient().prime(createRequest);
 
-        PortabilityJob primeJob = PortabilityJob.builder().build();
-        java.util.UUID jobId = java.util.UUID.randomUUID();
-        Map row =
-            Collections.singletonMap("job_data", new ObjectMapper().writeValueAsString(primeJob));
+    PortabilityJob primeJob = PortabilityJob.builder().build();
+    java.util.UUID jobId = java.util.UUID.randomUUID();
+    Map row = Collections.singletonMap("job_data", new ObjectMapper().writeValueAsString(primeJob));
 
-        PrimingRequest.Then.ThenBuilder thenQuery = PrimingRequest.then();
-        PrimingRequest findRequest = PrimingRequest.preparedStatementBuilder()
-                .withQuery(JOB_QUERY)
-                .withThen(thenQuery.withVariableTypes(UUID)
-                    .withColumnTypes(ColumnMetadata.column("job_id", UUID)).withRows(row)).build();
+    PrimingRequest.Then.ThenBuilder thenQuery = PrimingRequest.then();
+    PrimingRequest findRequest =
+        PrimingRequest.preparedStatementBuilder()
+            .withQuery(JOB_QUERY)
+            .withThen(
+                thenQuery
+                    .withVariableTypes(UUID)
+                    .withColumnTypes(ColumnMetadata.column("job_id", UUID))
+                    .withRows(row))
+            .build();
 
-        cassandra.primingClient().prime(findRequest);
+    cassandra.primingClient().prime(findRequest);
 
-        PrimingRequest.Then.ThenBuilder thenUpdate = PrimingRequest.then();
-        thenUpdate.withVariableTypes(VARCHAR, UUID).withColumnTypes(
+    PrimingRequest.Then.ThenBuilder thenUpdate = PrimingRequest.then();
+    thenUpdate
+        .withVariableTypes(VARCHAR, UUID)
+        .withColumnTypes(
             ColumnMetadata.column("job_data", VARCHAR), ColumnMetadata.column("job_id", UUID));
-        PrimingRequest updateRequest = PrimingRequest.preparedStatementBuilder()
-                .withQuery(JOB_UPDATE)
-                .withThen(thenUpdate)
-                .build();
+    PrimingRequest updateRequest =
+        PrimingRequest.preparedStatementBuilder()
+            .withQuery(JOB_UPDATE)
+            .withThen(thenUpdate)
+            .build();
 
-        cassandra.primingClient().prime(updateRequest);
+    cassandra.primingClient().prime(updateRequest);
 
-        PrimingRequest.Then.ThenBuilder thenRemove = PrimingRequest.then();
-        thenRemove.withVariableTypes(UUID);
-        PrimingRequest removeRequest = PrimingRequest.preparedStatementBuilder()
-            .withQuery(JOB_DELETE).withThen(thenRemove).build();
-        cassandra.primingClient().prime(removeRequest);
+    PrimingRequest.Then.ThenBuilder thenRemove = PrimingRequest.then();
+    thenRemove.withVariableTypes(UUID);
+    PrimingRequest removeRequest =
+        PrimingRequest.preparedStatementBuilder()
+            .withQuery(JOB_DELETE)
+            .withThen(thenRemove)
+            .build();
+    cassandra.primingClient().prime(removeRequest);
 
-        PortabilityJob createJob = PortabilityJob.builder().build();
-        cosmosStore.createJob(jobId, createJob);
+    PortabilityJob createJob = PortabilityJob.builder().build();
+    cosmosStore.createJob(jobId, createJob);
 
-        PortabilityJob copy = cosmosStore.findJob(jobId).toBuilder()
-            .setState(PortabilityJob.State.COMPLETE).build();
-        cosmosStore.updateJob(jobId, copy);
+    PortabilityJob copy =
+        cosmosStore.findJob(jobId).toBuilder().setState(PortabilityJob.State.COMPLETE).build();
+    cosmosStore.updateJob(jobId, copy);
 
-        cosmosStore.remove(jobId);
+    cosmosStore.remove(jobId);
 
-        PreparedStatementExecution expectedStatement = PreparedStatementExecution.builder()
-                .withPreparedStatementText(JOB_DELETE)
-                .withConsistency("LOCAL_ONE")
-                .build();
+    PreparedStatementExecution expectedStatement =
+        PreparedStatementExecution.builder()
+            .withPreparedStatementText(JOB_DELETE)
+            .withConsistency("LOCAL_ONE")
+            .build();
 
-        Assert.assertThat(cassandra.activityClient().retrievePreparedStatementExecutions(),
-            preparedStatementRecorded(expectedStatement));
-    }
+    Assert.assertThat(
+        cassandra.activityClient().retrievePreparedStatementExecutions(),
+        preparedStatementRecorded(expectedStatement));
+  }
 
-    @Before
-    @Ignore
-    public void setUp() {
-        cassandra = ScassandraFactory.createServer();
-        cassandra.start();
+  @Before
+  @Ignore
+  public void setUp() {
+    cassandra = ScassandraFactory.createServer();
+    cassandra.start();
 
-        int port = cassandra.getBinaryPort();
-        ObjectMapper mapper = new ObjectMapper();
-        cosmosStore = new LocalCosmosStoreInitializer().createLocalStore(port, mapper);
-    }
+    int port = cassandra.getBinaryPort();
+    ObjectMapper mapper = new ObjectMapper();
+    cosmosStore = new LocalCosmosStoreInitializer().createLocalStore(port, mapper);
+  }
 }

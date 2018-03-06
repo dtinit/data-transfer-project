@@ -1,10 +1,7 @@
 package org.dataportabilityproject.transfer.microsoft.transformer;
 
-/**
- * Defines constants used for Calendar export/import.
- */
+/** Defines constants used for Calendar export/import. */
 public interface TransformConstants {
 
-    String CALENDAR_ID = "calendar.id";
-
+  String CALENDAR_ID = "calendar.id";
 }
