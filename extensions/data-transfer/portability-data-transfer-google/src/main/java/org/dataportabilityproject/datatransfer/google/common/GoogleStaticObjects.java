@@ -15,22 +15,12 @@
  */
 package org.dataportabilityproject.datatransfer.google.common;
 
-import static org.dataportabilityproject.shared.PortableDataType.CALENDAR;
-import static org.dataportabilityproject.shared.PortableDataType.CONTACTS;
-import static org.dataportabilityproject.shared.PortableDataType.MAIL;
-import static org.dataportabilityproject.shared.PortableDataType.PHOTOS;
-import static org.dataportabilityproject.shared.PortableDataType.TASKS;
-
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.DataStoreFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
-import com.google.api.services.calendar.CalendarScopes;
-import com.google.api.services.gmail.GmailScopes;
-import com.google.api.services.people.v1.PeopleServiceScopes;
-import com.google.api.services.tasks.TasksScopes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -38,8 +28,6 @@ import com.google.common.collect.ListMultimap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import org.dataportabilityproject.shared.PortableDataType;
-import org.dataportabilityproject.shared.ServiceMode;
 
 /**
  * Static objects shared with all Google services.
