@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.dataportabilityproject.types.transfer.EntityType;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
+import org.dataportabilityproject.types.transfer.models.ItemResource;
 
 /** Specifies the starting point and context information for an export operation. */
 @JsonTypeName("org.dataportability:Continuation")

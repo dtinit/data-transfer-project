@@ -1,8 +1,9 @@
 package org.dataportabilityproject.spi.transfer.types;
 
 import com.google.common.base.MoreObjects;
+import org.dataportabilityproject.types.transfer.models.ItemResource;
 
-public class IdOnlyResource {
+public class IdOnlyResource extends ItemResource {
   private final String id;
 
   public IdOnlyResource(String id) {
