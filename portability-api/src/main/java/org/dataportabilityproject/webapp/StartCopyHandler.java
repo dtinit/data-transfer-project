@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 final class StartCopyHandler implements HttpHandler {
 
-  public final static String PATH = "/_/startCopy";
+  public static final String PATH = "/_/startCopy";
   private final Logger logger = LoggerFactory.getLogger(StartCopyHandler.class);
 
   private final ServiceProviderRegistry serviceProviderRegistry;
@@ -100,8 +100,10 @@ final class StartCopyHandler implements HttpHandler {
     //   - Update job with auth data
 
     // Lookup job
-    LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-        ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
+    LegacyPortabilityJob job =
+        commonSettings.getEncryptedFlow()
+            ? store.find(jobId, JobAuthorization.State.INITIAL)
+            : store.find(jobId);
     Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
     // Validate job
     String exportService = job.exportService();
@@ -110,17 +112,17 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
 
     //  Validate auth data is present in cookies
-    String exportAuthCookieValue = PortabilityApiUtils
-        .getCookie(exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(exportAuthCookieValue),
-            "Export auth cookie required");
+    String exportAuthCookieValue =
+        PortabilityApiUtils.getCookie(
+            exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(exportAuthCookieValue), "Export auth cookie required");
 
-    String importAuthCookieValue = PortabilityApiUtils
-        .getCookie(exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(importAuthCookieValue),
-            "Import auth cookie required");
+    String importAuthCookieValue =
+        PortabilityApiUtils.getCookie(
+            exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
 
     // We have the data, now update to 'pending worker assignment' so a worker may be assigned
     job = job.toBuilder().setJobState(JobAuthorization.State.CREDS_AVAILABLE).build();
@@ -145,20 +147,29 @@ final class StartCopyHandler implements HttpHandler {
 
     logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
 
-    Preconditions.checkNotNull(job.workerInstancePublicKey(),
-        "Expected job " + jobId + " to have a worker instance's public key after being assigned "
+    Preconditions.checkNotNull(
+        job.workerInstancePublicKey(),
+        "Expected job "
+            + jobId
+            + " to have a worker instance's public key after being assigned "
             + "(state CREDS_ENCRYPTION_KEY_GENERATED)");
-    Preconditions.checkState(job.encryptedExportAuthData() == null,
-        "Didn't expect job " + jobId + " to have encrypted export auth data yet in state "
+    Preconditions.checkState(
+        job.encryptedExportAuthData() == null,
+        "Didn't expect job "
+            + jobId
+            + " to have encrypted export auth data yet in state "
             + "CREDS_ENCRYPTION_KEY_GENERATED");
-    Preconditions.checkState(job.encryptedImportAuthData() == null,
-        "Didn't expect job " + jobId + " to have encrypted import auth data yet in state "
+    Preconditions.checkState(
+        job.encryptedImportAuthData() == null,
+        "Didn't expect job "
+            + jobId
+            + " to have encrypted import auth data yet in state "
             + "CREDS_ENCRYPTION_KEY_GENERATED");
 
     // Populate job with auth data from cookies encrypted with worker key
     logger.debug("About to parse worker instance public key: {}", job.workerInstancePublicKey());
-    PublicKey publicKey = PublicPrivateKeyPairGenerator
-        .parsePublicKey(job.workerInstancePublicKey());
+    PublicKey publicKey =
+        PublicPrivateKeyPairGenerator.parsePublicKey(job.workerInstancePublicKey());
     logger.debug("Parsed publicKey, has length: {}", publicKey.getEncoded().length);
 
     // Encrypt the data with the assigned workers PublicKey and persist
@@ -168,22 +179,20 @@ final class StartCopyHandler implements HttpHandler {
     String encryptedImportAuthData = crypter.encrypt(importAuthCookieValue);
     logger.debug("Encrypted import auth data, has length: {}", encryptedImportAuthData.length());
     // Populate job with encrypted auth data
-    job = job.toBuilder()
-        .setEncryptedExportAuthData(encryptedExportAuthData)
-        .setEncryptedImportAuthData(encryptedImportAuthData)
-        .setJobState(JobAuthorization.State.CREDS_ENCRYPTED)
-        .build();
+    job =
+        job.toBuilder()
+            .setEncryptedExportAuthData(encryptedExportAuthData)
+            .setEncryptedImportAuthData(encryptedImportAuthData)
+            .setJobState(JobAuthorization.State.CREDS_ENCRYPTED)
+            .build();
 
-    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_ENCRYPTED",
-        jobId);
+    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_ENCRYPTED", jobId);
     store.update(jobId, job, JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
 
     writeResponse(exchange);
   }
 
-  /**
-   * Validates job information, starts the copy job inline, and returns status to the client.
-   */
+  /** Validates job information, starts the copy job inline, and returns status to the client. */
   private void handleStartCopyInApi(HttpExchange exchange, UUID jobId) throws IOException {
     // Lookup job
     LegacyPortabilityJob job = store.find(jobId);
@@ -198,19 +207,26 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkState(job.exportAuthData() != null, "Export AuthData is required");
     Preconditions.checkState(job.importAuthData() != null, "Import AuthData is required");
     // TODO: Design better threading for new copy tasks with exception handling
-    Runnable r = new Runnable() {
-      public void run() {
-        try {
-          PortabilityCopier.copyDataType(serviceProviderRegistry, type, exportService,
-              job.exportAuthData(), importService, job.importAuthData(), jobId);
-        } catch (IOException e) {
-          logger.error("copyDataType failed", e);
-          e.printStackTrace();
-        } finally {
-          cloudFactory.clearJobData(jobId);
-        }
-      }
-    };
+    Runnable r =
+        new Runnable() {
+          public void run() {
+            try {
+              PortabilityCopier.copyDataType(
+                  serviceProviderRegistry,
+                  type,
+                  exportService,
+                  job.exportAuthData(),
+                  importService,
+                  job.importAuthData(),
+                  jobId);
+            } catch (IOException e) {
+              logger.error("copyDataType failed", e);
+              e.printStackTrace();
+            } finally {
+              cloudFactory.clearJobData(jobId);
+            }
+          }
+        };
 
     ExecutorService executor = Executors.newCachedThreadPool();
     executor.submit(r);
@@ -218,14 +234,13 @@ final class StartCopyHandler implements HttpHandler {
     writeResponse(exchange);
   }
 
-  /**
-   * Write a response with status to the client.
-   */
+  /** Write a response with status to the client. */
   private void writeResponse(HttpExchange exchange) throws IOException {
     JsonObject response = Json.createObjectBuilder().add("status", "started").build();
 
     // Mark response as Json and send
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .set(HEADER_CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
     JsonWriter writer = Json.createWriter(exchange.getResponseBody());

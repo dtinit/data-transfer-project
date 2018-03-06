@@ -16,7 +16,6 @@
 
 package org.dataportabilityproject.cloud.google;
 
-
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -35,13 +34,14 @@ public class GoogleCloudModuleTest {
 
   @Test
   public void getProjectEnvironment_missingEnvironment() {
-    assertThrows(IllegalArgumentException.class,
-        () -> GoogleCloudModule.getProjectEnvironment("acme"));
+    assertThrows(
+        IllegalArgumentException.class, () -> GoogleCloudModule.getProjectEnvironment("acme"));
   }
 
   @Test
   public void getProjectEnvironment_invalidEnvironment() {
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(
+        IllegalArgumentException.class,
         () -> GoogleCloudModule.getProjectEnvironment("acme-notARealEnvironment"));
   }
 }

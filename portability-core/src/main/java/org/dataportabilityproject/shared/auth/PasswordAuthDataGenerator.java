@@ -21,7 +21,8 @@ import java.util.UUID;
 import org.dataportabilityproject.shared.IOInterface;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
-public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator, OfflineAuthDataGenerator {
+public final class PasswordAuthDataGenerator
+    implements OnlineAuthDataGenerator, OfflineAuthDataGenerator {
   @Override // offline
   public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
     String account = ioInterface.ask("Enter email account");
@@ -36,8 +37,9 @@ public final class PasswordAuthDataGenerator implements OnlineAuthDataGenerator,
   }
 
   @Override // online
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
-      AuthData initialAuthData, String extra) throws IOException {
+  public AuthData generateAuthData(
+      String callbackBaseUrl, String authCode, UUID jobId, AuthData initialAuthData, String extra)
+      throws IOException {
     Preconditions.checkArgument(initialAuthData == null, "initial auth data not expected");
     return PasswordAuthData.create(authCode, extra);
   }

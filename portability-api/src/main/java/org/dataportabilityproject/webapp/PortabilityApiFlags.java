@@ -24,9 +24,7 @@ import org.dataportabilityproject.shared.settings.ApiSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A class that contains all flags exlusive to the API server.
- */
+/** A class that contains all flags exlusive to the API server. */
 public class PortabilityApiFlags {
   private static final Logger logger = LoggerFactory.getLogger(PortabilityApiFlags.class);
   private static PortabilityApiFlags INSTANCE = null;
@@ -36,9 +34,7 @@ public class PortabilityApiFlags {
     this.apiSettings = apiSettings;
   }
 
-  /**
-   * Initialize PortabilityApiFlags global configuration parameters from provided command line.
-   */
+  /** Initialize PortabilityApiFlags global configuration parameters from provided command line. */
   public static void parse() {
     if (INSTANCE != null) {
       throw new IllegalStateException("Trying to initialize flags a second time");
@@ -57,14 +53,14 @@ public class PortabilityApiFlags {
   }
 
   public static String baseUrl() {
-    Preconditions.checkNotNull(INSTANCE,
-        "Trying to get 'baseUrl' before flags have been initialized");
+    Preconditions.checkNotNull(
+        INSTANCE, "Trying to get 'baseUrl' before flags have been initialized");
     return INSTANCE.apiSettings.getBaseUrl();
   }
 
   public static String baseApiUrl() {
-    Preconditions.checkNotNull(INSTANCE,
-        "Trying to get 'baseApiUrl' before flags have been initialized");
+    Preconditions.checkNotNull(
+        INSTANCE, "Trying to get 'baseApiUrl' before flags have been initialized");
     return INSTANCE.apiSettings.getBaseApiUrl();
   }
 }

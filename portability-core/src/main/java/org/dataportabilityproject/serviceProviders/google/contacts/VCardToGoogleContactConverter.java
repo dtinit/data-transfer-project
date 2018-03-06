@@ -16,12 +16,9 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .CONTACT_SOURCE_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .VCARD_PRIMARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.VCARD_PRIMARY_PREF;
 
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
@@ -46,8 +43,8 @@ class VCardToGoogleContactConverter {
   private static final Logger logger = LoggerFactory.getLogger(VCardToGoogleContactConverter.class);
 
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
-  private static final FieldMetadata SECONDARY_FIELD_METADATA = new FieldMetadata().setPrimary
-      (false);
+  private static final FieldMetadata SECONDARY_FIELD_METADATA =
+      new FieldMetadata().setPrimary(false);
 
   // TODO(olsona): can we guarantee that <VCARDPROPERTY>.getPref() will always return a value?
 
@@ -63,21 +60,30 @@ class VCardToGoogleContactConverter {
     // can be uploaded, but what about names with source type null?
 
     if (vCard.getAddresses() != null) {
-      person.setAddresses(vCard.getAddresses().stream()
-          .map(VCardToGoogleContactConverter::convertToGoogleAddress)
-          .collect(Collectors.toList()));
+      person.setAddresses(
+          vCard
+              .getAddresses()
+              .stream()
+              .map(VCardToGoogleContactConverter::convertToGoogleAddress)
+              .collect(Collectors.toList()));
     }
 
     if (vCard.getTelephoneNumbers() != null) {
-      person.setPhoneNumbers(vCard.getTelephoneNumbers().stream()
-          .map(VCardToGoogleContactConverter::convertToGooglePhoneNumber)
-          .collect(Collectors.toList()));
+      person.setPhoneNumbers(
+          vCard
+              .getTelephoneNumbers()
+              .stream()
+              .map(VCardToGoogleContactConverter::convertToGooglePhoneNumber)
+              .collect(Collectors.toList()));
     }
 
     if (vCard.getEmails() != null) {
-      person.setEmailAddresses(vCard.getEmails().stream()
-          .map(VCardToGoogleContactConverter::convertToGoogleEmail)
-          .collect(Collectors.toList()));
+      person.setEmailAddresses(
+          vCard
+              .getEmails()
+              .stream()
+              .map(VCardToGoogleContactConverter::convertToGoogleEmail)
+              .collect(Collectors.toList()));
     }
 
     return person;
@@ -109,8 +115,8 @@ class VCardToGoogleContactConverter {
 
     // first look if there's a primary name (or names)
     // if no primary name exists, simply pick the first "alt" name
-    List<StructuredName> primaryNames = vCardNameList.stream()
-        .filter(a -> a.getAltId() == null).collect(Collectors.toList());
+    List<StructuredName> primaryNames =
+        vCardNameList.stream().filter(a -> a.getAltId() == null).collect(Collectors.toList());
     if (primaryNames.size() > 0) {
       primaryVCardName = primaryNames.get(0);
     } else {
@@ -120,10 +126,10 @@ class VCardToGoogleContactConverter {
     return convertToGoogleName(primaryVCardName);
   }
 
-  private static com.google.api.services.people.v1.model.Address convertToGoogleAddress(ezvcard
-      .property.Address vCardAddress) {
-    com.google.api.services.people.v1.model.Address personAddress = new com.google.api.services
-        .people.v1.model.Address();
+  private static com.google.api.services.people.v1.model.Address convertToGoogleAddress(
+      ezvcard.property.Address vCardAddress) {
+    com.google.api.services.people.v1.model.Address personAddress =
+        new com.google.api.services.people.v1.model.Address();
 
     personAddress.setCountry(vCardAddress.getCountry());
     personAddress.setRegion(vCardAddress.getRegion());
@@ -132,8 +138,10 @@ class VCardToGoogleContactConverter {
     personAddress.setStreetAddress(vCardAddress.getStreetAddress());
     personAddress.setPoBox(vCardAddress.getPoBox());
     personAddress.setExtendedAddress(vCardAddress.getExtendedAddress());
-    personAddress.setMetadata(vCardAddress.getPref() == VCARD_PRIMARY_PREF ?
-        PRIMARY_FIELD_METADATA : SECONDARY_FIELD_METADATA);
+    personAddress.setMetadata(
+        vCardAddress.getPref() == VCARD_PRIMARY_PREF
+            ? PRIMARY_FIELD_METADATA
+            : SECONDARY_FIELD_METADATA);
 
     return personAddress;
   }

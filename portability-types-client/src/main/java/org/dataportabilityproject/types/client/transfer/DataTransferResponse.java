@@ -20,40 +20,40 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-/**
- * A transfer operation in the system.
- */
+/** A transfer operation in the system. */
 @ApiModel(description = "A transfer operation in the system")
 public class DataTransferResponse extends AbstractDataTransfer {
 
-    @ApiModel
-    public enum Status {
-        INPROCESS, COMPLETE, ERROR
-    }
+  private Status status;
+  // The URL to go to after this is returned from the API
+  private String nextUrl;
 
-    private Status status;
+  @JsonCreator
+  public DataTransferResponse(
+      @JsonProperty(value = "source", required = true) String source,
+      @JsonProperty(value = "destination", required = true) String destination,
+      @JsonProperty(value = "transferDataType", required = true) String transferDataType,
+      @JsonProperty(value = "status", required = true) Status status,
+      @JsonProperty(value = "nextUrl") String nextUrl) {
+    super(source, destination, transferDataType);
+    this.status = status;
+    this.nextUrl = nextUrl;
+  }
 
-    // The URL to go to after this is returned from the API
-    private String nextUrl;
+  @ApiModelProperty
+  public Status getStatus() {
+    return status;
+  }
 
+  @ApiModelProperty
+  public String getNextUrl() {
+    return nextUrl;
+  }
 
-    @JsonCreator
-    public DataTransferResponse(
-            @JsonProperty(value = "source", required = true) String source,
-            @JsonProperty(value = "destination", required = true) String destination,
-            @JsonProperty(value = "transferDataType", required = true) String transferDataType,
-            @JsonProperty(value = "status", required = true) Status status,
-            @JsonProperty(value = "nextUrl") String nextUrl) {
-        super(source, destination, transferDataType);
-        this.status = status;
-        this.nextUrl = nextUrl;
-    }
-
-    @ApiModelProperty
-    public Status getStatus() {
-        return status;
-    }
-
-    @ApiModelProperty
-    public String getNextUrl() { return nextUrl;}
+  @ApiModel
+  public enum Status {
+    INPROCESS,
+    COMPLETE,
+    ERROR
+  }
 }

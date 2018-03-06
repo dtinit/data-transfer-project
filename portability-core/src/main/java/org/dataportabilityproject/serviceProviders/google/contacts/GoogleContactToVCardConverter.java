@@ -1,9 +1,7 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .VCARD_PRIMARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.VCARD_PRIMARY_PREF;
 
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
@@ -13,7 +11,6 @@ import com.google.api.services.people.v1.model.PhoneNumber;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import ezvcard.VCard;
-import ezvcard.property.Address;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
@@ -37,8 +34,8 @@ class GoogleContactToVCardConverter {
     Source: https://developers.google.com/people/api/rest/v1/people#personmetadata
     */
 
-    Preconditions.checkArgument(atLeastOneNamePresent(person.getNames()),
-        "At least one name must be present");
+    Preconditions.checkArgument(
+        atLeastOneNamePresent(person.getNames()), "At least one name must be present");
     convertToVCardNamesAndPopulate(vCard, person.getNames());
 
     if (person.getAddresses() != null) {
@@ -87,8 +84,8 @@ class GoogleContactToVCardConverter {
     StructuredName structuredName = new StructuredName();
     structuredName.setFamily(personName.getFamilyName());
     structuredName.setGiven(personName.getGivenName());
-    structuredName
-        .setParameter(SOURCE_PARAM_NAME_TYPE, personName.getMetadata().getSource().getType());
+    structuredName.setParameter(
+        SOURCE_PARAM_NAME_TYPE, personName.getMetadata().getSource().getType());
 
     // TODO(olsona): address formatting, structure, phonetics, suffixes, prefixes
     return structuredName;

@@ -15,9 +15,7 @@
  */
 package org.dataportabilityproject.gateway.action;
 
-/**
- * Handles an action in the API server.
- */
+/** Handles an action in the API server. */
 public interface Action<Request, Response> {
 
   /** Handles the given {@code Request} and returns a {@code Response}. */

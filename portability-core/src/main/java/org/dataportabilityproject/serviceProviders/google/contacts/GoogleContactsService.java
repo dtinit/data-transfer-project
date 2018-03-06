@@ -25,6 +25,10 @@ import com.google.api.services.people.v1.model.Person;
 import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.common.annotations.VisibleForTesting;
 import ezvcard.VCard;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.ExportInformation;
@@ -36,13 +40,8 @@ import org.dataportabilityproject.shared.StringPaginationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-
-public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
-    Importer<ContactsModelWrapper> {
+public class GoogleContactsService
+    implements Exporter<ContactsModelWrapper>, Importer<ContactsModelWrapper> {
 
   // TODO(olsona): next step is to merge existing contacts.
 
@@ -54,10 +53,14 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
   // TODO(olsona): addresses next
 
   public GoogleContactsService(Credential credential, JobDataCache jobDataCache) {
-    this(new PeopleService.Builder(
-        GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build(), jobDataCache);
+    this(
+        new PeopleService.Builder(
+                GoogleStaticObjects.getHttpTransport(),
+                GoogleStaticObjects.JSON_FACTORY,
+                credential)
+            .setApplicationName(GoogleStaticObjects.APP_NAME)
+            .build(),
+        jobDataCache);
   }
 
   @VisibleForTesting
@@ -68,38 +71,40 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
 
   public ContactsModelWrapper export(ExportInformation continuationInformation) throws IOException {
     // Set up connection
-    Connections.List connectionsList = peopleService
-        .people()
-        .connections()
-        .list(GoogleContactsConstants.SELF_RESOURCE);
+    Connections.List connectionsList =
+        peopleService.people().connections().list(GoogleContactsConstants.SELF_RESOURCE);
 
     // Get next page, if we have a page token
     if (continuationInformation.getPaginationInformation().isPresent()) {
-      String pageToken = ((StringPaginationToken) continuationInformation.getPaginationInformation()
-          .get()).getId();
+      String pageToken =
+          ((StringPaginationToken) continuationInformation.getPaginationInformation().get())
+              .getId();
       connectionsList.setPageToken(pageToken);
     }
 
     // Get list of connections (nb: not a list containing full info of each Person)
-    ListConnectionsResponse response = connectionsList.setPersonFields(
-        GoogleContactsConstants.PERSON_FIELDS).execute();
+    ListConnectionsResponse response =
+        connectionsList.setPersonFields(GoogleContactsConstants.PERSON_FIELDS).execute();
     List<Person> peopleList = response.getConnections();
 
     // Get list of resource names, then get list of Persons
-    List<String> resourceNames = peopleList.stream()
-        .map(Person::getResourceName)
-        .collect(Collectors.toList());
-    GetPeopleResponse batchResponse = peopleService.people()
-        .getBatchGet()
-        .setResourceNames(resourceNames)
-        .setPersonFields(GoogleContactsConstants.PERSON_FIELDS)
-        .execute();
+    List<String> resourceNames =
+        peopleList.stream().map(Person::getResourceName).collect(Collectors.toList());
+    GetPeopleResponse batchResponse =
+        peopleService
+            .people()
+            .getBatchGet()
+            .setResourceNames(resourceNames)
+            .setPersonFields(GoogleContactsConstants.PERSON_FIELDS)
+            .execute();
     List<PersonResponse> personResponseList = batchResponse.getResponses();
 
     // Convert Persons to VCards
-    List<VCard> vCards = personResponseList.stream()
-        .map(a -> GoogleContactToVCardConverter.convert(a.getPerson()))
-        .collect(Collectors.toList());
+    List<VCard> vCards =
+        personResponseList
+            .stream()
+            .map(a -> GoogleContactToVCardConverter.convert(a.getPerson()))
+            .collect(Collectors.toList());
 
     // Determine if there's a next page
     StringPaginationToken newPage = null;
@@ -121,10 +126,7 @@ public class GoogleContactsService implements Exporter<ContactsModelWrapper>,
     Collection<VCard> vCardCollection = wrapper.getVCards();
     for (VCard vCard : vCardCollection) {
       Person person = VCardToGoogleContactConverter.convert(vCard);
-      peopleService
-          .people()
-          .createContact(person)
-          .execute();
+      peopleService.people().createContact(person).execute();
       logger.debug("Imported {}", person);
     }
   }

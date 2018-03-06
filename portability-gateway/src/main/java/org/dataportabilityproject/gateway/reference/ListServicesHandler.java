@@ -26,7 +26,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import org.dataportabilityproject.gateway.action.createjob.CreateJobAction;
 import org.dataportabilityproject.gateway.action.listservices.ListServicesAction;
 import org.dataportabilityproject.gateway.action.listservices.ListServicesActionRequest;
 import org.dataportabilityproject.gateway.action.listservices.ListServicesActionResponse;
@@ -36,33 +35,27 @@ import org.dataportabilityproject.types.client.transfer.ListServicesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * HttpHandler for the {@link ListServicesAction}.
- */
+/** HttpHandler for the {@link ListServicesAction}. */
 final class ListServicesHandler implements HttpHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
   public static final String PATH = "/_/listServices";
+  private static final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
   private final ListServicesAction listServicesAction;
   private final ObjectMapper objectMapper;
 
   @Inject
   ListServicesHandler(ListServicesAction listServicesAction, TypeManager typeManager) {
     this.listServicesAction = listServicesAction;
-        this.objectMapper = typeManager.getMapper();
+    this.objectMapper = typeManager.getMapper();
   }
 
-  /**
-   * Services the {@link ListServicesAction} via the {@link HttpExchange}.
-   */
+  /** Services the {@link ListServicesAction} via the {@link HttpExchange}. */
   @Override
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, PATH));
+    Preconditions.checkArgument(ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, PATH));
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    String transferDataType = ReferenceApiUtils.getRequestParams(exchange)
-        .get(JsonKeys.DATA_TYPE);
+    String transferDataType = ReferenceApiUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(transferDataType), "Missing data type");
 
     ListServicesActionRequest actionRequest = new ListServicesActionRequest(transferDataType);
@@ -89,10 +82,11 @@ final class ListServicesHandler implements HttpHandler {
 
   /** Handles error response. TODO: Determine whether to return user facing error message here. */
   public void handleError(HttpExchange exchange, String transferDataType) throws IOException {
-    String[] empty = new String[]{};
+    String[] empty = new String[] {};
     ListServicesResponse response = new ListServicesResponse(transferDataType, empty, empty);
     // Mark the response as type Json and send
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
     objectMapper.writeValue(exchange.getResponseBody(), response);

@@ -75,7 +75,8 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   }
 
   public Auth getAuth(AuthData authData) throws IOException {
-    checkArgument(authData instanceof TokenSecretAuthData,
+    checkArgument(
+        authData instanceof TokenSecretAuthData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     Token requestToken = fromAuthData(authData);
@@ -90,19 +91,23 @@ final class FlickrAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenera
   @Override // online case
   public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
     AuthInterface authInterface = flickr.getAuthInterface();
-    Token token = authInterface.getRequestToken(
-        callbackBaseUrl + "/callback1/flickr");
-    String url = authInterface.getAuthorizationUrl(token,
-        serviceMode == ServiceMode.IMPORT ? Permission.WRITE : Permission.READ);
+    Token token = authInterface.getRequestToken(callbackBaseUrl + "/callback1/flickr");
+    String url =
+        authInterface.getAuthorizationUrl(
+            token, serviceMode == ServiceMode.IMPORT ? Permission.WRITE : Permission.READ);
     return AuthFlowInitiator.create(url, toAuthData(token));
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
-      AuthData initialAuthData, @Nullable String extra) throws IOException {
+  public AuthData generateAuthData(
+      String callbackBaseUrl,
+      String authCode,
+      UUID jobId,
+      AuthData initialAuthData,
+      @Nullable String extra)
+      throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
-    Preconditions
-        .checkNotNull(initialAuthData, "Earlier auth data not expected for Google flow");
+    Preconditions.checkNotNull(initialAuthData, "Earlier auth data not expected for Google flow");
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = fromAuthData(initialAuthData);
     Token requestToken = authInterface.getAccessToken(token, new Verifier(authCode));

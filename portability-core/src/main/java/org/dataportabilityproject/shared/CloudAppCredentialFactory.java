@@ -1,18 +1,18 @@
 /*
-* Copyright 2017 The Data-Portability Project Authors.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* https://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2017 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.dataportabilityproject.shared;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -35,10 +35,15 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class CloudAppCredentialFactory implements AppCredentialFactory {
   static final Logger logger = LoggerFactory.getLogger(AppCredentials.class);
-
+  private static final String KEYS_DIR = "keys/";
+  private static final String KEY_EXTENSION = ".txt";
+  private static final String SECRETS_DIR = "encrypted_secrets/";
+  private static final String SECRET_EXTENSION = ".encrypted";
+  private final BucketStore bucketStore;
+  private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
   /**
-   * Store keys and secrets in a cache so we can reduce load on cloud storage / KMS when
-   * reading keys and reading/decrypting secrets several times on startup.
+   * Store keys and secrets in a cache so we can reduce load on cloud storage / KMS when reading
+   * keys and reading/decrypting secrets several times on startup.
    *
    * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
    * compromised, we can update them without restarting our servers.
@@ -46,32 +51,30 @@ public class CloudAppCredentialFactory implements AppCredentialFactory {
   private LoadingCache<String, String> keys;
   private LoadingCache<String, String> secrets;
 
-  private static final String KEYS_DIR = "keys/";
-  private static final String KEY_EXTENSION = ".txt";
-  private static final String SECRETS_DIR = "encrypted_secrets/";
-  private static final String SECRET_EXTENSION = ".encrypted";
-
-  private final BucketStore bucketStore;
-  private final CryptoKeyManagementSystem cryptoKeyManagementSystem;
-
   @Inject
   CloudAppCredentialFactory(CloudFactory cloudFactory) {
     this.bucketStore = cloudFactory.getBucketStore();
     this.cryptoKeyManagementSystem = cloudFactory.getCryptoKeyManagementSystem();
-    this.keys = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build(
-        new CacheLoader<String, String>() {
-          @Override
-          public String load(String key) throws Exception {
-            return lookupKey(key);
-          }
-        });
-    this.secrets = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build(
-        new CacheLoader<String, String>() {
-          @Override
-          public String load(String key) throws Exception {
-            return lookupSecret(key);
-          }
-        });
+    this.keys =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build(
+                new CacheLoader<String, String>() {
+                  @Override
+                  public String load(String key) throws Exception {
+                    return lookupKey(key);
+                  }
+                });
+    this.secrets =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build(
+                new CacheLoader<String, String>() {
+                  @Override
+                  public String load(String key) throws Exception {
+                    return lookupSecret(key);
+                  }
+                });
   }
 
   @Override

@@ -75,7 +75,6 @@ public class GooglePhotosService
     } else {
       return exportAlbums(exportInformation.getPaginationInformation());
     }
-
   }
 
   private PhotosModelWrapper exportAlbums(Optional<PaginationInformation> pageInfo)
@@ -99,22 +98,25 @@ public class GooglePhotosService
       resources.add(new IdOnlyResource(myAlbum.getGphotoId()));
       // Saving data to the album allows the target service
       // to recreate the album structure.
-      albums.add(new PhotoAlbum(
-          myAlbum.getGphotoId(),
-          myAlbum.getTitle().getPlainText(),
-          myAlbum.getDescription().getPlainText()
-      ));
+      albums.add(
+          new PhotoAlbum(
+              myAlbum.getGphotoId(),
+              myAlbum.getTitle().getPlainText(),
+              myAlbum.getDescription().getPlainText()));
     }
 
     return new PhotosModelWrapper(albums, null, new ContinuationInformation(resources, null));
   }
 
-  private PhotosModelWrapper exportPhotos(
-      String albumId, Optional<PaginationInformation> pageInfo) throws IOException {
+  private PhotosModelWrapper exportPhotos(String albumId, Optional<PaginationInformation> pageInfo)
+      throws IOException {
     // imgmax=d gets the original immage as per:
     // https://developers.google.com/picasa-web/docs/2.0/reference
-    URL photosUrl = new URL("https://picasaweb.google.com/data/feed/api/user/default/albumid/"
-        + albumId + "?imgmax=d");
+    URL photosUrl =
+        new URL(
+            "https://picasaweb.google.com/data/feed/api/user/default/albumid/"
+                + albumId
+                + "?imgmax=d");
     AlbumFeed photoFeed;
     try {
       photoFeed = service.getFeed(photosUrl, AlbumFeed.class);
@@ -125,13 +127,13 @@ public class GooglePhotosService
     List<PhotoModel> photos = new ArrayList<>(photoFeed.getEntries().size());
     for (GphotoEntry photo : photoFeed.getEntries()) {
       MediaContent mediaContent = (MediaContent) photo.getContent();
-      photos.add(new PhotoModel(
-          photo.getTitle().getPlainText(),
-          mediaContent.getUri(),
-          photo.getDescription().getPlainText(),
-          mediaContent.getMimeType().getMediaType(),
-          albumId
-      ));
+      photos.add(
+          new PhotoModel(
+              photo.getTitle().getPlainText(),
+              mediaContent.getUri(),
+              photo.getDescription().getPlainText(),
+              mediaContent.getMimeType().getMediaType(),
+              albumId));
     }
 
     return new PhotosModelWrapper(null, photos, new ContinuationInformation(null, null));
@@ -149,8 +151,7 @@ public class GooglePhotosService
       myAlbum.setTitle(new PlainTextConstruct("copy of " + album.getName()));
       myAlbum.setDescription(new PlainTextConstruct(album.getDescription()));
 
-      URL albumUrl = new URL(
-          "https://picasaweb.google.com/data/feed/api/user/default");
+      URL albumUrl = new URL("https://picasaweb.google.com/data/feed/api/user/default");
       AlbumEntry insertedEntry;
 
       try {
@@ -158,16 +159,15 @@ public class GooglePhotosService
         insertedEntry = service.insert(albumUrl, myAlbum);
         jobDataCache.store(album.getId(), insertedEntry.getGphotoId());
       } catch (ServiceException e) {
-        throw new IOException(
-            "Problem copying" + album.getName() + " request to: " + albumUrl, e);
+        throw new IOException("Problem copying" + album.getName() + " request to: " + albumUrl, e);
       }
     }
 
     for (PhotoModel photo : wrapper.getPhotos()) {
-      //String newAlbumId = jobDataCache.getData(photo.getAlbumId(), String.class);
+      // String newAlbumId = jobDataCache.getData(photo.getAlbumId(), String.class);
       String newAlbumId = "default";
-      URL photoPostUrl = new URL("https://picasaweb.google.com/data/feed/api/user/default/albumid/"
-          + newAlbumId);
+      URL photoPostUrl =
+          new URL("https://picasaweb.google.com/data/feed/api/user/default/albumid/" + newAlbumId);
 
       PhotoEntry myPhoto = new PhotoEntry();
       myPhoto.setTitle(new PlainTextConstruct("copy of " + photo.getTitle()));
@@ -180,16 +180,14 @@ public class GooglePhotosService
         mediaType = "image/jpeg";
       }
 
-      MediaStreamSource streamSource = new MediaStreamSource(
-          getImageAsStream(photo.getFetchableUrl()),
-          mediaType);
+      MediaStreamSource streamSource =
+          new MediaStreamSource(getImageAsStream(photo.getFetchableUrl()), mediaType);
       myPhoto.setMediaSource(streamSource);
 
       try {
         service.insert(photoPostUrl, myPhoto);
       } catch (ServiceException e) {
-        throw new IOException("Problem adding " + photo.getTitle() + " to "
-            + newAlbumId, e);
+        throw new IOException("Problem adding " + photo.getTitle() + " to " + newAlbumId, e);
       }
     }
   }

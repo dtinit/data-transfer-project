@@ -29,10 +29,10 @@ import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.apache.http.HttpHeaders;
 import org.dataportabilityproject.gateway.ApiSettings;
-import org.dataportabilityproject.security.EncrypterFactory;
-import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.FrontendConstantUrls;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
+import org.dataportabilityproject.security.EncrypterFactory;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.TypeManager;
@@ -47,9 +47,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to:
- *   - the next authorization (if this is after the source service auth) or
- *   - the copy page (if this is after the destination service auth)
+ * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to: - the next
+ * authorization (if this is after the source service auth) or - the copy page (if this is after the
+ * destination service auth)
  */
 final class SimpleLoginSubmitHandler implements HttpHandler {
 
@@ -85,8 +85,10 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     logger.debug("simpleLoginSubmit, redirecting to: {}", response.getNextUrl());
     // Mark the response as type Json and send
-    exchange.getResponseHeaders()
-        .set(HttpHeaders.CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
+    exchange
+        .getResponseHeaders()
+        .set(
+            HttpHeaders.CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
 
     objectMapper.writeValue(exchange.getResponseBody(), response);
@@ -97,16 +99,15 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     Headers requestHeaders = exchange.getRequestHeaders();
     try {
-      SimpleLoginRequest request = objectMapper
-          .readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
+      SimpleLoginRequest request =
+          objectMapper.readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
 
-      String encodedIdCookie = ReferenceApiUtils
-          .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
+      String encodedIdCookie = ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
       // Valid job must be present
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
       UUID jobId = ReferenceApiUtils.decodeId(encodedIdCookie);
 
       PortabilityJob job = store.findJob(jobId);
@@ -116,44 +117,59 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       AuthMode authMode = ReferenceApiUtils.getAuthMode(exchange.getRequestHeaders());
 
       // TODO: Determine service from job or from authUrl path?
-      String service =
-          (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
-      Preconditions.checkState(!Strings.isNullOrEmpty(service),
-          "service not found, service: %s authMode: %s, jobId: %s", service, authMode,
+      String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
+      Preconditions.checkState(
+          !Strings.isNullOrEmpty(service),
+          "service not found, service: %s authMode: %s, jobId: %s",
+          service,
+          authMode,
           jobId);
 
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(request.getUsername()), "Missing valid username");
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(request.getPassword()), "Missing password");
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(request.getUsername()), "Missing valid username");
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(request.getPassword()), "Missing password");
 
-      AuthDataGenerator generator = registry.getAuthDataGenerator(service, job.transferDataType(),
-          AuthMode.EXPORT);
-      Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
-          job.transferDataType(), service);
+      AuthDataGenerator generator =
+          registry.getAuthDataGenerator(service, job.transferDataType(), AuthMode.EXPORT);
+      Preconditions.checkNotNull(
+          generator,
+          "Generator not found for type: %s, service: %s",
+          job.transferDataType(),
+          service);
 
       // TODO: change signature to pass UUID
 
       // Generate and store auth data
-      AuthData authData = generator
-          .generateAuthData(apiSettings.getBaseApiUrl(), request.getUsername(), jobId.toString(), null,
+      AuthData authData =
+          generator.generateAuthData(
+              apiSettings.getBaseApiUrl(),
+              request.getUsername(),
+              jobId.toString(),
+              null,
               request.getPassword());
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Obtain the session key for this job
       String encodedSessionKey = job.jobAuthorization().encryptedSessionKey();
-      SecretKey key = symmetricKeyGenerator
-          .parse(BaseEncoding.base64Url().decode(encodedSessionKey));
+      SecretKey key =
+          symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(encodedSessionKey));
       // Serialize and encrypt the auth data
       String serialized = objectMapper.writeValueAsString(authData);
       String encryptedAuthData = EncrypterFactory.create(key).encrypt(serialized);
       // Set new cookie
       ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
-      response = new DataTransferResponse(job.exportService(),
-          job.importService(), job.transferDataType(), Status.INPROCESS,
-          apiSettings.getBaseUrl() + (authMode == AuthMode.EXPORT
-              ? FrontendConstantUrls.URL_NEXT_PAGE : FrontendConstantUrls.URL_COPY_PAGE));
+      response =
+          new DataTransferResponse(
+              job.exportService(),
+              job.importService(),
+              job.transferDataType(),
+              Status.INPROCESS,
+              apiSettings.getBaseUrl()
+                  + (authMode == AuthMode.EXPORT
+                      ? FrontendConstantUrls.URL_NEXT_PAGE
+                      : FrontendConstantUrls.URL_COPY_PAGE));
 
     } catch (Exception e) {
       logger.debug("Exception occurred while trying to handle request: {}", e);

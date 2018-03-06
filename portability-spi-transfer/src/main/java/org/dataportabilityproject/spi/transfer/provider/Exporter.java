@@ -19,21 +19,22 @@ import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
-/**
- * Exports data from a source service.
- */
+/** Exports data from a source service. */
 public interface Exporter<A extends AuthData, T extends DataModel> {
 
-    /**
-     * Performs an export operation.
-     */
-    ExportResult<T> export(A authData);
+  /** Performs an export operation. */
+  ExportResult<T> export(A authData);
 
-    /**
-     * Performs an export operation, starting from the data specified by the continuation.
-     *
-     * @param authData authentication data for the operation
-     * @param exportInformation info about what data to export see {@link ExportInformation} for more info
-     */
-    ExportResult<T> export(A authData, ExportInformation exportInformation); // REVIEW: The original throws IOException. Continue to use checked exceptions or use unchecked?
+  /**
+   * Performs an export operation, starting from the data specified by the continuation.
+   *
+   * @param authData authentication data for the operation
+   * @param exportInformation info about what data to export see {@link ExportInformation} for more
+   *     info
+   */
+  ExportResult<T> export(
+      A authData,
+      ExportInformation
+          exportInformation); // REVIEW: The original throws IOException. Continue to use checked
+                              // exceptions or use unchecked?
 }

@@ -39,7 +39,7 @@ import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;
 
-//TODO(repeated events are ignored)
+// TODO(repeated events are ignored)
 public class GoogleCalendarService
     implements Exporter<CalendarModelWrapper>, Importer<CalendarModelWrapper> {
 
@@ -47,10 +47,14 @@ public class GoogleCalendarService
   private final JobDataCache jobDataCache;
 
   public GoogleCalendarService(Credential credential, JobDataCache jobDataCache) {
-    this(new Calendar.Builder(
-        GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build(), jobDataCache);
+    this(
+        new Calendar.Builder(
+                GoogleStaticObjects.getHttpTransport(),
+                GoogleStaticObjects.JSON_FACTORY,
+                credential)
+            .setApplicationName(GoogleStaticObjects.APP_NAME)
+            .build(),
+        jobDataCache);
   }
 
   GoogleCalendarService(Calendar calendarClient, JobDataCache jobDataCache) {
@@ -91,9 +95,7 @@ public class GoogleCalendarService
     }
 
     return new CalendarModelWrapper(
-        calendarModels,
-        null,
-        new ContinuationInformation(resources, newPageInfo));
+        calendarModels, null, new ContinuationInformation(resources, newPageInfo));
   }
 
   private CalendarModelWrapper getCalendarEvents(
@@ -106,8 +108,8 @@ public class GoogleCalendarService
     Events listResult = listRequest.execute();
     List<CalendarEventModel> results = new ArrayList<>(listResult.getItems().size());
     for (Event eventData : listResult.getItems()) {
-      CalendarEventModel model = GoogleCalendarToModelConverter
-          .convertToCalendarEventModel(id, eventData);
+      CalendarEventModel model =
+          GoogleCalendarToModelConverter.convertToCalendarEventModel(id, eventData);
       results.add(model);
     }
 
@@ -116,10 +118,7 @@ public class GoogleCalendarService
       newPageInfo = new StringPaginationToken(listResult.getNextPageToken());
     }
 
-    return new CalendarModelWrapper(
-        null,
-        results,
-        new ContinuationInformation(null, newPageInfo));
+    return new CalendarModelWrapper(null, results, new ContinuationInformation(null, newPageInfo));
   }
 
   @Override

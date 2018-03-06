@@ -18,9 +18,7 @@ package org.dataportabilityproject.gateway.action.listdatatypes;
 import com.google.inject.AbstractModule;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
-/**
- * Dependencies for the {@link ListDataTypesAction} and related classes.
- */
+/** Dependencies for the {@link ListDataTypesAction} and related classes. */
 public final class ListDataTypesActionModule extends AbstractModule {
 
   @Override

@@ -28,8 +28,8 @@ import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.serviceProviders.common.mail.ImapMailHelper;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
-public class MicrosoftMailService implements Exporter<MailModelWrapper>,
-    Importer<MailModelWrapper> {
+public class MicrosoftMailService
+    implements Exporter<MailModelWrapper>, Importer<MailModelWrapper> {
 
   public static final String HOST = "outlook.office365.com";
   public static final String PROTOCOL = "imap";
@@ -53,19 +53,18 @@ public class MicrosoftMailService implements Exporter<MailModelWrapper>,
   }
 
   @Override
-  public MailModelWrapper export(ExportInformation exportInformation)
-      throws IOException {
+  public MailModelWrapper export(ExportInformation exportInformation) throws IOException {
     ImapMailHelper helper = new ImapMailHelper();
     Optional<Resource> resource = exportInformation.getResource();
     try {
       if (resource.isPresent()) {
         IdOnlyResource folder = (IdOnlyResource) resource.get();
 
-        return helper.getFolderContents(HOST, account, password, folder.getId(),
-            getPaginationInformation(exportInformation));
+        return helper.getFolderContents(
+            HOST, account, password, folder.getId(), getPaginationInformation(exportInformation));
       } else {
-        return helper.getFolderContents(HOST, account, password, null,
-            getPaginationInformation(exportInformation));
+        return helper.getFolderContents(
+            HOST, account, password, null, getPaginationInformation(exportInformation));
       }
     } catch (MessagingException e) {
       throw new IOException(e);

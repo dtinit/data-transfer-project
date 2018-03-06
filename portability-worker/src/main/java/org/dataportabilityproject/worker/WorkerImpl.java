@@ -18,6 +18,8 @@ package org.dataportabilityproject.worker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
 import org.dataportabilityproject.security.Decrypter;
 import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -29,82 +31,84 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.UUID;
-
 final class WorkerImpl {
-    private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
 
-    private final JobPollingService jobPollingService;
-    private final JobStore store;
-    private final TransferServiceProviderRegistry registry;
-    private final ObjectMapper objectMapper;
-    private final WorkerJobMetadata workerJobMetadata;
+  private final JobPollingService jobPollingService;
+  private final JobStore store;
+  private final TransferServiceProviderRegistry registry;
+  private final ObjectMapper objectMapper;
+  private final WorkerJobMetadata workerJobMetadata;
 
-    @Inject
-    WorkerImpl(
-            JobStore store,
-            JobPollingService jobPollingService,
-            TransferServiceProviderRegistry registry,
-            ObjectMapper objectMapper,
-            WorkerJobMetadata workerJobMetadata) {
-        this.store = store;
-        this.jobPollingService = jobPollingService;
-        this.registry = registry;
-        this.objectMapper = objectMapper;
-        this.workerJobMetadata = workerJobMetadata;
+  @Inject
+  WorkerImpl(
+      JobStore store,
+      JobPollingService jobPollingService,
+      TransferServiceProviderRegistry registry,
+      ObjectMapper objectMapper,
+      WorkerJobMetadata workerJobMetadata) {
+    this.store = store;
+    this.jobPollingService = jobPollingService;
+    this.registry = registry;
+    this.objectMapper = objectMapper;
+    this.workerJobMetadata = workerJobMetadata;
+  }
+
+  void processJob() {
+    // Start the polling service to poll for an unassigned job and when it's ready.
+    pollForJob();
+
+    // Start the processing
+    UUID jobId = workerJobMetadata.getJobId();
+    logger.debug("Begin processing jobId: {}", jobId);
+    PortabilityJob job = store.findJob(jobId);
+    Preconditions.checkState(
+        job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
+
+    // Only load the two providers that are doing actually work.
+    // TODO(willard): Only load two needed services here, after converting service name to class
+    // name in storage.
+
+    processJob(jobId, job);
+    logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
+  }
+
+  private void pollForJob() {
+    jobPollingService.startAsync();
+    jobPollingService.awaitTerminated();
+  }
+
+  private void processJob(UUID jobId, PortabilityJob job) {
+    try {
+      Decrypter decrypter = DecrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
+      JobAuthorization jobAuthorization = job.jobAuthorization();
+      String serializedExportAuthData =
+          decrypter.decrypt(jobAuthorization.encryptedExportAuthData());
+      AuthData exportAuthData = deSerialize(serializedExportAuthData);
+      String serializedImportAuthData =
+          decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
+      AuthData importAuthData = deSerialize(serializedImportAuthData);
+      // TODO: Refactor copy logic, inject the appropriate copier type
+      InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier(registry);
+      copier.copyDataType(
+          job.transferDataType(),
+          job.exportService(),
+          exportAuthData,
+          job.importService(),
+          importAuthData,
+          jobId);
+    } catch (IOException e) {
+      logger.error("Error processing jobId: {}" + jobId, e);
+    } finally {
+      store.removeData(jobId);
     }
+  }
 
-    void processJob() {
-        // Start the polling service to poll for an unassigned job and when it's ready.
-        pollForJob();
-
-        // Start the processing
-        UUID jobId = workerJobMetadata.getJobId();
-        logger.debug("Begin processing jobId: {}", jobId);
-        PortabilityJob job = store.findJob(jobId);
-        Preconditions.checkState(
-                job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
-
-        // Only load the two providers that are doing actually work.
-        // TODO(willard): Only load two needed services here, after converting service name to class
-        // name in storage.
-
-        processJob(jobId, job);
-        logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
+  private AuthData deSerialize(String serialized) throws IOException {
+    try {
+      return objectMapper.readValue(serialized, AuthData.class);
+    } catch (IOException e) {
+      throw new IOException("Unable to deserialize AuthData", e);
     }
-
-    private void pollForJob() {
-        jobPollingService.startAsync();
-        jobPollingService.awaitTerminated();
-    }
-
-    private void processJob(UUID jobId, PortabilityJob job) {
-        try {
-            Decrypter decrypter = DecrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
-            JobAuthorization jobAuthorization = job.jobAuthorization();
-            String serializedExportAuthData =
-                    decrypter.decrypt(jobAuthorization.encryptedExportAuthData());
-            AuthData exportAuthData = deSerialize(serializedExportAuthData);
-            String serializedImportAuthData =
-                    decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
-            AuthData importAuthData = deSerialize(serializedImportAuthData);
-            // TODO: Refactor copy logic, inject the appropriate copier type
-            InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier(registry);
-            copier.copyDataType(job.transferDataType(), job.exportService(), exportAuthData,
-                    job.importService(), importAuthData, jobId);
-        } catch (IOException e) {
-            logger.error("Error processing jobId: {}" + jobId, e);
-        } finally {
-            store.removeData(jobId);
-        }
-    }
-
-    private AuthData deSerialize(String serialized) throws IOException {
-        try {
-            return objectMapper.readValue(serialized, AuthData.class);
-        } catch (IOException e) {
-            throw new IOException("Unable to deserialize AuthData", e);
-        }
-    }
+  }
 }

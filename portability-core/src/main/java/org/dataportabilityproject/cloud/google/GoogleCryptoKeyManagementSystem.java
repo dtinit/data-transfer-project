@@ -31,8 +31,9 @@ import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;
 
 final class GoogleCryptoKeyManagementSystem implements CryptoKeyManagementSystem {
   // Key for encrypting app secrets.
-  private static final String SECRETS_CRYPTO_KEY_FMT_STRING = "projects/%s/locations/global/"
-      + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
+  private static final String SECRETS_CRYPTO_KEY_FMT_STRING =
+      "projects/%s/locations/global/"
+          + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
 
   private CloudKMS cloudKMS;
   private String secretsCryptoKey;
@@ -51,17 +52,23 @@ final class GoogleCryptoKeyManagementSystem implements CryptoKeyManagementSystem
     if (credential.createScopedRequired()) {
       credential = credential.createScoped(CloudKMSScopes.all());
     }
-    this.cloudKMS = new CloudKMS.Builder(transport, jsonFactory, credential)
-        .setApplicationName("GoogleCryptoKeyManagementSystem")
-        .build();
+    this.cloudKMS =
+        new CloudKMS.Builder(transport, jsonFactory, credential)
+            .setApplicationName("GoogleCryptoKeyManagementSystem")
+            .build();
     this.secretsCryptoKey = String.format(SECRETS_CRYPTO_KEY_FMT_STRING, projectId);
   }
 
   public byte[] decryptAppSecret(byte[] ciphertext) throws IOException {
     DecryptRequest request = new DecryptRequest().encodeCiphertext(ciphertext);
-    DecryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
-        .decrypt(secretsCryptoKey, request)
-        .execute();
+    DecryptResponse response =
+        cloudKMS
+            .projects()
+            .locations()
+            .keyRings()
+            .cryptoKeys()
+            .decrypt(secretsCryptoKey, request)
+            .execute();
 
     return response.decodePlaintext();
   }

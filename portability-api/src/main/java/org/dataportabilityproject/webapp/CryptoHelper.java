@@ -37,9 +37,7 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Helper methods utilized for encrypting and decrypting data for the client.
- */
+/** Helper methods utilized for encrypting and decrypting data for the client. */
 class CryptoHelper {
   private static final Logger logger = LoggerFactory.getLogger(CryptoHelper.class);
   private static final Gson GSON = new Gson();
@@ -51,9 +49,7 @@ class CryptoHelper {
     this.store = cloudFactory.getJobStore();
   }
 
-   /**
-   * Serialize and encrypt the given {@code authData} with the given {@link SecretKey}.
-   */
+  /** Serialize and encrypt the given {@code authData} with the given {@link SecretKey}. */
   private static String encrypt(SecretKey key, AuthData authData) {
     Crypter crypter = CrypterFactory.create(key);
     String serialized = serialize(authData);
@@ -68,16 +64,20 @@ class CryptoHelper {
    * Encrypts the given {@code authData} with the session-based {@link SecretKey} and stores it as a
    * cookie in the provided headers.
    */
-  void encryptAndSetCookie(Headers headers, UUID jobId, ServiceMode serviceMode,
-      AuthData authData) {
+  void encryptAndSetCookie(
+      Headers headers, UUID jobId, ServiceMode serviceMode, AuthData authData) {
     SecretKey sessionKey = getSessionKey(jobId);
     String encrypted = encrypt(sessionKey, authData);
-    String cookieKey = (serviceMode == ServiceMode.EXPORT)
-        ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
-        : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
+    String cookieKey =
+        (serviceMode == ServiceMode.EXPORT)
+            ? JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY
+            : JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY;
     HttpCookie cookie = new HttpCookie(cookieKey, encrypted);
-    logger.debug("Set new cookie with key: {}, length: {} for job: {}",
-        cookieKey, encrypted.length(), jobId);
+    logger.debug(
+        "Set new cookie with key: {}, length: {} for job: {}",
+        cookieKey,
+        encrypted.length(),
+        jobId);
     headers.add(HEADER_SET_COOKIE, cookie.toString() + PortabilityApiUtils.COOKIE_ATTRIBUTES);
   }
 
@@ -85,8 +85,8 @@ class CryptoHelper {
     LegacyPortabilityJob job = store.find(jobId);
     Preconditions.checkState(job != null && job.jobState() == JobAuthorization.State.INITIAL);
     String encodedSessionKey = job.sessionKey();
-    Preconditions.checkState(!Strings.isNullOrEmpty(encodedSessionKey),
-        "Session key should not be null");
+    Preconditions.checkState(
+        !Strings.isNullOrEmpty(encodedSessionKey), "Session key should not be null");
     return SecretKeyGenerator.parse(encodedSessionKey);
   }
 }

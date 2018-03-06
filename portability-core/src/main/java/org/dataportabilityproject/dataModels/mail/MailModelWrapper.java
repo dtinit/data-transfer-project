@@ -16,15 +16,12 @@
 package org.dataportabilityproject.dataModels.mail;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.DataModel;
 
-/**
- * A Wrapper for all the possible objects that can be returned by a mail exporter.
- */
+/** A Wrapper for all the possible objects that can be returned by a mail exporter. */
 public class MailModelWrapper implements DataModel {
   private final Collection<MailContainerModel> folders;
   private final Collection<MailMessageModel> messages;

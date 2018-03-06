@@ -18,12 +18,11 @@ package org.dataportabilityproject.gateway.reference;
 /** Keys for returned Json data. */
 public class JsonKeys {
 
-  private JsonKeys(){} /** no instantiation */
+  /** no instantiation */
 
   public static final String ID_COOKIE_KEY = "e_id";
   public static final String EXPORT_AUTH_DATA_COOKIE_KEY = "ead_id";
   public static final String IMPORT_AUTH_DATA_COOKIE_KEY = "iad_id";
-
   public static final String DATA_TYPE = "dataType";
   public static final String EXPORT = "export";
   public static final String EXPORT_SERVICE = "exportService";
@@ -34,9 +33,9 @@ public class JsonKeys {
   public static final String IMPORT_SERVICE_AUTH_EXISTS = "importServiceAuthExists";
   public static final String IMPORT_AUTH_URL = "importAuthUrl";
   public static final String TOKEN = "token";
-
   // These tokens should match the token and header defined in the app.module.ts angular client.
   // see angular docs for more details: https://angular.io/guide/http#security-xsrf-protection
   public static final String XSRF_TOKEN = "XSRF-TOKEN";
   public static final String XSRF_HEADER = "X-XSRF-TOKEN";
+  private JsonKeys() {}
 }

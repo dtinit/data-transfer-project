@@ -22,9 +22,8 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 @AutoValue
 abstract class InstagramOauthData extends AuthData {
 
-  static InstagramOauthData create(String accessToken,
-      String refreshToken,
-      String tokenServerEncodedUrl) {
+  static InstagramOauthData create(
+      String accessToken, String refreshToken, String tokenServerEncodedUrl) {
     return new AutoValue_InstagramOauthData(accessToken, refreshToken, tokenServerEncodedUrl);
   }
 

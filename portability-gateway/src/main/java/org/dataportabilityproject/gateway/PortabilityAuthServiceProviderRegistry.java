@@ -26,7 +26,6 @@ import java.util.Set;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
-import org.dataportabilityproject.types.transfer.PortableType;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
 
@@ -35,24 +34,27 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   private final ImmutableSet<String> supportedExportTypes;
 
   // The parameters to the constructor are provided via dependency injection
-  public PortabilityAuthServiceProviderRegistry(List<String> enabledServices,
-      Map<String, AuthServiceProvider> serviceProviderMap){
-    ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder = ImmutableMap
-        .builder();
+  public PortabilityAuthServiceProviderRegistry(
+      List<String> enabledServices, Map<String, AuthServiceProvider> serviceProviderMap) {
+    ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder =
+        ImmutableMap.builder();
     ImmutableSet.Builder<String> supportedImportTypesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<String> supportedExportTypesBuilder = ImmutableSet.builder();
 
-    for(String service : enabledServices){
+    for (String service : enabledServices) {
       AuthServiceProvider authServiceProvider = serviceProviderMap.get(service);
-      Preconditions.checkArgument(authServiceProvider != null, "AuthServiceProvider not found for [%s]", service);
+      Preconditions.checkArgument(
+          authServiceProvider != null, "AuthServiceProvider not found for [%s]", service);
 
       List<String> importTypes = authServiceProvider.getImportTypes();
       List<String> exportTypes = authServiceProvider.getExportTypes();
 
       for (String type : importTypes) {
-        Preconditions.checkArgument(exportTypes.contains(type),
+        Preconditions.checkArgument(
+            exportTypes.contains(type),
             "TransferDataType [%s] is available for import but not export in [%s] AuthServiceProvider",
-            type, service);
+            type,
+            service);
         supportedImportTypesBuilder.add(type);
       }
 
@@ -66,15 +68,25 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   }
 
   @Override
-  public AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType, AuthMode mode) {
+  public AuthDataGenerator getAuthDataGenerator(
+      String serviceId, String transferDataType, AuthMode mode) {
     AuthServiceProvider provider = authServiceProviderMap.get(serviceId);
-    Preconditions.checkArgument(provider!=null, "AuthServiceProvider not found for serviceId [%s]", serviceId);
-    switch(mode) {
+    Preconditions.checkArgument(
+        provider != null, "AuthServiceProvider not found for serviceId [%s]", serviceId);
+    switch (mode) {
       case EXPORT:
-        Preconditions.checkArgument(supportedExportTypes.contains(transferDataType), "AuthMode [%s] not valid for TransferDataType [%s]", mode, transferDataType);
+        Preconditions.checkArgument(
+            supportedExportTypes.contains(transferDataType),
+            "AuthMode [%s] not valid for TransferDataType [%s]",
+            mode,
+            transferDataType);
         break;
       case IMPORT:
-        Preconditions.checkArgument(supportedImportTypes.contains(transferDataType), "AuthMode [%s] not valid for TransferDataType [%s]", mode, transferDataType);
+        Preconditions.checkArgument(
+            supportedImportTypes.contains(transferDataType),
+            "AuthMode [%s] not valid for TransferDataType [%s]",
+            mode,
+            transferDataType);
         break;
       default:
         throw new IllegalArgumentException("AuthMode [" + mode + "] not supported");
@@ -90,16 +102,18 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
    */
   @Override
   public Set<String> getServices(String transferDataType) {
-    Preconditions.checkArgument(supportedExportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for export", transferDataType);
-    Preconditions.checkArgument(supportedImportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for import", transferDataType);
+    Preconditions.checkArgument(
+        supportedExportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for export",
+        transferDataType);
+    Preconditions.checkArgument(
+        supportedImportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for import",
+        transferDataType);
     return authServiceProviderMap.keySet();
   }
 
-  /**
-   * Returns the set of data types that support both import and export.
-   */
+  /** Returns the set of data types that support both import and export. */
   @Override
   public Set<String> getTransferDataTypes() {
     return Sets.intersection(supportedExportTypes, supportedImportTypes);

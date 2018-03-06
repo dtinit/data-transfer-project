@@ -36,10 +36,12 @@ public class PortabilityApiUtilsTest {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies
-    String encodedJobId = JobUtils.encodeJobId(JOB_ID);;
+    String encodedJobId = JobUtils.encodeJobId(JOB_ID);
+    ;
     String token = tokenManager.createNewToken(JOB_ID);
-    String cookieStr = String
-        .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
+    String cookieStr =
+        String.format(
+            "%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
 
     // hook up cookies and token header
     Headers httpHeaders = new Headers();
@@ -51,7 +53,7 @@ public class PortabilityApiUtilsTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void validateJobIdMismatchTest(){
+  public void validateJobIdMismatchTest() {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies - purposefully create a token thats not for the correct job ID.
@@ -62,8 +64,9 @@ public class PortabilityApiUtilsTest {
     }
     String token = tokenManager.createNewToken(anotherId);
 
-    String cookieStr = String
-        .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
+    String cookieStr =
+        String.format(
+            "%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
 
     // hook up cookies and token header
     Headers httpHeaders = new Headers();
@@ -75,11 +78,12 @@ public class PortabilityApiUtilsTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void validateJobIdMissingCookieTest(){
+  public void validateJobIdMissingCookieTest() {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies
-    String encodedJobId = JobUtils.encodeJobId(JOB_ID);;
+    String encodedJobId = JobUtils.encodeJobId(JOB_ID);
+    ;
     String token = tokenManager.createNewToken(JOB_ID);
     String cookieStr = String.format("%s=%s;", JsonKeys.ID_COOKIE_KEY, encodedJobId);
 
@@ -93,14 +97,15 @@ public class PortabilityApiUtilsTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void validateJobIdMissingHeaderTest(){
+  public void validateJobIdMissingHeaderTest() {
     TokenManager tokenManager = new JWTTokenManager("TestSecret");
 
     // create cookies
     String encodedJobId = JobUtils.encodeJobId(JOB_ID);
     String token = tokenManager.createNewToken(JOB_ID);
-    String cookieStr = String
-        .format("%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
+    String cookieStr =
+        String.format(
+            "%s=%s;%s=%s", JsonKeys.ID_COOKIE_KEY, encodedJobId, JsonKeys.XSRF_TOKEN, token);
 
     // hook up cookies and token header
     Headers httpHeaders = new Headers();

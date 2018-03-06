@@ -39,19 +39,13 @@ import org.dataportabilityproject.shared.auth.OfflineAuthDataGenerator;
 import org.dataportabilityproject.shared.auth.OnlineAuthDataGenerator;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
-/**
- * Implements authorization flow for Microsoft
- */
+/** Implements authorization flow for Microsoft */
 final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGenerator {
 
-  /**
-   * Port in the "Callback URL".
-   */
+  /** Port in the "Callback URL". */
   private static final int PORT = 12345;
 
-  /**
-   * Domain name in the "Callback URL".
-   */
+  /** Domain name in the "Callback URL". */
   private static final String CALLBACK_PATH = "/callback/microsoft";
   // Edit /etc/hosts to map this to localhost
   private static final String DOMAIN = "localwebapp.com";
@@ -79,27 +73,28 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
   @Override
   public AuthFlowInitiator generateAuthUrl(String callbackBaseUrl, UUID jobId) throws IOException {
     String encodedJobId = JobUtils.encodeJobId(jobId);
-    String url = createFlow()
-        .newAuthorizationUrl()
-        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
-        .setState(encodedJobId) // TODO: Encrypt
-        .build();
+    String url =
+        createFlow()
+            .newAuthorizationUrl()
+            .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
+            .setState(encodedJobId) // TODO: Encrypt
+            .build();
     return AuthFlowInitiator.create(url);
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, UUID jobId,
-      AuthData initialAuthData, String extra)
+  public AuthData generateAuthData(
+      String callbackBaseUrl, String authCode, UUID jobId, AuthData initialAuthData, String extra)
       throws IOException {
-    Preconditions
-        .checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for MS oauth flow");
-    Preconditions
-        .checkArgument(initialAuthData == null, "Earlier auth data not expected for MS oauth flow");
+    Preconditions.checkArgument(
+        Strings.isNullOrEmpty(extra), "Extra data not expected for MS oauth flow");
+    Preconditions.checkArgument(
+        initialAuthData == null, "Earlier auth data not expected for MS oauth flow");
     AuthorizationCodeFlow flow = createFlow();
-    TokenResponse response = flow
-        .newTokenRequest(authCode)
-        .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) //TODO(chuy): Parameterize
-        .execute();
+    TokenResponse response =
+        flow.newTokenRequest(authCode)
+            .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) // TODO(chuy): Parameterize
+            .execute();
     // Figure out storage
     Credential credential = flow.createAndStoreCredential(response, jobId.toString());
     // Extract the Google User ID from the ID token in the auth response
@@ -113,53 +108,51 @@ final class MicrosoftAuth implements OfflineAuthDataGenerator, OnlineAuthDataGen
     return getAuthData(account);
   }
 
-  /**
-   * Initiates the auth flow and obtains the access token.
-   */
+  /** Initiates the auth flow and obtains the access token. */
   private MicrosoftOauthData getAuthData(String account) throws IOException {
     // set up authorization code flow
-    AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(
-        BearerToken.authorizationHeaderAccessMethod(), // Access Method
-        MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
-        JSON_FACTORY, // JsonFactory
-        new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
-        new ClientParametersAuthentication(appCredentials.key(), appCredentials.secret()),
-        // HttpExecuteInterceptor
-        appCredentials.key(), // clientId
-        AUTHORIZATION_SERVER_URL) // encoded authUrl
-        .setScopes(scopes) // scopes
-        .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
+    AuthorizationCodeFlow flow =
+        new AuthorizationCodeFlow.Builder(
+                BearerToken.authorizationHeaderAccessMethod(), // Access Method
+                MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
+                JSON_FACTORY, // JsonFactory
+                new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
+                new ClientParametersAuthentication(appCredentials.key(), appCredentials.secret()),
+                // HttpExecuteInterceptor
+                appCredentials.key(), // clientId
+                AUTHORIZATION_SERVER_URL) // encoded authUrl
+            .setScopes(scopes) // scopes
+            .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory())
+            .build();
 
     // authorize
     // NOTE: This requires an https endpoint wired to
     // forward requests to http://domain:port/Callback
-    VerificationCodeReceiver receiver = new LocalServerReceiver.Builder()
-        .setHost(DOMAIN).setPort(PORT).build();
+    VerificationCodeReceiver receiver =
+        new LocalServerReceiver.Builder().setHost(DOMAIN).setPort(PORT).build();
     try {
-      Credential credential = new AuthorizationCodeInstalledAppSecureOverride(flow, receiver)
-          .authorize(account);
+      Credential credential =
+          new AuthorizationCodeInstalledAppSecureOverride(flow, receiver).authorize(account);
       return toAuthData(credential);
     } catch (Exception e) {
       throw new IOException("Couldn't authorize", e);
     }
   }
 
-  /**
-   * Creates an AuthorizationCodeFlow for use in online and offline mode.
-   */
-  private AuthorizationCodeFlow createFlow()
-      throws IOException {
+  /** Creates an AuthorizationCodeFlow for use in online and offline mode. */
+  private AuthorizationCodeFlow createFlow() throws IOException {
     // set up authorization code flow
     return new AuthorizationCodeFlow.Builder(
-        BearerToken.authorizationHeaderAccessMethod(), // Access Method
-        MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
-        JSON_FACTORY, // JsonFactory
-        new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
-        new ClientParametersAuthentication(appCredentials.key(),
-            appCredentials.secret()), // HttpExecuteInterceptor
-        appCredentials.key(), // clientId
-        AUTHORIZATION_SERVER_URL) // encoded authUrl
+            BearerToken.authorizationHeaderAccessMethod(), // Access Method
+            MicrosoftStaticObjects.getHttpTransport(), // HttpTransport
+            JSON_FACTORY, // JsonFactory
+            new GenericUrl(TOKEN_SERVER_URL), // GenericUrl
+            new ClientParametersAuthentication(
+                appCredentials.key(), appCredentials.secret()), // HttpExecuteInterceptor
+            appCredentials.key(), // clientId
+            AUTHORIZATION_SERVER_URL) // encoded authUrl
         .setScopes(scopes) // scopes
-        .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory()).build();
+        .setDataStoreFactory(MicrosoftStaticObjects.getDataStoreFactory())
+        .build();
   }
 }

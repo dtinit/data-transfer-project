@@ -37,8 +37,8 @@ final class InstagramServiceProvider implements ServiceProvider {
   // Instagram only offers basic scope for reading user's profiles. There is no "write" scope.
   // See https://www.instagram.com/developer/authorization/
   private static final ImmutableList<String> SCOPES = ImmutableList.of("basic");
-  private static final ImmutableList<PortableDataType> EXPORT_TYPES = ImmutableList
-      .of(PortableDataType.PHOTOS);
+  private static final ImmutableList<PortableDataType> EXPORT_TYPES =
+      ImmutableList.of(PortableDataType.PHOTOS);
 
   private final InstagramAuth instagramAuth;
 
@@ -66,45 +66,40 @@ final class InstagramServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(PortableDataType dataType,
-      ServiceMode serviceMode) {
-    Preconditions
-        .checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
-    Preconditions
-        .checkArgument(EXPORT_TYPES.contains(dataType),
-            "Export of type [%s] is not supported by Instagram",
-            dataType);
+  public OfflineAuthDataGenerator getOfflineAuthDataGenerator(
+      PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(
+        serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+    Preconditions.checkArgument(
+        EXPORT_TYPES.contains(dataType),
+        "Export of type [%s] is not supported by Instagram",
+        dataType);
     return instagramAuth;
   }
 
   @Override
-  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(PortableDataType dataType,
-      ServiceMode serviceMode) {
-    Preconditions
-        .checkArgument(serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
-    Preconditions
-        .checkArgument(EXPORT_TYPES.contains(dataType),
-            "Export of type [%s] is not supported by Instagram",
-            dataType);
+  public OnlineAuthDataGenerator getOnlineAuthDataGenerator(
+      PortableDataType dataType, ServiceMode serviceMode) {
+    Preconditions.checkArgument(
+        serviceMode == ServiceMode.EXPORT, "IMPORT not supported by Instagram");
+    Preconditions.checkArgument(
+        EXPORT_TYPES.contains(dataType),
+        "Export of type [%s] is not supported by Instagram",
+        dataType);
     return instagramAuth;
   }
 
   @Override
   public Exporter<? extends DataModel> getExporter(
-      PortableDataType type,
-      AuthData authData,
-      JobDataCache jobDataCache) throws IOException {
-    Preconditions
-        .checkArgument(EXPORT_TYPES.contains(type),
-            "Export of type [%s] is not supported by Instagram", type);
+      PortableDataType type, AuthData authData, JobDataCache jobDataCache) throws IOException {
+    Preconditions.checkArgument(
+        EXPORT_TYPES.contains(type), "Export of type [%s] is not supported by Instagram", type);
     return new InstagramPhotoService(((InstagramOauthData) authData));
   }
 
   @Override
   public Importer<? extends DataModel> getImporter(
-      PortableDataType type,
-      AuthData authData,
-      JobDataCache jobDataCache) throws IOException {
+      PortableDataType type, AuthData authData, JobDataCache jobDataCache) throws IOException {
     throw new IllegalStateException("Instagram doesn't support importing anything");
   }
 }

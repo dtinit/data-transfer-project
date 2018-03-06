@@ -15,9 +15,18 @@
  */
 package org.dataportabilityproject.transfer.microsoft.contacts;
 
+import static java.util.stream.Collectors.toList;
+import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.batchRequest;
+import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -26,63 +35,64 @@ import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServ
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.stream.Collectors.toList;
-import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.batchRequest;
-import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
-
 /**
- * Performs a batch import of contacts using the Microsoft Graph API. For details see: https://developer.microsoft.com/en-us/graph/docs/concepts/json_batching.
+ * Performs a batch import of contacts using the Microsoft Graph API. For details see:
+ * https://developer.microsoft.com/en-us/graph/docs/concepts/json_batching.
  */
 public class MicrosoftContactsImporter implements Importer<TokenAuthData, ContactsModelWrapper> {
-    private static final String CONTACTS_URL = "me/contacts"; //must be relative for batch operations
+  private static final String CONTACTS_URL = "me/contacts"; // must be relative for batch operations
 
-    private final String baseUrl;
-    private final OkHttpClient client;
-    private final ObjectMapper objectMapper;
-    private final TransformerService transformerService;
+  private final String baseUrl;
+  private final OkHttpClient client;
+  private final ObjectMapper objectMapper;
+  private final TransformerService transformerService;
 
-    public MicrosoftContactsImporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
-        this.baseUrl = baseUrl;
-        this.client = client;
-        this.objectMapper = objectMapper;
-        this.transformerService = transformerService;
+  public MicrosoftContactsImporter(
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TransformerService transformerService) {
+    this.baseUrl = baseUrl;
+    this.client = client;
+    this.objectMapper = objectMapper;
+    this.transformerService = transformerService;
+  }
+
+  @Override
+  public ImportResult importItem(
+      String jobId, TokenAuthData authData, ContactsModelWrapper wrapper) {
+    JCardReader reader = new JCardReader(wrapper.getVCards());
+    try {
+      List<VCard> cards = reader.readAll();
+
+      List<String> problems = new ArrayList<>();
+
+      int[] id = new int[] {1};
+      List<Map<String, Object>> requests =
+          cards
+              .stream()
+              .map(
+                  card -> {
+                    TransformResult<LinkedHashMap> result =
+                        transformerService.transform(LinkedHashMap.class, card);
+                    problems.addAll(result.getProblems());
+                    LinkedHashMap contact = result.getTransformed();
+                    Map<String, Object> request = createRequest(id[0], CONTACTS_URL, contact);
+                    id[0]++;
+                    return request;
+                  })
+              .collect(toList());
+
+      if (!problems.isEmpty()) {
+        // TODO log problems
+      }
+
+      return batchRequest(authData, requests, baseUrl, client, objectMapper).getResult();
+    } catch (IOException e) {
+      // TODO log
+      e.printStackTrace();
+      return new ImportResult(
+          ImportResult.ResultType.ERROR, "Error deserializing contacts: " + e.getMessage());
     }
-
-    @Override
-    public ImportResult importItem(String jobId, TokenAuthData authData, ContactsModelWrapper wrapper) {
-        JCardReader reader = new JCardReader(wrapper.getVCards());
-        try {
-            List<VCard> cards = reader.readAll();
-
-            List<String> problems = new ArrayList<>();
-
-            int[] id = new int[]{1};
-            List<Map<String, Object>> requests = cards.stream().map(card -> {
-                TransformResult<LinkedHashMap> result = transformerService.transform(LinkedHashMap.class, card);
-                problems.addAll(result.getProblems());
-                LinkedHashMap contact = result.getTransformed();
-                Map<String, Object> request = createRequest(id[0], CONTACTS_URL, contact);
-                id[0]++;
-                return request;
-            }).collect(toList());
-
-            if (!problems.isEmpty()) {
-                // TODO log problems
-            }
-
-
-            return batchRequest(authData, requests, baseUrl, client, objectMapper).getResult();
-        } catch (IOException e) {
-            // TODO log
-            e.printStackTrace();
-            return new ImportResult(ImportResult.ResultType.ERROR, "Error deserializing contacts: " + e.getMessage());
-        }
-    }
-
+  }
 }

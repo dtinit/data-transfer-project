@@ -1,15 +1,22 @@
 {
   "bindings": [
     {
-      "members": ["serviceAccount:SERVICE_ACCOUNT"],
+      "members": [
+        "serviceAccount:SERVICE_ACCOUNT"
+      ],
       "role": "roles/editor"
-    }, {
-      "members": ["OWNERS"],
+    },
+    {
+      "members": [
+        "OWNERS"
+      ],
       "role": "roles/owner"
     },
     {
-      "members": ["serviceAccount:SERVICE_ACCOUNT"],
+      "members": [
+        "serviceAccount:SERVICE_ACCOUNT"
+      ],
       "role": "roles/cloudkms.cryptoKeyDecrypter"
-    },
+    }
   ]
 }

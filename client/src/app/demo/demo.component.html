@@ -1,4 +1,3 @@
-
 <div class="text-left portability-form">
   <form name="transferRequestForm" (ngSubmit)="onSubmit()">
     <div class="form-group">
@@ -11,9 +10,10 @@
                 (change)="onDataTypeChange()"
                 title="Select what type of data to transfer"
                 class="form-control">
-          <option value="" disabled="true" [selected]="!selectedDataType">[select data type]</option>
+          <option value="" disabled="true" [selected]="!selectedDataType">[select data type]
+          </option>
           <option *ngFor="let item of dataTypes.dataTypes" [ngValue]="item">
-              {{item}}
+            {{item}}
           </option>
         </select>
       </div>
@@ -29,9 +29,10 @@
                 (change)="onExportServiceChange()"
                 title="Select the service to transfer data from"
                 class="form-control">
-          <option value="" disabled="true" [selected]="!selectedExportService">[select company]</option>
+          <option value="" disabled="true" [selected]="!selectedExportService">[select company]
+          </option>
           <option *ngFor="let item of exportServices" [ngValue]="item">
-              {{item}}
+            {{item}}
           </option>
         </select>
       </div>
@@ -47,19 +48,20 @@
                 (change)="onImportServiceChange()"
                 title="Select the service to transfer data to"
                 class="form-control">
-          <option value="" disabled="true" [selected]="!selectedImportService">[select company]</option>
+          <option value="" disabled="true" [selected]="!selectedImportService">[select company]
+          </option>
           <option *ngFor="let item of importServices" [ngValue]="item">
-              {{item}}
+            {{item}}
           </option>
         </select>
       </div>
-  </div>
+    </div>
 
     <button type="submit"
             [disabled]="!enableNext"
             class="btn btn-primary"
             title="Clicking this will start the authorization flow">
-    Authorize
+      Authorize
     </button>
   </form>
 </div>
@@ -77,12 +79,24 @@
     <div class="row">
       <div class="col-md-12">
         <ul class="list-inline">
-          <li><div class="logo-google logo col" title="Google"></div></li>
-          <li><div class="logo-microsoft logo col" title="Microsoft Office"></div></li>
-          <li><div class="logo-instagram logo col" title="Instagram"></div></li>
-          <li><div class="logo-flickr logo col justify-content-center" title="Flickr"></div></li>
-          <li><div class="logo-smugmug logo col justify-content-center" title="Smugmug"></div></li>
-          <li><div class="logo-rtm logo col justify-content-center" title="Remember The Milk"></div></li>
+          <li>
+            <div class="logo-google logo col" title="Google"></div>
+          </li>
+          <li>
+            <div class="logo-microsoft logo col" title="Microsoft Office"></div>
+          </li>
+          <li>
+            <div class="logo-instagram logo col" title="Instagram"></div>
+          </li>
+          <li>
+            <div class="logo-flickr logo col justify-content-center" title="Flickr"></div>
+          </li>
+          <li>
+            <div class="logo-smugmug logo col justify-content-center" title="Smugmug"></div>
+          </li>
+          <li>
+            <div class="logo-rtm logo col justify-content-center" title="Remember The Milk"></div>
+          </li>
         </ul>
       </div>
     </div>

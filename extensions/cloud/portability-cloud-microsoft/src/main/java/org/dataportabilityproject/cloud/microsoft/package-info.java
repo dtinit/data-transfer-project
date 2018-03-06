@@ -13,7 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Extensions for running the system on Microsoft Azure.
- */
+/** Extensions for running the system on Microsoft Azure. */
 package org.dataportabilityproject.cloud.microsoft;

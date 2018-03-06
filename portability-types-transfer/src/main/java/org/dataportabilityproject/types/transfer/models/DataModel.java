@@ -17,8 +17,5 @@ package org.dataportabilityproject.types.transfer.models;
 
 import org.dataportabilityproject.types.transfer.EntityType;
 
-/**
- * The base data model type.
- */
-public abstract class DataModel extends EntityType {
-}
+/** The base data model type. */
+public abstract class DataModel extends EntityType {}

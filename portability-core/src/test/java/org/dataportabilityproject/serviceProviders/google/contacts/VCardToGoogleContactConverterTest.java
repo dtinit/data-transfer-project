@@ -17,12 +17,9 @@
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .CONTACT_SOURCE_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants
-    .VCARD_PRIMARY_PREF;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.VCARD_PRIMARY_PREF;
 
 import com.google.api.services.people.v1.model.Address;
 import com.google.api.services.people.v1.model.EmailAddress;
@@ -35,7 +32,6 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -46,6 +42,25 @@ import org.junit.Test;
 public class VCardToGoogleContactConverterTest {
 
   private VCard defaultVCard;
+
+  private static Pair<String, String> getGivenAndFamilyValues(Name name) {
+    return Pair.of(name.getGivenName(), name.getFamilyName());
+  }
+
+  private static StructuredName makeStructuredName(
+      String givenName, String familyName, @Nullable String sourceType) {
+    StructuredName structuredName = new StructuredName();
+    structuredName.setGiven(givenName);
+    structuredName.setFamily(familyName);
+    if (sourceType != null) {
+      structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, sourceType);
+    }
+    return structuredName;
+  }
+
+  private static <F, V> List<V> getValuesFromFields(List<F> fields, Function<F, V> function) {
+    return fields.stream().map(function).collect(Collectors.toList());
+  }
 
   @Before
   public void setup() {
@@ -59,8 +74,8 @@ public class VCardToGoogleContactConverterTest {
     String primaryGivenName = "Mark";
     String primaryFamilyName = "Twain";
     String primarySourceType = "CONTACT";
-    StructuredName primaryName = makeStructuredName(primaryGivenName, primaryFamilyName,
-        primarySourceType);
+    StructuredName primaryName =
+        makeStructuredName(primaryGivenName, primaryFamilyName, primarySourceType);
 
     String altGivenName = "Samuel";
     String altFamilyName = "Clemens";
@@ -79,21 +94,33 @@ public class VCardToGoogleContactConverterTest {
     assertThat(person.getNames().size()).isEqualTo(1);
 
     // Check primary names
-    List<Name> actualPrimaryNames = person.getNames().stream()
-        .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<Pair<String, String>> actualPrimaryNameValues = actualPrimaryNames.stream()
-        .map(VCardToGoogleContactConverterTest::getGivenAndFamilyValues)
-        .collect(Collectors.toList());
-    assertThat(actualPrimaryNameValues).containsExactly(
-        Pair.of(primaryGivenName, primaryFamilyName));
-    List<String> actualPrimaryNameSourceValues = actualPrimaryNames.stream()
-        .map(a -> a.getMetadata().getSource().getType())
-        .collect(Collectors.toList());
+    List<Name> actualPrimaryNames =
+        person
+            .getNames()
+            .stream()
+            .filter(a -> a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
+    List<Pair<String, String>> actualPrimaryNameValues =
+        actualPrimaryNames
+            .stream()
+            .map(VCardToGoogleContactConverterTest::getGivenAndFamilyValues)
+            .collect(Collectors.toList());
+    assertThat(actualPrimaryNameValues)
+        .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
+    List<String> actualPrimaryNameSourceValues =
+        actualPrimaryNames
+            .stream()
+            .map(a -> a.getMetadata().getSource().getType())
+            .collect(Collectors.toList());
     assertThat(actualPrimaryNameSourceValues).containsExactly(primarySourceType);
 
     // Check secondary names - there shouldn't be any
-    List<Name> actualSecondaryNames = person.getNames().stream()
-        .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
+    List<Name> actualSecondaryNames =
+        person
+            .getNames()
+            .stream()
+            .filter(a -> !a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
     assertThat(actualSecondaryNames).isEmpty();
   }
 
@@ -127,15 +154,23 @@ public class VCardToGoogleContactConverterTest {
     assertThat(person.getAddresses().size()).isEqualTo(2);
 
     // Check primary address
-    List<Address> actualPrimaryAddresses = person.getAddresses().stream()
-        .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualPrimaryAddressStreets
-        = getValuesFromFields(actualPrimaryAddresses, Address::getStreetAddress);
+    List<Address> actualPrimaryAddresses =
+        person
+            .getAddresses()
+            .stream()
+            .filter(a -> a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
+    List<String> actualPrimaryAddressStreets =
+        getValuesFromFields(actualPrimaryAddresses, Address::getStreetAddress);
     assertThat(actualPrimaryAddressStreets).containsExactly(primaryStreet);
 
     // Check secondary address
-    List<Address> actualSecondaryAddresses = person.getAddresses().stream()
-        .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
+    List<Address> actualSecondaryAddresses =
+        person
+            .getAddresses()
+            .stream()
+            .filter(a -> !a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
     List<String> actualSecondaryAddressStreets =
         getValuesFromFields(actualSecondaryAddresses, Address::getStreetAddress);
     assertThat(actualSecondaryAddressStreets).containsExactly(altStreet);
@@ -168,17 +203,25 @@ public class VCardToGoogleContactConverterTest {
     assertThat(person.getPhoneNumbers().size()).isEqualTo(3);
 
     // Check primary phone numbers
-    List<PhoneNumber> actualPrimaryNumbers = person.getPhoneNumbers().stream()
-        .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualPrimaryNumberStrings = getValuesFromFields(actualPrimaryNumbers,
-        PhoneNumber::getValue);
+    List<PhoneNumber> actualPrimaryNumbers =
+        person
+            .getPhoneNumbers()
+            .stream()
+            .filter(a -> a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
+    List<String> actualPrimaryNumberStrings =
+        getValuesFromFields(actualPrimaryNumbers, PhoneNumber::getValue);
     assertThat(actualPrimaryNumberStrings).containsExactly(primaryValue1, primaryValue2);
 
     // Check secondary phone numbers
-    List<PhoneNumber> actualSecondaryNumbers = person.getPhoneNumbers().stream()
-        .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualSecondaryNumberStrings = getValuesFromFields(actualSecondaryNumbers,
-        PhoneNumber::getValue);
+    List<PhoneNumber> actualSecondaryNumbers =
+        person
+            .getPhoneNumbers()
+            .stream()
+            .filter(a -> !a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
+    List<String> actualSecondaryNumberStrings =
+        getValuesFromFields(actualSecondaryNumbers, PhoneNumber::getValue);
     assertThat(actualSecondaryNumberStrings).containsExactly(secondaryValue);
   }
 
@@ -209,36 +252,25 @@ public class VCardToGoogleContactConverterTest {
     assertThat(person.getEmailAddresses().size()).isEqualTo(3);
 
     // Check primary email addresses
-    List<EmailAddress> actualPrimaryEmails = person.getEmailAddresses().stream()
-        .filter(a -> a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualPrimaryEmailsStrings = getValuesFromFields(actualPrimaryEmails,
-        EmailAddress::getValue);
+    List<EmailAddress> actualPrimaryEmails =
+        person
+            .getEmailAddresses()
+            .stream()
+            .filter(a -> a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
+    List<String> actualPrimaryEmailsStrings =
+        getValuesFromFields(actualPrimaryEmails, EmailAddress::getValue);
     assertThat(actualPrimaryEmailsStrings).containsExactly(primaryString);
 
     // Check secondary email addresses
-    List<EmailAddress> actualSecondaryEmails = person.getEmailAddresses().stream()
-        .filter(a -> !a.getMetadata().getPrimary()).collect(Collectors.toList());
-    List<String> actualSecondaryEmailsStrings = getValuesFromFields(actualSecondaryEmails,
-        EmailAddress::getValue);
+    List<EmailAddress> actualSecondaryEmails =
+        person
+            .getEmailAddresses()
+            .stream()
+            .filter(a -> !a.getMetadata().getPrimary())
+            .collect(Collectors.toList());
+    List<String> actualSecondaryEmailsStrings =
+        getValuesFromFields(actualSecondaryEmails, EmailAddress::getValue);
     assertThat(actualSecondaryEmailsStrings).containsExactly(secondaryString1, secondaryString2);
-  }
-
-  private static Pair<String, String> getGivenAndFamilyValues(Name name) {
-    return Pair.of(name.getGivenName(), name.getFamilyName());
-  }
-
-  private static StructuredName makeStructuredName(String givenName, String familyName,
-      @Nullable String sourceType) {
-    StructuredName structuredName = new StructuredName();
-    structuredName.setGiven(givenName);
-    structuredName.setFamily(familyName);
-    if (sourceType != null) {
-      structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, sourceType);
-    }
-    return structuredName;
-  }
-
-  private static <F, V> List<V> getValuesFromFields(List<F> fields, Function<F, V> function) {
-    return fields.stream().map(function).collect(Collectors.toList());
   }
 }

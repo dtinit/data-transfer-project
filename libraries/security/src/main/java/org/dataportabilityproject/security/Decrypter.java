@@ -15,13 +15,9 @@
  */
 package org.dataportabilityproject.security;
 
-/**
- * Provides functionality to decrypt encrypted data.
- */
+/** Provides functionality to decrypt encrypted data. */
 public interface Decrypter {
 
-  /**
-   * Decrypts the given {@code encryptedData}.
-   */
-  String decrypt(String encryptedData) ;
+  /** Decrypts the given {@code encryptedData}. */
+  String decrypt(String encryptedData);
 }

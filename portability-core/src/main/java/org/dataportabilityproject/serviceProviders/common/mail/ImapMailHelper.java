@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Properties;
 import javax.annotation.Nullable;
 import javax.mail.Folder;
@@ -37,9 +36,7 @@ import org.dataportabilityproject.dataModels.mail.MailModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.IntPaginationToken;
 
-/**
- * Interfaces with an imap server, authenticating using name and password
- */
+/** Interfaces with an imap server, authenticating using name and password */
 public class ImapMailHelper {
 
   public static final String PROTOCOL = "imaps";
@@ -60,9 +57,74 @@ public class ImapMailHelper {
     this.debug = debug;
   }
 
+  private static int getStart(PaginationInformation paginationInformation) {
+    int start = 1;
+    if (paginationInformation != null) {
+      start = Math.max(((IntPaginationToken) paginationInformation).getStart(), start);
+    }
+    return start;
+  }
 
-  public MailModelWrapper getFolderContents(String host,
-      String account, String password, @Nullable String folderName, PaginationInformation paginationInformation)
+  // TODO: Move to hierarchical model
+
+  private static int getEnd(int start, int totalNumMessages) {
+    return Math.min(((start + MAX_RESULTS_PER_REQUEST) - 1), totalNumMessages);
+  }
+
+  private static Properties createProperties(String host, String user, boolean debug) {
+    Properties props = new Properties();
+    props.put("mail.imap.ssl.enable", "true"); // required for Gmail
+
+    // disable other auth
+    props.put("mail.imap.auth.login.disable", "false");
+    props.put("mail.imap.auth.plain.disable", "false");
+
+    // timeouts
+    props.put("mail.imaps.connectiontimeout", "10000");
+    props.put("mail.imaps.timeout", "10000");
+
+    props.setProperty("mail.store.protocol", PROTOCOL);
+    props.setProperty("mail.imap.user", user);
+    props.setProperty("mail.imap.host", host);
+
+    if (debug) {
+      props.put("mail.debug", "true");
+      props.put("mail.debug.auth", "true");
+    }
+
+    // extra code required for reading messages during IMAP-start
+    props.setProperty("mail.imaps.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+    props.setProperty("mail.imaps.socketFactory.fallback", "false");
+    props.setProperty("mail.imaps.port", "993");
+    props.setProperty("mail.imaps.socketFactory.port", "993");
+    // extra codes required for reading OUTLOOK mails during IMAP-end
+
+    // XOAUTH unsupported, consider uncommenting if needed
+    // props.put("mail.imap.sasl.enable", "true");
+    // props.put("mail.imap.sasl.mechanisms", "XOAUTH2");
+    // props.put("mail.imaps.sasl.mechanisms.oauth2.oauthToken", token);
+
+    return props;
+  }
+
+  /** Creates a raw representation of the given email {@code message} */
+  private static String createRawMessage(Message message) throws MessagingException, IOException {
+    ByteArrayOutputStream outstream = new ByteArrayOutputStream();
+    message.writeTo(outstream);
+    return BASE_ENCODER.encode(outstream.toByteArray());
+  }
+
+  // TODO: Replace with logging framework
+  private static void log(String fmt, Object... args) {
+    System.out.println(String.format("ImapMailHelper: " + fmt, args));
+  }
+
+  public MailModelWrapper getFolderContents(
+      String host,
+      String account,
+      String password,
+      @Nullable String folderName,
+      PaginationInformation paginationInformation)
       throws MessagingException, IOException {
     Properties props = createProperties(host, account, debug);
 
@@ -100,10 +162,14 @@ public class ImapMailHelper {
     return getMessages(host, account, password, folder, true, paginationInformation);
   }
 
-  // TODO: Move to hierarchical model
   /** Get all messages in an account. */
-  private MailModelWrapper getMessages(String host, String account, String password,
-      Folder parentFolder, boolean fetchMessages, PaginationInformation paginationInformation)
+  private MailModelWrapper getMessages(
+      String host,
+      String account,
+      String password,
+      Folder parentFolder,
+      boolean fetchMessages,
+      PaginationInformation paginationInformation)
       throws MessagingException, IOException {
 
     int foldersSize = 0;
@@ -132,11 +198,16 @@ public class ImapMailHelper {
       int end = getEnd(start, parentFolder.getMessageCount());
       if (end < parentFolder.getMessageCount()) {
         // Indicates page to be fetched on next request
-        nextPaginationInformation = new IntPaginationToken(end + 1 /* the start index for next iteration */);
+        nextPaginationInformation =
+            new IntPaginationToken(end + 1 /* the start index for next iteration */);
       }
-      log("Fetching messages for foder: %s, start: %d, end: %d", parentFolder.getFullName(), start, end);
+      log(
+          "Fetching messages for foder: %s, start: %d, end: %d",
+          parentFolder.getFullName(), start, end);
       Message[] messages = parentFolder.getMessages(start, end);
-      log("Fetched message for folder: %s, messages: %s", parentFolder.getFullName(), messages.length);
+      log(
+          "Fetched message for folder: %s, messages: %s",
+          parentFolder.getFullName(), messages.length);
       for (Message message : messages) {
         log("Message, contentType: %s ,size: %s", message.getContentType(), message.getSize());
         ImmutableList<String> folderId = ImmutableList.of(parentFolder.getName());
@@ -146,69 +217,9 @@ public class ImapMailHelper {
     }
 
     // TODO: add pagination below
-    return new MailModelWrapper(folders.build(), resources.build(),
+    return new MailModelWrapper(
+        folders.build(),
+        resources.build(),
         new ContinuationInformation(folderIds.build(), nextPaginationInformation));
-
-  }
-
-  private static int getStart(PaginationInformation paginationInformation) {
-    int start = 1;
-    if (paginationInformation != null) {
-      start = Math.max(((IntPaginationToken)paginationInformation).getStart(), start);
-    }
-    return start;
-  }
-
-  private static int getEnd(int start, int totalNumMessages) {
-    return Math.min(((start + MAX_RESULTS_PER_REQUEST) - 1)  , totalNumMessages);
-  }
-
-  private static Properties createProperties(String host, String user, boolean debug) {
-    Properties props = new Properties();
-    props.put("mail.imap.ssl.enable", "true"); // required for Gmail
-    
-    // disable other auth
-    props.put("mail.imap.auth.login.disable", "false");
-    props.put("mail.imap.auth.plain.disable", "false");
-    
-
-    // timeouts
-    props.put("mail.imaps.connectiontimeout", "10000");
-    props.put("mail.imaps.timeout", "10000");
-   
-    props.setProperty("mail.store.protocol", PROTOCOL);
-    props.setProperty("mail.imap.user", user);
-    props.setProperty("mail.imap.host", host);
-
-    if (debug) {
-      props.put("mail.debug", "true");
-      props.put("mail.debug.auth", "true");
-    }
-  
-    //extra code required for reading messages during IMAP-start
-    props.setProperty("mail.imaps.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-    props.setProperty("mail.imaps.socketFactory.fallback", "false");
-    props.setProperty("mail.imaps.port", "993");
-    props.setProperty("mail.imaps.socketFactory.port", "993");
-      //extra codes required for reading OUTLOOK mails during IMAP-end
-
-    // XOAUTH unsupported, consider uncommenting if needed
-    // props.put("mail.imap.sasl.enable", "true");
-    // props.put("mail.imap.sasl.mechanisms", "XOAUTH2");
-    // props.put("mail.imaps.sasl.mechanisms.oauth2.oauthToken", token);
-
-    return props;
-  }
-
-  /** Creates a raw representation of the given email {@code message} */
-  private static String createRawMessage(Message message) throws MessagingException, IOException {
-    ByteArrayOutputStream outstream = new ByteArrayOutputStream();
-    message.writeTo(outstream);
-    return BASE_ENCODER.encode(outstream.toByteArray());
-  }
-
-  // TODO: Replace with logging framework
-  private static void log (String fmt, Object... args) {
-    System.out.println(String.format("ImapMailHelper: " + fmt, args));
   }
 }

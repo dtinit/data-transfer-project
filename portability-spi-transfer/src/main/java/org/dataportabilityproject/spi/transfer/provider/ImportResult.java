@@ -1,65 +1,49 @@
 package org.dataportabilityproject.spi.transfer.provider;
 
-/**
- * The result of an item import operation.
- */
+/** The result of an item import operation. */
 public class ImportResult {
-    public static final ImportResult OK = new ImportResult(ResultType.OK);
+  public static final ImportResult OK = new ImportResult(ResultType.OK);
+  private ResultType type;
+  private String message;
+  /**
+   * Ctor used to return error or retry results.
+   *
+   * @param type the result type
+   * @param message the result message, if any
+   */
+  public ImportResult(ResultType type, String message) {
+    this.type = type;
+    this.message = message;
+  }
 
-    /**
-     * Result types.
-     */
-    public enum ResultType {
-        /**
-         * Indicates a successful import.
-         */
-        OK,
+  /**
+   * Ctor.
+   *
+   * @param type the result type
+   */
+  public ImportResult(ResultType type) {
+    this.type = type;
+  }
 
-        /**
-         * Indicates an unrecoverable error was raised.
-         */
-        ERROR,
+  /** Returns the type of result. */
+  public ResultType getType() {
+    return type;
+  }
 
-        /**
-         * Indicates a recoverable error was raised.
-         */
-        RETRY
-    }
+  /** Returns the result message or null if no message is present. */
+  public String getMessage() {
+    return message;
+  }
 
-    private ResultType type;
-    private String message;
+  /** Result types. */
+  public enum ResultType {
+    /** Indicates a successful import. */
+    OK,
 
-    /**
-     * Ctor used to return error or retry results.
-     *
-     * @param type the result type
-     * @param message the result message, if any
-     */
-    public ImportResult(ResultType type, String message) {
-        this.type = type;
-        this.message = message;
-    }
+    /** Indicates an unrecoverable error was raised. */
+    ERROR,
 
-    /**
-     * Ctor.
-     *
-     * @param type the result type
-     */
-    public ImportResult(ResultType type) {
-        this.type = type;
-    }
-
-    /**
-     * Returns the type of result.
-     */
-    public ResultType getType() {
-        return type;
-    }
-
-    /**
-     * Returns the result message or null if no message is present.
-     */
-    public String getMessage() {
-        return message;
-    }
+    /** Indicates a recoverable error was raised. */
+    RETRY
+  }
 }

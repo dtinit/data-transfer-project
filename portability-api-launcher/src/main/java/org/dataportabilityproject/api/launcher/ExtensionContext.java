@@ -15,29 +15,24 @@
  */
 package org.dataportabilityproject.api.launcher;
 
-/**
- * Provides information required to bootstrap extensions.
- */
+/** Provides information required to bootstrap extensions. */
 public interface ExtensionContext {
 
-    /**
-     * Returns the system logger extension service can use to record events.
-     */
-    Logger getLogger();
+  /** Returns the system logger extension service can use to record events. */
+  Logger getLogger();
 
-    /**
-     * Returns a system service such as a type mapper extension services may require.
-     *
-     * @param type the system service type
-     */
-    <T> T getService(Class<T> type);
+  /**
+   * Returns a system service such as a type mapper extension services may require.
+   *
+   * @param type the system service type
+   */
+  <T> T getService(Class<T> type);
 
-    /**
-     * Returns the configuration parameter for the key or the default value if not found.
-     *
-     * @param key the parameter key
-     * @param defaultValue the default value. Null may be passed.
-     */
-    <T> T getConfiguration(String key, String defaultValue);
-
+  /**
+   * Returns the configuration parameter for the key or the default value if not found.
+   *
+   * @param key the parameter key
+   * @param defaultValue the default value. Null may be passed.
+   */
+  <T> T getConfiguration(String key, String defaultValue);
 }

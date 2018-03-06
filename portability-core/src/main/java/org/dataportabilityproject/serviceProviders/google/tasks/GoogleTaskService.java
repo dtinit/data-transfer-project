@@ -39,26 +39,26 @@ import org.dataportabilityproject.serviceProviders.google.GoogleStaticObjects;
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;
 
-public class GoogleTaskService implements
-    Importer<TaskModelWrapper>,
-    Exporter<TaskModelWrapper> {
+public class GoogleTaskService implements Importer<TaskModelWrapper>, Exporter<TaskModelWrapper> {
 
   private static final long PAGE_SIZE = 50;
   private final Tasks taskClient;
   private final JobDataCache jobDataCache;
 
   public GoogleTaskService(Credential credential, JobDataCache jobDataCache) {
-    taskClient = new Tasks.Builder(
-        GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
+    taskClient =
+        new Tasks.Builder(
+                GoogleStaticObjects.getHttpTransport(),
+                GoogleStaticObjects.JSON_FACTORY,
+                credential)
+            .setApplicationName(GoogleStaticObjects.APP_NAME)
+            .build();
     this.jobDataCache = jobDataCache;
   }
 
   private TaskModelWrapper getTaskLists(Optional<PaginationInformation> pageInfo)
       throws IOException {
-    Tasks.Tasklists.List query = taskClient.tasklists().list()
-        .setMaxResults(PAGE_SIZE);
+    Tasks.Tasklists.List query = taskClient.tasklists().list().setMaxResults(PAGE_SIZE);
     if (pageInfo.isPresent()) {
       query.setPageToken(((StringPaginationToken) pageInfo.get()).getId());
     }
@@ -76,49 +76,43 @@ public class GoogleTaskService implements
     }
 
     return new TaskModelWrapper(
-        newTaskLists,
-        null,
-        new ContinuationInformation(newResources, newPageInfo));
+        newTaskLists, null, new ContinuationInformation(newResources, newPageInfo));
   }
 
   private TaskModelWrapper getTasks(String taskListId, Optional<PaginationInformation> pageInfo)
       throws IOException {
     com.google.api.services.tasks.model.Tasks result;
 
-    Tasks.TasksOperations.List query = taskClient.tasks()
-        .list(taskListId).setMaxResults(PAGE_SIZE);
+    Tasks.TasksOperations.List query = taskClient.tasks().list(taskListId).setMaxResults(PAGE_SIZE);
     if (pageInfo.isPresent()) {
       query.setPageToken(((StringPaginationToken) pageInfo.get()).getId());
     }
     result = query.execute();
-    List<TaskModel> newTasks = result.getItems().stream()
-        .map(t -> new TaskModel(taskListId, t.getTitle(), t.getNotes()))
-        .collect(Collectors.toList());
+    List<TaskModel> newTasks =
+        result
+            .getItems()
+            .stream()
+            .map(t -> new TaskModel(taskListId, t.getTitle(), t.getNotes()))
+            .collect(Collectors.toList());
 
     PaginationInformation newPageInfo = null;
     if (result.getNextPageToken() != null) {
       newPageInfo = new StringPaginationToken(result.getNextPageToken());
     }
 
-    return new TaskModelWrapper(
-        null,
-        newTasks,
-        new ContinuationInformation(null, newPageInfo));
+    return new TaskModelWrapper(null, newTasks, new ContinuationInformation(null, newPageInfo));
   }
 
   @Override
   public void importItem(TaskModelWrapper wrapper) throws IOException {
     for (TaskListModel taskList : wrapper.getLists()) {
-      TaskList newTaskList = new TaskList()
-          .setTitle("Imported copy - " + taskList.getName());
+      TaskList newTaskList = new TaskList().setTitle("Imported copy - " + taskList.getName());
       TaskList insertedTaskList = taskClient.tasklists().insert(newTaskList).execute();
       System.out.println("Storing " + taskList.getId() + " as " + insertedTaskList.getId());
       jobDataCache.store(taskList.getId(), insertedTaskList.getId());
     }
     for (TaskModel oldTask : wrapper.getTasks()) {
-      Task newTask = new Task()
-          .setTitle(oldTask.getText())
-          .setNotes(oldTask.getNotes());
+      Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
       String newTaskId = jobDataCache.getData(oldTask.getTaskListId(), String.class);
       taskClient.tasks().insert(newTaskId, newTask).execute();
     }

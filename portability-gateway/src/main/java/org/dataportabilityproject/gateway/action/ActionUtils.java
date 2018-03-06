@@ -17,14 +17,10 @@ package org.dataportabilityproject.gateway.action;
 
 import com.google.common.base.Strings;
 
-/**
- * Helper functions for validating action related data.
- */
+/** Helper functions for validating action related data. */
 public final class ActionUtils {
 
-  /**
-   * Determines whether the current service is a valid service for export.
-   */
+  /** Determines whether the current service is a valid service for export. */
   public static boolean isValidExportService(String serviceName) {
     if (!Strings.isNullOrEmpty(serviceName)) {
       // TODO: Use service registry to validate the service is valid for import or export
@@ -33,9 +29,7 @@ public final class ActionUtils {
     return false;
   }
 
-  /**
-   * Determines whether the current service is a valid service for import.
-   */
+  /** Determines whether the current service is a valid service for import. */
   public static boolean isValidImportService(String serviceName) {
     if (!Strings.isNullOrEmpty(serviceName)) {
       // TODO: Use service registry to validate the service is valid for import or export
@@ -44,9 +38,7 @@ public final class ActionUtils {
     return false;
   }
 
-  /**
-   * Determines whether the current service is a valid service for import.
-   */
+  /** Determines whether the current service is a valid service for import. */
   public static boolean isValidTransferDataType(String transferDataType) {
     if (!Strings.isNullOrEmpty(transferDataType)) {
       // TODO: Use service registry to validate the transferDataType is valid

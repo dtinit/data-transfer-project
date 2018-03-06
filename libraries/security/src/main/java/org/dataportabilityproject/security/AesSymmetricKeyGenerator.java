@@ -22,9 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * AES-based implementation for {@link SecretKey} creation and encoding.
- */
+/** AES-based implementation for {@link SecretKey} creation and encoding. */
 class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
 
   private static final Logger logger = LoggerFactory.getLogger(AesSymmetricKeyGenerator.class);

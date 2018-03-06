@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Defines the transfer SPI. Extensions use this module to implement custom import/export functionality for a service provider.
+ * Defines the transfer SPI. Extensions use this module to implement custom import/export
+ * functionality for a service provider.
  */
 package org.dataportabilityproject.spi.transfer;
-

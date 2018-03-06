@@ -19,6 +19,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
@@ -28,29 +31,42 @@ import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.util.UUID;
+/** An {@link Action} that handles the initial creation of a job. */
+public final class CreateJobAction
+    implements Action<CreateJobActionRequest, CreateJobActionResponse> {
 
-/**
- * An {@link Action} that handles the initial creation of a job.
- */
-public final class CreateJobAction implements
-    Action<CreateJobActionRequest, CreateJobActionResponse> {
-
-  private static final Logger logger = LoggerFactory.getLogger(
-      CreateJobAction.class);
+  private static final Logger logger = LoggerFactory.getLogger(CreateJobAction.class);
 
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
 
   @Inject
-  CreateJobAction(
-      JobStore store,
-      SymmetricKeyGenerator symmetricKeyGenerator
-  ) {
+  CreateJobAction(JobStore store, SymmetricKeyGenerator symmetricKeyGenerator) {
     this.store = store;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
+  }
+
+  /** Populates the initial state of the {@link PortabilityJob} instance. */
+  private static PortabilityJob createJob(
+      String encodedSessionKey, String dataType, String exportService, String importService) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedSessionKey), "sessionKey missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
+    Preconditions.checkNotNull(dataType, "dataType missing");
+
+    // Job auth data
+    JobAuthorization jobAuthorization =
+        JobAuthorization.builder()
+            .setEncryptedSessionKey(encodedSessionKey)
+            .setState(JobAuthorization.State.INITIAL)
+            .build();
+
+    return PortabilityJob.builder()
+        .setTransferDataType(dataType)
+        .setExportService(exportService)
+        .setImportService(importService)
+        .setAndValidateJobAuthorization(jobAuthorization)
+        .build();
   }
 
   /**
@@ -64,24 +80,27 @@ public final class CreateJobAction implements
   public CreateJobActionResponse handle(CreateJobActionRequest request) {
 
     String dataType = request.getTransferDataType();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dataType),
-        "Missing valid dataTypeParam: %s", dataType);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(dataType), "Missing valid dataTypeParam: %s", dataType);
 
     String exportService = request.getSource();
-    Preconditions.checkArgument(ActionUtils.isValidExportService(exportService),
-        "Missing valid exportService: %s", exportService);
+    Preconditions.checkArgument(
+        ActionUtils.isValidExportService(exportService),
+        "Missing valid exportService: %s",
+        exportService);
 
     String importService = request.getDestination();
-    Preconditions.checkArgument(ActionUtils.isValidImportService(importService),
-        "Missing valid importService: %s", importService);
+    Preconditions.checkArgument(
+        ActionUtils.isValidImportService(importService),
+        "Missing valid importService: %s",
+        importService);
 
     // Create a new job and persist
     UUID newId = UUID.randomUUID();
     SecretKey sessionKey = symmetricKeyGenerator.generate();
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
 
-    PortabilityJob job = createJob(encodedSessionKey, dataType, exportService,
-        importService);
+    PortabilityJob job = createJob(encodedSessionKey, dataType, exportService, importService);
     try {
       store.createJob(newId, job);
     } catch (IOException e) {
@@ -100,30 +119,5 @@ public final class CreateJobAction implements
     SecretKey sessionKey = symmetricKeyGenerator.generate();
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
     return createJob(encodedSessionKey, dataType, exportService, importService);
-  }
-
-
-  /**
-   * Populates the initial state of the {@link PortabilityJob} instance.
-   */
-  private static PortabilityJob createJob(String encodedSessionKey,
-      String dataType, String exportService, String importService) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedSessionKey), "sessionKey missing");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(exportService), "exportService missing");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(importService), "importService missing");
-    Preconditions.checkNotNull(dataType, "dataType missing");
-
-    // Job auth data
-    JobAuthorization jobAuthorization = JobAuthorization.builder()
-        .setEncryptedSessionKey(encodedSessionKey)
-        .setState(JobAuthorization.State.INITIAL)
-        .build();
-
-    return PortabilityJob.builder()
-        .setTransferDataType(dataType)
-        .setExportService(exportService)
-        .setImportService(importService)
-        .setAndValidateJobAuthorization(jobAuthorization)
-        .build();
   }
 }

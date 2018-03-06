@@ -46,17 +46,19 @@ final class SmugMugAuth implements OfflineAuthDataGenerator {
   @Override
   public AuthData generateAuthData(IOInterface ioInterface) throws IOException {
     // As per details: https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
-    // and example: http://stackoverflow.com/questions/15194182/examples-for-oauth1-using-google-api-java-oauth
+    // and example:
+    // http://stackoverflow.com/questions/15194182/examples-for-oauth1-using-google-api-java-oauth
     // Google library puts signature in header and not in request, see https://oauth.net/1/
     OAuthConsumer consumer = new GoogleOAuthConsumer(appCredentials.key(), appCredentials.secret());
 
     String permissions = (serviceMode == ServiceMode.EXPORT) ? "Read" : "Add";
 
-    OAuthProvider provider = new DefaultOAuthProvider(
-        "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken",
-        "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken",
-        "https://secure.smugmug.com/services/oauth/1.0a/authorize?Access=Full&Permissions="
-            + permissions);
+    OAuthProvider provider =
+        new DefaultOAuthProvider(
+            "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken",
+            "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken",
+            "https://secure.smugmug.com/services/oauth/1.0a/authorize?Access=Full&Permissions="
+                + permissions);
 
     String authUrl;
     try {
@@ -83,7 +85,8 @@ final class SmugMugAuth implements OfflineAuthDataGenerator {
   }
 
   OAuthConsumer generateConsumer(AuthData authData) {
-    Preconditions.checkArgument(authData instanceof TokenSecretAuthData,
+    Preconditions.checkArgument(
+        authData instanceof TokenSecretAuthData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenSecretAuthData = (TokenSecretAuthData) authData;

@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.spi.cloud.storage.BucketStore;
 
-/** Bucket storage using Google Cloud Storage. **/
+/** Bucket storage using Google Cloud Storage. * */
 final class GoogleBucketStore implements BucketStore {
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
 
@@ -32,13 +32,13 @@ final class GoogleBucketStore implements BucketStore {
   private final String bucketName;
 
   @Inject
-  GoogleBucketStore(
-      GoogleCredentials googleCredentials,
-      @ProjectId String projectId) {
-    storage = StorageOptions.newBuilder()
-        .setProjectId(projectId)
-        .setCredentials(googleCredentials)
-        .build().getService();
+  GoogleBucketStore(GoogleCredentials googleCredentials, @ProjectId String projectId) {
+    storage =
+        StorageOptions.newBuilder()
+            .setProjectId(projectId)
+            .setCredentials(googleCredentials)
+            .build()
+            .getService();
     // Google Cloud Platform requires bucket names be unique across projects, so we include project
     // ID in the bucket name.
     bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;

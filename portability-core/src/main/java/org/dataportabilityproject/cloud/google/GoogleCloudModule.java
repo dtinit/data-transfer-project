@@ -1,18 +1,18 @@
 /*
-* Copyright 2017 The Data-Portability Project Authors.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* https://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2017 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.dataportabilityproject.cloud.google;
 
 import static java.lang.annotation.ElementType.FIELD;
@@ -37,10 +37,6 @@ import org.dataportabilityproject.shared.Config.Environment;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public class GoogleCloudModule extends AbstractModule {
-  @BindingAnnotation
-  @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
-  public @interface ProjectId {}
-
   @Override
   protected void configure() {
     requireBinding(CommonSettings.class);
@@ -58,17 +54,22 @@ public class GoogleCloudModule extends AbstractModule {
       // locally and connecting to GCP
       Preconditions.checkArgument(
           projectId.endsWith("-local") || projectId.endsWith("-test") || projectId.endsWith("-qa"),
-          "Invalid project to connect to with env=LOCAL. " + projectId + " doesn't appear to"
+          "Invalid project to connect to with env=LOCAL. "
+              + projectId
+              + " doesn't appear to"
               + " be a local/test project since it doesn't end in -local, -test, or -qa.");
     } else { // Assume running on GCP
       // TODO: Check whether we are actually running on GCP once we find out how
       String credsLocation = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
       if (!credsLocation.startsWith("/var/secrets/")) {
-        String cause = String.format("You are attempting to obtain credentials from somewhere "
-                + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
-                + "into your image, which we provide as a local debugging mechanism only. See GCP "
-                + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
-                + "location was: %s", credsLocation);
+        String cause =
+            String.format(
+                "You are attempting to obtain credentials from somewhere "
+                    + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
+                    + "into your image, which we provide as a local debugging mechanism only. See GCP "
+                    + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
+                    + "location was: %s",
+                credsLocation);
         throw new GoogleCredentialException(cause);
       }
       // Note: Tried an extra check via Kubernetes API to verify GOOGLE_APPLICATION_CREDENTIALS
@@ -88,20 +89,25 @@ public class GoogleCloudModule extends AbstractModule {
    *
    * @throws IllegalArgumentException if project ID is unset
    */
-  @Provides @Singleton @ProjectId
+  @Provides
+  @Singleton
+  @ProjectId
   String getProjectId(CommonSettings commonSettings) {
     validateUsingGoogle(commonSettings);
     String projectId;
     try {
       projectId = System.getenv("GOOGLE_PROJECT_ID");
     } catch (NullPointerException e) {
-      throw new IllegalArgumentException("Need to specify a project ID when using Google Cloud. "
-          + "This should be exposed as an environment variable by Kubernetes, see "
-          + "k8s/api-deployment.yaml");
+      throw new IllegalArgumentException(
+          "Need to specify a project ID when using Google Cloud. "
+              + "This should be exposed as an environment variable by Kubernetes, see "
+              + "k8s/api-deployment.yaml");
     }
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "Need to specify a project "
-        + "ID when using Google Cloud. This should be exposed as an environment variable by "
-        + "Kubernetes, see k8s/api-deployment.yaml");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(projectId),
+        "Need to specify a project "
+            + "ID when using Google Cloud. This should be exposed as an environment variable by "
+            + "Kubernetes, see k8s/api-deployment.yaml");
     return projectId;
   }
 
@@ -116,4 +122,9 @@ public class GoogleCloudModule extends AbstractModule {
       throw new IllegalStateException("Injecting Google objects when cloud != Google!");
     }
   }
+
+  @BindingAnnotation
+  @Target({FIELD, PARAMETER, METHOD})
+  @Retention(RUNTIME)
+  public @interface ProjectId {}
 }

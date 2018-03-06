@@ -22,23 +22,31 @@ public class JobUtilsTest {
   public void passwordAuthDataRoundTrip() throws Exception {
     LegacyPortabilityJob importJob = LegacyPortabilityJob.builder().build();
     AuthData authData = PasswordAuthData.create("myUsername", "myPassword");
-    assertThat(JobUtils.getInitialAuthData(
-        JobUtils.setInitialAuthData(importJob, authData, IMPORT), IMPORT)).isEqualTo(authData);
+    assertThat(
+            JobUtils.getInitialAuthData(
+                JobUtils.setInitialAuthData(importJob, authData, IMPORT), IMPORT))
+        .isEqualTo(authData);
 
     LegacyPortabilityJob exportJob = LegacyPortabilityJob.builder().build();
-    assertThat(JobUtils.getInitialAuthData(
-        JobUtils.setInitialAuthData(exportJob, authData, EXPORT), EXPORT)).isEqualTo(authData);
+    assertThat(
+            JobUtils.getInitialAuthData(
+                JobUtils.setInitialAuthData(exportJob, authData, EXPORT), EXPORT))
+        .isEqualTo(authData);
   }
 
   @Test
   public void tokenAuthDataRoundTrip() throws Exception {
     LegacyPortabilityJob importJob = LegacyPortabilityJob.builder().build();
     AuthData authData = TokenSecretAuthData.create("myToken", "mySecret");
-    assertThat(JobUtils.getInitialAuthData(
-        JobUtils.setInitialAuthData(importJob, authData, IMPORT), IMPORT)).isEqualTo(authData);
+    assertThat(
+            JobUtils.getInitialAuthData(
+                JobUtils.setInitialAuthData(importJob, authData, IMPORT), IMPORT))
+        .isEqualTo(authData);
 
     LegacyPortabilityJob exportJob = LegacyPortabilityJob.builder().build();
-    assertThat(JobUtils.getInitialAuthData(
-        JobUtils.setInitialAuthData(exportJob, authData, EXPORT), EXPORT)).isEqualTo(authData);
+    assertThat(
+            JobUtils.getInitialAuthData(
+                JobUtils.setInitialAuthData(exportJob, authData, EXPORT), EXPORT))
+        .isEqualTo(authData);
   }
 }

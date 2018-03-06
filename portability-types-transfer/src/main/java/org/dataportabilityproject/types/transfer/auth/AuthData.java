@@ -17,8 +17,5 @@ package org.dataportabilityproject.types.transfer.auth;
 
 import org.dataportabilityproject.types.transfer.PortableType;
 
-/**
- * Base type for authentication data.
- */
-public abstract class AuthData extends PortableType {
-}
+/** Base type for authentication data. */
+public abstract class AuthData extends PortableType {}

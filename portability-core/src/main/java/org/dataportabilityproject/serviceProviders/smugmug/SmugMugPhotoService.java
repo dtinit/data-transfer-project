@@ -74,12 +74,11 @@ import org.dataportabilityproject.serviceProviders.smugmug.model.SmugmugAlbumsRe
 import org.dataportabilityproject.shared.IdOnlyResource;
 import org.dataportabilityproject.shared.StringPaginationToken;
 
-final class SmugMugPhotoService implements
-    Exporter<PhotosModelWrapper>,
-    Importer<PhotosModelWrapper> {
+final class SmugMugPhotoService
+    implements Exporter<PhotosModelWrapper>, Importer<PhotosModelWrapper> {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private static final String BASE_URL = "https://api.smugmug.com";
   private static final String USER_URL = "/api/v2!authuser";
 
@@ -113,7 +112,6 @@ final class SmugMugPhotoService implements
     } else {
       return getAlbums(exportInformation.getPaginationInformation());
     }
-
   }
 
   @Override
@@ -142,12 +140,12 @@ final class SmugMugPhotoService implements
     // All imported content is private by default.
     json.put("Privacy", "Private");
     HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
-    SmugMugResponse<SmugmugAlbumResponse> response = postRequest(
-        folder + "!albums",
-        content,
-        ImmutableMap.of(),
-        new TypeReference<SmugMugResponse<SmugmugAlbumResponse>>() {
-        });
+    SmugMugResponse<SmugmugAlbumResponse> response =
+        postRequest(
+            folder + "!albums",
+            content,
+            ImmutableMap.of(),
+            new TypeReference<SmugMugResponse<SmugmugAlbumResponse>>() {});
     checkState(response.getResponse() != null, "Response is null");
     checkState(response.getResponse().getAlbum() != null, "Album is null");
     jobDataCache.store(album.getId(), response.getResponse().getAlbum().getAlbumKey());
@@ -155,25 +153,26 @@ final class SmugMugPhotoService implements
 
   private void uploadPhoto(PhotoModel photo) throws IOException {
     String newAlbumKey = jobDataCache.getData(photo.getAlbumId(), String.class);
-    checkState(!Strings.isNullOrEmpty(newAlbumKey),
-        "Cached album key for %s is null", photo.getAlbumId());
+    checkState(
+        !Strings.isNullOrEmpty(newAlbumKey), "Cached album key for %s is null", photo.getAlbumId());
 
-    InputStreamContent content = new InputStreamContent(null,
-        getImageAsStream(photo.getFetchableUrl()));
+    InputStreamContent content =
+        new InputStreamContent(null, getImageAsStream(photo.getFetchableUrl()));
 
-    postRequest("http://upload.smugmug.com/",
+    postRequest(
+        "http://upload.smugmug.com/",
         content,
         // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
         ImmutableMap.of(
             "X-Smug-AlbumUri", "/api/v2/album/" + newAlbumKey,
             "X-Smug-ResponseType", "json",
             "X-Smug-Version", "v2"),
-        new TypeReference<ImageUploadResponse>() {
-        });
+        new TypeReference<ImageUploadResponse>() {});
   }
 
-  private PhotosModelWrapper getImages(IdOnlyResource resource,
-      Optional<PaginationInformation> paginationInformation) throws IOException {
+  private PhotosModelWrapper getImages(
+      IdOnlyResource resource, Optional<PaginationInformation> paginationInformation)
+      throws IOException {
     List<PhotoModel> photos = new ArrayList<>();
 
     String url;
@@ -186,8 +185,7 @@ final class SmugMugPhotoService implements
 
     StringPaginationToken pageToken = null;
 
-    SmugMugResponse<SmugMugAlbumInfoResponse> albumInfoResponse =
-        makeAlbumInfoRequest(url);
+    SmugMugResponse<SmugMugAlbumInfoResponse> albumInfoResponse = makeAlbumInfoRequest(url);
     if (albumInfoResponse.getResponse().getImages() != null) {
       for (SmugMugAlbumImage image : albumInfoResponse.getResponse().getImages()) {
         String title = image.getTitle();
@@ -196,12 +194,13 @@ final class SmugMugPhotoService implements
         }
 
         try {
-          photos.add(new PhotoModel(
-              title,
-              this.authConsumer.sign(image.getArchivedUri()),
-              image.getCaption(),
-              image.getFormat(),
-              resource.getId()));
+          photos.add(
+              new PhotoModel(
+                  title,
+                  this.authConsumer.sign(image.getArchivedUri()),
+                  image.getCaption(),
+                  image.getFormat(),
+                  resource.getId()));
         } catch (OAuthException e) {
           throw new IOException("Couldn't sign: " + image.getArchivedUri(), e);
         }
@@ -216,8 +215,8 @@ final class SmugMugPhotoService implements
     return new PhotosModelWrapper(null, photos, new ContinuationInformation(null, pageToken));
   }
 
-  private PhotosModelWrapper getAlbums(
-      Optional<PaginationInformation> paginationInformation) throws IOException {
+  private PhotosModelWrapper getAlbums(Optional<PaginationInformation> paginationInformation)
+      throws IOException {
     String albumUri;
     if (paginationInformation.isPresent()) {
       albumUri = ((StringPaginationToken) paginationInformation.get()).getId();
@@ -247,22 +246,19 @@ final class SmugMugPhotoService implements
 
   private SmugMugResponse<SmugMugAlbumInfoResponse> makeAlbumInfoRequest(String url)
       throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {
-    });
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {});
   }
 
   private SmugMugResponse<SmugmugAlbumsResponse> makeAlbumRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugmugAlbumsResponse>>() {
-    });
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugmugAlbumsResponse>>() {});
   }
 
   private SmugMugResponse<SmugMugUserResponse> makeUserRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {
-    });
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
   }
 
-  private <T> SmugMugResponse<T> makeRequest(String url,
-      TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
+  private <T> SmugMugResponse<T> makeRequest(
+      String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     String signedRequest;
     try {
@@ -272,24 +268,21 @@ final class SmugMugPhotoService implements
         | OAuthCommunicationException e) {
       throw new IOException("Couldn't get albums", e);
     }
-    HttpRequest getRequest = requestFactory.buildGetRequest(
-        new GenericUrl(signedRequest));
-    HttpResponse response = getRequest
-        .execute();
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedRequest));
+    HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
-      throw new IOException("Bad status code: " + statusCode + " error: "
-          + response.getStatusMessage());
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    String result = CharStreams.toString(new InputStreamReader(
-        response.getContent(), Charsets.UTF_8));
+    String result =
+        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return MAPPER.readValue(result, typeReference);
   }
 
-  private <T> T postRequest(String url,
-      HttpContent content,
-      Map<String, String> headers,
-      TypeReference<T> typeReference) throws IOException {
+  private <T> T postRequest(
+      String url, HttpContent content, Map<String, String> headers, TypeReference<T> typeReference)
+      throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
 
     String fullUrl = url;
@@ -297,12 +290,9 @@ final class SmugMugPhotoService implements
       fullUrl = BASE_URL + url;
     }
 
-    HttpRequest postRequest = requestFactory.buildPostRequest(
-        new GenericUrl(fullUrl),
-        content);
-    HttpHeaders httpHeaders = new HttpHeaders()
-        .setAccept("application/json")
-        .setContentType("application/json");
+    HttpRequest postRequest = requestFactory.buildPostRequest(new GenericUrl(fullUrl), content);
+    HttpHeaders httpHeaders =
+        new HttpHeaders().setAccept("application/json").setContentType("application/json");
     for (Entry<String, String> entry : headers.entrySet()) {
       httpHeaders.put(entry.getKey(), entry.getValue());
     }
@@ -324,11 +314,11 @@ final class SmugMugPhotoService implements
     }
     int statusCode = response.getStatusCode();
     if (statusCode < 200 || statusCode >= 300) {
-      throw new IOException("Bad status code: " + statusCode + " error: "
-          + response.getStatusMessage());
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    String result = CharStreams.toString(new InputStreamReader(
-        response.getContent(), Charsets.UTF_8));
+    String result =
+        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
 
     return MAPPER.readValue(result, typeReference);
   }

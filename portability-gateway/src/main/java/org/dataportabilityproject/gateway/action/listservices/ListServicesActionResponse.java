@@ -17,9 +17,7 @@ package org.dataportabilityproject.gateway.action.listservices;
 
 import java.util.Set;
 
-/**
- * The result of a request to list services available for export and import.
- */
+/** The result of a request to list services available for export and import. */
 public class ListServicesActionResponse {
 
   private final Set<String> services;
@@ -30,19 +28,19 @@ public class ListServicesActionResponse {
     this.errorMsg = errorMsg;
   }
 
-  public Set<String> getServices() {
-    return services;
-  }
-
-  public String getErrorMsg() {
-    return errorMsg;
-  }
-
   public static final ListServicesActionResponse create(Set<String> services) {
     return new ListServicesActionResponse(services, null);
   }
 
   public static final ListServicesActionResponse createWithError(String errorMsg) {
     return new ListServicesActionResponse(null, errorMsg);
+  }
+
+  public Set<String> getServices() {
+    return services;
+  }
+
+  public String getErrorMsg() {
+    return errorMsg;
   }
 }

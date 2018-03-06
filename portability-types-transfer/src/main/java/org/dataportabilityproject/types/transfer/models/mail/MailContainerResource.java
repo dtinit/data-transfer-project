@@ -23,9 +23,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
-/**
- * A Wrapper for all the possible objects that can be returned by a mail exporter.
- */
+/** A Wrapper for all the possible objects that can be returned by a mail exporter. */
 @JsonTypeName("MailContainerResource")
 public class MailContainerResource extends ContainerResource {
   private final Collection<MailContainerModel> folders;

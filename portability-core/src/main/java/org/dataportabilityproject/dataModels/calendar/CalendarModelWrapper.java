@@ -20,9 +20,7 @@ import java.util.Collection;
 import org.dataportabilityproject.dataModels.ContinuationInformation;
 import org.dataportabilityproject.dataModels.DataModel;
 
-/**
- * A Wrapper for all the possible objects that can be returned by a calendar exporter.
- */
+/** A Wrapper for all the possible objects that can be returned by a calendar exporter. */
 public class CalendarModelWrapper implements DataModel {
   private final Collection<CalendarModel> calendars;
   private final Collection<CalendarEventModel> events;
@@ -36,6 +34,7 @@ public class CalendarModelWrapper implements DataModel {
     this.events = events == null ? ImmutableList.of() : events;
     this.continuationInformation = continuationInformation;
   }
+
   public Collection<CalendarModel> getCalendars() {
     return calendars;
   }
@@ -44,7 +43,8 @@ public class CalendarModelWrapper implements DataModel {
     return events;
   }
 
-  @Override public ContinuationInformation getContinuationInformation() {
+  @Override
+  public ContinuationInformation getContinuationInformation() {
     return continuationInformation;
   }
 }

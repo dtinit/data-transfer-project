@@ -18,9 +18,7 @@ package org.dataportabilityproject.shared.auth;
 import com.google.auto.value.AutoValue;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
-/**
- * A simple implementation of {@link AuthData} that contains a user name and password.
- */
+/** A simple implementation of {@link AuthData} that contains a user name and password. */
 @AutoValue
 public abstract class PasswordAuthData extends AuthData {
 
@@ -29,5 +27,6 @@ public abstract class PasswordAuthData extends AuthData {
   }
 
   public abstract String username();
+
   public abstract String password();
 }

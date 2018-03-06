@@ -53,8 +53,11 @@ final class EncrypterImpl implements Encrypter {
       cipher.update(salt);
       byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
       return BaseEncoding.base64Url().encode(encrypted);
-    } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeyException
-        | NoSuchAlgorithmException | NoSuchPaddingException e) {
+    } catch (BadPaddingException
+        | IllegalBlockSizeException
+        | InvalidKeyException
+        | NoSuchAlgorithmException
+        | NoSuchPaddingException e) {
       logger.error("Exception encrypting data, length: {}", data.length(), e);
       throw new RuntimeException(e);
     }

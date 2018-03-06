@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 /**
- * Defines the data portability client model objects.  Model objects represent the system data resources a client has access to.
+ * Defines the data portability client model objects. Model objects represent the system data
+ * resources a client has access to.
  */
 package org.dataportabilityproject.types.client;

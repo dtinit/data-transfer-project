@@ -33,9 +33,9 @@ import org.dataportabilityproject.gateway.ApiSettings;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobAction;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionRequest;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionResponse;
+import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
@@ -51,15 +51,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for the {@link CreateJobAction}.
- * TODO: rename to CreateJobHandler as well as client code as well
+ * HttpHandler for the {@link CreateJobAction}. TODO: rename to CreateJobHandler as well as client
+ * code as well
  */
 final class DataTransferHandler implements HttpHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   // TODO: rename to CreateJob as well as client code as well
   public static final String PATH = "/_/DataTransfer";
   public static final String ERROR_PATH = "/error";
+  private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final CreateJobAction createJobAction;
   private final AuthServiceProviderRegistry registry;
   private final ApiSettings apiSettings;
@@ -68,7 +68,8 @@ final class DataTransferHandler implements HttpHandler {
   private final ObjectMapper objectMapper;
 
   @Inject
-  DataTransferHandler(CreateJobAction createJobAction,
+  DataTransferHandler(
+      CreateJobAction createJobAction,
       AuthServiceProviderRegistry registry,
       ApiSettings apiSettings,
       JobStore store,
@@ -82,19 +83,18 @@ final class DataTransferHandler implements HttpHandler {
     this.objectMapper = typeManager.getMapper();
   }
 
-  /**
-   * Services the {@link CreateJobAction} via the {@link HttpExchange}.
-   */
+  /** Services the {@link CreateJobAction} via the {@link HttpExchange}. */
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
         ReferenceApiUtils.validateRequest(exchange, HttpMethods.POST, PATH),
         PATH + " only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
-    DataTransferRequest request = objectMapper
-        .readValue(exchange.getRequestBody(), DataTransferRequest.class);
-    CreateJobActionRequest actionRequest = new CreateJobActionRequest(request.getSource(),
-        request.getDestination(), request.getTransferDataType());
+    DataTransferRequest request =
+        objectMapper.readValue(exchange.getRequestBody(), DataTransferRequest.class);
+    CreateJobActionRequest actionRequest =
+        new CreateJobActionRequest(
+            request.getSource(), request.getDestination(), request.getTransferDataType());
     CreateJobActionResponse actionResponse = createJobAction.handle(actionRequest);
 
     DataTransferResponse dataTransferResponse;
@@ -107,20 +107,27 @@ final class DataTransferHandler implements HttpHandler {
     // Set new cookie
     String encodedJobId = ReferenceApiUtils.encodeId(actionResponse.getId());
     HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, encodedJobId);
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .add(HttpHeaders.SET_COOKIE, cookie.toString() + ReferenceApiUtils.COOKIE_ATTRIBUTES);
 
     // Initial auth flow url
-    AuthDataGenerator generator = registry.getAuthDataGenerator(request.getSource(), request.getTransferDataType(),
-        AuthMode.EXPORT);
-    Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
-        request.getTransferDataType(), request.getSource());
+    AuthDataGenerator generator =
+        registry.getAuthDataGenerator(
+            request.getSource(), request.getTransferDataType(), AuthMode.EXPORT);
+    Preconditions.checkNotNull(
+        generator,
+        "Generator not found for type: %s, service: %s",
+        request.getTransferDataType(),
+        request.getSource());
 
-    AuthFlowConfiguration authFlowConfiguration = generator
-        .generateConfiguration(apiSettings.getBaseUrl(), encodedJobId);
-    Preconditions.checkNotNull(authFlowConfiguration,
+    AuthFlowConfiguration authFlowConfiguration =
+        generator.generateConfiguration(apiSettings.getBaseUrl(), encodedJobId);
+    Preconditions.checkNotNull(
+        authFlowConfiguration,
         "AuthFlowConfiguration not found for type: %s, service: %s",
-        request.getTransferDataType(), request.getSource());
+        request.getTransferDataType(),
+        request.getSource());
 
     PortabilityJob job = store.findJob(actionResponse.getId());
 
@@ -136,41 +143,53 @@ final class DataTransferHandler implements HttpHandler {
           Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
 
       // Serialize and encrypt the initial auth data
-      String serialized = objectMapper
-          .writeValueAsString(authFlowConfiguration.getInitialAuthData());
+      String serialized =
+          objectMapper.writeValueAsString(authFlowConfiguration.getInitialAuthData());
       String encryptedInitialAuthData = EncrypterFactory.create(key).encrypt(serialized);
 
       // Add the serialized and encrypted initial auth data to the job authorization
-      JobAuthorization updatedJobAuthorization = job.jobAuthorization().toBuilder()
-          .setEncryptedInitialExportAuthData(encryptedInitialAuthData).build();
+      JobAuthorization updatedJobAuthorization =
+          job.jobAuthorization()
+              .toBuilder()
+              .setEncryptedInitialExportAuthData(encryptedInitialAuthData)
+              .build();
 
       // Persist the updated PortabilityJob with the updated JobAuthorization
-      PortabilityJob updatedPortabilityJob = job.toBuilder()
-          .setAndValidateJobAuthorization(updatedJobAuthorization).build();
+      PortabilityJob updatedPortabilityJob =
+          job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
 
       store.updateJob(actionResponse.getId(), updatedPortabilityJob);
     }
 
-    dataTransferResponse = new DataTransferResponse(request.getSource(),
-        request.getDestination(), request.getTransferDataType(), Status.INPROCESS,
-        authFlowConfiguration.getUrl());
+    dataTransferResponse =
+        new DataTransferResponse(
+            request.getSource(),
+            request.getDestination(),
+            request.getTransferDataType(),
+            Status.INPROCESS,
+            authFlowConfiguration.getUrl());
 
     logger.debug("redirecting to: {}", authFlowConfiguration.getUrl());
     // Mark the response as type Json and send
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
     objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
   }
 
-  /**
-   * Handles error response. TODO: Determine whether to return user facing error message here.
-   */
+  /** Handles error response. TODO: Determine whether to return user facing error message here. */
   public void handleError(HttpExchange exchange, DataTransferRequest request) throws IOException {
-    DataTransferResponse dataTransferResponse = new DataTransferResponse(request.getSource(),
-        request.getDestination(), request.getTransferDataType(), Status.ERROR, ERROR_PATH);
+    DataTransferResponse dataTransferResponse =
+        new DataTransferResponse(
+            request.getSource(),
+            request.getDestination(),
+            request.getTransferDataType(),
+            Status.ERROR,
+            ERROR_PATH);
     // Mark the response as type Json and send
-    exchange.getResponseHeaders()
+    exchange
+        .getResponseHeaders()
         .set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
     objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);

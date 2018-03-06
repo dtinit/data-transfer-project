@@ -18,19 +18,21 @@ package org.dataportabilityproject.spi.transfer.provider;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
-/**
- * Imports data into a destination service.
- */
+/** Imports data into a destination service. */
 public interface Importer<A extends AuthData, T extends DataModel> {
 
-    /**
-     * Imports data.
-     *
-     * @param jobId the current job id
-     * @param authData authentication information
-     * @param data the data
-     * @return the operation result
-     */
-    ImportResult importItem(String jobId, A authData, T data); // REVIEW: The original throws IOException. Continue to use or return as part of the result?
-
+  /**
+   * Imports data.
+   *
+   * @param jobId the current job id
+   * @param authData authentication information
+   * @param data the data
+   * @return the operation result
+   */
+  ImportResult importItem(
+      String jobId,
+      A authData,
+      T
+          data); // REVIEW: The original throws IOException. Continue to use or return as part of
+                 // the result?
 }

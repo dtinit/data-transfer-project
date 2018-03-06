@@ -18,7 +18,6 @@ package org.dataportabilityproject.types.transfer;
 /**
  * A uniquely identifiable entity in the system.
  *
- * TODO(rtannenbaum): Remove this class (current PR has a lot in it, do it in a separate one)
+ * <p>TODO(rtannenbaum): Remove this class (current PR has a lot in it, do it in a separate one)
  */
-public abstract class EntityType extends PortableType {
-}
+public abstract class EntityType extends PortableType {}

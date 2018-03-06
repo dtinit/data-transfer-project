@@ -22,9 +22,7 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 abstract class GoogleTokenData extends AuthData {
 
   public static AuthData create(
-      String accessToken,
-      String refreshToken,
-      String tokenServerEncodedUrl) {
+      String accessToken, String refreshToken, String tokenServerEncodedUrl) {
     return new AutoValue_GoogleTokenData(accessToken, refreshToken, tokenServerEncodedUrl);
   }
 

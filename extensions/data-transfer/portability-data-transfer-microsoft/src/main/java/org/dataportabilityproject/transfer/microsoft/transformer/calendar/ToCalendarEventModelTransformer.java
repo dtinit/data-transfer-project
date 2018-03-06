@@ -15,62 +15,65 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
-import org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
+import static java.util.Collections.emptyList;
+import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-
-import static java.util.Collections.emptyList;
-import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
+import org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 
 /**
- * Maps from a Graph API calendar event resource as defined by: https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/event
+ * Maps from a Graph API calendar event resource as defined by:
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/event
  */
-public class ToCalendarEventModelTransformer implements BiFunction<Map<String, Object>, TransformerContext, CalendarEventModel> {
+public class ToCalendarEventModelTransformer
+    implements BiFunction<Map<String, Object>, TransformerContext, CalendarEventModel> {
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public CalendarEventModel apply(Map<String, Object> event, TransformerContext context) {
-        if (!"singleInstance".equals(event.get("type"))) {   // support single instances for now;recurring events later
-            return null;
-        }
-        String calendarId = context.getProperty(CALENDAR_ID);
+  @Override
+  @SuppressWarnings("unchecked")
+  public CalendarEventModel apply(Map<String, Object> event, TransformerContext context) {
+    if (!"singleInstance"
+        .equals(event.get("type"))) { // support single instances for now;recurring events later
+      return null;
+    }
+    String calendarId = context.getProperty(CALENDAR_ID);
 
-        String title = (String) event.getOrDefault("subject", "");
-        String location = TransformerHelper.getOrDefault("location", "displayName", event, "");
+    String title = (String) event.getOrDefault("subject", "");
+    String location = TransformerHelper.getOrDefault("location", "displayName", event, "");
 
-        // Notes is itemBody resource type defined as: { "content": "string",  "contentType": "String"}
-        String notes = TransformerHelper.getOrDefault("body", "content", event, "");
+    // Notes is itemBody resource type defined as: { "content": "string",  "contentType": "String"}
+    String notes = TransformerHelper.getOrDefault("body", "content", event, "");
 
-        List<Map<String, Object>> rawAttendees = (List<Map<String, Object>>) event.getOrDefault("attendees", emptyList());
-        List<CalendarAttendeeModel> attendees = new ArrayList<>();
-        for (Object rawAttendee : rawAttendees) {
-            CalendarAttendeeModel attendee = context.transform(CalendarAttendeeModel.class, rawAttendee);
-            if (attendee != null) {
-                attendees.add(attendee);
-            }
-        }
-
-        CalendarEventModel.CalendarEventTime startTime = context.transform(CalendarEventModel.CalendarEventTime.class, event.get("start"));
-        if (startTime == null) {
-            context.problem("Could not parse start time. Skipping event.");
-            return null;
-        }
-
-        CalendarEventModel.CalendarEventTime endTime = context.transform(CalendarEventModel.CalendarEventTime.class, event.get("end"));
-        if (endTime == null) {
-            context.problem("Could not parse end time. Skipping event.");
-            return null;
-        }
-
-
-        return new CalendarEventModel(calendarId, title, notes, attendees, location, startTime, endTime);
+    List<Map<String, Object>> rawAttendees =
+        (List<Map<String, Object>>) event.getOrDefault("attendees", emptyList());
+    List<CalendarAttendeeModel> attendees = new ArrayList<>();
+    for (Object rawAttendee : rawAttendees) {
+      CalendarAttendeeModel attendee = context.transform(CalendarAttendeeModel.class, rawAttendee);
+      if (attendee != null) {
+        attendees.add(attendee);
+      }
     }
 
+    CalendarEventModel.CalendarEventTime startTime =
+        context.transform(CalendarEventModel.CalendarEventTime.class, event.get("start"));
+    if (startTime == null) {
+      context.problem("Could not parse start time. Skipping event.");
+      return null;
+    }
 
+    CalendarEventModel.CalendarEventTime endTime =
+        context.transform(CalendarEventModel.CalendarEventTime.class, event.get("end"));
+    if (endTime == null) {
+      context.problem("Could not parse end time. Skipping event.");
+      return null;
+    }
+
+    return new CalendarEventModel(
+        calendarId, title, notes, attendees, location, startTime, endTime);
+  }
 }
