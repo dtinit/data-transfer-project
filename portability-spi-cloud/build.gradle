@@ -17,7 +17,7 @@
 dependencies {
     compile project(':portability-types-transfer')
     compile project(':portability-api-launcher')
-    compile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
 }
 
@@ -25,7 +25,7 @@ sourceSets {
     main {
         java {
             // Includes generated AutoValue_ classes (build/classes/java) as source
-            srcDirs = ['build/classes/java','src/main/java']
+            srcDirs = ['build/classes/java', 'src/main/java']
         }
     }
     test {

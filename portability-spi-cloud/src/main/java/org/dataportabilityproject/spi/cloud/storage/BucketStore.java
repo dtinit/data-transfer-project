@@ -19,8 +19,8 @@ package org.dataportabilityproject.spi.cloud.storage;
 /**
  * Object storage in buckets.
  *
- * This class is intended to be implemented by extensions that support storage in various back-end
- * services.
+ * <p>This class is intended to be implemented by extensions that support storage in various
+ * back-end services.
  */
 public interface BucketStore {
   // Get an app credential (i.e. app key or secret). Each implementation may have its own convention
