@@ -15,14 +15,13 @@
  */
 package org.dataportabilityproject.shared;
 
-/**
- * Global config for portability code specific for each environment.
- */
+/** Global config for portability code specific for each environment. */
 public final class Config {
-  /**
-   * Supported deployment environments.
-   */
+  /** Supported deployment environments. */
   public enum Environment {
-    LOCAL, TEST, QA, PROD;
+    LOCAL,
+    TEST,
+    QA,
+    PROD;
   }
 }

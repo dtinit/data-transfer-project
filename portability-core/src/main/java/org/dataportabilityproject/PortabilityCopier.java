@@ -37,27 +37,30 @@ public class PortabilityCopier {
   private static final Logger logger = LoggerFactory.getLogger(PortabilityCopier.class);
 
   // Start the copy data process
-  public static <T extends DataModel> void copyDataType(ServiceProviderRegistry registry,
+  public static <T extends DataModel> void copyDataType(
+      ServiceProviderRegistry registry,
       PortableDataType dataType,
       String exportService,
       AuthData exportAuthData,
       String importService,
       AuthData importAuthData,
-      UUID jobId) throws IOException {
+      UUID jobId)
+      throws IOException {
 
     Exporter<T> exporter = registry.getExporter(exportService, dataType, jobId, exportAuthData);
     Importer<T> importer = registry.getImporter(importService, dataType, jobId, importAuthData);
-    ExportInformation emptyExportInfo =
-        new ExportInformation(Optional.empty(), Optional.empty());
-    logger.debug("Starting copy job, id: {}, source: {}, destination: {}",
-        jobId, exportService, importService);
+    ExportInformation emptyExportInfo = new ExportInformation(Optional.empty(), Optional.empty());
+    logger.debug(
+        "Starting copy job, id: {}, source: {}, destination: {}",
+        jobId,
+        exportService,
+        importService);
     copy(exporter, importer, emptyExportInfo);
   }
 
   private static <T extends DataModel> void copy(
-      Exporter<T> exporter,
-      Importer<T> importer,
-      ExportInformation exportInformation) throws IOException {
+      Exporter<T> exporter, Importer<T> importer, ExportInformation exportInformation)
+      throws IOException {
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
     // NOTE: order is important below, do the import of all the items, then do continuation
@@ -79,7 +82,9 @@ public class PortabilityCopier {
       // Process the next page of items for the resource
       if (null != continuationInfo.getPaginationInformation()) {
         logger.debug("Start off a new copy iteration with pagination info");
-        copy(exporter, importer,
+        copy(
+            exporter,
+            importer,
             new ExportInformation(
                 exportInformation.getResource(), // Resource with additional pages to fetch
                 Optional.of(continuationInfo.getPaginationInformation())));
@@ -88,13 +93,11 @@ public class PortabilityCopier {
       // Start processing sub-resources
       if (continuationInfo.getSubResources() != null
           && !continuationInfo.getSubResources().isEmpty()) {
-        logger.debug("Start off a new copy iteration with a sub resource, size: {}",
+        logger.debug(
+            "Start off a new copy iteration with a sub resource, size: {}",
             continuationInfo.getSubResources().size());
         for (Resource resource : continuationInfo.getSubResources()) {
-          copy(
-              exporter,
-              importer,
-              new ExportInformation(Optional.of(resource), Optional.empty()));
+          copy(exporter, importer, new ExportInformation(Optional.of(resource), Optional.empty()));
         }
       }
     }

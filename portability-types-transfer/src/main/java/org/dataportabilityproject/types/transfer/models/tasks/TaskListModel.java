@@ -20,22 +20,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 public class TaskListModel extends DataModel {
-    private final String id;
-    private final String name;
+  private final String id;
+  private final String name;
 
-    @JsonCreator
-    public TaskListModel(
-        @JsonProperty("id") String id,
-        @JsonProperty("name") String name) {
-        this.id = id;
-        this.name = name;
-    }
+  @JsonCreator
+  public TaskListModel(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+    this.id = id;
+    this.name = name;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 }

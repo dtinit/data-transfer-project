@@ -15,30 +15,32 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
+import java.util.Map;
+import java.util.function.BiFunction;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
-import java.util.Map;
-import java.util.function.BiFunction;
-
 /**
- * Maps from a Graph API calendar resource as defined by: https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/calendar.
+ * Maps from a Graph API calendar resource as defined by:
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/calendar.
  */
-public class ToCalendarModelTransformer implements BiFunction<Map<String, Object>, TransformerContext, CalendarModel> {
+public class ToCalendarModelTransformer
+    implements BiFunction<Map<String, Object>, TransformerContext, CalendarModel> {
 
-    @Override
-    public CalendarModel apply(Map<String, Object> calendar, TransformerContext context) {
-        String id = (String) calendar.get("id");
-        if (id == null) {
-            context.problem("Calendar id not found");
-            return null;
-        }
-
-        String name = (String) calendar.get("name");
-        if (name == null) {
-            context.problem("Calendar name not found");
-            return null;
-        }
-        return new CalendarModel(id, name, name);  // use name as description since it does not exist in Office
+  @Override
+  public CalendarModel apply(Map<String, Object> calendar, TransformerContext context) {
+    String id = (String) calendar.get("id");
+    if (id == null) {
+      context.problem("Calendar id not found");
+      return null;
     }
+
+    String name = (String) calendar.get("name");
+    if (name == null) {
+      context.problem("Calendar name not found");
+      return null;
+    }
+    return new CalendarModel(
+        id, name, name); // use name as description since it does not exist in Office
+  }
 }

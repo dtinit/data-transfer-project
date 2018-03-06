@@ -15,33 +15,30 @@
  */
 package org.dataportabilityproject.webapp;
 
+import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import org.dataportabilityproject.ServiceProviderRegistry;
 import org.dataportabilityproject.shared.PortableDataType;
 import org.dataportabilityproject.types.client.transfer.ListDataTypesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.apache.axis.transport.http.HTTPConstants.HEADER_CONTENT_TYPE;
-
-/**
- * HTTP Handler for the listDataTypes service
- */
+/** HTTP Handler for the listDataTypes service */
 final class ListDataTypesHandler implements HttpHandler {
 
   public static final String PATH = "/_/listDataTypes";
-  private final static Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
-  private final static ObjectMapper objectMapper = new ObjectMapper();
+  private static final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   private final ServiceProviderRegistry serviceProviderRegistry;
 
   @Inject
@@ -71,8 +68,8 @@ final class ListDataTypesHandler implements HttpHandler {
       }
     }
 
-    ListDataTypesResponse response = new ListDataTypesResponse(
-        data_types.toArray(new String[data_types.size()]));
+    ListDataTypesResponse response =
+        new ListDataTypesResponse(data_types.toArray(new String[data_types.size()]));
     exchange.sendResponseHeaders(200, 0);
     objectMapper.writeValue(exchange.getResponseBody(), response);
   }
@@ -82,10 +79,7 @@ final class ListDataTypesHandler implements HttpHandler {
    * that can import and at least one registered service that can export.
    */
   private boolean hasImportAndExport(PortableDataType type) throws Exception {
-    return
-        (serviceProviderRegistry.getServiceProvidersThatCanExport(type).size() > 0)
-            &&
-            (serviceProviderRegistry.getServiceProvidersThatCanImport(type).size() > 0);
+    return (serviceProviderRegistry.getServiceProvidersThatCanExport(type).size() > 0)
+        && (serviceProviderRegistry.getServiceProvidersThatCanImport(type).size() > 0);
   }
-
 }

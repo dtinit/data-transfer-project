@@ -31,11 +31,11 @@ import java.util.Map;
 import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.FrontendConstantUrls;
+import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.FrontendConstantUrls;
-import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.TypeManager;
@@ -53,13 +53,10 @@ import org.slf4j.LoggerFactory;
  */
 final class Oauth2CallbackHandler implements HttpHandler {
 
-  private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
   public static final String PATH = "/callback/";
-
   // TODO: obtain from flags
   private static final boolean IS_LOCAL = true;
-
-
+  private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
   private final AuthServiceProviderRegistry registry;
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -72,8 +69,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
       TypeManager typeManager,
-      ApiSettings apiSettings
-  ) {
+      ApiSettings apiSettings) {
     this.registry = registry;
     this.store = store;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
@@ -100,8 +96,8 @@ final class Oauth2CallbackHandler implements HttpHandler {
     try {
       Headers requestHeaders = exchange.getRequestHeaders();
 
-      String requestURL = ReferenceApiUtils
-          .createURL(
+      String requestURL =
+          ReferenceApiUtils.createURL(
               requestHeaders.getFirst(HttpHeaders.HOST),
               exchange.getRequestURI().toString(),
               IS_LOCAL);
@@ -117,45 +113,52 @@ final class Oauth2CallbackHandler implements HttpHandler {
       // retrieve cookie from exchange
       Map<String, HttpCookie> httpCookies = ReferenceApiUtils.getCookies(requestHeaders);
       HttpCookie encodedIdCookie = httpCookies.get(JsonKeys.ID_COOKIE_KEY);
-      Preconditions
-          .checkArgument(
-              encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
-              "Encoded Id cookie required");
+      Preconditions.checkArgument(
+          encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
+          "Encoded Id cookie required");
 
       UUID jobId = ReferenceApiUtils.decodeId(encodedIdCookie.getValue());
       UUID jobIdFromState = ReferenceApiUtils.decodeId(authResponse.getState());
 
       // TODO: Remove sanity check
-      Preconditions
-          .checkState(jobIdFromState.equals(jobId), "Job id in cookie [%s] and request [%s] should match",
-              jobId, jobIdFromState);
+      Preconditions.checkState(
+          jobIdFromState.equals(jobId),
+          "Job id in cookie [%s] and request [%s] should match",
+          jobId,
+          jobIdFromState);
 
       PortabilityJob job = store.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?
       AuthMode authMode = ReferenceApiUtils.getAuthMode(exchange.getRequestHeaders());
-      String service =
-          (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
-      Preconditions.checkState(!Strings.isNullOrEmpty(service),
-          "service not found, service: %s authMode: %s, jobId: %s", service, authMode,
+      String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
+      Preconditions.checkState(
+          !Strings.isNullOrEmpty(service),
+          "service not found, service: %s authMode: %s, jobId: %s",
+          service,
+          authMode,
           jobId.toString());
 
-      AuthDataGenerator generator = registry.getAuthDataGenerator(service, job.transferDataType(),
-          authMode);
-      Preconditions.checkNotNull(generator, "Generator not found for type: %s, service: %s",
-          job.transferDataType(), service);
+      AuthDataGenerator generator =
+          registry.getAuthDataGenerator(service, job.transferDataType(), authMode);
+      Preconditions.checkNotNull(
+          generator,
+          "Generator not found for type: %s, service: %s",
+          job.transferDataType(),
+          service);
 
       // Obtain the session key for this job
       String encodedSessionKey = job.jobAuthorization().encryptedSessionKey();
-      SecretKey key = symmetricKeyGenerator
-          .parse(BaseEncoding.base64Url().decode(encodedSessionKey));
+      SecretKey key =
+          symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(encodedSessionKey));
 
       // Retrieve initial auth data, if it existed
       AuthData initialAuthData = null;
       String encryptedInitialAuthData =
-          (authMode == AuthMode.EXPORT) ? job.jobAuthorization()
-              .encryptedInitialExportAuthData() : job.jobAuthorization().encryptedInitialImportAuthData();
+          (authMode == AuthMode.EXPORT)
+              ? job.jobAuthorization().encryptedInitialExportAuthData()
+              : job.jobAuthorization().encryptedInitialImportAuthData();
       if (encryptedInitialAuthData != null) {
         // Retrieve and parse the session key from the job
         // Decrypt and deserialize the object
@@ -165,9 +168,13 @@ final class Oauth2CallbackHandler implements HttpHandler {
 
       // TODO: Use UUID instead of UUID.toString()
       // Generate auth data
-      AuthData authData = generator
-          .generateAuthData(apiSettings.getBaseApiUrl(), authResponse.getCode(), jobId.toString(),
-              initialAuthData, null);
+      AuthData authData =
+          generator.generateAuthData(
+              apiSettings.getBaseApiUrl(),
+              authResponse.getCode(),
+              jobId.toString(),
+              initialAuthData,
+              null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Serialize and encrypt the auth data
@@ -177,8 +184,10 @@ final class Oauth2CallbackHandler implements HttpHandler {
       ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
       redirect =
-          apiSettings.getBaseUrl() + ((authMode == AuthMode.EXPORT)
-              ? FrontendConstantUrls.URL_NEXT_PAGE : FrontendConstantUrls.URL_COPY_PAGE);
+          apiSettings.getBaseUrl()
+              + ((authMode == AuthMode.EXPORT)
+                  ? FrontendConstantUrls.URL_NEXT_PAGE
+                  : FrontendConstantUrls.URL_COPY_PAGE);
     } catch (Exception e) {
       logger.error("Error handling request: {}", e);
       throw e;
@@ -187,4 +196,3 @@ final class Oauth2CallbackHandler implements HttpHandler {
     return redirect;
   }
 }
-

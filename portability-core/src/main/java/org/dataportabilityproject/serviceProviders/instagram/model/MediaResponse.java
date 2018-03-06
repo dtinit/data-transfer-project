@@ -17,9 +17,7 @@ package org.dataportabilityproject.serviceProviders.instagram.model;
 
 import java.util.List;
 
-/**
- * DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping.
- */
+/** DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping. */
 public final class MediaResponse {
 
   private Meta meta;

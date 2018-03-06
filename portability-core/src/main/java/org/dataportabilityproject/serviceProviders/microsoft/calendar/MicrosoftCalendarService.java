@@ -44,9 +44,7 @@ import org.dataportabilityproject.dataModels.calendar.CalendarModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
 
-/**
- * Stub for the Microsoft calendar service.
- */
+/** Stub for the Microsoft calendar service. */
 public class MicrosoftCalendarService
     implements Importer<CalendarModelWrapper>, Exporter<CalendarModelWrapper> {
 
@@ -61,8 +59,10 @@ public class MicrosoftCalendarService
             request -> {
               String headerValue = HEADER_PREFIX + token;
               request.getHeaders().setAuthorization(headerValue);
-              request.getHeaders().setAccept(
-                  "text/*, application/xml, application/json;odata.metadata=none;odata.streaming=false");
+              request
+                  .getHeaders()
+                  .setAccept(
+                      "text/*, application/xml, application/json;odata.metadata=none;odata.streaming=false");
               // TODO: add if needed: request.getHeaders().set("X-AnchorMailbox", account);
               request.getHeaders().setUserAgent("PlayGroundAgent/1.0");
             });
@@ -81,8 +81,7 @@ public class MicrosoftCalendarService
   }
 
   @Override
-  public CalendarModelWrapper export(ExportInformation exportInformation)
-      throws IOException {
+  public CalendarModelWrapper export(ExportInformation exportInformation) throws IOException {
     if (exportInformation.getResource().isPresent()) {
       return getCalendarEvents(
           ((IdOnlyResource) exportInformation.getResource().get()).getId(),
@@ -90,7 +89,6 @@ public class MicrosoftCalendarService
     } else {
       return getCalendars(exportInformation.getPaginationInformation());
     }
-
   }
 
   private CalendarModelWrapper getCalendars(Optional<PaginationInformation> pageInfo)
@@ -127,24 +125,23 @@ public class MicrosoftCalendarService
       resources.add(new IdOnlyResource(calendar.id));
     }
 
-    return new CalendarModelWrapper(
-        calendars,
-        null,
-        new ContinuationInformation(resources, null));
-
+    return new CalendarModelWrapper(calendars, null, new ContinuationInformation(resources, null));
   }
 
-  private CalendarModelWrapper getCalendarEvents(String calendarId,
-      Optional<PaginationInformation> pageInfo) throws IOException {
-    ZonedDateTime end = ZonedDateTime.now();     // The current date and time
+  private CalendarModelWrapper getCalendarEvents(
+      String calendarId, Optional<PaginationInformation> pageInfo) throws IOException {
+    ZonedDateTime end = ZonedDateTime.now(); // The current date and time
     ZonedDateTime begin = end.minusDays(90);
 
-    String eventsUrl = String.format(
-        "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
-        calendarId, formatTime(begin), formatTime(end));
+    String eventsUrl =
+        String.format(
+            "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
+            calendarId, formatTime(begin), formatTime(end));
     System.out.println("calendar: " + calendarId);
-    System.out.println("eventsUrl: "
-        + eventsUrl); // TODO: Determine why this URL works in the MS Oauth Playground but not here
+    System.out.println(
+        "eventsUrl: "
+            + eventsUrl); // TODO: Determine why this URL works in the MS Oauth Playground but not
+                          // here
 
     // Make requests for events
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(eventsUrl));
@@ -186,9 +183,9 @@ public class MicrosoftCalendarService
 
     @Override
     public String toString() {
-      return String.format("OutlookCalendarList(context=%s list=%s)",
-          context,
-          (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
+      return String.format(
+          "OutlookCalendarList(context=%s list=%s)",
+          context, (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
     }
   }
 
@@ -208,8 +205,7 @@ public class MicrosoftCalendarService
 
     @Override
     public String toString() {
-      return String.format("OutlookCalendar(Id=%s Name=%s Color=%s)",
-          id, name, color);
+      return String.format("OutlookCalendar(Id=%s Name=%s Color=%s)", id, name, color);
     }
   }
 }

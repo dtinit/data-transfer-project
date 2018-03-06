@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.serviceProviders.smugmug.model;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SmugMugPageInfo {

@@ -15,34 +15,33 @@
  */
 package org.dataportabilityproject.types.transfer.models.calendar;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CalendarAttendeeModel {
-    private final String displayName;
-    private final String email;
-    private final boolean optional;
+  private final String displayName;
+  private final String email;
+  private final boolean optional;
 
-    @JsonCreator
-    public CalendarAttendeeModel(
-        @JsonProperty("displayName") String displayName,
-        @JsonProperty("email") String email,
-        @JsonProperty("optional") boolean optional) {
-        this.displayName = displayName;
-        this.email = email;
-        this.optional = optional;
-    }
+  @JsonCreator
+  public CalendarAttendeeModel(
+      @JsonProperty("displayName") String displayName,
+      @JsonProperty("email") String email,
+      @JsonProperty("optional") boolean optional) {
+    this.displayName = displayName;
+    this.email = email;
+    this.optional = optional;
+  }
 
-    public boolean getOptional() {
-        return optional;
-    }
+  public boolean getOptional() {
+    return optional;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public String getDisplayName() {
-        return displayName;
-    }
+  public String getDisplayName() {
+    return displayName;
+  }
 }

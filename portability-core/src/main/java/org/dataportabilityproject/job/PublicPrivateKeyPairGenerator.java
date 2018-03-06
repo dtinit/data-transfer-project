@@ -29,16 +29,12 @@ import java.security.spec.X509EncodedKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Utility methods for generating, encoding, and decoding asymmetric keys.
- */
+/** Utility methods for generating, encoding, and decoding asymmetric keys. */
 public class PublicPrivateKeyPairGenerator {
   private static final Logger logger = LoggerFactory.getLogger(PublicPrivateKeyPairGenerator.class);
   private static final String ALGORITHM = "RSA";
 
-  /**
-   * Generate a new KeyPair.
-   */
+  /** Generate a new KeyPair. */
   public static KeyPair generateKeyPair() {
     KeyPairGenerator kpg = null;
     try {
@@ -55,9 +51,7 @@ public class PublicPrivateKeyPairGenerator {
     return BaseEncoding.base64Url().encode(key.getEncoded());
   }
 
-  /**
-   * Parses the given {@code encoded} public key.
-   */
+  /** Parses the given {@code encoded} public key. */
   public static PublicKey parsePublicKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
     EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
@@ -74,12 +68,9 @@ public class PublicPrivateKeyPairGenerator {
       logger.error("InvalidKeySpecException for: {}", spec.getEncoded().length, e);
       throw new RuntimeException("InvalidKeySpecException generating public key", e);
     }
-
   }
 
-  /**
-   * Parses the given {@code encoded} private key.
-   */
+  /** Parses the given {@code encoded} private key. */
   public static PrivateKey parsePrivateKey(String encoded) {
     byte[] decoded = BaseEncoding.base64Url().decode(encoded);
     EncodedKeySpec spec = new X509EncodedKeySpec(decoded);

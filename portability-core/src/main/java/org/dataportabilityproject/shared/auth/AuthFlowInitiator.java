@@ -19,9 +19,7 @@ import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
-/**
- * Represents the authUrl, and optional state, to request authorization for a service.
- */
+/** Represents the authUrl, and optional state, to request authorization for a service. */
 @AutoValue
 public abstract class AuthFlowInitiator {
 
@@ -34,5 +32,7 @@ public abstract class AuthFlowInitiator {
   }
 
   public abstract String authUrl();
-  @Nullable public abstract AuthData initialAuthData();
+
+  @Nullable
+  public abstract AuthData initialAuthData();
 }

@@ -40,49 +40,44 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Factory that can create cloud interfaces when running locally.
- */
+/** Factory that can create cloud interfaces when running locally. */
 @Singleton
 public class LocalCloudFactory implements CloudFactory {
-  private final Logger logger = LoggerFactory.getLogger(LocalCloudFactory.class);
   private static final String DUMMY_PROJECT_ID = "local-dev";
   private static final String USER_KEY_KIND = "local-user-key";
   private static final String JOB_KIND = "local-job";
   private static final LoadingCache<String, LoadingCache<String, JobDataCache>> JOB_DATA_CACHE =
       CacheBuilder.newBuilder()
-      .build(new CacheLoader<String, LoadingCache<String, JobDataCache>>() {
-        @Override
-        public LoadingCache<String, JobDataCache> load(String id) throws Exception {
-          return CacheBuilder.newBuilder()
-              .build(new CacheLoader<String, JobDataCache>() {
+          .build(
+              new CacheLoader<String, LoadingCache<String, JobDataCache>>() {
                 @Override
-                public JobDataCache load(String service) throws Exception {
-                  return new InMemoryJobDataCache();
+                public LoadingCache<String, JobDataCache> load(String id) throws Exception {
+                  return CacheBuilder.newBuilder()
+                      .build(
+                          new CacheLoader<String, JobDataCache>() {
+                            @Override
+                            public JobDataCache load(String service) throws Exception {
+                              return new InMemoryJobDataCache();
+                            }
+                          });
                 }
               });
-        }
-      });
-
   // Google DataStore emulator is used for local development
-  private static final Datastore datastore = DatastoreOptions.newBuilder()
-      .setHost("http://localhost:8081") // TODO: move to yaml config in case non-default is used
-      .setProjectId(DUMMY_PROJECT_ID)
-      .build()
-      .getService();
-
-
+  private static final Datastore datastore =
+      DatastoreOptions.newBuilder()
+          .setHost("http://localhost:8081") // TODO: move to yaml config in case non-default is used
+          .setProjectId(DUMMY_PROJECT_ID)
+          .build()
+          .getService();
+  private final Logger logger = LoggerFactory.getLogger(LocalCloudFactory.class);
   private final Supplier<JobStore> jobStoreSupplier;
 
   @Inject
   public LocalCloudFactory(CommonSettings commonSettings) {
     if (commonSettings.getEncryptedFlow()) {
-      this.jobStoreSupplier =
-          Suppliers.memoize( () ->
-              new GoogleJobStore(datastore));
+      this.jobStoreSupplier = Suppliers.memoize(() -> new GoogleJobStore(datastore));
     } else {
-      this.jobStoreSupplier =
-          Suppliers.memoize( () -> new LocalJobStore());
+      this.jobStoreSupplier = Suppliers.memoize(() -> new LocalJobStore());
     }
   }
 
@@ -111,11 +106,14 @@ public class LocalCloudFactory implements CloudFactory {
 
   @Override
   public void clearJobData(UUID jobId) {
-    QueryResults<Key> results = datastore.run(Query.newKeyQueryBuilder()
-        .setKind(USER_KEY_KIND)
-        .setFilter(PropertyFilter.hasAncestor(
-            datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId.toString())))
-        .build());
+    QueryResults<Key> results =
+        datastore.run(
+            Query.newKeyQueryBuilder()
+                .setKind(USER_KEY_KIND)
+                .setFilter(
+                    PropertyFilter.hasAncestor(
+                        datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId.toString())))
+                .build());
     results.forEachRemaining(datastore::delete);
   }
 }

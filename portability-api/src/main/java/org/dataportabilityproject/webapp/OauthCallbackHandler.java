@@ -43,9 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HttpHandler for callbacks from Oauth1 authorization flow. Redirects client request to:
- *   - the next authorization (if this is after the source service auth) or
- *   - the copy page (if this is after the destination service auth)
+ * HttpHandler for callbacks from Oauth1 authorization flow. Redirects client request to: - the next
+ * authorization (if this is after the source service auth) or - the copy page (if this is after the
+ * destination service auth)
  */
 final class OauthCallbackHandler implements HttpHandler {
 
@@ -90,18 +90,18 @@ final class OauthCallbackHandler implements HttpHandler {
 
       // Get the URL for the request - needed for the authorization.
 
-      String requestURL = PortabilityApiUtils
-          .createURL(
+      String requestURL =
+          PortabilityApiUtils.createURL(
               requestHeaders.getFirst(HEADER_HOST),
               exchange.getRequestURI().toString(),
               commonSettings.getEnv() != Environment.LOCAL);
 
       Map<String, String> requestParams = PortabilityApiUtils.getRequestParams(exchange);
 
-      String encodedIdCookie = PortabilityApiUtils
-          .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
+      String encodedIdCookie =
+          PortabilityApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
 
       String oauthToken = requestParams.get("oauth_token");
       Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthToken), "Missing oauth_token");
@@ -110,40 +110,44 @@ final class OauthCallbackHandler implements HttpHandler {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthVerifier), "Missing oauth_verifier");
 
       // Valid job must be present
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
       UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
 
-      LegacyPortabilityJob job = commonSettings.getEncryptedFlow()
-          ? store.find(jobId, JobAuthorization.State.INITIAL) : store.find(jobId);
+      LegacyPortabilityJob job =
+          commonSettings.getEncryptedFlow()
+              ? store.find(jobId, JobAuthorization.State.INITIAL)
+              : store.find(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
       PortableDataType dataType = JobUtils.getDataType(job.dataType());
 
-      ServiceMode serviceMode = PortabilityApiUtils.getServiceMode(
-          job,
-          exchange.getRequestHeaders(),
-          commonSettings.getEncryptedFlow());
+      ServiceMode serviceMode =
+          PortabilityApiUtils.getServiceMode(
+              job, exchange.getRequestHeaders(), commonSettings.getEncryptedFlow());
 
       // TODO: Determine service from job or from authUrl path?
       String service =
           serviceMode == ServiceMode.EXPORT ? job.exportService() : job.importService();
-      Preconditions.checkState(!Strings.isNullOrEmpty(service),
-          "service not found, service: %s serviceMode: %s, job id: %s", service, serviceMode,
+      Preconditions.checkState(
+          !Strings.isNullOrEmpty(service),
+          "service not found, service: %s serviceMode: %s, job id: %s",
+          service,
+          serviceMode,
           jobId);
 
       // Obtain the ServiceProvider from the registry
-      OnlineAuthDataGenerator generator = serviceProviderRegistry
-          .getOnlineAuth(service, dataType, serviceMode);
+      OnlineAuthDataGenerator generator =
+          serviceProviderRegistry.getOnlineAuth(service, dataType, serviceMode);
 
       // Retrieve initial auth data, if it existed
       AuthData initialAuthData = JobUtils.getInitialAuthData(job, serviceMode);
-      Preconditions
-          .checkNotNull(initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
+      Preconditions.checkNotNull(
+          initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
 
       // Generate and store auth data
-      AuthData authData = generator
-          .generateAuthData(PortabilityApiFlags.baseApiUrl(), oauthVerifier, jobId, initialAuthData,
-              null);
+      AuthData authData =
+          generator.generateAuthData(
+              PortabilityApiFlags.baseApiUrl(), oauthVerifier, jobId, initialAuthData, null);
 
       if (!commonSettings.getEncryptedFlow()) {
         // Update the job
@@ -151,13 +155,15 @@ final class OauthCallbackHandler implements HttpHandler {
         store.update(jobId, updatedJob, null);
       } else {
         // Set new cookie
-        cryptoHelper
-            .encryptAndSetCookie(exchange.getResponseHeaders(), jobId, serviceMode, authData);
+        cryptoHelper.encryptAndSetCookie(
+            exchange.getResponseHeaders(), jobId, serviceMode, authData);
       }
 
       redirect =
-          PortabilityApiFlags.baseUrl() + ((serviceMode == ServiceMode.EXPORT)
-              ? FrontendConstantUrls.next : FrontendConstantUrls.copy);
+          PortabilityApiFlags.baseUrl()
+              + ((serviceMode == ServiceMode.EXPORT)
+                  ? FrontendConstantUrls.next
+                  : FrontendConstantUrls.copy);
     } catch (Exception e) {
       logger.error("Error handling request", e);
       throw e;

@@ -28,22 +28,20 @@ import java.io.IOException;
 import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 
-/**
- * Crypto key management using Google's Cloud KMS.
- */
+/** Crypto key management using Google's Cloud KMS. */
 final class GoogleCryptoKeyManagementSystem implements CryptoKeyStore {
   // Key for encrypting app secrets.
-  private static final String SECRETS_CRYPTO_KEY_FMT_STRING = "projects/%s/locations/global/"
-      + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
+  private static final String SECRETS_CRYPTO_KEY_FMT_STRING =
+      "projects/%s/locations/global/"
+          + "keyRings/portability_secrets/cryptoKeys/portability_secrets_key";
 
   private final CloudKMS cloudKMS;
   private final String secretsCryptoKey;
 
   @Inject
   GoogleCryptoKeyManagementSystem(
-      HttpTransport transport,
-      JsonFactory jsonFactory,
-      @ProjectId String projectId) throws GoogleCredentialException {
+      HttpTransport transport, JsonFactory jsonFactory, @ProjectId String projectId)
+      throws GoogleCredentialException {
     GoogleCredential credential;
     try {
       credential = GoogleCredential.getApplicationDefault(transport, jsonFactory);
@@ -54,17 +52,23 @@ final class GoogleCryptoKeyManagementSystem implements CryptoKeyStore {
     if (credential.createScopedRequired()) {
       credential = credential.createScoped(CloudKMSScopes.all());
     }
-    this.cloudKMS = new CloudKMS.Builder(transport, jsonFactory, credential)
-        .setApplicationName("GoogleCryptoKeyManagementSystem")
-        .build();
+    this.cloudKMS =
+        new CloudKMS.Builder(transport, jsonFactory, credential)
+            .setApplicationName("GoogleCryptoKeyManagementSystem")
+            .build();
     this.secretsCryptoKey = String.format(SECRETS_CRYPTO_KEY_FMT_STRING, projectId);
   }
 
   public byte[] decryptAppSecret(byte[] ciphertext) throws IOException {
     DecryptRequest request = new DecryptRequest().encodeCiphertext(ciphertext);
-    DecryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
-        .decrypt(secretsCryptoKey, request)
-        .execute();
+    DecryptResponse response =
+        cloudKMS
+            .projects()
+            .locations()
+            .keyRings()
+            .cryptoKeys()
+            .decrypt(secretsCryptoKey, request)
+            .execute();
 
     return response.decodePlaintext();
   }

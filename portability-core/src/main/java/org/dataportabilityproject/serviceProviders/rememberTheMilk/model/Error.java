@@ -17,9 +17,7 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk.model;
 
 import com.google.api.client.util.Key;
 
-/**
- * Error details from RTM
- */
+/** Error details from RTM */
 public class Error {
 
   @Key("@code")

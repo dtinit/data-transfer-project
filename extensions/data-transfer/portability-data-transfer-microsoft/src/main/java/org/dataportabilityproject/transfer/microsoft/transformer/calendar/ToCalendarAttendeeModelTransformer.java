@@ -15,31 +15,31 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
+import java.util.Map;
+import java.util.function.BiFunction;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
 import org.dataportabilityproject.transfer.microsoft.transformer.common.TransformerHelper;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
 
-import java.util.Map;
-import java.util.function.BiFunction;
-
 /**
- * Maps from a Graph API calendar attendee resource as defined by https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/attendee
+ * Maps from a Graph API calendar attendee resource as defined by
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/attendee
  */
-public class ToCalendarAttendeeModelTransformer implements BiFunction<Map<String, Object>, TransformerContext, CalendarAttendeeModel> {
+public class ToCalendarAttendeeModelTransformer
+    implements BiFunction<Map<String, Object>, TransformerContext, CalendarAttendeeModel> {
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public CalendarAttendeeModel apply(Map<String, Object> attendee, TransformerContext context) {
-        if (attendee == null) {
-            return null;
-        }
-
-        boolean optional = !attendee.getOrDefault("type", "false").equals("required");
-        Map<String, ?> emailAddress = (Map<String, ?>) attendee.get("emailAddress");
-        String displayName = TransformerHelper.getString("name", emailAddress).orElse("");
-        String email = TransformerHelper.getString("address", emailAddress).orElse("");
-
-        return new CalendarAttendeeModel(displayName, email, optional);
+  @Override
+  @SuppressWarnings("unchecked")
+  public CalendarAttendeeModel apply(Map<String, Object> attendee, TransformerContext context) {
+    if (attendee == null) {
+      return null;
     }
 
+    boolean optional = !attendee.getOrDefault("type", "false").equals("required");
+    Map<String, ?> emailAddress = (Map<String, ?>) attendee.get("emailAddress");
+    String displayName = TransformerHelper.getString("name", emailAddress).orElse("");
+    String email = TransformerHelper.getString("address", emailAddress).orElse("");
+
+    return new CalendarAttendeeModel(displayName, email, optional);
+  }
 }

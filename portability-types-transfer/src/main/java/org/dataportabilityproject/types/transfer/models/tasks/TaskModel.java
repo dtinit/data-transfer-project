@@ -19,29 +19,29 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TaskModel {
-    private final String taskListId;
-    private final String text;
-    private final String notes;
+  private final String taskListId;
+  private final String text;
+  private final String notes;
 
-    @JsonCreator
-    public TaskModel(
-        @JsonProperty("taskListId") String taskListId,
-        @JsonProperty("text") String text,
-        @JsonProperty("notes") String notes) {
-        this.taskListId = taskListId;
-        this.text = text;
-        this.notes = notes;
-    }
+  @JsonCreator
+  public TaskModel(
+      @JsonProperty("taskListId") String taskListId,
+      @JsonProperty("text") String text,
+      @JsonProperty("notes") String notes) {
+    this.taskListId = taskListId;
+    this.text = text;
+    this.notes = notes;
+  }
 
-    public String getText() {
-        return text;
-    }
+  public String getText() {
+    return text;
+  }
 
-    public String getNotes() {
-        return notes;
-    }
+  public String getNotes() {
+    return notes;
+  }
 
-    public String getTaskListId() {
-        return taskListId;
-    }
+  public String getTaskListId() {
+    return taskListId;
+  }
 }

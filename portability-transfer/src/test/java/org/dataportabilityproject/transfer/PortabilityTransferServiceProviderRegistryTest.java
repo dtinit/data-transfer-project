@@ -29,11 +29,10 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 public class PortabilityTransferServiceProviderRegistryTest {
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
-  public void requireImportAndExportTest(){
+  public void requireImportAndExportTest() {
     List<String> supportedImportTypes = ImmutableList.of("photos", "contacts");
     List<String> supportedExportTypes = ImmutableList.of("contacts");
 
@@ -45,19 +44,23 @@ public class PortabilityTransferServiceProviderRegistryTest {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("available for import but not export");
 
-    TransferServiceProviderRegistry registry = new PortabilityTransferServiceProviderRegistry(ImmutableList.of("mockServiceProvider"),
-        ImmutableMap.of("mockServiceProvider", mockTransferProvider));
+    TransferServiceProviderRegistry registry =
+        new PortabilityTransferServiceProviderRegistry(
+            ImmutableList.of("mockServiceProvider"),
+            ImmutableMap.of("mockServiceProvider", mockTransferProvider));
   }
 
   @Test
-  public void serviceProviderNotFoundTest(){
+  public void serviceProviderNotFoundTest() {
     TransferServiceProvider mockTransferProvider = mock(TransferServiceProvider.class);
     when(mockTransferProvider.getServiceId()).thenReturn("mockServiceProvider");
 
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("TransferServiceProvider not found");
 
-    TransferServiceProviderRegistry registry = new PortabilityTransferServiceProviderRegistry(ImmutableList.of("ServiceDoesNotExist"),
-        ImmutableMap.of("mockServiceProvider", mockTransferProvider));
+    TransferServiceProviderRegistry registry =
+        new PortabilityTransferServiceProviderRegistry(
+            ImmutableList.of("ServiceDoesNotExist"),
+            ImmutableMap.of("mockServiceProvider", mockTransferProvider));
   }
 }

@@ -17,13 +17,10 @@ package org.dataportabilityproject.gateway.action.createjob;
 
 import org.dataportabilityproject.types.client.transfer.AbstractDataTransfer;
 
-/**
- * A request to initiate a data transfer operation.
- */
+/** A request to initiate a data transfer operation. */
 public class CreateJobActionRequest extends AbstractDataTransfer {
 
-  public CreateJobActionRequest(String source, String destination,
-      String transferDataType) {
+  public CreateJobActionRequest(String source, String destination, String transferDataType) {
     super(source, destination, transferDataType);
   }
 }

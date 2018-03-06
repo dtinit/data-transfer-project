@@ -44,19 +44,18 @@ import org.simpleframework.http.parse.CookieParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Contains utility functions for use by the PortabilityServer HttpHandlers
- */
+/** Contains utility functions for use by the PortabilityServer HttpHandlers */
 public class PortabilityApiUtils {
 
   /**
    * Attributes to attach to all cookies set by the API - Since HttpCookie doesnt support adding
    * arbitrary attributes, we need to do this manually by concatenating to the cookie string.
    *
-   * SameSite=lax specification allows cookies to be sent by the browser on top level GET requests
-   * and on requests from within the app.
+   * <p>SameSite=lax specification allows cookies to be sent by the browser on top level GET
+   * requests and on requests from within the app.
    */
-  public final static String COOKIE_ATTRIBUTES = "; Path=/; SameSite=lax";
+  public static final String COOKIE_ATTRIBUTES = "; Path=/; SameSite=lax";
+
   private static final Logger logger = LoggerFactory.getLogger(PortabilityApiUtils.class);
 
   /**
@@ -69,12 +68,9 @@ public class PortabilityApiUtils {
 
     logger.debug("createURL, scheme: {}, host: {}, URI: {}", scheme, host, URI);
     return scheme + host + URI;
-
   }
 
-  /**
-   * Returns the cookie specified in headers for the provided {@code} key.
-   */
+  /** Returns the cookie specified in headers for the provided {@code} key. */
   public static String getCookie(Headers headers, String key) {
     Map<String, HttpCookie> cookieMap = getCookies(headers);
     HttpCookie httpCookie = cookieMap.get(key);
@@ -85,9 +81,7 @@ public class PortabilityApiUtils {
     return cookie;
   }
 
-  /**
-   * Returns a Map of HttpCookies provided from the headers.
-   */
+  /** Returns a Map of HttpCookies provided from the headers. */
   public static Map<String, HttpCookie> getCookies(Headers headers) {
     List<String> cookies = headers.get(HEADER_COOKIE);
     Map<String, HttpCookie> cookieMap = new HashMap<>();
@@ -97,8 +91,8 @@ public class PortabilityApiUtils {
       CookieParser parser = new CookieParser(cookieStr);
       for (Cookie c : parser) {
         HttpCookie httpCookie = new HttpCookie(c.getName(), c.getValue());
-        logger.debug("parsed cookie, name: {}, value: {}",
-            httpCookie.getName(), httpCookie.getValue());
+        logger.debug(
+            "parsed cookie, name: {}, value: {}", httpCookie.getName(), httpCookie.getValue());
         cookieMap.put(httpCookie.getName(), httpCookie);
       }
     }
@@ -106,16 +100,16 @@ public class PortabilityApiUtils {
     return cookieMap;
   }
 
-  /**
-   * Returns map of request parameters from the RequestBody of HttpExchange.
-   */
+  /** Returns map of request parameters from the RequestBody of HttpExchange. */
   public static Map<String, String> getPostParams(HttpExchange exchange) {
     Map<String, String> requestParameters = new HashMap<>();
 
     // postParams are provided in the form of:
     // dataType=1%3A+CALENDAR&exportService=1%3A+Google&importService=2%3A+Microsoft
-    String postParams = new BufferedReader(new InputStreamReader(exchange.getRequestBody()))
-        .lines().collect(Collectors.joining("\n"));
+    String postParams =
+        new BufferedReader(new InputStreamReader(exchange.getRequestBody()))
+            .lines()
+            .collect(Collectors.joining("\n"));
     logger.debug("post parameters: {}", postParams);
 
     parsePostParams(postParams, requestParameters);
@@ -126,9 +120,7 @@ public class PortabilityApiUtils {
     return requestParameters;
   }
 
-  /**
-   * Returns map of request parameters from the provided HttpExchange.
-   */
+  /** Returns map of request parameters from the provided HttpExchange. */
   public static Map<String, String> getRequestParams(HttpExchange exchange) {
     URIBuilder builder = new URIBuilder(exchange.getRequestURI());
     List<NameValuePair> queryParamPairs = builder.getQueryParams();
@@ -140,15 +132,12 @@ public class PortabilityApiUtils {
     return params;
   }
 
-
-  /**
-   * Hack! For now, if we don't have export auth data, assume it's for export.
-   */
-  public static ServiceMode getServiceMode(LegacyPortabilityJob job, Headers headers,
-      boolean useEncryptedFlow) {
+  /** Hack! For now, if we don't have export auth data, assume it's for export. */
+  public static ServiceMode getServiceMode(
+      LegacyPortabilityJob job, Headers headers, boolean useEncryptedFlow) {
     if (useEncryptedFlow) {
-      String exportAuthCookie = PortabilityApiUtils
-          .getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+      String exportAuthCookie =
+          PortabilityApiUtils.getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
       return (Strings.isNullOrEmpty(exportAuthCookie) ? ServiceMode.EXPORT : ServiceMode.IMPORT);
     } else {
       return (null == job.exportAuthData() ? ServiceMode.EXPORT : ServiceMode.IMPORT);
@@ -159,8 +148,8 @@ public class PortabilityApiUtils {
    * Returns whether or not the exchange is a valid request for the provided http method and
    * resource. If not, it will close the client connection.
    */
-  public static boolean validateRequest(HttpExchange exchange, HttpMethods supportedMethod,
-      String resourceRegex) throws IOException {
+  public static boolean validateRequest(
+      HttpExchange exchange, HttpMethods supportedMethod, String resourceRegex) throws IOException {
     String path = exchange.getRequestURI().getPath();
     if (!exchange.getRequestMethod().equalsIgnoreCase(supportedMethod.name())) {
       exchange.sendResponseHeaders(404, 0);
@@ -180,14 +169,13 @@ public class PortabilityApiUtils {
   }
 
   /**
-   * Validates that the JobId in the request matches the jobId in the xsrf header and contains
-   * Does not validate that the job id itself is valid. Returns JobID.
+   * Validates that the JobId in the request matches the jobId in the xsrf header and contains Does
+   * not validate that the job id itself is valid. Returns JobID.
    */
   public static UUID validateJobId(Headers requestHeaders, TokenManager tokenManager) {
-    String encodedIdCookie = PortabilityApiUtils
-        .getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+    String encodedIdCookie = PortabilityApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
     // Valid job must be present
     UUID jobId = JobUtils.decodeJobId(encodedIdCookie);
@@ -197,36 +185,33 @@ public class PortabilityApiUtils {
     String tokenCookie = PortabilityApiUtils.getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
 
     // Both header and token should be present
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenHeader),
-        "xsrf token header must be present");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tokenCookie),
-        "xsrf token cookie must be present");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(tokenHeader), "xsrf token header must be present");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(tokenCookie), "xsrf token cookie must be present");
 
     // The token present in the header should be the same as the token present in the cookie.
-    Preconditions.checkArgument(tokenCookie.equals(tokenHeader),
-        "xsrf token header and cookie must match");
+    Preconditions.checkArgument(
+        tokenCookie.equals(tokenHeader), "xsrf token header and cookie must match");
 
     // Verify that the token is actually valid in the tokenManager
-    Preconditions.checkArgument(tokenManager.verifyToken(tokenHeader),
-        "xsrf token provided is invalid");
+    Preconditions.checkArgument(
+        tokenManager.verifyToken(tokenHeader), "xsrf token provided is invalid");
 
     // finally make sure the jobId present in the token is also equal to the jobId present in the
     // cookie
     UUID jobIdFromToken = tokenManager.getJobIdFromToken(tokenHeader);
-    Preconditions.checkArgument(jobId.equals(jobIdFromToken),
-        "encoded job id and job id token must match");
+    Preconditions.checkArgument(
+        jobId.equals(jobIdFromToken), "encoded job id and job id token must match");
     return jobId;
   }
 
-  //The cookie value might be surrounded by double quotes which causes the angular cli to also
+  // The cookie value might be surrounded by double quotes which causes the angular cli to also
   // surround the header with double quotes. Since the value itself may not contain quotes or
   // whitespace, trim off the double quotes by converting them to whitespace.
-  private static String parseXsrfTokenHeader(Headers requestHeaders){
-    return requestHeaders.getFirst(JsonKeys.XSRF_HEADER)
-        .replace("\"", " ")
-        .trim();
+  private static String parseXsrfTokenHeader(Headers requestHeaders) {
+    return requestHeaders.getFirst(JsonKeys.XSRF_HEADER).replace("\"", " ").trim();
   }
-
 
   // TODO: figure out how to get the client to submit "clean" values
   // Hack to strip the angular indexing in option values.
@@ -239,5 +224,4 @@ public class PortabilityApiUtils {
       params.put(keyval[0], value);
     }
   }
-
 }

@@ -13,8 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Implements importers and exporters for Google services.
- */
+/** Implements importers and exporters for Google services. */
 package org.dataportabilityproject.auth.microsoft;
-

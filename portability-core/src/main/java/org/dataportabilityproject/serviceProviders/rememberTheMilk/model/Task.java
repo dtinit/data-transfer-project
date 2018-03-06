@@ -17,9 +17,7 @@ package org.dataportabilityproject.serviceProviders.rememberTheMilk.model;
 
 import com.google.api.client.util.Key;
 
-/**
- * Represents a single Task
- */
+/** Represents a single Task */
 public class Task {
 
   @Key("@id")

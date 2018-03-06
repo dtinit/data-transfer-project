@@ -17,21 +17,16 @@ package org.dataportabilityproject.spi.gateway.provider;
 
 import java.util.List;
 
-/**
- * Tracks service provider importer and exporter extensions registered in the system.
- */
+/** Tracks service provider importer and exporter extensions registered in the system. */
 public interface ProviderInfoRegistry {
 
-    /**
-     * Returns the registered service providers.
-     */
-    List<ServiceProviderInfo> getRegisteredServiceProviders();
+  /** Returns the registered service providers. */
+  List<ServiceProviderInfo> getRegisteredServiceProviders();
 
-    /**
-     * Registers a service provider.
-     *
-     * @param provider the provider to register
-     */
-    void registerServiceProvider(ServiceProviderInfo provider);
-
+  /**
+   * Registers a service provider.
+   *
+   * @param provider the provider to register
+   */
+  void registerServiceProvider(ServiceProviderInfo provider);
 }

@@ -47,26 +47,20 @@ import org.slf4j.LoggerFactory;
 
 public class FlickrPhotoServiceTest {
 
-  private final Logger logger = LoggerFactory.getLogger(FlickrPhotoServiceTest.class);
-
   private static final String PHOTO_TITLE = "Title";
   private static final String FETCHABLE_URL = "fetchable_url";
   private static final String PHOTO_DESCRIPTION = "Description";
   private static final String MEDIA_TYPE = "jpeg";
-
   private static final String ALBUM_ID = "Album ID";
   private static final String ALBUM_NAME = "Album name";
   private static final String ALBUM_DESCRIPTION = "Album description";
-
-  private static final PhotoModel PHOTO_MODEL = new PhotoModel(PHOTO_TITLE, FETCHABLE_URL,
-      PHOTO_DESCRIPTION,
-      MEDIA_TYPE, ALBUM_ID);
-  private static final PhotoAlbum PHOTO_ALBUM = new PhotoAlbum(ALBUM_ID, ALBUM_NAME,
-      ALBUM_DESCRIPTION);
-
+  private static final PhotoModel PHOTO_MODEL =
+      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, ALBUM_ID);
+  private static final PhotoAlbum PHOTO_ALBUM =
+      new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
   private static final String FLICKR_PHOTO_ID = "flickrPhotoId";
   private static final String FLICKR_ALBUM_ID = "flickrAlbumId";
-
+  private final Logger logger = LoggerFactory.getLogger(FlickrPhotoServiceTest.class);
   private Flickr flickr = mock(Flickr.class);
   private PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
   private PhotosInterface photosInterface = mock(PhotosInterface.class);
@@ -76,8 +70,36 @@ public class FlickrPhotoServiceTest {
   private Auth auth = new Auth(Permission.WRITE, user);
   private ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
   private BufferedInputStream bufferedInputStream = mock(BufferedInputStream.class);
-  private FlickrPhotoService photoService = new FlickrPhotoService(flickr, photosetsInterface,
-      photosInterface, uploader, auth, jobDataCache, imageStreamProvider);
+  private FlickrPhotoService photoService =
+      new FlickrPhotoService(
+          flickr,
+          photosetsInterface,
+          photosInterface,
+          uploader,
+          auth,
+          jobDataCache,
+          imageStreamProvider);
+
+  private static Photo initializePhoto(String title, String url, String description) {
+    Photo photo = new Photo();
+    photo.setTitle(title);
+    photo.setDescription(description);
+    photo.setOriginalFormat(MEDIA_TYPE);
+    Size size = new Size();
+    size.setSource(url);
+    size.setLabel(Size.ORIGINAL);
+    photo.setSizes(Collections.singletonList(size));
+    return photo;
+  }
+
+  private static Photoset initializePhotoset(String id, String title, String description) {
+    Photoset photoset = new Photoset();
+    photoset.setId(id);
+    photoset.setTitle(title);
+    photoset.setDescription(description);
+
+    return photoset;
+  }
 
   @Test
   public void getPage() {
@@ -112,14 +134,16 @@ public class FlickrPhotoServiceTest {
   @Test
   public void importStoresAlbumsInJobCache() throws IOException, FlickrException {
     // Set up input: a single photo album with a single photo
-    PhotosModelWrapper wrapper = new PhotosModelWrapper(Collections.singletonList(PHOTO_ALBUM),
-        Collections.singletonList(PHOTO_MODEL), new ContinuationInformation(null, null));
+    PhotosModelWrapper wrapper =
+        new PhotosModelWrapper(
+            Collections.singletonList(PHOTO_ALBUM),
+            Collections.singletonList(PHOTO_MODEL),
+            new ContinuationInformation(null, null));
 
     // Set up mocks
     when(imageStreamProvider.get(FETCHABLE_URL)).thenReturn(bufferedInputStream);
 
-    when(uploader
-        .upload(any(BufferedInputStream.class), any(UploadMetaData.class)))
+    when(uploader.upload(any(BufferedInputStream.class), any(UploadMetaData.class)))
         .thenReturn(FLICKR_PHOTO_ID);
 
     String flickrAlbumTitle = FlickrPhotoService.COPY_PREFIX + ALBUM_NAME;
@@ -134,10 +158,9 @@ public class FlickrPhotoServiceTest {
     verify(imageStreamProvider).get(FETCHABLE_URL);
 
     // Verify the correct photo information was uploaded
-    ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor = ArgumentCaptor
-        .forClass(UploadMetaData.class);
-    verify(uploader)
-        .upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());
+    ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor =
+        ArgumentCaptor.forClass(UploadMetaData.class);
+    verify(uploader).upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());
     UploadMetaData actualUploadMetaData = uploadMetaDataArgumentCaptor.getValue();
     assertThat(actualUploadMetaData.getTitle())
         .isEqualTo(FlickrPhotoService.COPY_PREFIX + PHOTO_TITLE);
@@ -157,8 +180,7 @@ public class FlickrPhotoServiceTest {
   public void exportAlbumInitial() throws IOException, FlickrException {
     // Set up initial export information, such as what FlickrPhotoService would see when a transfer
     // is initiated
-    ExportInformation emptyExportInfo =
-        new ExportInformation(Optional.empty(), Optional.empty());
+    ExportInformation emptyExportInfo = new ExportInformation(Optional.empty(), Optional.empty());
 
     // Set up auth
     when(user.getId()).thenReturn("userId");
@@ -204,8 +226,8 @@ public class FlickrPhotoServiceTest {
     // Situation: getting photos from a set with id photosetsId and page 1
     int page = 1;
     String photosetsId = "photosetsId";
-    ExportInformation exportInformation = new ExportInformation(
-        Optional.of(new IdOnlyResource(photosetsId)), Optional.empty());
+    ExportInformation exportInformation =
+        new ExportInformation(Optional.of(new IdOnlyResource(photosetsId)), Optional.empty());
 
     // Make a bunch of photos, add them to PhotoList, and add pagination information
     int numPhotos = 4;
@@ -228,26 +250,5 @@ public class FlickrPhotoServiceTest {
     assertThat(result.getContinuationInformation().getSubResources()).isEmpty();
     assertThat(result.getContinuationInformation().getPaginationInformation())
         .isEqualTo(new FlickrPaginationInformation(page + 1));
-  }
-
-  private static Photo initializePhoto(String title, String url, String description) {
-    Photo photo = new Photo();
-    photo.setTitle(title);
-    photo.setDescription(description);
-    photo.setOriginalFormat(MEDIA_TYPE);
-    Size size = new Size();
-    size.setSource(url);
-    size.setLabel(Size.ORIGINAL);
-    photo.setSizes(Collections.singletonList(size));
-    return photo;
-  }
-
-  private static Photoset initializePhotoset(String id, String title, String description) {
-    Photoset photoset = new Photoset();
-    photoset.setId(id);
-    photoset.setTitle(title);
-    photoset.setDescription(description);
-
-    return photoset;
   }
 }

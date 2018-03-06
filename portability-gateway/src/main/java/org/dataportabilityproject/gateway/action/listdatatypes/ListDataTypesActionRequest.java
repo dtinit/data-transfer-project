@@ -15,9 +15,5 @@
  */
 package org.dataportabilityproject.gateway.action.listdatatypes;
 
-/**
- * A request to list data types available for export and import.
- */
-public class ListDataTypesActionRequest {
-
-}
+/** A request to list data types available for export and import. */
+public class ListDataTypesActionRequest {}

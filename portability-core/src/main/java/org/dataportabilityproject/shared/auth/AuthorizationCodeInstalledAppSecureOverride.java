@@ -49,6 +49,31 @@ public class AuthorizationCodeInstalledAppSecureOverride {
   }
 
   /**
+   * Open a browser at the given URL using {@link Desktop} if available, or alternatively output the
+   * URL to {@link System#out} for command-line applications.
+   *
+   * @param url URL to browse
+   */
+  public static void browse(String url) {
+    Preconditions.checkNotNull(url);
+    if (Desktop.isDesktopSupported()) {
+      Desktop desktop = Desktop.getDesktop();
+      if (desktop.isSupported(Action.BROWSE)) {
+        try {
+          System.out.println("Browse, authUrl: " + url);
+          desktop.browse(URI.create(url));
+          return;
+        } catch (IOException e) {
+          // handled below
+        }
+      }
+    }
+    // Finally just ask user to open in their browser using copy-paste
+    System.out.println("Please open the following URL in your browser:");
+    System.out.println("  " + url);
+  }
+
+  /**
    * Authorizes the installed application to access user's protected data.
    *
    * @param userId user ID or {@code null} if not using a persisted credential store
@@ -88,18 +113,16 @@ public class AuthorizationCodeInstalledAppSecureOverride {
   /**
    * Handles user authorization by redirecting to the OAuth 2.0 authorization server.
    *
-   * <p>
-   * Default implementation is to call {@code browse(authorizationUrl.build())}. Subclasses may
+   * <p>Default implementation is to call {@code browse(authorizationUrl.build())}. Subclasses may
    * override to provide optional parameters such as the recommended state parameter. Sample
    * implementation:
-   * </p>
    *
    * <pre>
-  &#64;Override
-  protected void onAuthorization(AuthorizationCodeRequestUrl authorizationUrl) throws IOException {
-    authorizationUrl.setState("xyz");
-    super.onAuthorization(authorizationUrl);
-  }
+   * &#64;Override
+   * protected void onAuthorization(AuthorizationCodeRequestUrl authorizationUrl) throws IOException {
+   * authorizationUrl.setState("xyz");
+   * super.onAuthorization(authorizationUrl);
+   * }
    * </pre>
    *
    * @param authorizationUrl authorization URL
@@ -107,31 +130,6 @@ public class AuthorizationCodeInstalledAppSecureOverride {
    */
   protected void onAuthorization(AuthorizationCodeRequestUrl authorizationUrl) throws Exception {
     browse(authorizationUrl.build());
-  }
-
-  /**
-   * Open a browser at the given URL using {@link Desktop} if available, or alternatively output the
-   * URL to {@link System#out} for command-line applications.
-   *
-   * @param url URL to browse
-   */
-  public static void browse(String url) {
-    Preconditions.checkNotNull(url);
-    if (Desktop.isDesktopSupported()) {
-      Desktop desktop = Desktop.getDesktop();
-      if (desktop.isSupported(Action.BROWSE)) {
-        try {
-          System.out.println("Browse, authUrl: " + url);
-          desktop.browse(URI.create(url));
-          return;
-        } catch (IOException e) {
-          // handled below
-        }
-      }
-    }
-    // Finally just ask user to open in their browser using copy-paste
-    System.out.println("Please open the following URL in your browser:");
-    System.out.println("  " + url);
   }
 
   /** Returns the authorization code flow. */
@@ -143,5 +141,4 @@ public class AuthorizationCodeInstalledAppSecureOverride {
   public final VerificationCodeReceiver getReceiver() {
     return receiver;
   }
-  
 }

@@ -15,9 +15,7 @@
  */
 package org.dataportabilityproject.cloud.interfaces;
 
-/**
- * Object storage in buckets.
- */
+/** Object storage in buckets. */
 public interface BucketStore {
   // Get an app credential (i.e. app key or secret). Each implementation may have its own convention
   // for where/how app credential data is stored.

@@ -45,4 +45,3 @@ public class ListInfo {
     return String.format("List(id=%d, name=%s)", id, name);
   }
 }
-

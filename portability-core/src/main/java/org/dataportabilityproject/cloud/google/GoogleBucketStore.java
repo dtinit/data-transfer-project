@@ -30,13 +30,13 @@ final class GoogleBucketStore implements BucketStore {
   private String bucketName;
 
   @Inject
-  GoogleBucketStore(
-      GoogleCredentials googleCredentials,
-      @ProjectId String projectId) {
-    storage = StorageOptions.newBuilder()
-        .setProjectId(projectId)
-        .setCredentials(googleCredentials)
-        .build().getService();
+  GoogleBucketStore(GoogleCredentials googleCredentials, @ProjectId String projectId) {
+    storage =
+        StorageOptions.newBuilder()
+            .setProjectId(projectId)
+            .setCredentials(googleCredentials)
+            .build()
+            .getService();
     // Google Cloud Platform requires bucket names be unique across projects, so we include project
     // ID in the bucket name.
     bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;

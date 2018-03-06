@@ -1,18 +1,18 @@
 /*
-* Copyright 2018 The Data-Portability Project Authors.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* https://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.dataportabilityproject.gateway.reference;
 
 import com.google.inject.Inject;
@@ -37,10 +37,12 @@ public final class ReferenceApiServer {
   private final HttpServer server;
 
   @Inject
-  ReferenceApiServer(Map<String, HttpHandler> handlers,
+  ReferenceApiServer(
+      Map<String, HttpHandler> handlers,
       @Named("httpPort") int port,
       @Named("defaultView") String defaultView,
-      @Named("httpExecutor") Executor httpExecutor) throws IOException {
+      @Named("httpExecutor") Executor httpExecutor)
+      throws IOException {
     // TODO: backlog and port should be command line args
     this.port = port;
     this.server = createServer(port);
@@ -49,14 +51,14 @@ public final class ReferenceApiServer {
     setExecutor(httpExecutor);
   }
 
+  private static HttpServer createServer(int port) throws IOException {
+    return HttpServer.create(new InetSocketAddress(port), 0);
+  }
+
   /** Starts the Sun HttpServer based API. */
   public void start() throws IOException {
     server.start();
     logger.info("Server is listening on port {}", port);
-  }
-
-  private static HttpServer createServer(int port) throws IOException {
-    return HttpServer.create(new InetSocketAddress(port), 0);
   }
 
   private void setHandlers(Map<String, HttpHandler> handlers) {
@@ -66,7 +68,8 @@ public final class ReferenceApiServer {
   }
 
   // Redirect anything that doesn't match to the ViewHandler. The view handler serves index.html
-  // which should reference static content served by our bucket. The angular app then routes requests
+  // which should reference static content served by our bucket. The angular app then routes
+  // requests
   // client side via angular.
   private void setDefaultView(String resource) {
     server.createContext("/", new DefaultHandler(resource));

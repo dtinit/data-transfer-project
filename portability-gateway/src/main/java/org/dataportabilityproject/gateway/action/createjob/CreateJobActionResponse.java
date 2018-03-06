@@ -17,9 +17,7 @@ package org.dataportabilityproject.gateway.action.createjob;
 
 import java.util.UUID;
 
-/**
- * The result of a data transfer submission action.
- */
+/** The result of a data transfer submission action. */
 public class CreateJobActionResponse {
 
   private final UUID id;
@@ -30,19 +28,19 @@ public class CreateJobActionResponse {
     this.errorMsg = errorMsg;
   }
 
-  public UUID getId() {
-    return id;
-  }
-
-  public String getErrorMsg() {
-    return errorMsg;
-  }
-
   public static final CreateJobActionResponse create(UUID id) {
     return new CreateJobActionResponse(id, null);
   }
 
   public static final CreateJobActionResponse createWithError(String errorMsg) {
     return new CreateJobActionResponse(null, errorMsg);
+  }
+
+  public UUID getId() {
+    return id;
+  }
+
+  public String getErrorMsg() {
+    return errorMsg;
   }
 }

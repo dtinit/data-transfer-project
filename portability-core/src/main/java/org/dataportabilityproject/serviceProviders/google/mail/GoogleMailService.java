@@ -47,12 +47,13 @@ public final class GoogleMailService
   private final Gmail gmail;
 
   public GoogleMailService(Credential credential) {
-    this.gmail = new Gmail.Builder(
-        GoogleStaticObjects.getHttpTransport(),
-        GoogleStaticObjects.JSON_FACTORY,
-        credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
+    this.gmail =
+        new Gmail.Builder(
+                GoogleStaticObjects.getHttpTransport(),
+                GoogleStaticObjects.JSON_FACTORY,
+                credential)
+            .setApplicationName(GoogleStaticObjects.APP_NAME)
+            .build();
   }
 
   // TODO: Replace with logging framework
@@ -66,9 +67,8 @@ public final class GoogleMailService
     for (MailMessageModel message : model.getMessages()) {
       // TODO: Avoid re-looking up lable on each fetch
       String labelId = getMigratedLabelId();
-      Message newMessage = new Message()
-          .setRaw(message.getRawString())
-          .setLabelIds(ImmutableList.of(labelId));
+      Message newMessage =
+          new Message().setRaw(message.getRawString()).setLabelIds(ImmutableList.of(labelId));
       gmail.users().messages().insert(USER, newMessage).execute();
     }
   }
@@ -76,8 +76,8 @@ public final class GoogleMailService
   // This currently exports each message with associated labels
   @Override
   public MailModelWrapper export(ExportInformation exportInformation) throws IOException {
-    Messages.List request = gmail.users().messages()
-        .list(USER).setMaxResults(MAX_RESULTS_PER_REQUEST);
+    Messages.List request =
+        gmail.users().messages().list(USER).setMaxResults(MAX_RESULTS_PER_REQUEST);
 
     if (exportInformation.getPaginationInformation().isPresent()) {
       request.setPageToken(
@@ -90,8 +90,8 @@ public final class GoogleMailService
     // TODO: this is a good indication we need to swap the interface
     // as we can't store all the mail messagess in memory at once.
     for (Message listMessage : response.getMessages()) {
-      Message getResponse = gmail.users().messages()
-          .get(USER, listMessage.getId()).setFormat("raw").execute();
+      Message getResponse =
+          gmail.users().messages().get(USER, listMessage.getId()).setFormat("raw").execute();
       // TODO: note this doesn't transfer things like labels
       results.add(new MailMessageModel(getResponse.getRaw(), getResponse.getLabelIds()));
     }
@@ -113,10 +113,11 @@ public final class GoogleMailService
       }
     }
 
-    Label newLabel = new Label()
-        .setName(LABEL)
-        .setLabelListVisibility("labelShow")
-        .setMessageListVisibility("show");
+    Label newLabel =
+        new Label()
+            .setName(LABEL)
+            .setLabelListVisibility("labelShow")
+            .setMessageListVisibility("show");
     return gmail.users().labels().create(USER, newLabel).execute().getId();
   }
 }

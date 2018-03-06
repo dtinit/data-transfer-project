@@ -15,6 +15,13 @@
  */
 package org.dataportabilityproject.worker;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
+
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.UUID;
 import org.dataportabilityproject.cloud.local.LocalJobStore;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -27,148 +34,146 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
-    private static final UUID TEST_ID = UUID.randomUUID();
-    private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
+  private static final UUID TEST_ID = UUID.randomUUID();
+  private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
 
-    @Mock
-    private AsymmetricKeyGenerator asymmetricKeyGenerator;
+  @Mock private AsymmetricKeyGenerator asymmetricKeyGenerator;
 
-    private JobStore store;
-    private JobPollingService jobPollingService;
-    private WorkerJobMetadata metadata = new WorkerJobMetadata();
+  private JobStore store;
+  private JobPollingService jobPollingService;
+  private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
-    @Before
-    public void setUp() throws Exception {
-        store = new LocalJobStore();
-        jobPollingService = new JobPollingService(store, metadata, asymmetricKeyGenerator);
-    }
+  private static final KeyPair createTestKeyPair() {
+    PublicKey publicKey =
+        new PublicKey() {
+          @Override
+          public String getAlgorithm() {
+            return "RSA";
+          }
 
-    // TODO(data-portability/issues/43): Make this an integration test which uses both the API and
-    // worker, rather than simulating API calls, in case this test ever diverges from what the API
-    // actually does.
-    @Test
-    public void pollingLifeCycle() throws Exception {
+          @Override
+          public String getFormat() {
+            return "";
+          }
 
-        when(asymmetricKeyGenerator.generate()).thenReturn(TEST_KEY_PAIR);
-        // Initial state
-        assertThat(metadata.isInitialized()).isFalse();
-
-        // Run once with no data in the database
-        jobPollingService.runOneIteration();
-        assertThat(metadata.isInitialized()).isFalse();
-        PortabilityJob job = store.findJob(TEST_ID);
-        assertThat(job).isNull(); // No existing ready job
-
-        // API inserts an job in initial authorization state
-        job = PortabilityJob.builder()
-                .setTransferDataType("photo")
-                .setExportService("DummyExportService")
-                .setImportService("DummyImportService")
-                .setAndValidateJobAuthorization(JobAuthorization.builder()
-                        .setState(State.INITIAL)
-                        .setEncryptedSessionKey("fooBar")
-                        .build())
-                .build();
-        store.createJob(TEST_ID, job);
-
-        // Verify initial authorization state
-        job = store.findJob(TEST_ID);
-        assertThat(job.jobAuthorization().state()).isEqualTo(State.INITIAL);
-        // no auth data should exist yet
-        assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
-        assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
-
-        // API atomically updates job to from 'initial' to 'creds available'
-        job = job.toBuilder()
-                .setAndValidateJobAuthorization(job.jobAuthorization().toBuilder()
-                        .setState(State.CREDS_AVAILABLE)
-                        .build())
-                .build();
-        store.updateJob(TEST_ID, job);
-
-        // Verify 'creds available' state
-        job = store.findJob(TEST_ID);
-        assertThat(job.jobAuthorization().state()).isEqualTo(State.CREDS_AVAILABLE);
-        // no auth data should exist yet
-        assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
-        assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
-
-        // Worker initiates the JobPollingService
-        jobPollingService.runOneIteration();
-        assertThat(metadata.isInitialized()).isTrue();
-        assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
-
-        // Verify assigned without auth data state
-        job = store.findJob(TEST_ID);
-        assertThat(job.jobAuthorization().state())
-                .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-        assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
-
-        // Client encrypts data and updates the job
-        job = job.toBuilder()
-                .setAndValidateJobAuthorization(job.jobAuthorization().toBuilder()
-                        .setEncryptedExportAuthData("dummy export data")
-                        .setEncryptedImportAuthData("dummy import data")
-                        .setState(State.CREDS_ENCRYPTED)
-                        .build())
-                .build();
-        store.updateJob(TEST_ID, job);
-
-        // Run another iteration of the polling service
-        // Worker should pick up encrypted data and update job
-        jobPollingService.runOneIteration();
-        job = store.findJob(TEST_ID);
-        JobAuthorization jobAuthorization = job.jobAuthorization();
-        assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
-        assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
-        assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
-
-        store.remove(TEST_ID);
-    }
-
-    private static final KeyPair createTestKeyPair() {
-        PublicKey publicKey = new PublicKey() {
-            @Override
-            public String getAlgorithm() {
-                return "RSA";
-            }
-
-            @Override
-            public String getFormat() {
-                return "";
-            }
-
-            @Override
-            public byte[] getEncoded() {
-                return "DummyPublicKey".getBytes();
-            }
+          @Override
+          public byte[] getEncoded() {
+            return "DummyPublicKey".getBytes();
+          }
         };
-        PrivateKey privateKey = new PrivateKey() {
-            @Override
-            public String getAlgorithm() {
-                return "RSA";
-            }
+    PrivateKey privateKey =
+        new PrivateKey() {
+          @Override
+          public String getAlgorithm() {
+            return "RSA";
+          }
 
-            @Override
-            public String getFormat() {
-                return "";
-            }
+          @Override
+          public String getFormat() {
+            return "";
+          }
 
-            @Override
-            public byte[] getEncoded() {
-                return "DummyPrivateKey".getBytes();
-            }
+          @Override
+          public byte[] getEncoded() {
+            return "DummyPrivateKey".getBytes();
+          }
         };
-        return new KeyPair(publicKey, privateKey);
-    }
+    return new KeyPair(publicKey, privateKey);
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    store = new LocalJobStore();
+    jobPollingService = new JobPollingService(store, metadata, asymmetricKeyGenerator);
+  }
+
+  // TODO(data-portability/issues/43): Make this an integration test which uses both the API and
+  // worker, rather than simulating API calls, in case this test ever diverges from what the API
+  // actually does.
+  @Test
+  public void pollingLifeCycle() throws Exception {
+
+    when(asymmetricKeyGenerator.generate()).thenReturn(TEST_KEY_PAIR);
+    // Initial state
+    assertThat(metadata.isInitialized()).isFalse();
+
+    // Run once with no data in the database
+    jobPollingService.runOneIteration();
+    assertThat(metadata.isInitialized()).isFalse();
+    PortabilityJob job = store.findJob(TEST_ID);
+    assertThat(job).isNull(); // No existing ready job
+
+    // API inserts an job in initial authorization state
+    job =
+        PortabilityJob.builder()
+            .setTransferDataType("photo")
+            .setExportService("DummyExportService")
+            .setImportService("DummyImportService")
+            .setAndValidateJobAuthorization(
+                JobAuthorization.builder()
+                    .setState(State.INITIAL)
+                    .setEncryptedSessionKey("fooBar")
+                    .build())
+            .build();
+    store.createJob(TEST_ID, job);
+
+    // Verify initial authorization state
+    job = store.findJob(TEST_ID);
+    assertThat(job.jobAuthorization().state()).isEqualTo(State.INITIAL);
+    // no auth data should exist yet
+    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+
+    // API atomically updates job to from 'initial' to 'creds available'
+    job =
+        job.toBuilder()
+            .setAndValidateJobAuthorization(
+                job.jobAuthorization().toBuilder().setState(State.CREDS_AVAILABLE).build())
+            .build();
+    store.updateJob(TEST_ID, job);
+
+    // Verify 'creds available' state
+    job = store.findJob(TEST_ID);
+    assertThat(job.jobAuthorization().state()).isEqualTo(State.CREDS_AVAILABLE);
+    // no auth data should exist yet
+    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+
+    // Worker initiates the JobPollingService
+    jobPollingService.runOneIteration();
+    assertThat(metadata.isInitialized()).isTrue();
+    assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
+
+    // Verify assigned without auth data state
+    job = store.findJob(TEST_ID);
+    assertThat(job.jobAuthorization().state())
+        .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
+    assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
+
+    // Client encrypts data and updates the job
+    job =
+        job.toBuilder()
+            .setAndValidateJobAuthorization(
+                job.jobAuthorization()
+                    .toBuilder()
+                    .setEncryptedExportAuthData("dummy export data")
+                    .setEncryptedImportAuthData("dummy import data")
+                    .setState(State.CREDS_ENCRYPTED)
+                    .build())
+            .build();
+    store.updateJob(TEST_ID, job);
+
+    // Run another iteration of the polling service
+    // Worker should pick up encrypted data and update job
+    jobPollingService.runOneIteration();
+    job = store.findJob(TEST_ID);
+    JobAuthorization jobAuthorization = job.jobAuthorization();
+    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
+    assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
+    assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
+
+    store.remove(TEST_ID);
+  }
 }

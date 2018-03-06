@@ -32,7 +32,8 @@ import javax.annotation.Nullable;
 import org.dataportabilityproject.shared.AppCredentials;
 
 /**
- * Generates signatures hash based on the algorithm described: https://www.rememberthemilk.com/services/api/authentication.rtm
+ * Generates signatures hash based on the algorithm described:
+ * https://www.rememberthemilk.com/services/api/authentication.rtm
  */
 final class RememberTheMilkSignatureGenerator {
 
@@ -46,10 +47,8 @@ final class RememberTheMilkSignatureGenerator {
 
   URL getSignature(URL url) throws MalformedURLException {
     String query = url.getQuery();
-    Map<String, String> map = new HashMap<>(Splitter.on('&')
-        .trimResults()
-        .withKeyValueSeparator("=")
-        .split(query));
+    Map<String, String> map =
+        new HashMap<>(Splitter.on('&').trimResults().withKeyValueSeparator("=").split(query));
 
     String apiKey = appCredentials.key();
     String secret = appCredentials.secret();
@@ -71,10 +70,17 @@ final class RememberTheMilkSignatureGenerator {
       MessageDigest md = MessageDigest.getInstance("MD5");
       byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
       String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
-      return new URL(url
-          + "&" + "api_key" + "=" + apiKey
-          + (authToken == null ? "" : ("&" + "auth_token" + "=" + authToken))
-          + "&" + "api_sig" + "=" + signature);
+      return new URL(
+          url
+              + "&"
+              + "api_key"
+              + "="
+              + apiKey
+              + (authToken == null ? "" : ("&" + "auth_token" + "=" + authToken))
+              + "&"
+              + "api_sig"
+              + "="
+              + signature);
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Couldn't find MD5 hash", e);
     } catch (MalformedURLException e) {

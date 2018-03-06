@@ -15,9 +15,6 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
-
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -25,31 +22,39 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 
 /**
- * Maps from a Graph API dateTimeTimeZone resource as defined by microsoft.graph.dateTimeTimeZone defined at https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/dateTimeTimeZone
+ * Maps from a Graph API dateTimeTimeZone resource as defined by microsoft.graph.dateTimeTimeZone
+ * defined at
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/dateTimeTimeZone
  */
-public class ToCalendarEventTimeTransformer implements BiFunction<Map<String, String>, TransformerContext, CalendarEventModel.CalendarEventTime> {
+public class ToCalendarEventTimeTransformer
+    implements BiFunction<
+        Map<String, String>, TransformerContext, CalendarEventModel.CalendarEventTime> {
 
-    @Override
-    public CalendarEventModel.CalendarEventTime apply(Map<String, String> time, TransformerContext context) {
-        if (time == null) {
-            return null;
-        }
-
-        String dateTimeValue = time.get("dateTime");
-        String timeZone = time.get("timeZone");
-        if (dateTimeValue == null || timeZone == null) {
-            return null;
-        }
-
-        try {
-            OffsetDateTime dateTime = ZonedDateTime.of(LocalDateTime.parse(dateTimeValue), ZoneId.of(timeZone)).toOffsetDateTime();
-            return new CalendarEventModel.CalendarEventTime(dateTime, false);
-        } catch (DateTimeException e) {
-            context.problem(e.getMessage());
-            return null;
-        }
+  @Override
+  public CalendarEventModel.CalendarEventTime apply(
+      Map<String, String> time, TransformerContext context) {
+    if (time == null) {
+      return null;
     }
 
+    String dateTimeValue = time.get("dateTime");
+    String timeZone = time.get("timeZone");
+    if (dateTimeValue == null || timeZone == null) {
+      return null;
+    }
+
+    try {
+      OffsetDateTime dateTime =
+          ZonedDateTime.of(LocalDateTime.parse(dateTimeValue), ZoneId.of(timeZone))
+              .toOffsetDateTime();
+      return new CalendarEventModel.CalendarEventTime(dateTime, false);
+    } catch (DateTimeException e) {
+      context.problem(e.getMessage());
+      return null;
+    }
+  }
 }

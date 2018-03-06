@@ -28,10 +28,10 @@ import org.slf4j.LoggerFactory;
  * api, and worker.
  */
 public class SecretKeyGenerator {
-  private static final Logger logger = LoggerFactory.getLogger(SecretKeyGenerator.class);
   public static final String ALGORITHM = "AES";
+  private static final Logger logger = LoggerFactory.getLogger(SecretKeyGenerator.class);
 
-  /** Generate a new symmetric key to use throughout the life of a job session.  */
+  /** Generate a new symmetric key to use throughout the life of a job session. */
   public static String generateKeyAndEncode() {
     try {
       KeyGenerator generator = KeyGenerator.getInstance(ALGORITHM);

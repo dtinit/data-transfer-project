@@ -27,20 +27,23 @@ public class ModelToGoogleCalendarConverter {
 
     // google's APIs want millisecond from epoch, and the timezone offset in minutes.
     if (dateTime.isDateOnly()) {
-      eventDateTime.setDate(new DateTime(true,
-          dateTime.getDateTime().toEpochSecond() * 1000,
-          dateTime.getDateTime().getOffset().getTotalSeconds() / 60));
+      eventDateTime.setDate(
+          new DateTime(
+              true,
+              dateTime.getDateTime().toEpochSecond() * 1000,
+              dateTime.getDateTime().getOffset().getTotalSeconds() / 60));
     } else {
-      eventDateTime.setDateTime(new DateTime(
-          dateTime.getDateTime().toEpochSecond() * 1000,
-          dateTime.getDateTime().getOffset().getTotalSeconds() / 60));
+      eventDateTime.setDateTime(
+          new DateTime(
+              dateTime.getDateTime().toEpochSecond() * 1000,
+              dateTime.getDateTime().getOffset().getTotalSeconds() / 60));
     }
 
     return eventDateTime;
   }
 
-  static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(CalendarModel
-      calendarModel) {
+  static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(
+      CalendarModel calendarModel) {
     com.google.api.services.calendar.model.Calendar calendar =
         new com.google.api.services.calendar.model.Calendar()
             .setSummary("Copy of - " + calendarModel.getName())
@@ -49,16 +52,20 @@ public class ModelToGoogleCalendarConverter {
   }
 
   static Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
-    Event event = new Event()
-        .setLocation(eventModel.getLocation())
-        .setDescription(eventModel.getTitle())
-        .setSummary(eventModel.getNotes())
-        .setStart(getEventDateTime(eventModel.getStartTime()))
-        .setEnd(getEventDateTime(eventModel.getEndTime()));
+    Event event =
+        new Event()
+            .setLocation(eventModel.getLocation())
+            .setDescription(eventModel.getTitle())
+            .setSummary(eventModel.getNotes())
+            .setStart(getEventDateTime(eventModel.getStartTime()))
+            .setEnd(getEventDateTime(eventModel.getEndTime()));
     if (eventModel.getAttendees() != null) {
-      event.setAttendees(eventModel.getAttendees().stream()
-          .map(ModelToGoogleCalendarConverter::transformToEventAttendee)
-          .collect(Collectors.toList()));
+      event.setAttendees(
+          eventModel
+              .getAttendees()
+              .stream()
+              .map(ModelToGoogleCalendarConverter::transformToEventAttendee)
+              .collect(Collectors.toList()));
     }
     return event;
   }

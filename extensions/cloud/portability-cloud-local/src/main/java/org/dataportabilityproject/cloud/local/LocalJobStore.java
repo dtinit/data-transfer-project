@@ -25,10 +25,7 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
-/**
- * An in-memory {@link JobStore} implementation that uses a concurrent map as its
- * store.
- */
+/** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
   private final ConcurrentHashMap<UUID, Map<String, Object>> map;
 
@@ -42,7 +39,7 @@ public final class LocalJobStore implements JobStore {
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
-   * problem inserting the job.
+   *     problem inserting the job.
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -56,13 +53,12 @@ public final class LocalJobStore implements JobStore {
   /**
    * Atomically updates the entry for {@code job}'s ID to {@code job}.
    *
-   * @throws IOException if the job was not in the expected state in the store, or there was
-   * another problem updating it.
-   *
-   * TODO(rtannenbaum): Consider validating authorization state was the previous one, when updating
-   * authorization state within this transaction. Previous API allowed for passing in of a previous
-   * expected state, but we shouldn't need to pass that in, given the context of the new state we
-   * should know what comes before it.
+   * @throws IOException if the job was not in the expected state in the store, or there was another
+   *     problem updating it.
+   *     <p>TODO(rtannenbaum): Consider validating authorization state was the previous one, when
+   *     updating authorization state within this transaction. Previous API allowed for passing in
+   *     of a previous expected state, but we shouldn't need to pass that in, given the context of
+   *     the new state we should know what comes before it.
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -73,8 +69,7 @@ public final class LocalJobStore implements JobStore {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
     } catch (NullPointerException e) {
-      throw new IOException(
-          "Couldn't update jobId: " + jobId, e);
+      throw new IOException("Couldn't update jobId: " + jobId, e);
     }
   }
 
@@ -114,7 +109,8 @@ public final class LocalJobStore implements JobStore {
     for (Entry<UUID, Map<String, Object>> job : map.entrySet()) {
       Map<String, Object> properties = job.getValue();
       if (JobAuthorization.State.valueOf(
-          properties.get(PortabilityJob.AUTHORIZATION_STATE).toString()) == jobState) {
+              properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
+          == jobState) {
         UUID jobId = job.getKey();
         return jobId;
       }

@@ -13,20 +13,19 @@ public class TasksModelWrapperTest {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerSubtypes(TaskContainerResource.class);
 
-    List<TaskListModel> taskLists = ImmutableList.of(
-        new TaskListModel("id1", "List 1")
-    );
+    List<TaskListModel> taskLists = ImmutableList.of(new TaskListModel("id1", "List 1"));
 
-    List<TaskModel> tasks = ImmutableList.of(
-        new TaskModel("id1", "Write Better tests", "Do this soon"),
-        new TaskModel("id1", "Liberate all the data", "do this in stages")
-    );
+    List<TaskModel> tasks =
+        ImmutableList.of(
+            new TaskModel("id1", "Write Better tests", "Do this soon"),
+            new TaskModel("id1", "Liberate all the data", "do this in stages"));
 
     ContainerResource data = new TaskContainerResource(taskLists, tasks);
 
     String serialized = objectMapper.writeValueAsString(data);
 
-    ContainerResource deserializedModel = objectMapper.readValue(serialized, ContainerResource.class);
+    ContainerResource deserializedModel =
+        objectMapper.readValue(serialized, ContainerResource.class);
 
     Truth.assertThat(deserializedModel).isNotNull();
     Truth.assertThat(deserializedModel).isInstanceOf(TaskContainerResource.class);

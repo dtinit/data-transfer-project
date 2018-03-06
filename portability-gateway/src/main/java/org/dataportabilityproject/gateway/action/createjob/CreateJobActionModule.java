@@ -19,9 +19,7 @@ import com.google.inject.AbstractModule;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
-/**
- * Dependencies for the {@link CreateJobAction} and related classes.
- */
+/** Dependencies for the {@link CreateJobAction} and related classes. */
 public final class CreateJobActionModule extends AbstractModule {
 
   @Override

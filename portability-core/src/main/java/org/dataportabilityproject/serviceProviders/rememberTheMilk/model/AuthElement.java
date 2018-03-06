@@ -20,7 +20,8 @@ import com.google.api.client.util.Key;
 /**
  * Response from rtm.auth.getToken
  *
- * <p>Example: <?xml version='1.0' encoding='UTF-8'?><rsp stat="ok"><auth><token>0cefd358a1a6ec74b6a7a4f268681b27eb435916</token><perms>write</perms><user
+ * <p>Example: <?xml version='1.0' encoding='UTF-8'?><rsp
+ * stat="ok"><auth><token>0cefd358a1a6ec74b6a7a4f268681b27eb435916</token><perms>write</perms><user
  * id="1650840" username="bwillard" fullname="Brian Willard"/></auth></rsp>
  */
 public class AuthElement extends RememberTheMilkResponse {

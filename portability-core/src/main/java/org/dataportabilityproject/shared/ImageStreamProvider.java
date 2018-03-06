@@ -18,21 +18,21 @@ package org.dataportabilityproject.shared;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import org.dataportabilityproject.serviceProviders.flickr.FlickrPhotoService;
 
 /**
- * A class containing stream getters for images.  Should be used by photo services to get image
+ * A class containing stream getters for images. Should be used by photo services to get image
  * streams.
  *
- * Initially created to make testing easier.
+ * <p>Initially created to make testing easier.
  */
 public class ImageStreamProvider {
 
   /**
-   * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotoService} to upload the image.
+   * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotoService} to upload
+   * the image.
    */
   public BufferedInputStream get(String urlStr) throws IOException {
     URL url = new URL(urlStr);

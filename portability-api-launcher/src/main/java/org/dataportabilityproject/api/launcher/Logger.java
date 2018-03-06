@@ -18,35 +18,32 @@ package org.dataportabilityproject.api.launcher;
 import java.util.function.Supplier;
 
 /**
- * The system logger used to record events. Implementations may delegate to a logging implementation.
+ * The system logger used to record events. Implementations may delegate to a logging
+ * implementation.
  */
 public interface Logger {
 
-    /**
-     * Records a severe (error) level event.
-     *
-     * @param supplier the event message
-     * @param errors optional raised errors
-     */
-    default void severe(Supplier<String> supplier, Throwable... errors) {
-    }
+  /**
+   * Records a severe (error) level event.
+   *
+   * @param supplier the event message
+   * @param errors optional raised errors
+   */
+  default void severe(Supplier<String> supplier, Throwable... errors) {}
 
-    /**
-     * Records a info level event.
-     *
-     * @param supplier the event message
-     * @param errors optional raised errors
-     */
-    default void info(Supplier<String> supplier, Throwable... errors) {
-    }
+  /**
+   * Records a info level event.
+   *
+   * @param supplier the event message
+   * @param errors optional raised errors
+   */
+  default void info(Supplier<String> supplier, Throwable... errors) {}
 
-    /**
-     * Records a debug level event.
-     *
-     * @param supplier the event message
-     * @param errors optional raised errors
-     */
-    default void debug(Supplier<String> supplier, Throwable... errors) {
-    }
-
+  /**
+   * Records a debug level event.
+   *
+   * @param supplier the event message
+   * @param errors optional raised errors
+   */
+  default void debug(Supplier<String> supplier, Throwable... errors) {}
 }

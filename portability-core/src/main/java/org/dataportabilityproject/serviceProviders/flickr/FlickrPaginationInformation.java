@@ -32,9 +32,7 @@ final class FlickrPaginationInformation implements PaginationInformation {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("page", page)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("page", page).toString();
   }
 
   @Override

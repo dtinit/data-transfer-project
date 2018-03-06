@@ -17,18 +17,12 @@ package org.dataportabilityproject.security;
 
 import javax.crypto.SecretKey;
 
-/**
- * Creates and encodes keys for symmetric encryption.
- */
+/** Creates and encodes keys for symmetric encryption. */
 public interface SymmetricKeyGenerator {
 
-  /**
-   * Generates a {@link SecretKey}
-   */
+  /** Generates a {@link SecretKey} */
   SecretKey generate();
 
-  /**
-   * Parses an encoded {@link SecretKey}.
-   */
+  /** Parses an encoded {@link SecretKey}. */
   SecretKey parse(byte[] encoded);
 }

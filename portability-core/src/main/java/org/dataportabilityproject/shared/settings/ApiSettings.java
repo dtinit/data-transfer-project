@@ -19,9 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-/**
- * Settings for {@code PortabilityApiServer}.
- */
+/** Settings for {@code PortabilityApiServer}. */
 public class ApiSettings {
   // TODO(rtannenbaum): Change these to URL types instead of String
   // Base url for all calls within the application
@@ -31,8 +29,8 @@ public class ApiSettings {
 
   @JsonCreator
   public ApiSettings(
-      @JsonProperty(value="baseUrl", required=true) String baseUrl,
-      @JsonProperty(value="baseApiUrl", required=true) String baseApiUrl) {
+      @JsonProperty(value = "baseUrl", required = true) String baseUrl,
+      @JsonProperty(value = "baseApiUrl", required = true) String baseApiUrl) {
     this.baseUrl = baseUrl;
     this.baseApiUrl = baseApiUrl;
   }

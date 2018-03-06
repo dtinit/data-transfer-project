@@ -16,7 +16,8 @@
 package org.dataportabilityproject.gateway.action.listservices;
 
 /**
- * A request to list services available for export and import for the given {@code transferDataType}.
+ * A request to list services available for export and import for the given {@code
+ * transferDataType}.
  */
 public class ListServicesActionRequest {
   private final String transferDataType;

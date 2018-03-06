@@ -19,43 +19,43 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PhotoModel {
-    private final String title;
-    private final String fetchableUrl;
-    private final String description;
-    private final String mediaType;
-    private final String albumId;
+  private final String title;
+  private final String fetchableUrl;
+  private final String description;
+  private final String mediaType;
+  private final String albumId;
 
-    @JsonCreator
-    public PhotoModel(
-        @JsonProperty("title") String title,
-        @JsonProperty("fetchableUrl") String fetchableUrl,
-        @JsonProperty("description") String description,
-        @JsonProperty("mediaType") String mediaType,
-        @JsonProperty("albumId") String albumId) {
-        this.title = title;
-        this.fetchableUrl = fetchableUrl;
-        this.description = description;
-        this.mediaType = mediaType;
-        this.albumId = albumId;
-    }
+  @JsonCreator
+  public PhotoModel(
+      @JsonProperty("title") String title,
+      @JsonProperty("fetchableUrl") String fetchableUrl,
+      @JsonProperty("description") String description,
+      @JsonProperty("mediaType") String mediaType,
+      @JsonProperty("albumId") String albumId) {
+    this.title = title;
+    this.fetchableUrl = fetchableUrl;
+    this.description = description;
+    this.mediaType = mediaType;
+    this.albumId = albumId;
+  }
 
-    public String getTitle() {
-        return title;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public String getFetchableUrl() {
-        return fetchableUrl;
-    }
+  public String getFetchableUrl() {
+    return fetchableUrl;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public String getMediaType() {
-        return mediaType;
-    }
+  public String getMediaType() {
+    return mediaType;
+  }
 
-    public String getAlbumId() {
-        return albumId;
-    }
+  public String getAlbumId() {
+    return albumId;
+  }
 }

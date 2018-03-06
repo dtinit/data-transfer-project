@@ -13,11 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Extensions for running the system on Google App Engine.
- */
+/** Extensions for running the system on Google App Engine. */
 package org.dataportabilityproject.cloud.google;
-
-
-
-

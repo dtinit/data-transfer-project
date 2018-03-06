@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.shared.signpost;
 
-
 import oauth.signpost.AbstractOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
@@ -24,8 +23,8 @@ import oauth.signpost.http.HttpRequest;
 import oauth.signpost.signature.QueryStringSigningStrategy;
 
 /**
- * Implements a SingPost {@link AbstractOAuthConsumer} that knows how to interact
- * with a a Google {@link com.google.api.client.http.HttpRequest}.
+ * Implements a SingPost {@link AbstractOAuthConsumer} that knows how to interact with a a Google
+ * {@link com.google.api.client.http.HttpRequest}.
  */
 public final class GoogleOAuthConsumer extends AbstractOAuthConsumer {
 
@@ -43,8 +42,9 @@ public final class GoogleOAuthConsumer extends AbstractOAuthConsumer {
   }
 
   @Override
-  public synchronized HttpRequest sign(Object request) throws OAuthCommunicationException,
-      OAuthExpectationFailedException, OAuthMessageSignerException {
+  public synchronized HttpRequest sign(Object request)
+      throws OAuthCommunicationException, OAuthExpectationFailedException,
+          OAuthMessageSignerException {
     setSigningStrategy(new QueryStringSigningStrategy());
     return super.sign(request);
   }

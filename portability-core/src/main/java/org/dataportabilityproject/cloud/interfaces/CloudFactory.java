@@ -18,13 +18,15 @@ package org.dataportabilityproject.cloud.interfaces;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
-/**
- * Factory for creating object to interact with cloud implementations.
- */
+/** Factory for creating object to interact with cloud implementations. */
 public interface CloudFactory {
   JobDataCache getJobDataCache(UUID jobId, String service);
+
   JobStore getJobStore();
+
   CryptoKeyManagementSystem getCryptoKeyManagementSystem();
+
   BucketStore getBucketStore();
+
   void clearJobData(UUID jobId);
 }

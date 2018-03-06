@@ -27,30 +27,26 @@ import org.slf4j.LoggerFactory;
  * An {@link Action} that handles listing the services available for export and import for a given
  * data type.
  */
-public final class ListServicesAction implements
-    Action<ListServicesActionRequest, ListServicesActionResponse> {
+public final class ListServicesAction
+    implements Action<ListServicesActionRequest, ListServicesActionResponse> {
 
-  private static final Logger logger = LoggerFactory.getLogger(
-      ListServicesAction.class);
+  private static final Logger logger = LoggerFactory.getLogger(ListServicesAction.class);
 
   private final AuthServiceProviderRegistry registry;
 
   @Inject
-  ListServicesAction(
-      AuthServiceProviderRegistry registry
-  ) {
+  ListServicesAction(AuthServiceProviderRegistry registry) {
     this.registry = registry;
   }
 
-  /**
-   * Lists the services available for export and import for a given data type.
-   */
+  /** Lists the services available for export and import for a given data type. */
   @Override
   public ListServicesActionResponse handle(ListServicesActionRequest request) {
     String transferDataType = request.getTransferDataType();
     // Validate incoming data type parameter
-    if(!ActionUtils.isValidTransferDataType(transferDataType)){
-      return ListServicesActionResponse.createWithError("Invalid transferDataType: " + transferDataType);
+    if (!ActionUtils.isValidTransferDataType(transferDataType)) {
+      return ListServicesActionResponse.createWithError(
+          "Invalid transferDataType: " + transferDataType);
     }
     Set<String> services = registry.getServices(transferDataType);
     if (services.isEmpty()) {

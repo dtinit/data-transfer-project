@@ -15,22 +15,23 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
 /**
- * Maps from a transfer calendar type to a Graph API calendar resource as defined by: https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/calendar.
+ * Maps from a transfer calendar type to a Graph API calendar resource as defined by:
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/calendar.
  */
-public class ToGraphCalendarTransformer implements BiFunction<CalendarModel, TransformerContext, Map<String, String>> {
+public class ToGraphCalendarTransformer
+    implements BiFunction<CalendarModel, TransformerContext, Map<String, String>> {
 
-    @Override
-    public Map<String, String> apply(CalendarModel calendarModel, TransformerContext context) {
-        Map<String, String> calendar = new LinkedHashMap<>();
-        calendar.put("name", calendarModel.getName());
-        return calendar;
-    }
+  @Override
+  public Map<String, String> apply(CalendarModel calendarModel, TransformerContext context) {
+    Map<String, String> calendar = new LinkedHashMap<>();
+    calendar.put("name", calendarModel.getName());
+    return calendar;
+  }
 }

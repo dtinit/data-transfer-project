@@ -15,10 +15,6 @@
  */
 package org.dataportabilityproject.transfer.microsoft.transformer.calendar;
 
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
-
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,75 +22,84 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerContext;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 
 /**
- * Maps from a transfer event type to a Graph API event resource as defined by: https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/event.
+ * Maps from a transfer event type to a Graph API event resource as defined by:
+ * https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/event.
  */
-public class ToGraphEventTransformer implements BiFunction<CalendarEventModel, TransformerContext, Map<String, Object>> {
+public class ToGraphEventTransformer
+    implements BiFunction<CalendarEventModel, TransformerContext, Map<String, Object>> {
 
-    @Override
-    public Map<String, Object> apply(CalendarEventModel eventModel, TransformerContext context) {
-        Map<String, Object> graphCalendar = new LinkedHashMap<>();
+  @Override
+  public Map<String, Object> apply(CalendarEventModel eventModel, TransformerContext context) {
+    Map<String, Object> graphCalendar = new LinkedHashMap<>();
 
-        graphCalendar.put("subject", eventModel.getTitle());
+    graphCalendar.put("subject", eventModel.getTitle());
 
-        copyDateTime("start", eventModel.getStartTime(), graphCalendar);
-        copyDateTime("end", eventModel.getStartTime(), graphCalendar);
-        copyLocation(eventModel, graphCalendar);
-        copyBody(eventModel, graphCalendar);
-        copyAttendees(eventModel, graphCalendar);
+    copyDateTime("start", eventModel.getStartTime(), graphCalendar);
+    copyDateTime("end", eventModel.getStartTime(), graphCalendar);
+    copyLocation(eventModel, graphCalendar);
+    copyBody(eventModel, graphCalendar);
+    copyAttendees(eventModel, graphCalendar);
 
-        return graphCalendar;
+    return graphCalendar;
+  }
+
+  private void copyLocation(CalendarEventModel eventModel, Map<String, Object> graphCalendar) {
+    if (eventModel.getLocation() == null) {
+      return;
     }
+    Map<String, String> graphLocation = new HashMap<>();
+    graphLocation.put("displayName", eventModel.getLocation());
+    graphLocation.put("locationType", "Default");
+    graphCalendar.put("location", graphLocation);
+  }
 
-    private void copyLocation(CalendarEventModel eventModel, Map<String, Object> graphCalendar) {
-        if (eventModel.getLocation() == null) {
-            return;
-        }
-        Map<String, String> graphLocation = new HashMap<>();
-        graphLocation.put("displayName", eventModel.getLocation());
-        graphLocation.put("locationType", "Default");
-        graphCalendar.put("location", graphLocation);
+  private void copyDateTime(
+      String key,
+      CalendarEventModel.CalendarEventTime dateTime,
+      Map<String, Object> graphCalendar) {
+    Map<String, String> graphDateTime = new HashMap<>();
+    graphDateTime.put(
+        "dateTime",
+        dateTime.getDateTime().atZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime().toString());
+    graphDateTime.put("timeZone", "UTC");
+    graphCalendar.put(key, graphDateTime);
+  }
+
+  private void copyAttendees(CalendarEventModel eventModel, Map<String, Object> graphCalendar) {
+    List<CalendarAttendeeModel> attendees = eventModel.getAttendees();
+    if (attendees == null) {
+      return;
     }
+    List<Map<String, Object>> graphAttendees = new ArrayList<>();
+    attendees.forEach(
+        attendee -> {
+          Map<String, Object> graphAttendee = new HashMap<>();
+          graphAttendee.put("type", attendee.getOptional() ? "optional" : "required");
 
-    private void copyDateTime(String key, CalendarEventModel.CalendarEventTime dateTime, Map<String, Object> graphCalendar) {
-        Map<String, String> graphDateTime = new HashMap<>();
-        graphDateTime.put("dateTime", dateTime.getDateTime().atZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime().toString());
-        graphDateTime.put("timeZone", "UTC");
-        graphCalendar.put(key, graphDateTime);
-    }
+          HashMap<String, String> emailAddress = new HashMap<>();
+          emailAddress.put("address", attendee.getEmail());
+          emailAddress.put("name", attendee.getDisplayName());
+          graphAttendee.put("emailAddress", emailAddress);
 
-    private void copyAttendees(CalendarEventModel eventModel, Map<String, Object> graphCalendar) {
-        List<CalendarAttendeeModel> attendees = eventModel.getAttendees();
-        if (attendees == null) {
-            return;
-        }
-        List<Map<String, Object>> graphAttendees = new ArrayList<>();
-        attendees.forEach(attendee -> {
-            Map<String, Object> graphAttendee = new HashMap<>();
-            graphAttendee.put("type", attendee.getOptional() ? "optional" : "required");
-
-            HashMap<String, String> emailAddress = new HashMap<>();
-            emailAddress.put("address", attendee.getEmail());
-            emailAddress.put("name", attendee.getDisplayName());
-            graphAttendee.put("emailAddress", emailAddress);
-
-            graphAttendees.add(graphAttendee);
+          graphAttendees.add(graphAttendee);
         });
 
-        graphCalendar.put("attendees", graphAttendees);
-    }
+    graphCalendar.put("attendees", graphAttendees);
+  }
 
-    private void copyBody(CalendarEventModel eventModel, Map<String, Object> graphCalendar) {
-        String notes = eventModel.getNotes();
-        if (notes == null) {
-            return;
-        }
-        Map<String, String> body = new HashMap<>();
-        body.put("contentType", "HTML");
-        body.put("content", notes);
-        graphCalendar.put("body", body);
+  private void copyBody(CalendarEventModel eventModel, Map<String, Object> graphCalendar) {
+    String notes = eventModel.getNotes();
+    if (notes == null) {
+      return;
     }
+    Map<String, String> body = new HashMap<>();
+    body.put("contentType", "HTML");
+    body.put("content", notes);
+    graphCalendar.put("body", body);
+  }
 }
-
-

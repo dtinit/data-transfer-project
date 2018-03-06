@@ -2,9 +2,58 @@ package org.dataportabilityproject.types.transfer.models.calendar;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class RecurringEvent {
+
+  enum Freq {
+    SECONDLY,
+    MINUTELY,
+    HOURLY,
+    DAILY,
+    WEEKLY,
+    MONTHLY,
+    YEARLY
+  }
+
+  enum ByRule {
+    BYSECOND,
+    BYMINUTE,
+    BYHOUR,
+    BYDAY,
+    BYMONTHDAY,
+    BYYEARDAY,
+    BYWEEKNO,
+    BYMONTH,
+    BYSETPOS
+  }
+
+  enum Day {
+    SU,
+    MO,
+    TU,
+    WE,
+    TH,
+    FR,
+    SA
+  }
+
+  enum TimeType {
+    DATETIME("DATE-TIME"),
+    DATE("DATE"),
+    PERIOD("PERIOD"),
+    UNDEFINED("UNDEFINED");
+
+    private final String title;
+
+    TimeType(String title) {
+      this.title = title;
+    }
+
+    @Override
+    public String toString() {
+      return title;
+    }
+  }
 
   public class RRule {
     final Freq freq;
@@ -15,8 +64,13 @@ public class RecurringEvent {
     final Map<ByRule, List<Property>> byRuleMap;
     final Day wkst;
 
-    public RRule(Freq freq, CalendarEventModel.CalendarEventTime until, int count, int interval,
-          Map<ByRule, List<Property>> byRuleMap, Day wkst) {
+    public RRule(
+        Freq freq,
+        CalendarEventModel.CalendarEventTime until,
+        int count,
+        int interval,
+        Map<ByRule, List<Property>> byRuleMap,
+        Day wkst) {
       this.freq = freq;
       this.until = until;
       this.count = count;
@@ -51,30 +105,6 @@ public class RecurringEvent {
 
     public ExDate(List<CalendarEventModel.CalendarEventTime> exDateList) {
       this.exDateList = exDateList;
-    }
-  }
-
-  enum Freq {SECONDLY, MINUTELY, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY}
-
-  enum ByRule {BYSECOND, BYMINUTE, BYHOUR, BYDAY, BYMONTHDAY, BYYEARDAY, BYWEEKNO, BYMONTH, BYSETPOS}
-
-  enum Day {SU, MO, TU, WE, TH, FR, SA}
-
-  enum TimeType {
-    DATETIME("DATE-TIME"),
-    DATE("DATE"),
-    PERIOD("PERIOD"),
-    UNDEFINED("UNDEFINED");
-
-    private final String title;
-
-    TimeType(String title) {
-      this.title = title;
-    }
-
-    @Override
-    public String toString() {
-      return title;
     }
   }
 }

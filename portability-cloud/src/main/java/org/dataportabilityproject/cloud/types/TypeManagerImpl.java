@@ -19,22 +19,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dataportabilityproject.spi.cloud.types.TypeManager;
 
-/**
- * Jackson-based type manager that supports polymorphic type handling.
- */
+/** Jackson-based type manager that supports polymorphic type handling. */
 public class TypeManagerImpl implements TypeManager {
-    private final ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper;
 
-    public TypeManagerImpl() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());   // configure ISO 8601 time de/serialization support
-    }
+  public TypeManagerImpl() {
+    objectMapper = new ObjectMapper();
+    objectMapper.registerModule(
+        new JavaTimeModule()); // configure ISO 8601 time de/serialization support
+  }
 
-    public ObjectMapper getMapper() {
-        return objectMapper;
-    }
+  public ObjectMapper getMapper() {
+    return objectMapper;
+  }
 
-    public void registerType(Class<?> type) {
-        objectMapper.registerSubtypes(type);
-    }
+  public void registerType(Class<?> type) {
+    objectMapper.registerSubtypes(type);
+  }
 }

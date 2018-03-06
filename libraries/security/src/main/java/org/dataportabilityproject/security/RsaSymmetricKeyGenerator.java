@@ -15,16 +15,13 @@
  */
 package org.dataportabilityproject.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * RSA-based implementation for {@link KeyPair} creation and encoding.
- */
+/** RSA-based implementation for {@link KeyPair} creation and encoding. */
 class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
 
   private static final Logger logger = LoggerFactory.getLogger(RsaSymmetricKeyGenerator.class);
@@ -43,4 +40,3 @@ class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
     return kpg.genKeyPair();
   }
 }
-

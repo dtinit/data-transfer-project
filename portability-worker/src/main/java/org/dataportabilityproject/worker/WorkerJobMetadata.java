@@ -18,40 +18,38 @@ package org.dataportabilityproject.worker;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import java.security.KeyPair;
 import java.util.UUID;
 
 /**
- * A class that contains the value of the job and key for a worker instance. This classes uses
- * the initialization-on-demand holder idiom to ensure it is a singleton.
+ * A class that contains the value of the job and key for a worker instance. This classes uses the
+ * initialization-on-demand holder idiom to ensure it is a singleton.
  */
 @Singleton
 final class WorkerJobMetadata {
-    private static KeyPair keyPair = null;
-    private static UUID jobId = null;
+  private static KeyPair keyPair = null;
+  private static UUID jobId = null;
 
-    @Inject
-    WorkerJobMetadata() {
-    }
+  @Inject
+  WorkerJobMetadata() {}
 
-    boolean isInitialized() {
-        return (jobId != null && keyPair != null);
-    }
+  boolean isInitialized() {
+    return (jobId != null && keyPair != null);
+  }
 
-    void init(UUID jobId, KeyPair keyPair) {
-        Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
-        this.jobId = jobId;
-        this.keyPair = keyPair;
-    }
+  void init(UUID jobId, KeyPair keyPair) {
+    Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
+    this.jobId = jobId;
+    this.keyPair = keyPair;
+  }
 
-    public KeyPair getKeyPair() {
-        Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
-        return keyPair;
-    }
+  public KeyPair getKeyPair() {
+    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+    return keyPair;
+  }
 
-    public UUID getJobId() {
-        Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
-        return jobId;
-    }
+  public UUID getJobId() {
+    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+    return jobId;
+  }
 }

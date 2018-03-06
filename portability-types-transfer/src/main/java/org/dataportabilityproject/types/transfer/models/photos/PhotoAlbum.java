@@ -15,35 +15,34 @@
  */
 package org.dataportabilityproject.types.transfer.models.photos;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PhotoAlbum {
-    private final String id;
-    private final String name;
-    private final String description;
+  private final String id;
+  private final String name;
+  private final String description;
 
-    /** The {@code id} is used to associate photos with this album. **/
-    @JsonCreator
-    public PhotoAlbum(
-        @JsonProperty("id") String id,
-        @JsonProperty("name") String name,
-        @JsonProperty("description") String description) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-    }
+  /** The {@code id} is used to associate photos with this album. * */
+  @JsonCreator
+  public PhotoAlbum(
+      @JsonProperty("id") String id,
+      @JsonProperty("name") String name,
+      @JsonProperty("description") String description) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 }

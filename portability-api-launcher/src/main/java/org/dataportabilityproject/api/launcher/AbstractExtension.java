@@ -15,27 +15,21 @@
  */
 package org.dataportabilityproject.api.launcher;
 
-/**
- * Implementations provide an extension to the system.
- */
+/** Implementations provide an extension to the system. */
 public interface AbstractExtension {
-    /**
-     * Initializes the extension. Implementations prepare provided services.
-     *
-     * @param context the extension context.
-     */
-    void initialize(ExtensionContext context);
+  /**
+   * Initializes the extension. Implementations prepare provided services.
+   *
+   * @param context the extension context.
+   */
+  void initialize(ExtensionContext context);
 
-    /**
-     * Sginals to the extension to prepare for receiving requests. For example, implementations may open sockets or other resources.
-     */
-    default void start() {
-    }
+  /**
+   * Sginals to the extension to prepare for receiving requests. For example, implementations may
+   * open sockets or other resources.
+   */
+  default void start() {}
 
-    /**
-     * Signals the extension to terminate and cleanup resources.
-     */
-    default void shutdown() {
-    }
-
+  /** Signals the extension to terminate and cleanup resources. */
+  default void shutdown() {}
 }

@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.cloud.google;
 
-
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.Datastore;
@@ -36,13 +35,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.cloud.interfaces.JobDataCache;
 
-/**
- * A {@link JobDataCache} implementation based on Google Cloud Platform's DataStore.
- */
+/** A {@link JobDataCache} implementation based on Google Cloud Platform's DataStore. */
 public final class GoogleJobDataCache implements JobDataCache {
   static final String JOB_KIND = "job";
-  private static final String SERVICE_KIND = "service";
   static final String USER_KEY_KIND = "user-key";
+  private static final String SERVICE_KIND = "service";
   private static final int EXPIRE_TIME_MINUTES = 10;
 
   private static final String JOB_CREATION_FIELD = "created";
@@ -52,21 +49,23 @@ public final class GoogleJobDataCache implements JobDataCache {
   private final ImmutableList<PathElement> ancestors;
 
   private final Datastore datastore;
-  private final LoadingCache<String, Blob> loadingCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(EXPIRE_TIME_MINUTES, TimeUnit.MINUTES)
-      .build(new CacheLoader<String, Blob>() {
-        @Override
-        public Blob load(String key) throws Exception {
-          Entity entity = datastore.get(getKey(key));
-          return entity.getBlob(DATA_FIELD);
-        }
-      });
+  private final LoadingCache<String, Blob> loadingCache =
+      CacheBuilder.newBuilder()
+          .expireAfterAccess(EXPIRE_TIME_MINUTES, TimeUnit.MINUTES)
+          .build(
+              new CacheLoader<String, Blob>() {
+                @Override
+                public Blob load(String key) throws Exception {
+                  Entity entity = datastore.get(getKey(key));
+                  return entity.getBlob(DATA_FIELD);
+                }
+              });
 
   public GoogleJobDataCache(Datastore datastore, UUID jobId, String service) {
     this.datastore = datastore;
-    this.ancestors = ImmutableList.of(
-        PathElement.of(JOB_KIND, jobId.toString()),
-        PathElement.of(SERVICE_KIND, service));
+    this.ancestors =
+        ImmutableList.of(
+            PathElement.of(JOB_KIND, jobId.toString()), PathElement.of(SERVICE_KIND, service));
   }
 
   @Override
@@ -99,16 +98,14 @@ public final class GoogleJobDataCache implements JobDataCache {
     try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
       out.writeObject(data);
     }
-    datastore.put(Entity.newBuilder(getKey(key))
-        .set(DATA_FIELD, Blob.copyFrom(bos.toByteArray()))
-        .set(JOB_CREATION_FIELD, Timestamp.now())
-        .build());
+    datastore.put(
+        Entity.newBuilder(getKey(key))
+            .set(DATA_FIELD, Blob.copyFrom(bos.toByteArray()))
+            .set(JOB_CREATION_FIELD, Timestamp.now())
+            .build());
   }
 
   private Key getKey(String key) {
-    return datastore.newKeyFactory()
-        .setKind(USER_KEY_KIND)
-        .addAncestors(ancestors)
-        .newKey(key);
+    return datastore.newKeyFactory().setKind(USER_KEY_KIND).addAncestors(ancestors).newKey(key);
   }
 }

@@ -40,8 +40,8 @@ import org.dataportabilityproject.serviceProviders.instagram.model.MediaResponse
 
 final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   private static final String FAKE_ALBUM_ID = "instagramAlbum";
 
@@ -59,9 +59,8 @@ final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
 
   @Override
   public PhotosModelWrapper export(ExportInformation exportInformation) throws IOException {
-    MediaResponse response = makeRequest(
-        "https://api.instagram.com/v1/users/self/media/recent",
-        MediaResponse.class);
+    MediaResponse response =
+        makeRequest("https://api.instagram.com/v1/users/self/media/recent", MediaResponse.class);
 
     List<PhotoModel> photos = new ArrayList<>();
 
@@ -71,20 +70,15 @@ final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
       String photoId = photo.getId();
       String url = photo.getImages().getStandardResolution().getUrl();
       String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
-      photos.add(new PhotoModel("Instagram photo: " + photoId,
-          url,
-          text,
-          null,
-          FAKE_ALBUM_ID));
+      photos.add(new PhotoModel("Instagram photo: " + photoId, url, text, null, FAKE_ALBUM_ID));
     }
 
     List<PhotoAlbum> albums = new ArrayList<>();
 
     if (!photos.isEmpty() && !exportInformation.getPaginationInformation().isPresent()) {
-      albums.add(new PhotoAlbum(
-          FAKE_ALBUM_ID,
-          "Imported Instagram Photos",
-          "Photos imported from instagram"));
+      albums.add(
+          new PhotoAlbum(
+              FAKE_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
     }
 
     return new PhotosModelWrapper(albums, photos, null);
@@ -92,17 +86,17 @@ final class InstagramPhotoService implements Exporter<PhotosModelWrapper> {
 
   private <T> T makeRequest(String url, Class<T> clazz) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest getRequest = requestFactory.buildGetRequest(
-        new GenericUrl(url + "?access_token=" + authData.accessToken()));
-    HttpResponse response = getRequest
-        .execute();
+    HttpRequest getRequest =
+        requestFactory.buildGetRequest(
+            new GenericUrl(url + "?access_token=" + authData.accessToken()));
+    HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
-      throw new IOException("Bad status code: " + statusCode + " error: "
-          + response.getStatusMessage());
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    String result = CharStreams.toString(new InputStreamReader(
-        response.getContent(), Charsets.UTF_8));
+    String result =
+        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return MAPPER.readValue(result, clazz);
   }
 }

@@ -15,18 +15,12 @@
  */
 package org.dataportabilityproject.job;
 
-import com.google.common.base.Charsets;
-
 /** Provides functions related to encryption. */
 public interface Crypter {
 
-  /**
-   * Encrypt the given {@code data} with the key this crypter was constructed with.
-   */
+  /** Encrypt the given {@code data} with the key this crypter was constructed with. */
   String encrypt(String data);
 
-  /**
-   * Decrypts the given {@code encrypted} bytes with the key this crypter was constructed with.
-   */
+  /** Decrypts the given {@code encrypted} bytes with the key this crypter was constructed with. */
   String decrypt(String encrypted);
 }

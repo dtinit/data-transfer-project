@@ -26,8 +26,8 @@ import javax.crypto.SecretKey;
 public class EncrypterFactory {
 
   /**
-   * Creates a {@link EncrypterImpl} with the given {@link SecretKey} for use with "AES"-based symmetric
-   * encryption.
+   * Creates a {@link EncrypterImpl} with the given {@link SecretKey} for use with "AES"-based
+   * symmetric encryption.
    */
   public static Encrypter create(SecretKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("AES"));

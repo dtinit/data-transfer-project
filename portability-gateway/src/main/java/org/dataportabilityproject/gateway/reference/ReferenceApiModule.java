@@ -1,18 +1,18 @@
 /*
-* Copyright 2018 The Data-Portability Project Authors.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* https://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2018 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.dataportabilityproject.gateway.reference;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Bindings the reference api server, a sample implementation using Sun's http library to
- * serve requests for the api actions.
+ * Bindings the reference api server, a sample implementation using Sun's http library to serve
+ * requests for the api actions.
  */
 public class ReferenceApiModule extends AbstractModule {
 
@@ -51,10 +51,11 @@ public class ReferenceApiModule extends AbstractModule {
   @Provides
   @Named("httpExecutor")
   public Executor executor(UncaughtExceptionHandler uncaughtExceptionHandler) {
-    ThreadFactory threadPoolFactory = new ThreadFactoryBuilder()
-        .setNameFormat("http-server-%d")
-        .setUncaughtExceptionHandler(uncaughtExceptionHandler)
-        .build();
+    ThreadFactory threadPoolFactory =
+        new ThreadFactoryBuilder()
+            .setNameFormat("http-server-%d")
+            .setUncaughtExceptionHandler(uncaughtExceptionHandler)
+            .build();
     return Executors.newCachedThreadPool(threadPoolFactory);
   }
 
@@ -72,8 +73,8 @@ public class ReferenceApiModule extends AbstractModule {
   protected void configure() {
     // TODO: Bind ApiSettings or migrate to launcher api context
     // TODO: Bind actions in single or multiple modules
-    MapBinder<String, HttpHandler> mapbinder
-        = MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
+    MapBinder<String, HttpHandler> mapbinder =
+        MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
 
     // HttpServer does exact longest matching prefix for context matching. This means
     // /_/listServices, /_/listServicesthisshouldnotwork and /_/listServices/path/to/resource will
@@ -94,4 +95,3 @@ public class ReferenceApiModule extends AbstractModule {
     */
   }
 }
-

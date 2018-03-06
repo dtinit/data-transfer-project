@@ -22,9 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 
-/**
- * A Wrapper for all the possible objects that can be returned by a task exporter.
- */
+/** A Wrapper for all the possible objects that can be returned by a task exporter. */
 @JsonTypeName("TaskContainerResource")
 public class TaskContainerResource extends ContainerResource {
   private final Collection<TaskListModel> lists;
