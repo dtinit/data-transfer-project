@@ -30,6 +30,7 @@ import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.transfer.microsoft.types.GraphPagination;
@@ -50,6 +51,11 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
     this.client = client;
     this.objectMapper = objectMapper;
     this.transformerService = transformerService;
+  }
+
+  @Override
+  public String getServiceId() {
+    return MicrosoftTransferExtension.SERVICE_ID;
   }
 
   @Override

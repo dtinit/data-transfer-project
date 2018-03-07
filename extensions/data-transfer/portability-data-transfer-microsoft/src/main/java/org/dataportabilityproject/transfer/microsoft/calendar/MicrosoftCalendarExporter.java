@@ -31,6 +31,7 @@ import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
@@ -69,6 +70,11 @@ public class MicrosoftCalendarExporter
   }
 
   @Override
+  public String getServiceId() {
+    return MicrosoftTransferExtension.SERVICE_ID;
+  }
+
+  @Override
   public ExportResult<CalendarContainerResource> export(TokenAuthData authData) {
     Request.Builder calendarsBuilder = getBuilder(baseUrl + CALENDARS_URL, authData);
 
@@ -83,8 +89,8 @@ public class MicrosoftCalendarExporter
       Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
       // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
-      // TODO ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new
-      // GraphPagination(nextLink));
+      // TODO ContinuationData continuationData = nextLink == null
+      // ? null : new ContinuationData(new GraphPagination(nextLink));
 
       @SuppressWarnings("unchecked")
       List<Map<String, Object>> rawCalendars = (List<Map<String, Object>>) graphMap.get("value");
@@ -125,8 +131,8 @@ public class MicrosoftCalendarExporter
         Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
         // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
-        // TODO ContinuationData continuationData = nextLink == null ? null : new
-        // ContinuationData(new GraphPagination(nextLink));
+        // TODO ContinuationData continuationData = nextLink == null
+        // ? null : new ContinuationData(new GraphPagination(nextLink));
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> rawEvents = (List<Map<String, Object>>) graphMap.get("value");

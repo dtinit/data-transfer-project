@@ -22,6 +22,9 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 /** Exports data from a source service. */
 public interface Exporter<A extends AuthData, T extends DataModel> {
 
+  /** The key associated with this service. */
+  String getServiceId();
+
   /** Performs an export operation. */
   ExportResult<T> export(A authData);
 

@@ -30,6 +30,7 @@ import java.util.Map;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
@@ -56,6 +57,11 @@ public class MicrosoftContactsImporter implements Importer<TokenAuthData, Contac
     this.client = client;
     this.objectMapper = objectMapper;
     this.transformerService = transformerService;
+  }
+
+  @Override
+  public String getServiceId() {
+    return MicrosoftTransferExtension.SERVICE_ID;
   }
 
   @Override

@@ -26,7 +26,8 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
-import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
+import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,6 @@ final class WorkerImpl {
 
   private final JobPollingService jobPollingService;
   private final JobStore store;
-  private final TransferServiceProviderRegistry registry;
   private final ObjectMapper objectMapper;
   private final WorkerJobMetadata workerJobMetadata;
 
@@ -44,20 +44,19 @@ final class WorkerImpl {
   WorkerImpl(
       JobStore store,
       JobPollingService jobPollingService,
-      TransferServiceProviderRegistry registry,
       ObjectMapper objectMapper,
       WorkerJobMetadata workerJobMetadata) {
     this.store = store;
     this.jobPollingService = jobPollingService;
-    this.registry = registry;
     this.objectMapper = objectMapper;
     this.workerJobMetadata = workerJobMetadata;
   }
 
-  void processJob() {
-    // Start the polling service to poll for an unassigned job and when it's ready.
-    pollForJob();
-
+  /**
+   * Start processing the job we've already polled. TODO: Refactor this class as the polling and
+   * processing are completely separate
+   */
+  void processJob(Exporter<?, ?> exporter, Importer<?, ?> importer) {
     // Start the processing
     UUID jobId = workerJobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
@@ -65,20 +64,22 @@ final class WorkerImpl {
     Preconditions.checkState(
         job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
 
-    // Only load the two providers that are doing actually work.
-    // TODO(willard): Only load two needed services here, after converting service name to class
-    // name in storage.
-
-    processJob(jobId, job);
+    processJob(jobId, job, exporter, importer);
     logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
   }
 
-  private void pollForJob() {
+  /** Start the polling service to poll for an unassigned job when it's ready. */
+  void pollForJob() {
     jobPollingService.startAsync();
     jobPollingService.awaitTerminated();
   }
 
-  private void processJob(UUID jobId, PortabilityJob job) {
+  /** Get the metadata for the polled job. */
+  WorkerJobMetadata getWorkerJobMetadata() {
+    return workerJobMetadata;
+  }
+
+  private void processJob(UUID jobId, PortabilityJob job, Exporter exporter, Importer importer) {
     try {
       Decrypter decrypter = DecrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
       JobAuthorization jobAuthorization = job.jobAuthorization();
@@ -88,15 +89,8 @@ final class WorkerImpl {
       String serializedImportAuthData =
           decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
       AuthData importAuthData = deSerialize(serializedImportAuthData);
-      // TODO: Refactor copy logic, inject the appropriate copier type
-      InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier(registry);
-      copier.copyDataType(
-          job.transferDataType(),
-          job.exportService(),
-          exportAuthData,
-          job.importService(),
-          importAuthData,
-          jobId);
+      InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier();
+      copier.copy(exporter, importer, exportAuthData, importAuthData, jobId);
     } catch (IOException e) {
       logger.error("Error processing jobId: {}" + jobId, e);
     } finally {
