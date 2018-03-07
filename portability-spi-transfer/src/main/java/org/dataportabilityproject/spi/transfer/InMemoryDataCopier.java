@@ -22,11 +22,9 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /** In-memory Copier interface */
-public interface InMemoryTransferCopier {
+public interface InMemoryDataCopier {
   /* Copies the provided dataType from exportService to importService */
   void copy(
-      Exporter exporter,
-      Importer importer,
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId)

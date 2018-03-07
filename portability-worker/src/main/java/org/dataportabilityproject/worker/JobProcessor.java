@@ -25,68 +25,50 @@ import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
-import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class WorkerImpl {
-  private static final Logger logger = LoggerFactory.getLogger(WorkerImpl.class);
+/**
+ * Process a job in two steps: <br>
+ * (1) Decrypt the stored credentials, which have been encrypted with this worker's public key
+ * (2) Run the copy job
+ */
+final class JobProcessor {
+  private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
 
-  private final JobPollingService jobPollingService;
   private final JobStore store;
   private final ObjectMapper objectMapper;
-  private final WorkerJobMetadata workerJobMetadata;
+  private final InMemoryDataCopier copier;
 
   @Inject
-  WorkerImpl(
-      JobStore store,
-      JobPollingService jobPollingService,
-      ObjectMapper objectMapper,
-      WorkerJobMetadata workerJobMetadata) {
+  JobProcessor(JobStore store, ObjectMapper objectMapper, InMemoryDataCopier copier) {
     this.store = store;
-    this.jobPollingService = jobPollingService;
     this.objectMapper = objectMapper;
-    this.workerJobMetadata = workerJobMetadata;
+    this.copier = copier;
   }
 
   /**
-   * Start processing the job we've already polled. TODO: Refactor this class as the polling and
-   * processing are completely separate
+   * Process our job, whose metadata is available via {@link JobMetadata}.
    */
-  void processJob(Exporter<?, ?> exporter, Importer<?, ?> importer) {
-    // Start the processing
-    UUID jobId = workerJobMetadata.getJobId();
+  void processJob() {
+    UUID jobId = JobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
+
     PortabilityJob job = store.findJob(jobId);
     Preconditions.checkState(
         job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
 
-    processJob(jobId, job, exporter, importer);
-    logger.info("Successfully processed jobId: {}", workerJobMetadata.getJobId());
-  }
-
-  /** Start the polling service to poll for an unassigned job when it's ready. */
-  void pollForJob() {
-    jobPollingService.startAsync();
-    jobPollingService.awaitTerminated();
-  }
-
-  /** Get the metadata for the polled job. */
-  WorkerJobMetadata getWorkerJobMetadata() {
-    return workerJobMetadata;
-  }
-
-  private void processJob(UUID jobId, PortabilityJob job, Exporter exporter, Importer importer) {
     try {
       logger.debug(
           "Starting copy job, id: {}, source: {}, destination: {}",
           jobId,
-          workerJobMetadata.getExportService(),
-          workerJobMetadata.getImportService());
-      Decrypter decrypter = DecrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
+          JobMetadata.getExportService(),
+          JobMetadata.getImportService());
+
+      // Decrypt export and import credentials, which have been encrypted with our public key
+      Decrypter decrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
       JobAuthorization jobAuthorization = job.jobAuthorization();
       String serializedExportAuthData =
           decrypter.decrypt(jobAuthorization.encryptedExportAuthData());
@@ -94,8 +76,9 @@ final class WorkerImpl {
       String serializedImportAuthData =
           decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
       AuthData importAuthData = deSerialize(serializedImportAuthData);
-      InMemoryTransferCopier copier = new PortabilityInMemoryTransferCopier();
-      copier.copy(exporter, importer, exportAuthData, importAuthData, jobId);
+
+      // Copy the data
+      copier.copy(exportAuthData, importAuthData, jobId);
     } catch (IOException e) {
       logger.error("Error processing jobId: {}" + jobId, e);
     } finally {

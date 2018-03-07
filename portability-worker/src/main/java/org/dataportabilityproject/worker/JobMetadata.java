@@ -16,27 +16,24 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.security.KeyPair;
 import java.util.UUID;
 
 /**
- * A class that contains the value of the job and key for a worker instance. This classes uses the
- * initialization-on-demand holder idiom to ensure it is a singleton.
+ * A class that contains metadata for a worker's job.
+ *
+ * <p>This class is completely static to ensure it is a singleton within each worker instance.
  */
 @Singleton
-final class WorkerJobMetadata {
+final class JobMetadata {
   private static KeyPair keyPair = null;
   private static UUID jobId = null;
   private static String dataType = null;
   private static String exportService = null;
   private static String importService = null;
 
-  @Inject
-  WorkerJobMetadata() {}
-
-  boolean isInitialized() {
+  static boolean isInitialized() {
     return (jobId != null
         && keyPair != null
         && dataType != null
@@ -44,38 +41,42 @@ final class WorkerJobMetadata {
         && importService != null);
   }
 
-  void init(
-      UUID jobId, KeyPair keyPair, String dataType, String exportService, String importService) {
-    Preconditions.checkState(!isInitialized(), "WorkerJobMetadata cannot be initialized twice");
-    this.jobId = jobId;
-    this.keyPair = keyPair;
-    this.dataType = dataType;
-    this.exportService = exportService;
-    this.importService = importService;
+  static void init(
+      UUID initJobId,
+      KeyPair initKeyPair,
+      String initDataType,
+      String initExportService,
+      String initImportService) {
+    Preconditions.checkState(!isInitialized(), "JobMetadata cannot be initialized twice");
+    jobId = initJobId;
+    keyPair = initKeyPair;
+    dataType = initDataType;
+    exportService = initExportService;
+    importService = initImportService;
   }
 
-  public KeyPair getKeyPair() {
-    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+  static KeyPair getKeyPair() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return keyPair;
   }
 
-  public UUID getJobId() {
-    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+  static UUID getJobId() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return jobId;
   }
 
-  public String getDataType() {
-    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+  static String getDataType() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return dataType;
   }
 
-  public String getExportService() {
-    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+  static String getExportService() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return exportService;
   }
 
-  public String getImportService() {
-    Preconditions.checkState(isInitialized(), "WorkerJobMetadata must be initialized");
+  static String getImportService() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return importService;
   }
 }
