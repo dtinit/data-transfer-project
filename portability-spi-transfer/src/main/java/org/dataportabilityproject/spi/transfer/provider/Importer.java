@@ -20,7 +20,6 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** Imports data into a destination service. */
 public interface Importer<A extends AuthData, T extends DataModel> {
-
   /**
    * Imports data.
    *
