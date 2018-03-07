@@ -21,7 +21,6 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** Exports data from a source service. */
 public interface Exporter<A extends AuthData, T extends DataModel> {
-
   /** Performs an export operation. */
   ExportResult<T> export(A authData);
 
@@ -32,9 +31,7 @@ public interface Exporter<A extends AuthData, T extends DataModel> {
    * @param exportInformation info about what data to export see {@link ExportInformation} for more
    *     info
    */
-  ExportResult<T> export(
-      A authData,
-      ExportInformation
-          exportInformation); // REVIEW: The original throws IOException. Continue to use checked
-                              // exceptions or use unchecked?
+  // REVIEW: The original throws IOException. Continue to use checked
+  // exceptions or use unchecked?
+  ExportResult<T> export(A authData, ExportInformation exportInformation);
 }
