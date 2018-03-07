@@ -29,10 +29,6 @@ public interface Importer<A extends AuthData, T extends DataModel> {
    * @param data the data
    * @return the operation result
    */
-  ImportResult importItem(
-      String jobId,
-      A authData,
-      T
-          data); // REVIEW: The original throws IOException. Continue to use or return as part of
-                 // the result?
+  // REVIEW: The original throws IOException. Continue to use or return as part of the result?
+  ImportResult importItem(String jobId, A authData, T data);
 }

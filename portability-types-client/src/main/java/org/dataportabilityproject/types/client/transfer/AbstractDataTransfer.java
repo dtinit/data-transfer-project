@@ -23,9 +23,8 @@ public abstract class AbstractDataTransfer {
 
   private String source; // REVIEW: corresponds to the import service
   private String destination; // REVIEW: corresponds to the export service
-  private String
-      transferDataType; // REVIEW: replace old PortableDataType since the latter is an enum and not
-                        // extensible?
+  // REVIEW: replace old PortableDataType since the latter is an enum and not extensible?
+  private String transferDataType;
 
   @JsonCreator
   public AbstractDataTransfer(String source, String destination, String transferDataType) {

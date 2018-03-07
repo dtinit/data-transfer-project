@@ -18,8 +18,6 @@ package org.dataportabilityproject.gateway.reference;
 /** Keys for returned Json data. */
 public class JsonKeys {
 
-  /** no instantiation */
-
   public static final String ID_COOKIE_KEY = "e_id";
   public static final String EXPORT_AUTH_DATA_COOKIE_KEY = "ead_id";
   public static final String IMPORT_AUTH_DATA_COOKIE_KEY = "iad_id";
@@ -37,5 +35,7 @@ public class JsonKeys {
   // see angular docs for more details: https://angular.io/guide/http#security-xsrf-protection
   public static final String XSRF_TOKEN = "XSRF-TOKEN";
   public static final String XSRF_HEADER = "X-XSRF-TOKEN";
+
+  /** no instantiation */
   private JsonKeys() {}
 }
