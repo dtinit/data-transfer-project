@@ -1,10 +1,8 @@
 package org.dataportabilityproject.gateway;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +14,8 @@ import org.slf4j.LoggerFactory;
 
 public class PortabilityAuthServiceProviderModule extends AbstractModule {
 
-  private static final Logger logger = LoggerFactory.getLogger(PortabilityAuthServiceProviderModule.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(PortabilityAuthServiceProviderModule.class);
 
   @Override
   protected void configure() {
@@ -27,7 +26,9 @@ public class PortabilityAuthServiceProviderModule extends AbstractModule {
 
     List<AuthServiceProvider> authServiceProviders = new ArrayList<>();
 
-    ServiceLoader.load(AuthServiceProvider.class).iterator().forEachRemaining(authServiceProviders::add);
+    ServiceLoader.load(AuthServiceProvider.class)
+        .iterator()
+        .forEachRemaining(authServiceProviders::add);
 
     for (AuthServiceProvider provider : authServiceProviders) {
       logger.debug("Found AuthServiceProvider: {}", provider.getServiceId());
@@ -39,7 +40,7 @@ public class PortabilityAuthServiceProviderModule extends AbstractModule {
   }
 
   @Provides
-  List<String> provideEnabledServices(){
+  List<String> provideEnabledServices() {
     // TODO(seehamrun): dont hardcode.
     return ImmutableList.of("Microsoft");
   }
