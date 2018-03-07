@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Numeric pagination data.
+ * String pagination data.
  */
 @JsonTypeName("org.dataportability:StringPagination")
 public class StringPaginationToken extends PaginationData {

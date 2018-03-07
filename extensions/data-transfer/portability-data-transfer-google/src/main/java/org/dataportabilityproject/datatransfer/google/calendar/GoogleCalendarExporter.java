@@ -24,6 +24,7 @@ import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.store.TransferStore;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
@@ -37,37 +38,33 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
 public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContainerResource> {
 
-  private Calendar calendarInterface;
-
-  // For testing purposes
-  GoogleCalendarExporter(Calendar calendarInterface) {
-    this.calendarInterface = calendarInterface;
-  }
+  private TransferStore transferStore;
 
   @Override
   public ExportResult<CalendarContainerResource> export(AuthData authData) {
-    setUpCalendarInterface(authData);
-    return exportCalendars(Optional.empty());
+    Calendar calendarInterface = setUpCalendarInterface(authData);
+    return exportCalendars(calendarInterface, Optional.empty());
   }
 
   @Override
   public ExportResult<CalendarContainerResource> export(AuthData authData,
       ExportInformation exportInformation) {
-    setUpCalendarInterface(authData);
+    Calendar calendarInterface = setUpCalendarInterface(authData);
     StringPaginationToken paginationToken = (StringPaginationToken) exportInformation
         .getPaginationData();
     if (paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
       // Next thing to export is more calendars
-      return exportCalendars(Optional.of(paginationToken));
+      return exportCalendars(calendarInterface, Optional.of(paginationToken));
     } else {
       // Next thing to export is events
       IdOnlyContainerResource idOnlyContainerResource = (IdOnlyContainerResource) exportInformation
           .getContainerResource();
-      return getCalendarEvents(idOnlyContainerResource.getId(), Optional.of(paginationToken));
+      return getCalendarEvents(calendarInterface, idOnlyContainerResource.getId(),
+          Optional.of(paginationToken));
     }
   }
 
-  private ExportResult<CalendarContainerResource> exportCalendars(
+  private ExportResult<CalendarContainerResource> exportCalendars(Calendar calendarInterface,
       Optional<PaginationData> pageData) {
     Calendar.CalendarList.List listRequest;
     CalendarList listResult;
@@ -118,7 +115,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
         continuationData);
   }
 
-  private ExportResult<CalendarContainerResource> getCalendarEvents(
+  private ExportResult<CalendarContainerResource> getCalendarEvents(Calendar calendarInterface,
       String id, Optional<PaginationData> pageData) {
     Calendar.Events.List listRequest;
     Events listResult;
@@ -166,10 +163,10 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
         continuationData);
   }
 
-  private void setUpCalendarInterface(AuthData authData) {
+  private Calendar setUpCalendarInterface(AuthData authData) {
     // TODO(olsona): get credential using authData
     Credential credential = null;
-    calendarInterface = new Calendar.Builder(
+    return new Calendar.Builder(
         GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();

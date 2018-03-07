@@ -17,7 +17,8 @@ public class GoogleCalendarImporter implements Importer<AuthData, CalendarContai
 
   @Override
   public ImportResult importItem(String jobId, AuthData authData, CalendarContainerResource data) {
-    return null;
+    // TODO(olsona)
+    throw new UnsupportedOperationException();
   }
 
   static EventAttendee transformToEventAttendee(CalendarAttendeeModel attendee) {
