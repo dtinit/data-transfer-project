@@ -16,7 +16,6 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
-import com.google.inject.Singleton;
 import java.security.KeyPair;
 import java.util.UUID;
 
@@ -25,7 +24,6 @@ import java.util.UUID;
  *
  * <p>This class is completely static to ensure it is a singleton within each worker instance.
  */
-@Singleton
 final class JobMetadata {
   private static KeyPair keyPair = null;
   private static UUID jobId = null;

@@ -38,6 +38,7 @@ final class WorkerModule extends AbstractModule {
 
       @Override
       public <T> T getConfiguration(String key, String defaultValue) {
+        // TODO: pass in flags
         return null;
       }
     };
