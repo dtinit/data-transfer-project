@@ -49,6 +49,7 @@ public class CloudAppCredentialFactory implements AppCredentialFactory {
    * compromised, we can update them without restarting our servers.
    */
   private LoadingCache<String, String> keys;
+
   private LoadingCache<String, String> secrets;
 
   @Inject

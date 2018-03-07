@@ -138,10 +138,8 @@ public class MicrosoftCalendarService
             "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
             calendarId, formatTime(begin), formatTime(end));
     System.out.println("calendar: " + calendarId);
-    System.out.println(
-        "eventsUrl: "
-            + eventsUrl); // TODO: Determine why this URL works in the MS Oauth Playground but not
-                          // here
+    // TODO: Determine why this URL works in the MS Oauth Playground but not here
+    System.out.println("eventsUrl: " + eventsUrl);
 
     // Make requests for events
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(eventsUrl));
