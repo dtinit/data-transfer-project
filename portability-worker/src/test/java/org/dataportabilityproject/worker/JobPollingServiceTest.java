@@ -43,7 +43,6 @@ public class JobPollingServiceTest {
 
   private JobStore store;
   private JobPollingService jobPollingService;
-  private WorkerJobMetadata metadata = new WorkerJobMetadata();
 
   private static final KeyPair createTestKeyPair() {
     PublicKey publicKey =
@@ -86,7 +85,7 @@ public class JobPollingServiceTest {
   @Before
   public void setUp() throws Exception {
     store = new LocalJobStore();
-    jobPollingService = new JobPollingService(store, metadata, asymmetricKeyGenerator);
+    jobPollingService = new JobPollingService(store, asymmetricKeyGenerator);
   }
 
   // TODO(data-portability/issues/43): Make this an integration test which uses both the API and
@@ -97,11 +96,11 @@ public class JobPollingServiceTest {
 
     when(asymmetricKeyGenerator.generate()).thenReturn(TEST_KEY_PAIR);
     // Initial state
-    assertThat(metadata.isInitialized()).isFalse();
+    assertThat(JobMetadata.isInitialized()).isFalse();
 
     // Run once with no data in the database
     jobPollingService.runOneIteration();
-    assertThat(metadata.isInitialized()).isFalse();
+    assertThat(JobMetadata.isInitialized()).isFalse();
     PortabilityJob job = store.findJob(TEST_ID);
     assertThat(job).isNull(); // No existing ready job
 
@@ -143,8 +142,8 @@ public class JobPollingServiceTest {
 
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
-    assertThat(metadata.isInitialized()).isTrue();
-    assertThat(metadata.getJobId()).isEqualTo(TEST_ID);
+    assertThat(JobMetadata.isInitialized()).isTrue();
+    assertThat(JobMetadata.getJobId()).isEqualTo(TEST_ID);
 
     // Verify assigned without auth data state
     job = store.findJob(TEST_ID);
@@ -153,16 +152,14 @@ public class JobPollingServiceTest {
     assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
-    job =
-        job.toBuilder()
-            .setAndValidateJobAuthorization(
-                job.jobAuthorization()
-                    .toBuilder()
-                    .setEncryptedExportAuthData("dummy export data")
-                    .setEncryptedImportAuthData("dummy import data")
-                    .setState(State.CREDS_ENCRYPTED)
-                    .build())
-            .build();
+    job = job.toBuilder()
+        .setAndValidateJobAuthorization(
+            job.jobAuthorization()
+                .toBuilder()
+                .setEncryptedExportAuthData("dummy export data")
+                .setEncryptedImportAuthData("dummy import data")
+                .setState(State.CREDS_ENCRYPTED)
+                .build()).build();
     store.updateJob(TEST_ID, job);
 
     // Run another iteration of the polling service
