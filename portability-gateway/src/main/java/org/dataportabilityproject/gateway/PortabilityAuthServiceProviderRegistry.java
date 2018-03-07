@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   private final ImmutableSet<String> supportedImportTypes;
   private final ImmutableSet<String> supportedExportTypes;
 
-  // The parameters to the constructor are provided via dependency injection
+  @Inject
   public PortabilityAuthServiceProviderRegistry(
       List<String> enabledServices, Map<String, AuthServiceProvider> serviceProviderMap) {
     ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder =
