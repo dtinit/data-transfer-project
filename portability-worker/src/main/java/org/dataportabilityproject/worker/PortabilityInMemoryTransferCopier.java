@@ -23,68 +23,40 @@ import org.dataportabilityproject.spi.transfer.InMemoryTransferCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.spi.transfer.provider.TransferServiceProviderRegistry;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
-import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Implementation of InMemoryTransferCopier. */
+/** Implementation of {@link InMemoryTransferCopier}. */
 public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger =
       LoggerFactory.getLogger(PortabilityInMemoryTransferCopier.class);
 
-  private final TransferServiceProviderRegistry registry;
-
   @Inject
-  public PortabilityInMemoryTransferCopier(TransferServiceProviderRegistry registry) {
-    this.registry = registry;
-  }
+  public PortabilityInMemoryTransferCopier() {}
 
-  /**
-   * Kicks off the transfer job for the datatype from the export service to the import service.
-   *
-   * @param dataType The data type to transfer
-   * @param exportService The export service to transfer from
-   * @param exportAuthData The auth data for the export service
-   * @param importService The import service to transfer to
-   * @param importAuthData The auth data for the import service
-   * @param jobId The job id representing this copy
-   */
+  /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-  public void copyDataType(
-      String dataType,
-      String exportService,
+  public void copy(
+      Exporter exporter,
+      Importer importer,
       AuthData exportAuthData,
-      String importService,
       AuthData importAuthData,
       UUID jobId)
       throws IOException {
-
-    Exporter<? extends AuthData, ? extends DataModel> exporter =
-        registry.getExporter(exportService, dataType);
-    Importer<? extends AuthData, ? extends DataModel> importer =
-        registry.getImporter(importService, dataType);
-
-    logger.debug(
-        "Starting copy job, id: {}, source: {}, destination: {}",
-        jobId,
-        exportService,
-        importService);
-
     // Initial copy, starts off the process with no previous paginationData or containerResource
     // information
     ExportInformation emptyExportInfo = new ExportInformation(null, null);
-    copy(exporter, importer, exportAuthData, importAuthData, emptyExportInfo);
+    copyHelper(exporter, importer, exportAuthData, importAuthData, emptyExportInfo);
   }
 
   /**
-   * Transfers data fropm the given {@code exporter} optionally starting at the point specified in
+   * Transfers data from the given {@code exporter} optionally starting at the point specified in
    * the provided {@code exportInformation}. Imports the data using the provided {@code importer}.
    * If there is more data to required to be exported, recursively copies using the specific {@link
    * ExportInformation} to continue the process.
@@ -95,7 +67,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
    * @param importAuthData The auth data for the import
    * @param exportInformation Any pagination or resource information to use for subsequent calls.
    */
-  private void copy(
+  private void copyHelper(
       Exporter exporter,
       Importer importer,
       AuthData exportAuthData,
@@ -123,7 +95,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
         logger.debug("start off a new copy iteration with pagination info");
-        copy(
+        copyHelper(
             exporter,
             importer,
             exportAuthData,
@@ -136,7 +108,7 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copy(
+          copyHelper(
               exporter,
               importer,
               exportAuthData,

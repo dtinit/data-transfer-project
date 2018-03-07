@@ -83,8 +83,8 @@ public class MicrosoftCalendarExporter
       Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
       // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
-      // TODO ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new
-      // GraphPagination(nextLink));
+      // TODO ContinuationData continuationData = nextLink == null
+      // ? null : new ContinuationData(new GraphPagination(nextLink));
 
       @SuppressWarnings("unchecked")
       List<Map<String, Object>> rawCalendars = (List<Map<String, Object>>) graphMap.get("value");
@@ -125,8 +125,8 @@ public class MicrosoftCalendarExporter
         Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
 
         // TODO String nextLink = (String) graphMap.get(ODATA_NEXT);
-        // TODO ContinuationData continuationData = nextLink == null ? null : new
-        // ContinuationData(new GraphPagination(nextLink));
+        // TODO ContinuationData continuationData = nextLink == null
+        // ? null : new ContinuationData(new GraphPagination(nextLink));
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> rawEvents = (List<Map<String, Object>>) graphMap.get("value");

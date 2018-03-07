@@ -17,16 +17,17 @@ package org.dataportabilityproject.spi.transfer;
 
 import java.io.IOException;
 import java.util.UUID;
+import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /** In-memory Copier interface */
 public interface InMemoryTransferCopier {
   /* Copies the provided dataType from exportService to importService */
-  void copyDataType(
-      String dataType,
-      String exportService,
+  void copy(
+      Exporter exporter,
+      Importer importer,
       AuthData exportAuthData,
-      String importService,
       AuthData importAuthData,
       UUID jobId)
       throws IOException;
