@@ -31,9 +31,7 @@ public interface Exporter<A extends AuthData, T extends DataModel> {
    * @param exportInformation info about what data to export see {@link ExportInformation} for more
    *     info
    */
-  ExportResult<T> export(
-      A authData,
-      ExportInformation
-          exportInformation); // REVIEW: The original throws IOException. Continue to use checked
-                              // exceptions or use unchecked?
+  // REVIEW: The original throws IOException. Continue to use checked
+  // exceptions or use unchecked?
+  ExportResult<T> export(A authData, ExportInformation exportInformation);
 }

@@ -85,11 +85,8 @@ public class ToGraphContactTransformer
             telephone -> {
               for (TelephoneType telephoneType : telephone.getTypes()) {
                 if (TelephoneType.CELL.equals(telephoneType)) {
-                  contact.put(
-                      "mobilePhone",
-                      telephone
-                          .getText()); // this could overwrite some numbers since MS contacts only
-                                       // have one mobile
+                  // this could overwrite some numbers since MS contacts only have one mobile
+                  contact.put("mobilePhone", telephone.getText());
                 } else if (TelephoneType.WORK.equals(telephoneType)) {
                   addPhone("businessPhones", telephone, contact);
                 } else {

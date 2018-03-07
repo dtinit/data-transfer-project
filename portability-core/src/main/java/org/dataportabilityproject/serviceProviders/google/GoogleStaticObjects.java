@@ -31,6 +31,7 @@ public final class GoogleStaticObjects {
   /** Static values used in converters */
   // TODO(olsona): find optimum value
   public static final int MAX_ATTENDEES = 100;
+
   private static final java.io.File DATA_STORE_DIR =
       new java.io.File(System.getProperty("user.home"), ".store/google_creds");
   /** Global instance of the HTTP transport. */
