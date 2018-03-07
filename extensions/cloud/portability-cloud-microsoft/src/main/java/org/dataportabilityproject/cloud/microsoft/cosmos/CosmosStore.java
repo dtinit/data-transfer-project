@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -75,6 +76,11 @@ public class CosmosStore implements JobStore {
   public void updateJob(UUID jobId, PortabilityJob job) {
     Preconditions.checkNotNull(jobId, "Job not persisted");
     update(jobId, job, JOB_UPDATE);
+  }
+
+  @Override
+  public void updateJob(UUID jobId, PortabilityJob job, State previousState) throws IOException {
+    throw new UnsupportedOperationException("Not yet implemented");
   }
 
   @Override

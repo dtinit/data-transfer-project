@@ -51,22 +51,41 @@ public final class LocalJobStore implements JobStore {
   }
 
   /**
-   * Atomically updates the entry for {@code job}'s ID to {@code job}.
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}.
    *
-   * @throws IOException if the job was not in the expected state in the store, or there was another
-   *     problem updating it.
-   *     <p>TODO(rtannenbaum): Consider validating authorization state was the previous one, when
-   *     updating authorization state within this transaction. Previous API allowed for passing in
-   *     of a previous expected state, but we shouldn't need to pass that in, given the context of
-   *     the new state we should know what comes before it.
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+    updateJob(jobId, job, null);
+  }
+
+  /**
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}.
+   *
+   * <p>For auth-state-changing operations, the {@code previousState} may be validated as part of
+   * the update. Set {@code previousState} to null if no validation is desired.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   * @throws IllegalStateException if state validation was requested ({@code previousState} was
+   * non-null) and the job's state was not the expected {@code previousState}
+   */
+  @Override
+  public synchronized void updateJob(UUID jobId, PortabilityJob job,
+      JobAuthorization.State previousState) throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
       Map<String, Object> previousEntry = map.replace(jobId, job.toMap());
       if (previousEntry == null) {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
+      }
+      if (previousState != null) {
+        PortabilityJob previousJob = PortabilityJob.fromMap(previousEntry);
+        Preconditions.checkState(previousJob.jobAuthorization().state().equals(previousState));
       }
     } catch (NullPointerException e) {
       throw new IOException("Couldn't update jobId: " + jobId, e);

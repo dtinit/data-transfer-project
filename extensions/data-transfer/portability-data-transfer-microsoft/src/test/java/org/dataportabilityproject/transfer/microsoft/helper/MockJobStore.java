@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.LegacyPortabilityJob;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
@@ -51,6 +52,9 @@ public class MockJobStore implements JobStore {
 
   @Override
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {}
+
+  @Override
+  public void updateJob(UUID jobId, PortabilityJob job, State previousState) throws IOException {}
 
   @Override
   public void remove(UUID jobId) throws IOException {}

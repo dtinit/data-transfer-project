@@ -17,7 +17,7 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 public interface JobStore {
 
   /**
-   * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in the store.
+   * Inserts a new {@link LegacyPortabilityJob} keyed by {@code jobId} in the store.
    *
    * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
    *
@@ -31,7 +31,7 @@ public interface JobStore {
   }
 
   /**
-   * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
@@ -41,8 +41,8 @@ public interface JobStore {
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Atomically updates the entry for {@code job}'s ID to {@code job}, and verifies that it
-   * previously existed in {@code previousState}.
+   * Updates the entry for {@code jobId} to {@code job}, and verifies that it previously existed
+   * in {@code previousState}.
    *
    * @throws IOException if the job was not in the expected state in the store, or there was another
    *     problem updating it.
@@ -55,11 +55,28 @@ public interface JobStore {
   }
 
   /**
-   * Atomically updates the entry for {@code job}'s ID to {@code job}.
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}.
    *
-   * @throws IOException if there was a problem updating the job.
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
    */
   void updateJob(UUID jobId, PortabilityJob job) throws IOException;
+
+  /**
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}.
+   *
+   * <p>For auth-state-changing operations, the {@code previousState} may be validated as part of
+   * the transaction. Set {@code previousState} to null if no validation is desired.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   * @throws IllegalStateException if state validation was requested ({@code previousState} was
+   * non-null) and the job's state was not the expected {@code previousState}
+   */
+  void updateJob(UUID jobId, PortabilityJob job, JobAuthorization.State previousState)
+      throws IOException;
 
   /**
    * Removes the {@link LegacyPortabilityJob} in the store keyed by {@code jobId}.
