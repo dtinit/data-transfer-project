@@ -73,6 +73,7 @@ public class ReferenceApiModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PortabilityAuthServiceProviderModule());
+
     // TODO: Bind ApiSettings or migrate to launcher api context
     // TODO: Bind actions in single or multiple modules
     MapBinder<String, HttpHandler> mapbinder =
