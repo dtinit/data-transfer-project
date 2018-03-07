@@ -1,5 +1,8 @@
 package org.dataportabilityproject.datatransfer.google.calendar;
 
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
@@ -8,6 +11,7 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -20,7 +24,6 @@ import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.store.TransferStore;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
@@ -51,15 +54,16 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   public ExportResult<CalendarContainerResource> export(AuthData authData,
       ExportInformation exportInformation) {
     setUpCalendarInterface(authData);
-    PaginationData paginationData = exportInformation.getPaginationData();
-    if (paginationData.getClass().isAssignableFrom(CalendarToken.class)) {
+    StringPaginationToken paginationToken = (StringPaginationToken) exportInformation
+        .getPaginationData();
+    if (paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
       // Next thing to export is more calendars
-      return exportCalendars(Optional.of(paginationData));
+      return exportCalendars(Optional.of(paginationToken));
     } else {
       // Next thing to export is events
       IdOnlyContainerResource idOnlyContainerResource = (IdOnlyContainerResource) exportInformation
           .getContainerResource();
-      return getCalendarEvents(idOnlyContainerResource.getId(), Optional.of(paginationData));
+      return getCalendarEvents(idOnlyContainerResource.getId(), Optional.of(paginationToken));
     }
   }
 
@@ -73,7 +77,11 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
       listRequest = calendarInterface.calendarList().list();
 
       if (pageData.isPresent()) {
-        listRequest.setPageToken(((StringPaginationToken) pageData.get()).getToken());
+        StringPaginationToken paginationToken = (StringPaginationToken) pageData.get();
+        Preconditions.checkState(paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX),
+            "Token is not applicable");
+        listRequest.setPageToken(((StringPaginationToken) pageData.get()).getToken()
+            .substring(CALENDAR_TOKEN_PREFIX.length()));
       }
 
       listResult = listRequest.execute();
@@ -85,7 +93,8 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
     // Set up continuation data
     PaginationData nextPageData = null;
     if (listResult.getNextPageToken() != null) {
-      nextPageData = new CalendarToken(listResult.getNextPageToken());
+      nextPageData = new StringPaginationToken(
+          CALENDAR_TOKEN_PREFIX + listResult.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
@@ -110,7 +119,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   }
 
   private ExportResult<CalendarContainerResource> getCalendarEvents(
-      String id, Optional<PaginationData> pageInfo) {
+      String id, Optional<PaginationData> pageData) {
     Calendar.Events.List listRequest;
     Events listResult;
 
@@ -118,8 +127,12 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
     try {
       listRequest = calendarInterface.events().list(id)
           .setMaxAttendees(GoogleStaticObjects.MAX_ATTENDEES);
-      if (pageInfo.isPresent()) {
-        listRequest.setPageToken(((StringPaginationToken) pageInfo.get()).getToken());
+      if (pageData.isPresent()) {
+        StringPaginationToken paginationToken = (StringPaginationToken) pageData.get();
+        Preconditions.checkState(paginationToken.getToken().startsWith(EVENT_TOKEN_PREFIX),
+            "Token is not applicable");
+        listRequest.setPageToken(((StringPaginationToken) pageData.get()).getToken()
+            .substring(EVENT_TOKEN_PREFIX.length()));
       }
       listResult = listRequest.execute();
     } catch (IOException e) {
@@ -130,7 +143,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
     // Set up continuation data
     PaginationData nextPageData = null;
     if (listResult.getNextPageToken() != null) {
-      nextPageData = new EventToken(listResult.getNextPageToken());
+      nextPageData = new StringPaginationToken(EVENT_TOKEN_PREFIX + listResult.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 

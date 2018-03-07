@@ -77,4 +77,6 @@ public final class GoogleStaticObjects {
    */
   // TODO(olsona): find optimum value
   public static final int MAX_ATTENDEES = 100;
+  public static final String CALENDAR_TOKEN_PREFIX = "calendar:";
+  public static final String EVENT_TOKEN_PREFIX = "event:";
 }
