@@ -25,7 +25,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Named;
-import org.dataportabilityproject.gateway.PortabilityAuthServiceProviderModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,8 +71,6 @@ public class ReferenceApiModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    install(new PortabilityAuthServiceProviderModule());
-
     // TODO: Bind ApiSettings or migrate to launcher api context
     // TODO: Bind actions in single or multiple modules
     MapBinder<String, HttpHandler> mapbinder =

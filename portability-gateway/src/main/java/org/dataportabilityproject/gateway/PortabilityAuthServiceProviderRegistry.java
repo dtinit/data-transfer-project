@@ -36,32 +36,27 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
 
   @Inject
   public PortabilityAuthServiceProviderRegistry(
-      List<String> enabledServices, Map<String, AuthServiceProvider> serviceProviderMap) {
+      Map<String, AuthServiceProvider> serviceProviderMap) {
     ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder =
         ImmutableMap.builder();
     ImmutableSet.Builder<String> supportedImportTypesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<String> supportedExportTypesBuilder = ImmutableSet.builder();
 
-    for (String service : enabledServices) {
-      AuthServiceProvider authServiceProvider = serviceProviderMap.get(service);
-      Preconditions.checkArgument(
-          authServiceProvider != null, "AuthServiceProvider not found for [%s]", service);
-
-      List<String> importTypes = authServiceProvider.getImportTypes();
-      List<String> exportTypes = authServiceProvider.getExportTypes();
-
-      for (String type : importTypes) {
-        Preconditions.checkArgument(
-            exportTypes.contains(type),
-            "TransferDataType [%s] is available for import but not export in [%s] AuthServiceProvider",
-            type,
-            service);
-        supportedImportTypesBuilder.add(type);
-      }
-
-      supportedExportTypesBuilder.addAll(exportTypes);
-      serviceProviderBuilder.put(service, authServiceProvider);
-    }
+    serviceProviderMap.forEach(
+        (service, provider) -> {
+          List<String> importTypes = provider.getImportTypes();
+          List<String> exportTypes = provider.getExportTypes();
+          for (String type : importTypes) {
+            Preconditions.checkArgument(
+                exportTypes.contains(type),
+                "TransferDataType [%s] is available for import but not export in [%s] AuthServiceProvider",
+                type,
+                service);
+            supportedImportTypesBuilder.add(type);
+          }
+          supportedExportTypesBuilder.addAll(exportTypes);
+          serviceProviderBuilder.put(service, provider);
+        });
 
     authServiceProviderMap = serviceProviderBuilder.build();
     supportedImportTypes = supportedImportTypesBuilder.build();
