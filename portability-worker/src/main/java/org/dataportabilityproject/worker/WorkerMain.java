@@ -57,6 +57,7 @@ public class WorkerMain {
     Preconditions.checkState(
         !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
 
+    // TODO: This could be simplified with streams & filtering
     for (TransferExtension extension : extensions) {
       if (extension.getServiceId().equals(exportService)) {
         extension.initialize(extensionContext);

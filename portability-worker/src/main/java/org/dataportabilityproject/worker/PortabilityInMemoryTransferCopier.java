@@ -49,13 +49,6 @@ public class PortabilityInMemoryTransferCopier implements InMemoryTransferCopier
       AuthData importAuthData,
       UUID jobId)
       throws IOException {
-
-    logger.debug(
-        "Starting copy job, id: {}, source: {}, destination: {}",
-        jobId,
-        exporter.getServiceId(),
-        importer.getServiceId());
-
     // Initial copy, starts off the process with no previous paginationData or containerResource
     // information
     ExportInformation emptyExportInfo = new ExportInformation(null, null);

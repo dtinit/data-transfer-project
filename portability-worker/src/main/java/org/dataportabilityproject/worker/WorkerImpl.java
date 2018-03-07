@@ -81,6 +81,11 @@ final class WorkerImpl {
 
   private void processJob(UUID jobId, PortabilityJob job, Exporter exporter, Importer importer) {
     try {
+      logger.debug(
+          "Starting copy job, id: {}, source: {}, destination: {}",
+          jobId,
+          workerJobMetadata.getExportService(),
+          workerJobMetadata.getImportService());
       Decrypter decrypter = DecrypterFactory.create(workerJobMetadata.getKeyPair().getPrivate());
       JobAuthorization jobAuthorization = job.jobAuthorization();
       String serializedExportAuthData =

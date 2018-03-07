@@ -31,7 +31,6 @@ import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
@@ -67,11 +66,6 @@ public class MicrosoftCalendarExporter
     this.objectMapper = objectMapper;
     this.transformerService = transformerService;
     this.baseUrl = baseUrl;
-  }
-
-  @Override
-  public String getServiceId() {
-    return MicrosoftTransferExtension.SERVICE_ID;
   }
 
   @Override
