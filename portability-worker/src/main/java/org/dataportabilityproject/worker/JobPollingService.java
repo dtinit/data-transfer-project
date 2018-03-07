@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -41,22 +40,17 @@ import org.slf4j.LoggerFactory;
 class JobPollingService extends AbstractScheduledService {
   private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
   private final JobStore store;
-  private final WorkerJobMetadata jobMetadata;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
   @Inject
-  JobPollingService(
-      JobStore store,
-      WorkerJobMetadata jobMetadata,
-      AsymmetricKeyGenerator asymmetricKeyGenerator) {
+  JobPollingService(JobStore store, AsymmetricKeyGenerator asymmetricKeyGenerator) {
     this.store = store;
-    this.jobMetadata = jobMetadata;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
   @Override
   protected void runOneIteration() throws Exception {
-    if (jobMetadata.isInitialized()) {
+    if (JobMetadata.isInitialized()) {
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this worker instance.
@@ -82,14 +76,13 @@ class JobPollingService extends AbstractScheduledService {
       return;
     }
     logger.debug("Polled job {}", jobId);
-    Preconditions.checkState(!jobMetadata.isInitialized());
+    Preconditions.checkState(!JobMetadata.isInitialized());
     KeyPair keyPair = asymmetricKeyGenerator.generate();
     PublicKey publicKey = keyPair.getPublic();
-    // TODO: Move storage of private key to a different location. One option is to manage this
-    // key pair within our cloud platform's key management system rather than generating here.
-    PrivateKey privateKey = keyPair.getPrivate();
-    // Executing Job State Transition from Unassigned (auth state INITIAL) to Assigned (auth
-    // state CREDS_ENCRYPTION_KEY_GENERATED).
+    // TODO: Back up private key (keyPair.getPrivate()) in case this worker dies mid-copy, so we
+    // don't have to make the user start from scratch. Some options are to manage this key pair
+    // within our hosting platform's key management system rather than generating here, or to
+    // encrypt and store the private key on the client.
     try {
       keyGenerated(jobId, keyPair);
       logger.debug(
@@ -125,10 +118,9 @@ class JobPollingService extends AbstractScheduledService {
                     .toBuilder()
                     .setEncodedPublicKey(encodedPublicKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
-                    .build())
-            .build();
+                    .build()).build();
     store.updateJob(jobId, updatedJob);
-    jobMetadata.init(
+    JobMetadata.init(
         jobId,
         keyPair,
         existingJob.transferDataType(),
@@ -138,7 +130,7 @@ class JobPollingService extends AbstractScheduledService {
 
   /** Polls for job with populated auth data and stops this service when found. */
   private void pollUntilJobIsReady() {
-    UUID jobId = jobMetadata.getJobId();
+    UUID jobId = JobMetadata.getJobId();
     PortabilityJob job = store.findJob(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
@@ -149,17 +141,14 @@ class JobPollingService extends AbstractScheduledService {
           && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
       } else {
-        logger.warn(
-            "Polled job {} does not have auth data as expected. "
-                + "Done polling this job since it's in a bad state! Starting over.",
-            jobId);
+        logger.warn("Polled job {} does not have auth data as expected. "
+            + "Done polling this job since it's in a bad state! Starting over.", jobId);
       }
       this.stopAsync();
     } else {
       logger.debug(
           "Polling job {} until it's in state CREDS_ENCRYPTED. " + "It's currently in state: {}",
-          jobId,
-          job.jobAuthorization().state());
+          jobId, job.jobAuthorization().state());
     }
   }
 }

@@ -57,8 +57,7 @@ public interface JobStore {
   /**
    * Atomically updates the entry for {@code job}'s ID to {@code job}.
    *
-   * @throws IOException if the job was not in the expected state in the store, or there was another
-   *     problem updating it.
+   * @throws IOException if there was a problem updating the job.
    */
   void updateJob(UUID jobId, PortabilityJob job) throws IOException;
 
