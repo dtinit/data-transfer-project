@@ -43,6 +43,8 @@ import org.dataportabilityproject.dataModels.Resource;
 import org.dataportabilityproject.dataModels.calendar.CalendarModel;
 import org.dataportabilityproject.dataModels.calendar.CalendarModelWrapper;
 import org.dataportabilityproject.shared.IdOnlyResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Stub for the Microsoft calendar service. */
 public class MicrosoftCalendarService
@@ -50,6 +52,7 @@ public class MicrosoftCalendarService
 
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private static final String HEADER_PREFIX = "Bearer ";
+  private static final Logger logger = LoggerFactory.getLogger(MicrosoftCalendarService.class);
 
   private final HttpRequestFactory requestFactory;
 
@@ -77,7 +80,7 @@ public class MicrosoftCalendarService
 
   @Override
   public void importItem(CalendarModelWrapper object) throws IOException {
-    System.out.println("importItem: " + object);
+    logger.debug("importItem: {}", object);
   }
 
   @Override
@@ -101,11 +104,11 @@ public class MicrosoftCalendarService
     try {
       response = getRequest.execute();
     } catch (HttpResponseException e) {
-      System.out.println("Error fetching content");
-      System.out.println("response status code: " + e.getStatusCode());
-      System.out.println("response status message: " + e.getStatusMessage());
-      System.out.println("response headers: " + e.getHeaders());
-      System.out.println("response content: " + e.getContent());
+      logger.debug("Error fetching content");
+      logger.debug("response status code: {}", e.getStatusCode());
+      logger.debug("response status message: {}", e.getStatusMessage());
+      logger.debug("response headers: {}", e.getHeaders());
+      logger.debug("response content: {}", e.getContent());
       e.printStackTrace();
       throw e;
     }
@@ -137,9 +140,9 @@ public class MicrosoftCalendarService
         String.format(
             "https://outlook.office.com/api/v2.0/me/calendars/%s/calendarview?startDateTime=%s&endDateTime=%s",
             calendarId, formatTime(begin), formatTime(end));
-    System.out.println("calendar: " + calendarId);
+    logger.debug("calendar: {}", calendarId);
     // TODO: Determine why this URL works in the MS Oauth Playground but not here
-    System.out.println("eventsUrl: " + eventsUrl);
+    logger.debug("eventsUrl: {}", eventsUrl);
 
     // Make requests for events
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(eventsUrl));
@@ -147,11 +150,11 @@ public class MicrosoftCalendarService
     try {
       response = getRequest.execute();
     } catch (HttpResponseException e) {
-      System.out.println("Error fetching content");
-      System.out.println("response status code: " + e.getStatusCode());
-      System.out.println("response status message: " + e.getStatusMessage());
-      System.out.println("response headers: " + e.getHeaders());
-      System.out.println("response content: " + e.getContent());
+      logger.debug("Error fetching content");
+      logger.debug("response status code: {}", e.getStatusCode());
+      logger.debug("response status message: {}", e.getStatusMessage());
+      logger.debug("response headers: {}", e.getHeaders());
+      logger.debug("response content: {}", e.getContent());
       e.printStackTrace();
       throw e;
     }
@@ -163,9 +166,9 @@ public class MicrosoftCalendarService
 
     // TODO: Parse with JSON and add to model
     // Currently this is not working as it is not returning events.
-    System.out.println("response headers" + response.getHeaders());
-    System.out.println("response status message" + response.getStatusMessage());
-    System.out.println("\n\n" + "events resp: " + response.parseAsString() + "\n\n");
+    logger.debug("response headers: {}", response.getHeaders());
+    logger.debug("response status message: {}", response.getStatusMessage());
+    logger.debug("events response: {}", response.parseAsString());
 
     // TODO(chuy): return actual results here.
     return null;
