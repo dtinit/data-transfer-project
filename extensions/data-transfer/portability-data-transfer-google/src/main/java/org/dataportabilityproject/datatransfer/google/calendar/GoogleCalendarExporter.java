@@ -60,7 +60,6 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   @Override
   public ExportResult<CalendarContainerResource> export(AuthData authData,
       ExportInformation exportInformation) {
-    getOrCreateCalendarInterface(authData);
     StringPaginationToken paginationToken = (StringPaginationToken) exportInformation
         .getPaginationData();
     if (paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
