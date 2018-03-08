@@ -129,11 +129,54 @@ public final class ReferenceApiUtils {
     }
     return true;
   }
+  /**
+   * Validates that the JobId in the request matches the jobId in the xsrf header and contains Does
+   * not validate that the job id itself is valid. Returns JobID.
+   */
+  public static UUID validateJobId(Headers requestHeaders, TokenManager tokenManager) {
+    String encodedIdCookie = getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
+    // Valid job must be present
+    UUID jobId = decodeId(encodedIdCookie);
+
+    // Validate XSRF token is present in request header and in the token.
+    String tokenHeader = parseXsrfTokenHeader(requestHeaders);
+    String tokenCookie = getCookie(requestHeaders, JsonKeys.XSRF_TOKEN);
+
+    // Both header and token should be present
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(tokenHeader), "xsrf token header must be present");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(tokenCookie), "xsrf token cookie must be present");
+
+    // The token present in the header should be the same as the token present in the cookie.
+    Preconditions.checkArgument(
+        tokenCookie.equals(tokenHeader), "xsrf token header and cookie must match");
+
+    // Verify that the token is actually valid in the tokenManager
+    Preconditions.checkArgument(
+        tokenManager.verifyToken(tokenHeader), "xsrf token provided is invalid");
+
+    // finally make sure the jobId present in the token is also equal to the jobId present in the
+    // cookie
+    UUID jobIdFromToken = tokenManager.getJobIdFromToken(tokenHeader);
+    Preconditions.checkArgument(
+        jobId.equals(jobIdFromToken), "encoded job id and job id token must match");
+    return jobId;
+  }
   /** Hack! For now, if we don't have export auth data, assume it's for export. */
   public static AuthMode getAuthMode(Headers headers) {
     String exportAuthCookie = getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     return (Strings.isNullOrEmpty(exportAuthCookie) ? AuthMode.EXPORT : AuthMode.IMPORT);
+  }
+
+  // The cookie value might be surrounded by double quotes which causes the angular cli to also
+  // surround the header with double quotes. Since the value itself may not contain quotes or
+  // whitespace, trim off the double quotes by converting them to whitespace.
+  private static String parseXsrfTokenHeader(Headers requestHeaders) {
+    return requestHeaders.getFirst(JsonKeys.XSRF_HEADER).replace("\"", " ").trim();
   }
 
   /**
