@@ -53,7 +53,8 @@ public class GoogleCloudExtension implements CloudExtension {
   @Override
   public void initialize(ExtensionContext context) {
     try {
-      projectId = context.getConfiguration("", "");
+      projectId = context.getConfiguration("GOOGLE_PROJECT_ID", "");
+      Preconditions.checkArgument(!projectId.isEmpty(), "Google project id not found");
       googleCredentials = GoogleCredentials.getApplicationDefault();
       datastore =
           DatastoreOptions.newBuilder()
