@@ -1,12 +1,13 @@
 package org.dataportabilityproject.cloud.google;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.BucketStore;
@@ -15,33 +16,20 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GoogleCloudExtension implements CloudExtension {
-  // TODO: Should these be initialized from the ExtensionContext and not injected?
-  // If injected, this requires that we install the GoogleCloudModule before using which might not
-  // make sense depending on where it would happen
-  private final GoogleCredentials googleCredentials;
-  private final String projectId;
-  private final HttpTransport transport;
-  private final JsonFactory jsonFactory;
-  private static final Logger logger = LoggerFactory.getLogger(GoogleCloudExtension.class);
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
-  private boolean initialized = false;
+public class GoogleCloudExtension implements CloudExtension {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleCloudExtension.class);
+  private GoogleCredentials googleCredentials;
+  private HttpTransport transport;
+  private JsonFactory jsonFactory;
   private Datastore datastore;
   private JobStore jobstore;
   private BucketStore bucketStore;
   private GoogleCryptoKeyStore cryptoKeyManagementSystem;
-
-  @Inject
-  GoogleCloudExtension(
-      @GoogleCloudModule.ProjectId String projectId,
-      GoogleCredentials googleCredentials,
-      HttpTransport transport,
-      JsonFactory jsonFactory) {
-    this.projectId = projectId;
-    this.googleCredentials = googleCredentials;
-    this.transport = transport;
-    this.jsonFactory = jsonFactory;
-  }
+  private String projectId;
+  private boolean initialized = false;
 
   @Override
   public JobStore getJobStore() {
@@ -57,33 +45,40 @@ public class GoogleCloudExtension implements CloudExtension {
 
   @Override
   public CryptoKeyStore getCryptoKeyStore() {
-    Preconditions.checkArgument(initialized, "Attempting to getCryptoKeyStore() before initializing");
+    Preconditions.checkArgument(
+        initialized, "Attempting to getCryptoKeyStore() before initializing");
     return cryptoKeyManagementSystem;
   }
 
   @Override
   public void initialize(ExtensionContext context) {
-    this.datastore =
-        DatastoreOptions.newBuilder()
-            .setProjectId(projectId)
-            .setCredentials(googleCredentials)
-            .build()
-            .getService();
-    this.jobstore = new GoogleJobStore(datastore);
-    this.bucketStore = new GoogleBucketStore(googleCredentials,projectId);
-
     try {
-      this.cryptoKeyManagementSystem = new GoogleCryptoKeyStore(transport, jsonFactory, projectId);
-    } catch (GoogleCredentialException e) {
-      //TODO: the method doesn't throw an exception, how do we pass this onto the user?
-      logger.debug("Error creating GoogleCryptoKeyStore: ", e);
+      projectId = context.getConfiguration("", "");
+      googleCredentials = GoogleCredentials.getApplicationDefault();
+      datastore =
+          DatastoreOptions.newBuilder()
+              .setProjectId(projectId)
+              .setCredentials(googleCredentials)
+              .build()
+              .getService();
+      jobstore = new GoogleJobStore(datastore);
+      bucketStore = new GoogleBucketStore(googleCredentials, projectId);
+
+      // TODO: Hook these up with the global instances
+      transport =  GoogleNetHttpTransport.newTrustedTransport();
+      jsonFactory = new JacksonFactory();
+      cryptoKeyManagementSystem = new GoogleCryptoKeyStore(transport, jsonFactory, projectId);
+
+      initialized = true;
+    } catch (IOException | GoogleCredentialException | GeneralSecurityException e) {
+      // TODO: the method doesn't throw an exception, how do we pass this onto the user?
+      logger.debug("Error initializing extension: " + this.getClass().getName(), e);
+      initialized = false;
     }
-    this.initialized = true;
   }
 
   @Override
-  public void start() {}
-
-  @Override
-  public void shutdown() {}
+  public void shutdown() {
+    this.initialized = false;
+  }
 }
