@@ -11,8 +11,8 @@
 #
 # Must be run from the root source directory data-portability/
 
-if [[ $(pwd) != */data-portability ]]; then
-  echo "Please run out of /data-portability directory. Aborting."
+if [[ $(pwd) != */data-transfer-project ]]; then
+  echo "Please run out of /data-transfer-project directory. Aborting."
   exit 1
 fi
 
@@ -66,7 +66,7 @@ if [[ -e "${SRC_RESOURCES_PATH}/log4j.properties" ]]; then
   fi
 fi
 
-if [[ $BINARY == "api" ]]; then
+if [[ $BINARY == "api" || $BINARY == "gateway" ]]; then
   echo -e "Copying api.yaml from $SRC_SETTINGS_PATH to $DEST_SETTINGS_PATH"
   cp "${SRC_SETTINGS_PATH}api.yaml" "${DEST_SETTINGS_PATH}api.yaml"
   if [[ ! -e "${SRC_SETTINGS_PATH}api.yaml" ]]; then

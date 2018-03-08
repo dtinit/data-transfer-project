@@ -15,13 +15,16 @@
  */
 package org.dataportabilityproject.gateway;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.lang.Thread.UncaughtExceptionHandler;
 import org.dataportabilityproject.gateway.reference.ReferenceApiModule;
 import org.dataportabilityproject.gateway.reference.ReferenceApiServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Set;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -39,7 +42,12 @@ public class ApiMain {
         });
 
     // TODO: Support other server implementations, e.g. Jetty, Tomcat
-    Injector injector = Guice.createInjector(new ReferenceApiModule());
+    // TODO: Don't hardcode list of services
+    Set<String> services = ImmutableSet.of("Microsoft");
+
+    Injector injector =
+        Guice.createInjector(
+            new PortabilityAuthServiceProviderModule(services), new ReferenceApiModule());
 
     // Launch the application
     ReferenceApiServer server = injector.getInstance(ReferenceApiServer.class);
