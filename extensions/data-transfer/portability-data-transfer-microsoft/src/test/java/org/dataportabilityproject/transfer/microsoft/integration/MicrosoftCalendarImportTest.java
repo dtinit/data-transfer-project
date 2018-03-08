@@ -33,7 +33,7 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.dataportabilityproject.transfer.microsoft.helper.MockJobStore;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.dataportabilityproject.transfer.microsoft.types.TempCalendarData;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;

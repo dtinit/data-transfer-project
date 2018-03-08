@@ -2,6 +2,7 @@ package org.dataportabilityproject.transfer.microsoft.types;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.junit.Assert;
 import org.junit.Test;
 
