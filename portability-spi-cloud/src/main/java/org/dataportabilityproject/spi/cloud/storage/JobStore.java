@@ -15,6 +15,13 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
  * back-end services.
  */
 public interface JobStore {
+  interface JobUpdateValidator {
+    /**
+     * Validation to do as part of an atomic update. Implementers should throw an
+     * {@code IllegalStateException} if the validation fails.
+     */
+    void validate(PortabilityJob previous, PortabilityJob updated);
+  }
 
   /**
    * Inserts a new {@link LegacyPortabilityJob} keyed by {@code jobId} in the store.
@@ -65,18 +72,14 @@ public interface JobStore {
 
   /**
    * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}.
-   *
-   * <p>For auth-state-changing operations, the {@code previousState} may be validated as part of
-   * the transaction. Set {@code previousState} to null if no validation is desired.
+   * {@code job}. If {@code validator} is non-null, validator.validate() is called first, as part of
+   * the atomic update.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
    * updating it
-   * @throws IllegalStateException if state validation was requested ({@code previousState} was
-   * non-null) and the job's state was not the expected {@code previousState}
+   * @throws IllegalStateException if validator.validate() failed
    */
-  void updateJob(UUID jobId, PortabilityJob job, JobAuthorization.State previousState)
-      throws IOException;
+  void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator) throws IOException;
 
   /**
    * Removes the {@link LegacyPortabilityJob} in the store keyed by {@code jobId}.

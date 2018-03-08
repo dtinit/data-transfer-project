@@ -94,18 +94,15 @@ public final class GoogleJobStore implements JobStore {
 
   /**
    * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}, within a {@code Transaction}.
-   *
-   * <p>For auth-state-changing operations, the {@code previousState} may be validated as part of
-   * the transaction. Set {@code previousState} to null if no validation is desired.
+   * {@code job}, within a {@code Transaction}. If {@code validator} is non-null,
+   * validator.validate() is called first in the transaction.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
    * updating it
-   * @throws IllegalStateException if state validation was requested ({@code previousState} was
-   * non-null) and the job's state was not the expected {@code previousState}
+   * @throws IllegalStateException if validator.validate() failed
    */
   @Override
-  public void updateJob(UUID jobId, PortabilityJob job, JobAuthorization.State previousState)
+  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
@@ -114,13 +111,12 @@ public final class GoogleJobStore implements JobStore {
     try {
       Entity previousEntity = transaction.get(key);
       if (previousEntity == null) {
-        transaction.rollback();
         throw new IOException("Could not find record for jobId: " + jobId);
       }
 
-      if (previousState != null) {
+      if (validator != null) {
         PortabilityJob previousJob = PortabilityJob.fromMap(getProperties(previousEntity));
-        Preconditions.checkState(previousJob.jobAuthorization().state().equals(previousState));
+        validator.validate(previousJob, job);
       }
 
       Entity newEntity = createEntity(key, job.toMap());

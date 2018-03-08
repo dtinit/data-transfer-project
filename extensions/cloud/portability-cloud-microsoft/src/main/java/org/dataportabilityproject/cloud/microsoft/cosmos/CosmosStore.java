@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -79,7 +78,10 @@ public class CosmosStore implements JobStore {
   }
 
   @Override
-  public void updateJob(UUID jobId, PortabilityJob job, State previousState) throws IOException {
+  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+      throws IOException {
+    // TODO: if validator != null, call validator.validate() as part of update transaction. See
+    // https://github.com/google/data-transfer-project/pull/187/files/ac5b796988aa70c2e8d6948f17c59a025ae1947a#r173193724
     throw new UnsupportedOperationException("Not yet implemented");
   }
 

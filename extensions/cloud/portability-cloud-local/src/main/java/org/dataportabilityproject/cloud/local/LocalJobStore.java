@@ -64,30 +64,27 @@ public final class LocalJobStore implements JobStore {
 
   /**
    * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}.
-   *
-   * <p>For auth-state-changing operations, the {@code previousState} may be validated as part of
-   * the update. Set {@code previousState} to null if no validation is desired.
+   * {@code job}. If {@code validator} is non-null, validator.validate() is called first, as part of
+   * the atomic update.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
    * updating it
-   * @throws IllegalStateException if state validation was requested ({@code previousState} was
-   * non-null) and the job's state was not the expected {@code previousState}
+   * @throws IllegalStateException if validator.validate() failed
    */
   @Override
-  public synchronized void updateJob(UUID jobId, PortabilityJob job,
-      JobAuthorization.State previousState) throws IOException {
+  public synchronized void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+      throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
       Map<String, Object> previousEntry = map.replace(jobId, job.toMap());
       if (previousEntry == null) {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
-      if (previousState != null) {
+      if (validator != null) {
         PortabilityJob previousJob = PortabilityJob.fromMap(previousEntry);
-        Preconditions.checkState(previousJob.jobAuthorization().state().equals(previousState));
+        validator.validate(previousJob, job);
       }
-    } catch (NullPointerException e) {
+    } catch (NullPointerException | IllegalStateException e) {
       throw new IOException("Couldn't update jobId: " + jobId, e);
     }
   }

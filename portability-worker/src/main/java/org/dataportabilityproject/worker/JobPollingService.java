@@ -27,7 +27,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore.JobUpdateValidator;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +122,9 @@ class JobPollingService extends AbstractScheduledService {
     // instance polled the same job, and already claimed it, it will have updated the job's state
     // to CREDS_ENCRYPTION_KEY_GENERATED.
     try {
-      store.updateJob(jobId, updatedJob, JobAuthorization.State.CREDS_AVAILABLE);
+      store.updateJob(jobId, updatedJob,
+          (previous, updated) -> Preconditions.checkState(
+              previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
     } catch (IllegalStateException e) {
       throw new IOException("Could not 'claim' job " + jobId + ". It was probably already "
           + "claimed by another worker", e);

@@ -126,6 +126,10 @@ final class StartCopyHandler implements HttpHandler {
 
     // We have the data, now update to 'CREDS_AVAILABLE' so a worker may poll the job.
     job = job.toBuilder().setJobState(JobAuthorization.State.CREDS_AVAILABLE).build();
+    // TODO: when this is ported to gateway, pass in JobUpdateValidator to validate previously in
+    // state INITIAL as part of the atomic update
+    // store.updateJob(jobId, job, (previous, updated) -> Preconditions.checkState(
+    //    previous.jobAuthorization().state() == JobAuthorization.State.INITIAL))
     store.update(jobId, job, JobAuthorization.State.INITIAL);
     logger.debug("Updated job {} to CREDS_AVAILABLE", jobId);
 
