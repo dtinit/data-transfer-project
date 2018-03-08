@@ -27,7 +27,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore.JobUpdateValidator;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,23 +85,19 @@ class JobPollingService extends AbstractScheduledService {
     // don't have to make the user start from scratch. Some options are to manage this key pair
     // within our hosting platform's key management system rather than generating here, or to
     // encrypt and store the private key on the client.
-    try {
-      keyGenerated(jobId, keyPair);
-      logger.debug(
-          "Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
-          jobId,
-          publicKey.getEncoded().length);
-    } catch (IOException e) {
-      logger.debug(
-          "Failed to claim job {}; it was probably already claimed by another worker", jobId);
-    }
+    // Note: claimJob may fail if another worker beat us to it. That's ok -- this worker will keep
+    // polling until it can claim a job.
+    claimJob(jobId, keyPair);
+    logger.debug(
+        "Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
+        jobId,
+        publicKey.getEncoded().length);
   }
 
   /**
-   * Updates a unassigned {@link PortabilityJob} in storage with the provided {@code jobId} in
-   * CREDS_ENCRYPTION_KEY_GENERATED state with {@code publicKey} and {@code privateKey}.
+   * Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
    */
-  private void keyGenerated(UUID jobId, KeyPair keyPair) throws IOException {
+  private void claimJob(UUID jobId, KeyPair keyPair) throws IOException {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
     // Verify no worker key
@@ -119,7 +117,18 @@ class JobPollingService extends AbstractScheduledService {
                     .setEncodedPublicKey(encodedPublicKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                     .build()).build();
-    store.updateJob(jobId, updatedJob);
+    // Attempt to 'claim' this job by validating it is still in state CREDS_AVAILABLE as we
+    // update it to state CREDS_ENCRYPTION_KEY_GENERATED, along with our key. If another worker
+    // instance polled the same job, and already claimed it, it will have updated the job's state
+    // to CREDS_ENCRYPTION_KEY_GENERATED.
+    try {
+      store.updateJob(jobId, updatedJob,
+          (previous, updated) -> Preconditions.checkState(
+              previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
+    } catch (IllegalStateException e) {
+      throw new IOException("Could not 'claim' job " + jobId + ". It was probably already "
+          + "claimed by another worker", e);
+    }
     JobMetadata.init(
         jobId,
         keyPair,
