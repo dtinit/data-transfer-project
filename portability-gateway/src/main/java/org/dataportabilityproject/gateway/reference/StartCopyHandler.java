@@ -74,6 +74,7 @@ final class StartCopyHandler implements HttpHandler {
     StartJobActionRequest request = new StartJobActionRequest(jobId, exportAuthCookieValue, importAuthCookieValue);
     StartJobActionResponse response = startJobAction.handle(request);
 
+    // TODO: Determine if we need more fields populated or a new object
     DataTransferResponse dataTransferResponse =
             new DataTransferResponse(
                 "", //job.exportService(),
