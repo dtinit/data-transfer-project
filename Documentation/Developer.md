@@ -31,6 +31,7 @@ The following instructions work for IntelliJ IDEA version 2017.2.6.
     * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
     * Check 'Enable annotation processing'
     * Store generated sources relative to: 'Module content root' (not the default)
+    * Production sources directory: 'build/classes/java/'
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored
