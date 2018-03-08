@@ -45,21 +45,6 @@ public class PortabilityAuthServiceProviderRegistryTest {
 
     AuthServiceProviderRegistry registry =
         new PortabilityAuthServiceProviderRegistry(
-            ImmutableList.of("mockServiceProvider"),
-            ImmutableMap.of("mockServiceProvider", mockAuthProvider));
-  }
-
-  @Test
-  public void serviceProviderNotFoundTest() {
-    AuthServiceProvider mockAuthProvider = mock(AuthServiceProvider.class);
-    when(mockAuthProvider.getServiceId()).thenReturn("mockAuthProvider");
-
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("AuthServiceProvider not found");
-
-    AuthServiceProviderRegistry registry =
-        new PortabilityAuthServiceProviderRegistry(
-            ImmutableList.of("ServiceDoesNotExist"),
             ImmutableMap.of("mockServiceProvider", mockAuthProvider));
   }
 }
