@@ -21,6 +21,8 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** Exports data from a source service. */
 public interface Exporter<A extends AuthData, T extends DataModel> {
+  // TODO: reconsider this model - can we avoid sending AuthData with every export call?
+
   /** Performs an export operation. */
   ExportResult<T> export(A authData);
 
