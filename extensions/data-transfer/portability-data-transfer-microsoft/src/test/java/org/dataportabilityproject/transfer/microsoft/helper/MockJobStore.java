@@ -53,6 +53,10 @@ public class MockJobStore implements JobStore {
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {}
 
   @Override
+  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+      throws IOException {}
+
+  @Override
   public void remove(UUID jobId) throws IOException {}
 
   @Override

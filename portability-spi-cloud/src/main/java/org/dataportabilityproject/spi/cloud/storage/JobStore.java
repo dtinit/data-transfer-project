@@ -15,9 +15,16 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
  * back-end services.
  */
 public interface JobStore {
+  interface JobUpdateValidator {
+    /**
+     * Validation to do as part of an atomic update. Implementers should throw an
+     * {@code IllegalStateException} if the validation fails.
+     */
+    void validate(PortabilityJob previous, PortabilityJob updated);
+  }
 
   /**
-   * Inserts a new {@link LegacyPortabilityJob} keyed by its job ID in the store.
+   * Inserts a new {@link LegacyPortabilityJob} keyed by {@code jobId} in the store.
    *
    * <p>To update an existing {@link LegacyPortabilityJob} instead, use {@link #update}.
    *
@@ -31,7 +38,7 @@ public interface JobStore {
   }
 
   /**
-   * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
@@ -41,8 +48,8 @@ public interface JobStore {
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Atomically updates the entry for {@code job}'s ID to {@code job}, and verifies that it
-   * previously existed in {@code previousState}.
+   * Updates the entry for {@code jobId} to {@code job}, and verifies that it previously existed
+   * in {@code previousState}.
    *
    * @throws IOException if the job was not in the expected state in the store, or there was another
    *     problem updating it.
@@ -55,11 +62,24 @@ public interface JobStore {
   }
 
   /**
-   * Atomically updates the entry for {@code job}'s ID to {@code job}.
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}.
    *
-   * @throws IOException if there was a problem updating the job.
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
    */
   void updateJob(UUID jobId, PortabilityJob job) throws IOException;
+
+  /**
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}. If {@code validator} is non-null, validator.validate() is called first, as part of
+   * the atomic update.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   * @throws IllegalStateException if validator.validate() failed
+   */
+  void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator) throws IOException;
 
   /**
    * Removes the {@link LegacyPortabilityJob} in the store keyed by {@code jobId}.

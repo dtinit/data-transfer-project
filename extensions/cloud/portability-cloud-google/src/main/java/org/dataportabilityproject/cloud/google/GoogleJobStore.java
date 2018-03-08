@@ -54,49 +54,12 @@ public final class GoogleJobStore implements JobStore {
     this.datastore = datastore;
   }
 
-  private static Map<String, Object> getProperties(Entity entity) {
-    if (entity == null) return null;
-    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-    for (String property : entity.getNames()) {
-      // builder.put(property, entity.getValue(property));
-      if (entity.getValue(property) instanceof StringValue) {
-        builder.put(property, (String) entity.getString(property));
-      } else if (entity.getValue(property) instanceof LongValue) {
-        // This conversion is safe because of integer to long conversion above
-        builder.put(property, new Long(entity.getLong(property)).intValue());
-      } else if (entity.getValue(property) instanceof DoubleValue) {
-        builder.put(property, (Double) entity.getDouble(property));
-      } else if (entity.getValue(property) instanceof BooleanValue) {
-        builder.put(property, (Boolean) entity.getBoolean(property));
-      } else if (entity.getValue(property) instanceof TimestampValue) {
-        builder.put(property, (Timestamp) entity.getTimestamp(property));
-      } else {
-        Blob blob = entity.getBlob(property);
-        Object obj = null;
-        try {
-          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-            try {
-              obj = in.readObject();
-            } catch (ClassNotFoundException e) {
-              e.printStackTrace();
-            }
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        builder.put(property, obj); // BlobValue
-      }
-    }
-
-    return builder.build();
-  }
-
   /**
-   * Inserts a new {@link PortabilityJob} keyed by its job ID in Datastore.
+   * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in Datastore.
    *
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
-   * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
+   * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    *     problem inserting the job.
    */
   @Override
@@ -121,16 +84,26 @@ public final class GoogleJobStore implements JobStore {
   }
 
   /**
-   * Atomically updates the {@link PortabilityJob} keyed by {@code jobId} to {@code job}, in
-   * Datastore using a {@link Transaction}.
-   *
-   * <p>TODO(rtannenbaum): Consider validating authorization state was the previous one, when
-   * updating authorization state within this transaction. Previous API allowed for passing in of a
-   * previous expected state, but we shouldn't need to pass that in, given the context of the new
-   * state we should know what comes before it.
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}, within a {@code Transaction}.
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
+    updateJob(jobId, job, null);
+  }
+
+  /**
+   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
+   * {@code job}, within a {@code Transaction}. If {@code validator} is non-null,
+   * validator.validate() is called first in the transaction.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   * @throws IllegalStateException if validator.validate() failed
+   */
+  @Override
+  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+      throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
     Key key = getKey(jobId);
@@ -138,8 +111,12 @@ public final class GoogleJobStore implements JobStore {
     try {
       Entity previousEntity = transaction.get(key);
       if (previousEntity == null) {
-        transaction.rollback();
         throw new IOException("Could not find record for jobId: " + jobId);
+      }
+
+      if (validator != null) {
+        PortabilityJob previousJob = PortabilityJob.fromMap(getProperties(previousEntity));
+        validator.validate(previousJob, job);
       }
 
       Entity newEntity = createEntity(key, job.toMap());
@@ -166,9 +143,7 @@ public final class GoogleJobStore implements JobStore {
   }
 
   /**
-   * Returns the job for the id or null if not found.
-   *
-   * @param jobId the job id
+   * Returns the job keyed by {@code jobId} in Datastore, or null if not found.
    */
   @Override
   public PortabilityJob findJob(UUID jobId) {
@@ -234,5 +209,42 @@ public final class GoogleJobStore implements JobStore {
 
   private Key getKey(UUID jobId) {
     return datastore.newKeyFactory().setKind(KIND).newKey(jobId.toString());
+  }
+
+  private static Map<String, Object> getProperties(Entity entity) {
+    if (entity == null) return null;
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+    for (String property : entity.getNames()) {
+      // builder.put(property, entity.getValue(property));
+      if (entity.getValue(property) instanceof StringValue) {
+        builder.put(property, (String) entity.getString(property));
+      } else if (entity.getValue(property) instanceof LongValue) {
+        // This conversion is safe because of integer to long conversion above
+        builder.put(property, new Long(entity.getLong(property)).intValue());
+      } else if (entity.getValue(property) instanceof DoubleValue) {
+        builder.put(property, (Double) entity.getDouble(property));
+      } else if (entity.getValue(property) instanceof BooleanValue) {
+        builder.put(property, (Boolean) entity.getBoolean(property));
+      } else if (entity.getValue(property) instanceof TimestampValue) {
+        builder.put(property, (Timestamp) entity.getTimestamp(property));
+      } else {
+        Blob blob = entity.getBlob(property);
+        Object obj = null;
+        try {
+          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+            try {
+              obj = in.readObject();
+            } catch (ClassNotFoundException e) {
+              e.printStackTrace();
+            }
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        builder.put(property, obj); // BlobValue
+      }
+    }
+
+    return builder.build();
   }
 }
