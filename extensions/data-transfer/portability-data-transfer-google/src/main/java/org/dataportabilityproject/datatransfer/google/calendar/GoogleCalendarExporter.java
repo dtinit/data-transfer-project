@@ -26,7 +26,6 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.store.TransferStore;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;

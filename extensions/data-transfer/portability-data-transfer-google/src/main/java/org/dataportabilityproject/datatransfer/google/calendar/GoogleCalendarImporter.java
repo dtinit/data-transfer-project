@@ -110,14 +110,15 @@ public class GoogleCalendarImporter implements Importer<AuthData, CalendarContai
     return eventDateTime;
   }
 
-  private static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(CalendarModel
-      calendarModel) {
+  private static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(
+      CalendarModel
+          calendarModel) {
     return new com.google.api.services.calendar.model.Calendar()
         .setSummary("Copy of - " + calendarModel.getName())
         .setDescription(calendarModel.getDescription());
   }
 
-  private static Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
+  static Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
     Event event = new Event()
         .setLocation(eventModel.getLocation())
         .setDescription(eventModel.getTitle())
