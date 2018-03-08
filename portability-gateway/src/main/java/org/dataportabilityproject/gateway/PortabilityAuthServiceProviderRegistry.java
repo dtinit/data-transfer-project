@@ -21,12 +21,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
 

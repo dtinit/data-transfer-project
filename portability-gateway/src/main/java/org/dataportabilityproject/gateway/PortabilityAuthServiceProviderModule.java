@@ -1,25 +1,27 @@
 package org.dataportabilityproject.gateway;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ServiceLoader;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
 
 public class PortabilityAuthServiceProviderModule extends AbstractModule {
 
   private static final Logger logger =
       LoggerFactory.getLogger(PortabilityAuthServiceProviderModule.class);
 
-  private final ImmutableList<String> enabledServices;
+  private final ImmutableSet<String> enabledServices;
 
-  PortabilityAuthServiceProviderModule(List<String> enabledServices) {
-    this.enabledServices = ImmutableList.copyOf(enabledServices);
+  PortabilityAuthServiceProviderModule(Set<String> enabledServices) {
+    this.enabledServices = ImmutableSet.copyOf(enabledServices);
   }
 
   @Override
