@@ -12,6 +12,7 @@ description: Data Transfer Project is an open source platform enabling data port
 
 The goal of the Data Transfer Project (name is a work in progress) is to make it easy to transfer data
 from one service provider (e.g. Google) to another (e.g. Microsoft).
+{: .homepage__key_point}
 
 ## Features
 {: .card__title}
@@ -26,8 +27,3 @@ from one service provider (e.g. Google) to another (e.g. Microsoft).
 - [Overview](pages/overview.html)
 - [Resources](pages/resources.html)
 - [Github](https://github.com/google/data-transfer-project)
-
-
----
-
-The source for this site is on  [on github](https://github.com/google/data-transfer-project/tree/gh-pages).
