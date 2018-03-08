@@ -25,7 +25,7 @@
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
  * Open IntelliJ -> Import Project
- * Navigate to the 'data-portability' directory where you have git cloned the repo
+ * Navigate to the 'data-transfer-project' directory where you have git cloned the repo
  * Import project from external model (Gradle) -> uncheck 'Create separate module per source set' -> Finish
  * Enable annotation processing.
     * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
