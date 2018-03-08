@@ -78,6 +78,14 @@ public class CosmosStore implements JobStore {
   }
 
   @Override
+  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+      throws IOException {
+    // TODO: if validator != null, call validator.validate() as part of update transaction. See
+    // https://github.com/google/data-transfer-project/pull/187/files/ac5b796988aa70c2e8d6948f17c59a025ae1947a#r173193724
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
   public PortabilityJob findJob(UUID id) {
     return findData(PortabilityJob.class, id, JOB_QUERY, "job_data");
   }
