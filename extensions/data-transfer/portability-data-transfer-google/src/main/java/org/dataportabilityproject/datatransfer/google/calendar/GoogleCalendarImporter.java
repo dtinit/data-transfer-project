@@ -25,7 +25,7 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 public class GoogleCalendarImporter implements Importer<AuthData, CalendarContainerResource> {
 
   private volatile Calendar calendarInterface;
-  private JobStore jobStore;
+  private final JobStore jobStore;
 
   public GoogleCalendarImporter(JobStore jobStore) {
     this.jobStore = jobStore;

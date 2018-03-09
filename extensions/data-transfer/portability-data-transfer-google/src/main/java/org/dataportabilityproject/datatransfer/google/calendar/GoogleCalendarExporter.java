@@ -40,16 +40,14 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContainerResource> {
 
   private volatile Calendar calendarInterface;
-  private JobStore jobStore;  // TODO(olsona): use jobStore
 
-  public GoogleCalendarExporter(JobStore jobStore) {
-    this.jobStore = jobStore;
+  public GoogleCalendarExporter() {
+    this.calendarInterface = null;
   }
 
   @VisibleForTesting
-  GoogleCalendarExporter(Calendar calendarInterface, JobStore jobStore) {
+  GoogleCalendarExporter(Calendar calendarInterface) {
     this.calendarInterface = calendarInterface;
-    this.jobStore = jobStore;
   }
 
   @Override
