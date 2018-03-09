@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2018 The Data-Portability Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.security;
+package org.dataportabilityproject.gateway.action.startjob;
 
-import java.security.KeyPair;
-import java.security.PublicKey;
+import com.google.inject.AbstractModule;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
-/** Creates and encodes keys for asymmetric encryption. */
-public interface AsymmetricKeyGenerator {
+/** Dependencies for the {@link StartJobAction} and related classes. */
+public final class StartJobActionModule extends AbstractModule {
 
-  /** Generates a {@link KeyPair} */
-  KeyPair generate();
-
-  /** Parses an encoded {@link PublicKey}. */
-  PublicKey parse(byte[] encoded);
+  @Override
+  protected void configure() {
+    requireBinding(JobStore.class);
+    requireBinding(SymmetricKeyGenerator.class);
+  }
 }

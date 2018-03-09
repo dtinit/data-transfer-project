@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.security;
+package org.dataportabilityproject.gateway.reference;
 
-import java.security.KeyPair;
-import java.security.PublicKey;
+import java.util.UUID;
 
-/** Creates and encodes keys for asymmetric encryption. */
-public interface AsymmetricKeyGenerator {
+/** Functionality to manage the lifecycle of tokens. */
+public interface TokenManager {
 
-  /** Generates a {@link KeyPair} */
-  KeyPair generate();
+  /** Verifies if the token is valid. */
+  boolean verifyToken(String token);
 
-  /** Parses an encoded {@link PublicKey}. */
-  PublicKey parse(byte[] encoded);
+  /** Verifies and returns the jobId associated with this token. */
+  UUID getJobIdFromToken(String token);
+
+  /** Creates a new JWT token with the given {@code jobId}. */
+  String createNewToken(UUID jobId);
 }

@@ -95,7 +95,6 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   }
 
   DataTransferResponse handleExchange(HttpExchange exchange) throws IOException {
-    DataTransferResponse response;
 
     Headers requestHeaders = exchange.getRequestHeaders();
     try {
@@ -160,22 +159,19 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       // Set new cookie
       ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
-      response =
-          new DataTransferResponse(
-              job.exportService(),
-              job.importService(),
-              job.transferDataType(),
-              Status.INPROCESS,
-              apiSettings.getBaseUrl()
-                  + (authMode == AuthMode.EXPORT
-                      ? FrontendConstantUrls.URL_NEXT_PAGE
-                      : FrontendConstantUrls.URL_COPY_PAGE));
+      return new DataTransferResponse(
+          job.exportService(),
+          job.importService(),
+          job.transferDataType(),
+          Status.INPROCESS,
+          apiSettings.getBaseUrl()
+              + (authMode == AuthMode.EXPORT
+                  ? FrontendConstantUrls.URL_NEXT_PAGE
+                  : FrontendConstantUrls.URL_COPY_PAGE));
 
     } catch (Exception e) {
       logger.debug("Exception occurred while trying to handle request: {}", e);
       throw e;
     }
-
-    return response;
   }
 }
