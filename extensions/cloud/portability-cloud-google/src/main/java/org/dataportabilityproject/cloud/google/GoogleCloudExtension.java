@@ -73,7 +73,7 @@ public class GoogleCloudExtension implements CloudExtension {
       initialized = true;
     } catch (IOException | GoogleCredentialException | GeneralSecurityException e) {
       // TODO: the method doesn't throw an exception, how do we pass this onto the user?
-      logger.debug("Error initializing extension: " + this.getClass().getName(), e);
+      logger.warn("Error initializing extension: " + this.getClass().getName(), e);
       initialized = false;
     }
   }
