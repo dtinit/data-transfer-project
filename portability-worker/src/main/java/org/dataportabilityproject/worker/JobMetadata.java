@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,11 +16,14 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.base.Preconditions;
+
 import java.security.KeyPair;
 import java.util.UUID;
 
 /**
  * A class that contains metadata for a worker's job.
+ *
+ * <p>
  *
  * <p>This class is completely static to ensure it is a singleton within each worker instance.
  */

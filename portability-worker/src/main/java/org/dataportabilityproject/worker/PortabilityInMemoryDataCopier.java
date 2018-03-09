@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
+
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -33,8 +34,7 @@ import org.slf4j.LoggerFactory;
 /** Implementation of {@link InMemoryDataCopier}. */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
-  private static final Logger logger =
-      LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
+  private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
   private final Exporter exporter;
   private final Importer importer;
@@ -47,10 +47,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-  public void copy(
-      AuthData exportAuthData,
-      AuthData importAuthData,
-      UUID jobId)
+  public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId)
       throws IOException {
     // Initial copy, starts off the process with no previous paginationData or containerResource
     // information
@@ -69,9 +66,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * @param exportInformation Any pagination or resource information to use for subsequent calls.
    */
   private void copyHelper(
-      AuthData exportAuthData,
-      AuthData importAuthData,
-      ExportInformation exportInformation)
+      AuthData exportAuthData, AuthData importAuthData, ExportInformation exportInformation)
       throws IOException {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
@@ -105,10 +100,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copyHelper(
-              exportAuthData,
-              importAuthData,
-              new ExportInformation(null, resource));
+          copyHelper(exportAuthData, importAuthData, new ExportInformation(null, resource));
         }
       }
     }

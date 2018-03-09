@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,11 +20,13 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore.JobUpdateValidator;
@@ -94,9 +96,7 @@ class JobPollingService extends AbstractScheduledService {
         publicKey.getEncoded().length);
   }
 
-  /**
-   * Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
-   */
+  /** Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage. */
   private void claimJob(UUID jobId, KeyPair keyPair) throws IOException {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
@@ -116,18 +116,26 @@ class JobPollingService extends AbstractScheduledService {
                     .toBuilder()
                     .setEncodedPublicKey(encodedPublicKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
-                    .build()).build();
+                    .build())
+            .build();
     // Attempt to 'claim' this job by validating it is still in state CREDS_AVAILABLE as we
     // update it to state CREDS_ENCRYPTION_KEY_GENERATED, along with our key. If another worker
     // instance polled the same job, and already claimed it, it will have updated the job's state
     // to CREDS_ENCRYPTION_KEY_GENERATED.
     try {
-      store.updateJob(jobId, updatedJob,
-          (previous, updated) -> Preconditions.checkState(
-              previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
+      store.updateJob(
+          jobId,
+          updatedJob,
+          (previous, updated) ->
+              Preconditions.checkState(
+                  previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
     } catch (IllegalStateException e) {
-      throw new IOException("Could not 'claim' job " + jobId + ". It was probably already "
-          + "claimed by another worker", e);
+      throw new IOException(
+          "Could not 'claim' job "
+              + jobId
+              + ". It was probably already "
+              + "claimed by another worker",
+          e);
     }
     JobMetadata.init(
         jobId,
@@ -150,14 +158,17 @@ class JobPollingService extends AbstractScheduledService {
           && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
       } else {
-        logger.warn("Polled job {} does not have auth data as expected. "
-            + "Done polling this job since it's in a bad state! Starting over.", jobId);
+        logger.warn(
+            "Polled job {} does not have auth data as expected. "
+                + "Done polling this job since it's in a bad state! Starting over.",
+            jobId);
       }
       this.stopAsync();
     } else {
       logger.debug(
           "Polling job {} until it's in state CREDS_ENCRYPTED. " + "It's currently in state: {}",
-          jobId, job.jobAuthorization().state());
+          jobId,
+          job.jobAuthorization().state());
     }
   }
 }

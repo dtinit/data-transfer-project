@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Data Transfer Project Authors.
+ * Copyright 2018 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package org.dataportabilityproject.worker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+
 import java.io.IOException;
 import java.util.UUID;
+
 import org.dataportabilityproject.security.Decrypter;
 import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -32,8 +34,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Process a job in two steps: <br>
- * (1) Decrypt the stored credentials, which have been encrypted with this worker's public key
- * (2) Run the copy job
+ * (1) Decrypt the stored credentials, which have been encrypted with this worker's public key<br>
+ * (2)Run the copy job
  */
 final class JobProcessor {
   private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
@@ -49,9 +51,7 @@ final class JobProcessor {
     this.copier = copier;
   }
 
-  /**
-   * Process our job, whose metadata is available via {@link JobMetadata}.
-   */
+  /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
     UUID jobId = JobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
