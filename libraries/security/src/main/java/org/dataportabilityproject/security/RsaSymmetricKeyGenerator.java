@@ -49,14 +49,9 @@ class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
     KeyFactory factory;
     try {
       factory = KeyFactory.getInstance(ALGORITHM);
-    } catch (NoSuchAlgorithmException e) {
-      logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
-      throw new RuntimeException("NoSuchAlgorithmException generating key", e);
-    }
-    try {
       return factory.generatePublic(new X509EncodedKeySpec(encoded));
-    } catch (InvalidKeySpecException e) {
-      logger.error("InvalidKeySpecException for: {}", ALGORITHM, e);
+    } catch (NoSuchAlgorithmException|InvalidKeySpecException e) {
+      logger.error("Error parsing public key for: {}", ALGORITHM, e);
       throw new RuntimeException("InvalidKeySpecException generating key", e);
     }
   }
