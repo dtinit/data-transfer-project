@@ -24,14 +24,49 @@
  
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
+
+#### Import the project
  * Open IntelliJ -> Import Project
  * Navigate to the 'data-transfer-project' directory where you have git cloned the repo
  * Import project from external model (Gradle) -> uncheck 'Create separate module per source set' -> Finish
- * Enable annotation processing.
-    * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
-    * Check 'Enable annotation processing'
-    * Store generated sources relative to: 'Module content root' (not the default)
-    * Production sources directory: 'build/classes/java/'
+ 
+#### Enable annotation processing
+ * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
+ * Check 'Enable annotation processing'
+ * Store generated sources relative to: 'Module content root' (not the default)
+ * Production sources directory: `build/classes/java/`
+
+#### Setup formatting
+* File -> Settings -> General -> Ensure line feed at file end on Save
+* Install the 'google-java-format' plugin, and enable it in Settings
+
+#### Setup automatic license header
+* Go to File -> Settings -> Editor -> Copyright -> Copyright Profiles
+* Click the green + button, add a new profile called "Data-Transfer-Project-Authors". Use this as the text:
+
+```
+Copyright $today.year The Data Transfer Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+Create a new temp file (e.g. Test.java) in Intellij.
+Inside the file, enter Alt-Insert -> Copyright
+It should prompt you to select the new Copyright profile
+Test out another new test file - the copyright should be imported automatically (note: it might be collapsed so not immediately obvious)
+```
+* Create a new temp file (e.g. Test.java) in Intellij.
+* Inside the file, enter Alt-Insert -> Copyright
+* It should prompt you to select the new Copyright profile
+* The copyright should be added to all new files from now on
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored

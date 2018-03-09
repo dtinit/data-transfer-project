@@ -105,7 +105,7 @@ final class DataTransferHandler implements HttpHandler {
     }
 
     // Set new cookie
-    String encodedJobId = ReferenceApiUtils.encodeId(actionResponse.getId());
+    String encodedJobId = ReferenceApiUtils.encodeJobId(actionResponse.getId());
     HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, encodedJobId);
     exchange
         .getResponseHeaders()
