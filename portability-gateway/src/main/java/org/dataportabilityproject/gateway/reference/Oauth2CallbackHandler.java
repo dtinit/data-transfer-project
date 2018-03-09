@@ -117,8 +117,8 @@ final class Oauth2CallbackHandler implements HttpHandler {
           encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
           "Encoded Id cookie required");
 
-      UUID jobId = ReferenceApiUtils.decodeId(encodedIdCookie.getValue());
-      UUID jobIdFromState = ReferenceApiUtils.decodeId(authResponse.getState());
+      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie.getValue());
+      UUID jobIdFromState = ReferenceApiUtils.decodeJobId(authResponse.getState());
 
       // TODO: Remove sanity check
       Preconditions.checkState(

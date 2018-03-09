@@ -97,14 +97,15 @@ public final class ReferenceApiUtils {
     return params;
   }
 
-  public static String encodeId(UUID id) {
-    Preconditions.checkNotNull(id);
-    return BaseEncoding.base64Url().encode(id.toString().getBytes(Charsets.UTF_8));
+  public static String encodeJobId(UUID jobId) {
+    Preconditions.checkNotNull(jobId);
+    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
   }
 
-  public static UUID decodeId(String encoded) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(encoded));
-    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encoded), Charsets.UTF_8));
+  public static UUID decodeJobId(String encodedJobId) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
+    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),
+        Charsets.UTF_8));
   }
 
   /**
@@ -139,7 +140,7 @@ public final class ReferenceApiUtils {
         !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
     // Valid job must be present
-    UUID jobId = decodeId(encodedIdCookie);
+    UUID jobId = decodeJobId(encodedIdCookie);
 
     // Validate XSRF token is present in request header and in the token.
     String tokenHeader = parseXsrfTokenHeader(requestHeaders);
