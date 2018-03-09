@@ -40,6 +40,7 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-gateway')
     compile project(':portability-types-client')
+    compile("com.auth0:java-jwt:${jwtVersion}")
     compile("com.google.guava:guava:${guavaVersion}")
     compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
     compile("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
