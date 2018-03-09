@@ -16,21 +16,12 @@
 package org.dataportabilityproject.webapp;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
-import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.PortabilityCoreModule;
-import org.dataportabilityproject.job.IdProvider;
-import org.dataportabilityproject.job.UUIDProvider;
 
 public class PortabilityApiModule extends AbstractModule {
 
   @Override
   protected void configure() {
     install(new PortabilityCoreModule());
-    bind(IdProvider.class).toInstance(new UUIDProvider());
-
-    MapBinder<String, HttpHandler> mapbinder =
-        MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
-
   }
 }
