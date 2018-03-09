@@ -130,8 +130,8 @@ public final class ReferenceApiUtils {
     return true;
   }
   /**
-   * Validates that the JobId in the request matches the jobId in the xsrf header and contains Does
-   * not validate that the job id itself is valid. Returns JobID.
+   * Validates that the job id in the request matches the job id in the xsrf header and contains
+   * Does not validate that the job id itself is valid. Returns UUID.
    */
   public static UUID validateJobId(Headers requestHeaders, TokenManager tokenManager) {
     String encodedIdCookie = getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);

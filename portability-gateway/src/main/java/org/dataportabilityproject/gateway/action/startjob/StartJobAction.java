@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 /** An {@link Action} that starts a transfer job. */
 public final class StartJobAction
     implements Action<StartJobActionRequest, StartJobActionResponse> {
-
   private static final Logger logger = LoggerFactory.getLogger(StartJobAction.class);
 
   private final JobStore store;
@@ -56,7 +55,7 @@ public final class StartJobAction
    * Starts a job using the following flow:
    *
    * <li>Validate auth data is present in cookies
-   * <li>Set Job to state pending assignment
+   * <li>Set Job to state CREDS_AVAILABLE
    * <li>Wait for a worker to be assigned
    * <li>Once worker assigned, grab worker key to encrypt auth data from cookies
    * <li>Update job with auth data
@@ -67,10 +66,10 @@ public final class StartJobAction
     // Update the job to indicate to worker processes that creds are available for encryption
     updateStateToCredsAvailable(jobId);
 
-    // Poll and block until a public key is assigned to this job
+    // Poll and block until a public key is assigned to this job, e.g. from a specific worker instance
     PortabilityJob job = pollForPublicKey(jobId);
 
-    // Update this job with
+    // Update this job with credentials encrypted with a public key, e.g. for a specific worker instance
     encryptAndUpdateJobWithCredentials(
         jobId,
         job,
@@ -81,8 +80,8 @@ public final class StartJobAction
   }
 
   /**
-   * Update the data store to {@code State.CREDS_AVAILABLE} state. This indicates to the pool of
-   * workers that this job is available for processing.
+   * Update the job to state to {@code State.CREDS_AVAILABLE} in the store. This indicates to the
+   * pool of workers that this job is available for processing.
    */
   private void updateStateToCredsAvailable(UUID jobId) {
     PortabilityJob job = store.findJob(jobId);
@@ -126,6 +125,8 @@ public final class StartJobAction
 
     logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
 
+
+    // TODO: Consolidate validation with the internal PortabilityJob validation
     Preconditions.checkNotNull(
         job.jobAuthorization().encodedPublicKey(),
         "Expected job "
@@ -148,7 +149,7 @@ public final class StartJobAction
     return job;
   }
 
-  /** TODO: Determine if we need this sanity check. */
+  // TODO: Consolidate validation with the internal PortabilityJob validation
   private void validateJob(PortabilityJob job) {
 
     // Validate
@@ -170,7 +171,7 @@ public final class StartJobAction
   }
 
   /**
-   * Encrypt the export and import credentials with the {@link PublicKey assigned to this job} then
+   * Encrypt the export and import credentials with the {@link PublicKey} assigned to this job then
    * update the data store to {@code State.CREDS_ENCRYPTED} state.
    */
   private void encryptAndUpdateJobWithCredentials(
@@ -183,6 +184,7 @@ public final class StartJobAction
             BaseEncoding.base64Url().decode(job.jobAuthorization().encodedPublicKey()));
 
     // Encrypt the data with the assigned workers PublicKey and persist
+    // NOTE: These auth datas are already encrypted with the session symmetric encryption key
     Encrypter crypter = EncrypterFactory.create(publicKey);
     String encryptedExportAuthData = crypter.encrypt(encryptedExportAuthCredential);
     logger.debug("Encrypted export auth data, has length: {}", encryptedExportAuthData.length());
