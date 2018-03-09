@@ -16,10 +16,16 @@
 package org.dataportabilityproject.spi.cloud.extension;
 
 import org.dataportabilityproject.api.launcher.AbstractExtension;
+import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /** Cloud extensions implement this interface to be loaded in either a gateway or worker process. */
 public interface CloudExtension extends AbstractExtension {
   /** Returns the {@link JobStore} provided by the extension. */
   JobStore getJobStore();
+
+  BucketStore getBucketStore();
+
+  CryptoKeyStore getCryptoKeyStore();
 }
