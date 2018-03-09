@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Process a job in two steps: <br>
- * (1) Decrypt the stored credentials, which have been encrypted with this worker's public key (2)
- * Run the copy job
+ * (1) Decrypt the stored credentials, which have been encrypted with this worker's public key<br>
+ * (2)Run the copy job
  */
 final class JobProcessor {
   private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
