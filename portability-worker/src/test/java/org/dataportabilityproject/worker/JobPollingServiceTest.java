@@ -152,14 +152,16 @@ public class JobPollingServiceTest {
     assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
-    job = job.toBuilder()
-        .setAndValidateJobAuthorization(
-            job.jobAuthorization()
-                .toBuilder()
-                .setEncryptedExportAuthData("dummy export data")
-                .setEncryptedImportAuthData("dummy import data")
-                .setState(State.CREDS_ENCRYPTED)
-                .build()).build();
+    job =
+        job.toBuilder()
+            .setAndValidateJobAuthorization(
+                job.jobAuthorization()
+                    .toBuilder()
+                    .setEncryptedExportAuthData("dummy export data")
+                    .setEncryptedImportAuthData("dummy import data")
+                    .setState(State.CREDS_ENCRYPTED)
+                    .build())
+            .build();
     store.updateJob(TEST_ID, job);
 
     // Run another iteration of the polling service

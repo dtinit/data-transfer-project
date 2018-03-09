@@ -24,13 +24,13 @@ import com.google.inject.Injector;
  * held in {@link JobMetadata}.
  */
 public class WorkerMain {
-    public static void main(String[] args) throws Exception {
-        Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
+  public static void main(String[] args) throws Exception {
+    Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
-        Injector injector = Guice.createInjector(new WorkerModule());
-        Worker worker = injector.getInstance(Worker.class);
-        worker.doWork();
+    Injector injector = Guice.createInjector(new WorkerModule());
+    Worker worker = injector.getInstance(Worker.class);
+    worker.doWork();
 
-        System.exit(0);
-    }
+    System.exit(0);
+  }
 }
