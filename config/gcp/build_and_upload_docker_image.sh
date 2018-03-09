@@ -34,8 +34,8 @@
 #
 #!/bin/sh
 
-if [[ $(pwd) != */data-portability ]]; then
-  echo "Please run out of /data-portability directory. Aborting."
+if [[ $(pwd) != */data-transfer-project ]]; then
+  echo "Please run out of /data-transfer-project directory. Aborting."
   exit 1
 fi
 
@@ -258,7 +258,7 @@ if [[ ${ENV} == "local" ]]; then
   if [[ ${response} =~ ^(no|n| ) ]]; then
     echo "Continuing"
   else
-    docker run -ti --rm -p 8080:8080 -p 5005:5005 $IMAGE
+    docker run -ti --rm -p 8080:8080 -p ${DEBUG_PORT}:${DEBUG_PORT} $IMAGE
   fi
 fi
 

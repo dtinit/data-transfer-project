@@ -22,62 +22,47 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-
 import java.util.NoSuchElementException;
-import java.util.ServiceLoader;
-
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.api.launcher.Logger;
+import org.dataportabilityproject.security.AsymmetricKeyGenerator;
+import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 
 final class WorkerModule extends AbstractModule {
+
+  private final ExtensionContext context;
+
+  WorkerModule(ExtensionContext context) {
+    this.context = context;
+  }
+
   @Override
   protected void configure() {
+    bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
   }
 
   @Provides
   @Singleton
-  ExtensionContext provideExtensionContext() {
-    return new ExtensionContext() {
-      @Override
-      public Logger getLogger() {
-        return new Logger() {};
-      }
-
-      @Override
-      public <T> T getService(Class<T> type) {
-        return null;
-      }
-
-      @Override
-      public <T> T getConfiguration(String key, String defaultValue) {
-        // TODO: pass in flags
-        return null;
-      }
-    };
-  }
-
-  @Provides
-  @Singleton
-  Exporter provideExporter(
-      ImmutableList<TransferExtension> transferExtensions, ExtensionContext extensionContext) {
+  Exporter getExporter(
+      ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
         findTransferExtension(transferExtensions, JobMetadata.getExportService());
-    extension.initialize(extensionContext);
+    extension.initialize(context);
     return extension.getExporter(JobMetadata.getDataType());
   }
 
   @Provides
   @Singleton
-  Importer provideImporter(
-      ImmutableList<TransferExtension> transferExtensions, ExtensionContext extensionContext) {
+  Importer getImporter(
+      ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
         findTransferExtension(transferExtensions, JobMetadata.getImportService());
-    extension.initialize(extensionContext);
+    extension.initialize(context);
     return extension.getImporter(JobMetadata.getDataType());
   }
 
@@ -99,11 +84,13 @@ final class WorkerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  ImmutableList<TransferExtension> provideTransferExtensions() {
+  ImmutableList<TransferExtension> getTransferExtensions() {
     // TODO: Next version should ideally not load every TransferExtension impl, look into
     // solutions where we selectively invoke class loader.
     ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
+    // TODO(seehamrun): ServiceLoad TransferExtensions and remove hardcoded one
+    //ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
+    extensionsBuilder.add(new MicrosoftTransferExtension());
     ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
     Preconditions.checkState(
         !extensions.isEmpty(), "Could not find any implementations of TransferExtension");

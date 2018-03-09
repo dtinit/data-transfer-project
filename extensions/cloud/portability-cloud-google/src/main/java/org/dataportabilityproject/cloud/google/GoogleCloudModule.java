@@ -22,14 +22,13 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -37,9 +36,13 @@ import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.cloud.extension.CloudExtensionModule;
+import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /** Bindings for cloud platform components using Google Cloud Platform. * */
-final class GoogleCloudModule extends AbstractModule {
+final class GoogleCloudModule extends CloudExtensionModule {
   // The value for the 'cloud' flag when hosting on Google Cloud Platform.
   private static final String GOOGLE_CLOUD_NAME = "GOOGLE";
   // Environment variable where GCP project ID is stored. The value is set in
@@ -51,6 +54,12 @@ final class GoogleCloudModule extends AbstractModule {
   private static final String GCP_CREDENTIALS_PATH_ENV_VAR = "GOOGLE_APPLICATION_CREDENTIALS";
   // The path where Kubernetes stores Secrets.
   private static final String KUBERNETES_SECRETS_PATH_ROOT = "/var/secrets/";
+
+  private final ExtensionContext context;
+
+  GoogleCloudModule(ExtensionContext context) {
+    this.context = context;
+  }
 
   /**
    * Return the {@link Environment} we are running in based on our convention of Project ID's ending
@@ -72,13 +81,25 @@ final class GoogleCloudModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    requireBinding(ExtensionContext.class);
+    bind(JobStore.class).to(GoogleJobStore.class);
+    bind(BucketStore.class).to(GoogleBucketStore.class);
+    bind(CryptoKeyStore.class).to(GoogleCryptoKeyStore.class);
   }
 
   @Provides
-  GoogleCredentials getCredentials(ExtensionContext context, @ProjectId String projectId)
-      throws GoogleCredentialException {
-    validateUsingGoogle(context);
+  @Singleton
+  Datastore getDatastore(@ProjectId String projectId, GoogleCredentials credentials) {
+    return DatastoreOptions
+        .newBuilder()
+        .setProjectId(projectId)
+        .setCredentials(credentials)
+        .build()
+        .getService();
+  }
+
+  @Provides
+  GoogleCredentials getCredentials(@ProjectId String projectId) throws GoogleCredentialException {
+    validateUsingGoogle();
 
     // TODO(rtannenbaum): Make env a direct parameter, maybe using @Named annotations
     Environment env =
@@ -102,10 +123,10 @@ final class GoogleCloudModule extends AbstractModule {
         String cause =
             String.format(
                 "You are attempting to obtain credentials from somewhere "
-                    + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
-                    + "into your image, which we provide as a local debugging mechanism only. See GCP "
-                    + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
-                    + "location was: %s",
+                    + "other than Kubernetes secrets in prod. You may have accidentally copied "
+                    + "creds into your image, which we provide as a local debugging mechanism "
+                    + "only. See GCP build script (config/gcp/build_and_upload_docker_image.sh) "
+                    + "for more info. Creds location was: %s",
                 credsLocation);
         throw new GoogleCredentialException(cause);
       }
@@ -129,8 +150,8 @@ final class GoogleCloudModule extends AbstractModule {
   @Provides
   @Singleton
   @ProjectId
-  String getProjectId(ExtensionContext context) {
-    validateUsingGoogle(context);
+  String getProjectId() {
+    validateUsingGoogle();
     String projectId;
     try {
       projectId = System.getenv(GCP_PROJECT_ID_ENV_VAR);
@@ -149,13 +170,15 @@ final class GoogleCloudModule extends AbstractModule {
   }
 
   @Provides
+  @Singleton
   HttpTransport getHttpTransport() {
-    return new NetHttpTransport();
+    return context.getService(HttpTransport.class);
   }
 
   @Provides
+  @Singleton
   JsonFactory getJsonFactory() {
-    return new JacksonFactory();
+    return context.getService(JsonFactory.class);
   }
 
   /**
@@ -167,7 +190,7 @@ final class GoogleCloudModule extends AbstractModule {
    * <p>TODO: Can this be removed? In the new modular structure, will this code only be run/loaded
    * for Google cloud?
    */
-  private void validateUsingGoogle(ExtensionContext context) {
+  private void validateUsingGoogle() {
     // TODO: "cloud" should be a global flag name once we decide the proper place(s) for those
     if (!context.getConfiguration("cloud", "").equals(GOOGLE_CLOUD_NAME)) {
       throw new IllegalStateException("Injecting Google objects when cloud != Google!");

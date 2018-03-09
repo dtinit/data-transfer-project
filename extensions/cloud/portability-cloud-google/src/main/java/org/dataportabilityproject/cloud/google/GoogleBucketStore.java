@@ -21,10 +21,12 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
 import org.dataportabilityproject.spi.cloud.storage.BucketStore;
 
 /** Bucket storage using Google Cloud Storage. * */
+@Singleton
 final class GoogleBucketStore implements BucketStore {
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
 
