@@ -22,10 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.store.TransferStore;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
@@ -40,16 +40,14 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContainerResource> {
 
   private volatile Calendar calendarInterface;
-  private TransferStore transferStore; // TODO(olsona): use transferStore
 
-  public GoogleCalendarExporter(TransferStore transferStore) {
-    this.transferStore = transferStore;
+  public GoogleCalendarExporter() {
+    this.calendarInterface = null;
   }
 
   @VisibleForTesting
-  GoogleCalendarExporter(Calendar calendarInterface, TransferStore transferStore) {
+  GoogleCalendarExporter(Calendar calendarInterface) {
     this.calendarInterface = calendarInterface;
-    this.transferStore = transferStore;
   }
 
   @Override

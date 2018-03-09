@@ -31,7 +31,7 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.transfer.microsoft.common.RequestHelper;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
-import org.dataportabilityproject.transfer.microsoft.types.TempCalendarData;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
