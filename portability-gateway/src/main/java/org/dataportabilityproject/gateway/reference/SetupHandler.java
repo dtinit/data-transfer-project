@@ -96,7 +96,7 @@ abstract class SetupHandler implements HttpHandler {
           !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
       // Valid job must be present
-      UUID jobId = ReferenceApiUtils.decodeId(encodedIdCookie);
+      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
       PortabilityJob job = store.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -150,7 +150,7 @@ abstract class SetupHandler implements HttpHandler {
         job.transferDataType(),
         job.importService());
 
-    String encodedJobId = ReferenceApiUtils.encodeId(jobId);
+    String encodedJobId = ReferenceApiUtils.encodeJobId(jobId);
     AuthFlowConfiguration authFlowConfiguration =
         generator.generateConfiguration(apiSettings.getBaseUrl(), encodedJobId);
     Preconditions.checkNotNull(
