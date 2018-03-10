@@ -25,7 +25,11 @@ import java.security.spec.X509EncodedKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** RSA-based implementation for {@link KeyPair} creation and encoding. */
+/**
+ * RSA-based implementation for {@link KeyPair} creation and encoding.
+ *
+ * TODO: provide a public module to bind KeyGenerators
+ */
 public class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
 
   private static final Logger logger = LoggerFactory.getLogger(RsaSymmetricKeyGenerator.class);

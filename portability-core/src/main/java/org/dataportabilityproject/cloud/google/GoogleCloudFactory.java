@@ -24,7 +24,7 @@ import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import java.util.UUID;
 import javax.inject.Inject;
-import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
+import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.interfaces.CryptoKeyManagementSystem;

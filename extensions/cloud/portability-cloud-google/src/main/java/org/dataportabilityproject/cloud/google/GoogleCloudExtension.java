@@ -41,7 +41,7 @@ public class GoogleCloudExtension implements CloudExtension {
   public void initialize(ExtensionContext context) {
     Preconditions.checkArgument(
         !initialized, "Attempting to initialize GoogleCloudExtension more than once");
-    cloudExtensionModule = new GoogleCloudModule(context);
+    cloudExtensionModule = new GoogleCloudExtensionModule(context);
     initialized = true;
   }
 

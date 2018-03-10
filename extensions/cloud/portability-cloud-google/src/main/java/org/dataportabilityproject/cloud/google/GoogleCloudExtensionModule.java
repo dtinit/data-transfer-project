@@ -42,7 +42,7 @@ import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /** Bindings for cloud platform components using Google Cloud Platform. * */
-final class GoogleCloudModule extends CloudExtensionModule {
+final class GoogleCloudExtensionModule extends CloudExtensionModule {
   // The value for the 'cloud' flag when hosting on Google Cloud Platform.
   private static final String GOOGLE_CLOUD_NAME = "GOOGLE";
   // Environment variable where GCP project ID is stored. The value is set in
@@ -57,7 +57,7 @@ final class GoogleCloudModule extends CloudExtensionModule {
 
   private final ExtensionContext context;
 
-  GoogleCloudModule(ExtensionContext context) {
+  GoogleCloudExtensionModule(ExtensionContext context) {
     this.context = context;
   }
 
@@ -81,6 +81,8 @@ final class GoogleCloudModule extends CloudExtensionModule {
 
   @Override
   protected void configure() {
+    super.configure();
+
     bind(JobStore.class).to(GoogleJobStore.class);
     bind(BucketStore.class).to(GoogleBucketStore.class);
     bind(CryptoKeyStore.class).to(GoogleCryptoKeyStore.class);

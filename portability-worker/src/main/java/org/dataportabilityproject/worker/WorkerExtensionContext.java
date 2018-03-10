@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.common.collect.ImmutableClassToInstanceMap;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 
@@ -31,8 +32,11 @@ import org.dataportabilityproject.api.launcher.Logger;
  * {@link ExtensionContext} used by the worker.
  */
 final class WorkerExtensionContext implements ExtensionContext {
-  private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-  private static final JsonFactory JSON_FACTORY = new JacksonFactory();
+  private static final ImmutableClassToInstanceMap<Object> SERVICE_MAP =
+      new ImmutableClassToInstanceMap.Builder<>()
+          .put(HttpTransport.class, new NetHttpTransport())
+          .put(JsonFactory.class, new JacksonFactory())
+          .build();
 
   @Override
   public Logger getLogger() {
@@ -41,13 +45,8 @@ final class WorkerExtensionContext implements ExtensionContext {
 
   @Override
   public <T> T getService(Class<T> type) {
-    if (type.equals(HttpTransport.class)) {
-      return (T) HTTP_TRANSPORT;
-    }
-    if (type.equals(JsonFactory.class)) {
-      return (T) JSON_FACTORY;
-    }
-    return null;
+    // returns null if no instance
+    return SERVICE_MAP.getInstance(type);
   }
 
   @Override

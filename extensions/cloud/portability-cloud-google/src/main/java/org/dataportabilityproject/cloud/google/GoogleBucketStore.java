@@ -22,7 +22,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
+import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.dataportabilityproject.spi.cloud.storage.BucketStore;
 
 /** Bucket storage using Google Cloud Storage. * */

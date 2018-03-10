@@ -20,7 +20,7 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.inject.Inject;
-import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
+import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.dataportabilityproject.cloud.interfaces.BucketStore;
 
 final class GoogleBucketStore implements BucketStore {
