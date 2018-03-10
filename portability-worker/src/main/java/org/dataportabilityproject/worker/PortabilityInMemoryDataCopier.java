@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.worker;
 
+import com.google.inject.Provider;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,11 +37,17 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
-  private final Exporter exporter;
-  private final Importer importer;
+  /**
+   * Lazy evaluate exporter and importer as their providers depend on the polled
+   * {@code PortabilityJob} which is not available at startup.
+   */
+  private final Provider<Exporter> exporter;
+  private final Provider<Importer> importer;
 
   @Inject
-  public PortabilityInMemoryDataCopier(Exporter exporter, Importer importer) {
+  public PortabilityInMemoryDataCopier(
+      Provider<Exporter> exporter,
+      Provider<Importer> importer) {
     this.exporter = exporter;
     this.importer = importer;
   }
@@ -75,12 +82,12 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export, ExportInformation: {}", exportInformation);
-    ExportResult<?> exportResult = exporter.export(exportAuthData, exportInformation);
+    ExportResult<?> exportResult = exporter.get().export(exportAuthData, exportInformation);
     logger.debug("Finished export, results: {}", exportResult);
 
     logger.debug("Starting import");
     // TODO, use job Id?
-    importer.importItem("1", importAuthData, exportResult.getExportedData());
+    importer.get().importItem("1", importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
 
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();

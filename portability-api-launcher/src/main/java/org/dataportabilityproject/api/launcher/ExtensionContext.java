@@ -34,5 +34,5 @@ public interface ExtensionContext {
    * @param key the parameter key
    * @param defaultValue the default value. Null may be passed.
    */
-  <T> T getConfiguration(String key, String defaultValue);
+  <T> T getConfiguration(String key, T defaultValue);
 }

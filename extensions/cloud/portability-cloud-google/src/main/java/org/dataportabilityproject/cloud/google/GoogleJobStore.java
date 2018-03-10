@@ -32,6 +32,8 @@ import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -44,12 +46,14 @@ import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
+@Singleton
 public final class GoogleJobStore implements JobStore {
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
 
+  @Inject
   public GoogleJobStore(Datastore datastore) {
     this.datastore = datastore;
   }

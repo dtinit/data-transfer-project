@@ -20,18 +20,14 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.storage.JobStore.JobUpdateValidator;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +71,7 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollForUnassignedJob() throws IOException {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
-    logger.debug("Polling for a job CREDS_AVAILABLE");
+    logger.debug("Polling for a job in state CREDS_AVAILABLE");
     if (jobId == null) {
       return;
     }

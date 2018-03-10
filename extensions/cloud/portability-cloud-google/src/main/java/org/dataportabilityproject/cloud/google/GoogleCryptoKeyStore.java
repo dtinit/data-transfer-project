@@ -24,11 +24,13 @@ import com.google.api.services.cloudkms.v1.CloudKMSScopes;
 import com.google.api.services.cloudkms.v1.model.DecryptRequest;
 import com.google.api.services.cloudkms.v1.model.DecryptResponse;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.io.IOException;
-import org.dataportabilityproject.cloud.google.GoogleCloudModule.ProjectId;
+import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 
 /** Crypto key management using Google's Cloud KMS. */
+@Singleton
 final class GoogleCryptoKeyStore implements CryptoKeyStore {
   // Key for encrypting app secrets.
   private static final String SECRETS_CRYPTO_KEY_FMT_STRING =

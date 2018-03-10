@@ -15,22 +15,44 @@
  */
 package org.dataportabilityproject.worker;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.cloud.google.GoogleCloudExtension;
+import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 
 /**
  * Main class to bootstrap a portability worker that will operate on a single job whose state is
  * held in {@link JobMetadata}.
  */
 public class WorkerMain {
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
-    Injector injector = Guice.createInjector(new WorkerModule());
+    ExtensionContext context = new WorkerExtensionContext();
+
+    CloudExtension cloudExtension = getCloudExtension();
+    cloudExtension.initialize(context);
+
+    Injector injector =
+        Guice.createInjector(new WorkerModule(context), cloudExtension.getCloudModule());
     Worker worker = injector.getInstance(Worker.class);
     worker.doWork();
 
     System.exit(0);
+  }
+
+  private static CloudExtension getCloudExtension() {
+    ImmutableList.Builder<CloudExtension> extensionsBuilder = ImmutableList.builder();
+    // TODO(seehamrun): Service load cloud extension and remove hardcoded GoogleCloudExtension
+    //ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
+    extensionsBuilder.add(new GoogleCloudExtension());
+    ImmutableList<CloudExtension> extensions = extensionsBuilder.build();
+    Preconditions.checkState(extensions.size() == 1,
+        "Exactly one CloudExtension is required, but found " + extensions.size());
+    return extensions.get(0);
   }
 }
