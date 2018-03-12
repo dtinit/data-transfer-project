@@ -36,6 +36,9 @@ plugins {
     id 'java'
 }
 
+ext.cloudType = hasProperty('cloudType') ? cloudType : 'default'
+println "Cloud type: ${ext.cloudType}";
+
 def sourceProjects() {
     // define projects containing source code
     return subprojects.findAll { new File(it.projectDir, 'src').exists() }
@@ -60,4 +63,13 @@ configure(sourceProjects()) {
         testCompile "com.google.truth:truth:0.39"
     }
 
+}
+
+def addCloudExtensionDependency(proj) {
+
+    if (proj.rootProject.ext.cloudType == "google") {
+        proj.dependencies { compile project(':extensions:cloud:portability-cloud-google') }
+    } else if (proj.rootProject.ext.cloudType == "microsoft") {
+        proj.dependencies { compile project(':extensions:cloud:portability-cloud-microsoft') }
+    }
 }

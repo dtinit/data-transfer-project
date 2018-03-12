@@ -27,8 +27,12 @@ repositories {
 
 dependencies {
     compile project(':portability-worker')
+
     compile project(':extensions:data-transfer:portability-data-transfer-google')
+    compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
 }
+
+addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.worker.WorkerMain'
 
