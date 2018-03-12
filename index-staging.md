@@ -7,18 +7,18 @@ description: Data Transfer Project is an open source platform enabling data port
 **ADD LOGO  Data Transfer Project**  
 
 
-## Who we Are
+## **Who We Are**
 Data Transfer Project is a collaboration of industry partners committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
 
 We want all individuals across the web to feel in control of their data.
 
-### How it works
+## **How it works**
 
 <img src="./HowItWorks.png" width="548">
 
 An individual who wants to move their photos data from Service C, for example, to Service 2, doesn’t have to worry about file types since both Service C and Service 2 are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  The Service Providers authenticate on both ends using their primary authentication infrastructure.
 
-## Initial Data portability enabled
+### Initial Data portability enabled
 The initial set of file types supported by the DTP ecosystem which can be moved directly between service providers include:  
 
 +  calendar
@@ -31,7 +31,7 @@ The Data Transfer Project is actively working to extend the supported set of dat
 
 We hope to eventually include all file types across all services.
 
-## Initial set of Integration  
+### Initial set of Integration  
 Data Transfer Project APIs have been built for the following service providers and file types:
 
 +  Google
@@ -49,7 +49,7 @@ Data Transfer Project APIs have been built for the following service providers a
 +  Rememberthemilk
     +  Tasks
 
-## How to Participate
+## **How to Participate**
 There are many ways to participate in this open source project:
 
 ### Integrate a service  
@@ -63,7 +63,7 @@ Partners may host an instance of Data Transfer Project configured to their needs
 ### Contribute to the platform  
 If you would like to write an API to a new data type and/or extend the DTP framework see Developer Documentation on the Data Transfer Project Github site.
 
-## Docs & Reference
+## **Docs & Reference**
 
 +  [Data Transfer Project Whitepaper](#)
 
@@ -71,7 +71,7 @@ If you would like to write an API to a new data type and/or extend the DTP frame
 
 +  Walk-through Video/Screencast
 
-## About Us
+## **About Us**
 
 The Data Transfer Project was formed in 2017 to create an open-source service-to-service portability platform so that all individuals across the web could easily move their data between online service providers.
 
