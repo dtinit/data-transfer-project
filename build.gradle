@@ -71,10 +71,5 @@ configure(sourceProjects()) {
 }
 
 def addCloudExtensionDependency(proj) {
-
-    if (proj.rootProject.ext.cloudType == "google") {
-        proj.dependencies { compile project(':extensions:cloud:portability-cloud-google') }
-    } else if (proj.rootProject.ext.cloudType == "microsoft") {
-        proj.dependencies { compile project(':extensions:cloud:portability-cloud-microsoft') }
-    }
+    proj.dependencies { compile project(":extensions:cloud:portability-cloud-${proj.rootProject.ext.cloudType}") }
 }
