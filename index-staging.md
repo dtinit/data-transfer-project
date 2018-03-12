@@ -20,7 +20,7 @@ DIAGRAM WITH LIST OF COMPONENTS
 
 ### How it works
 
-(insert_image_url_here)
+<img src="./HowItWorks.png" width="548">
 
 An individual who wants to move their photos data from Service C, for example, to Service 2, doesn’t have to worry about file types since both Service C and Service 2 are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  The Service Providers authenticate on both ends using their primary authentication infrastructure.
 
