@@ -23,6 +23,8 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
+import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 
 /**
  * {@link ExtensionContext} used by the worker.
@@ -31,12 +33,23 @@ final class WorkerExtensionContext implements ExtensionContext {
   private static final ImmutableClassToInstanceMap<Object> SERVICE_MAP =
       new ImmutableClassToInstanceMap.Builder<>()
           .put(HttpTransport.class, new NetHttpTransport())
-          .put(JsonFactory.class, new JacksonFactory())
           .build();
+
+  private final TypeManager typeManager;
+
+  public WorkerExtensionContext() {
+    // TODO init with types
+    this.typeManager = new TypeManagerImpl();
+  }
 
   @Override
   public Logger getLogger() {
     return null;
+  }
+
+  @Override
+  public TypeManager getTypeManager() {
+    return typeManager;
   }
 
   @Override

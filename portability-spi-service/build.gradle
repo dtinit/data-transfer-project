@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    compile project(':portability-spi-cloud')
+
+    compile project(':portability-api-launcher')
 
 }

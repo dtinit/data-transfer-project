@@ -35,7 +35,7 @@ import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.spi.cloud.types.TypeManager;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
