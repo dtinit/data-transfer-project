@@ -38,7 +38,7 @@ public class WorkerMain {
     cloudExtension.initialize(context);
 
     Injector injector =
-        Guice.createInjector(new WorkerModule(context), cloudExtension.getCloudModule());
+        Guice.createInjector(new WorkerModule(cloudExtension, context));
     Worker worker = injector.getInstance(Worker.class);
     worker.doWork();
 
