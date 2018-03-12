@@ -26,6 +26,10 @@ import java.util.NoSuchElementException;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
+import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
+import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -33,10 +37,11 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
 
 final class WorkerModule extends AbstractModule {
-
+  private final CloudExtension cloudExtension;
   private final ExtensionContext context;
 
-  WorkerModule(ExtensionContext context) {
+  WorkerModule(CloudExtension cloudExtension, ExtensionContext context) {
+    this.cloudExtension = cloudExtension;
     this.context = context;
   }
 
@@ -44,6 +49,24 @@ final class WorkerModule extends AbstractModule {
   protected void configure() {
     bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
+  }
+
+  @Provides
+  @Singleton
+  JobStore getJobStore() {
+    return cloudExtension.getJobStore();
+  }
+
+  @Provides
+  @Singleton
+  BucketStore getBucketStore() {
+    return cloudExtension.getBucketStore();
+  }
+
+  @Provides
+  @Singleton
+  CryptoKeyStore getCryptoKeyStore() {
+    return cloudExtension.getCryptoKeyStore();
   }
 
   @Provides
