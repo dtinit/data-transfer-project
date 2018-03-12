@@ -61,7 +61,7 @@ Data Transfer Project APIs have been built for the following service providers a
     +  Tasks
 
 
-## How to Participate<a name="participate"></a>
+## How to Participate
 There are many ways to participate in this open source project:
 
 ### Integrate a service  
