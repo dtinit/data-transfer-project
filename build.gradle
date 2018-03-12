@@ -41,7 +41,7 @@ plugins {
     id 'java'
 }
 
-ext.cloudType = hasProperty('cloudType') ? cloudType : 'google'
+ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
 println "Cloud type: ${ext.cloudType}";
 
 def sourceProjects() {
