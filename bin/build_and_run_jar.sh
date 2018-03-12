@@ -37,6 +37,10 @@ fi
 gradle=$(which gradle)|| { echo "Gradle (gradle) not found. Please install it and try again." >&2; exit 1; }
 
 # Copy settings yaml files from ENV/settings/ into $SRC_DIR/src/main/resources/
+# TODO: this script should take cloud extension name as a param, in addition to ENV.
+# It should copy settings from extension-cloud-dir/config/settings.yaml into
+# config/settings.yaml, and extension-cloud-dir/config/environments/$ENV/settings.yaml into
+# config/env/settings.yaml.
 DEST_RESOURCES_PATH="$SRC_DIR/src/main/resources"
 DEST_SETTINGS_PATH="$DEST_RESOURCES_PATH/settings/"
 if [[ -e ${DEST_SETTINGS_PATH} ]]; then
