@@ -75,14 +75,7 @@ for each environment: `local/`, `qa/`, `test/`, and `prod/`. Each environment
 subdirectory contains a `settings.yaml` and `common.yaml` for PortabilityFlags values.
 
 For local development and testing, a `secrets.csv` file should be included in `config/environments/local`.
-This should contain all your API keys, see `portability-core/src/resources/secrets_template.csv` for an example.
-
-## Building/Running portability-core CLI locally
-The following builds and optionally runs the core CLI
-
- * `bin/build_and_run_jar.sh core local`
-   * This copies over LOCAL secrets and settings and compiles the core cli jar.
-   * This will also prompt you to run the jar.
+This should contain all your API keys, see `secrets_template.csv` (TODO: add sample) for an example.
 
 ## Building/Running the API server locally
 The following builds and optionally runs the API server on `port:8080`

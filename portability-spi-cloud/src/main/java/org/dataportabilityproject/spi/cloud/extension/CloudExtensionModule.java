@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * Create a new temp file (e.g. Test.java) in Intellij.
- * Inside the file, enter Alt-Insert -> Copyright
- * It should prompt you to select the new Copyright profile
- * Test out another new test file - the copyright should be imported automatically (note: it might be collapsed so not immediately obvious)
  */
 
 package org.dataportabilityproject.spi.cloud.extension;
@@ -26,7 +22,9 @@ import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /**
- * Guice module that must be implemented by Cloud extensions.
+ * Guice module that must be implemented by Cloud extensions who want to use Guice. See example in
+ * extensions/cloud/portability-cloud-google. Extensions may also opt to manually construct storage
+ * interfaces (i.e. 'new' them), see extensions/cloud/portability-cloud-microsoft for an example.
  */
 public class CloudExtensionModule extends AbstractModule {
 
