@@ -37,12 +37,12 @@ final class WorkerExtensionContext implements ExtensionContext {
   private static final ImmutableClassToInstanceMap<Object> SERVICE_MAP =
       new ImmutableClassToInstanceMap.Builder<>()
           .put(HttpTransport.class, new NetHttpTransport())
-          .put(JsonFactory.class, new JacksonFactory())
           .build();
 
   private final TypeManager typeManager;
 
   public WorkerExtensionContext() {
+    // TODO init with types
     this.typeManager = new TypeManagerImpl();
   }
 
