@@ -35,25 +35,19 @@ We hope to eventually include all file types across all services.
 Data Transfer Project APIs have been built for the following service providers and file types:
 
 +  Google
-
     +  Photos, calendar, mail, contacts, tasks
 
 +  Microsoft
-
     +  Calendar, contacts
 
 +  Flickr
-
     +  Photos
 
 +  Instagram
-
     +  Photos
 
 +  Rememberthemilk
-
     +  Tasks
-
 
 ## How to Participate
 There are many ways to participate in this open source project:
