@@ -26,7 +26,9 @@ import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /**
- * Guice module that must be implemented by Cloud extensions.
+ * Guice module that must be implemented by Cloud extensions who want to use Guice. See example in
+ * extensions/cloud/portability-cloud-google. Extensions may also opt to manually construct storage
+ * interfaces (i.e. 'new' them), see extensions/cloud/portability-cloud-microsoft for an example.
  */
 public class CloudExtensionModule extends AbstractModule {
 

@@ -16,15 +16,19 @@
 package org.dataportabilityproject.cloud.google;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
-import org.dataportabilityproject.spi.cloud.extension.CloudExtensionModule;
+import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /**
  * {@link CloudExtension} for Google Cloud Platform.
  */
 public class GoogleCloudExtension implements CloudExtension {
-  private CloudExtensionModule cloudExtensionModule;
+  private Injector injector;
   private boolean initialized = false;
 
   // TODO(seehamrun): Needed for ServiceLoader?
@@ -41,7 +45,7 @@ public class GoogleCloudExtension implements CloudExtension {
   public void initialize(ExtensionContext context) {
     Preconditions.checkArgument(
         !initialized, "Attempting to initialize GoogleCloudExtension more than once");
-    cloudExtensionModule = new GoogleCloudExtensionModule(context);
+    injector = Guice.createInjector(new GoogleCloudExtensionModule(context));
     initialized = true;
   }
 
@@ -51,7 +55,17 @@ public class GoogleCloudExtension implements CloudExtension {
   }
 
   @Override
-  public CloudExtensionModule getCloudModule() {
-    return cloudExtensionModule;
+  public JobStore getJobStore() {
+    return injector.getInstance(JobStore.class);
+  }
+
+  @Override
+  public BucketStore getBucketStore() {
+    return injector.getInstance(BucketStore.class);
+  }
+
+  @Override
+  public CryptoKeyStore getCryptoKeyStore() {
+    return injector.getInstance(CryptoKeyStore.class);
   }
 }
