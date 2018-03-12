@@ -24,6 +24,11 @@
  *
  *  gradlew clean jar
  *
+ * To build with a cloud extension type, use:
+ *
+ * ./gradlew -PcloudType=<type> clean check shadowJar
+ *
+ * Where <type> is "google", "microsoft", or another provider
  */
 buildscript {
 
