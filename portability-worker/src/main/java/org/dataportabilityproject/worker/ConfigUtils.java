@@ -28,3 +28,4 @@ final class ConfigUtils {
     return mapper.readValue(in, Map.class);
   }
 }
+

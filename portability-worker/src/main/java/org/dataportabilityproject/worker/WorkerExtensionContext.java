@@ -33,10 +33,6 @@ import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
  * {@link ExtensionContext} used by the worker.
  */
 final class WorkerExtensionContext implements ExtensionContext {
-  // TODO: build script, which should take cloud extension name and environment (e.g. local) as
-  // params, should copy settings from extension-cloud-dir/config/settings.yaml into
-  // config/settings.yaml, and extension-cloud-dir/config/environments/<env>/settings.yaml into
-  // config/env/settings.yaml.
   private static final String CLOUD_SETTINGS_PATH = "config/settings.yaml";
   private static final String CLOUD_ENV_SETTINGS_PATH = "config/env/settings.yaml";
 
