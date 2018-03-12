@@ -12,17 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * Create a new temp file (e.g. Test.java) in Intellij.
+ * Inside the file, enter Alt-Insert -> Copyright
+ * It should prompt you to select the new Copyright profile
+ * Test out another new test file - the copyright should be imported automatically (note: it might be collapsed so not immediately obvious)
  */
-package org.dataportabilityproject.spi.cloud.extension;
+package org.dataportabilityproject.spi.service.extension;
 
 import org.dataportabilityproject.api.launcher.AbstractExtension;
-import org.dataportabilityproject.spi.cloud.storage.BucketStore;
-import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
-/** Cloud extensions implement this interface to be loaded in either a gateway or worker process. */
-public interface CloudExtension extends AbstractExtension {
-  JobStore getJobStore();
-  BucketStore getBucketStore();
-  CryptoKeyStore getCryptoKeyStore();
-}
+/**
+ * An extension that provides core runtime services used by other extensions.
+ *
+ * <p>Service extensions are guaranteeed to be loaded prior to other extension types.
+ */
+public interface ServiceExtension extends AbstractExtension {}

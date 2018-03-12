@@ -30,7 +30,7 @@ import org.dataportabilityproject.gateway.action.listservices.ListServicesAction
 import org.dataportabilityproject.gateway.action.listservices.ListServicesActionRequest;
 import org.dataportabilityproject.gateway.action.listservices.ListServicesActionResponse;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
-import org.dataportabilityproject.spi.cloud.types.TypeManager;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.types.client.transfer.ListServicesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

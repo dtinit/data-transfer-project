@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * Create a new temp file (e.g. Test.java) in Intellij.
- * Inside the file, enter Alt-Insert -> Copyright
- * It should prompt you to select the new Copyright profile
- * Test out another new test file - the copyright should be imported automatically (note: it might be collapsed so not immediately obvious)
  */
 
 package org.dataportabilityproject.worker;
@@ -27,6 +23,8 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
+import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 
 /**
  * {@link ExtensionContext} used by the worker.
@@ -35,12 +33,23 @@ final class WorkerExtensionContext implements ExtensionContext {
   private static final ImmutableClassToInstanceMap<Object> SERVICE_MAP =
       new ImmutableClassToInstanceMap.Builder<>()
           .put(HttpTransport.class, new NetHttpTransport())
-          .put(JsonFactory.class, new JacksonFactory())
           .build();
+
+  private final TypeManager typeManager;
+
+  public WorkerExtensionContext() {
+    // TODO init with types
+    this.typeManager = new TypeManagerImpl();
+  }
 
   @Override
   public Logger getLogger() {
     return null;
+  }
+
+  @Override
+  public TypeManager getTypeManager() {
+    return typeManager;
   }
 
   @Override

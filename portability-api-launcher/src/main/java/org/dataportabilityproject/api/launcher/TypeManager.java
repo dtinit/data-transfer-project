@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.cloud.types;
+package org.dataportabilityproject.api.launcher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
