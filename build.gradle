@@ -24,6 +24,11 @@
  *
  *  gradlew clean jar
  *
+ * To build with a cloud extension type, use:
+ *
+ * ./gradlew -PcloudType=<type> clean check shadowJar
+ *
+ * Where <type> is "google", "microsoft", or another provider
  */
 buildscript {
 
@@ -35,6 +40,9 @@ buildscript {
 plugins {
     id 'java'
 }
+
+ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
+println "Cloud type: ${ext.cloudType}";
 
 def sourceProjects() {
     // define projects containing source code
@@ -60,4 +68,8 @@ configure(sourceProjects()) {
         testCompile "com.google.truth:truth:0.39"
     }
 
+}
+
+def addCloudExtensionDependency(proj) {
+    proj.dependencies { compile project(":extensions:cloud:portability-cloud-${proj.rootProject.ext.cloudType}") }
 }

@@ -20,3 +20,4 @@ include ':portability-test-utilities'
 
 include ':portability-core', ':portability-worker', ':portability-api'
 
+include ':distributions:worker-default'
