@@ -29,7 +29,7 @@ import org.dataportabilityproject.gateway.action.startjob.StartJobAction;
 import org.dataportabilityproject.gateway.action.startjob.StartJobActionRequest;
 import org.dataportabilityproject.gateway.action.startjob.StartJobActionResponse;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
-import org.dataportabilityproject.spi.cloud.types.TypeManager;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 
