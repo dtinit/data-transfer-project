@@ -7,12 +7,12 @@ target/
 **/gradlew
 **/gradlew.bat
 **/generated/
-**/src/main/resources/
 *.iml
 *.log
 config/local/secrets.csv
 config/test/secrets.csv
 config/qa/secrets.csv
+distributions/**/src/main/resources/
 **/src/main/resources/settings/*.yaml
 # Dockerfile is generated each time we run build.sh
 Dockerfile

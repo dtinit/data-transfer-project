@@ -43,7 +43,7 @@ public class ApiMain {
 
     // TODO: Support other server implementations, e.g. Jetty, Tomcat
     // TODO: Don't hardcode list of services
-    Set<String> services = ImmutableSet.of("Microsoft");
+    Set<String> services = ImmutableSet.of("microsoft");
 
     Injector injector =
         Guice.createInjector(

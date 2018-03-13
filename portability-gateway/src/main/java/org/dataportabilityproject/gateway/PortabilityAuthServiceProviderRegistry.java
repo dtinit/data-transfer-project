@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
+import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
 import java.util.List;
@@ -31,14 +31,14 @@ import java.util.Set;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
 
-  private final ImmutableMap<String, AuthServiceProvider> authServiceProviderMap;
+  private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
   private final ImmutableSet<String> supportedImportTypes;
   private final ImmutableSet<String> supportedExportTypes;
 
   @Inject
   public PortabilityAuthServiceProviderRegistry(
-      Map<String, AuthServiceProvider> serviceProviderMap) {
-    ImmutableMap.Builder<String, AuthServiceProvider> serviceProviderBuilder =
+      Map<String, AuthServiceExtension> serviceProviderMap) {
+    ImmutableMap.Builder<String, AuthServiceExtension> serviceProviderBuilder =
         ImmutableMap.builder();
     ImmutableSet.Builder<String> supportedImportTypesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<String> supportedExportTypesBuilder = ImmutableSet.builder();
@@ -50,7 +50,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
           for (String type : importTypes) {
             Preconditions.checkArgument(
                 exportTypes.contains(type),
-                "TransferDataType [%s] is available for import but not export in [%s] AuthServiceProvider",
+                "TransferDataType [%s] is available for import but not export in [%s] AuthServiceExtension",
                 type,
                 service);
             supportedImportTypesBuilder.add(type);
@@ -67,9 +67,9 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   @Override
   public AuthDataGenerator getAuthDataGenerator(
       String serviceId, String transferDataType, AuthMode mode) {
-    AuthServiceProvider provider = authServiceProviderMap.get(serviceId);
+    AuthServiceExtension provider = authServiceProviderMap.get(serviceId);
     Preconditions.checkArgument(
-        provider != null, "AuthServiceProvider not found for serviceId [%s]", serviceId);
+        provider != null, "AuthServiceExtension not found for serviceId [%s]", serviceId);
     switch (mode) {
       case EXPORT:
         Preconditions.checkArgument(

@@ -17,7 +17,7 @@ package org.dataportabilityproject.spi.gateway.extension;
 
 import java.util.List;
 import org.dataportabilityproject.api.launcher.AbstractExtension;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
+import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.gateway.provider.ServiceProviderInfo;
 
 /** Gateway extensions implement this interface to be loaded in a gateway process. */
@@ -27,5 +27,5 @@ public interface GatewayExtension extends AbstractExtension {
   List<ServiceProviderInfo> getServiceProviderInfos();
 
   /** Returns initialized extension exporters. */
-  List<AuthServiceProvider> getAuthServiceProviders();
+  List<AuthServiceExtension> getAuthServiceProviders();
 }

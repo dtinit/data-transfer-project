@@ -3,7 +3,7 @@ package org.dataportabilityproject.gateway;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
+import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,18 +26,18 @@ public class PortabilityAuthServiceProviderModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    MapBinder<String, AuthServiceProvider> mapBinder =
-        MapBinder.newMapBinder(binder(), String.class, AuthServiceProvider.class);
+    MapBinder<String, AuthServiceExtension> mapBinder =
+        MapBinder.newMapBinder(binder(), String.class, AuthServiceExtension.class);
 
-    List<AuthServiceProvider> authServiceProviders = new ArrayList<>();
+    List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
 
-    ServiceLoader.load(AuthServiceProvider.class)
+    ServiceLoader.load(AuthServiceExtension.class)
         .iterator()
-        .forEachRemaining(authServiceProviders::add);
+        .forEachRemaining(authServiceExtensions::add);
 
-    for (AuthServiceProvider provider : authServiceProviders) {
+    for (AuthServiceExtension provider : authServiceExtensions) {
       if (enabledServices.contains(provider.getServiceId())) {
-        logger.debug("Found AuthServiceProvider: {}", provider.getServiceId());
+        logger.debug("Found AuthServiceExtension: {}", provider.getServiceId());
         mapBinder.addBinding(provider.getServiceId()).to(provider.getClass());
       }
     }
