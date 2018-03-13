@@ -2,15 +2,16 @@ package org.dataportabilityproject.auth.microsoft;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProvider;
+import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 
 /** */
-public class MicrosoftAuthServiceProvider implements AuthServiceProvider {
+public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private MicrosoftAuthDataGenerator contactsGenerator;
 
-  public MicrosoftAuthServiceProvider() {
+  public MicrosoftAuthServiceExtension() {
     // contactsGenerator = new MicrosoftAuthDataGenerator(r)
   }
 
@@ -31,5 +32,10 @@ public class MicrosoftAuthServiceProvider implements AuthServiceProvider {
   @Override
   public List<String> getExportTypes() {
     return ImmutableList.of();
+  }
+
+  @Override
+  public void initialize(ExtensionContext context) {
+    // TODO
   }
 }

@@ -23,11 +23,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import org.dataportabilityproject.gateway.PortabilityAuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class PortabilityAuthServiceProviderRegistryTest {
+public class PortabilityAuthServiceExtensionRegistryTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -36,7 +37,7 @@ public class PortabilityAuthServiceProviderRegistryTest {
     List<String> supportedImportTypes = ImmutableList.of("photos", "contacts");
     List<String> supportedExportTypes = ImmutableList.of("contacts");
 
-    AuthServiceProvider mockAuthProvider = mock(AuthServiceProvider.class);
+    AuthServiceExtension mockAuthProvider = mock(AuthServiceExtension.class);
     when(mockAuthProvider.getExportTypes()).thenReturn(supportedExportTypes);
     when(mockAuthProvider.getImportTypes()).thenReturn(supportedImportTypes);
     when(mockAuthProvider.getServiceId()).thenReturn("mockAuthProvider");
