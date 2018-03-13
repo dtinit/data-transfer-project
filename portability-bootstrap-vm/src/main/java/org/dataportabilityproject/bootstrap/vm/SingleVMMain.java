@@ -21,8 +21,6 @@ public class SingleVMMain {
   public static void main(String[] args) {
     Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
-    System.setProperty("singleVM", "true");
-
     SingleVMMain singleVMMain = new SingleVMMain(SingleVMMain::exitError);
 
     Runtime.getRuntime().addShutdownHook(new Thread(singleVMMain::shutdown));

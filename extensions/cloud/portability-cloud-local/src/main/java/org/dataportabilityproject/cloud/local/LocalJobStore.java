@@ -28,19 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
-  private static ConcurrentHashMap<UUID, Map<String, Object>> SINGLETON_MAP;
-
-  private final boolean isSingleton;
-  private ConcurrentHashMap<UUID, Map<String, Object>> instanceMap;
-
-  public LocalJobStore() {
-    isSingleton = Boolean.parseBoolean(System.getProperty("singleVM", "false"));
-    if (isSingleton) {
-      SINGLETON_MAP = new ConcurrentHashMap<>();
-    } else {
-      this.instanceMap = new ConcurrentHashMap<>();
-    }
-  }
+  private static ConcurrentHashMap<UUID, Map<String, Object>> SINGLETON_MAP =  new ConcurrentHashMap<>();
 
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
@@ -53,10 +41,10 @@ public final class LocalJobStore implements JobStore {
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
-    if (getMap().get(jobId) != null) {
+    if (SINGLETON_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
-    getMap().put(jobId, job.toMap());
+    SINGLETON_MAP.put(jobId, job.toMap());
   }
 
   /**
@@ -85,7 +73,7 @@ public final class LocalJobStore implements JobStore {
       throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
-      Map<String, Object> previousEntry = getMap().replace(jobId, job.toMap());
+      Map<String, Object> previousEntry = SINGLETON_MAP.replace(jobId, job.toMap());
       if (previousEntry == null) {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
@@ -105,7 +93,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
-    Map<String, Object> previous = getMap().remove(jobId);
+    Map<String, Object> previous = SINGLETON_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
     }
@@ -118,10 +106,10 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public PortabilityJob findJob(UUID jobId) {
-    if (!getMap().containsKey(jobId)) {
+    if (!SINGLETON_MAP.containsKey(jobId)) {
       return null;
     }
-    return PortabilityJob.fromMap(getMap().get(jobId));
+    return PortabilityJob.fromMap(SINGLETON_MAP.get(jobId));
   }
 
   /**
@@ -131,7 +119,7 @@ public final class LocalJobStore implements JobStore {
   @Override
   public synchronized UUID findFirst(JobAuthorization.State jobState) {
     // Mimic an index lookup
-    for (Entry<UUID, Map<String, Object>> job : getMap().entrySet()) {
+    for (Entry<UUID, Map<String, Object>> job : SINGLETON_MAP.entrySet()) {
       Map<String, Object> properties = job.getValue();
       if (JobAuthorization.State.valueOf(
               properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
@@ -143,7 +131,4 @@ public final class LocalJobStore implements JobStore {
     return null;
   }
 
-  private ConcurrentHashMap<UUID, Map<String, Object>> getMap() {
-    return isSingleton ? SINGLETON_MAP : instanceMap;
-  }
 }
