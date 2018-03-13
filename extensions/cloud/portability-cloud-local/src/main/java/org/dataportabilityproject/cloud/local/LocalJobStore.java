@@ -16,22 +16,19 @@
 package org.dataportabilityproject.cloud.local;
 
 import com.google.common.base.Preconditions;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
-  private final ConcurrentHashMap<UUID, Map<String, Object>> map;
-
-  public LocalJobStore() {
-    this.map = new ConcurrentHashMap<>();
-  }
+  private static ConcurrentHashMap<UUID, Map<String, Object>> SINGLETON_MAP =  new ConcurrentHashMap<>();
 
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
@@ -44,10 +41,10 @@ public final class LocalJobStore implements JobStore {
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
-    if (map.get(jobId) != null) {
+    if (SINGLETON_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
-    map.put(jobId, job.toMap());
+    SINGLETON_MAP.put(jobId, job.toMap());
   }
 
   /**
@@ -55,7 +52,7 @@ public final class LocalJobStore implements JobStore {
    * {@code job}.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -68,7 +65,7 @@ public final class LocalJobStore implements JobStore {
    * the atomic update.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
    * @throws IllegalStateException if validator.validate() failed
    */
   @Override
@@ -76,7 +73,7 @@ public final class LocalJobStore implements JobStore {
       throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
-      Map<String, Object> previousEntry = map.replace(jobId, job.toMap());
+      Map<String, Object> previousEntry = SINGLETON_MAP.replace(jobId, job.toMap());
       if (previousEntry == null) {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
@@ -96,7 +93,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
-    Map<String, Object> previous = map.remove(jobId);
+    Map<String, Object> previous = SINGLETON_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
     }
@@ -109,10 +106,10 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public PortabilityJob findJob(UUID jobId) {
-    if (!map.containsKey(jobId)) {
+    if (!SINGLETON_MAP.containsKey(jobId)) {
       return null;
     }
-    return PortabilityJob.fromMap(map.get(jobId));
+    return PortabilityJob.fromMap(SINGLETON_MAP.get(jobId));
   }
 
   /**
@@ -122,7 +119,7 @@ public final class LocalJobStore implements JobStore {
   @Override
   public synchronized UUID findFirst(JobAuthorization.State jobState) {
     // Mimic an index lookup
-    for (Entry<UUID, Map<String, Object>> job : map.entrySet()) {
+    for (Entry<UUID, Map<String, Object>> job : SINGLETON_MAP.entrySet()) {
       Map<String, Object> properties = job.getValue();
       if (JobAuthorization.State.valueOf(
               properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
@@ -133,4 +130,5 @@ public final class LocalJobStore implements JobStore {
     }
     return null;
   }
+
 }

@@ -15,16 +15,17 @@
  */
 package org.dataportabilityproject.security;
 
-import java.security.NoSuchAlgorithmException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** AES-based implementation for {@link SecretKey} creation and encoding. */
-class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.NoSuchAlgorithmException;
 
+/** AES-based implementation for {@link SecretKey} creation and encoding. */
+public class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
+// TODO change this back to package private when Guice module is created
   private static final Logger logger = LoggerFactory.getLogger(AesSymmetricKeyGenerator.class);
   private static final String ALGORITHM = "AES";
 

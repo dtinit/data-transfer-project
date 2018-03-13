@@ -4,7 +4,7 @@ include ':portability-types-client', ':portability-types-transfer'
 
 include ':portability-api-launcher'
 
-include ':portability-spi-service',':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
+include ':portability-spi-service', ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
 
 include ':portability-gateway', ':portability-transfer'
 
@@ -18,6 +18,6 @@ include ':libraries:security'
 
 include ':portability-test-utilities'
 
-include ':portability-core', ':portability-worker', ':portability-api'
+include ':portability-core', ':portability-worker', ':portability-api', ':portability-bootstrap-vm'
 
-include ':distributions:worker-default', ':distributions:gateway-default'
+include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
