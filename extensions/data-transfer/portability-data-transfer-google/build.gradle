@@ -26,4 +26,9 @@ dependencies {
 
     compile "org.slf4j:slf4j-api:${slf4jVersion}"
     compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+
+    compile("com.google.gdata:core:${gdataVersion}") {
+        exclude(module: 'jetty-util')
+        exclude(module: 'servlet-api')
+    }
 }
