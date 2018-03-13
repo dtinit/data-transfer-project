@@ -13,24 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.cloud.types;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-/** Manages known JSON types and databinding. */
-public interface TypeManager {
-
-  /**
-   * Returns the system-wide {@code ObjectMapper} that is configured to databind built-in and
-   * extension model types in the system.
-   */
-  ObjectMapper getMapper();
-
-  /**
-   * Registers a model type. Extensions that introduce new model subtypes must registered them here
-   * so they can be databound properly.
-   *
-   * @param type the type to register.
-   */
-  void registerType(Class<?> type);
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'java'
+    id 'application'
 }
+
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile project(':portability-worker')
+
+    compile project(':extensions:data-transfer:portability-data-transfer-google')
+    compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
+}
+
+addCloudExtensionDependency(project)
+
+mainClassName = 'org.dataportabilityproject.worker.WorkerMain'
+
+shadowJar {
+    mergeServiceFiles()
+    exclude '**/pom.properties'
+    exclude '**/pom.xml'
+}
+

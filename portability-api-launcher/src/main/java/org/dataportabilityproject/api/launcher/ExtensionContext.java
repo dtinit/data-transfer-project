@@ -22,6 +22,13 @@ public interface ExtensionContext {
   Logger getLogger();
 
   /**
+   * Returns the runtime type manager.
+   *
+   * @return the type manager.
+   */
+  TypeManager getTypeManager();
+
+  /**
    * Returns a system service such as a type mapper extension services may require.
    *
    * @param type the system service type

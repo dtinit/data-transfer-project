@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    compile project(':portability-spi-cloud')
+package org.dataportabilityproject.worker;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
+final class ConfigUtils {
+  static Map<String, Object> parse(InputStream in) throws IOException {
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    return mapper.readValue(in, Map.class);
+  }
 }
+

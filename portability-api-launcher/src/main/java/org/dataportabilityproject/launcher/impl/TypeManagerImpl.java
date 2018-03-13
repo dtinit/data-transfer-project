@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.cloud.types;
+package org.dataportabilityproject.launcher.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.dataportabilityproject.spi.cloud.types.TypeManager;
+import org.dataportabilityproject.api.launcher.TypeManager;
 
 /** Jackson-based type manager that supports polymorphic type handling. */
 public class TypeManagerImpl implements TypeManager {

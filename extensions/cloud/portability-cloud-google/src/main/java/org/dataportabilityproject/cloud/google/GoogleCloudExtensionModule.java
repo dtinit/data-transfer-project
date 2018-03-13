@@ -55,10 +55,20 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   // The path where Kubernetes stores Secrets.
   private static final String KUBERNETES_SECRETS_PATH_ROOT = "/var/secrets/";
 
-  private final ExtensionContext context;
+  private final HttpTransport httpTransport;
+  private final JsonFactory jsonFactory;
+  private final String cloud;
+  private final Environment environment;
 
-  GoogleCloudExtensionModule(ExtensionContext context) {
-    this.context = context;
+  GoogleCloudExtensionModule(
+      HttpTransport httpTransport,
+      JsonFactory jsonFactory,
+      String cloud,
+      Environment environment) {
+    this.httpTransport = httpTransport;
+    this.jsonFactory = jsonFactory;
+    this.cloud = cloud;
+    this.environment = environment;
   }
 
   /**
@@ -102,11 +112,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Provides
   GoogleCredentials getCredentials(@ProjectId String projectId) throws GoogleCredentialException {
     validateUsingGoogle();
-
-    // TODO(rtannenbaum): Make env a direct parameter, maybe using @Named annotations
-    Environment env =
-        Environment.valueOf(context.getConfiguration("environment", Environment.LOCAL.name()));
-    if (env == Environment.LOCAL) { // Running locally
+    if (environment == Environment.LOCAL) { // Running locally
       // This is a crude check to make sure we are only pointing to test projects when running
       // locally and connecting to GCP
       Environment projectIdEnvironment = getProjectEnvironment(projectId);
@@ -174,13 +180,13 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Provides
   @Singleton
   HttpTransport getHttpTransport() {
-    return context.getService(HttpTransport.class);
+    return httpTransport;
   }
 
   @Provides
   @Singleton
   JsonFactory getJsonFactory() {
-    return context.getService(JsonFactory.class);
+    return jsonFactory;
   }
 
   /**
@@ -193,8 +199,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
    * for Google cloud?
    */
   private void validateUsingGoogle() {
-    // TODO: "cloud" should be a global flag name once we decide the proper place(s) for those
-    if (!context.getConfiguration("cloud", "").equals(GOOGLE_CLOUD_NAME)) {
+    if (!cloud.equals(GOOGLE_CLOUD_NAME)) {
       throw new IllegalStateException("Injecting Google objects when cloud != Google!");
     }
   }

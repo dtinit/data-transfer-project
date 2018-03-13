@@ -12,35 +12,65 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * Create a new temp file (e.g. Test.java) in Intellij.
- * Inside the file, enter Alt-Insert -> Copyright
- * It should prompt you to select the new Copyright profile
- * Test out another new test file - the copyright should be imported automatically (note: it might be collapsed so not immediately obvious)
  */
 
 package org.dataportabilityproject.worker;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.collect.ImmutableClassToInstanceMap;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
+import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 
 /**
  * {@link ExtensionContext} used by the worker.
  */
 final class WorkerExtensionContext implements ExtensionContext {
+  private static final String CLOUD_SETTINGS_PATH = "config/settings.yaml";
+  private static final String CLOUD_ENV_SETTINGS_PATH = "config/env/settings.yaml";
+
   private static final ImmutableClassToInstanceMap<Object> SERVICE_MAP =
       new ImmutableClassToInstanceMap.Builder<>()
           .put(HttpTransport.class, new NetHttpTransport())
-          .put(JsonFactory.class, new JacksonFactory())
           .build();
+
+  private final Map<String, Object> config;
+  private final TypeManager typeManager;
+
+  WorkerExtensionContext() {
+    // TODO init with types
+    this.typeManager = new TypeManagerImpl();
+    try {
+      // TODO: read settings from files in jar once they are built in
+      String tempSettings = "environment: LOCAL\ncloud: GOOGLE";
+      InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
+      // InputStream cloudSettingsIn =
+      //     WorkerModule.class.getClassLoader().getResourceAsStream(CLOUD_SETTINGS_PATH);
+      // InputStream envCloudSettingsIn =
+      //     WorkerModule.class.getClassLoader().getResourceAsStream(CLOUD_ENV_SETTINGS_PATH);
+      // TODO: consider allowing env settings to override base settings. For now, concatenate them.
+      // InputStream in = new SequenceInputStream(cloudSettingsIn, envCloudSettingsIn);
+      config = ConfigUtils.parse(in);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Problem parsing cloud extension settings", e);
+    }
+  }
 
   @Override
   public Logger getLogger() {
     return null;
+  }
+
+  @Override
+  public TypeManager getTypeManager() {
+    return typeManager;
   }
 
   @Override
@@ -51,9 +81,8 @@ final class WorkerExtensionContext implements ExtensionContext {
 
   @Override
   public <T> T getConfiguration(String key, T defaultValue) {
-    // TODO parse flags. Returning hardcoded local+GOOGLE config now for testing.
-    if (key.equals("cloud")) {
-      return (T) "GOOGLE";
+    if (config.containsKey(key)) {
+      return (T) config.get(key);
     }
     return defaultValue;
   }
