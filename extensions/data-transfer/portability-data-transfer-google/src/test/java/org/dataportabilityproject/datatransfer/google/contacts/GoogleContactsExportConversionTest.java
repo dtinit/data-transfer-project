@@ -1,15 +1,22 @@
-package org.dataportabilityproject.transfer.google.contacts;
+package org.dataportabilityproject.datatransfer.google.contacts;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
 
+import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
 import com.google.api.services.people.v1.model.Person;
+import com.google.api.services.people.v1.model.PhoneNumber;
 import com.google.api.services.people.v1.model.Source;
+import com.google.gdata.util.common.base.Pair;
 import ezvcard.VCard;
 import ezvcard.parameter.VCardParameters;
+import ezvcard.property.Address;
+import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
+import ezvcard.property.Telephone;
 import ezvcard.property.TextProperty;
 import ezvcard.property.VCardProperty;
 import java.util.Arrays;
@@ -17,11 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import com.google.gdata.util.common.base.Pair;
-import org.dataportabilityproject.datatransfer.google.contacts.GoogleContactsExporter;
 import org.junit.Test;
 
-public class GoogleContactsExporterTest {
+public class GoogleContactsExportConversionTest {
   private static final String DEFAULT_SOURCE_TYPE = "CONTACT";
   private static final Source DEFAULT_SOURCE = new Source().setType(DEFAULT_SOURCE_TYPE);
   private static final FieldMetadata PRIMARY_FIELD_METADATA =
@@ -84,7 +89,7 @@ public class GoogleContactsExporterTest {
     List<Pair<String, String>> actualPrimaryNamesValues =
         actualPrimaryNames
             .stream()
-            .map(GoogleContactsExporterTest::getGivenAndFamilyNames)
+            .map(GoogleContactsExportConversionTest::getGivenAndFamilyNames)
             .collect(Collectors.toList());
     assertThat(actualPrimaryNamesValues)
         .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
@@ -101,7 +106,7 @@ public class GoogleContactsExporterTest {
     List<Pair<String, String>> actualAlternateNamesValues =
         actualAlternateNames
             .stream()
-            .map(GoogleContactsExporterTest::getGivenAndFamilyNames)
+            .map(GoogleContactsExportConversionTest::getGivenAndFamilyNames)
             .collect(Collectors.toList());
     assertThat(actualAlternateNamesValues)
         .containsExactly(
@@ -114,6 +119,114 @@ public class GoogleContactsExporterTest {
             .collect(Collectors.toList());
     assertThat(actualAlternateSourceValues)
         .containsExactly(alternateSourceType1, alternateSourceType2);
+  }
+
+  @Test
+  public void testConversionToVCardAddress() {
+    // Set up test: person with a primary address and a secondary address
+    String primaryStreet = "221B Baker St";
+    String primaryCity = "London";
+    String primaryPostcode = "NW1";
+    String primaryCountry = "United Kingdom";
+    com.google.api.services.people.v1.model.Address primaryAddress =
+        new com.google.api.services.people.v1.model.Address()
+            .setStreetAddress(primaryStreet)
+            .setCity(primaryCity)
+            .setPostalCode(primaryPostcode)
+            .setCountry(primaryCountry)
+            .setMetadata(PRIMARY_FIELD_METADATA);
+
+    String altStreet = "42 Wallaby Way";
+    String altCity = "Sydney";
+    String altRegion = "New South Wales";
+    String altCountry = "Australia";
+    com.google.api.services.people.v1.model.Address altAddress =
+        new com.google.api.services.people.v1.model.Address()
+            .setStreetAddress(altStreet)
+            .setCity(altCity)
+            .setRegion(altRegion)
+            .setCountry(altCountry)
+            .setMetadata(SECONDARY_FIELD_METADATA);
+
+    Person person = DEFAULT_PERSON.setAddresses(Arrays.asList(altAddress, primaryAddress));
+
+    // Run test
+    VCard vCard = GoogleContactsExporter.convert(person);
+
+    // Check results for correct values and preferences
+    List<Address> actualPrimaryAddressList =
+        getPropertiesWithPreference(vCard, Address.class, VCARD_PRIMARY_PREF);
+    assertThat(
+        actualPrimaryAddressList
+            .stream()
+            .map(Address::getStreetAddress)
+            .collect(Collectors.toList()))
+        .containsExactly(primaryStreet);
+    List<Address> actualAltAddressList =
+        getPropertiesWithPreference(vCard, Address.class, VCARD_PRIMARY_PREF + 1);
+    assertThat(actualAltAddressList.stream().map(Address::getRegion).collect(Collectors.toList()))
+        .containsExactly(altRegion);
+  }
+
+  @Test
+  public void testConversionToVCardTelephone() {
+    // Set up test: person with 2 primary phone numbers and 1 secondary phone number
+    String primaryValue1 = "334-844-4244";
+    String primaryValue2 = "411";
+    String secondaryValue = "(555) 867-5309";
+    PhoneNumber primaryPhone1 =
+        new PhoneNumber().setValue(primaryValue1).setMetadata(PRIMARY_FIELD_METADATA);
+    PhoneNumber primaryPhone2 =
+        new PhoneNumber().setValue(primaryValue2).setMetadata(PRIMARY_FIELD_METADATA);
+    PhoneNumber secondaryPhone =
+        new PhoneNumber().setValue(secondaryValue).setMetadata(SECONDARY_FIELD_METADATA);
+    Person person =
+        DEFAULT_PERSON.setPhoneNumbers(Arrays.asList(secondaryPhone, primaryPhone1, primaryPhone2));
+
+    // Run test
+    VCard vCard = GoogleContactsExporter.convert(person);
+
+    // Check results for correct values and preferences
+    List<Telephone> resultPrimaryPhoneList =
+        getPropertiesWithPreference(vCard, Telephone.class, VCARD_PRIMARY_PREF);
+    assertThat(getValuesFromProperties(resultPrimaryPhoneList, Telephone::getText))
+        .containsExactly(primaryValue1, primaryValue2);
+    List<Telephone> resultSecondaryPhoneList =
+        getPropertiesWithPreference(vCard, Telephone.class, VCARD_PRIMARY_PREF + 1);
+    assertThat(getValuesFromProperties(resultSecondaryPhoneList, Telephone::getText))
+        .containsExactly(secondaryValue);
+  }
+
+  @Test
+  public void testConversionToVCardEmail() {
+    // Set up test: person with 1 primary email and 2 secondary emails
+    String primaryString = "primary@email.com";
+    String secondaryString1 = "secondary1@email.com";
+    String secondaryString2 = "secondary2@email.com";
+    EmailAddress primaryEmail =
+        new EmailAddress().setValue(primaryString).setMetadata(PRIMARY_FIELD_METADATA);
+    EmailAddress secondaryEmail1 =
+        new EmailAddress().setValue(secondaryString1).setMetadata(SECONDARY_FIELD_METADATA);
+    EmailAddress secondaryEmail2 =
+        new EmailAddress().setValue(secondaryString2).setMetadata(SECONDARY_FIELD_METADATA);
+    Person person =
+        DEFAULT_PERSON.setEmailAddresses(
+            Arrays.asList(
+                secondaryEmail1,
+                primaryEmail,
+                secondaryEmail2)); // Making sure order isn't a factor
+
+    // Run test - NB, this Person only has emails
+    VCard vCard = GoogleContactsExporter.convert(person);
+
+    // Check results for correct values and preferences
+    List<Email> resultPrimaryEmailList =
+        getPropertiesWithPreference(vCard, Email.class, VCARD_PRIMARY_PREF);
+    assertThat(getValuesFromTextProperties(resultPrimaryEmailList)).containsExactly(primaryString);
+    List<Email> resultSecondaryEmailList =
+        getPropertiesWithPreference(vCard, Email.class, VCARD_PRIMARY_PREF + 1);
+    assertThat(getValuesFromTextProperties(resultSecondaryEmailList))
+        .containsExactly(secondaryString1, secondaryString2);
   }
 
   private static Pair<String, String> getGivenAndFamilyNames(StructuredName structuredName) {

@@ -250,12 +250,14 @@ public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelW
         .build();
   }
 
-  private String makeVCardString(List<VCard> vCardList) throws IOException {
+  @VisibleForTesting
+  static String makeVCardString(List<VCard> vCardList) throws IOException {
     StringWriter stringWriter = new StringWriter();
     JCardWriter jCardWriter = new JCardWriter(stringWriter);
     for (VCard vCardProperties : vCardList) { // needs to be loop so error can be thrown
       jCardWriter.write(vCardProperties);
     }
+    jCardWriter.flush();
     return stringWriter.toString();
   }
 }
