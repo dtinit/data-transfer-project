@@ -1,6 +1,8 @@
-package org.dataportabilityproject.spi.gateway.auth;
+package org.dataportabilityproject.spi.gateway.auth.extension;
 
 import java.util.List;
+import org.dataportabilityproject.api.launcher.AbstractExtension;
+import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 
 /**
@@ -9,7 +11,7 @@ import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.A
  * <p>REVIEW: There is no distinction between offline and online generators since offline input data
  * collection should be externalized from this layer
  */
-public interface AuthServiceProvider {
+public interface AuthServiceExtension extends AbstractExtension{
 
   /** Returns the id of the service this factory supports. */
   String getServiceId();
