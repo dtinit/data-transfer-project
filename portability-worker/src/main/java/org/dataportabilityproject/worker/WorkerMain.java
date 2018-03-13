@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.cloud.google.GoogleCloudExtension;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 
