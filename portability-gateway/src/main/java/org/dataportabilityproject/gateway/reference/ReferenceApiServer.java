@@ -18,15 +18,16 @@ package org.dataportabilityproject.gateway.reference;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // TODO: Migrate to Launcher API
 /** Server that handles requests to API/web server using the Sun HttpServer framework. */
@@ -59,6 +60,10 @@ public final class ReferenceApiServer {
   public void start() throws IOException {
     server.start();
     logger.info("Server is listening on port {}", port);
+  }
+
+  public void stop() {
+    server.stop(0);
   }
 
   private void setHandlers(Map<String, HttpHandler> handlers) {
