@@ -91,8 +91,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
 
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<CalendarContainerResource>(ExportResult.ResultType.ERROR,
-          e.getMessage());
+      return new ExportResult<CalendarContainerResource>(ResultType.ERROR, e.getMessage());
     }
 
     // Set up continuation data
@@ -141,8 +140,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
       }
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<CalendarContainerResource>(ExportResult.ResultType.ERROR,
-          e.getMessage());
+      return new ExportResult<CalendarContainerResource>(ResultType.ERROR, e.getMessage());
     }
 
     // Set up continuation data
