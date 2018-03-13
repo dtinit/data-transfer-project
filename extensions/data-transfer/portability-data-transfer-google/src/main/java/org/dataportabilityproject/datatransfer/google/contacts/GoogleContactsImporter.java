@@ -45,9 +45,10 @@ import static org.dataportabilityproject.datatransfer.google.common.GoogleStatic
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
 
 public class GoogleContactsImporter implements Importer<AuthData, ContactsModelWrapper> {
+
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
-          new FieldMetadata().setPrimary(false);
+      new FieldMetadata().setPrimary(false);
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactsExporter.class);
   private volatile PeopleService peopleService;
@@ -91,29 +92,29 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
 
     if (vCard.getAddresses() != null) {
       person.setAddresses(
-              vCard
-                      .getAddresses()
-                      .stream()
-                      .map(GoogleContactsImporter::convertToGoogleAddress)
-                      .collect(Collectors.toList()));
+          vCard
+              .getAddresses()
+              .stream()
+              .map(GoogleContactsImporter::convertToGoogleAddress)
+              .collect(Collectors.toList()));
     }
 
     if (vCard.getTelephoneNumbers() != null) {
       person.setPhoneNumbers(
-              vCard
-                      .getTelephoneNumbers()
-                      .stream()
-                      .map(GoogleContactsImporter::convertToGooglePhoneNumber)
-                      .collect(Collectors.toList()));
+          vCard
+              .getTelephoneNumbers()
+              .stream()
+              .map(GoogleContactsImporter::convertToGooglePhoneNumber)
+              .collect(Collectors.toList()));
     }
 
     if (vCard.getEmails() != null) {
       person.setEmailAddresses(
-              vCard
-                      .getEmails()
-                      .stream()
-                      .map(GoogleContactsImporter::convertToGoogleEmail)
-                      .collect(Collectors.toList()));
+          vCard
+              .getEmails()
+              .stream()
+              .map(GoogleContactsImporter::convertToGoogleEmail)
+              .collect(Collectors.toList()));
     }
 
     return person;
@@ -146,7 +147,7 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
     // first look if there's a primary name (or names)
     // if no primary name exists, simply pick the first "alt" name
     List<StructuredName> primaryNames =
-            vCardNameList.stream().filter(a -> a.getAltId() == null).collect(Collectors.toList());
+        vCardNameList.stream().filter(a -> a.getAltId() == null).collect(Collectors.toList());
     if (primaryNames.size() > 0) {
       primaryVCardName = primaryNames.get(0);
     } else {
@@ -157,9 +158,9 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
   }
 
   private static com.google.api.services.people.v1.model.Address convertToGoogleAddress(
-          ezvcard.property.Address vCardAddress) {
+      ezvcard.property.Address vCardAddress) {
     com.google.api.services.people.v1.model.Address personAddress =
-            new com.google.api.services.people.v1.model.Address();
+        new com.google.api.services.people.v1.model.Address();
 
     personAddress.setCountry(vCardAddress.getCountry());
     personAddress.setRegion(vCardAddress.getRegion());
@@ -169,9 +170,9 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
     personAddress.setPoBox(vCardAddress.getPoBox());
     personAddress.setExtendedAddress(vCardAddress.getExtendedAddress());
     personAddress.setMetadata(
-            vCardAddress.getPref() == VCARD_PRIMARY_PREF
-                    ? PRIMARY_FIELD_METADATA
-                    : SECONDARY_FIELD_METADATA);
+        vCardAddress.getPref() == VCARD_PRIMARY_PREF
+            ? PRIMARY_FIELD_METADATA
+            : SECONDARY_FIELD_METADATA);
 
     return personAddress;
   }
@@ -214,10 +215,10 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
     // TODO(olsona): get credential using authData
     Credential credential = null;
     return new PeopleService.Builder(
-            GoogleStaticObjects.getHttpTransport(),
-            GoogleStaticObjects.JSON_FACTORY,
-            credential)
-            .setApplicationName(GoogleStaticObjects.APP_NAME)
-            .build();
+        GoogleStaticObjects.getHttpTransport(),
+        GoogleStaticObjects.JSON_FACTORY,
+        credential)
+        .setApplicationName(GoogleStaticObjects.APP_NAME)
+        .build();
   }
 }
