@@ -27,6 +27,7 @@ repositories {
 
 dependencies {
     compile project(':portability-gateway')
+    // TODO: depend on these based on list in flag values.
     compile project(':extensions:auth:portability-auth-microsoft')
 }
 
