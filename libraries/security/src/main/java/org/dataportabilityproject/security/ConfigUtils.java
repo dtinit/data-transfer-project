@@ -26,18 +26,32 @@ import java.util.Map;
 
 // TODO(rtannenbaum): Move this out of security/ into a new module config/. Couldn't figure it
 // out in Intellij.
+/**
+ * Common utilities for yaml configuration parsing.
+ */
 public class ConfigUtils {
+
+  /**
+   * Parses an input stream to a yaml configuration file into a generic Map<String, Object>.
+   */
   public static Map<String, Object> parse(InputStream in) throws IOException {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     return mapper.readValue(in, Map.class);
   }
 
+  /**
+   * Concatenates {@link InputStream}s to multiple yaml configuration files into a single
+   * {@link InputStream}.
+   */
   public static InputStream getSettingsCombinedInputStream(ImmutableList<String> settingsFiles) {
     return settingsFiles.stream()
         .map(file -> ConfigUtils.class.getClassLoader().getResourceAsStream(file))
         .reduce(null, (in1, in2) -> combineStreams(in1, in2));
   }
 
+  /**
+   * Concatenates two {@link InputStream}s.
+   */
   private static InputStream combineStreams(InputStream in1, InputStream in2) {
     if (in1 != null) {
       if (in2 != null) {
