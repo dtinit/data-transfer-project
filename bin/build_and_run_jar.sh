@@ -2,13 +2,19 @@
 
 # Interactive script to build a new jar.
 #
-# Usage: ./config/gcp/build_jar.sh <binary> <env>
+# Usage: ./config/gcp/build_jar.sh <binary> <env> <cloud> <distribution>
 # - binary is required and specifies which server to build.
-#     This should be one of: api, worker, core
-#     ex: api will build the portability-api binary
+#     This should be one of: worker, gateway
+#     ex: gateway will build a distribution of the portability-gateway binary
 # - env is the environment you would like to build in. This should correspond to an environment dir
 #     in config/environments. Settings for this environment are copied into the binary.
-#
+# - cloud is required and specifies which cloud environment to use
+#     This should be one of the supported cloud extensions
+#     ex: 'google' or 'microsoft'
+# - distribution
+#     this is optional and specifies which distribution to build. If not specified, will use the default build
+#     ex: binary=gateway and distribution=prod, will build the jar under distributions/gateway-prod
+#         binary=gateway and distribution=default, will build the jar under distributions/gateway-default
 # Must be run from the root source directory data-portability/
 
 if [[ $(pwd) != */data-transfer-project ]]; then
@@ -17,7 +23,7 @@ if [[ $(pwd) != */data-transfer-project ]]; then
 fi
 
 if [ -z $1 ]; then
-  echo "ERROR: Must provide a binary: 'api' or 'worker'"
+  echo "ERROR: Must provide a binary: 'api', 'gateway', or 'worker'"
   exit 1
 fi
 
@@ -26,9 +32,21 @@ if [ -z $2 ]; then
   exit 1
 fi
 
+# TODO: this should be pulled in from the environment configuration scrips.
+if [ -z $3 ]; then
+  echo "ERROR: Must provide a cloud type, e.g. 'local', 'google', or 'microsoft'"
+  exit 1
+fi
+
+DISTRO=$4
+if [ -z $4]; then
+  DISTRO="default"
+fi
+
 BINARY=$1
 ENV=$2
-SRC_DIR="portability-$BINARY"
+CLOUD=$3
+SRC_DIR="distributions/$BINARY-$DISTRO"
 DEBUG_PORT=5005
 if [[ $BINARY == "worker" ]]; then
   DEBUG_PORT=5006
@@ -131,15 +149,13 @@ fi
 echo -e "\nCompiling and packaging...\n"
 
 gradle wrapper
-./gradlew clean build
+./gradlew -PcloudType=$CLOUD clean build shadowJar
 
 # TODO: Exit in case of error compiling
 
 read -p "Would you like to run the app jar at this time? (Y/n): " response
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-#  COMMAND="java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT $SRC_DIR/build/libs/$SRC_DIR-1.0-SNAPSHOT.jar"
- COMMAND="java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT $SRC_DIR/build/libs/$SRC_DIR-1.0-SNAPSHOT.jar"
-
+  COMMAND="java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT $SRC_DIR/build/libs/$BINARY-$DISTRO-all.jar"
   echo -e "running $COMMAND"
   $COMMAND
 fi
