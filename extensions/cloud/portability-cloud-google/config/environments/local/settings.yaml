@@ -1,5 +1,0 @@
-# Google cloud settings specific to the local environment
-# TODO: split into separate worker, api, and common yaml files as appropriate
-baseUrl: http://localhost:3000
-baseApiUrl: http://localhost:8080
-environment: LOCAL
