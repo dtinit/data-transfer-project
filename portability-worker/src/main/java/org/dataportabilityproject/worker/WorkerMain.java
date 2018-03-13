@@ -21,17 +21,19 @@ import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.cloud.google.GoogleCloudExtension;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 
 import java.util.ServiceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class to bootstrap a portability worker that will operate on a single job whose state is
  * held in {@link JobMetadata}.
  */
 public class WorkerMain {
+  private static final Logger logger = LoggerFactory.getLogger(WorkerMain.class);
   public static void main(String[] args) {
     Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
@@ -43,6 +45,9 @@ public class WorkerMain {
             serviceExtension -> serviceExtension.initialize(context));
 
     CloudExtension cloudExtension = getCloudExtension();
+    // TODO: verify that this is the cloud extension that is specified in the configuration
+    logger.info("Using CloudExtension: {} ", cloudExtension.getClass().getName());
+
     cloudExtension.initialize(context);
 
     Injector injector =
@@ -55,9 +60,7 @@ public class WorkerMain {
 
   private static CloudExtension getCloudExtension() {
     ImmutableList.Builder<CloudExtension> extensionsBuilder = ImmutableList.builder();
-    // TODO(seehamrun): Service load cloud extension and remove hardcoded GoogleCloudExtension
-    // ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    extensionsBuilder.add(new GoogleCloudExtension());
+    ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
     ImmutableList<CloudExtension> extensions = extensionsBuilder.build();
     Preconditions.checkState(
         extensions.size() == 1,

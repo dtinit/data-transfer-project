@@ -47,10 +47,6 @@ configurations {
 }
 
 dependencies {
-    // TODO(seehamrun): this is here for testing hardcoded Google cloud extension, is it needed
-    // with ServiceLoading?
-    compile project(':extensions:cloud:portability-cloud-google')
-
     compile project(':portability-spi-service')
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
