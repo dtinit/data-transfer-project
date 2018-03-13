@@ -37,6 +37,7 @@ jar {
 
 dependencies {
     compile project(':libraries:security')
+    compile project(':portability-spi-service')
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-gateway')
     compile project(':portability-types-client')
