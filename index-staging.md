@@ -12,13 +12,13 @@ Data Transfer Project is a collaboration of industry partners committed to build
 
 We want all individuals across the web to feel in control of their data.
 
-## **How it works**
+## **How It Works**
 
 <img src="./HowItWorks.png" width="548">
 
 An individual who wants to move their photos data from Service C, for example, to Service 2, doesn’t have to worry about file types since both Service C and Service 2 are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  The Service Providers authenticate on both ends using their primary authentication infrastructure.
 
-### Initial Data portability enabled
+### Initial Data Portability Enabled
 The initial set of file types supported by the DTP ecosystem which can be moved directly between service providers include:  
 
 +  calendar
@@ -31,7 +31,7 @@ The Data Transfer Project is actively working to extend the supported set of dat
 
 We hope to eventually include all file types across all services.
 
-### Initial set of Integration  
+### Initial Set of Integration  
 Data Transfer Project APIs have been built for the following service providers and file types:
 
 +  Google
@@ -49,18 +49,18 @@ Data Transfer Project APIs have been built for the following service providers a
 +  Rememberthemilk
     +  Tasks
 
-## **How to Participate**
+## **How To Participate**
 There are many ways to participate in this open source project:
 
-### Integrate a service  
+### Integrate A Service  
 If you just want to enable your service to share files using the Data Transfer Project toolset, check out the Integration Guide on  Github and download the code 
 
 Providers who incorporates this code into their current platform give individuals the ability to transfer their data to or from the provider. For example, with this tool fully implemented, anyone could seamlessly transfer their photos from one photos service provider to another.
 
-### Hosting options for a Data Transfer Project Service  
+### Hosting Options For A Data Transfer Project Service  
 Partners may host an instance of Data Transfer Project configured to their needs on any docker-based platform.  Google Cloud Platform and Microsoft Azure already have pre-built tools for hosting Data Transfer Project.
 
-### Contribute to the platform  
+### Contribute To The Platform  
 If you would like to write an API to a new data type and/or extend the DTP framework see Developer Documentation on the Data Transfer Project Github site.
 
 ## **Docs & Reference**
