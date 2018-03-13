@@ -66,7 +66,7 @@ If you would like to write an API to a new data type and/or extend the DTP frame
 ## **Docs & Reference**
 
 +  [Data Transfer Project Whitepaper](Temp_Whitepaper.pdf)
-+  ADD ABSTRACT when written
+   +  ADD ABSTRACT when written
 +  Walk-through Video/Screencast
 
 ## **About Us**
