@@ -1,19 +1,14 @@
 package org.dataportabilityproject.auth.microsoft;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.util.Map;
-import java.util.function.Supplier;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Provides configuration for conducting an OAuth flow against the Microsoft AD API. Returned tokens
@@ -30,8 +25,8 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
       "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
   private final String redirectPath;
-  private final Supplier<String> clientIdSupplier;
-  private final Supplier<String> clientSecretSupplier;
+  private final String clientIdSupplier;
+  private final String clientSecretSupplier;
   private final OkHttpClient httpClient;
   private final ObjectMapper mapper;
 
@@ -48,8 +43,8 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
    */
   public MicrosoftAuthDataGenerator(
       String redirectPath,
-      Supplier<String> clientIdSupplier,
-      Supplier<String> clientSecretSupplier,
+      String clientIdSupplier,
+      String clientSecretSupplier,
       OkHttpClient client,
       ObjectMapper mapper) {
     this.redirectPath = redirectPath;
@@ -108,7 +103,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     }
     ParamStringBuilder builder = new ParamStringBuilder();
 
-    String clientId = clientIdSupplier.get();
+    String clientId = clientIdSupplier;
     builder.startParam("client_id").value(clientId).endParam();
 
     builder.startParam("scope");
@@ -130,11 +125,11 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     }
     ParamStringBuilder builder = new ParamStringBuilder();
 
-    String clientId = clientIdSupplier.get();
+    String clientId = clientIdSupplier;
     builder.startParam("client_id").value(clientId).endParam();
 
     builder.startParam("code").value(authCode).endParam();
-    builder.startParam("client_secret").value(clientSecretSupplier.get()).endParam();
+    builder.startParam("client_secret").value(clientSecretSupplier).endParam();
 
     builder.startParam("scope");
     for (String scope : scopes) {
