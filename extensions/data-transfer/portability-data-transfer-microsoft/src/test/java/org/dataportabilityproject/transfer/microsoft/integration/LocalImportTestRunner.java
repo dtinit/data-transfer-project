@@ -23,7 +23,7 @@ import java.io.StringWriter;
 import org.dataportabilityproject.auth.microsoft.harness.AuthTestDriver;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
+import org.dataportabilityproject.transfer.microsoft.MicrosoftTransferExtension;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 
