@@ -16,6 +16,7 @@
 
 dependencies {
     compile project(':portability-spi-gateway')
+    compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile "com.google.http-client:google-http-client:${googleHttpClientVersion}"
     compile "com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}"
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"

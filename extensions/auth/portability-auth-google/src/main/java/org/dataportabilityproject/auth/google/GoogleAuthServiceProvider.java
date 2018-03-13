@@ -23,10 +23,8 @@ import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.A
 
 /** */
 public class GoogleAuthServiceProvider implements AuthServiceProvider {
-  private GoogleAuthDataGenerator contactsGenerator;
 
   public GoogleAuthServiceProvider() {
-    // contactsGenerator = new GoogleAuthDataGenerator(r)
   }
 
   public String getServiceId() {
