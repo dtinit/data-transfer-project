@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.worker;
-
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
@@ -24,13 +22,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.dataportabilityproject.security.ConfigUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConfigUtilsTest {
-  @Test public void testParse() {
+  @Test
+  public void parse() {
     String testYaml = "environment: PROD\ncloud: LOCAL";
     InputStream in = new ByteArrayInputStream(testYaml.getBytes(StandardCharsets.UTF_8));
     try {
@@ -42,4 +42,3 @@ public class ConfigUtilsTest {
     }
   }
 }
-

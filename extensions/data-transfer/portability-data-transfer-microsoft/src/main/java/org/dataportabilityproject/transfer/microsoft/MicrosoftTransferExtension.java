@@ -1,4 +1,4 @@
-package org.dataportabilityproject.transfer.microsoft.provider;
+package org.dataportabilityproject.transfer.microsoft;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;

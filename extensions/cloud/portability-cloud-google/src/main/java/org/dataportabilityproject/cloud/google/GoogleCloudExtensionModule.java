@@ -35,9 +35,8 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtensionModule;
-import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
@@ -94,8 +93,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
     super.configure();
 
     bind(JobStore.class).to(GoogleJobStore.class);
-    bind(BucketStore.class).to(GoogleBucketStore.class);
-    bind(CryptoKeyStore.class).to(GoogleCryptoKeyStore.class);
+    bind(AppCredentialStore.class).to(GoogleAppCredentialStore.class);
   }
 
   @Provides

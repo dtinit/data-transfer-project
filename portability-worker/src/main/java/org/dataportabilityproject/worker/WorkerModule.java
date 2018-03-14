@@ -27,14 +27,14 @@ import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
-import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
+import org.dataportabilityproject.transfer.microsoft.MicrosoftTransferExtension;
 
 final class WorkerModule extends AbstractModule {
   private final CloudExtension cloudExtension;
@@ -59,14 +59,8 @@ final class WorkerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  BucketStore getBucketStore() {
-    return cloudExtension.getBucketStore();
-  }
-
-  @Provides
-  @Singleton
-  CryptoKeyStore getCryptoKeyStore() {
-    return cloudExtension.getCryptoKeyStore();
+  AppCredentialStore getBucketStore() {
+    return cloudExtension.getAppCredentialStore();
   }
 
   @Provides

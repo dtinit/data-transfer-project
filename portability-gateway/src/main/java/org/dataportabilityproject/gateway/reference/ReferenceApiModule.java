@@ -15,16 +15,26 @@
  */
 package org.dataportabilityproject.gateway.reference;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Named;
+import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.security.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +43,12 @@ import org.slf4j.LoggerFactory;
  * requests for the api actions.
  */
 public class ReferenceApiModule extends AbstractModule {
-
   private static final Logger logger = LoggerFactory.getLogger(ReferenceApiModule.class);
+
+  private static final String API_SETTINGS_PATH = "config/api.yaml";
+  private static final String ENV_API_SETTINGS_PATH = "config/env/api.yaml";
+  private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
+  private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
 
   @Provides
   @Named("httpPort")
@@ -94,4 +108,42 @@ public class ReferenceApiModule extends AbstractModule {
       mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
     */
   }
+
+  @Provides
+  @Singleton
+  ApiSettings getApiSettings() {
+    // TODO: currently, any setting in both a base and env config will be overridden by the last
+    // definition. e.g. a setting in api.yaml and env/api.yaml will take the definition in
+    // env/api.yaml. Determine whether this is intended behavior.
+    try {
+      ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
+          .add(API_SETTINGS_PATH)
+          .add(ENV_API_SETTINGS_PATH)
+          .add(COMMON_SETTINGS_PATH)
+          .add(ENV_COMMON_SETTINGS_PATH)
+          .build();
+      // ApiSettings apiSettings = getApiSettings(settingsFiles);
+
+      // TODO: remove this and use the commented out ApiSettings above once we compile in jar
+      String tempSettings = "baseUrl: http://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
+      InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
+      ApiSettings apiSettings = getApiSettings(in);
+
+      logger.debug("Parsed flags: {}", apiSettings);
+      return apiSettings;
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Problem parsing api settings", e);
+    }
+  }
+
+  static ApiSettings getApiSettings(ImmutableList<String> settingsFiles) throws IOException {
+    InputStream combinedInputStream = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
+    return getApiSettings(combinedInputStream);
+  }
+
+  static ApiSettings getApiSettings(InputStream inputStream) throws IOException {
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    return mapper.readValue(inputStream, ApiSettings.class);
+  }
+
 }
