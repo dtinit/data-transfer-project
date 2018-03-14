@@ -3,10 +3,6 @@ title: Data Transfer Project
 tagline:  a platform for transfering data
 description: Data Transfer Project is a collaboration of industry partners committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
 ---
-
-<img src="./dtp-lockup.png" width="548"> 
-
-
 ## **Who We Are**
 Data Transfer Project is a collaboration of industry partners committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
 
