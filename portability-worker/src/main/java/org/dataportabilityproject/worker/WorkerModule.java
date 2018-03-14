@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
@@ -38,26 +39,12 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 final class WorkerModule extends AbstractModule {
   private final CloudExtension cloudExtension;
   private final ExtensionContext context;
+  private final List<TransferExtension> transferExtensions;
 
-  WorkerModule(CloudExtension cloudExtension, ExtensionContext context) {
+  WorkerModule(CloudExtension cloudExtension, ExtensionContext context, List<TransferExtension> transferExtensions) {
     this.cloudExtension = cloudExtension;
     this.context = context;
-  }
-
-  private static TransferExtension findTransferExtension(
-      ImmutableList<TransferExtension> transferExtensions, String service) {
-    try {
-      return transferExtensions
-          .stream()
-          .filter(ext -> ext.getServiceId().equals(service))
-          .collect(onlyElement());
-    } catch (IllegalArgumentException e) {
-      throw new IllegalStateException(
-          "Found multiple transfer extensions for service " + service, e);
-    } catch (NoSuchElementException e) {
-      throw new IllegalStateException(
-          "Did not find a valid transfer extension for service " + service, e);
-    }
+    this.transferExtensions = transferExtensions;
   }
 
   @Override
@@ -99,13 +86,22 @@ final class WorkerModule extends AbstractModule {
   @Provides
   @Singleton
   ImmutableList<TransferExtension> getTransferExtensions() {
-    // TODO: Next version should ideally not load every TransferExtension impl, look into
-    // solutions where we selectively invoke class loader.
-    ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
-    return extensions;
+    return ImmutableList.copyOf(transferExtensions);
+  }
+
+  private static TransferExtension findTransferExtension(
+      ImmutableList<TransferExtension> transferExtensions, String service) {
+    try {
+      return transferExtensions
+          .stream()
+          .filter(ext -> ext.getServiceId().equals(service))
+          .collect(onlyElement());
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException(
+          "Found multiple transfer extensions for service " + service, e);
+    } catch (NoSuchElementException e) {
+      throw new IllegalStateException(
+          "Did not find a valid transfer extension for service " + service, e);
+    }
   }
 }
