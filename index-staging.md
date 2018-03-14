@@ -79,4 +79,3 @@ We anticipate the Data Transfer Project solution will make a particularly big im
 
 ## **Partners**
 <img src="./logo_Google_FullColor_3x_75x24px.png" width="100">         <img src="./Microsoft.jpg" width="125">
----
