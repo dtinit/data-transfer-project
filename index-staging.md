@@ -4,7 +4,7 @@ tagline:  a platform for transfering data
 description: Data Transfer Project is an open source platform enabling data portability between service providers
 ---
 
-**ADD LOGO  Data Transfer Project**  
+<img src="./dtp-lockup.png" width="548"> 
 
 
 ## **Who We Are**
