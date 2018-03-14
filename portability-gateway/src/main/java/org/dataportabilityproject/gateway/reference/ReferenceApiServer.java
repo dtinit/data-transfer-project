@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 
-// TODO: Migrate to Launcher API
+// TODO: Migrate a Service extension
 /** Server that handles requests to API/web server using the Sun HttpServer framework. */
 @Singleton
 public final class ReferenceApiServer {
