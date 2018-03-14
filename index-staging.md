@@ -16,10 +16,10 @@ We want all individuals across the web to feel in control of their data.
 
 <img src="./HowItWorks.png" width="548">
 
-An individual who wants to move their photos data from Service C, for example, to Service 2, doesn’t have to worry about file types since both Service C and Service 2 are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  The Service Providers authenticate on both ends using their primary authentication infrastructure.
+An individual who wants to move their photos data from Service C, for example, to Service 2, doesn’t have to worry about file types since both Service C and Service 2 are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  The Service Providers authentication on both ends using their primary authentication infrastructure.
 
 ### Initial Data Portability Enabled
-The initial set of file types supported by the DTP ecosystem which can be moved directly between service providers include:  
+The initial set of file types which can be moved directly between online service providers via Data Transfer Project include:   
 
 +  calendar
 +  contacts
@@ -27,7 +27,7 @@ The initial set of file types supported by the DTP ecosystem which can be moved 
 +  photos
 +  posts  
 
-The Data Transfer Project is actively working to extend the supported set of data format types, and we are looking for partners to help us in this area. Additional file types for service-to-service transfer the DTP will support include documents, spreadsheets, videos, sensor data, .dwg and more.   
+The Data Transfer Project is actively working to extend the supported set of data format types, and we are looking for partners to help us in this area. Additional file types for service-to-service transfer the DTP will support include documents, spreadsheets, videos, sensor data, CAD files and more   
 
 We hope to eventually include all file types across all services.
 
@@ -53,7 +53,7 @@ Data Transfer Project APIs have been built for the following service providers a
 There are many ways to participate in this open source project:
 
 ### Integrate A Service  
-If you just want to enable your service to share files using the Data Transfer Project toolset, check out the Integration Guide on  Github and download the code 
+If you just want to enable your service to share files using the Data Transfer Project toolset, check out the [Integration Guide](https://github.com/google/data-transfer-project/blob/master/Documentation/Integration.md) on Github and download the code 
 
 Providers who incorporates this code into their current platform give individuals the ability to transfer their data to or from the provider. For example, with this tool fully implemented, anyone could seamlessly transfer their photos from one photos service provider to another.
 
@@ -61,13 +61,13 @@ Providers who incorporates this code into their current platform give individual
 Partners may host an instance of Data Transfer Project configured to their needs on any docker-based platform.  Google Cloud Platform and Microsoft Azure already have pre-built tools for hosting Data Transfer Project.
 
 ### Contribute To The Platform  
-If you would like to write an API to a new data type and/or extend the DTP framework see Developer Documentation on the Data Transfer Project Github site.
+If you would like to write an API to a new data type and/or extend the DTP framework see [Developer Documentation](https://github.com/google/data-transfer-project/blob/master/Documentation/Developer.md) on the [Data Transfer Project Github site](https://github.com/google/data-transfer-project).
 
 ## **Docs & Reference**
 
 +  [Data Transfer Project Whitepaper](Temp_Whitepaper.pdf)
    +  ADD ABSTRACT when written
-+  Walk-through Video/Screencast
++  Walk-through Video/Screencast (TBD)
 
 ## **About Us**
 
