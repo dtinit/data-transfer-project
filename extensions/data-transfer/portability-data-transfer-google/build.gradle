@@ -18,6 +18,21 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
 
+    compile("com.google.api-client:google-api-client:${googleApiClient}")
+    compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
+    compile("com.google.apis:google-api-services-people:${googlePeopleVersion}")
+
+    compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
+
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+
+    compile("com.google.gdata:core:${gdataVersion}") {
+        exclude(module: 'jetty-util')
+        exclude(module: 'servlet-api')
+    }
+
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
     compile "com.google.api-client:google-api-client:${googleApiClient}"
     compile "com.google.apis:google-api-services-calendar:${googleCalendarVersion}"
     compile "com.google.apis:google-api-services-people:${googlePeopleVersion}"
