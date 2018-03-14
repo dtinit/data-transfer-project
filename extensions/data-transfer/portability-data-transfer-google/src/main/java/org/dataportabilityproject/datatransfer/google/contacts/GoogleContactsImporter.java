@@ -65,22 +65,6 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
     this.peopleService = peopleService;
   }
 
-  @Override
-  public ImportResult importItem(String jobId, AuthData authData, ContactsModelWrapper data) {
-    JCardReader reader = new JCardReader(data.getVCards());
-    try {
-      // TODO(olsona): address any other problems that might arise in conversion
-      List<VCard> vCardList = reader.readAll();
-      for (VCard vCard : vCardList) {
-        Person person = convert(vCard);
-        getOrCreatePeopleService(authData).people().createContact(person).execute();
-      }
-      return ImportResult.OK;
-    } catch (IOException e) {
-      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
-    }
-  }
-
   // TODO(olsona): can we guarantee that <VCARDPROPERTY>.getPref() will always return a value?
   @VisibleForTesting
   static Person convert(VCard vCard) {
@@ -208,6 +192,22 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
   private static boolean atLeastOneNamePresent(VCard vCard) {
     // TODO(olsona): there are more checks we could make
     return vCard.getStructuredNames().size() >= 1 && vCard.getStructuredName() != null;
+  }
+
+  @Override
+  public ImportResult importItem(String jobId, AuthData authData, ContactsModelWrapper data) {
+    JCardReader reader = new JCardReader(data.getVCards());
+    try {
+      // TODO(olsona): address any other problems that might arise in conversion
+      List<VCard> vCardList = reader.readAll();
+      for (VCard vCard : vCardList) {
+        Person person = convert(vCard);
+        getOrCreatePeopleService(authData).people().createContact(person).execute();
+      }
+      return ImportResult.OK;
+    } catch (IOException e) {
+      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
+    }
   }
 
   private PeopleService getOrCreatePeopleService(AuthData authData) {
