@@ -69,9 +69,6 @@ public class ApiMain {
     // TODO implement
     Map<String, Object> configuration = new HashMap<>();
 
-    // TODO: configure from command line - for now this is hardcoded to google cloud.
-    configuration.put("cloud", "GOOGLE");
-
     ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
 
     // Services that need to be shared between extensions or load types in the typemanager get
