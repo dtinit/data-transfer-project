@@ -16,10 +16,18 @@
 
 package org.dataportabilityproject.datatransfer.google.contacts;
 
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People.Connections;
-import com.google.api.services.people.v1.model.*;
+import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.FieldMetadata;
+import com.google.api.services.people.v1.model.Name;
+import com.google.api.services.people.v1.model.Person;
+import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.api.services.people.v1.model.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import ezvcard.VCard;
@@ -27,6 +35,10 @@ import ezvcard.io.json.JCardReader;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -34,15 +46,6 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
 
 public class GoogleContactsImporter implements Importer<AuthData, ContactsModelWrapper> {
 
@@ -60,22 +63,6 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
   @VisibleForTesting
   GoogleContactsImporter(PeopleService peopleService) {
     this.peopleService = peopleService;
-  }
-
-  @Override
-  public ImportResult importItem(String jobId, AuthData authData, ContactsModelWrapper data) {
-    JCardReader reader = new JCardReader(data.getVCards());
-    try {
-      // TODO(olsona): address any other problems that might arise in conversion
-      List<VCard> vCardList = reader.readAll();
-      for (VCard vCard : vCardList) {
-        Person person = convert(vCard);
-        getOrCreatePeopleService(authData).people().createContact(person).execute();
-      }
-      return ImportResult.OK;
-    } catch (IOException e) {
-      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
-    }
   }
 
   // TODO(olsona): can we guarantee that <VCARDPROPERTY>.getPref() will always return a value?
@@ -207,6 +194,22 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
     return vCard.getStructuredNames().size() >= 1 && vCard.getStructuredName() != null;
   }
 
+  @Override
+  public ImportResult importItem(String jobId, AuthData authData, ContactsModelWrapper data) {
+    JCardReader reader = new JCardReader(data.getVCards());
+    try {
+      // TODO(olsona): address any other problems that might arise in conversion
+      List<VCard> vCardList = reader.readAll();
+      for (VCard vCard : vCardList) {
+        Person person = convert(vCard);
+        getOrCreatePeopleService(authData).people().createContact(person).execute();
+      }
+      return ImportResult.OK;
+    } catch (IOException e) {
+      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
+    }
+  }
+
   private PeopleService getOrCreatePeopleService(AuthData authData) {
     return peopleService == null ? makePeopleService(authData) : peopleService;
   }
@@ -215,9 +218,7 @@ public class GoogleContactsImporter implements Importer<AuthData, ContactsModelW
     // TODO(olsona): get credential using authData
     Credential credential = null;
     return new PeopleService.Builder(
-        GoogleStaticObjects.getHttpTransport(),
-        GoogleStaticObjects.JSON_FACTORY,
-        credential)
+            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

@@ -1,0 +1,2 @@
+# Google cloud settings specific to the local environment
+environment: LOCAL
