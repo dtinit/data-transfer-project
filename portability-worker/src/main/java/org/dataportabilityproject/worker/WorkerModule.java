@@ -34,7 +34,7 @@ import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.provider.MicrosoftTransferExtension;
+import org.dataportabilityproject.transfer.microsoft.MicrosoftTransferExtension;
 
 final class WorkerModule extends AbstractModule {
   private final CloudExtension cloudExtension;
