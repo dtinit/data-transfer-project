@@ -17,8 +17,7 @@ package org.dataportabilityproject.cloud.local;
 
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
-import org.dataportabilityproject.spi.cloud.storage.BucketStore;
-import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /** */
@@ -30,15 +29,9 @@ public class LocalCloudExtension implements CloudExtension {
   }
 
   @Override
-  public BucketStore getBucketStore() {
+  public AppCredentialStore getAppCredentialStore() {
     // TODO implement
-    return null;
-  }
-
-  @Override
-  public CryptoKeyStore getCryptoKeyStore() {
-    // TODO implement
-    return null;
+    return new LocalAppCredentialStore();
   }
 
   @Override

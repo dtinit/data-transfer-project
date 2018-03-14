@@ -16,14 +16,16 @@
 
 package org.dataportabilityproject.spi.cloud.storage;
 
+import java.io.IOException;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
+
 /**
- * Object storage in buckets.
+ * Storage of app credentials, e.g. OAuth client IDs/keys and secrets.
  *
  * <p>This class is intended to be implemented by extensions that support storage in various
  * back-end services.
  */
-public interface BucketStore {
-  // Get an app credential (i.e. app key or secret). Each implementation may have its own convention
-  // for where/how app credential data is stored.
-  byte[] getAppCredentialBlob(String blobName);
+public interface AppCredentialStore {
+  // Get an app credential (i.e. app key or secret).
+  AppCredentials getAppCredentials(String keyName, String secretName) throws IOException;
 }

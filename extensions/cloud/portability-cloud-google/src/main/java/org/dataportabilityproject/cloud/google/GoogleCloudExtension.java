@@ -23,8 +23,7 @@ import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.Environment;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
-import org.dataportabilityproject.spi.cloud.storage.BucketStore;
-import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /**
@@ -66,12 +65,7 @@ public class GoogleCloudExtension implements CloudExtension {
   }
 
   @Override
-  public BucketStore getBucketStore() {
-    return injector.getInstance(BucketStore.class);
-  }
-
-  @Override
-  public CryptoKeyStore getCryptoKeyStore() {
-    return injector.getInstance(CryptoKeyStore.class);
+  public AppCredentialStore getAppCredentialStore() {
+    return injector.getInstance(AppCredentialStore.class);
   }
 }

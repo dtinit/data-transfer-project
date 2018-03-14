@@ -29,9 +29,9 @@ import java.io.IOException;
 import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 
-/** Crypto key management using Google's Cloud KMS. */
+/** Decrypts app secrets using Google Cloud KMS. */
 @Singleton
-final class GoogleCryptoKeyStore implements CryptoKeyStore {
+final class GoogleAppSecretDecrypter {
   // Key for encrypting app secrets.
   private static final String SECRETS_CRYPTO_KEY_FMT_STRING =
       "projects/%s/locations/global/"
@@ -41,7 +41,7 @@ final class GoogleCryptoKeyStore implements CryptoKeyStore {
   private final String secretsCryptoKey;
 
   @Inject
-  GoogleCryptoKeyStore(
+  GoogleAppSecretDecrypter(
       HttpTransport transport, JsonFactory jsonFactory, @ProjectId String projectId)
       throws GoogleCredentialException {
     GoogleCredential credential;
@@ -56,7 +56,7 @@ final class GoogleCryptoKeyStore implements CryptoKeyStore {
     }
     this.cloudKMS =
         new CloudKMS.Builder(transport, jsonFactory, credential)
-            .setApplicationName("GoogleCryptoKeyStore")
+            .setApplicationName("GoogleAppSecretDecrypter")
             .build();
     this.secretsCryptoKey = String.format(SECRETS_CRYPTO_KEY_FMT_STRING, projectId);
   }
