@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.gateway;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -32,7 +33,8 @@ import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,11 +61,16 @@ public class ApiMain {
         });
 
     ApiMain apiMain = new ApiMain();
-    apiMain.initialize();
+    apiMain.initializeHttp();
     apiMain.start();
   }
 
-  public void initialize() {
+  public void initializeHttp() {
+    initializeHttps(null, null);
+  }
+
+  public void initializeHttps(
+      TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory) {
     TypeManager typeManager = new TypeManagerImpl();
 
     // TODO implement
@@ -85,9 +92,11 @@ public class ApiMain {
     // FIXME make configurable
     SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator();
 
+    JobStore jobStore = cloudExtension.getJobStore();
     Injector injector =
         Guice.createInjector(
-            new ApiServicesModule(typeManager, cloudExtension.getJobStore(), keyGenerator),
+            new ApiServicesModule(
+                typeManager, jobStore, keyGenerator, trustManagerFactory, keyManagerFactory),
             new PortabilityAuthServiceProviderModule(services),
             new ReferenceApiModule());
 
@@ -95,7 +104,7 @@ public class ApiMain {
     server = injector.getInstance(ReferenceApiServer.class);
   }
 
-  public void start() throws IOException {
+  public void start() throws Exception {
     server.start();
   }
 
@@ -159,11 +168,28 @@ public class ApiMain {
     private final TypeManager typeManager;
     private final JobStore jobStore;
     private final SymmetricKeyGenerator keyGenerator;
+    private final TrustManagerFactory trustManagerFactory;
+    private final KeyManagerFactory keyManagerFactory;
 
-    public ApiServicesModule(TypeManager typeManager, JobStore jobStore, SymmetricKeyGenerator keyGenerator) {
+    public ApiServicesModule(
+        TypeManager typeManager,
+        JobStore jobStore,
+        SymmetricKeyGenerator keyGenerator,
+        TrustManagerFactory trustManagerFactory,
+        KeyManagerFactory keyManagerFactory) {
       this.typeManager = typeManager;
       this.jobStore = jobStore;
       this.keyGenerator = keyGenerator;
+      this.trustManagerFactory = trustManagerFactory;
+      this.keyManagerFactory = keyManagerFactory;
+      if (trustManagerFactory != null || keyManagerFactory != null) {
+        Preconditions.checkNotNull(
+            trustManagerFactory,
+            "If a key manager factory is specified, a trust manager factory must also be provided");
+        Preconditions.checkNotNull(
+            keyManagerFactory,
+            "If a trust manager factory  is specified, a key manager factory must also be provided");
+      }
     }
 
     @Override
@@ -171,6 +197,12 @@ public class ApiMain {
       bind(SymmetricKeyGenerator.class).toInstance(keyGenerator);
       bind(TypeManager.class).toInstance(typeManager);
       bind(JobStore.class).toInstance(jobStore);
+      if (trustManagerFactory != null) {
+        bind(TrustManagerFactory.class).toInstance(trustManagerFactory);
+      }
+      if (keyManagerFactory != null) {
+        bind(KeyManagerFactory.class).toInstance(keyManagerFactory);
+      }
     }
   }
 }
