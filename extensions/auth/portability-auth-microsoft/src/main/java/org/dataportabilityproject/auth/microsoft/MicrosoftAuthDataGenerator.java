@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
@@ -35,21 +36,19 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
    *
    * @param redirectPath the path part this generator is configured to request OAuth authentication
    *     code responses be sent to
-   * @param clientIdSupplier The Application ID that the registration portal
-   *     (apps.dev.microsoft.com) assigned the portability instance
-   * @param clientSecretSupplier The application secret that was created in the app registration
-   *     portal for the portability instance
+   * @param credentials The AppCredentials containing the Application ID that the registration portal
+   *     (apps.dev.microsoft.com) assigned the portability instance and the application secret that
+   *     was created in the app registration portal
    * @param mapper the mapper for deserializing responses from JSON
    */
   public MicrosoftAuthDataGenerator(
       String redirectPath,
-      String clientIdSupplier,
-      String clientSecretSupplier,
+      AppCredentials credentials,
       OkHttpClient client,
       ObjectMapper mapper) {
     this.redirectPath = redirectPath;
-    this.clientIdSupplier = clientIdSupplier;
-    this.clientSecretSupplier = clientSecretSupplier;
+    this.clientIdSupplier = credentials.getKey();
+    this.clientSecretSupplier = credentials.getSecret();
     httpClient = client;
     this.mapper = mapper;
   }

@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
+import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,10 +37,12 @@ import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,14 +76,22 @@ public class ApiMain {
       TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory) {
     TypeManager typeManager = new TypeManagerImpl();
 
-    // TODO implement
+    // TODO implement - dont hardcode.
     Map<String, Object> configuration = new HashMap<>();
+    configuration.put("cloud", "GOOGLE");
+    Map<Class, Object> serviceMap = new HashMap<>();
+    serviceMap.put(AppCredentialStore.class, new AppCredentialStore() {
+      @Override
+      public AppCredentials getAppCredentials(String keyName, String secretName)
+          throws IOException {
+        return new AppCredentials("dummy name", "dummy secret");
+      }
+    });
 
     ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
 
     // Services that need to be shared between authServiceExtensions or load types in the
-    // typemanager get
-    // initialized first.
+    // typemanager get initialized first.
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
         .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
