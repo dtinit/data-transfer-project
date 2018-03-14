@@ -17,7 +17,7 @@
 package org.dataportabilityproject.spi.cloud.extension;
 
 import com.google.inject.AbstractModule;
-import org.dataportabilityproject.spi.cloud.storage.BucketStore;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
@@ -31,7 +31,6 @@ public class CloudExtensionModule extends AbstractModule {
   @Override
   protected void configure() {
     requireBinding(JobStore.class);
-    requireBinding(BucketStore.class);
-    requireBinding(CryptoKeyStore.class);
+    requireBinding(AppCredentialStore.class);
   }
 }

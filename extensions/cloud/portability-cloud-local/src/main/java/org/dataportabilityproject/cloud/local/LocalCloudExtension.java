@@ -1,11 +1,11 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2017 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,15 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.cloud.extension;
+package org.dataportabilityproject.cloud.local;
 
-import org.dataportabilityproject.api.launcher.AbstractExtension;
+import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
-import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
-/** Cloud extensions implement this interface to be loaded in either a gateway or worker process. */
-public interface CloudExtension extends AbstractExtension {
-  JobStore getJobStore();
-  AppCredentialStore getAppCredentialStore();
+/** */
+public class LocalCloudExtension implements CloudExtension {
+
+  @Override
+  public JobStore getJobStore() {
+    return new LocalJobStore();
+  }
+
+  @Override
+  public AppCredentialStore getAppCredentialStore() {
+    // TODO implement
+    return new LocalAppCredentialStore();
+  }
+
+  @Override
+  public void initialize(ExtensionContext context) {}
 }
