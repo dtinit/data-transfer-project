@@ -78,4 +78,4 @@ The partners in the Data Transfer Project believe portability and interoperabili
 We anticipate the Data Transfer Project solution will make a particularly big impact in global markets where downloading or uploading data is expensive and/or slow. The Data Transfer Project eliminates the need to download data at all. Instead, files are transferred directly between service providers.
 
 ## **Partners**
-<img src="./Google.Microsoft.Logo2.png" width="250">  
+<img src="./Google.Microsoft.Logo2.png" width="300">  
