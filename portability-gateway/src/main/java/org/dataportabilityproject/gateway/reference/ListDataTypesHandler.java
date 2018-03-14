@@ -55,15 +55,12 @@ final class ListDataTypesHandler implements HttpHandler {
     Preconditions.checkArgument(ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, PATH));
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    String transferDataType = ReferenceApiUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(transferDataType), "Missing data type");
-
     ListDataTypesActionResponse actionResponse =
         listDataTypesAction.handle(new ListDataTypesActionRequest());
 
     if (actionResponse.getErrorMsg() != null) {
       logger.warn("Error during action: {}", actionResponse.getErrorMsg());
-      handleError(exchange, transferDataType);
+      handleError(exchange);
       return;
     }
 
@@ -80,7 +77,7 @@ final class ListDataTypesHandler implements HttpHandler {
   }
 
   /** Handles error response. TODO: Determine whether to return user facing error message here. */
-  public void handleError(HttpExchange exchange, String transferDataType) throws IOException {
+  public void handleError(HttpExchange exchange) throws IOException {
     String[] empty = new String[] {};
     ListDataTypesResponse response = new ListDataTypesResponse(empty);
     // Mark the response as type Json and send
