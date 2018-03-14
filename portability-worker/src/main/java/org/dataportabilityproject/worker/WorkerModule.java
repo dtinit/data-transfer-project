@@ -23,18 +23,17 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import java.util.NoSuchElementException;
+import java.util.ServiceLoader;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
-import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.MicrosoftTransferExtension;
 
 final class WorkerModule extends AbstractModule {
   private final CloudExtension cloudExtension;
@@ -105,9 +104,7 @@ final class WorkerModule extends AbstractModule {
     // TODO: Next version should ideally not load every TransferExtension impl, look into
     // solutions where we selectively invoke class loader.
     ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
-    // TODO(seehamrun): ServiceLoad TransferExtensions and remove hardcoded one
-    //ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    extensionsBuilder.add(new MicrosoftTransferExtension());
+    ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
     ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
     Preconditions.checkState(
         !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
