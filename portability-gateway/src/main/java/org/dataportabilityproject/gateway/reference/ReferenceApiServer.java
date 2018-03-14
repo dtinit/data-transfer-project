@@ -18,12 +18,19 @@ package org.dataportabilityproject.gateway.reference;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.io.IOException;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,36 +41,75 @@ import java.util.concurrent.Executor;
 @Singleton
 public final class ReferenceApiServer {
   private final Logger logger = LoggerFactory.getLogger(ReferenceApiServer.class);
+  private final Map<String, HttpHandler> handlers;
   private final int port;
-  private final HttpServer server;
+  private final String defaultView;
+  private final Executor httpExecutor;
+  private HttpServer server;
+
+  @Inject(optional = true)
+  public KeyManagerFactory keyManagerFactory;
+
+  @Inject(optional = true)
+  public TrustManagerFactory trustManagerFactory;
 
   @Inject
   ReferenceApiServer(
       Map<String, HttpHandler> handlers,
       @Named("httpPort") int port,
       @Named("defaultView") String defaultView,
-      @Named("httpExecutor") Executor httpExecutor)
-      throws IOException {
+      @Named("httpExecutor") Executor httpExecutor) {
+    this.handlers = handlers;
     // TODO: backlog and port should be command line args
     this.port = port;
+    this.defaultView = defaultView;
+    this.httpExecutor = httpExecutor;
+  }
+
+  /** Starts the Sun HttpServer based API. */
+  public void start() throws Exception {
     this.server = createServer(port);
     setHandlers(handlers);
     setDefaultView(defaultView);
     setExecutor(httpExecutor);
-  }
 
-  private static HttpServer createServer(int port) throws IOException {
-    return HttpServer.create(new InetSocketAddress(port), 0);
-  }
-
-  /** Starts the Sun HttpServer based API. */
-  public void start() throws IOException {
     server.start();
     logger.info("Server is listening on port {}", port);
   }
 
   public void stop() {
     server.stop(0);
+  }
+
+  private HttpServer createServer(int port) throws Exception {
+      if (trustManagerFactory == null || keyManagerFactory == null) {
+        return HttpServer.create(new InetSocketAddress(port), 0);
+      }
+
+      HttpsServer server = HttpsServer.create(new InetSocketAddress(port), 0);
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+
+      sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+
+      server.setHttpsConfigurator(
+              new HttpsConfigurator(sslContext) {
+                public void configure(HttpsParameters params) {
+                  try {
+                    SSLContext context = SSLContext.getDefault();
+                    SSLEngine engine = context.createSSLEngine();
+                    params.setCipherSuites(engine.getEnabledCipherSuites());
+                    params.setProtocols(engine.getEnabledProtocols());
+
+                    SSLParameters defaultSSLParameters = context.getDefaultSSLParameters();
+                    params.setSSLParameters(defaultSSLParameters);
+
+                    params.setNeedClientAuth(false);
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                  }
+                }
+              });
+      return server;
   }
 
   private void setHandlers(Map<String, HttpHandler> handlers) {

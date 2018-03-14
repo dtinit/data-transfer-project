@@ -27,6 +27,7 @@
       "environmentSource": "environments/environment.ts",
       "environments": {
         "local": "environments/environment.ts",
+        "localhttps": "environments/environment.https.ts",
         "test": "environments/environment.test.ts",
         "qa": "environments/environment.qa.ts",
         "prod": "environments/environment.prod.ts"
