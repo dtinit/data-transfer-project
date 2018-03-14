@@ -79,6 +79,7 @@ public class ApiMain {
     // TODO implement - dont hardcode.
     Map<String, Object> configuration = new HashMap<>();
     configuration.put("cloud", "GOOGLE");
+
     Map<Class, Object> serviceMap = new HashMap<>();
     serviceMap.put(AppCredentialStore.class, new AppCredentialStore() {
       @Override
@@ -88,7 +89,7 @@ public class ApiMain {
       }
     });
 
-    ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
+    ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration, serviceMap);
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.
@@ -160,10 +161,12 @@ public class ApiMain {
   private class ApiExtensionContext implements ExtensionContext {
     private final TypeManager typeManager;
     private final Map<String, Object> configuration;
+    private final Map<Class, Object> serviceMap;
 
-    public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
+    public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration, Map<Class, Object> serviceMap) {
       this.typeManager = typeManager;
       this.configuration = configuration;
+      this.serviceMap = serviceMap;
     }
 
     @Override
@@ -179,7 +182,7 @@ public class ApiMain {
 
     @Override
     public <T> T getService(Class<T> type) {
-      return null;
+      return (T)serviceMap.get(type);
     }
 
     @Override
