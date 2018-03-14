@@ -50,7 +50,7 @@ public class AuthTestDriver {
     ObjectMapper mapper = new ObjectMapper();
 
     MicrosoftAuthDataGenerator dataGenerator =
-        new MicrosoftAuthDataGenerator("/response", () -> clientId, () -> secret, client, mapper);
+        new MicrosoftAuthDataGenerator("/response", clientId, secret, client, mapper);
 
     AuthFlowConfiguration configuration = dataGenerator.generateConfiguration(callbackBase, "1");
 
