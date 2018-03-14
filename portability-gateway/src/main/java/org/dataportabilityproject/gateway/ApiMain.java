@@ -16,18 +16,18 @@
 package org.dataportabilityproject.gateway;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
-import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiModule;
@@ -42,16 +42,6 @@ import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtensio
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Set;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -88,7 +78,8 @@ public class ApiMain {
 
     ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
 
-    // Services that need to be shared between extensions or load types in the typemanager get
+    // Services that need to be shared between authServiceExtensions or load types in the
+    // typemanager get
     // initialized first.
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
@@ -102,9 +93,9 @@ public class ApiMain {
     ServiceLoader.load(AuthServiceExtension.class)
         .iterator()
         .forEachRemaining(
-            (serviceExtension) -> {
-              serviceExtension.initialize(extensionContext);
-              authServiceExtensions.add(serviceExtension);
+            (authServiceExtension) -> {
+              authServiceExtension.initialize(extensionContext);
+              authServiceExtensions.add(authServiceExtension);
             });
 
     // TODO: make configurable
@@ -114,7 +105,12 @@ public class ApiMain {
     Injector injector =
         Guice.createInjector(
             new ApiServicesModule(
-                typeManager, jobStore, keyGenerator, trustManagerFactory, keyManagerFactory, authServiceExtensions),
+                typeManager,
+                jobStore,
+                keyGenerator,
+                trustManagerFactory,
+                keyManagerFactory,
+                authServiceExtensions),
             new ReferenceApiModule());
 
     // Launch the application
@@ -144,7 +140,7 @@ public class ApiMain {
           "A cloud extension is not available. Exactly one is required.");
     } else if (cloudExtensions.size() > 1) {
       throw new IllegalStateException(
-          "Multiple cloud extensions were found. Exactly one is required.");
+          "Multiple cloud authServiceExtensions were found. Exactly one is required.");
     }
 
     return cloudExtensions.get(0);
@@ -153,7 +149,6 @@ public class ApiMain {
   private class ApiExtensionContext implements ExtensionContext {
     private final TypeManager typeManager;
     private final Map<String, Object> configuration;
-    private final Map<Class, Object> services = new HashMap<>();
 
     public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
       this.typeManager = typeManager;
@@ -187,7 +182,7 @@ public class ApiMain {
     private final TypeManager typeManager;
     private final JobStore jobStore;
     private final SymmetricKeyGenerator keyGenerator;
-    private final List<AuthServiceExtension> extensions;
+    private final List<AuthServiceExtension> authServiceExtensions;
     private final TrustManagerFactory trustManagerFactory;
     private final KeyManagerFactory keyManagerFactory;
 
@@ -197,13 +192,14 @@ public class ApiMain {
         SymmetricKeyGenerator keyGenerator,
         TrustManagerFactory trustManagerFactory,
         KeyManagerFactory keyManagerFactory,
-        List<AuthServiceExtension> extensions) {
+        List<AuthServiceExtension> authServiceExtensions) {
       this.typeManager = typeManager;
       this.jobStore = jobStore;
       this.keyGenerator = keyGenerator;
-      this.extensions = extensions;
+      this.authServiceExtensions = authServiceExtensions;
       this.trustManagerFactory = trustManagerFactory;
       this.keyManagerFactory = keyManagerFactory;
+
       if (trustManagerFactory != null || keyManagerFactory != null) {
         Preconditions.checkNotNull(
             trustManagerFactory,
@@ -219,9 +215,11 @@ public class ApiMain {
       MapBinder<String, AuthServiceExtension> mapBinder =
           MapBinder.newMapBinder(binder(), String.class, AuthServiceExtension.class);
 
-      for (AuthServiceExtension provider : extensions) {
-        mapBinder.addBinding(provider.getServiceId()).to(provider.getClass());
-      }
+      authServiceExtensions
+          .stream()
+          .forEach(
+              authExtension ->
+                  mapBinder.addBinding(authExtension.getServiceId()).to(authExtension.getClass()));
 
       bind(AuthServiceProviderRegistry.class).to(PortabilityAuthServiceProviderRegistry.class);
       bind(SymmetricKeyGenerator.class).toInstance(keyGenerator);
