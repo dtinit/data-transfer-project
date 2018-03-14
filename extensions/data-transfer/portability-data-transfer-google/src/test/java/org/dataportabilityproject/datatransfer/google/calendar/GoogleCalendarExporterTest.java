@@ -58,7 +58,7 @@ public class GoogleCalendarExporterTest {
 
   private static final String NEXT_TOKEN = "next_token";
 
-  private GoogleCalendarExporter calendarService;
+  private GoogleCalendarExporter googleCalendarExporter;
 
   private Calendar calendarClient;
   private Calendar.Calendars calendarCalendars;
@@ -78,7 +78,7 @@ public class GoogleCalendarExporterTest {
     calendarEvents = mock(Calendar.Events.class);
     eventListRequest = mock(Calendar.Events.List.class);
 
-    calendarService = new GoogleCalendarExporter(calendarClient);
+    googleCalendarExporter = new GoogleCalendarExporter(calendarClient);
 
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
 
@@ -98,7 +98,7 @@ public class GoogleCalendarExporterTest {
     calendarListResponse.setNextPageToken(NEXT_TOKEN);
 
     // Run test
-    ExportResult<CalendarContainerResource> result = calendarService.export(null);
+    ExportResult<CalendarContainerResource> result = googleCalendarExporter.export(null);
 
     // Check results
     // Verify correct methods were called
@@ -141,7 +141,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        calendarService.export(null, exportInformation);
+        googleCalendarExporter.export(null, exportInformation);
 
     // Check results
     // Verify correct calls were made
@@ -167,7 +167,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        calendarService.export(null, exportInformation);
+        googleCalendarExporter.export(null, exportInformation);
 
     // Check results
     // Verify correct methods were called
@@ -203,7 +203,8 @@ public class GoogleCalendarExporterTest {
     eventListResponse.setNextPageToken(null);
 
     // Run test
-    ExportResult<CalendarContainerResource> result = calendarService.export(null, exportInformation);
+    ExportResult<CalendarContainerResource> result = googleCalendarExporter
+        .export(null, exportInformation);
 
     // Check results
     // Verify correct methods were called in order

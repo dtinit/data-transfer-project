@@ -110,7 +110,7 @@ public class GoogleCalendarImporter implements Importer<AuthData, CalendarContai
     return eventDateTime;
   }
 
-  private static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(
+  static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(
       CalendarModel
           calendarModel) {
     return new com.google.api.services.calendar.model.Calendar()
