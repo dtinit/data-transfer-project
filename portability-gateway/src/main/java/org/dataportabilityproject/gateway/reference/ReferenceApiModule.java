@@ -24,9 +24,11 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -120,8 +122,13 @@ public class ReferenceApiModule extends AbstractModule {
           .add(COMMON_SETTINGS_PATH)
           .add(ENV_COMMON_SETTINGS_PATH)
           .build();
+      // ApiSettings apiSettings = getApiSettings(settingsFiles);
 
-      ApiSettings apiSettings = getApiSettings(settingsFiles);
+      // TODO: remove this and use the commented out ApiSettings above once we compile in jar
+      String tempSettings = "baseUrl: http://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
+      InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
+      ApiSettings apiSettings = getApiSettings(in);
+
       logger.debug("Parsed flags: {}", apiSettings);
       return apiSettings;
     } catch (IOException e) {
@@ -131,8 +138,12 @@ public class ReferenceApiModule extends AbstractModule {
 
   static ApiSettings getApiSettings(ImmutableList<String> settingsFiles) throws IOException {
     InputStream combinedInputStream = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
+    return getApiSettings(combinedInputStream);
+  }
+
+  static ApiSettings getApiSettings(InputStream inputStream) throws IOException {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    return mapper.readValue(combinedInputStream, ApiSettings.class);
+    return mapper.readValue(inputStream, ApiSettings.class);
   }
 
 }
