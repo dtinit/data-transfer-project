@@ -29,6 +29,9 @@
  * ./gradlew -PcloudType=<type> clean check shadowJar
  *
  * Where <type> is "google", "microsoft", or another provider
+ *
+ * TODO: take in a parameter - configDir as well (e.g. demo-google-deployment), and copy the
+ * contents of that into src/main/resources.
  */
 buildscript {
 

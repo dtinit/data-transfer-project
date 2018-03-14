@@ -14,18 +14,8 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.worker;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
-final class ConfigUtils {
-  static Map<String, Object> parse(InputStream in) throws IOException {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    return mapper.readValue(in, Map.class);
-  }
+dependencies {
+    compile project(':portability-worker')
+    compile project(':portability-gateway')
 }
-
