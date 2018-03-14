@@ -15,25 +15,25 @@
  */
 package org.dataportabilityproject.gateway.reference;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.action.listdatatypes.ListDataTypesAction;
 import org.dataportabilityproject.gateway.action.listdatatypes.ListDataTypesActionRequest;
 import org.dataportabilityproject.gateway.action.listdatatypes.ListDataTypesActionResponse;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.types.client.transfer.ListDataTypesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 /** HttpHandler for the {@link ListDataTypesAction}. */
 final class ListDataTypesHandler implements HttpHandler {

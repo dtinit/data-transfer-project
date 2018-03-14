@@ -2,9 +2,13 @@ package org.dataportabilityproject.bootstrap.vm;
 
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import org.dataportabilityproject.gateway.ApiMain;
+import org.dataportabilityproject.gateway.reference.ReferenceApiServer;
 import org.dataportabilityproject.worker.WorkerMain;
 
-import java.io.IOException;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.InputStream;
+import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -36,10 +40,28 @@ public class SingleVMMain {
 
   public void initializeGateway() {
     ApiMain apiMain = new ApiMain();
-    apiMain.initialize();
-    try {
+
+    try (InputStream stream =
+        ReferenceApiServer.class.getClassLoader().getResourceAsStream("portability.keystore.jks")) {
+      if (stream == null) {
+        throw new IllegalArgumentException("Demo keystore was not found");
+      }
+
+      // initialise the keystore
+      char[] password = "password".toCharArray();
+      KeyStore keyStore = KeyStore.getInstance("JKS");
+      keyStore.load(stream, password);
+      KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+      keyManagerFactory.init(keyStore, password);
+
+      TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+      trustManagerFactory.init(keyStore);
+
+      apiMain.initializeHttps(trustManagerFactory, keyManagerFactory);
+
       apiMain.start();
-    } catch (IOException e) {
+
+    } catch (Exception e) {
       errorCallback.accept(e);
     }
   }
