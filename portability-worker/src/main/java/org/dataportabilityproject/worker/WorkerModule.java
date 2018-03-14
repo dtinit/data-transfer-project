@@ -44,6 +44,22 @@ final class WorkerModule extends AbstractModule {
     this.context = context;
   }
 
+  private static TransferExtension findTransferExtension(
+      ImmutableList<TransferExtension> transferExtensions, String service) {
+    try {
+      return transferExtensions
+          .stream()
+          .filter(ext -> ext.getServiceId().equals(service))
+          .collect(onlyElement());
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException(
+          "Found multiple transfer extensions for service " + service, e);
+    } catch (NoSuchElementException e) {
+      throw new IllegalStateException(
+          "Did not find a valid transfer extension for service " + service, e);
+    }
+  }
+
   @Override
   protected void configure() {
     bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
@@ -64,8 +80,7 @@ final class WorkerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  Exporter getExporter(
-      ImmutableList<TransferExtension> transferExtensions) {
+  Exporter getExporter(ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
         findTransferExtension(transferExtensions, JobMetadata.getExportService());
     extension.initialize(context);
@@ -74,28 +89,11 @@ final class WorkerModule extends AbstractModule {
 
   @Provides
   @Singleton
-  Importer getImporter(
-      ImmutableList<TransferExtension> transferExtensions) {
+  Importer getImporter(ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
         findTransferExtension(transferExtensions, JobMetadata.getImportService());
     extension.initialize(context);
     return extension.getImporter(JobMetadata.getDataType());
-  }
-
-  private static TransferExtension findTransferExtension(
-      ImmutableList<TransferExtension> transferExtensions, String service) {
-    try {
-      return transferExtensions
-          .stream()
-          .filter(ext -> ext.getServiceId().equals(service))
-          .collect(onlyElement());
-    } catch (IllegalArgumentException e) {
-      throw new IllegalStateException(
-          "Found multiple transfer extensions for service " + service, e);
-    } catch (NoSuchElementException e) {
-      throw new IllegalStateException(
-          "Did not find a valid transfer extension for service " + service, e);
-    }
   }
 
   @Provides
