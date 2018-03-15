@@ -16,21 +16,21 @@
 package org.dataportabilityproject.cloud.local;
 
 import com.google.common.base.Preconditions;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
-  private static ConcurrentHashMap<UUID, PortabilityJob> JOB_MAP = new ConcurrentHashMap<>();
-  private static ConcurrentHashMap<UUID, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
-      new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<UUID, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
 
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
@@ -46,7 +46,7 @@ public final class LocalJobStore implements JobStore {
     if (JOB_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
-    JOB_MAP.put(jobId, job);
+    JOB_MAP.put(jobId, job.toMap());
   }
 
   /**
@@ -75,11 +75,12 @@ public final class LocalJobStore implements JobStore {
       throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
-      PortabilityJob previousJob = JOB_MAP.replace(jobId, job);
-      if (previousJob == null) {
+      Map<String, Object> previousEntry = JOB_MAP.replace(jobId, job.toMap());
+      if (previousEntry == null) {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
       if (validator != null) {
+        PortabilityJob previousJob = PortabilityJob.fromMap(previousEntry);
         validator.validate(previousJob, job);
       }
     } catch (NullPointerException | IllegalStateException e) {
@@ -94,7 +95,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
-    PortabilityJob previous = JOB_MAP.remove(jobId);
+    Map<String, Object> previous = JOB_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
     }
@@ -110,7 +111,7 @@ public final class LocalJobStore implements JobStore {
     if (!JOB_MAP.containsKey(jobId)) {
       return null;
     }
-    return JOB_MAP.get(jobId);
+    return PortabilityJob.fromMap(JOB_MAP.get(jobId));
   }
 
   /**
@@ -120,10 +121,12 @@ public final class LocalJobStore implements JobStore {
   @Override
   public synchronized UUID findFirst(JobAuthorization.State jobState) {
     // Mimic an index lookup
-    for (Entry<UUID, PortabilityJob> jobEntry : JOB_MAP.entrySet()) {
-      PortabilityJob portabilityJob = jobEntry.getValue();
-      if (portabilityJob.jobAuthorization().toString().equals(PortabilityJob.AUTHORIZATION_STATE)) {
-        UUID jobId = jobEntry.getKey();
+    for (Entry<UUID, Map<String, Object>> job : JOB_MAP.entrySet()) {
+      Map<String, Object> properties = job.getValue();
+      if (JobAuthorization.State.valueOf(
+              properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
+          == jobState) {
+        UUID jobId = job.getKey();
         return jobId;
       }
     }
@@ -141,11 +144,8 @@ public final class LocalJobStore implements JobStore {
   /** Updates the given model instance associated with a job. */
   @Override
   public <T extends DataModel> void update(UUID jobId, T model) {
-    // TODO: what sort of checking should we perform here?
-    if (!DATA_MAP.containsKey(jobId)) {
-      DATA_MAP.put(jobId, new ConcurrentHashMap<>());
-    }
-    DATA_MAP.get(jobId).put(model.getClass(), model);
+    // TODO: do we want to do any checking here to make sure there's something to update?
+    create(jobId, model);
   }
 
   /** Returns a model instance for the id of the given type or null if not found. */
