@@ -20,6 +20,14 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiModule;
@@ -28,21 +36,13 @@ import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -74,20 +74,25 @@ public class ApiMain {
       TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory) {
     TypeManager typeManager = new TypeManagerImpl();
 
-    // TODO implement
+    // TODO implement - dont hardcode.
     Map<String, Object> configuration = new HashMap<>();
+    configuration.put("cloud", "GOOGLE");
 
-    ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
+    ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
 
     // Services that need to be shared between authServiceExtensions or load types in the
-    // typemanager get
-    // initialized first.
+    // typemanager get initialized first.
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
         .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
 
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
+
+    // TODO: for now, use the same context as the cloud extension and modify it. Later we should
+    // create a separate extension.
+    extensionContext.addService(AppCredentialStore.class, cloudExtension.getAppCredentialStore());
+    extensionContext.addService(JobStore.class, cloudExtension.getJobStore());
 
     // TODO: Load up only "enabled" services
     List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
@@ -150,10 +155,15 @@ public class ApiMain {
   private class ApiExtensionContext implements ExtensionContext {
     private final TypeManager typeManager;
     private final Map<String, Object> configuration;
+    private final Map<Class, Object> serviceMap = new HashMap<>();
 
     public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
       this.typeManager = typeManager;
       this.configuration = configuration;
+    }
+
+    public <T> void addService(Class<T> type, T object) {
+      serviceMap.put(type, object);
     }
 
     @Override
@@ -169,7 +179,7 @@ public class ApiMain {
 
     @Override
     public <T> T getService(Class<T> type) {
-      return null;
+      return (T) serviceMap.get(type);
     }
 
     @Override
@@ -216,10 +226,9 @@ public class ApiMain {
       MapBinder<String, AuthServiceExtension> mapBinder =
           MapBinder.newMapBinder(binder(), String.class, AuthServiceExtension.class);
 
-      authServiceExtensions
-          .forEach(
-              authExtension ->
-                  mapBinder.addBinding(authExtension.getServiceId()).toInstance(authExtension));
+      authServiceExtensions.forEach(
+          authExtension ->
+              mapBinder.addBinding(authExtension.getServiceId()).toInstance(authExtension));
 
       bind(AuthServiceProviderRegistry.class).to(PortabilityAuthServiceProviderRegistry.class);
       bind(SymmetricKeyGenerator.class).toInstance(keyGenerator);

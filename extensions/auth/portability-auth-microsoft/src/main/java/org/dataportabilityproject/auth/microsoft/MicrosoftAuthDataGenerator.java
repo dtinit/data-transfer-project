@@ -3,7 +3,6 @@ package org.dataportabilityproject.auth.microsoft;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Supplier;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -12,6 +11,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
@@ -30,8 +30,8 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
       "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
   private final String redirectPath;
-  private final Supplier<String> clientIdSupplier;
-  private final Supplier<String> clientSecretSupplier;
+  private final String clientId;
+  private final String clientSecret;
   private final OkHttpClient httpClient;
   private final ObjectMapper mapper;
 
@@ -40,21 +40,16 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
    *
    * @param redirectPath the path part this generator is configured to request OAuth authentication
    *     code responses be sent to
-   * @param clientIdSupplier The Application ID that the registration portal
-   *     (apps.dev.microsoft.com) assigned the portability instance
-   * @param clientSecretSupplier The application secret that was created in the app registration
-   *     portal for the portability instance
+   * @param credentials The AppCredentials containing the Application ID that the registration
+   *     portal (apps.dev.microsoft.com) assigned the portability instance and the application
+   *     secret that was created in the app registration portal
    * @param mapper the mapper for deserializing responses from JSON
    */
   public MicrosoftAuthDataGenerator(
-      String redirectPath,
-      Supplier<String> clientIdSupplier,
-      Supplier<String> clientSecretSupplier,
-      OkHttpClient client,
-      ObjectMapper mapper) {
+      String redirectPath, AppCredentials credentials, OkHttpClient client, ObjectMapper mapper) {
     this.redirectPath = redirectPath;
-    this.clientIdSupplier = clientIdSupplier;
-    this.clientSecretSupplier = clientSecretSupplier;
+    this.clientId = credentials.getKey();
+    this.clientSecret = credentials.getSecret();
     httpClient = client;
     this.mapper = mapper;
   }
@@ -108,7 +103,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     }
     ParamStringBuilder builder = new ParamStringBuilder();
 
-    String clientId = clientIdSupplier.get();
+    String clientId = this.clientId;
     builder.startParam("client_id").value(clientId).endParam();
 
     builder.startParam("scope");
@@ -130,11 +125,11 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     }
     ParamStringBuilder builder = new ParamStringBuilder();
 
-    String clientId = clientIdSupplier.get();
+    String clientId = this.clientId;
     builder.startParam("client_id").value(clientId).endParam();
 
     builder.startParam("code").value(authCode).endParam();
-    builder.startParam("client_secret").value(clientSecretSupplier.get()).endParam();
+    builder.startParam("client_secret").value(clientSecret).endParam();
 
     builder.startParam("scope");
     for (String scope : scopes) {
