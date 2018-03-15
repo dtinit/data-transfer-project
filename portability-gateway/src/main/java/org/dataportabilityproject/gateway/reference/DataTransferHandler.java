@@ -122,7 +122,7 @@ final class DataTransferHandler implements HttpHandler {
         request.getSource());
 
     AuthFlowConfiguration authFlowConfiguration =
-        generator.generateConfiguration(apiSettings.getBaseUrl(), encodedJobId);
+        generator.generateConfiguration(apiSettings.getBaseApiUrl(), encodedJobId);
     Preconditions.checkNotNull(
         authFlowConfiguration,
         "AuthFlowConfiguration not found for type: %s, service: %s",
