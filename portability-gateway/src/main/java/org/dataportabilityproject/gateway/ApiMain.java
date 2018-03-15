@@ -20,15 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
-import java.io.IOException;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
+
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiModule;
@@ -45,6 +37,15 @@ import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -229,10 +230,9 @@ public class ApiMain {
           MapBinder.newMapBinder(binder(), String.class, AuthServiceExtension.class);
 
       authServiceExtensions
-          .stream()
           .forEach(
               authExtension ->
-                  mapBinder.addBinding(authExtension.getServiceId()).to(authExtension.getClass()));
+                  mapBinder.addBinding(authExtension.getServiceId()).toInstance(authExtension));
 
       bind(AuthServiceProviderRegistry.class).to(PortabilityAuthServiceProviderRegistry.class);
       bind(SymmetricKeyGenerator.class).toInstance(keyGenerator);
