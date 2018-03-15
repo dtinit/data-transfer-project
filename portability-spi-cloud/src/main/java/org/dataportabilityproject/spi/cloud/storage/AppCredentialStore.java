@@ -16,8 +16,9 @@
 
 package org.dataportabilityproject.spi.cloud.storage;
 
-import java.io.IOException;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
+
+import java.io.IOException;
 
 /**
  * Storage of app credentials, e.g. OAuth client IDs/keys and secrets.
@@ -26,6 +27,7 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
  * back-end services.
  */
 public interface AppCredentialStore {
+
   // Get an app credential (i.e. app key or secret).
   AppCredentials getAppCredentials(String keyName, String secretName) throws IOException;
 }

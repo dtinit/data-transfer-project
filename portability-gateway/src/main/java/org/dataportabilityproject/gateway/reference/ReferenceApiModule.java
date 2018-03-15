@@ -24,6 +24,12 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
+import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.security.ConfigUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,11 +38,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import javax.inject.Named;
-import org.dataportabilityproject.gateway.ApiSettings;
-import org.dataportabilityproject.security.ConfigUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Bindings the reference api server, a sample implementation using Sun's http library to serve
@@ -125,7 +126,8 @@ public class ReferenceApiModule extends AbstractModule {
       // ApiSettings apiSettings = getApiSettings(settingsFiles);
 
       // TODO: remove this and use the commented out ApiSettings above once we compile in jar
-      String tempSettings = "baseUrl: http://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
+      String tempSettings = "baseUrl: https://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
+//      String tempSettings = "baseUrl: http://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
       InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
       ApiSettings apiSettings = getApiSettings(in);
 
