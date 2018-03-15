@@ -16,6 +16,7 @@
 
 package org.dataportabilityproject.datatransfer.google.calendar;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.UUID;
 import org.dataportabilityproject.cloud.local.LocalJobStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
@@ -42,6 +44,7 @@ public class GoogleCalendarImporterTest {
   private static final Event EVENT = new Event().setDescription(EVENT_DESCRIPTION);
 
   private GoogleCalendarImporter calendarService;
+  private JobStore jobStore;
 
   private Calendar calendarClient;
   private Calendar.Calendars calendarCalendars;
@@ -57,7 +60,7 @@ public class GoogleCalendarImporterTest {
     calendarEvents = mock(Calendar.Events.class);
     eventInsertRequest = mock(Calendar.Events.Insert.class);
 
-    JobStore jobStore = new LocalJobStore();
+    jobStore = new LocalJobStore();
 
     calendarService = new GoogleCalendarImporter(calendarClient, jobStore);
 
@@ -88,8 +91,9 @@ public class GoogleCalendarImporterTest {
     when(eventInsertRequest.execute()).thenReturn(responseEvent);
     when(calendarEvents.insert(googleCalendarId, eventToInsert)).thenReturn(eventInsertRequest);
 
-    CalendarContainerResource calendarContainerResource = new CalendarContainerResource(
-        Collections.singleton(calendarModel), Collections.singleton(eventModel));
+    CalendarContainerResource calendarContainerResource =
+        new CalendarContainerResource(
+            Collections.singleton(calendarModel), Collections.singleton(eventModel));
 
     // Run test
     calendarService.importItem(jobId.toString(), null, calendarContainerResource);
@@ -99,5 +103,9 @@ public class GoogleCalendarImporterTest {
     verify(calendarInsertRequest).execute();
     verify(calendarEvents).insert(googleCalendarId, eventToInsert);
     verify(eventInsertRequest).execute();
+
+    // Check jobStore contents
+    assertThat(jobStore.findData(TempCalendarData.class, jobId).getImportedId(modelCalendarId))
+        .isEqualTo(googleCalendarId);
   }
 }
