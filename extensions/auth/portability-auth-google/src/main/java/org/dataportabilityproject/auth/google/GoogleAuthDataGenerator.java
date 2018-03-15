@@ -42,9 +42,8 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
   // TODO: Reduce requested scopes by service
-  private static final ImmutableCollection<String> SCOPES = ImmutableSet.of(
-      "user.read", "mail.read", "Contacts.ReadWrite", "Calendars.ReadWrite");
-
+  private static final ImmutableCollection<String> SCOPES =
+      ImmutableSet.of("user.read", "mail.read", "Contacts.ReadWrite", "Calendars.ReadWrite");
 
   private final String redirectPath;
   private final String clientId;
@@ -55,10 +54,10 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   /**
    * @param redirectPath the path part this generator is configured to request OAuth authentication
    *     code responses be sent to
-   * @param clientId The Application ID that the registration portal
-   *     (apps.dev.microsoft.com) assigned the portability instance
-   * @param clientSecret The application secret that was created in the app registration
-   *     portal for the portability instance
+   * @param clientId The Application ID that the registration portal (apps.dev.microsoft.com)
+   *     assigned the portability instance
+   * @param clientSecret The application secret that was created in the app registration portal for
+   *     the portability instance
    * @param httpTransport The http transport to use for underlying GoogleAuthorizationCodeFlow
    * @param objectMapper The json factory provider
    */
@@ -67,9 +66,8 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
       String clientId,
       String clientSecret,
       HttpTransport httpTransport,
-      ObjectMapper objectMapper
+      ObjectMapper objectMapper) {
 
-  ) {
     this.redirectPath = redirectPath;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
@@ -91,18 +89,18 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
-      AuthData initialAuthData, String extra) {
+  public AuthData generateAuthData(
+      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkState(
         initialAuthData == null, "Earlier auth data not expected for Google flow");
     AuthorizationCodeFlow flow;
     TokenResponse response;
     try {
-     flow = createFlow();
-     response =
-        flow.newTokenRequest(authCode)
-            .setRedirectUri(callbackBaseUrl + redirectPath) // TODO(chuy): Parameterize
-            .execute();
+      flow = createFlow();
+      response =
+          flow.newTokenRequest(authCode)
+              .setRedirectUri(callbackBaseUrl + redirectPath) // TODO(chuy): Parameterize
+              .execute();
     } catch (IOException e) {
       throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);
     }
@@ -111,24 +109,26 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
     try {
       credential = flow.createAndStoreCredential(response, id);
     } catch (IOException e) {
-      throw new RuntimeException("Error calling AuthorizationCodeFlow.createAndStoreCredential ", e);
+      throw new RuntimeException(
+          "Error calling AuthorizationCodeFlow.createAndStoreCredential ", e);
     }
     // TODO: Extract the Google User ID from the ID token in the auth response
     // GoogleIdToken.Payload payload = ((GoogleTokenResponse) response).parseIdToken().getPayload();
-    return new TokensAndUrlAuthData(credential.getAccessToken(), credential.getRefreshToken(), credential.getTokenServerEncodedUrl());
+    return new TokensAndUrlAuthData(
+        credential.getAccessToken(),
+        credential.getRefreshToken(),
+        credential.getTokenServerEncodedUrl());
   }
-
-
 
   /** Creates an AuthorizationCodeFlow for use in online and offline mode. */
   private GoogleAuthorizationCodeFlow createFlow() {
     return new GoogleAuthorizationCodeFlow.Builder(
-        httpTransport,
-         // Figure out how to adapt objectMapper.getFactory(),
-        new JacksonFactory(),
-        clientId,
-        clientSecret,
-        SCOPES)
+            httpTransport,
+            // Figure out how to adapt objectMapper.getFactory(),
+            new JacksonFactory(),
+            clientId,
+            clientSecret,
+            SCOPES)
         .setAccessType("offline")
         // TODO: Needed for local caching
         // .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
