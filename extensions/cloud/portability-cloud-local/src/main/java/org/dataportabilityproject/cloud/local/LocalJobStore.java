@@ -16,6 +16,7 @@
 package org.dataportabilityproject.cloud.local;
 
 import com.google.common.base.Preconditions;
+import java.io.InputStream;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
@@ -129,6 +131,29 @@ public final class LocalJobStore implements JobStore {
       }
     }
     return null;
+  }
+
+  @Override
+  public <T extends DataModel> void create(UUID jobId, T model) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** Updates the given model instance associated with a job. */
+  @Override
+  public <T extends DataModel> void update(UUID jobId, T model) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** Returns a model instance for the id of the given type or null if not found. */
+  @Override
+  public <T extends DataModel> T findData(Class<T> type, UUID id) {
+    throw new UnsupportedOperationException();
+  }
+
+  /** Removes the data model instance. */
+  @Override
+  public void removeData(UUID id) {
+    throw new UnsupportedOperationException();
   }
 
 }
