@@ -127,7 +127,6 @@ public class ReferenceApiModule extends AbstractModule {
 
       // TODO: remove this and use the commented out ApiSettings above once we compile in jar
       String tempSettings = "baseUrl: https://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
-//      String tempSettings = "baseUrl: http://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
       InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
       ApiSettings apiSettings = getApiSettings(in);
 

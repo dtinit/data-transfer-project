@@ -29,7 +29,7 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import java.io.IOException;
 import java.util.List;
 
-/** */
+/** Bootstraps the Mirosoft authentication extension. */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final String REDIRECT_PATH = "/callback/microsoft";
   private static final ImmutableList<String> SUPPORTED_SERVICES =
