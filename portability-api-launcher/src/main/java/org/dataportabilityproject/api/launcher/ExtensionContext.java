@@ -36,6 +36,14 @@ public interface ExtensionContext {
   <T> T getService(Class<T> type);
 
   /**
+   * Registers a service
+   *
+   * @param type the type to register the service for
+   * @param service the service instance
+   */
+  default <T> void registerService(Class<T> type, T service) {}
+
+  /**
    * Returns the configuration parameter for the key or the default value if not found.
    *
    * @param key the parameter key

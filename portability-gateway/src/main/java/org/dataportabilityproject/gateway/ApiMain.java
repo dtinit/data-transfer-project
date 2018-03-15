@@ -28,6 +28,7 @@ import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
@@ -80,14 +81,19 @@ public class ApiMain {
     ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
 
     // Services that need to be shared between authServiceExtensions or load types in the
-    // typemanager get
-    // initialized first.
+    // typemanager get initialized first.
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
         .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
 
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
+
+    JobStore jobStore = cloudExtension.getJobStore();
+    extensionContext.registerService(JobStore.class, jobStore);
+
+    AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
+    extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
 
     // TODO: Load up only "enabled" services
     List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
@@ -102,7 +108,7 @@ public class ApiMain {
     // TODO: make configurable
     SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator();
 
-    JobStore jobStore = cloudExtension.getJobStore();
+
     Injector injector =
         Guice.createInjector(
             new ApiServicesModule(
@@ -147,38 +153,6 @@ public class ApiMain {
     return cloudExtensions.get(0);
   }
 
-  private class ApiExtensionContext implements ExtensionContext {
-    private final TypeManager typeManager;
-    private final Map<String, Object> configuration;
-
-    public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
-      this.typeManager = typeManager;
-      this.configuration = configuration;
-    }
-
-    @Override
-    public org.dataportabilityproject.api.launcher.Logger getLogger() {
-      // TODO implement
-      return null;
-    }
-
-    @Override
-    public TypeManager getTypeManager() {
-      return typeManager;
-    }
-
-    @Override
-    public <T> T getService(Class<T> type) {
-      return null;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> T getConfiguration(final String key, final T defaultValue) {
-      return (T) configuration.getOrDefault(key, defaultValue);
-    }
-  }
-
   private class ApiServicesModule extends AbstractModule {
     private final TypeManager typeManager;
     private final JobStore jobStore;
@@ -216,10 +190,9 @@ public class ApiMain {
       MapBinder<String, AuthServiceExtension> mapBinder =
           MapBinder.newMapBinder(binder(), String.class, AuthServiceExtension.class);
 
-      authServiceExtensions
-          .forEach(
-              authExtension ->
-                  mapBinder.addBinding(authExtension.getServiceId()).toInstance(authExtension));
+      authServiceExtensions.forEach(
+          authExtension ->
+              mapBinder.addBinding(authExtension.getServiceId()).toInstance(authExtension));
 
       bind(AuthServiceProviderRegistry.class).to(PortabilityAuthServiceProviderRegistry.class);
       bind(SymmetricKeyGenerator.class).toInstance(keyGenerator);
