@@ -15,14 +15,23 @@
  */
 package org.dataportabilityproject.auth.google;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.BaseEncoding;
 import java.io.IOException;
-import java.util.function.Supplier;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
-
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 /**
  * Provides configuration for conducting an OAuth flow against the Google AD API. Returned tokens
  * can be used to make requests against the Google Graph API.
@@ -32,64 +41,98 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
+  // TODO: Reduce requested scopes by service
+  private static final ImmutableCollection<String> SCOPES = ImmutableSet.of(
+      "user.read", "mail.read", "Contacts.ReadWrite", "Calendars.ReadWrite");
+
+
   private final String redirectPath;
-  private final Supplier<String> clientIdSupplier;
-  private final Supplier<String> clientSecretSupplier;
+  private final String clientId;
+  private final String clientSecret;
+  private final HttpTransport httpTransport;
+  private final ObjectMapper objectMapper;
 
   /**
    * @param redirectPath the path part this generator is configured to request OAuth authentication
    *     code responses be sent to
-   * @param clientIdSupplier The Application ID that the registration portal
+   * @param clientId The Application ID that the registration portal
    *     (apps.dev.microsoft.com) assigned the portability instance
-   * @param clientSecretSupplier The application secret that was created in the app registration
+   * @param clientSecret The application secret that was created in the app registration
    *     portal for the portability instance
+   * @param httpTransport The http transport to use for underlying GoogleAuthorizationCodeFlow
+   * @param objectMapper The json factory provider
    */
   public GoogleAuthDataGenerator(
       String redirectPath,
-      Supplier<String> clientIdSupplier,
-      Supplier<String> clientSecretSupplier
+      String clientId,
+      String clientSecret,
+      HttpTransport httpTransport,
+      ObjectMapper objectMapper
 
   ) {
     this.redirectPath = redirectPath;
-    this.clientIdSupplier = clientIdSupplier;
-    this.clientSecretSupplier = clientSecretSupplier;
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+    this.httpTransport = httpTransport;
+    this.objectMapper = objectMapper;
   }
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    String encodedJobId = JobUtils.encodeJobId(jobId);
+    // TODO: Move to common location
+    String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
     String url =
         createFlow()
             .newAuthorizationUrl()
-            .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
-            .setState(encodedJobId) // TODO: Encrypt
+            .setRedirectUri(callbackBaseUrl + redirectPath)
+            .setState(encodedJobId)
             .build();
-    // constructs a request for Google authorization code.
-    String redirectUrl = callbackBaseUrl + redirectPath;
-    String queryPart =
-        constructAuthQueryPart(
-            redirectUrl, id, "user.read", "mail.read", "Contacts.ReadWrite", "Calendars.ReadWrite");
-    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart);
+    return new AuthFlowConfiguration(url);
   }
 
   @Override
   public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
       AuthData initialAuthData, String extra) {
-    return null;
+    Preconditions.checkState(
+        initialAuthData == null, "Earlier auth data not expected for Google flow");
+    AuthorizationCodeFlow flow;
+    TokenResponse response;
+    try {
+     flow = createFlow();
+     response =
+        flow.newTokenRequest(authCode)
+            .setRedirectUri(callbackBaseUrl + redirectPath) // TODO(chuy): Parameterize
+            .execute();
+    } catch (IOException e) {
+      throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);
+    }
+    // Figure out storage
+    Credential credential = null;
+    try {
+      credential = flow.createAndStoreCredential(response, id);
+    } catch (IOException e) {
+      throw new RuntimeException("Error calling AuthorizationCodeFlow.createAndStoreCredential ", e);
+    }
+    // TODO: Extract the Google User ID from the ID token in the auth response
+    // GoogleIdToken.Payload payload = ((GoogleTokenResponse) response).parseIdToken().getPayload();
+    return new TokensAndUrlAuthData(credential.getAccessToken(), credential.getRefreshToken(), credential.getTokenServerEncodedUrl());
   }
 
+
+
   /** Creates an AuthorizationCodeFlow for use in online and offline mode. */
-  private GoogleAuthorizationCodeFlow createFlow() throws IOException {
+  private GoogleAuthorizationCodeFlow createFlow() {
     return new GoogleAuthorizationCodeFlow.Builder(
-        GoogleStaticObjects.getHttpTransport(),
-        JSON_FACTORY,
-        appCredentials.key(),
-        appCredentials.secret(),
-        scopes)
+        httpTransport,
+         // Figure out how to adapt objectMapper.getFactory(),
+        new JacksonFactory(),
+        clientId,
+        clientSecret,
+        SCOPES)
         .setAccessType("offline")
-        .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
+        // TODO: Needed for local caching
+        // .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
         .setApprovalPrompt("force")
         .build();
   }
-
 }
