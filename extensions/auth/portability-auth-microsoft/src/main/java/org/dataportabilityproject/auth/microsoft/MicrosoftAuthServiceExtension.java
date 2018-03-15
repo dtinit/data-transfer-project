@@ -16,6 +16,8 @@
 package org.dataportabilityproject.auth.microsoft;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
@@ -25,14 +27,14 @@ import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtensio
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /** */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final String REDIRECT_PATH = "/callback/microsoft";
+  private static final ImmutableList<String> SUPPORTED_SERVICES =
+      ImmutableList.<String>builder().add("calendar", "contacts").build();
 
-  private List<String> supportedServices = Arrays.asList("calendar", "contacts");
   private MicrosoftAuthDataGenerator authDataGenerator;
 
   public String getServiceId() {
@@ -40,17 +42,18 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   }
 
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
+    Preconditions.checkNotNull(authDataGenerator);
     return authDataGenerator;
   }
 
   @Override
   public List<String> getImportTypes() {
-    return supportedServices;
+    return SUPPORTED_SERVICES;
   }
 
   @Override
   public List<String> getExportTypes() {
-    return supportedServices;
+    return SUPPORTED_SERVICES;
   }
 
   @Override
@@ -68,11 +71,11 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
         throw new IllegalStateException("Microsoft Graph API credentials not found");
       }
       authDataGenerator =
-          new MicrosoftAuthDataGenerator(REDIRECT_PATH, credentials::getKey, credentials::getSecret, okHttpClient, mapper);
+          new MicrosoftAuthDataGenerator(
+              REDIRECT_PATH, credentials::getKey, credentials::getSecret, okHttpClient, mapper);
     } catch (IOException e) {
       throw new IllegalStateException(
           "Error retrieving Microsoft Graph API credentials - Were they set?", e);
     }
-
   }
 }
