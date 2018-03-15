@@ -63,10 +63,10 @@ task createSecretsFile() {
         project.rootProject.ext.properties.each { key, val ->
             if (key.startsWith(CLIENT_ID_PREFIX) && key.length() > CLIENT_ID_PREFIX.length()) {
                 def keyPrefix = key.substring(CLIENT_ID_PREFIX.length()).toUpperCase();
-                propFile.append("${keyPrefix}_KEY=" + val + "\n");
+                propFile.append("${keyPrefix}_KEY=${val}\n");
             } else if (key.startsWith(CLIENT_SECRET_PREFIX) && key.length() > CLIENT_SECRET_PREFIX.length()) {
                 def keyPrefix = key.substring(CLIENT_SECRET_PREFIX.length()).toUpperCase();
-                propFile.append("${keyPrefix}_SECRET=" + val + "\n");
+                propFile.append("${keyPrefix}_SECRET=${val}\n");
             }
         }
     }
