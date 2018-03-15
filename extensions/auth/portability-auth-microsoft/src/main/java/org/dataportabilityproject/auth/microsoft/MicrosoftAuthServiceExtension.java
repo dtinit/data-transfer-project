@@ -54,7 +54,9 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
     if (authDataGenerator == null) {
       AppCredentials credentials;
       try {
-        credentials = context.getService(AppCredentialStore.class)
+        credentials =
+            context
+                .getService(AppCredentialStore.class)
                 .getAppCredentials("MICROSOFT_KEY", "MICROSOFT_SECRET");
       } catch (IOException e) {
         logger.warn("Problem getting AppCredentials: {}", e);

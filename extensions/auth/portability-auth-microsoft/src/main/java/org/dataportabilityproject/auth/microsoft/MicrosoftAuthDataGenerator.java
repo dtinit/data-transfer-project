@@ -1,15 +1,19 @@
 package org.dataportabilityproject.auth.microsoft;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
+import java.io.IOException;
+import java.util.Map;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * Provides configuration for conducting an OAuth flow against the Microsoft AD API. Returned tokens
@@ -36,16 +40,13 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
    *
    * @param redirectPath the path part this generator is configured to request OAuth authentication
    *     code responses be sent to
-   * @param credentials The AppCredentials containing the Application ID that the registration portal
-   *     (apps.dev.microsoft.com) assigned the portability instance and the application secret that
-   *     was created in the app registration portal
+   * @param credentials The AppCredentials containing the Application ID that the registration
+   *     portal (apps.dev.microsoft.com) assigned the portability instance and the application
+   *     secret that was created in the app registration portal
    * @param mapper the mapper for deserializing responses from JSON
    */
   public MicrosoftAuthDataGenerator(
-      String redirectPath,
-      AppCredentials credentials,
-      OkHttpClient client,
-      ObjectMapper mapper) {
+      String redirectPath, AppCredentials credentials, OkHttpClient client, ObjectMapper mapper) {
     this.redirectPath = redirectPath;
     this.clientId = credentials.getKey();
     this.clientSecret = credentials.getSecret();
