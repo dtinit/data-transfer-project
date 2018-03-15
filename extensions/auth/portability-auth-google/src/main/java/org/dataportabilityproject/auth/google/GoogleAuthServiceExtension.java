@@ -16,6 +16,7 @@
 package org.dataportabilityproject.auth.google;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
@@ -28,7 +29,7 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** */
+/** An {@link AuthServiceExtension} providing authentication mechanism for Google services. */
 public class GoogleAuthServiceExtension implements AuthServiceExtension {
   private static final Logger logger = LoggerFactory.getLogger(GoogleAuthServiceExtension.class);
   private static final String REDIRECT_PATH = "/callback/google";
@@ -43,6 +44,7 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
   }
 
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
+    Preconditions.checkNotNull(authDataGenerator);
     // TODO Create auth data generator for a given mode, usually means a different scope
     if (DEFAULT_AUTH_GENERATOR_SERVICES.contains(transferDataType)) {
       return authDataGenerator;
@@ -52,41 +54,37 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
 
   @Override
   public List<String> getImportTypes() {
-    return ImmutableList.of();
+    return DEFAULT_AUTH_GENERATOR_SERVICES;
   }
 
   @Override
   public List<String> getExportTypes() {
-    return ImmutableList.of();
+    return DEFAULT_AUTH_GENERATOR_SERVICES;
   }
 
   @Override
   public void initialize(ExtensionContext context) {
-
     makeAuthDataGenerator(context);
   }
 
-  private synchronized GoogleAuthDataGenerator makeAuthDataGenerator(ExtensionContext context) {
-    if (authDataGenerator == null) {
-      AppCredentials credentials;
-      try {
-        credentials =
-            context
-                .getService(AppCredentialStore.class)
-                .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
-      } catch (IOException e) {
-        logger.warn("Problem getting AppCredentials: {}", e);
-        return null;
-      }
-
-      authDataGenerator =
-          new GoogleAuthDataGenerator(
-              REDIRECT_PATH,
-              credentials.getKey(),
-              credentials.getSecret(),
-              context.getService(HttpTransport.class),
-              context.getTypeManager().getMapper());
+  private synchronized void makeAuthDataGenerator(ExtensionContext context) {
+    Preconditions.checkState(authDataGenerator == null);
+    AppCredentials credentials;
+    try {
+      credentials =
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
+    } catch (IOException e) {
+      logger.warn("Problem getting AppCredentials: {}", e);
+      return;
     }
-    return authDataGenerator;
+    authDataGenerator =
+        new GoogleAuthDataGenerator(
+            REDIRECT_PATH,
+            credentials.getKey(),
+            credentials.getSecret(),
+            context.getService(HttpTransport.class),
+            context.getTypeManager().getMapper());
   }
 }
