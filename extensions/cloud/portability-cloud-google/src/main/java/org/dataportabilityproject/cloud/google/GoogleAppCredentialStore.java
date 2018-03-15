@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 final class GoogleAppCredentialStore implements AppCredentialStore {
   static final Logger logger = LoggerFactory.getLogger(AppCredentialStore.class);
+  private static final Integer CACHE_EXPIRATION_MINUTES = 10;
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
   private static final String KEYS_DIR = "keys/";
   private static final String KEY_EXTENSION = ".txt";
@@ -64,8 +65,8 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
    * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
    * compromised, we can update them without restarting our servers.
    */
-  private LoadingCache<String, String> keys;
-  private LoadingCache<String, String> secrets;
+  private final LoadingCache<String, String> keys;
+  private final LoadingCache<String, String> secrets;
 
   @Inject
   GoogleAppCredentialStore(
@@ -84,7 +85,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
     this.bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
     this.keys =
         CacheBuilder.newBuilder()
-            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES)
             .build(
                 new CacheLoader<String, String>() {
                   @Override
@@ -94,7 +95,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
                 });
     this.secrets =
         CacheBuilder.newBuilder()
-            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES)
             .build(
                 new CacheLoader<String, String>() {
                   @Override
