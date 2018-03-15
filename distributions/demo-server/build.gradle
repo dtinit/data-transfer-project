@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+/**
+ * This sub-project creates a single process runtime for demonstration purposes.
+ *
+ * <p>
+ * To enable OAuth secrets for testing, edit your gradle.settings file in the user home/.gradle directory (NOT the one in the source directory). Add the appropriate entries, e.g.:
+ *
+ * ddata.portability.key.microsoft=keyms
+ * data.portability.secret.microsoft=secretms
+ * ddata.portability.key.google=keygoogle
+ * data.portability.secret.google=secretgoogle
+ */
 plugins {
     id 'com.github.johnrengelman.shadow' version '2.0.2'
     id 'java'
@@ -24,6 +35,10 @@ plugins {
 repositories {
     jcenter()
 }
+
+
+def CLIENT_ID_PREFIX = 'data.portability.key.'
+def CLIENT_SECRET_PREFIX = 'data.portability.secret.'
 
 dependencies {
     compile project(':portability-bootstrap-vm')
@@ -40,6 +55,23 @@ dependencies {
 
 addCloudExtensionDependency(project)
 
+task createSecretsFile() {
+
+    doLast {
+        def propFile = file("$buildDir/resources/main/secrets.properties")
+        propFile.delete()
+        project.rootProject.ext.properties.each { key, val ->
+            if (key.startsWith(CLIENT_ID_PREFIX) && key.length() > CLIENT_ID_PREFIX.length()) {
+                def keyPrefix = key.substring(CLIENT_ID_PREFIX.length()).toUpperCase();
+                propFile.append("${keyPrefix}_KEY=${val}\n");
+            } else if (key.startsWith(CLIENT_SECRET_PREFIX) && key.length() > CLIENT_SECRET_PREFIX.length()) {
+                def keyPrefix = key.substring(CLIENT_SECRET_PREFIX.length()).toUpperCase();
+                propFile.append("${keyPrefix}_SECRET=${val}\n");
+            }
+        }
+    }
+}
+
 mainClassName = 'org.dataportabilityproject.bootstrap.vm.SingleVMMain'
 
 shadowJar {
@@ -47,4 +79,6 @@ shadowJar {
     exclude '**/pom.properties'
     exclude '**/pom.xml'
 }
+
+shadowJar.dependsOn(createSecretsFile)
 

@@ -16,20 +16,19 @@
 
 package org.dataportabilityproject.worker;
 
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.google.common.collect.ImmutableList;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.security.ConfigUtils;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * {@link ExtensionContext} used by the worker.
@@ -40,25 +39,24 @@ final class WorkerExtensionContext implements ExtensionContext {
   private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
   private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
 
-  private static final ImmutableClassToInstanceMap<Object> SERVICE_MAP =
-      new ImmutableClassToInstanceMap.Builder<>()
-          .put(HttpTransport.class, new NetHttpTransport())
-          .build();
 
   private final Map<String, Object> config;
   private final TypeManager typeManager;
+  private final Map<Class<?>, Object> registered = new HashMap<>();
 
   WorkerExtensionContext() {
     // TODO init with types
     this.typeManager = new TypeManagerImpl();
+    registered.put(TypeManager.class, typeManager);
+
     try {
-      // TODO: read settings from files in jar once they are built in
+      // TODO: read settings from files in jar once they are built in - Jim: I think this should be done by the class creating this one
       ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
-          .add(WORKER_SETTINGS_PATH)
-          .add(ENV_WORKER_SETTINGS_PATH)
-          .add(COMMON_SETTINGS_PATH)
-          .add(ENV_COMMON_SETTINGS_PATH)
-          .build();
+              .add(WORKER_SETTINGS_PATH)
+              .add(ENV_WORKER_SETTINGS_PATH)
+              .add(COMMON_SETTINGS_PATH)
+              .add(ENV_COMMON_SETTINGS_PATH)
+              .build();
       // InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
 
       String tempSettings = "environment: LOCAL\ncloud: GOOGLE";
@@ -82,9 +80,15 @@ final class WorkerExtensionContext implements ExtensionContext {
   @Override
   public <T> T getService(Class<T> type) {
     // returns null if no instance
-    return SERVICE_MAP.getInstance(type);
+    return type.cast(registered.get(type));
   }
 
+  @Override
+  public <T> void registerService(Class<T> type, T service) {
+    registered.put(type, service);
+  }
+
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getConfiguration(String key, T defaultValue) {
     if (config.containsKey(key)) {

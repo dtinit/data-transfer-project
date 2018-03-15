@@ -21,6 +21,7 @@
  * Install Angular: `npm install -g @angular/cli`
  * Install modules: `npm install`
  * Test `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
+ * Test using SSL: `ng serve --ssl  --port 3000 --proxy-config proxy.https.conf.json --environment localhttps`
  
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
@@ -98,6 +99,7 @@ The following commands will run the angular frontend in dev mode locally proxyin
 * `cd client/`
 * [optional] `npm install` #required first time through
 * `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
+* Or, using SSL: `ng serve --ssl  --port 3000 --proxy-config proxy.https.conf.json --environment localhttps`
 
 ## Running angular tests
 

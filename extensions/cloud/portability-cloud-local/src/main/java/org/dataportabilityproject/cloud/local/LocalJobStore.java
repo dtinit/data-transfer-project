@@ -16,7 +16,6 @@
 package org.dataportabilityproject.cloud.local;
 
 import com.google.common.base.Preconditions;
-import java.io.InputStream;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
@@ -30,7 +29,8 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
-  private static ConcurrentHashMap<UUID, Map<String, Object>> SINGLETON_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<UUID, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
 
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
@@ -43,10 +43,10 @@ public final class LocalJobStore implements JobStore {
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
-    if (SINGLETON_MAP.get(jobId) != null) {
+    if (JOB_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
-    SINGLETON_MAP.put(jobId, job.toMap());
+    JOB_MAP.put(jobId, job.toMap());
   }
 
   /**
@@ -75,7 +75,7 @@ public final class LocalJobStore implements JobStore {
       throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
-      Map<String, Object> previousEntry = SINGLETON_MAP.replace(jobId, job.toMap());
+      Map<String, Object> previousEntry = JOB_MAP.replace(jobId, job.toMap());
       if (previousEntry == null) {
         throw new IOException("jobId: " + jobId + " didn't exist in the map");
       }
@@ -95,7 +95,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
-    Map<String, Object> previous = SINGLETON_MAP.remove(jobId);
+    Map<String, Object> previous = JOB_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
     }
@@ -108,10 +108,10 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public PortabilityJob findJob(UUID jobId) {
-    if (!SINGLETON_MAP.containsKey(jobId)) {
+    if (!JOB_MAP.containsKey(jobId)) {
       return null;
     }
-    return PortabilityJob.fromMap(SINGLETON_MAP.get(jobId));
+    return PortabilityJob.fromMap(JOB_MAP.get(jobId));
   }
 
   /**
@@ -121,7 +121,7 @@ public final class LocalJobStore implements JobStore {
   @Override
   public synchronized UUID findFirst(JobAuthorization.State jobState) {
     // Mimic an index lookup
-    for (Entry<UUID, Map<String, Object>> job : SINGLETON_MAP.entrySet()) {
+    for (Entry<UUID, Map<String, Object>> job : JOB_MAP.entrySet()) {
       Map<String, Object> properties = job.getValue();
       if (JobAuthorization.State.valueOf(
               properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
@@ -135,25 +135,28 @@ public final class LocalJobStore implements JobStore {
 
   @Override
   public <T extends DataModel> void create(UUID jobId, T model) {
-    // TODO(olsona): what if the jobId is not in the map?
-    SINGLETON_MAP.get(jobId).put(model.getClass().getCanonicalName(), model);
+    if (!DATA_MAP.containsKey(jobId)) {
+      DATA_MAP.put(jobId, new ConcurrentHashMap<>());
+    }
+    DATA_MAP.get(jobId).put(model.getClass(), model);
   }
 
   /** Updates the given model instance associated with a job. */
   @Override
   public <T extends DataModel> void update(UUID jobId, T model) {
-    SINGLETON_MAP.get(jobId).put(model.getClass().getCanonicalName(), model);
+    // TODO: do we want to do any checking here to make sure there's something to update?
+    create(jobId, model);
   }
 
   /** Returns a model instance for the id of the given type or null if not found. */
   @Override
   public <T extends DataModel> T findData(Class<T> type, UUID id) {
-    if (!SINGLETON_MAP.containsKey(id)) {
+    if (!DATA_MAP.containsKey(id)) {
       return null;
     }
-    if (!SINGLETON_MAP.get(id).containsKey(type.getCanonicalName())) {
+    if (!DATA_MAP.get(id).containsKey(type)) {
       return null;
     }
-    return (T) SINGLETON_MAP.get(id).get(type.getCanonicalName());
+    return (T) DATA_MAP.get(id).get(type);
   }
 }

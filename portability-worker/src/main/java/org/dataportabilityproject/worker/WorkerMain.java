@@ -15,19 +15,24 @@
  */
 package org.dataportabilityproject.worker;
 
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.List;
-import java.util.ServiceLoader;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * Main class to bootstrap a portability worker that will operate on a single job whose state is
@@ -51,6 +56,9 @@ public class WorkerMain {
   public void initialize() {
     ExtensionContext context = new WorkerExtensionContext();
 
+    // TODO this should be moved into a service extension
+    context.registerService(HttpTransport.class, new NetHttpTransport());
+
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
         .forEachRemaining(serviceExtension -> serviceExtension.initialize(context));
@@ -59,6 +67,12 @@ public class WorkerMain {
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(context);
     logger.info("Using CloudExtension: {} ", cloudExtension.getClass().getName());
+
+    JobStore jobStore = cloudExtension.getJobStore();
+    context.registerService(JobStore.class, jobStore);
+
+    AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
+    context.registerService(AppCredentialStore.class, appCredentialStore);
 
     List<TransferExtension> transferExtensions = getTransferExtensions();
 
