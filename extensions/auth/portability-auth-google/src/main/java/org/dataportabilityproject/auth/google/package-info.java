@@ -13,32 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
-    id 'java'
-    id 'application'
-}
-
-
-repositories {
-    jcenter()
-}
-
-dependencies {
-    compile project(':portability-gateway')
-    // TODO: depend on these based on list in flag values.
-    compile project(':extensions:auth:portability-auth-google')
-    compile project(':extensions:auth:portability-auth-microsoft')
-}
-
-addCloudExtensionDependency(project)
-
-mainClassName = 'org.dataportabilityproject.gateway.ApiMain'
-
-shadowJar {
-    mergeServiceFiles()
-    exclude '**/pom.properties'
-    exclude '**/pom.xml'
-}
-
+/** Implements importers and exporters for Google services. */
+package org.dataportabilityproject.auth.google;
