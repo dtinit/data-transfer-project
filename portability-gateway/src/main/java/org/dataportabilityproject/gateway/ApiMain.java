@@ -80,16 +80,7 @@ public class ApiMain {
     Map<String, Object> configuration = new HashMap<>();
     configuration.put("cloud", "GOOGLE");
 
-    Map<Class, Object> serviceMap = new HashMap<>();
-    serviceMap.put(AppCredentialStore.class, new AppCredentialStore() {
-      @Override
-      public AppCredentials getAppCredentials(String keyName, String secretName)
-          throws IOException {
-        return new AppCredentials("dummy name", "dummy secret");
-      }
-    });
-
-    ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration, serviceMap);
+    ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.
@@ -99,6 +90,11 @@ public class ApiMain {
 
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
+
+    // TODO: for now, use the same context as the cloud extension and modify it. Later we should
+    // create a separate extension.
+    extensionContext.addService(AppCredentialStore.class, cloudExtension.getAppCredentialStore());
+    extensionContext.addService(JobStore.class, cloudExtension.getJobStore());
 
     // TODO: Load up only "enabled" services
     List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
@@ -161,12 +157,15 @@ public class ApiMain {
   private class ApiExtensionContext implements ExtensionContext {
     private final TypeManager typeManager;
     private final Map<String, Object> configuration;
-    private final Map<Class, Object> serviceMap;
+    private final Map<Class, Object> serviceMap = new HashMap<>();
 
-    public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration, Map<Class, Object> serviceMap) {
+    public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
       this.typeManager = typeManager;
       this.configuration = configuration;
-      this.serviceMap = serviceMap;
+    }
+
+    public <T> void addService(Class<T> type, T object) {
+      serviceMap.put(type, object);
     }
 
     @Override

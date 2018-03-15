@@ -26,8 +26,8 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
       "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
   private final String redirectPath;
-  private final String clientIdSupplier;
-  private final String clientSecretSupplier;
+  private final String clientId;
+  private final String clientSecret;
   private final OkHttpClient httpClient;
   private final ObjectMapper mapper;
 
@@ -47,8 +47,8 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
       OkHttpClient client,
       ObjectMapper mapper) {
     this.redirectPath = redirectPath;
-    this.clientIdSupplier = credentials.getKey();
-    this.clientSecretSupplier = credentials.getSecret();
+    this.clientId = credentials.getKey();
+    this.clientSecret = credentials.getSecret();
     httpClient = client;
     this.mapper = mapper;
   }
@@ -102,7 +102,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     }
     ParamStringBuilder builder = new ParamStringBuilder();
 
-    String clientId = clientIdSupplier;
+    String clientId = this.clientId;
     builder.startParam("client_id").value(clientId).endParam();
 
     builder.startParam("scope");
@@ -124,11 +124,11 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     }
     ParamStringBuilder builder = new ParamStringBuilder();
 
-    String clientId = clientIdSupplier;
+    String clientId = this.clientId;
     builder.startParam("client_id").value(clientId).endParam();
 
     builder.startParam("code").value(authCode).endParam();
-    builder.startParam("client_secret").value(clientSecretSupplier).endParam();
+    builder.startParam("client_secret").value(clientSecret).endParam();
 
     builder.startParam("scope");
     for (String scope : scopes) {
