@@ -81,8 +81,8 @@ shadowJar {
     exclude '**/pom.properties'
     exclude '**/pom.xml'
     copy {
-        from 'config/'
-        into 'src/main/resources/config'
+        from 'resources/'
+        into 'src/main/resources'
     }
 }
 
