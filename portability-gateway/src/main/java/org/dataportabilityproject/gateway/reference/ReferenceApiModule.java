@@ -34,7 +34,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Named;
 import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.ConfigUtils;
+import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,13 +100,12 @@ public class ReferenceApiModule extends AbstractModule {
     mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
     mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
     mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
+    mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
+    mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
+    mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
 
-    // TODO: Add additional bindings when ready
-    /*
-      mapbinder.addBinding(CopySetupHandler.PATH).to(CopySetupHandler.class);
-      mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
-      mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
-    */
+    bind(TokenManager.class).to(JWTTokenManager.class);
+    bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
   }
 
   @Provides

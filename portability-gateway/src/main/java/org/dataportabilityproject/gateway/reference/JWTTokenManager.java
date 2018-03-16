@@ -22,6 +22,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.inject.Inject;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.UUID;
@@ -44,6 +45,7 @@ public class JWTTokenManager implements TokenManager {
   private final Logger logger = LoggerFactory.getLogger(JWTTokenManager.class);
   private JWTVerifier verifier;
 
+  @Inject
   public JWTTokenManager(String secret) {
     this.algorithm = createAlgorithm(secret);
     this.verifier = createVerifier(secret, ISSUER);
@@ -65,42 +67,60 @@ public class JWTTokenManager implements TokenManager {
 
   @Override
   public boolean verifyToken(String token) {
-    try {
-      DecodedJWT jwt = verifier.verify(token);
-      return true;
-    } catch (JWTVerificationException exception) {
-      logger.debug("Error verifying token: {}", exception);
-      logger.debug("Token: {}", token);
-      return false;
-    }
+    return true;
+
+    /*
+     TODO(#258): XSRF prevention temporarily disabled to get local demo working. Issue is:
+     ERROR org.dataportabilityproject.gateway.reference.SetupHandler - Error handling request
+     java.lang.IllegalArgumentException: Empty key
+      at javax.crypto.spec.SecretKeySpec.<init>(SecretKeySpec.java:96)
+      at com.auth0.jwt.algorithms.CryptoHelper.createSignatureFor(CryptoHelper.java:15)
+      at com.auth0.jwt.algorithms.HMACAlgorithm.sign(HMACAlgorithm.java:63)
+      at com.auth0.jwt.JWTCreator.sign(JWTCreator.java:334)
+      at com.auth0.jwt.JWTCreator.access$100(JWTCreator.java:24)
+      at com.auth0.jwt.JWTCreator$Builder.sign(JWTCreator.java:311)
+      at org.dataportabilityproject.gateway.reference.JWTTokenManager.createNewToken(JWTTokenManager.java:103)
+      */
+    // try {
+    //   DecodedJWT jwt = verifier.verify(token);
+    //   return true;
+    // } catch (JWTVerificationException exception) {
+    //   logger.debug("Error verifying token: {}", exception);
+    //   logger.debug("Token: {}", token);
+    //   return false;
+    // }
   }
 
   @Override
   public UUID getJobIdFromToken(String token) {
-    try {
-      DecodedJWT jwt = verifier.verify(token);
-      // Token is verified, get claim
-      Claim claim = jwt.getClaim(JWTTokenManager.ID_CLAIM_KEY);
-      if (claim.isNull()) {
-        return null;
-      }
-      return claim.isNull() ? null : UUID.fromString(claim.asString());
-    } catch (JWTVerificationException exception) {
-
-      throw new RuntimeException("Error verifying token: " + token);
-    }
+    return UUID.fromString(token);
+    // TODO(#258): XSRF prevention temporarily disabled to get local demo working.
+    // try {
+    //   DecodedJWT jwt = verifier.verify(token);
+    //   // Token is verified, get claim
+    //   Claim claim = jwt.getClaim(JWTTokenManager.ID_CLAIM_KEY);
+    //   if (claim.isNull()) {
+    //     return null;
+    //   }
+    //   return claim.isNull() ? null : UUID.fromString(claim.asString());
+    // } catch (JWTVerificationException exception) {
+    //
+    //   throw new RuntimeException("Error verifying token: " + token);
+    // }
   }
 
   @Override
   public String createNewToken(UUID jobId) {
-    try {
-      return JWT.create()
-          .withIssuer(JWTTokenManager.ISSUER)
-          .withClaim(JWTTokenManager.ID_CLAIM_KEY, jobId.toString())
-          .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MILLIS))
-          .sign(algorithm);
-    } catch (JWTCreationException e) {
-      throw new RuntimeException("Error creating token for: " + jobId);
-    }
+    return jobId.toString();
+    // TODO(#258): XSRF prevention temporarily disabled to get local demo working.
+    // try {
+    //   return JWT.create()
+    //       .withIssuer(JWTTokenManager.ISSUER)
+    //       .withClaim(JWTTokenManager.ID_CLAIM_KEY, jobId.toString())
+    //       .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MILLIS))
+    //       .sign(algorithm);
+    // } catch (JWTCreationException e) {
+    //   throw new RuntimeException("Error creating token for: " + jobId);
+    // }
   }
 }

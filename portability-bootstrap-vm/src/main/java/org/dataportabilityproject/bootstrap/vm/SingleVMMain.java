@@ -42,7 +42,7 @@ public class SingleVMMain {
     ApiMain apiMain = new ApiMain();
 
     try (InputStream stream =
-        ReferenceApiServer.class.getClassLoader().getResourceAsStream("portability.keystore.jks")) {
+        ReferenceApiServer.class.getClassLoader().getResourceAsStream("demo-selfsigned-keystore.jks")) {
       if (stream == null) {
         throw new IllegalArgumentException("Demo keystore was not found");
       }

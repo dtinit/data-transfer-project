@@ -13,6 +13,9 @@ config/local/secrets.csv
 config/test/secrets.csv
 config/qa/secrets.csv
 distributions/**/src/main/resources/
+!distributions/demo-server/src/main/resources/
+distributions/demo-server/src/main/resources/**
+!distributions/demo-server/src/main/resources/demo-selfsigned-keystore.jks
 **/src/main/resources/settings/*.yaml
 # Dockerfile is generated each time we run build.sh
 Dockerfile
