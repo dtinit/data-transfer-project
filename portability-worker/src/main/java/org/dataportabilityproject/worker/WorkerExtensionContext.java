@@ -17,18 +17,17 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.collect.ImmutableList;
-import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.api.launcher.Logger;
-import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
-import org.dataportabilityproject.security.ConfigUtils;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.api.launcher.Logger;
+import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
+import org.dataportabilityproject.security.ConfigUtils;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -40,7 +39,6 @@ final class WorkerExtensionContext implements ExtensionContext {
   private static final String ENV_WORKER_SETTINGS_PATH = "config/env/worker.yaml";
   private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
   private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
-
 
   private final Map<String, Object> config;
   private final TypeManager typeManager;

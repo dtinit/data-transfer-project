@@ -21,6 +21,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private static final String CALENDAR = "calendar";
   private boolean initialized = false;
 
+  private JobStore jobStore;
+
   // Needed for ServiceLoader to load this class.
   public MicrosoftTransferExtension() {}
 
@@ -57,8 +59,6 @@ public class MicrosoftTransferExtension implements TransferExtension {
       return new MicrosoftContactsImporter("", client, mapper, transformerService);
     }
     if (transferDataType.equals(CALENDAR)) {
-      // TODO: initialize jobStore. This will rely on initialize(ExtensionContext).
-      JobStore jobStore = null;
       return new MicrosoftCalendarImporter("", client, mapper, transformerService, jobStore);
     }
 
@@ -71,8 +71,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // export to the same service provider. So just return rather than throwing if called multiple
     // times.
     if (initialized) return;
-
-    // TODO: implement
+    jobStore = context.getService(JobStore.class);
     initialized = true;
   }
 }
