@@ -36,6 +36,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Contains utility functions for use by the ReferenceApiServer HttpHandlers */
 public final class ReferenceApiUtils {
@@ -55,7 +57,8 @@ public final class ReferenceApiUtils {
    */
   public static String createURL(String host, String URI, boolean useHttps) {
     // http is only allowed if this is running a local instance, enforce https instead.
-    String scheme = useHttps ? "https://" : "http://";
+    // TODO: this should be configurable based on what the api base url is.
+    String scheme ="https://";
     return scheme + host + URI;
   }
 

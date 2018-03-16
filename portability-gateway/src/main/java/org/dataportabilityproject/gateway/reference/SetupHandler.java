@@ -109,7 +109,6 @@ abstract class SetupHandler implements HttpHandler {
       Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
 
       DataTransferResponse response;
-
       if (mode == Mode.IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobId);
       } else {
@@ -152,7 +151,7 @@ abstract class SetupHandler implements HttpHandler {
 
     String encodedJobId = ReferenceApiUtils.encodeJobId(jobId);
     AuthFlowConfiguration authFlowConfiguration =
-        generator.generateConfiguration(apiSettings.getBaseUrl(), encodedJobId);
+        generator.generateConfiguration(apiSettings.getBaseApiUrl(), encodedJobId);
     Preconditions.checkNotNull(
         authFlowConfiguration,
         "AuthFlowConfiguration not found for type: %s, service: %s",
