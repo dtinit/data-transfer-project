@@ -142,6 +142,7 @@ public final class ReferenceApiUtils {
     // Valid job must be present
     UUID jobId = decodeJobId(encodedIdCookie);
     return jobId;
+    // TODO(#258): XSRF prevention temporarily disabled to get local demo working.
     //
     // // Validate XSRF token is present in request header and in the token.
     // String tokenHeader = parseXsrfTokenHeader(requestHeaders);

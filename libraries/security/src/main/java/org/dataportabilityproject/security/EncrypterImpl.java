@@ -45,6 +45,8 @@ final class EncrypterImpl implements Encrypter {
   @Override
   public String encrypt(String data) {
     return data;
+    // TODO(#258): Encryption temporarily disabled to get local demo working. Issue is:
+    // https://stackoverflow.com/questions/10007147/getting-a-illegalblocksizeexception-data-must-not-be-longer-than-256-bytes-when
     // try {
     //   Cipher cipher = Cipher.getInstance(transformation);
     //   cipher.init(Cipher.ENCRYPT_MODE, key);
