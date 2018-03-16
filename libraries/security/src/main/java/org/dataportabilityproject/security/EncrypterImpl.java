@@ -44,7 +44,7 @@ final class EncrypterImpl implements Encrypter {
 
   @Override
   public String encrypt(String data) {
-    return data;
+    return BaseEncoding.base64Url().encode(data.getBytes());
     // TODO(#258): Encryption temporarily disabled to get local demo working. Issue is:
     // https://stackoverflow.com/questions/10007147/getting-a-illegalblocksizeexception-data-must-not-be-longer-than-256-bytes-when
     // try {
