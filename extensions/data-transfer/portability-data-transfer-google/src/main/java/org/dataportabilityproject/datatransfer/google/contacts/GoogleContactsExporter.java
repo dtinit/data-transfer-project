@@ -80,9 +80,10 @@ public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelW
   @Override
   public ExportResult<ContactsModelWrapper> export(AuthData authData,
       ExportInformation exportInformation) {
-    StringPaginationToken stringPaginationToken = (StringPaginationToken) exportInformation
-        .getPaginationData();
-    return exportContacts(authData, Optional.of(stringPaginationToken));
+    StringPaginationToken stringPaginationToken =
+        (StringPaginationToken) exportInformation.getPaginationData();
+    Optional<PaginationData> paginationData = Optional.ofNullable(stringPaginationToken);
+    return exportContacts(authData, paginationData);
   }
 
   private ExportResult<ContactsModelWrapper> exportContacts(AuthData authData,
