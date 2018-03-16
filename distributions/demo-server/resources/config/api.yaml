@@ -1,2 +1,2 @@
-baseUrl: https://localhost:3000
-baseApiUrl: https://localhost:8080
+baseUrl: http://localhost:3000
+baseApiUrl: http://localhost:8080
