@@ -107,3 +107,5 @@ JB :
   # where [HELPER] is the name of the helper you are overriding.
 
 theme: jekyll-theme-cayman
+
+google_analytics: UA-51297152-3
