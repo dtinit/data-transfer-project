@@ -17,6 +17,7 @@ package org.dataportabilityproject.worker;
 
 import static com.google.common.collect.MoreCollectors.onlyElement;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -51,6 +52,7 @@ final class WorkerModule extends AbstractModule {
   protected void configure() {
     bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
+    bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
   }
 
   @Provides
