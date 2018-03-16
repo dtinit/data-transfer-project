@@ -59,10 +59,9 @@
 
     ga('create', '{{ site.google_analytics }}', 'auto');
     ga('send', 'pageview');
-  </script> {% endif %}
 
-  <script>
     function handleOutboundLinkClicks(event) {
+      console.log('SendingClickEvent');
       ga('send', 'event', {
         eventCategory: 'Outbound Link',
         eventAction: 'click',
@@ -76,7 +75,6 @@
         anchor.addEventListener('click', handleOutboundLinkClicks);
       });
     });
-  </script>
+  </script> {% endif %}    
 </body>
-
 </html>
