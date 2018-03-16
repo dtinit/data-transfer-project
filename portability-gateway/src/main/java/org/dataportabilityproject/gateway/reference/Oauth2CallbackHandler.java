@@ -118,6 +118,8 @@ final class Oauth2CallbackHandler implements HttpHandler {
           "Encoded Id cookie required");
 
       UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie.getValue());
+
+      logger.debug("State token: {}", authResponse.getState());
       // TODO(#258): Check job ID in state token, was broken during local demo
       // UUID jobIdFromState = ReferenceApiUtils.decodeJobId(authResponse.getState());
 
