@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -50,30 +49,78 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
     this.calendarInterface = calendarInterface;
   }
 
+  private static CalendarAttendeeModel transformToModelAttendee(EventAttendee attendee) {
+    return new CalendarAttendeeModel(
+        attendee.getDisplayName(),
+        attendee.getEmail(),
+        Boolean.TRUE.equals(attendee.getOptional()));
+  }
+
+  private static CalendarEventModel.CalendarEventTime getEventTime(EventDateTime dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+
+    OffsetDateTime offsetDateTime;
+
+    if (dateTime.getDate() == null) {
+      offsetDateTime = OffsetDateTime.parse(dateTime.getDateTime().toString());
+    } else {
+      offsetDateTime =
+          OffsetDateTime.from(
+              LocalDate.parse(dateTime.getDate().toString()).atStartOfDay(ZoneId.of("UTC")));
+    }
+
+    return new CalendarEventModel.CalendarEventTime(offsetDateTime, dateTime.getDate() != null);
+  }
+
+  private static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
+    return new CalendarModel(
+        calendarData.getId(), calendarData.getSummary(), calendarData.getDescription());
+  }
+
+  private static CalendarEventModel convertToCalendarEventModel(String id, Event eventData) {
+    List<EventAttendee> attendees = eventData.getAttendees();
+    return new CalendarEventModel(
+        id,
+        eventData.getDescription(),
+        eventData.getSummary(),
+        attendees == null
+            ? null
+            : attendees
+                .stream()
+                .map(GoogleCalendarExporter::transformToModelAttendee)
+                .collect(Collectors.toList()),
+        eventData.getLocation(),
+        getEventTime(eventData.getStart()),
+        getEventTime(eventData.getEnd()));
+  }
+
   @Override
   public ExportResult<CalendarContainerResource> export(AuthData authData) {
     return exportCalendars(authData, Optional.empty());
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(AuthData authData,
-      ExportInformation exportInformation) {
-    StringPaginationToken paginationToken = (StringPaginationToken) exportInformation
-        .getPaginationData();
-    if (paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
+  public ExportResult<CalendarContainerResource> export(
+      AuthData authData, ExportInformation exportInformation) {
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) exportInformation.getPaginationData();
+    if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
       // Next thing to export is more calendars
       return exportCalendars(authData, Optional.of(paginationToken));
     } else {
       // Next thing to export is events
-      IdOnlyContainerResource idOnlyContainerResource = (IdOnlyContainerResource) exportInformation
-          .getContainerResource();
-      return getCalendarEvents(authData, idOnlyContainerResource.getId(),
-          Optional.of(paginationToken));
+      IdOnlyContainerResource idOnlyContainerResource =
+          (IdOnlyContainerResource) exportInformation.getContainerResource();
+      Optional<PaginationData> pageData =
+          paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
+      return getCalendarEvents(authData, idOnlyContainerResource.getId(), pageData);
     }
   }
 
-  private ExportResult<CalendarContainerResource> exportCalendars(AuthData authData,
-      Optional<PaginationData> pageData) {
+  private ExportResult<CalendarContainerResource> exportCalendars(
+      AuthData authData, Optional<PaginationData> pageData) {
     Calendar.CalendarList.List listRequest;
     CalendarList listResult;
 
@@ -83,10 +130,13 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
 
       if (pageData.isPresent()) {
         StringPaginationToken paginationToken = (StringPaginationToken) pageData.get();
-        Preconditions.checkState(paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX),
+        Preconditions.checkState(
+            paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX),
             "Token is not applicable");
-        listRequest.setPageToken(((StringPaginationToken) pageData.get()).getToken()
-            .substring(CALENDAR_TOKEN_PREFIX.length()));
+        listRequest.setPageToken(
+            ((StringPaginationToken) pageData.get())
+                .getToken()
+                .substring(CALENDAR_TOKEN_PREFIX.length()));
       }
 
       listResult = listRequest.execute();
@@ -97,8 +147,8 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
     // Set up continuation data
     PaginationData nextPageData = null;
     if (listResult.getNextPageToken() != null) {
-      nextPageData = new StringPaginationToken(
-          CALENDAR_TOKEN_PREFIX + listResult.getNextPageToken());
+      nextPageData =
+          new StringPaginationToken(CALENDAR_TOKEN_PREFIX + listResult.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
@@ -109,8 +159,8 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
       continuationData.addContainerResource(new IdOnlyContainerResource(calendarData.getId()));
       calendarModels.add(model);
     }
-    CalendarContainerResource calendarContainerResource = new CalendarContainerResource(
-        calendarModels, null);
+    CalendarContainerResource calendarContainerResource =
+        new CalendarContainerResource(calendarModels, null);
 
     // Get result type
     ExportResult.ResultType resultType = ResultType.CONTINUE;
@@ -118,25 +168,30 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
       resultType = ResultType.END;
     }
 
-    return new ExportResult<CalendarContainerResource>(resultType, calendarContainerResource,
-        continuationData);
+    return new ExportResult<CalendarContainerResource>(
+        resultType, calendarContainerResource, continuationData);
   }
 
-  private ExportResult<CalendarContainerResource> getCalendarEvents(AuthData authData, String id,
-      Optional<PaginationData> pageData) {
+  private ExportResult<CalendarContainerResource> getCalendarEvents(
+      AuthData authData, String id, Optional<PaginationData> pageData) {
     Calendar.Events.List listRequest;
     Events listResult;
 
     // Get event information
     try {
-      listRequest = getOrCreateCalendarInterface(authData).events().list(id)
-          .setMaxAttendees(GoogleStaticObjects.MAX_ATTENDEES);
+      listRequest =
+          getOrCreateCalendarInterface(authData)
+              .events()
+              .list(id)
+              .setMaxAttendees(GoogleStaticObjects.MAX_ATTENDEES);
       if (pageData.isPresent()) {
         StringPaginationToken paginationToken = (StringPaginationToken) pageData.get();
-        Preconditions.checkState(paginationToken.getToken().startsWith(EVENT_TOKEN_PREFIX),
-            "Token is not applicable");
-        listRequest.setPageToken(((StringPaginationToken) pageData.get()).getToken()
-            .substring(EVENT_TOKEN_PREFIX.length()));
+        Preconditions.checkState(
+            paginationToken.getToken().startsWith(EVENT_TOKEN_PREFIX), "Token is not applicable");
+        listRequest.setPageToken(
+            ((StringPaginationToken) pageData.get())
+                .getToken()
+                .substring(EVENT_TOKEN_PREFIX.length()));
       }
       listResult = listRequest.execute();
     } catch (IOException e) {
@@ -156,8 +211,8 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
       CalendarEventModel model = convertToCalendarEventModel(id, eventData);
       eventModels.add(model);
     }
-    CalendarContainerResource calendarContainerResource = new CalendarContainerResource(null,
-        eventModels);
+    CalendarContainerResource calendarContainerResource =
+        new CalendarContainerResource(null, eventModels);
 
     // Get result type
     ExportResult.ResultType resultType = ResultType.CONTINUE;
@@ -165,8 +220,8 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
       resultType = ResultType.END;
     }
 
-    return new ExportResult<CalendarContainerResource>(resultType, calendarContainerResource,
-        continuationData);
+    return new ExportResult<CalendarContainerResource>(
+        resultType, calendarContainerResource, continuationData);
   }
 
   private Calendar getOrCreateCalendarInterface(AuthData authData) {
@@ -176,52 +231,9 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   private synchronized Calendar makeCalendarInterface(AuthData authData) {
     // TODO(olsona): get credential using authData
     Credential credential = null;
-    return new Calendar.Builder(GoogleStaticObjects.getHttpTransport(),
-        GoogleStaticObjects.JSON_FACTORY, credential)
+    return new Calendar.Builder(
+            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
-  }
-
-  private static CalendarAttendeeModel transformToModelAttendee(EventAttendee attendee) {
-    return new CalendarAttendeeModel(attendee.getDisplayName(), attendee.getEmail(),
-        Boolean.TRUE.equals(attendee.getOptional()));
-  }
-
-  private static CalendarEventModel.CalendarEventTime getEventTime(EventDateTime dateTime) {
-    if (dateTime == null) {
-      return null;
-    }
-
-    OffsetDateTime offsetDateTime;
-
-    if (dateTime.getDate() == null) {
-      offsetDateTime = OffsetDateTime.parse(dateTime.getDateTime().toString());
-    } else {
-      offsetDateTime = OffsetDateTime.from(
-          LocalDate.parse(dateTime.getDate().toString()).atStartOfDay(ZoneId.of("UTC")));
-    }
-
-    return new CalendarEventModel.CalendarEventTime(offsetDateTime, dateTime.getDate() != null);
-  }
-
-  private static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
-    return new CalendarModel(
-        calendarData.getId(),
-        calendarData.getSummary(),
-        calendarData.getDescription());
-  }
-
-  private static CalendarEventModel convertToCalendarEventModel(String id, Event eventData) {
-    List<EventAttendee> attendees = eventData.getAttendees();
-    return new CalendarEventModel(
-        id,
-        eventData.getDescription(),
-        eventData.getSummary(),
-        attendees == null ? null : attendees.stream()
-            .map(GoogleCalendarExporter::transformToModelAttendee)
-            .collect(Collectors.toList()),
-        eventData.getLocation(),
-        getEventTime(eventData.getStart()),
-        getEventTime(eventData.getEnd()));
   }
 }
