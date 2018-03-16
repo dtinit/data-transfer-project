@@ -17,13 +17,16 @@ package org.dataportabilityproject.worker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import javax.crypto.SecretKey;
 import org.dataportabilityproject.security.Decrypter;
 import org.dataportabilityproject.security.DecrypterFactory;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
@@ -43,12 +46,14 @@ final class JobProcessor {
   private final JobStore store;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
+  private final SymmetricKeyGenerator symmetricKeyGenerator;
 
   @Inject
-  JobProcessor(JobStore store, ObjectMapper objectMapper, InMemoryDataCopier copier) {
+  JobProcessor(JobStore store, ObjectMapper objectMapper, InMemoryDataCopier copier, SymmetricKeyGenerator symmetricKeyGenerator) {
     this.store = store;
     this.objectMapper = objectMapper;
     this.copier = copier;
+    this.symmetricKeyGenerator = symmetricKeyGenerator;
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
@@ -57,8 +62,9 @@ final class JobProcessor {
     logger.debug("Begin processing jobId: {}", jobId);
 
     PortabilityJob job = store.findJob(jobId);
+    JobAuthorization jobAuthorization = job.jobAuthorization();
     Preconditions.checkState(
-        job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED);
+        jobAuthorization.state() == JobAuthorization.State.CREDS_ENCRYPTED);
 
     try {
       logger.debug(
@@ -67,14 +73,24 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
 
-      // Decrypt export and import credentials, which have been encrypted with our public key
-      Decrypter decrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
-      JobAuthorization jobAuthorization = job.jobAuthorization();
+      // Decrypt export and import auth data, which have been encrypted with session key and then
+      // with our (worker) public key
+      Decrypter workerKeyDecrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
+      String encodedSessionKey = jobAuthorization.encodedSessionKey();
+      SecretKey sessionKey =
+          symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(encodedSessionKey));
+      Decrypter sessionKeyDecrypter = DecrypterFactory.create(sessionKey);
+
+      // Export auth data
       String serializedExportAuthData =
-          decrypter.decrypt(jobAuthorization.encryptedExportAuthData());
+          workerKeyDecrypter.decrypt(jobAuthorization.encryptedExportAuthData());
+      serializedExportAuthData = sessionKeyDecrypter.decrypt(serializedExportAuthData);
       AuthData exportAuthData = deSerialize(serializedExportAuthData);
+
+      // Import auth data
       String serializedImportAuthData =
-          decrypter.decrypt(jobAuthorization.encryptedImportAuthData());
+          workerKeyDecrypter.decrypt(jobAuthorization.encryptedImportAuthData());
+      serializedImportAuthData = sessionKeyDecrypter.decrypt(serializedImportAuthData);
       AuthData importAuthData = deSerialize(serializedImportAuthData);
 
       // Copy the data

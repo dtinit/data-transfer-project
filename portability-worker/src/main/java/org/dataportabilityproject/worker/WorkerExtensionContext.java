@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * {@link ExtensionContext} used by the worker.
@@ -47,6 +49,8 @@ final class WorkerExtensionContext implements ExtensionContext {
   WorkerExtensionContext() {
     // TODO init with types
     this.typeManager = new TypeManagerImpl();
+    typeManager.registerType(TokenAuthData.class);
+    typeManager.registerType(TokensAndUrlAuthData.class);
     registered.put(TypeManager.class, typeManager);
 
     try {
@@ -59,7 +63,7 @@ final class WorkerExtensionContext implements ExtensionContext {
               .build();
       // InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
 
-      String tempSettings = "environment: LOCAL\ncloud: GOOGLE";
+      String tempSettings = "environment: LOCAL\ncloud: local";
       InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
       config = ConfigUtils.parse(in);
     } catch (IOException e) {
