@@ -1,6 +1,8 @@
 package org.dataportabilityproject.auth.google;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.people.v1.PeopleServiceScopes;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +25,11 @@ public class GoogleAuthDataGeneratorTest {
         "https://accounts.google.com/o/oauth2/auth?"
             + "access_type=offline&approval_prompt=force&client_id=dummy-id"
             + "&redirect_uri=http://localhost/testredirect&response_type=code"
-            + "&scope=user.read%20mail.read%20Contacts.ReadWrite%20Calendars.ReadWrite&state=NTQzMjE%3D",
+            + "&scope="
+            + CalendarScopes.CALENDAR
+            + "%20"
+            + PeopleServiceScopes.CONTACTS
+            + "&state=NTQzMjE%3D",
         config.getUrl());
   }
 }
