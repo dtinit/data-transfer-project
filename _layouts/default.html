@@ -1,3 +1,13 @@
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-51297152-3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-51297152-3');
+</script>
+
 <!DOCTYPE html>
 <html lang="{{ site.lang | default: " en-US " }}">
 
@@ -11,7 +21,7 @@
 
 <body>
   <section class="page-header">
-    <h1 class="project-name">{{ site.title | default: site.github.repository_name }}</h1>
+    <img src="./dtp-lockup.png" width="750">
     <h2 class="project-tagline">{{ site.description | default: site.github.project_tagline }}</h2>
     {% if site.github.is_project_page %}
     <a href="{{ site.github.repository_url }}" class="btn">View on GitHub</a>
