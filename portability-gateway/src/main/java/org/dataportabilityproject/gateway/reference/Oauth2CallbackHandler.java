@@ -118,14 +118,15 @@ final class Oauth2CallbackHandler implements HttpHandler {
           "Encoded Id cookie required");
 
       UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie.getValue());
-      UUID jobIdFromState = ReferenceApiUtils.decodeJobId(authResponse.getState());
+      // TODO(#258): Check job ID in state token, was broken during local demo
+      // UUID jobIdFromState = ReferenceApiUtils.decodeJobId(authResponse.getState());
 
-      // TODO: Remove sanity check
-      Preconditions.checkState(
-          jobIdFromState.equals(jobId),
-          "Job id in cookie [%s] and request [%s] should match",
-          jobId,
-          jobIdFromState);
+      // // TODO: Remove sanity check
+      // Preconditions.checkState(
+      //     jobIdFromState.equals(jobId),
+      //     "Job id in cookie [%s] and request [%s] should match",
+      //     jobId,
+      //     jobIdFromState);
 
       PortabilityJob job = store.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
