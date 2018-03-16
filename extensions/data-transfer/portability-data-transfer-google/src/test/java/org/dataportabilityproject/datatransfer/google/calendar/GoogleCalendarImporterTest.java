@@ -86,10 +86,10 @@ public class GoogleCalendarImporterTest {
     Event eventToInsert = GoogleCalendarImporter.convertToGoogleCalendarEvent(eventModel);
     Event responseEvent = new Event();
 
-    when(calendarInsertRequest.execute()).thenReturn(responseCalendar);
-    when(calendarCalendars.insert(calendarToInsert)).thenReturn(calendarInsertRequest);
     when(eventInsertRequest.execute()).thenReturn(responseEvent);
     when(calendarEvents.insert(googleCalendarId, eventToInsert)).thenReturn(eventInsertRequest);
+    when(calendarInsertRequest.execute()).thenReturn(responseCalendar);
+    when(calendarCalendars.insert(calendarToInsert)).thenReturn(calendarInsertRequest);
 
     CalendarContainerResource calendarContainerResource =
         new CalendarContainerResource(
