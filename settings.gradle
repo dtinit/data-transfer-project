@@ -12,6 +12,8 @@ include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portabil
 
 include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 
+include ':extensions:auth:portability-auth-google'
+
 include ':extensions:data-transfer:portability-data-transfer-google', ':extensions:data-transfer:portability-data-transfer-microsoft'
 
 include ':libraries:security'

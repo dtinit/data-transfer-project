@@ -40,8 +40,6 @@ import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftModule;
 import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkModule;
 import org.dataportabilityproject.serviceProviders.smugmug.SmugmugModule;
 import org.dataportabilityproject.shared.AppCredentialFactory;
-import org.dataportabilityproject.shared.CloudAppCredentialFactory;
-import org.dataportabilityproject.shared.local.LocalAppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
 
 public final class PortabilityCoreModule extends AbstractModule {
@@ -85,18 +83,6 @@ public final class PortabilityCoreModule extends AbstractModule {
       return googleCloudFactoryProvider.get();
     } else {
       throw new UnsupportedOperationException(commonSettings.getCloud() + " is not supported yet.");
-    }
-  }
-
-  @Provides
-  AppCredentialFactory provideAppCredentialFactory(
-      CommonSettings commonSettings,
-      Provider<LocalAppCredentialFactory> localAppCredentialFactoryProvider,
-      Provider<CloudAppCredentialFactory> cloudAppCredentialFactoryProvider) {
-    if (commonSettings.getCloud() == SupportedCloud.LOCAL) {
-      return localAppCredentialFactoryProvider.get();
-    } else {
-      return cloudAppCredentialFactoryProvider.get();
     }
   }
 

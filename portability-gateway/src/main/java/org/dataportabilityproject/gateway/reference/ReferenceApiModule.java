@@ -24,12 +24,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
-import org.dataportabilityproject.gateway.ApiSettings;
-import org.dataportabilityproject.security.ConfigUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Named;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +32,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import javax.inject.Named;
+import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.security.ConfigUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Bindings the reference api server, a sample implementation using Sun's http library to serve
@@ -48,8 +47,6 @@ public class ReferenceApiModule extends AbstractModule {
 
   private static final String API_SETTINGS_PATH = "config/api.yaml";
   private static final String ENV_API_SETTINGS_PATH = "config/env/api.yaml";
-  private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
-  private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
 
   @Provides
   @Named("httpPort")
@@ -120,16 +117,8 @@ public class ReferenceApiModule extends AbstractModule {
       ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
           .add(API_SETTINGS_PATH)
           .add(ENV_API_SETTINGS_PATH)
-          .add(COMMON_SETTINGS_PATH)
-          .add(ENV_COMMON_SETTINGS_PATH)
           .build();
-      // ApiSettings apiSettings = getApiSettings(settingsFiles);
-
-      // TODO: remove this and use the commented out ApiSettings above once we compile in jar
-      String tempSettings = "baseUrl: https://localhost:3000\nbaseApiUrl: http://localhost:8080\n";
-      InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
-      ApiSettings apiSettings = getApiSettings(in);
-
+      ApiSettings apiSettings = getApiSettings(settingsFiles);
       logger.debug("Parsed flags: {}", apiSettings);
       return apiSettings;
     } catch (IOException e) {
@@ -146,5 +135,4 @@ public class ReferenceApiModule extends AbstractModule {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     return mapper.readValue(inputStream, ApiSettings.class);
   }
-
 }

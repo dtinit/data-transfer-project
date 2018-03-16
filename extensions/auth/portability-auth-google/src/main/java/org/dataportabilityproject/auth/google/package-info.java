@@ -13,11 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.cloud.auth;
-
-import java.io.IOException;
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
-
-public interface AppCredentialFactory {
-  AppCredentials get(String keyName, String secretName) throws IOException;
-}
+/** Implements importers and exporters for Google services. */
+package org.dataportabilityproject.auth.google;
