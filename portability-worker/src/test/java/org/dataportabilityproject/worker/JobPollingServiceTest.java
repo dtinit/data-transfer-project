@@ -113,7 +113,7 @@ public class JobPollingServiceTest {
             .setAndValidateJobAuthorization(
                 JobAuthorization.builder()
                     .setState(State.INITIAL)
-                    .setEncryptedSessionKey("fooBar")
+                    .setEncodedSessionKey("fooBar")
                     .build())
             .build();
     store.createJob(TEST_ID, job);

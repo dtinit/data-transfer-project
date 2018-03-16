@@ -162,7 +162,7 @@ abstract class SetupHandler implements HttpHandler {
     if (authFlowConfiguration.getInitialAuthData() != null) {
 
       // Retrieve and parse the session key from the job
-      String sessionKey = job.jobAuthorization().encryptedSessionKey();
+      String sessionKey = job.jobAuthorization().encodedSessionKey();
       SecretKey key = symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(sessionKey));
 
       // Ensure intial auth data for import has not already been set
