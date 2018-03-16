@@ -44,22 +44,23 @@ final class EncrypterImpl implements Encrypter {
 
   @Override
   public String encrypt(String data) {
-    try {
-      Cipher cipher = Cipher.getInstance(transformation);
-      cipher.init(Cipher.ENCRYPT_MODE, key);
-      byte[] salt = new byte[8];
-      SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-      random.nextBytes(salt);
-      cipher.update(salt);
-      byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
-      return BaseEncoding.base64Url().encode(encrypted);
-    } catch (BadPaddingException
-        | IllegalBlockSizeException
-        | InvalidKeyException
-        | NoSuchAlgorithmException
-        | NoSuchPaddingException e) {
-      logger.error("Exception encrypting data, length: {}", data.length(), e);
-      throw new RuntimeException(e);
-    }
+    return data;
+    // try {
+    //   Cipher cipher = Cipher.getInstance(transformation);
+    //   cipher.init(Cipher.ENCRYPT_MODE, key);
+    //   byte[] salt = new byte[8];
+    //   SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+    //   random.nextBytes(salt);
+    //   cipher.update(salt);
+    //   byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
+    //   return BaseEncoding.base64Url().encode(encrypted);
+    // } catch (BadPaddingException
+    //     | IllegalBlockSizeException
+    //     | InvalidKeyException
+    //     | NoSuchAlgorithmException
+    //     | NoSuchPaddingException e) {
+    //   logger.error("Exception encrypting data, length: {}", data.length(), e);
+    //   throw new RuntimeException(e);
+    // }
   }
 }

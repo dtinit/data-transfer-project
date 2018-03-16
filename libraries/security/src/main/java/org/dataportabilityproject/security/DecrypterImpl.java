@@ -44,24 +44,25 @@ final class DecrypterImpl implements Decrypter {
 
   @Override
   public String decrypt(String encrypted) {
-    try {
-      byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
-      Cipher cipher = Cipher.getInstance(transformation);
-      cipher.init(Cipher.DECRYPT_MODE, key);
-      byte[] decrypted = cipher.doFinal(decoded);
-      if (decrypted == null || decrypted.length <= 8) {
-        throw new RuntimeException("incorrect decrypted text.");
-      }
-      byte[] data = new byte[decrypted.length - 8];
-      System.arraycopy(decrypted, 8, data, 0, data.length);
-      return new String(data, Charsets.UTF_8);
-    } catch (BadPaddingException
-        | IllegalBlockSizeException
-        | InvalidKeyException
-        | NoSuchAlgorithmException
-        | NoSuchPaddingException e) {
-      logger.error("Error decrypting data, length: {}", encrypted.length(), e);
-      throw new RuntimeException(e);
-    }
+    return encrypted;
+    // try {
+    //   byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
+    //   Cipher cipher = Cipher.getInstance(transformation);
+    //   cipher.init(Cipher.DECRYPT_MODE, key);
+    //   byte[] decrypted = cipher.doFinal(decoded);
+    //   if (decrypted == null || decrypted.length <= 8) {
+    //     throw new RuntimeException("incorrect decrypted text.");
+    //   }
+    //   byte[] data = new byte[decrypted.length - 8];
+    //   System.arraycopy(decrypted, 8, data, 0, data.length);
+    //   return new String(data, Charsets.UTF_8);
+    // } catch (BadPaddingException
+    //     | IllegalBlockSizeException
+    //     | InvalidKeyException
+    //     | NoSuchAlgorithmException
+    //     | NoSuchPaddingException e) {
+    //   logger.error("Error decrypting data, length: {}", encrypted.length(), e);
+    //   throw new RuntimeException(e);
+    // }
   }
 }
