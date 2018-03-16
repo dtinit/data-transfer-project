@@ -44,7 +44,10 @@ final class DecrypterImpl implements Decrypter {
 
   @Override
   public String decrypt(String encrypted) {
-    return encrypted;
+    byte[] data = BaseEncoding.base64Url().decode(encrypted);
+    return new String(data, Charsets.UTF_8);
+    //   System.arraycopy(decrypted, 8, data, 0, data.length);
+    //   return new String(data, Charsets.UTF_8);
     // TODO(#258): Encryption temporarily disabled to get local demo working. Issue is:
     // https://stackoverflow.com/questions/10007147/getting-a-illegalblocksizeexception-data-must-not-be-longer-than-256-bytes-when
     // try {
