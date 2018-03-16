@@ -15,6 +15,8 @@
  */
 package org.dataportabilityproject.gateway;
 
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -89,11 +91,10 @@ public class ApiMain {
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
 
-    JobStore jobStore = cloudExtension.getJobStore();
-    extensionContext.registerService(JobStore.class, jobStore);
-
-    AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
-    extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
+    // Needed for GoogleAuthServiceExtension
+    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
+    extensionContext.registerService(AppCredentialStore.class, cloudExtension.getAppCredentialStore());
 
     // TODO: Load up only "enabled" services
     List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
@@ -113,7 +114,7 @@ public class ApiMain {
         Guice.createInjector(
             new ApiServicesModule(
                 typeManager,
-                jobStore,
+                cloudExtension.getJobStore(),
                 keyGenerator,
                 trustManagerFactory,
                 keyManagerFactory,
