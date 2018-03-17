@@ -79,7 +79,7 @@ final class JobProcessor {
       // Decrypt the encrypted outer symmetric key, which have been encrypted with our public key
       Decrypter decrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
       String decryptedSymmetricKey =
-          decrypter.decrypt(jobAuthorization.encryptedSymmetricKeyForAuthData());
+          decrypter.decrypt(jobAuthorization.authSecretKey());
       SecretKey outerSymmetricKey =
           symmetricKeyGenerator.parse(decryptedSymmetricKey.getBytes(Charsets.UTF_8));
 
@@ -94,7 +94,7 @@ final class JobProcessor {
           outerAuthDataDecrypter.decrypt(jobAuthorization.encryptedImportAuthData());
 
       // Parse the inner (initial) symmetric encryption key that is stored encoded with the jobAuthorization
-      byte[] keyBytes = BaseEncoding.base64Url().decode(jobAuthorization.encodedSessionKey());
+      byte[] keyBytes = BaseEncoding.base64Url().decode(jobAuthorization.sessionkey());
       SecretKey innerSymmetricKey = symmetricKeyGenerator.parse(keyBytes);
 
       // Decrypt one more time

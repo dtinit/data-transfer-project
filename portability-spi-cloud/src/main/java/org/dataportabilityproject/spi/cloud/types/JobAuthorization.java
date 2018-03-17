@@ -37,16 +37,22 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedImportAuthData")
   public abstract String encryptedImportAuthData();
 
-  @Nullable
-  @JsonProperty("encryptedSymmetricKeyForAuthData")
-  public abstract String encryptedSymmetricKeyForAuthData();
+  /** The SecretKey used to encrypt all data associated with this job, encoded for storage. */
+  @JsonProperty("sessionKey")
+  public abstract String sessionkey();
 
-  @JsonProperty("encodedSessionKey")
-  public abstract String encodedSessionKey();
-
+  /**
+   * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
+   * before storage.
+   */
   @Nullable
-  @JsonProperty("encodedPublicKey")
-  public abstract String encodedPublicKey();
+  @JsonProperty("authSecretKey")
+  public abstract String authSecretKey();
+
+  /** The PublicKey of the 'worker' instance assigned to this job, encoded for storage. */
+  @Nullable
+  @JsonProperty("authPublicKey")
+  public abstract String authPublicKey();
 
   public abstract Builder toBuilder();
 
@@ -87,14 +93,14 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedImportAuthData")
     public abstract Builder setEncryptedImportAuthData(String authData);
 
-    @JsonProperty("encryptedSymmetricKeyForAuthData")
-    public abstract Builder setEncryptedSymmetricKeyForAuthData(String encryptedSymmetricKeyForAuthData);
+    @JsonProperty("sessionkey")
+    public abstract Builder setSessionKey(String encodedSessionKey);
 
-    @JsonProperty("encodedSessionKey")
-    public abstract Builder setEncodedSessionKey(String encodedSessionKey);
+    @JsonProperty("authPublicKey")
+    public abstract Builder setAuthPublicKey(String encodedPublicKey);
 
-    @JsonProperty("encodedPublicKey")
-    public abstract Builder setEncodedPublicKey(String encodedPublicKey);
+    @JsonProperty("authSecretKey")
+    public abstract Builder setAuthSecretKey(String encryptedSymmetricKeyForAuthData);
 
     public abstract JobAuthorization build();
   }

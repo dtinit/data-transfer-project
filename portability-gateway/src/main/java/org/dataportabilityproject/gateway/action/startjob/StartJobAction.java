@@ -134,7 +134,7 @@ public final class StartJobAction
 
     // TODO: Consolidate validation with the internal PortabilityJob validation
     Preconditions.checkNotNull(
-        job.jobAuthorization().encodedPublicKey(),
+        job.jobAuthorization().authPublicKey(),
         "Expected job "
             + jobId
             + " to have a worker instance's public key after being assigned "
@@ -177,8 +177,8 @@ public final class StartJobAction
   }
 
   /**
-   * Encrypt the export and import credentials with the {@link PublicKey} assigned to this job then
-   * update the data store to {@code State.CREDS_ENCRYPTED} state.
+   * Encrypt the export and import credentials with a new {@link SecretKey} and {@link PublicKey}
+   * assigned to this job then update the data store to {@code State.CREDS_ENCRYPTED} state.
    */
   private void encryptAndUpdateJobWithCredentials(
       UUID jobId,
@@ -186,33 +186,21 @@ public final class StartJobAction
       String encryptedExportAuthCredential,
       String encryptedImportAuthCredential) {
 
+    // Step 1 - Generate authSecretKey, a new SecretKey which must not be persisted as is.
+    SecretKey authSecretKey = symmetricKeyGenerator.generate();
 
-    // Encrypt the data with the assigned workers PublicKey and persist
-
-    /*
-     * NOTE: These auth datas are already encrypted with the session symmetric encryption key
-     * Step 1) Generate a new symmetric key, which is now symmetric key B. This key will encrypted so the worker only
-     *     has access to it, thus it must not be persisted.
-     * Step 2) Encrypt the already encrypted auth data with symmetric key B (Double Encryption)
-     * Step 3) Encrypt the symmetric key B with the worker public key
-     * step 4) Store the doubly encrypted auth data and the encrypted symmetric key B
-     */
-
-    // Step 1
-    SecretKey secretKey = symmetricKeyGenerator.generate();
-    // Step 2
-    Encrypter secretKeyEncrypter = EncrypterFactory.create(secretKey);
+    // Step 2 - Encrypt the auth data with authSecretKey
+    Encrypter secretKeyEncrypter = EncrypterFactory.create(authSecretKey);
     String doublyEncryptedExportAuthData = secretKeyEncrypter.encrypt(encryptedExportAuthCredential);
-    logger.debug("Doubly encrypted export auth data, has length: {}", doublyEncryptedExportAuthData.length());
     String doublyEncryptedImportAuthData = secretKeyEncrypter.encrypt(encryptedImportAuthCredential);
-    logger.debug("Doubly encrypted import auth data, has length: {}", doublyEncryptedImportAuthData.length());
-    // Step 3
-     PublicKey publicKey =
+
+    // Step 3 - Encrypt the authSecretKey itself with the authPublickey
+     PublicKey authPublicKey =
         asymmetricKeyGenerator.parse(
-            BaseEncoding.base64Url().decode(job.jobAuthorization().encodedPublicKey()));
-    Encrypter asymmetricEncrypter = EncrypterFactory.create(publicKey);
-    String encryptedSecretKey =
-        asymmetricEncrypter.encrypt(new String(secretKey.getEncoded(), Charsets.UTF_8));
+            BaseEncoding.base64Url().decode(job.jobAuthorization().authPublicKey()));
+    Encrypter asymmetricEncrypter = EncrypterFactory.create(authPublicKey);
+    String encryptedAuthSecretKey =
+        asymmetricEncrypter.encrypt(new String(authSecretKey.getEncoded(), Charsets.UTF_8));
 
     // Populate job with encrypted auth data
     JobAuthorization updatedJobAuthorization =
@@ -220,7 +208,7 @@ public final class StartJobAction
             .toBuilder()
             .setEncryptedExportAuthData(doublyEncryptedExportAuthData)
             .setEncryptedImportAuthData(doublyEncryptedImportAuthData)
-            .setEncryptedSymmetricKeyForAuthData(encryptedSecretKey)
+            .setAuthSecretKey(encryptedAuthSecretKey)
             .setState(JobAuthorization.State.CREDS_ENCRYPTED)
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();

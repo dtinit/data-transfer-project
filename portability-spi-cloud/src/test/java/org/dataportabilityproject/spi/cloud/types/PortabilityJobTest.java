@@ -35,7 +35,7 @@ public class PortabilityJobTest {
     JobAuthorization jobAuthorization =
         JobAuthorization.builder()
             .setState(JobAuthorization.State.INITIAL)
-            .setEncodedSessionKey("foo")
+            .setSessionKey("foo")
             .build();
 
     PortabilityJob job =
