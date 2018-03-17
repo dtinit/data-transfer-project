@@ -43,17 +43,26 @@ final class WorkerModule extends AbstractModule {
   private final CloudExtension cloudExtension;
   private final ExtensionContext context;
   private final List<TransferExtension> transferExtensions;
+  private final SymmetricKeyGenerator symmetricKeyGenerator;
+  private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
-  WorkerModule(CloudExtension cloudExtension, ExtensionContext context, List<TransferExtension> transferExtensions) {
+  WorkerModule(
+      CloudExtension cloudExtension,
+      ExtensionContext context,
+      List<TransferExtension> transferExtensions,
+      SymmetricKeyGenerator symmetricKeyGenerator,
+      AsymmetricKeyGenerator asymmetricKeyGenerator) {
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
+    this.symmetricKeyGenerator = symmetricKeyGenerator;
+    this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
   @Override
   protected void configure() {
-    bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
-    bind(SymmetricKeyGenerator.class).toInstance(new AesSymmetricKeyGenerator());
+    bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
+    bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
   }
