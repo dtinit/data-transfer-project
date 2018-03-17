@@ -191,7 +191,8 @@ public final class StartJobAction
 
     /*
      * NOTE: These auth datas are already encrypted with the session symmetric encryption key
-     * Step 1) Generate a new symmetric key, which is now symmetric key B
+     * Step 1) Generate a new symmetric key, which is now symmetric key B. This key will encrypted so the worker only
+     *     has access to it, thus it must not be persisted.
      * Step 2) Encrypt the already encrypted auth data with symmetric key B (Double Encryption)
      * Step 3) Encrypt the symmetric key B with the worker public key
      * step 4) Store the doubly encrypted auth data and the encrypted symmetric key B
