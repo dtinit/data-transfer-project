@@ -16,6 +16,7 @@
 package org.dataportabilityproject.gateway.action.startjob;
 
 import com.google.api.client.util.Sleeper;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
@@ -23,11 +24,13 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.Encrypter;
 import org.dataportabilityproject.security.EncrypterFactory;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
@@ -41,13 +44,16 @@ public final class StartJobAction
   private static final Logger logger = LoggerFactory.getLogger(StartJobAction.class);
 
   private final JobStore store;
+  private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
   @Inject
   StartJobAction(
       JobStore store,
+      SymmetricKeyGenerator symmetricKeyGenerator,
       AsymmetricKeyGenerator asymmetricKeyGenerator) {
     this.store = store;
+    this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
@@ -179,24 +185,41 @@ public final class StartJobAction
       PortabilityJob job,
       String encryptedExportAuthCredential,
       String encryptedImportAuthCredential) {
-    PublicKey publicKey =
-        asymmetricKeyGenerator.parse(
-            BaseEncoding.base64Url().decode(job.jobAuthorization().encodedPublicKey()));
+
 
     // Encrypt the data with the assigned workers PublicKey and persist
-    // NOTE: These auth datas are already encrypted with the session symmetric encryption key
-    Encrypter crypter = EncrypterFactory.create(publicKey);
-    String encryptedExportAuthData = crypter.encrypt(encryptedExportAuthCredential);
-    logger.debug("Encrypted export auth data, has length: {}", encryptedExportAuthData.length());
-    String encryptedImportAuthData = crypter.encrypt(encryptedImportAuthCredential);
-    logger.debug("Encrypted import auth data, has length: {}", encryptedImportAuthData.length());
+
+    /*
+     * NOTE: These auth datas are already encrypted with the session symmetric encryption key
+     * Step 1) Generate a new symmetric key, which is now symmetric key B
+     * Step 2) Encrypt the already encrypted auth data with symmetric key B (Double Encryption)
+     * Step 3) Encrypt the symmetric key B with the worker public key
+     * step 4) Store the doubly encrypted auth data and the encrypted symmetric key B
+     */
+
+    // Step 1
+    SecretKey secretKey = symmetricKeyGenerator.generate();
+    // Step 2
+    Encrypter secretKeyEncrypter = EncrypterFactory.create(secretKey);
+    String doublyEncryptedExportAuthData = secretKeyEncrypter.encrypt(encryptedExportAuthCredential);
+    logger.debug("Doubly encrypted export auth data, has length: {}", doublyEncryptedExportAuthData.length());
+    String doublyEncryptedImportAuthData = secretKeyEncrypter.encrypt(encryptedImportAuthCredential);
+    logger.debug("Doubly encrypted import auth data, has length: {}", doublyEncryptedImportAuthData.length());
+    // Step 3
+     PublicKey publicKey =
+        asymmetricKeyGenerator.parse(
+            BaseEncoding.base64Url().decode(job.jobAuthorization().encodedPublicKey()));
+    Encrypter asymmetricEncrypter = EncrypterFactory.create(publicKey);
+    String encryptedSecretKey =
+        asymmetricEncrypter.encrypt(new String(secretKey.getEncoded(), Charsets.UTF_8));
 
     // Populate job with encrypted auth data
     JobAuthorization updatedJobAuthorization =
         job.jobAuthorization()
             .toBuilder()
-            .setEncryptedExportAuthData(encryptedExportAuthData)
-            .setEncryptedImportAuthData(encryptedImportAuthData)
+            .setEncryptedExportAuthData(doublyEncryptedExportAuthData)
+            .setEncryptedImportAuthData(doublyEncryptedImportAuthData)
+            .setEncryptedSymmetricKeyForAuthData(encryptedSecretKey)
             .setState(JobAuthorization.State.CREDS_ENCRYPTED)
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
