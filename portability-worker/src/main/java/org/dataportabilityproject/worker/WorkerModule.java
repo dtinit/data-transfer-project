@@ -17,6 +17,7 @@ package org.dataportabilityproject.worker;
 
 import static com.google.common.collect.MoreCollectors.onlyElement;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -26,8 +27,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -50,7 +53,9 @@ final class WorkerModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
+    bind(SymmetricKeyGenerator.class).toInstance(new AesSymmetricKeyGenerator());
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
+    bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
   }
 
   @Provides

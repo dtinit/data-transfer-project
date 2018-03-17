@@ -37,8 +37,8 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedImportAuthData")
   public abstract String encryptedImportAuthData();
 
-  @JsonProperty("encryptedSessionKey")
-  public abstract String encryptedSessionKey();
+  @JsonProperty("encodedSessionKey")
+  public abstract String encodedSessionKey();
 
   @Nullable
   @JsonProperty("encodedPublicKey")
@@ -83,8 +83,8 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedImportAuthData")
     public abstract Builder setEncryptedImportAuthData(String authData);
 
-    @JsonProperty("encryptedSessionKey")
-    public abstract Builder setEncryptedSessionKey(String sessionKey);
+    @JsonProperty("encodedSessionKey")
+    public abstract Builder setEncodedSessionKey(String sessionKey);
 
     @JsonProperty("encodedPublicKey")
     public abstract Builder setEncodedPublicKey(String publicKey);
