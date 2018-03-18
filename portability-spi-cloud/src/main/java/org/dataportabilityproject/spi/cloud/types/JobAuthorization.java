@@ -37,12 +37,22 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedImportAuthData")
   public abstract String encryptedImportAuthData();
 
-  @JsonProperty("encodedSessionKey")
-  public abstract String encodedSessionKey();
+  /** The SecretKey used to encrypt all data, including auth data, associated with this job, encoded for storage. */
+  @JsonProperty("sessionSecretKey")
+  public abstract String sessionSecretKey();
 
+  /**
+   * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
+   * before storage.
+   */
   @Nullable
-  @JsonProperty("encodedPublicKey")
-  public abstract String encodedPublicKey();
+  @JsonProperty("authSecretKey")
+  public abstract String authSecretKey();
+
+  /** The PublicKey of the 'worker' instance assigned to this job, encoded for storage. */
+  @Nullable
+  @JsonProperty("authPublicKey")
+  public abstract String authPublicKey();
 
   public abstract Builder toBuilder();
 
@@ -83,11 +93,20 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedImportAuthData")
     public abstract Builder setEncryptedImportAuthData(String authData);
 
-    @JsonProperty("encodedSessionKey")
-    public abstract Builder setEncodedSessionKey(String sessionKey);
+    /** The SecretKey used to encrypt all data, including auth data, associated with this job, encoded for storage. */
+    @JsonProperty("sessionSecretKey")
+    public abstract Builder setSessionSecretKey(String sessionSecretKey);
 
-    @JsonProperty("encodedPublicKey")
-    public abstract Builder setEncodedPublicKey(String publicKey);
+    /**
+     * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
+     * before storage.
+     */
+    @JsonProperty("authSecretKey")
+    public abstract Builder setAuthSecretKey(String authSecretKey);
+
+    /** The PublicKey of the 'worker' instance assigned to this job, encoded for storage. */
+    @JsonProperty("authPublicKey")
+    public abstract Builder setAuthPublicKey(String authPublicKey);
 
     public abstract JobAuthorization build();
   }

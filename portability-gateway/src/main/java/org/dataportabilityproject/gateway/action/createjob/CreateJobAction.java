@@ -57,7 +57,7 @@ public final class CreateJobAction
     // Job auth data
     JobAuthorization jobAuthorization =
         JobAuthorization.builder()
-            .setEncodedSessionKey(encodedSessionKey)
+            .setSessionSecretKey(encodedSessionKey)
             .setState(JobAuthorization.State.INITIAL)
             .build();
 

@@ -23,6 +23,10 @@ import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
+import org.dataportabilityproject.security.AsymmetricKeyGenerator;
+import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
+import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -76,8 +80,13 @@ public class WorkerMain {
 
     List<TransferExtension> transferExtensions = getTransferExtensions();
 
+    // TODO: make configurable
+    SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator();
+    AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator();
+
     Injector injector =
-        Guice.createInjector(new WorkerModule(cloudExtension, context, transferExtensions));
+        Guice.createInjector(new WorkerModule(cloudExtension, context, transferExtensions,
+                symmetricKeyGenerator, asymmetricKeyGenerator));
     worker = injector.getInstance(Worker.class);
   }
 

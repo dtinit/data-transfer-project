@@ -140,7 +140,7 @@ final class OauthCallbackHandler implements HttpHandler {
           service);
 
       // Obtain the session key for this job
-      String encodedSessionKey = job.jobAuthorization().encodedSessionKey();
+      String encodedSessionKey = job.jobAuthorization().sessionSecretKey();
       SecretKey key =
           symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(encodedSessionKey));
 

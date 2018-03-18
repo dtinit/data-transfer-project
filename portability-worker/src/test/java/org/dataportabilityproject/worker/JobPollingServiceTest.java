@@ -113,7 +113,7 @@ public class JobPollingServiceTest {
             .setAndValidateJobAuthorization(
                 JobAuthorization.builder()
                     .setState(State.INITIAL)
-                    .setEncodedSessionKey("fooBar")
+                    .setSessionSecretKey("fooBar")
                     .build())
             .build();
     store.createJob(TEST_ID, job);
@@ -149,7 +149,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     assertThat(job.jobAuthorization().state())
         .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    assertThat(job.jobAuthorization().encodedPublicKey()).isNotEmpty();
+    assertThat(job.jobAuthorization().authPublicKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
     job =
