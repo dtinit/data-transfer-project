@@ -39,8 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** An {@link Action} that starts a transfer job. */
-public final class StartJobAction
-    implements Action<StartJobActionRequest, StartJobActionResponse> {
+public final class StartJobAction implements Action<StartJobActionRequest, StartJobActionResponse> {
   private static final Logger logger = LoggerFactory.getLogger(StartJobAction.class);
 
   private final JobStore store;
@@ -59,7 +58,6 @@ public final class StartJobAction
 
   /**
    * Starts a job using the following flow:
-   *
    * <li>Validate auth data is present in cookies
    * <li>Set Job to state CREDS_AVAILABLE
    * <li>Wait for a worker to be assigned
@@ -72,10 +70,12 @@ public final class StartJobAction
     // Update the job to indicate to worker processes that creds are available for encryption
     updateStateToCredsAvailable(jobId);
 
-    // Poll and block until a public key is assigned to this job, e.g. from a specific worker instance
+    // Poll and block until a public key is assigned to this job, e.g. from a specific worker
+    // instance
     PortabilityJob job = pollForPublicKey(jobId);
 
-    // Update this job with credentials encrypted with a public key, e.g. for a specific worker instance
+    // Update this job with credentials encrypted with a public key, e.g. for a specific worker
+    // instance
     encryptAndUpdateJobWithCredentials(
         jobId,
         job,
@@ -130,7 +130,6 @@ public final class StartJobAction
     }
 
     logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
-
 
     // TODO: Consolidate validation with the internal PortabilityJob validation
     Preconditions.checkNotNull(
@@ -191,11 +190,13 @@ public final class StartJobAction
 
     // Step 2 - Encrypt the auth data with authSecretKey
     Encrypter secretKeyEncrypter = EncrypterFactory.create(authSecretKey);
-    String doublyEncryptedExportAuthData = secretKeyEncrypter.encrypt(encryptedExportAuthCredential);
-    String doublyEncryptedImportAuthData = secretKeyEncrypter.encrypt(encryptedImportAuthCredential);
+    String doublyEncryptedExportAuthData =
+        secretKeyEncrypter.encrypt(encryptedExportAuthCredential);
+    String doublyEncryptedImportAuthData =
+        secretKeyEncrypter.encrypt(encryptedImportAuthCredential);
 
     // Step 3 - Encrypt the authSecretKey itself with the authPublickey
-     PublicKey authPublicKey =
+    PublicKey authPublicKey =
         asymmetricKeyGenerator.parse(
             BaseEncoding.base64Url().decode(job.jobAuthorization().authPublicKey()));
     Encrypter asymmetricEncrypter = EncrypterFactory.create(authPublicKey);

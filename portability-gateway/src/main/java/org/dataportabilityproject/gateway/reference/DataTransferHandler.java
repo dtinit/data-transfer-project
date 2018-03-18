@@ -135,7 +135,7 @@ final class DataTransferHandler implements HttpHandler {
     if (authFlowConfiguration.getInitialAuthData() != null) {
 
       // Retrieve and parse the session key from the job
-      String sessionKey = job.jobAuthorization().sessionkey();
+      String sessionKey = job.jobAuthorization().sessionSecretKey();
       SecretKey key = symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(sessionKey));
 
       // Ensure intial auth data for export has not already been set

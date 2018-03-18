@@ -94,7 +94,7 @@ final class JobProcessor {
           outerAuthDataDecrypter.decrypt(jobAuthorization.encryptedImportAuthData());
 
       // Parse the inner (initial) symmetric encryption key that is stored encoded with the jobAuthorization
-      byte[] keyBytes = BaseEncoding.base64Url().decode(jobAuthorization.sessionkey());
+      byte[] keyBytes = BaseEncoding.base64Url().decode(jobAuthorization.sessionSecretKey());
       SecretKey innerSymmetricKey = symmetricKeyGenerator.parse(keyBytes);
 
       // Decrypt one more time

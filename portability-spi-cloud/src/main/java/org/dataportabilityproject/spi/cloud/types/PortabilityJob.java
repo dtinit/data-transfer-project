@@ -67,7 +67,7 @@ public abstract class PortabilityJob {
                     JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE)))
                 .setEncryptedExportAuthData(encryptedExportAuthData)
                 .setEncryptedImportAuthData(encryptedImportAuthData)
-                .setSessionKey((String) properties.get(ENCRYPTED_SESSION_KEY))
+                .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
                 .setAuthPublicKey(encodedPublicKey)
                 .build())
         .build();
@@ -117,7 +117,7 @@ public abstract class PortabilityJob {
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
-            .put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionkey());
+            .put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
 
     if (null != jobAuthorization().encryptedExportAuthData()) {
       builder.put(EXPORT_ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedExportAuthData());
@@ -171,7 +171,7 @@ public abstract class PortabilityJob {
         case INITIAL:
         case CREDS_AVAILABLE:
           // SessionKey required to create a job
-          isSet(jobAuthorization.sessionkey());
+          isSet(jobAuthorization.sessionSecretKey());
           isUnset(
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData(),
@@ -179,7 +179,7 @@ public abstract class PortabilityJob {
           break;
         case CREDS_ENCRYPTION_KEY_GENERATED:
           // Expected associated keys from the assigned worker to be present
-          isSet(jobAuthorization.sessionkey(), jobAuthorization.authPublicKey());
+          isSet(jobAuthorization.sessionSecretKey(), jobAuthorization.authPublicKey());
           isUnset(
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData());
@@ -187,7 +187,7 @@ public abstract class PortabilityJob {
         case CREDS_ENCRYPTED:
           // Expected all fields set
           isSet(
-              jobAuthorization.sessionkey(),
+              jobAuthorization.sessionSecretKey(),
               jobAuthorization.authPublicKey(),
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData());

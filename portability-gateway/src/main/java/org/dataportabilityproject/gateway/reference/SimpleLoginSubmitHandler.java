@@ -150,7 +150,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Obtain the session key for this job
-      String encodedSessionKey = job.jobAuthorization().sessionkey();
+      String encodedSessionKey = job.jobAuthorization().sessionSecretKey();
       SecretKey key =
           symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(encodedSessionKey));
       // Serialize and encrypt the auth data

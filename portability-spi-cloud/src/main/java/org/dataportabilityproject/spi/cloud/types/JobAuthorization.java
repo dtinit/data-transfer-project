@@ -37,9 +37,9 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedImportAuthData")
   public abstract String encryptedImportAuthData();
 
-  /** The SecretKey used to encrypt all data associated with this job, encoded for storage. */
-  @JsonProperty("sessionKey")
-  public abstract String sessionkey();
+  /** The SecretKey used to encrypt all data, including auth data, associated with this job, encoded for storage. */
+  @JsonProperty("sessionSecretKey")
+  public abstract String sessionSecretKey();
 
   /**
    * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
@@ -93,14 +93,20 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedImportAuthData")
     public abstract Builder setEncryptedImportAuthData(String authData);
 
-    @JsonProperty("sessionkey")
-    public abstract Builder setSessionKey(String encodedSessionKey);
+    /** The SecretKey used to encrypt all data, including auth data, associated with this job, encoded for storage. */
+    @JsonProperty("sessionSecretKey")
+    public abstract Builder setSessionSecretKey(String sessionSecretKey);
 
-    @JsonProperty("authPublicKey")
-    public abstract Builder setAuthPublicKey(String encodedPublicKey);
-
+    /**
+     * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
+     * before storage.
+     */
     @JsonProperty("authSecretKey")
-    public abstract Builder setAuthSecretKey(String encryptedSymmetricKeyForAuthData);
+    public abstract Builder setAuthSecretKey(String authSecretKey);
+
+    /** The PublicKey of the 'worker' instance assigned to this job, encoded for storage. */
+    @JsonProperty("authPublicKey")
+    public abstract Builder setAuthPublicKey(String authPublicKey);
 
     public abstract JobAuthorization build();
   }
