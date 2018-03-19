@@ -24,11 +24,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -104,7 +102,6 @@ public class ReferenceApiModule extends AbstractModule {
     mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
     mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
 
-    bind(TokenManager.class).to(JWTTokenManager.class);
     bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
   }
 
@@ -115,10 +112,8 @@ public class ReferenceApiModule extends AbstractModule {
     // definition. e.g. a setting in api.yaml and env/api.yaml will take the definition in
     // env/api.yaml. Determine whether this is intended behavior.
     try {
-      ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
-          .add(API_SETTINGS_PATH)
-          .add(ENV_API_SETTINGS_PATH)
-          .build();
+      ImmutableList<String> settingsFiles =
+          ImmutableList.<String>builder().add(API_SETTINGS_PATH).add(ENV_API_SETTINGS_PATH).build();
       ApiSettings apiSettings = getApiSettings(settingsFiles);
       logger.debug("Parsed flags: {}", apiSettings);
       return apiSettings;
