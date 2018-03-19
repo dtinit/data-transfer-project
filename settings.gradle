@@ -6,7 +6,7 @@ include ':portability-api-launcher'
 
 include ':portability-spi-service', ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
 
-include ':portability-gateway', ':portability-transfer'
+include ':portability-gateway'
 
 include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
 
@@ -20,6 +20,6 @@ include ':libraries:security'
 
 include ':portability-test-utilities'
 
-include ':portability-core', ':portability-worker', ':portability-api', ':portability-bootstrap-vm'
+include ':portability-core', ':portability-worker', ':portability-bootstrap-vm'
 
 include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
