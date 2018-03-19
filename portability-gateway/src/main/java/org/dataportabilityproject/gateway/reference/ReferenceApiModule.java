@@ -48,16 +48,6 @@ public class ReferenceApiModule extends AbstractModule {
   private static final String API_SETTINGS_PATH = "config/api.yaml";
   private static final String ENV_API_SETTINGS_PATH = "config/env/api.yaml";
 
-  static ApiSettings getApiSettings(ImmutableList<String> settingsFiles) throws IOException {
-    InputStream combinedInputStream = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
-    return getApiSettings(combinedInputStream);
-  }
-
-  static ApiSettings getApiSettings(InputStream inputStream) throws IOException {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    return mapper.readValue(inputStream, ApiSettings.class);
-  }
-
   @Provides
   @Named("httpPort")
   public int httpPort() {
@@ -130,5 +120,15 @@ public class ReferenceApiModule extends AbstractModule {
     } catch (IOException e) {
       throw new IllegalArgumentException("Problem parsing api settings", e);
     }
+  }
+
+  static ApiSettings getApiSettings(ImmutableList<String> settingsFiles) throws IOException {
+    InputStream combinedInputStream = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
+    return getApiSettings(combinedInputStream);
+  }
+
+  static ApiSettings getApiSettings(InputStream inputStream) throws IOException {
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    return mapper.readValue(inputStream, ApiSettings.class);
   }
 }
