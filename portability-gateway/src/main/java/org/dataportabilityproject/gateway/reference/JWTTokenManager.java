@@ -67,20 +67,8 @@ public class JWTTokenManager implements TokenManager {
 
   @Override
   public boolean verifyToken(String token) {
-    /*
-    TODO(#258): XSRF prevention temporarily disabled to get local demo working. Issue is:
-    ERROR org.dataportabilityproject.gateway.reference.SetupHandler - Error handling request
-    java.lang.IllegalArgumentException: Empty key
-     at javax.crypto.spec.SecretKeySpec.<init>(SecretKeySpec.java:96)
-     at com.auth0.jwt.algorithms.CryptoHelper.createSignatureFor(CryptoHelper.java:15)
-     at com.auth0.jwt.algorithms.HMACAlgorithm.sign(HMACAlgorithm.java:63)
-     at com.auth0.jwt.JWTCreator.sign(JWTCreator.java:334)
-     at com.auth0.jwt.JWTCreator.access$100(JWTCreator.java:24)
-     at com.auth0.jwt.JWTCreator$Builder.sign(JWTCreator.java:311)
-     at org.dataportabilityproject.gateway.reference.JWTTokenManager.createNewToken(JWTTokenManager.java:103)
-     */
     try {
-      DecodedJWT jwt = verifier.verify(token);
+      verifier.verify(token);
       return true;
     } catch (JWTVerificationException exception) {
       logger.debug("Error verifying token: {}", exception);
@@ -91,7 +79,6 @@ public class JWTTokenManager implements TokenManager {
 
   @Override
   public UUID getJobIdFromToken(String token) {
-    // TODO(#258): XSRF prevention temporarily disabled to get local demo working.
     try {
       DecodedJWT jwt = verifier.verify(token);
       // Token is verified, get claim
@@ -108,7 +95,6 @@ public class JWTTokenManager implements TokenManager {
 
   @Override
   public String createNewToken(UUID jobId) {
-    // TODO(#258): XSRF prevention temporarily disabled to get local demo working.
     try {
       return JWT.create()
           .withIssuer(JWTTokenManager.ISSUER)
