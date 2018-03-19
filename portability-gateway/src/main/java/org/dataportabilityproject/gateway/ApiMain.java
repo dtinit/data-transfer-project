@@ -22,10 +22,21 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
+import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.gateway.reference.JWTTokenManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiModule;
 import org.dataportabilityproject.gateway.reference.ReferenceApiServer;
+import org.dataportabilityproject.gateway.reference.TokenManager;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
@@ -37,15 +48,6 @@ import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtensio
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -94,7 +96,8 @@ public class ApiMain {
     // Needed for GoogleAuthServiceExtension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
     extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
-    extensionContext.registerService(AppCredentialStore.class, cloudExtension.getAppCredentialStore());
+    extensionContext.registerService(
+        AppCredentialStore.class, cloudExtension.getAppCredentialStore());
 
     // TODO: Load up only "enabled" services
     List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
@@ -108,7 +111,23 @@ public class ApiMain {
 
     // TODO: make configurable
     SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator();
+    TokenManager tokenManager;
 
+    try {
+      // TODO: we store the JWT Token with the application credentials, but dont need to have a key
+      // consider using a blobstore type of thing or allowing the AppCredentialStore to return a
+      // cred that doesn't contain a key.
+      tokenManager =
+          new JWTTokenManager(
+              cloudExtension
+                  .getAppCredentialStore()
+                  .getAppCredentials(JWTTokenManager.JWT_KEY_NAME, JWTTokenManager.JWT_SECRET_NAME)
+                  .getSecret());
+    } catch (IOException e) {
+      logger.error(
+          "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?");
+      throw new RuntimeException(e);
+    }
 
     Injector injector =
         Guice.createInjector(
@@ -118,7 +137,8 @@ public class ApiMain {
                 keyGenerator,
                 trustManagerFactory,
                 keyManagerFactory,
-                authServiceExtensions),
+                authServiceExtensions,
+                tokenManager),
             new ReferenceApiModule());
 
     // Launch the application
@@ -161,6 +181,7 @@ public class ApiMain {
     private final List<AuthServiceExtension> authServiceExtensions;
     private final TrustManagerFactory trustManagerFactory;
     private final KeyManagerFactory keyManagerFactory;
+    private final TokenManager tokenManager;
 
     public ApiServicesModule(
         TypeManager typeManager,
@@ -168,13 +189,15 @@ public class ApiMain {
         SymmetricKeyGenerator keyGenerator,
         TrustManagerFactory trustManagerFactory,
         KeyManagerFactory keyManagerFactory,
-        List<AuthServiceExtension> authServiceExtensions) {
+        List<AuthServiceExtension> authServiceExtensions,
+        TokenManager tokenManager) {
       this.typeManager = typeManager;
       this.jobStore = jobStore;
       this.keyGenerator = keyGenerator;
       this.authServiceExtensions = authServiceExtensions;
       this.trustManagerFactory = trustManagerFactory;
       this.keyManagerFactory = keyManagerFactory;
+      this.tokenManager = tokenManager;
 
       if (trustManagerFactory != null || keyManagerFactory != null) {
         Preconditions.checkNotNull(
@@ -199,6 +222,8 @@ public class ApiMain {
       bind(SymmetricKeyGenerator.class).toInstance(keyGenerator);
       bind(TypeManager.class).toInstance(typeManager);
       bind(JobStore.class).toInstance(jobStore);
+      bind(TokenManager.class).toInstance(tokenManager);
+
       if (trustManagerFactory != null) {
         bind(TrustManagerFactory.class).toInstance(trustManagerFactory);
       }
