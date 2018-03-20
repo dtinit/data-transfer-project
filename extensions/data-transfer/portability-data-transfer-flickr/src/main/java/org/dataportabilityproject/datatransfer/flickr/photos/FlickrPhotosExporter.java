@@ -54,6 +54,8 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 import org.scribe.model.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
   private static final int PHOTO_PER_PAGE = 50;
@@ -65,10 +67,19 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   private final PhotosInterface photosInterface;
   private final Flickr flickr;
 
+  private final Logger logger = LoggerFactory.getLogger(FlickrPhotosExporter.class);
+
   public FlickrPhotosExporter(AppCredentials appCredentials) {
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.photosInterface = flickr.getPhotosInterface();
+  }
+
+  @VisibleForTesting
+  FlickrPhotosExporter(Flickr flickr) {
+    this.flickr = flickr;
+    this.photosInterface = flickr.getPhotosInterface();
+    this.photosetsInterface = flickr.getPhotosetsInterface();
   }
 
   @Override
@@ -134,7 +145,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
 
   private ExportResult<PhotosContainerResource> getAlbums(PaginationData paginationData, Auth auth) {
     ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
-    List<IdOnlyResource> subResources = new ArrayList<>();
+    List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     int page = paginationData==null? 1 : ((IntPaginationToken)paginationData).getStart();
     Photosets photoSetList;
@@ -147,7 +158,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
       // Saving data to the album allows the target service to recreate the album structure
       albumBuilder.add(new PhotoAlbum(photoSet.getId(), photoSet.getTitle(), photoSet.getDescription()));
       // Adding subresources tells the framework to recall export to get all the photos
-      subResources.add(new IdOnlyResource(photoSet.getId()));
+      subResources.add(new IdOnlyContainerResource(photoSet.getId()));
     }
 
     PaginationData newPage = null;
@@ -155,13 +166,16 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     if(hasMore) newPage = new IntPaginationToken(page+1);
 
     PhotosContainerResource photosContainerResource = new PhotosContainerResource(albumBuilder.build(), null);
+    ContinuationData continuationData = new ContinuationData(newPage);
+    subResources.forEach(resource -> continuationData.addContainerResource(resource));
+
     // Get result type
     ResultType resultType = ResultType.CONTINUE;
     if (newPage == null) {
       resultType = ResultType.END;
     }
 
-    return new ExportResult<>(resultType, photosContainerResource, new ContinuationData(newPage));
+    return new ExportResult<>(resultType, photosContainerResource, continuationData);
   }
 
   private Auth getAuth(AuthData authData) {
@@ -171,7 +185,6 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenAuthData = (TokenSecretAuthData)authData;
     Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
-
     try {
       Auth auth = flickr.getAuthInterface().checkToken(requestToken);
       return auth;
@@ -193,7 +206,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         albumId);
   }
 
-  private static String toMimeType(String flickrFormat) {
+  @VisibleForTesting
+  static String toMimeType(String flickrFormat) {
     switch (flickrFormat) {
       case "jpg":
       case "jpeg":

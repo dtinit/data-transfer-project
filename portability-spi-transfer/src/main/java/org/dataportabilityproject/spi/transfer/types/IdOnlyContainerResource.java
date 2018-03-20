@@ -23,4 +23,16 @@ public class IdOnlyContainerResource extends ContainerResource {
   public String getId() {
     return id;
   }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object == null) {
+      return false;
+    }
+    if (!IdOnlyContainerResource.class.isAssignableFrom(object.getClass())) {
+      return false;
+    }
+    IdOnlyContainerResource idResource= (IdOnlyContainerResource) object;
+    return this.id.equals(idResource.getId());
+  }
 }

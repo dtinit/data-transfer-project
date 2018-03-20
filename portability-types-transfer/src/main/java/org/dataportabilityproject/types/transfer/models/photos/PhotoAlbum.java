@@ -45,4 +45,18 @@ public class PhotoAlbum {
   public String getId() {
     return id;
   }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object == null) {
+      return false;
+    }
+    if (!PhotoAlbum.class.isAssignableFrom(object.getClass())) {
+      return false;
+    }
+    PhotoAlbum album = (PhotoAlbum) object;
+    return this.description.equals(album.getDescription())
+        && this.id.equals(album.getId())
+        && this.name.equals(album.getName());
+  }
 }
