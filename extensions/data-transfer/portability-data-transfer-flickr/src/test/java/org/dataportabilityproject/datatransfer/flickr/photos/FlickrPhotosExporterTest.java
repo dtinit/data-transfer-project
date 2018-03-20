@@ -154,7 +154,8 @@ public class FlickrPhotosExporterTest {
     // check continuation information
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
     assertThat(continuationData.getPaginationData()).isInstanceOf(IntPaginationToken.class);
-    assertThat(((IntPaginationToken)continuationData.getPaginationData()).getStart()).isEqualTo(page+1);
+    assertThat(((IntPaginationToken) continuationData.getPaginationData()).getStart())
+        .isEqualTo(page + 1);
 
     Collection<? extends ContainerResource> subResources = continuationData.getContainerResources();
     assertThat(subResources.size()).isEqualTo(1);
@@ -173,27 +174,31 @@ public class FlickrPhotosExporterTest {
     // getting photos from a set with id photosetsId and page 1
     int page = 1;
     String photosetsId = "photosetsId";
-    ExportInformation exportInformation = new ExportInformation(null, new IdOnlyContainerResource(photosetsId));
+    ExportInformation exportInformation =
+        new ExportInformation(null, new IdOnlyContainerResource(photosetsId));
 
     // make lots of photos and add them to PhotoList (also adding pagination information)
     int numPhotos = 4;
     PhotoList<Photo> photosList = new PhotoList<>();
-    for(int i=0; i<numPhotos; i++) {
-      photosList.add(initializePhoto("title"+1, "url"+i, "description"+i));
+    for (int i = 0; i < numPhotos; i++) {
+      photosList.add(initializePhoto("title" + 1, "url" + i, "description" + i));
     }
     photosList.setPage(page);
-    photosList.setPages(page+1);
+    photosList.setPages(page + 1);
 
-    when(photosetsInterface.getPhotos(anyString(), anySet(), anyInt(), anyInt(), anyInt())).thenReturn(photosList);
+    when(photosetsInterface.getPhotos(anyString(), anySet(), anyInt(), anyInt(), anyInt()))
+        .thenReturn(photosList);
 
     // run test
     FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
-    ExportResult<PhotosContainerResource> result = exporter.export(new TokenSecretAuthData("token", "secret"), exportInformation);
+    ExportResult<PhotosContainerResource> result =
+        exporter.export(new TokenSecretAuthData("token", "secret"), exportInformation);
     assertThat(result.getExportedData().getPhotos().size()).isEqualTo(numPhotos);
     assertThat(result.getExportedData().getAlbums()).isEmpty();
 
-    ContinuationData continuationData = (ContinuationData)result.getContinuationData();
+    ContinuationData continuationData = (ContinuationData) result.getContinuationData();
     assertThat(continuationData.getContainerResources()).isEmpty();
-    assertThat(((IntPaginationToken)continuationData.getPaginationData()).getStart()).isEqualTo(page+1);
+    assertThat(((IntPaginationToken) continuationData.getPaginationData()).getStart())
+        .isEqualTo(page + 1);
   }
 }

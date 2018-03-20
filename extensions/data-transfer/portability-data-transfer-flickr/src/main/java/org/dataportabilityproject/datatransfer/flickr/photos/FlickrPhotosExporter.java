@@ -44,7 +44,6 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
-import org.dataportabilityproject.spi.transfer.types.IdOnlyResource;
 import org.dataportabilityproject.spi.transfer.types.IntPaginationToken;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
@@ -80,6 +79,30 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     this.flickr = flickr;
     this.photosInterface = flickr.getPhotosInterface();
     this.photosetsInterface = flickr.getPhotosetsInterface();
+  }
+
+  @VisibleForTesting
+  static PhotoModel toCommonPhoto(Photo p, String albumId) {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(p.getOriginalSize().getSource()),
+        "Photo [" + p.getId() + "] has a null authUrl");
+    return new PhotoModel(
+        p.getTitle(),
+        p.getOriginalSize().getSource(),
+        p.getDescription(),
+        toMimeType(p.getOriginalFormat()),
+        albumId);
+  }
+
+  @VisibleForTesting
+  static String toMimeType(String flickrFormat) {
+    switch (flickrFormat) {
+      case "jpg":
+      case "jpeg":
+        return "image/jpeg";
+      default:
+        throw new IllegalArgumentException("Don't know how to map: " + flickrFormat);
+    }
   }
 
   @Override
@@ -139,33 +162,40 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     }
 
     PhotosContainerResource photosContainerResource = new PhotosContainerResource(null, photos);
-    return new ExportResult<>(
-        resultType, photosContainerResource, new ContinuationData(newPage));
+    return new ExportResult<>(resultType, photosContainerResource, new ContinuationData(newPage));
   }
 
-  private ExportResult<PhotosContainerResource> getAlbums(PaginationData paginationData, Auth auth) {
+  private ExportResult<PhotosContainerResource> getAlbums(
+      PaginationData paginationData, Auth auth) {
     ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
-    int page = paginationData==null? 1 : ((IntPaginationToken)paginationData).getStart();
+    int page = paginationData == null ? 1 : ((IntPaginationToken) paginationData).getStart();
     Photosets photoSetList;
 
     try {
-      photoSetList = photosetsInterface.getList(auth.getUser().getId(), PHOTO_SETS_PER_PAGE, page, PHOTOSET_EXTRAS );
-    } catch(FlickrException e){ throw new IllegalArgumentException(e);}
+      photoSetList =
+          photosetsInterface.getList(
+              auth.getUser().getId(), PHOTO_SETS_PER_PAGE, page, PHOTOSET_EXTRAS);
+    } catch (FlickrException e) {
+      throw new IllegalArgumentException(e);
+    }
 
     for (Photoset photoSet : photoSetList.getPhotosets()) {
       // Saving data to the album allows the target service to recreate the album structure
-      albumBuilder.add(new PhotoAlbum(photoSet.getId(), photoSet.getTitle(), photoSet.getDescription()));
+      albumBuilder.add(
+          new PhotoAlbum(photoSet.getId(), photoSet.getTitle(), photoSet.getDescription()));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(photoSet.getId()));
     }
 
     PaginationData newPage = null;
-    boolean hasMore = photoSetList.getPage()!=photoSetList.getPages() && !photoSetList.getPhotosets().isEmpty();
-    if(hasMore) newPage = new IntPaginationToken(page+1);
+    boolean hasMore =
+        photoSetList.getPage() != photoSetList.getPages() && !photoSetList.getPhotosets().isEmpty();
+    if (hasMore) newPage = new IntPaginationToken(page + 1);
 
-    PhotosContainerResource photosContainerResource = new PhotosContainerResource(albumBuilder.build(), null);
+    PhotosContainerResource photosContainerResource =
+        new PhotosContainerResource(albumBuilder.build(), null);
     ContinuationData continuationData = new ContinuationData(newPage);
     subResources.forEach(resource -> continuationData.addContainerResource(resource));
 
@@ -183,7 +213,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         authData instanceof TokenSecretAuthData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
-    TokenSecretAuthData tokenAuthData = (TokenSecretAuthData)authData;
+    TokenSecretAuthData tokenAuthData = (TokenSecretAuthData) authData;
     Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
     try {
       Auth auth = flickr.getAuthInterface().checkToken(requestToken);
@@ -192,29 +222,4 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
       throw new IllegalArgumentException("Problem verifying auth token", e);
     }
   }
-
-  @VisibleForTesting
-  static PhotoModel toCommonPhoto(Photo p, String albumId) {
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(p.getOriginalSize().getSource()),
-        "Photo [" + p.getId() + "] has a null authUrl");
-    return new PhotoModel(
-        p.getTitle(),
-        p.getOriginalSize().getSource(),
-        p.getDescription(),
-        toMimeType(p.getOriginalFormat()),
-        albumId);
-  }
-
-  @VisibleForTesting
-  static String toMimeType(String flickrFormat) {
-    switch (flickrFormat) {
-      case "jpg":
-      case "jpeg":
-        return "image/jpeg";
-      default:
-        throw new IllegalArgumentException("Don't know how to map: " + flickrFormat);
-    }
-  }
-
 }
