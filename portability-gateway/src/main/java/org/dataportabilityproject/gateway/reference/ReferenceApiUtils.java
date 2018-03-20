@@ -22,6 +22,13 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
+import org.simpleframework.http.Cookie;
+import org.simpleframework.http.parse.CookieParser;
+
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpCookie;
@@ -30,14 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import javax.crypto.SecretKey;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIBuilder;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
-import org.simpleframework.http.Cookie;
-import org.simpleframework.http.parse.CookieParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Contains utility functions for use by the ReferenceApiServer HttpHandlers */
 public final class ReferenceApiUtils {
@@ -79,6 +78,8 @@ public final class ReferenceApiUtils {
     Map<String, HttpCookie> cookieMap = new HashMap<>();
 
     for (String cookieStr : cookies) {
+      // TODO This strips out a null cookie setting in the local demo server setup; figure out what is causing this
+      cookieStr = cookieStr.replace("null;","");
       CookieParser parser = new CookieParser(cookieStr);
       for (Cookie c : parser) {
         HttpCookie httpCookie = new HttpCookie(c.getName(), c.getValue());

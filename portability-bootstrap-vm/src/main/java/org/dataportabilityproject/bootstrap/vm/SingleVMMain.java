@@ -42,7 +42,9 @@ public class SingleVMMain {
     ApiMain apiMain = new ApiMain();
 
     try (InputStream stream =
-        ReferenceApiServer.class.getClassLoader().getResourceAsStream("demo-selfsigned-keystore.jks")) {
+        ReferenceApiServer.class
+            .getClassLoader()
+            .getResourceAsStream("demo-selfsigned-keystore.jks")) {
       if (stream == null) {
         throw new IllegalArgumentException("Demo keystore was not found");
       }
@@ -102,7 +104,12 @@ public class SingleVMMain {
         } catch (Exception e) {
           errorCallback.accept(e);
         }
-        workerMain.poll();
+        try {
+          workerMain.poll();
+        } catch (Exception e) {
+          // TODO Logger
+          e.printStackTrace();
+        }
       }
     }
   }

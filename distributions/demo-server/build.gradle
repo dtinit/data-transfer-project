@@ -39,6 +39,8 @@ repositories {
 
 def CLIENT_ID_PREFIX = 'data.portability.key.'
 def CLIENT_SECRET_PREFIX = 'data.portability.secret.'
+def JWT_KEY = 'data.portability.jwt.key'
+def JWT_SECRET = 'data.portability.jwt.secret'
 
 dependencies {
     compile project(':portability-bootstrap-vm')
@@ -68,6 +70,10 @@ task createSecretsFile() {
             } else if (key.startsWith(CLIENT_SECRET_PREFIX) && key.length() > CLIENT_SECRET_PREFIX.length()) {
                 def keyPrefix = key.substring(CLIENT_SECRET_PREFIX.length()).toUpperCase();
                 propFile.append("${keyPrefix}_SECRET=${val}\n");
+            }  else if (JWT_KEY.equals(key)){
+                propFile.append("JWT_KEY=${val}\n");
+            }  else if (JWT_SECRET.equals(key)){
+                propFile.append("JWT_SECRET=${val}\n");
             }
         }
     }

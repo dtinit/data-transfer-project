@@ -19,6 +19,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
   // TODO: centralized place, or enum type for these?
   private static final String CONTACTS = "contacts";
   private static final String CALENDAR = "calendar";
+  private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
+
   private boolean initialized = false;
 
   private JobStore jobStore;
@@ -40,10 +42,10 @@ public class MicrosoftTransferExtension implements TransferExtension {
     TransformerService transformerService = new TransformerServiceImpl();
 
     if (transferDataType.equals(CONTACTS)) {
-      return new MicrosoftContactsExporter(client, mapper, transformerService);
+      return new MicrosoftContactsExporter(BASE_GRAPH_URL, client, mapper, transformerService);
     }
     if (transferDataType.equals(CALENDAR)) {
-      return new MicrosoftCalendarExporter(client, mapper, transformerService);
+      return new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService);
     }
 
     return null;
@@ -56,10 +58,11 @@ public class MicrosoftTransferExtension implements TransferExtension {
     TransformerService transformerService = new TransformerServiceImpl();
 
     if (transferDataType.equals(CONTACTS)) {
-      return new MicrosoftContactsImporter("", client, mapper, transformerService);
+      return new MicrosoftContactsImporter(BASE_GRAPH_URL, client, mapper, transformerService);
     }
     if (transferDataType.equals(CALENDAR)) {
-      return new MicrosoftCalendarImporter("", client, mapper, transformerService, jobStore);
+      return new MicrosoftCalendarImporter(
+          BASE_GRAPH_URL, client, mapper, transformerService, jobStore);
     }
 
     return null;
