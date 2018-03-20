@@ -109,13 +109,15 @@ final class JobProcessor {
 
       // Copy the data
       copier.copy(exportAuthData, importAuthData, jobId);
+      logger.debug("Finished copy for jobId: " + jobId);
     } catch (IOException e) {
-      logger.error("Error processing jobId: {}" + jobId, e);
+      logger.error("Error processing jobId: " + jobId, e);
     } finally {
       try {
         store.remove(jobId);
+        JobMetadata.reset();
       } catch (IOException e) {
-        logger.error("Error removing jobId: {}" + jobId, e);
+        logger.error("Error removing jobId: " + jobId, e);
       }
     }
   }

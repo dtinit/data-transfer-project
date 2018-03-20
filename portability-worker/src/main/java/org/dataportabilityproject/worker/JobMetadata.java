@@ -56,6 +56,14 @@ final class JobMetadata {
     importService = initImportService;
   }
 
+  static void reset() {
+    jobId = null;
+    keyPair = null;
+    dataType = null;
+    exportService = null;
+    importService = null;
+  }
+
   static KeyPair getKeyPair() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return keyPair;
