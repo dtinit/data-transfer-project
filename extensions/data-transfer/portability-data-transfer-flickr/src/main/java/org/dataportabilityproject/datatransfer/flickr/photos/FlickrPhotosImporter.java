@@ -16,63 +16,117 @@
 
 package org.dataportabilityproject.datatransfer.flickr.photos;
 
+import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
+import com.flickr4java.flickr.REST;
+import com.flickr4java.flickr.photosets.Photoset;
+import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
-import java.io.BufferedInputStream;
-import java.io.IOException;
+import com.flickr4java.flickr.uploader.Uploader;
+import com.google.common.annotations.VisibleForTesting;
+import jdk.internal.joptsimple.internal.Strings;
+import jdk.internal.util.Preconditions;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
+import org.dataportabilityproject.spi.transfer.types.TempPhotosData;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
-  private final JobStore jobStore;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.UUID;
 
-  FlickrPhotosImporter(JobStore jobStore){
+public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
+  @VisibleForTesting static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
+  @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
+  private final JobStore jobStore;
+  private final Flickr flickr;
+  private final Uploader uploader;
+  private final ImageStreamProvider imageStreamProvider;
+  private final PhotosetsInterface photosetsInterface;
+
+  FlickrPhotosImporter(AppCredentials appCredentials, JobStore jobStore) {
     this.jobStore = jobStore;
+    this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
+    this.uploader = flickr.getUploader();
+    imageStreamProvider = new ImageStreamProvider();
+    photosetsInterface = flickr.getPhotosetsInterface();
   }
+
 
   @Override
   public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
-    for(PhotoAlbum album : data.getAlbums()) {
-      String key = album.getId();
-      // TODO: store key and album into the JobStore
+//    Preconditions.checkArgument(authData instanceof TokenSecretAuthData);
+//    flickr.getAuthInterface().checkToken()
+    UUID id = UUID.fromString(jobId);
+
+    // Store any album data in the cache because Flickr only allows you to create an album with a photo
+    // in it, so we have to wait for the first photo to create the album
+    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, id);
+    if(tempPhotosData == null) {
+      tempPhotosData = new TempPhotosData(jobId);
+      jobStore.create(id, tempPhotosData);
     }
+
+    for (PhotoAlbum album : data.getAlbums()) {
+      tempPhotosData.addAlbum(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
+    }
+    jobStore.update(id, tempPhotosData);
 
     for (PhotoModel photo : data.getPhotos()) {
-      try{
-      String photoId = uploadPhoto(photo);
-      } catch(FlickrException | IOException e) {
-        throw new IllegalArgumentException(e);
-      }
-
-      String oldPhotoId = photo.getAlbumId();
-
-      if(/*!jobStore.hasKey(old album)*/false) {
-        // get data for albummetadata+oldalbum id
-        // use photosetsinterface to create the prefix of the albmu
-        // store the old album id into the jobdata cache
-      } else {
-        // old alsums created in the cache, add the photo to the album
+      try {
+        String photoId = uploadPhoto(photo);
+        String oldAlbumId = photo.getAlbumId();
+        TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
+        String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
+        if (Strings.isNullOrEmpty(newAlbumId)) {
+          // This means that we havent created the new album yet, create the photoset and store the in it
+          PhotoAlbum album = tempData.lookupAlbum(CACHE_ALBUM_METADATA_PREFIX+oldAlbumId);
+          Photoset photoset = photosetsInterface.create(COPY_PREFIX+album.getName(), album.getDescription(), photoId);
+          tempData.addAlbumId(oldAlbumId, photoset.getId());
+        } else {
+          // We've already created a new album, add the photo to the new album
+          photosetsInterface.addPhoto(newAlbumId, photoId);
+        }
+        jobStore.update(id, tempData);
+      } catch (FlickrException | IOException e) {
+        // TODO: figure out retries
+        return new ImportResult(ImportResult.ResultType.ERROR);
       }
     }
-    return null;
+    return new ImportResult(ImportResult.ResultType.OK);
   }
 
   private String uploadPhoto(PhotoModel photo) throws IOException, FlickrException {
-    BufferedInputStream inStream ;//= imageStreamProvider.get(photo.getFetchableUrl());
+    BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
     UploadMetaData uploadMetaData =
         new UploadMetaData()
             .setAsync(false)
             .setPublicFlag(false)
             .setFriendFlag(false)
             .setFamilyFlag(false)
-            .setTitle(/*COPY_PREFIX + */ photo.getTitle())
+            .setTitle(COPY_PREFIX + photo.getTitle())
             .setDescription(photo.getDescription());
-    return "blah"; // uploader.upload(inStream, uploadMetaData);
+    return uploader.upload(inStream, uploadMetaData);
   }
 
+  private class ImageStreamProvider {
+    /**
+     * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotosImporter} to upload
+     * the image.
+     */
+    public BufferedInputStream get(String urlStr) throws IOException {
+      URL url = new URL(urlStr);
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.connect();
+      return new BufferedInputStream(conn.getInputStream());
+    }
+  }
 }
