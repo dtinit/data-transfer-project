@@ -138,7 +138,8 @@ public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerR
             "Invalid pagination token " + token);
         startItem = Integer.parseInt(token.substring(PHOTO_TOKEN_PREFIX.length()));
       }
-      URL photosUrl = new URL(String.format(URL_PHOTO_FEED_FORMAT, albumId, startItem, MAX_RESULTS));
+      URL photosUrl = new URL(
+          String.format(URL_PHOTO_FEED_FORMAT, albumId, startItem, MAX_RESULTS));
       AlbumFeed photoFeed = getOrCreatePhotosService(authData).getFeed(photosUrl, AlbumFeed.class);
 
       PaginationData nextPageData = null;

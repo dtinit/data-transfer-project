@@ -15,14 +15,57 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.gdata.client.photos.PicasawebService;
+import java.io.IOException;
+import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class GooglePhotosImporter implements Importer<AuthData, PhotosContainerResource> {
+
+  private volatile PicasawebService photosService;
+
   @Override
   public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
-    return null;
+    try {
+      for (PhotoAlbum album : data.getAlbums()) {
+        importSingleAlbum(jobId, authData, album);
+      }
+      for (PhotoModel photo : data.getPhotos()) {
+        importSinglePhoto(jobId, authData, photo);
+      }
+    } catch (IOException e) {
+      return new ImportResult(ResultType.ERROR, e.getMessage());
+    }
+    return ImportResult.OK;
+  }
+
+  @VisibleForTesting
+  void importSingleAlbum(String jobId, AuthData authData, PhotoAlbum photoAlbum) throws IOException {
+
+  }
+
+  @VisibleForTesting
+  void importSinglePhoto(String jobId, AuthData authData, PhotoModel photoModel) throws IOException {
+
+  }
+
+  private PicasawebService getOrCreatePhotosService(AuthData authData) {
+    return photosService == null ? makePhotosService(authData) : photosService;
+  }
+
+  private synchronized PicasawebService makePhotosService(AuthData authData) {
+    // TODO(olsona): create credentials from authdata
+    Credential credential = null;
+    PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
+    service.setOAuth2Credentials(credential);
+    return service;
   }
 }
