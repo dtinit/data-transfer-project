@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /** Token-secret-based authentication data. */
-@JsonTypeName("org.dataportability:TokensAndUrlAuthData")
+@JsonTypeName("org.dataportability:TokenSecretAuthData")
 public class TokenSecretAuthData extends AuthData {
   private final String token;
   private final String secret;

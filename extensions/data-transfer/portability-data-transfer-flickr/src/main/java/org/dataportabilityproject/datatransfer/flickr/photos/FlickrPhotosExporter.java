@@ -147,7 +147,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
       }
     } catch (FlickrException e) {
       return new ExportResult<>(
-          ResultType.ERROR, "Error exporting FlickrPhotos: " + e.getErrorMessage());
+          ResultType.ERROR, "Error exporting Flickr photo: " + e.getErrorMessage());
     }
 
     boolean hasMore = photoSetList.getPage() != photoSetList.getPages() && !photoSetList.isEmpty();
@@ -184,7 +184,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
               auth.getUser().getId(), PHOTO_SETS_PER_PAGE, page, PHOTOSET_EXTRAS);
     } catch (FlickrException e) {
       return new ExportResult<>(
-          ResultType.ERROR, "Error exporting FlickrPhotos: " + e.getErrorMessage());
+          ResultType.ERROR, "Error exporting Flickr album: " + e.getErrorMessage());
     }
 
     for (Photoset photoSet : photoSetList.getPhotosets()) {
@@ -221,7 +221,6 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenAuthData = (TokenSecretAuthData) authData;
     Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
-    Auth auth = flickr.getAuthInterface().checkToken(requestToken);
-    return auth;
+    return flickr.getAuthInterface().checkToken(requestToken);
   }
 }
