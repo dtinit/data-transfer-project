@@ -56,7 +56,8 @@ final class JobMetadata {
     importService = initImportService;
   }
 
-  static void reset() {
+  // TODO: remove this
+  static synchronized void reset() {
     jobId = null;
     keyPair = null;
     dataType = null;
