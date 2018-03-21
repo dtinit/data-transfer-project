@@ -16,15 +16,10 @@
 package org.dataportabilityproject.gateway.action.startjob;
 
 import com.google.api.client.util.Sleeper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.security.PublicKey;
-import java.util.UUID;
-import javax.crypto.SecretKey;
 import org.dataportabilityproject.gateway.action.Action;
 import org.dataportabilityproject.gateway.action.ActionUtils;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
@@ -37,6 +32,11 @@ import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.security.PublicKey;
+import java.util.UUID;
 
 /** An {@link Action} that starts a transfer job. */
 public final class StartJobAction implements Action<StartJobActionRequest, StartJobActionResponse> {
@@ -200,8 +200,9 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
         asymmetricKeyGenerator.parse(
             BaseEncoding.base64Url().decode(job.jobAuthorization().authPublicKey()));
     Encrypter asymmetricEncrypter = EncrypterFactory.create(authPublicKey);
+
     String encryptedAuthSecretKey =
-        asymmetricEncrypter.encrypt(new String(authSecretKey.getEncoded(), Charsets.UTF_8));
+        asymmetricEncrypter.encrypt(BaseEncoding.base64Url().encode(authSecretKey.getEncoded()));
 
     // Populate job with encrypted auth data
     JobAuthorization updatedJobAuthorization =
