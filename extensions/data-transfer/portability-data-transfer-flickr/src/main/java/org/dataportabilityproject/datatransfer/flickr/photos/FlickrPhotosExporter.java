@@ -16,8 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.flickr.photos;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.REST;
@@ -34,18 +32,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.types.ContinuationData;
-import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
-import org.dataportabilityproject.spi.transfer.types.IntPaginationToken;
-import org.dataportabilityproject.spi.transfer.types.PaginationData;
+import org.dataportabilityproject.spi.transfer.types.*;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
@@ -55,6 +45,13 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerRe
 import org.scribe.model.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
   private static final int PHOTO_PER_PAGE = 50;
@@ -113,7 +110,14 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   @Override
   public ExportResult<PhotosContainerResource> export(
       AuthData authData, ExportInformation exportInformation) {
+    Auth auth;
+    try {
+      auth = getAuth(authData);
+    } catch (FlickrException e) {
+      return new ExportResult<>(ResultType.ERROR, "Error authorizing user: " + e.getErrorMessage());
+    }
 
+    RequestContext.getRequestContext().setAuth(auth);
     PaginationData paginationData = exportInformation.getPaginationData();
 
     IdOnlyContainerResource resource =
@@ -121,7 +125,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     if (resource != null) {
       return getPhotos(resource, paginationData);
     } else {
-      return getAlbums(paginationData, getAuth(authData));
+      return getAlbums(paginationData, auth);
     }
   }
 
@@ -142,7 +146,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
                 photoSetId, ImmutableSet.copyOf(EXTRAS), 0, PHOTO_PER_PAGE, page);
       }
     } catch (FlickrException e) {
-      throw new IllegalArgumentException(e);
+      return new ExportResult<>(
+          ResultType.ERROR, "Error exporting FlickrPhotos: " + e.getErrorMessage());
     }
 
     boolean hasMore = photoSetList.getPage() != photoSetList.getPages() && !photoSetList.isEmpty();
@@ -178,7 +183,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
           photosetsInterface.getList(
               auth.getUser().getId(), PHOTO_SETS_PER_PAGE, page, PHOTOSET_EXTRAS);
     } catch (FlickrException e) {
-      throw new IllegalArgumentException(e);
+      return new ExportResult<>(
+          ResultType.ERROR, "Error exporting FlickrPhotos: " + e.getErrorMessage());
     }
 
     for (Photoset photoSet : photoSetList.getPhotosets()) {
@@ -208,18 +214,14 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     return new ExportResult<>(resultType, photosContainerResource, continuationData);
   }
 
-  private Auth getAuth(AuthData authData) {
+  private Auth getAuth(AuthData authData) throws FlickrException {
     checkArgument(
         authData instanceof TokenSecretAuthData,
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenAuthData = (TokenSecretAuthData) authData;
     Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
-    try {
-      Auth auth = flickr.getAuthInterface().checkToken(requestToken);
-      return auth;
-    } catch (FlickrException e) {
-      throw new IllegalArgumentException("Problem verifying auth token", e);
-    }
+    Auth auth = flickr.getAuthInterface().checkToken(requestToken);
+    return auth;
   }
 }
