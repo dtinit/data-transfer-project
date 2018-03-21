@@ -19,17 +19,17 @@ package org.dataportabilityproject.datatransfer.flickr.photos;
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.REST;
+import com.flickr4java.flickr.RequestContext;
+import com.flickr4java.flickr.auth.Auth;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
 import jdk.internal.joptsimple.internal.Strings;
-import jdk.internal.util.Preconditions;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.spi.transfer.types.TempPhotosData;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
@@ -60,17 +60,22 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     photosetsInterface = flickr.getPhotosetsInterface();
   }
 
-
   @Override
   public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
-//    Preconditions.checkArgument(authData instanceof TokenSecretAuthData);
-//    flickr.getAuthInterface().checkToken()
+    Auth auth;
+    try {
+      auth = FlickrUtils.getAuth(authData, flickr);
+    } catch (FlickrException e) {
+      return new ImportResult(
+          ImportResult.ResultType.ERROR, "Error authorizing Flickr Auth: " + e.getErrorMessage());
+    }
+    RequestContext.getRequestContext().setAuth(auth);
     UUID id = UUID.fromString(jobId);
 
-    // Store any album data in the cache because Flickr only allows you to create an album with a photo
-    // in it, so we have to wait for the first photo to create the album
+    // Store any album data in the cache because Flickr only allows you to create an album with a
+    // photo in it, so we have to wait for the first photo to create the album
     TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, id);
-    if(tempPhotosData == null) {
+    if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(id, tempPhotosData);
     }
@@ -87,9 +92,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
         String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
         if (Strings.isNullOrEmpty(newAlbumId)) {
-          // This means that we havent created the new album yet, create the photoset and store the in it
-          PhotoAlbum album = tempData.lookupAlbum(CACHE_ALBUM_METADATA_PREFIX+oldAlbumId);
-          Photoset photoset = photosetsInterface.create(COPY_PREFIX+album.getName(), album.getDescription(), photoId);
+          // This means that we havent created the new album yet, create the photoset
+          PhotoAlbum album = tempData.lookupAlbum(CACHE_ALBUM_METADATA_PREFIX + oldAlbumId);
+          Photoset photoset =
+              photosetsInterface.create(
+                  COPY_PREFIX + album.getName(), album.getDescription(), photoId);
           tempData.addAlbumId(oldAlbumId, photoset.getId());
         } else {
           // We've already created a new album, add the photo to the new album
@@ -98,7 +105,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         jobStore.update(id, tempData);
       } catch (FlickrException | IOException e) {
         // TODO: figure out retries
-        return new ImportResult(ImportResult.ResultType.ERROR);
+        return new ImportResult(
+            ImportResult.ResultType.ERROR, "Error importing item: " + e.getMessage());
       }
     }
     return new ImportResult(ImportResult.ResultType.OK);
@@ -119,8 +127,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   private class ImageStreamProvider {
     /**
-     * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotosImporter} to upload
-     * the image.
+     * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotosImporter} to
+     * upload the image.
      */
     public BufferedInputStream get(String urlStr) throws IOException {
       URL url = new URL(urlStr);
