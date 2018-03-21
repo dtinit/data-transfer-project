@@ -15,25 +15,17 @@
  */
 package org.dataportabilityproject.transfer.microsoft.integration;
 
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.dataportabilityproject.transfer.microsoft.helper.MockJobStore;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
@@ -43,6 +35,15 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 /**
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph
@@ -236,7 +237,7 @@ public class MicrosoftCalendarImportTest {
 
     Assert.assertNotNull(calendarRequest.get("headers"));
     Assert.assertEquals("POST", calendarRequest.get("method"));
-    Assert.assertEquals("me/calendars", calendarRequest.get("url"));
+    Assert.assertEquals("/v1.0/me/calendars", calendarRequest.get("url"));
 
     Map<String, Object> calendarRequestBody = (Map<String, Object>) calendarRequest.get("body");
     Assert.assertNotNull(calendarRequestBody);
@@ -256,7 +257,7 @@ public class MicrosoftCalendarImportTest {
     Assert.assertNotNull(eventRequest.get("headers"));
     Assert.assertEquals("POST", eventRequest.get("method"));
     Assert.assertEquals(
-        "me/calendars/NewId1/events",
+        "/v1.0/me/calendars/NewId1/events",
         eventRequest.get("url")); // verify the URL is contructed correctly with NewId
 
     Map<String, Object> eventRequestBody = (Map<String, Object>) eventRequest.get("body");

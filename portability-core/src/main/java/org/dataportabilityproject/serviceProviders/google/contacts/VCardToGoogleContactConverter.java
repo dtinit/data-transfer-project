@@ -16,10 +16,6 @@
 
 package org.dataportabilityproject.serviceProviders.google.contacts;
 
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.CONTACT_SOURCE_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.VCARD_PRIMARY_PREF;
-
 import com.google.api.services.people.v1.model.EmailAddress;
 import com.google.api.services.people.v1.model.FieldMetadata;
 import com.google.api.services.people.v1.model.Name;
@@ -32,11 +28,16 @@ import ezvcard.VCard;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.serviceProviders.google.contacts.GoogleContactsConstants.VCARD_PRIMARY_PREF;
 
 class VCardToGoogleContactConverter {
 
@@ -99,7 +100,7 @@ class VCardToGoogleContactConverter {
     fieldMetadata.setPrimary(isPrimary);
 
     String vCardNameSource = vCardName.getParameter(SOURCE_PARAM_NAME_TYPE);
-    if (vCardNameSource.equals(CONTACT_SOURCE_TYPE)) {
+    if (CONTACT_SOURCE_TYPE.equals(vCardNameSource)) {
       Source source = new Source().setType(vCardNameSource);
       fieldMetadata.setSource(source);
     }
@@ -139,7 +140,7 @@ class VCardToGoogleContactConverter {
     personAddress.setPoBox(vCardAddress.getPoBox());
     personAddress.setExtendedAddress(vCardAddress.getExtendedAddress());
     personAddress.setMetadata(
-        vCardAddress.getPref() == VCARD_PRIMARY_PREF
+        vCardAddress.getPref() != null && vCardAddress.getPref() == VCARD_PRIMARY_PREF
             ? PRIMARY_FIELD_METADATA
             : SECONDARY_FIELD_METADATA);
 
@@ -149,7 +150,7 @@ class VCardToGoogleContactConverter {
   private static PhoneNumber convertToGooglePhoneNumber(Telephone vCardTelephone) {
     PhoneNumber phoneNumber = new PhoneNumber();
     phoneNumber.setValue(vCardTelephone.getText());
-    if (vCardTelephone.getPref() == VCARD_PRIMARY_PREF) {
+    if (vCardTelephone.getPref() != null && vCardTelephone.getPref() == VCARD_PRIMARY_PREF) {
       phoneNumber.setMetadata(PRIMARY_FIELD_METADATA);
     } else {
       phoneNumber.setMetadata(SECONDARY_FIELD_METADATA);
@@ -161,7 +162,7 @@ class VCardToGoogleContactConverter {
   private static EmailAddress convertToGoogleEmail(Email vCardEmail) {
     EmailAddress emailAddress = new EmailAddress();
     emailAddress.setValue(vCardEmail.getValue());
-    if (vCardEmail.getPref() == VCARD_PRIMARY_PREF) {
+    if (vCardEmail.getPref() != null && vCardEmail.getPref() == VCARD_PRIMARY_PREF) {
       emailAddress.setMetadata(PRIMARY_FIELD_METADATA);
     } else {
       emailAddress.setMetadata(SECONDARY_FIELD_METADATA);

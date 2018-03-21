@@ -15,15 +15,8 @@
  */
 package org.dataportabilityproject.transfer.microsoft.calendar;
 
-import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -38,10 +31,18 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarContain
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
+
 /** Exports Outlook calendar information using the Microsoft Graph API. */
 public class MicrosoftCalendarExporter
     implements Exporter<TokenAuthData, CalendarContainerResource> {
-  private static final String CALENDARS_URL = "/v1.0/me/calendars";
+  private static final String CALENDARS_SUBPATH = "/v1.0/me/calendars";
   private static final String EVENTS_URL = "/v1.0/me/calendars/%s/events";
   private static final String ODATA_NEXT = "@odata.nextLink";
 
@@ -50,11 +51,6 @@ public class MicrosoftCalendarExporter
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TransformerService transformerService;
-
-  public MicrosoftCalendarExporter(
-      OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
-    this("https://graph.microsoft.com/", client, objectMapper, transformerService);
-  }
 
   @VisibleForTesting
   public MicrosoftCalendarExporter(
@@ -70,7 +66,7 @@ public class MicrosoftCalendarExporter
 
   @Override
   public ExportResult<CalendarContainerResource> export(TokenAuthData authData) {
-    Request.Builder calendarsBuilder = getBuilder(baseUrl + CALENDARS_URL, authData);
+    Request.Builder calendarsBuilder = getBuilder(baseUrl + CALENDARS_SUBPATH, authData);
 
     List<CalendarModel> calendarModels = new ArrayList<>();
     try (Response graphResponse = client.newCall(calendarsBuilder.build()).execute()) {

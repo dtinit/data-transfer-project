@@ -15,35 +15,36 @@
  */
 package org.dataportabilityproject.transfer.microsoft.calendar;
 
-import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult;
+import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
+import org.dataportabilityproject.transfer.microsoft.common.RequestHelper;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
+import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
+import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
+import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import okhttp3.OkHttpClient;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.transfer.provider.ImportResult;
-import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.common.RequestHelper;
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformResult;
-import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
-import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
-import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
-import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
+
+import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
 
 /** Imports Outlook calendar information using the Microsoft Graph API. */
 public class MicrosoftCalendarImporter
     implements Importer<TokenAuthData, CalendarContainerResource> {
-  private static final String CALENDAR_URL =
-      "me/calendars"; // must be relative for batch operations
-  private static final String EVENT_URL =
-      "me/calendars/%s/events"; // must be relative for batch operations
+  private static final String CALENDAR_SUBPATH =
+      "/v1.0/me/calendars"; // must be relative for batch operations
+  private static final String EVENT_SUBPATH =
+      "/v1.0/me/calendars/%s/events"; // must be relative for batch operations
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -51,14 +52,6 @@ public class MicrosoftCalendarImporter
 
   private final String baseUrl;
   private final JobStore jobStore;
-
-  public MicrosoftCalendarImporter(
-      OkHttpClient client,
-      ObjectMapper objectMapper,
-      TransformerService transformerService,
-      JobStore jobStore) {
-    this("https://graph.microsoft.com", client, objectMapper, transformerService, jobStore);
-  }
 
   public MicrosoftCalendarImporter(
       String baseUrl,
@@ -93,7 +86,7 @@ public class MicrosoftCalendarImporter
     List<Map<String, Object>> calendarRequests = new ArrayList<>();
 
     for (CalendarModel calendar : data.getCalendars()) {
-      Map<String, Object> request = createRequestItem(calendar, requestId, CALENDAR_URL, problems);
+      Map<String, Object> request = createRequestItem(calendar, requestId, CALENDAR_SUBPATH, problems);
       requestIdToExportedId.put(String.valueOf(requestId), calendar.getId());
       requestId++;
       calendarRequests.add(request);
@@ -141,7 +134,7 @@ public class MicrosoftCalendarImporter
               event
                   .getCalendarId()); // get the imported calendar id for the event from the mappings
       Map<String, Object> request =
-          createRequestItem(event, requestId, String.format(EVENT_URL, importedId), problems);
+          createRequestItem(event, requestId, String.format(EVENT_SUBPATH, importedId), problems);
       requestId++;
       eventRequests.add(request);
     }

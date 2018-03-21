@@ -16,11 +16,7 @@
 
 package org.dataportabilityproject.datatransfer.google.contacts;
 
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
-
+import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -39,12 +35,6 @@ import ezvcard.io.json.JCardWriter;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -53,12 +43,25 @@ import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelWrapper> {
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
+
+public class GoogleContactsExporter
+    implements Exporter<TokensAndUrlAuthData, ContactsModelWrapper> {
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactsExporter.class);
   private volatile PeopleService peopleService;
@@ -73,26 +76,25 @@ public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelW
   }
 
   @Override
-  public ExportResult<ContactsModelWrapper> export(AuthData authData) {
+  public ExportResult<ContactsModelWrapper> export(TokensAndUrlAuthData authData) {
     return exportContacts(authData, Optional.empty());
   }
 
   @Override
-  public ExportResult<ContactsModelWrapper> export(AuthData authData,
-      ExportInformation exportInformation) {
+  public ExportResult<ContactsModelWrapper> export(
+      TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     StringPaginationToken stringPaginationToken =
         (StringPaginationToken) exportInformation.getPaginationData();
     Optional<PaginationData> paginationData = Optional.ofNullable(stringPaginationToken);
     return exportContacts(authData, paginationData);
   }
 
-  private ExportResult<ContactsModelWrapper> exportContacts(AuthData authData,
-      Optional<PaginationData> pageData) {
+  private ExportResult<ContactsModelWrapper> exportContacts(
+      TokensAndUrlAuthData authData, Optional<PaginationData> pageData) {
     try {
       // Set up connection
-      Connections.List connectionsListRequest = getOrCreatePeopleService(authData).people()
-          .connections()
-          .list(SELF_RESOURCE);
+      Connections.List connectionsListRequest =
+          getOrCreatePeopleService(authData).people().connections().list(SELF_RESOURCE);
 
       // Get next page, if we have a page token
       if (pageData.isPresent()) {
@@ -101,13 +103,13 @@ public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelW
       }
 
       // Get list of connections (nb: not a list containing full info of each Person)
-      ListConnectionsResponse response = connectionsListRequest.setPersonFields(PERSON_FIELDS)
-          .execute();
+      ListConnectionsResponse response =
+          connectionsListRequest.setPersonFields(PERSON_FIELDS).execute();
       List<Person> peopleList = response.getConnections();
 
       // Get list of resource names, then get list of Persons
-      List<String> resourceNames = peopleList.stream().map(Person::getResourceName)
-          .collect(Collectors.toList());
+      List<String> resourceNames =
+          peopleList.stream().map(Person::getResourceName).collect(Collectors.toList());
       GetPeopleResponse batchResponse =
           getOrCreatePeopleService(authData)
               .people()
@@ -119,10 +121,7 @@ public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelW
 
       // Convert Persons to VCards
       List<VCard> vCards =
-          personResponseList
-              .stream()
-              .map(a -> convert(a.getPerson()))
-              .collect(Collectors.toList());
+          personResponseList.stream().map(a -> convert(a.getPerson())).collect(Collectors.toList());
 
       // Determine if there's a next page
       StringPaginationToken nextPageData = null;
@@ -252,17 +251,16 @@ public class GoogleContactsExporter implements Exporter<AuthData, ContactsModelW
     return personNames.size() >= 1 && !personNames.get(0).isEmpty();
   }
 
-  private PeopleService getOrCreatePeopleService(AuthData authData) {
+  private PeopleService getOrCreatePeopleService(TokensAndUrlAuthData authData) {
     return peopleService == null ? makePeopleService(authData) : peopleService;
   }
 
-  private synchronized PeopleService makePeopleService(AuthData authData) {
-    // TODO(olsona): get credential using authData
-    Credential credential = null;
+  private synchronized PeopleService makePeopleService(TokensAndUrlAuthData authData) {
+    Credential credential =
+        new Credential(BearerToken.authorizationHeaderAccessMethod())
+            .setAccessToken(authData.getAccessToken());
     return new PeopleService.Builder(
-        GoogleStaticObjects.getHttpTransport(),
-        GoogleStaticObjects.JSON_FACTORY,
-        credential)
+            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

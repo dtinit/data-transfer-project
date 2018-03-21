@@ -18,10 +18,6 @@ package org.dataportabilityproject.transfer.microsoft.contacts;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardWriter;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -36,17 +32,24 @@ import org.dataportabilityproject.transfer.microsoft.types.GraphPagination;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
+
 /** Exports Microsoft contacts using the Graph API. */
 public class MicrosoftContactsExporter implements Exporter<TokenAuthData, ContactsModelWrapper> {
-  private static final String CONTACTS_URL = "https://graph.microsoft.com/v1.0/me/contacts";
+  private static final String CONTACTS_SUBPATH = "/v1.0/me/contacts";
   private static final String ODATA_NEXT = "@odata.nextLink";
 
+  private final String contactsUrl;
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TransformerService transformerService;
 
   public MicrosoftContactsExporter(
-      OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+      String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+    this.contactsUrl = baseUrl + CONTACTS_SUBPATH;
     this.client = client;
     this.objectMapper = objectMapper;
     this.transformerService = transformerService;
@@ -54,14 +57,18 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
 
   @Override
   public ExportResult<ContactsModelWrapper> export(TokenAuthData authData) {
-    return doExport(authData, CONTACTS_URL);
+    return doExport(authData, contactsUrl);
   }
 
   @Override
   public ExportResult<ContactsModelWrapper> export(
       TokenAuthData authData, ExportInformation continuationData) {
     GraphPagination graphPagination = (GraphPagination) continuationData.getPaginationData();
-    return doExport(authData, graphPagination.getNextLink());
+    if (graphPagination != null && graphPagination.getNextLink() != null) {
+      return doExport(authData, graphPagination.getNextLink());
+    }else {
+      return doExport(authData, contactsUrl);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -98,7 +105,7 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
 
   private ContactsModelWrapper transform(List<Map<String, Object>> rawContacts) {
     StringWriter stringWriter = new StringWriter();
-    try (JCardWriter writer = new JCardWriter(stringWriter); ) {
+    try (JCardWriter writer = new JCardWriter(stringWriter) ) {
       for (Map<String, Object> rawContact : rawContacts) {
         TransformResult<VCard> result = transformerService.transform(VCard.class, rawContact);
         if (result.hasProblems()) {
