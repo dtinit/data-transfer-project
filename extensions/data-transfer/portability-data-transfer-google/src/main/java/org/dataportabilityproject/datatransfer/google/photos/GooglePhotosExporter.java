@@ -17,112 +17,149 @@ package org.dataportabilityproject.datatransfer.google.photos;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.MediaContent;
 import com.google.gdata.data.photos.AlbumFeed;
 import com.google.gdata.data.photos.GphotoEntry;
 import com.google.gdata.data.photos.UserFeed;
 import com.google.gdata.util.ServiceException;
-import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.transfer.provider.ExportResult;
-import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
-import org.dataportabilityproject.spi.transfer.types.ContinuationData;
-import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
-import org.dataportabilityproject.spi.transfer.types.PaginationData;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
-import org.dataportabilityproject.types.transfer.models.ContainerResource;
-import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
-import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
-import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
-
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
+import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.types.ContinuationData;
+import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
+import org.dataportabilityproject.spi.transfer.types.PaginationData;
+import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
+import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
 
-  private volatile PicasawebService photosService;
-  private final JobStore jobStore;
+  public static final String ALBUM_TOKEN_PREFIX = "album:";
+  public static final String PHOTO_TOKEN_PREFIX = "photo:";
 
-  public GooglePhotosExporter(JobStore jobStore) {
+  // TODO(olsona): figure out optimal value here
+  public static final int MAX_RESULTS = 100;
+
+  public static final String URL_ALBUM_FEED_FORMAT = "https://picasaweb.google.com/data/feed/api/user/default?kind=album&start-index=%d&max-results=%d";
+  // imgmax=d gets the original image as per https://developers.google.com/picasa-web/docs/3.0/reference
+  public static final String URL_PHOTO_FEED_FORMAT = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s?imgmax=d&start-index=%s&max-results=%d";
+
+  private volatile PicasawebService photosService;
+
+  public GooglePhotosExporter() {
     this.photosService = null;
-    this.jobStore = jobStore;
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(PicasawebService photosService, JobStore jobStore) {
+  GooglePhotosExporter(PicasawebService photosService) {
     this.photosService = photosService;
-    this.jobStore = jobStore;
   }
 
   @Override
   public ExportResult<PhotosContainerResource> export(AuthData authData) {
-    return null;
+    return exportAlbums(authData, Optional.empty());
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(AuthData authData, ExportInformation exportInformation) {
-    return null;
+  public ExportResult<PhotosContainerResource> export(AuthData authData,
+      ExportInformation exportInformation) {
+    StringPaginationToken paginationToken = (StringPaginationToken) exportInformation
+        .getPaginationData();
+    if (paginationToken != null && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
+      // Next thing to export is more albums
+      return exportAlbums(authData, Optional.of(paginationToken));
+    } else {
+      // Next thing to export is photos
+      IdOnlyContainerResource idOnlyContainerResource =
+          (IdOnlyContainerResource) exportInformation.getContainerResource();
+      Optional<PaginationData> pageData =
+          paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
+      return exportPhotos(authData, idOnlyContainerResource.getId(), pageData);
+    }
   }
 
-  private ExportResult<PhotosContainerResource> exportAlbums(AuthData authData) {
-    // TODO(olsona): is pagination data relevant for this?
-
+  private ExportResult<PhotosContainerResource> exportAlbums(AuthData authData,
+      Optional<PaginationData> paginationData) {
     try {
-      URL albumUrl = new URL("https://picasaweb.google.com/data/feed/api/user/default?kind=album");
+      int startItem = 1;
+      if (paginationData.isPresent()) {
+        String token = ((StringPaginationToken) paginationData.get()).getToken();
+        Preconditions.checkArgument(token.startsWith(ALBUM_TOKEN_PREFIX),
+            "Invalid pagination token " + token);
+        startItem = Integer.parseInt(token.substring(ALBUM_TOKEN_PREFIX.length()));
+      }
+      URL albumUrl = new URL(String.format(URL_ALBUM_FEED_FORMAT, startItem, MAX_RESULTS));
       UserFeed albumFeed = getOrCreatePhotosService(authData).getFeed(albumUrl, UserFeed.class);
 
-      List<PhotoAlbum> albums = new ArrayList<>(albumFeed.getAlbumEntries().size());
-      ContinuationData continuationData = new ContinuationData(null);
+      PaginationData nextPageData = null;
+      if (albumFeed.getAlbumEntries().size() == MAX_RESULTS) {
+        int nextPageStart = startItem + MAX_RESULTS;
+        nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);
+      }
+      ContinuationData continuationData = new ContinuationData(nextPageData);
 
+      List<PhotoAlbum> albums = new ArrayList<>(albumFeed.getAlbumEntries().size());
       for (GphotoEntry googleAlbum : albumFeed.getAlbumEntries()) {
         // Add album info to list so album can be recreated later
         albums.add(new PhotoAlbum(googleAlbum.getGphotoId(), googleAlbum.getTitle().getPlainText(),
-                googleAlbum.getDescription().getPlainText()));
+            googleAlbum.getDescription().getPlainText()));
 
         // Add album id to continuation data
-        continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
+        continuationData
+            .addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
       }
 
       ResultType resultType = ResultType.CONTINUE;
       PhotosContainerResource containerResource = new PhotosContainerResource(albums, null);
-      return new ExportResult<PhotosContainerResource>
-              (resultType, containerResource, continuationData);
+      return new ExportResult<>(resultType, containerResource, continuationData);
     } catch (ServiceException | IOException e) {
-      return new ExportResult<PhotosContainerResource>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
   }
 
-  private ExportResult<PhotosContainerResource> exportPhotos(String albumId, AuthData authData) {
-    // TODO(olsona): pagination data?
-
+  private ExportResult<PhotosContainerResource> exportPhotos(AuthData authData, String albumId,
+      Optional<PaginationData> paginationData) {
     try {
-      // imgmax=d gets the original image as per:
-      // https://developers.google.com/picasa-web/docs/3.0/reference
-      URL photosUrl = new URL(
-              "https://picasaweb.google.com/data/feed/api/user/default/albumid/"
-                      + albumId
-                      + "?imgmax=d");
+      int startItem = 1;
+      if (paginationData.isPresent()) {
+        String token = ((StringPaginationToken) paginationData.get()).getToken();
+        Preconditions.checkArgument(token.startsWith(PHOTO_TOKEN_PREFIX),
+            "Invalid pagination token " + token);
+        startItem = Integer.parseInt(token.substring(PHOTO_TOKEN_PREFIX.length()));
+      }
+      URL photosUrl = new URL(String.format(URL_PHOTO_FEED_FORMAT, albumId, startItem, MAX_RESULTS));
       AlbumFeed photoFeed = getOrCreatePhotosService(authData).getFeed(photosUrl, AlbumFeed.class);
+
+      PaginationData nextPageData = null;
+      if (photoFeed.getEntries().size() == MAX_RESULTS) {
+        int nextPageStart = startItem + MAX_RESULTS;
+        nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + nextPageStart);
+      }
+      ContinuationData continuationData = new ContinuationData(nextPageData);
 
       List<PhotoModel> photos = new ArrayList<>(photoFeed.getEntries().size());
       for (GphotoEntry photo : photoFeed.getEntries()) {
         MediaContent mediaContent = (MediaContent) photo.getContent();
         photos.add(new PhotoModel(photo.getTitle().getPlainText(), mediaContent.getUri(), photo
-                .getDescription().getPlainText(), mediaContent.getMimeType().getMediaType(),
-                albumId));
+            .getDescription().getPlainText(), mediaContent.getMimeType().getMediaType(),
+            albumId));
       }
 
       PhotosContainerResource containerResource = new PhotosContainerResource(null, photos);
-      return new ExportResult<PhotosContainerResource>(ResultType.END, containerResource, null);
+      return new ExportResult<>(ResultType.END, containerResource, continuationData);
     } catch (ServiceException | IOException e) {
-      return new ExportResult<PhotosContainerResource>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
   }
 
