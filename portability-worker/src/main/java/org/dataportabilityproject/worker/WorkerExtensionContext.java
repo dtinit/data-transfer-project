@@ -86,7 +86,7 @@ final class WorkerExtensionContext implements ExtensionContext {
       // allows extensions to structure their custom settings however they want.
       ImmutableList<String> settingsFiles = ImmutableList.<String>builder().build();
       InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
-      return ConfigUtils.parse(in);
+      return ConfigUtils.parseExtensionSettings(in);
     } catch (IOException e) {
       throw new IllegalArgumentException("Problem parsing cloud extension settings", e);
     }

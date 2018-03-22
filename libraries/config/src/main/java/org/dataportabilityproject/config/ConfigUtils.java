@@ -24,17 +24,22 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common utilities for yaml configuration parsing.
  */
 public class ConfigUtils {
+  private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
 
   /**
-   * Parses an input stream to a yaml configuration file into a generic Map<String, Object>.
+   * Parses an input stream to an extension's yaml configuration into a generic
+   * Map<String, Object>.
    */
-  public static Map<String, Object> parse(InputStream in) throws IOException {
+  public static Map<String, Object> parseExtensionSettings(InputStream in) throws IOException {
     if (in == null) {
+      logger.warn("No extension settings found to parse");
       return new HashMap<>();
     }
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());

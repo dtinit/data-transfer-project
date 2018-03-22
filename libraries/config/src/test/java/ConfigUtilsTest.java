@@ -34,7 +34,7 @@ public class ConfigUtilsTest {
     String testYaml = "environment: PROD\ncloud: LOCAL";
     InputStream in = new ByteArrayInputStream(testYaml.getBytes(StandardCharsets.UTF_8));
     try {
-      Map<String, Object> config = ConfigUtils.parse(in);
+      Map<String, Object> config = ConfigUtils.parseExtensionSettings(in);
       assertThat(config.get("environment")).isEqualTo("PROD");
       assertThat(config.get("cloud")).isEqualTo("LOCAL");
     } catch (IOException e) {

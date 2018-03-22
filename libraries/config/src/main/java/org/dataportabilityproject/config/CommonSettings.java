@@ -59,11 +59,6 @@ public class CommonSettings {
   private final String cloud;
   private final Environment environment;
 
-  public CommonSettings() {
-    cloud = null;
-    environment = null;
-  }
-
   @JsonCreator
   public CommonSettings(
       @JsonProperty(value = "cloud", required = true) String cloud,
@@ -118,5 +113,11 @@ public class CommonSettings {
   private static CommonSettings getCommonSettings(InputStream inputStream) throws IOException {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     return mapper.readValue(inputStream, CommonSettings.class);
+  }
+
+  // prevent instantiation, use @JsonCreator constructor
+  private CommonSettings() {
+    cloud = null;
+    environment = null;
   }
 }
