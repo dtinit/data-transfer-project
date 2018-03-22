@@ -7,6 +7,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -26,6 +27,7 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_CREDS_KEY = "EXPORT_ENCRYPTED_CREDS_KEY";
   private static final String IMPORT_ENCRYPTED_CREDS_KEY = "IMPORT_ENCRYPTED_CREDS_KEY";
   private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
+  private static final String ENCRYPTED_AUTH_KEY = "ENCRYPTED_AUTH_KEY";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
 
   public static PortabilityJob.Builder builder() {
@@ -68,6 +70,7 @@ public abstract class PortabilityJob {
                 .setEncryptedExportAuthData(encryptedExportAuthData)
                 .setEncryptedImportAuthData(encryptedImportAuthData)
                 .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
+                .setAuthSecretKey((String) properties.get(ENCRYPTED_AUTH_KEY))
                 .setAuthPublicKey(encodedPublicKey)
                 .build())
         .build();
@@ -118,6 +121,9 @@ public abstract class PortabilityJob {
             .put(IMPORT_SERVICE_KEY, importService())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
             .put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+    if (jobAuthorization().authSecretKey() != null) {
+      builder.put(ENCRYPTED_AUTH_KEY, jobAuthorization().authSecretKey());
+    }
 
     if (null != jobAuthorization().encryptedExportAuthData()) {
       builder.put(EXPORT_ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedExportAuthData());
