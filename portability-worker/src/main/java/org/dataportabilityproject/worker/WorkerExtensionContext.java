@@ -26,8 +26,8 @@ import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.config.ConfigUtils;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
-import org.dataportabilityproject.security.ConfigUtils;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
