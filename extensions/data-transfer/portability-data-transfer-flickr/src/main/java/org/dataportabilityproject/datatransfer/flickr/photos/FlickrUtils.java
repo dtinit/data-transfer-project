@@ -3,6 +3,7 @@ package org.dataportabilityproject.datatransfer.flickr.photos;
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
+import com.flickr4java.flickr.photosets.Photoset;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.model.Token;

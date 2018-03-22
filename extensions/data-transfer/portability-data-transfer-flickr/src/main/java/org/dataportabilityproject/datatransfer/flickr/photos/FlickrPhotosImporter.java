@@ -26,7 +26,7 @@ import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
-import jdk.internal.joptsimple.internal.Strings;
+import com.google.common.base.Strings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -37,6 +37,7 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
+import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -56,8 +57,17 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
-    imageStreamProvider = new ImageStreamProvider();
-    photosetsInterface = flickr.getPhotosetsInterface();
+    this.imageStreamProvider = new ImageStreamProvider();
+    this.photosetsInterface = flickr.getPhotosetsInterface();
+  }
+
+  @VisibleForTesting
+  FlickrPhotosImporter(Flickr flickr, JobStore jobstore, ImageStreamProvider imageStreamProvider) {
+    this.flickr = flickr;
+    this.imageStreamProvider = imageStreamProvider;
+    this.jobStore = jobstore;
+    this.uploader = flickr.getUploader();
+    this.photosetsInterface = flickr.getPhotosetsInterface();
   }
 
   @Override
@@ -125,7 +135,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     return uploader.upload(inStream, uploadMetaData);
   }
 
-  private class ImageStreamProvider {
+  @VisibleForTesting
+  class ImageStreamProvider {
     /**
      * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotosImporter} to
      * upload the image.

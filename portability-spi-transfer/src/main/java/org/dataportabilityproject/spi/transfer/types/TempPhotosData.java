@@ -35,18 +35,22 @@ public class TempPhotosData extends DataModel {
     this.newAlbumIds = new HashMap<>();
   }
 
+  // Adds the <Key, PhotoAlbum> mapping provided
   public void addAlbum(String key, PhotoAlbum album) {
     photoAlbums.put(key, album);
   }
 
+  // Looks up the PhotoAlbum corresponding to the key provided
   public PhotoAlbum lookupAlbum(String key) {
     return photoAlbums.getOrDefault(key, null);
   }
 
+  // Adds a mapping from old album id to new album id
   public void addAlbumId(String oldAlbumId, String newAlbumId){
     newAlbumIds.put(oldAlbumId, newAlbumId);
   }
 
+  // returns the album id mapped to by old album id
   public String lookupNewAlbumId(String oldAlbumId){
     return newAlbumIds.getOrDefault(oldAlbumId, "");
   }
