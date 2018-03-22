@@ -53,7 +53,7 @@ public class CommonSettings {
    */
   private static CommonSettings commonSettings;
 
-  private static final String COMMON_SETTINGS_PATH = "config/env/common.yaml";
+  private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
   private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
 
   private final String cloud;
