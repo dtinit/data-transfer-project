@@ -45,15 +45,15 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerRe
 
 public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
 
-  public static final String ALBUM_TOKEN_PREFIX = "album:";
-  public static final String PHOTO_TOKEN_PREFIX = "photo:";
+  static final String ALBUM_TOKEN_PREFIX = "album:";
+  static final String PHOTO_TOKEN_PREFIX = "photo:";
 
   // TODO(olsona): figure out optimal value here
-  public static final int MAX_RESULTS = 100;
+  static final int MAX_RESULTS = 100;
 
-  public static final String URL_ALBUM_FEED_FORMAT = "https://picasaweb.google.com/data/feed/api/user/default?kind=album&start-index=%d&max-results=%d";
+  static final String URL_ALBUM_FEED_FORMAT = "https://picasaweb.google.com/data/feed/api/user/default?kind=album&start-index=%d&max-results=%d";
   // imgmax=d gets the original image as per https://developers.google.com/picasa-web/docs/3.0/reference
-  public static final String URL_PHOTO_FEED_FORMAT = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s?imgmax=d&start-index=%s&max-results=%d";
+  static final String URL_PHOTO_FEED_FORMAT = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s?imgmax=d&start-index=%s&max-results=%d";
 
   private volatile PicasawebService photosService;
 
