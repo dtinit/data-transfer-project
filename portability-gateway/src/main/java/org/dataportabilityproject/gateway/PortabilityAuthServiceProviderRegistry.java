@@ -22,15 +22,15 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
-
   private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
   private final ImmutableSet<String> supportedImportTypes;
   private final ImmutableSet<String> supportedExportTypes;
@@ -107,7 +107,31 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
         supportedImportTypes.contains(transferDataType),
         "TransferDataType [%s] is not valid for import",
         transferDataType);
-    return authServiceProviderMap.keySet();
+
+    Set<String> exportServices =
+        authServiceProviderMap
+            .values()
+            .stream()
+            .filter(
+                sp ->
+                    sp.getExportTypes()
+                        .stream()
+                        .anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
+            .map(AuthServiceExtension::getServiceId)
+            .collect(Collectors.toSet());
+
+    Set<String> importServices =
+        authServiceProviderMap
+            .values()
+            .stream()
+            .filter(
+                sp ->
+                    sp.getImportTypes()
+                        .stream()
+                        .anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
+            .map(AuthServiceExtension::getServiceId)
+            .collect(Collectors.toSet());
+    return Sets.union(exportServices, importServices);
   }
 
   /** Returns the set of data types that support both import and export. */
