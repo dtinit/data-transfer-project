@@ -24,15 +24,20 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * TempPhotosData used to store album and photos information before they are ready to be uploaded.
+ */
 @JsonTypeName("org.dataportability:TempPhotosData")
 public class TempPhotosData extends DataModel {
 
   @JsonProperty("jobId")
   private final String jobId;
 
-  @JsonProperty("album")
+  // Map of PhotoAlbums keyed by Album name.
+  @JsonProperty("photoAlbums")
   private final Map<String, PhotoAlbum> photoAlbums;
 
+  // Map of newAlbumIds keyed by the old album name.
   @JsonProperty("newAlbumIds")
   private final Map<String, String> newAlbumIds;
 
@@ -62,12 +67,12 @@ public class TempPhotosData extends DataModel {
   }
 
   // Adds a mapping from old album id to new album id
-  public void addAlbumId(String oldAlbumId, String newAlbumId){
+  public void addAlbumId(String oldAlbumId, String newAlbumId) {
     newAlbumIds.put(oldAlbumId, newAlbumId);
   }
 
   // returns the album id mapped to by old album id
-  public String lookupNewAlbumId(String oldAlbumId){
+  public String lookupNewAlbumId(String oldAlbumId) {
     return newAlbumIds.getOrDefault(oldAlbumId, "");
   }
 }

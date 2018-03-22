@@ -22,7 +22,7 @@ import com.flickr4java.flickr.photosets.Photoset;
 
 import java.util.Collections;
 
-public class FlickrTestUtils {
+class FlickrTestUtils {
 
   public static Photoset initializePhotoset(String id, String title, String description) {
     Photoset photoset = new Photoset();
