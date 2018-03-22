@@ -51,8 +51,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS = ImmutableList.of("url_o", "o_dims", "original_format");
@@ -112,7 +110,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
       AuthData authData, ExportInformation exportInformation) {
     Auth auth;
     try {
-      auth = getAuth(authData);
+      auth = FlickrUtils.getAuth(authData, flickr);
     } catch (FlickrException e) {
       return new ExportResult<>(ResultType.ERROR, "Error authorizing user: " + e.getErrorMessage());
     }
@@ -212,15 +210,5 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     }
 
     return new ExportResult<>(resultType, photosContainerResource, continuationData);
-  }
-
-  private Auth getAuth(AuthData authData) throws FlickrException {
-    checkArgument(
-        authData instanceof TokenSecretAuthData,
-        "authData expected to be TokenSecretAuthData not %s",
-        authData.getClass().getCanonicalName());
-    TokenSecretAuthData tokenAuthData = (TokenSecretAuthData) authData;
-    Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
-    return flickr.getAuthInterface().checkToken(requestToken);
   }
 }

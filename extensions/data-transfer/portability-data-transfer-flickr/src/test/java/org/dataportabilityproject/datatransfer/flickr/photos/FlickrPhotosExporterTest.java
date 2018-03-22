@@ -62,15 +62,6 @@ public class FlickrPhotosExporterTest {
   private static final String PHOTO_DESCRIPTION = "Description";
   private static final String MEDIA_TYPE = "jpeg";
   private static final String ALBUM_ID = "Album ID";
-  private static final String ALBUM_NAME = "Album name";
-  private static final String ALBUM_DESCRIPTION = "Album description";
-  private static final PhotoModel PHOTO_MODEL =
-      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, ALBUM_ID);
-  private static final PhotoAlbum PHOTO_ALBUM =
-      new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
-  private static final String FLICKR_PHOTO_ID = "flickrPhotoId";
-  private static final String FLICKR_ALBUM_ID = "flickrAlbumId";
-  private static final Logger logger = LoggerFactory.getLogger(FlickrPhotosExporterTest.class);
 
   private Flickr flickr = mock(Flickr.class);
   private PhotosInterface photosInterface = mock(PhotosInterface.class);
@@ -80,30 +71,9 @@ public class FlickrPhotosExporterTest {
   private User user = mock(User.class);
   private Auth auth = new Auth(Permission.WRITE, user);
 
-  private static Photo initializePhoto(String title, String url, String description) {
-    Photo photo = new Photo();
-    photo.setTitle(title);
-    photo.setDescription(description);
-    photo.setOriginalFormat(MEDIA_TYPE);
-    Size size = new Size();
-    size.setSource(url);
-    size.setLabel(Size.ORIGINAL);
-    photo.setSizes(Collections.singletonList(size));
-    return photo;
-  }
-
-  private static Photoset initializePhotoset(String id, String title, String description) {
-    Photoset photoset = new Photoset();
-    photoset.setId(id);
-    photoset.setTitle(title);
-    photoset.setDescription(description);
-
-    return photoset;
-  }
-
   @Test
   public void toCommonPhoto() {
-    Photo photo = initializePhoto(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION);
+    Photo photo = FlickrTestUtils.initializePhoto(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE);
     PhotoModel photoModel = FlickrPhotosExporter.toCommonPhoto(photo, ALBUM_ID);
 
     assertThat(photoModel.getAlbumId()).isEqualTo(ALBUM_ID);
@@ -129,7 +99,7 @@ public class FlickrPhotosExporterTest {
     when(flickr.getAuthInterface()).thenReturn(authInterface);
 
     // setup photoset
-    Photoset photoset = initializePhotoset("photosetId", "title", "description");
+    Photoset photoset = FlickrTestUtils.initializePhotoset("photosetId", "title", "description");
 
     // setup photoset list (aka album view)
     int page = 1;
@@ -181,7 +151,7 @@ public class FlickrPhotosExporterTest {
     int numPhotos = 4;
     PhotoList<Photo> photosList = new PhotoList<>();
     for (int i = 0; i < numPhotos; i++) {
-      photosList.add(initializePhoto("title" + 1, "url" + i, "description" + i));
+      photosList.add(FlickrTestUtils.initializePhoto("title" + 1, "url" + i, "description" + i, MEDIA_TYPE));
     }
     photosList.setPage(page);
     photosList.setPages(page + 1);
