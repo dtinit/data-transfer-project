@@ -53,7 +53,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private final ImageStreamProvider imageStreamProvider;
   private final PhotosetsInterface photosetsInterface;
 
-  FlickrPhotosImporter(AppCredentials appCredentials, JobStore jobStore) {
+  public FlickrPhotosImporter(AppCredentials appCredentials, JobStore jobStore) {
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
