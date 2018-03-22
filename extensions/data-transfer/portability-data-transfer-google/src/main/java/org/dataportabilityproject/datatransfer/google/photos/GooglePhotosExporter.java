@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
+import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -38,12 +39,12 @@ import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
+public class GooglePhotosExporter implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "photo:";
@@ -67,12 +68,12 @@ public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerR
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(AuthData authData) {
+  public ExportResult<PhotosContainerResource> export(TokensAndUrlAuthData authData) {
     return exportAlbums(authData, Optional.empty());
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(AuthData authData,
+  public ExportResult<PhotosContainerResource> export(TokensAndUrlAuthData authData,
       ExportInformation exportInformation) {
     StringPaginationToken paginationToken = (StringPaginationToken) exportInformation
         .getPaginationData();
@@ -89,7 +90,7 @@ public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerR
     }
   }
 
-  private ExportResult<PhotosContainerResource> exportAlbums(AuthData authData,
+  private ExportResult<PhotosContainerResource> exportAlbums(TokensAndUrlAuthData authData,
       Optional<PaginationData> paginationData) {
     try {
       int startItem = 1;
@@ -128,7 +129,7 @@ public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerR
     }
   }
 
-  private ExportResult<PhotosContainerResource> exportPhotos(AuthData authData, String albumId,
+  private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData, String albumId,
       Optional<PaginationData> paginationData) {
     try {
       int startItem = 1;
@@ -164,13 +165,14 @@ public class GooglePhotosExporter implements Exporter<AuthData, PhotosContainerR
     }
   }
 
-  private PicasawebService getOrCreatePhotosService(AuthData authData) {
+  private PicasawebService getOrCreatePhotosService(TokensAndUrlAuthData authData) {
     return photosService == null ? makePhotosService(authData) : photosService;
   }
 
-  private synchronized PicasawebService makePhotosService(AuthData authData) {
-    // TODO(olsona): create credentials from authdata
-    Credential credential = null;
+  private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
+    Credential credential =
+        new Credential(BearerToken.authorizationHeaderAccessMethod())
+            .setAccessToken(authData.getAccessToken());
     PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
     service.setOAuth2Credentials(credential);
     return service;

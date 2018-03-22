@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
+import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gdata.client.photos.PicasawebService;
@@ -34,12 +35,12 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempPhotosData;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class GooglePhotosImporter implements Importer<AuthData, PhotosContainerResource> {
+public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_POST_URL = "https://picasaweb.google.com/data/feed/api/user/default";
   static final String PHOTO_POST_URL_FORMATTER = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
@@ -67,7 +68,7 @@ public class GooglePhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @Override
-  public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
     try {
       for (PhotoAlbum album : data.getAlbums()) {
         importSingleAlbum(jobId, authData, album);
@@ -83,7 +84,7 @@ public class GooglePhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @VisibleForTesting
-  void importSingleAlbum(String jobId, AuthData authData, PhotoAlbum inputAlbum)
+  void importSingleAlbum(String jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
       throws IOException, ServiceException {
     UUID uuid = UUID.fromString(jobId);
 
@@ -107,7 +108,7 @@ public class GooglePhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @VisibleForTesting
-  void importSinglePhoto(String jobId, AuthData authData, PhotoModel inputPhoto)
+  void importSinglePhoto(String jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
       throws IOException, ServiceException {
     UUID uuid = UUID.fromString(jobId);
 
@@ -135,13 +136,14 @@ public class GooglePhotosImporter implements Importer<AuthData, PhotosContainerR
     getOrCreatePhotosService(authData).insert(uploadUrl, outputPhoto);
   }
 
-  private PicasawebService getOrCreatePhotosService(AuthData authData) {
+  private PicasawebService getOrCreatePhotosService(TokensAndUrlAuthData authData) {
     return photosService == null ? makePhotosService(authData) : photosService;
   }
 
-  private synchronized PicasawebService makePhotosService(AuthData authData) {
-    // TODO(olsona): create credentials from authdata
-    Credential credential = null;
+  private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
+    Credential credential =
+        new Credential(BearerToken.authorizationHeaderAccessMethod())
+            .setAccessToken(authData.getAccessToken());
     PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
     service.setOAuth2Credentials(credential);
     return service;
