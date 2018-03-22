@@ -15,18 +15,9 @@
  */
 package org.dataportabilityproject.transfer.microsoft.contacts;
 
-import static java.util.stream.Collectors.toList;
-import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.batchRequest;
-import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -35,12 +26,22 @@ import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServ
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.stream.Collectors.toList;
+import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.batchRequest;
+import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.createRequest;
+
 /**
  * Performs a batch import of contacts using the Microsoft Graph API. For details see:
  * https://developer.microsoft.com/en-us/graph/docs/concepts/json_batching.
  */
 public class MicrosoftContactsImporter implements Importer<TokenAuthData, ContactsModelWrapper> {
-  private static final String CONTACTS_URL = "me/contacts"; // must be relative for batch operations
+  private static final String CONTACTS_URL = "/me/contacts"; // must be relative for batch operations
 
   private final String baseUrl;
   private final OkHttpClient client;

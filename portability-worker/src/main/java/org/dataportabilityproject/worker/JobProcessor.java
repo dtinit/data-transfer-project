@@ -16,7 +16,6 @@
 package org.dataportabilityproject.worker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
@@ -73,15 +72,14 @@ final class JobProcessor {
       logger.debug(
           "Starting copy job, id: {}, source: {}, destination: {}",
           jobId,
-          JobMetadata.getExportService(),
-          JobMetadata.getImportService());
+          job.exportService(),
+          job.importService());
 
       // Decrypt the encrypted outer symmetric key, which have been encrypted with our public key
       Decrypter decrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
-      String decryptedSymmetricKey =
-          decrypter.decrypt(jobAuthorization.authSecretKey());
-      SecretKey outerSymmetricKey =
-          symmetricKeyGenerator.parse(decryptedSymmetricKey.getBytes(Charsets.UTF_8));
+      byte[] decryptedSymmetricKey =
+          BaseEncoding.base64Url().decode(decrypter.decrypt(jobAuthorization.authSecretKey()));
+      SecretKey outerSymmetricKey = symmetricKeyGenerator.parse(decryptedSymmetricKey);
 
       // Decrypt the doubly encrypted export and import credentials, which have been doubly
       // encrypted with two symmetric keys
@@ -93,7 +91,8 @@ final class JobProcessor {
       String singlyEncryptedImportAuthData =
           outerAuthDataDecrypter.decrypt(jobAuthorization.encryptedImportAuthData());
 
-      // Parse the inner (initial) symmetric encryption key that is stored encoded with the jobAuthorization
+      // Parse the inner (initial) symmetric encryption key that is stored encoded with the
+      // jobAuthorization
       byte[] keyBytes = BaseEncoding.base64Url().decode(jobAuthorization.sessionSecretKey());
       SecretKey innerSymmetricKey = symmetricKeyGenerator.parse(keyBytes);
 
@@ -110,10 +109,16 @@ final class JobProcessor {
 
       // Copy the data
       copier.copy(exportAuthData, importAuthData, jobId);
+      logger.debug("Finished copy for jobId: " + jobId);
     } catch (IOException e) {
-      logger.error("Error processing jobId: {}" + jobId, e);
+      logger.error("Error processing jobId: " + jobId, e);
     } finally {
-      store.removeData(jobId);
+      try {
+        store.remove(jobId);
+        JobMetadata.reset();
+      } catch (IOException e) {
+        logger.error("Error removing jobId: " + jobId, e);
+      }
     }
   }
 
