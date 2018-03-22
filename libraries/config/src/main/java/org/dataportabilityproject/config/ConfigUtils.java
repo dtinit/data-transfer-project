@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.security;
+package org.dataportabilityproject.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -24,8 +24,6 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Map;
 
-// TODO(rtannenbaum): Move this out of security/ into a new module config/. Couldn't figure it
-// out in Intellij.
 /**
  * Common utilities for yaml configuration parsing.
  */

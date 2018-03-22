@@ -15,15 +15,9 @@
  */
 
 dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
-
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+    // Logging
     compile("org.slf4j:slf4j-api:${slf4jVersion}")
     compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-
-    compile("com.flickr4java:flickr4java:${flickrVersion}")
-
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
-    testCompile project(":extensions:cloud:portability-cloud-local")
+    testCompile("org.mockito:mockito-all:${mockitoVersion}")
 }
