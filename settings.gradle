@@ -18,6 +18,8 @@ include ':extensions:data-transfer:portability-data-transfer-google', ':extensio
 
 include ':libraries:security'
 
+include ':libraries:config'
+
 include ':portability-test-utilities'
 
 include ':portability-core', ':portability-worker', ':portability-bootstrap-vm'
