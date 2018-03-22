@@ -16,15 +16,41 @@
 
 package org.dataportabilityproject.transfer.smugmug.photos;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.UUID;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
+  private SmugMugInterface smugMugInterface;
+  private final JobStore jobStore;
+
+  @VisibleForTesting
+  SmugMugPhotosImporter(SmugMugInterface smugMugInterface, JobStore jobStore) {
+    this.smugMugInterface = smugMugInterface;
+    this.jobStore = jobStore;
+  }
+
   @Override
   public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
     return null;
+  }
+
+  private void importSingleAlbum(String jobId, PhotoAlbum inputAlbum) {
+    UUID uuid = UUID.fromString(jobId);
+
+
+  }
+
+  private void importSinglePhoto(String jobId, PhotoModel inputPhoto) {
+    UUID uuid = UUID.fromString(jobId);
+
+
   }
 }
