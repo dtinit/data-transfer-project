@@ -19,7 +19,7 @@ package org.dataportabilityproject.cloud.google;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.Environment;
+import org.dataportabilityproject.config.CommonSettings.Environment;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -29,13 +29,15 @@ public class GoogleCloudModuleTest {
 
   @Test
   public void getProjectEnvironment() {
-    assertThat(GoogleCloudExtensionModule.getProjectEnvironment("acme-qa")).isEqualTo(Environment.QA);
+    assertThat(GoogleCloudExtensionModule.getProjectEnvironment("acme-qa"))
+        .isEqualTo(Environment.QA);
   }
 
   @Test
   public void getProjectEnvironment_missingEnvironment() {
     assertThrows(
-        IllegalArgumentException.class, () -> GoogleCloudExtensionModule.getProjectEnvironment("acme"));
+        IllegalArgumentException.class,
+        () -> GoogleCloudExtensionModule.getProjectEnvironment("acme"));
   }
 
   @Test

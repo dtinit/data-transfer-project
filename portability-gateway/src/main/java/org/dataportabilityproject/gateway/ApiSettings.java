@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-/** Settings for {@code ApiServer}. */
+/** Settings used in the API server. */
 public class ApiSettings {
   // TODO(rtannenbaum): Change these to URL types instead of String
   // Base url for all calls within the application

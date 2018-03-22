@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,6 +34,9 @@ public class ConfigUtils {
    * Parses an input stream to a yaml configuration file into a generic Map<String, Object>.
    */
   public static Map<String, Object> parse(InputStream in) throws IOException {
+    if (in == null) {
+      return new HashMap<>();
+    }
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     return mapper.readValue(in, Map.class);
   }

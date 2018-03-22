@@ -35,9 +35,11 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import org.dataportabilityproject.config.CommonSettings;
+import org.dataportabilityproject.config.CommonSettings.Environment;
+import org.dataportabilityproject.config.CommonSettingsModule;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtensionModule;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
-import org.dataportabilityproject.spi.cloud.storage.CryptoKeyStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 
 /** Bindings for cloud platform components using Google Cloud Platform. * */
@@ -56,18 +58,12 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
 
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
-  private final String cloud;
-  private final Environment environment;
 
   GoogleCloudExtensionModule(
       HttpTransport httpTransport,
-      JsonFactory jsonFactory,
-      String cloud,
-      Environment environment) {
+      JsonFactory jsonFactory) {
     this.httpTransport = httpTransport;
     this.jsonFactory = jsonFactory;
-    this.cloud = cloud;
-    this.environment = environment;
   }
 
   /**
@@ -91,7 +87,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Override
   protected void configure() {
     super.configure();
-
+    install(new CommonSettingsModule());
     bind(JobStore.class).to(GoogleJobStore.class);
     bind(AppCredentialStore.class).to(GoogleAppCredentialStore.class);
   }
@@ -108,9 +104,10 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   }
 
   @Provides
-  GoogleCredentials getCredentials(@ProjectId String projectId) throws GoogleCredentialException {
-    validateUsingGoogle();
-    if (environment == Environment.LOCAL) { // Running locally
+  GoogleCredentials getCredentials(@ProjectId String projectId, CommonSettings commonSettings)
+      throws GoogleCredentialException {
+    validateUsingGoogle(commonSettings.getCloud());
+    if (commonSettings.getEnvironment() == Environment.LOCAL) { // Running locally
       // This is a crude check to make sure we are only pointing to test projects when running
       // locally and connecting to GCP
       Environment projectIdEnvironment = getProjectEnvironment(projectId);
@@ -156,8 +153,8 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Provides
   @Singleton
   @ProjectId
-  String getProjectId() {
-    validateUsingGoogle();
+  String getProjectId(CommonSettings commonSettings) {
+    validateUsingGoogle(commonSettings.getCloud());
     String projectId;
     try {
       projectId = System.getenv(GCP_PROJECT_ID_ENV_VAR);
@@ -196,19 +193,10 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
    * <p>TODO: Can this be removed? In the new modular structure, will this code only be run/loaded
    * for Google cloud?
    */
-  private void validateUsingGoogle() {
+  private void validateUsingGoogle(String cloud) {
     if (!cloud.equals(GOOGLE_CLOUD_NAME)) {
       throw new IllegalStateException("Injecting Google objects when cloud != Google!");
     }
-  }
-
-  // TODO(rtannenbaum): Consolidate with core Environment enum once that is defined in new dirs
-  @VisibleForTesting
-  enum Environment {
-    LOCAL,
-    TEST,
-    QA,
-    PROD
   }
 
   @BindingAnnotation

@@ -17,10 +17,8 @@
 package org.dataportabilityproject.worker;
 
 import com.google.common.collect.ImmutableList;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
@@ -35,38 +33,21 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
  * {@link ExtensionContext} used by the worker.
  */
 final class WorkerExtensionContext implements ExtensionContext {
-  private static final String WORKER_SETTINGS_PATH = "config/worker.yaml";
-  private static final String ENV_WORKER_SETTINGS_PATH = "config/env/worker.yaml";
-  private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
-  private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
-
+  /**
+   * Custom settings for an extension. This is separate from the required {@code CommonSettings}.
+   */
   private final Map<String, Object> config;
+
   private final TypeManager typeManager;
   private final Map<Class<?>, Object> registered = new HashMap<>();
 
   WorkerExtensionContext() {
-    // TODO init with types
     this.typeManager = new TypeManagerImpl();
     typeManager.registerType(TokenAuthData.class);
     typeManager.registerType(TokensAndUrlAuthData.class);
+
     registered.put(TypeManager.class, typeManager);
-
-    try {
-      // TODO: read settings from files in jar once they are built in - Jim: I think this should be done by the class creating this one
-      ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
-              .add(WORKER_SETTINGS_PATH)
-              .add(ENV_WORKER_SETTINGS_PATH)
-              .add(COMMON_SETTINGS_PATH)
-              .add(ENV_COMMON_SETTINGS_PATH)
-              .build();
-      // InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
-
-      String tempSettings = "environment: LOCAL\ncloud: local";
-      InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
-      config = ConfigUtils.parse(in);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Problem parsing cloud extension settings", e);
-    }
+    config = parseExtensionSettings();
   }
 
   @Override
@@ -97,5 +78,17 @@ final class WorkerExtensionContext implements ExtensionContext {
       return (T) config.get(key);
     }
     return defaultValue;
+  }
+
+  private Map<String, Object> parseExtensionSettings() {
+    try {
+      // TODO: this should add the contents of an extension's custom config directory (TBD), which
+      // allows extensions to structure their custom settings however they want.
+      ImmutableList<String> settingsFiles = ImmutableList.<String>builder().build();
+      InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
+      return ConfigUtils.parse(in);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Problem parsing cloud extension settings", e);
+    }
   }
 }
