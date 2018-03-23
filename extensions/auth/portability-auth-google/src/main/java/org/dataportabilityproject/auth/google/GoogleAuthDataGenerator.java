@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.people.v1.PeopleServiceScopes;
+import com.google.api.services.tasks.TasksScopes;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -45,7 +46,7 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
   // TODO: Reduce requested scopes by service and authorization mode (readwrite/read)
   private static final ImmutableCollection<String> SCOPES =
-      ImmutableSet.of(CalendarScopes.CALENDAR, PeopleServiceScopes.CONTACTS);
+      ImmutableSet.of(CalendarScopes.CALENDAR, PeopleServiceScopes.CONTACTS, TasksScopes.TASKS);
 
   private final String redirectPath;
   private final String clientId;
