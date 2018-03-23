@@ -33,7 +33,6 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
-import org.dataportabilityproject.spi.transfer.types.IdOnlyResource;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -64,8 +63,6 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
       TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     // Create a new tasks service for the authorized user
     Tasks tasksService = getOrCreateTasksService(authData);
-
-    PaginationData paginationData = exportInformation.getPaginationData();
 
     IdOnlyContainerResource resource =
         (IdOnlyContainerResource) exportInformation.getContainerResource();
@@ -117,12 +114,12 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
       query.setPageToken(((StringPaginationToken) paginationData).getToken());
     }
     TaskLists result = query.execute();
-    ImmutableList.Builder<TaskListModel> newTaskLists = ImmutableList.builder();
-    ImmutableList.Builder<IdOnlyContainerResource> newResources = ImmutableList.builder();
+    ImmutableList.Builder<TaskListModel> newTaskListsBuilder = ImmutableList.builder();
+    ImmutableList.Builder<IdOnlyContainerResource> newResourcesBuilder = ImmutableList.builder();
 
     for(TaskList taskList : result.getItems()) {
-      newTaskLists.add(new TaskListModel(taskList.getId(), taskList.getTitle()));
-      newResources.add(new IdOnlyContainerResource(taskList.getId()));
+      newTaskListsBuilder.add(new TaskListModel(taskList.getId(), taskList.getTitle()));
+      newResourcesBuilder.add(new IdOnlyContainerResource(taskList.getId()));
     }
 
     PaginationData newPage = null;
@@ -132,9 +129,12 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
       resultType = ResultType.CONTINUE;
     }
 
-    TaskContainerResource taskContainerResource = new TaskContainerResource(newTaskLists.build(), null);
+    List<IdOnlyContainerResource> newResources = newResourcesBuilder.build();
+    if(!newResources.isEmpty()) { resultType = ResultType.CONTINUE; }
+
+    TaskContainerResource taskContainerResource = new TaskContainerResource(newTaskListsBuilder.build(), null);
     ContinuationData continuationData = new ContinuationData(newPage);
-    newResources.build().forEach(resource -> continuationData.addContainerResource(resource));
+    newResourcesBuilder.build().forEach(resource -> continuationData.addContainerResource(resource));
     return new ExportResult<>(resultType,taskContainerResource, continuationData);
   }
 
