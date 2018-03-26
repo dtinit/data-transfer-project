@@ -72,6 +72,9 @@ final class OauthCallbackHandler implements HttpHandler {
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
     this.apiSettings = apiSettings;
+
+    logger.debug("Using jobstore: {} in DataTransferHandler", store);
+
   }
 
   @Override
@@ -119,6 +122,8 @@ final class OauthCallbackHandler implements HttpHandler {
       UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
 
       PortabilityJob job = store.findJob(jobId);
+      logger.debug("Found job: {}->{} in OCH", jobId, job);
+
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?

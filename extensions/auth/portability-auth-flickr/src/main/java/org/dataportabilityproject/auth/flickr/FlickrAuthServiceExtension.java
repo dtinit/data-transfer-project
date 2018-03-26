@@ -16,18 +16,27 @@
 
 package org.dataportabilityproject.auth.flickr;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
-
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FlickrAuthServiceExtension implements AuthServiceExtension {
-  private final static String SERVICE_ID = "flickr";
+  private static final String FLICKR_KEY = "FLICKR_KEY";
+  private static final String FLICKR_SECRET = "FLICKR_SECRET";
+  private static final String SERVICE_ID = "flickr";
+
+  private final Logger logger = LoggerFactory.getLogger(FlickrAuthServiceExtension.class);
   private final List<String> supportedServices = ImmutableList.of("photos");
   private FlickrAuthDataGenerator flickrAuthDataGenerator;
+  private boolean initialized = false;
 
   @Override
   public String getServiceId() {
@@ -35,7 +44,11 @@ public class FlickrAuthServiceExtension implements AuthServiceExtension {
   }
 
   @Override
-  public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthServiceProviderRegistry.AuthMode mode) {
+  public AuthDataGenerator getAuthDataGenerator(
+      String transferDataType, AuthServiceProviderRegistry.AuthMode mode) {
+    Preconditions.checkArgument(
+        initialized,
+        "FlickrAuthServiceExtension is not initialized! Unable to retrieve AuthDataGenerator");
     return flickrAuthDataGenerator;
   }
 
@@ -51,7 +64,16 @@ public class FlickrAuthServiceExtension implements AuthServiceExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
+    AppCredentialStore appCredentialStore = context.getService(AppCredentialStore.class);
 
-
+    try {
+      flickrAuthDataGenerator =
+          new FlickrAuthDataGenerator(
+              appCredentialStore.getAppCredentials(FLICKR_KEY, FLICKR_SECRET));
+      initialized = true;
+    } catch (IOException e) {
+      logger.debug(
+          "Error retrieving Flickr Credentials. Did you set {} and {}?", FLICKR_KEY, FLICKR_SECRET);
+    }
   }
 }

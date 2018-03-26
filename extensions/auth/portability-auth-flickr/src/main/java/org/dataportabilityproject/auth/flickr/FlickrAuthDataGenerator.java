@@ -57,7 +57,7 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
   public AuthData generateAuthData(
       String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
-    Preconditions.checkNotNull(initialAuthData, "Earlier auth data not expected for Google flow");
+    Preconditions.checkNotNull(initialAuthData, "Earlier auth data not expected for Flickr flow");
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = fromAuthData(initialAuthData);
     Token requestToken = authInterface.getAccessToken(token, new Verifier(authCode));

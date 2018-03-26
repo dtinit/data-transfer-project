@@ -36,4 +36,10 @@ public class TypeManagerImpl implements TypeManager {
   public void registerType(Class<?> type) {
     objectMapper.registerSubtypes(type);
   }
+
+  public void registerTypes(Class<?>... types) {
+    for (Class<?> t : types) {
+      objectMapper.registerSubtypes(t);
+    }
+  }
 }

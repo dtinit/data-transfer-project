@@ -7,7 +7,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -29,6 +28,10 @@ public abstract class PortabilityJob {
   private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
   private static final String ENCRYPTED_AUTH_KEY = "ENCRYPTED_AUTH_KEY";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
+  private static final String IMPORT_ENCRYPTED_INITIAL_AUTH_DATA =
+      "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
+  private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
+      "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
 
   public static PortabilityJob.Builder builder() {
     LocalDateTime now = LocalDateTime.now();
@@ -56,6 +59,16 @@ public abstract class PortabilityJob {
             ? (String) properties.get(WORKER_INSTANCE_PUBLIC_KEY)
             : null;
 
+    String encryptedExportInitialAuthData =
+        properties.containsKey(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA)
+            ? (String) properties.get(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA)
+            : null;
+
+    String encryptedImportInitialAuthData =
+        properties.containsKey(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA)
+            ? (String) properties.get(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA)
+            : null;
+
     return PortabilityJob.builder()
         .setState(State.NEW)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
@@ -72,6 +85,8 @@ public abstract class PortabilityJob {
                 .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
                 .setAuthSecretKey((String) properties.get(ENCRYPTED_AUTH_KEY))
                 .setAuthPublicKey(encodedPublicKey)
+                .setEncryptedInitialExportAuthData(encryptedExportInitialAuthData)
+                .setEncryptedInitialImportAuthData(encryptedImportInitialAuthData)
                 .build())
         .build();
   }
@@ -133,6 +148,16 @@ public abstract class PortabilityJob {
     }
     if (null != jobAuthorization().authPublicKey()) {
       builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
+    }
+
+    if (null != jobAuthorization().encryptedInitialExportAuthData()) {
+      builder.put(
+          EXPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialExportAuthData());
+    }
+
+    if (null != jobAuthorization().encryptedInitialImportAuthData()) {
+      builder.put(
+          IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
     }
     return builder.build();
   }
