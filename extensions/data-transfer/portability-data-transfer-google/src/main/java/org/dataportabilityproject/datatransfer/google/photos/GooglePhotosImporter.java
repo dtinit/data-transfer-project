@@ -40,10 +40,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
 
-public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class GooglePhotosImporter
+    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_POST_URL = "https://picasaweb.google.com/data/feed/api/user/default";
-  static final String PHOTO_POST_URL_FORMATTER = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
+  static final String PHOTO_POST_URL_FORMATTER =
+      "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
 
   private final JobStore jobStore;
   private volatile PicasawebService photosService;
@@ -93,8 +95,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
     outputAlbum.setDescription(new PlainTextConstruct(inputAlbum.getDescription()));
 
     // Upload album
-    AlbumEntry insertedEntry = getOrCreatePhotosService(authData)
-        .insert(new URL(ALBUM_POST_URL), outputAlbum);
+    AlbumEntry insertedEntry =
+        getOrCreatePhotosService(authData).insert(new URL(ALBUM_POST_URL), outputAlbum);
 
     // Put new album ID in job store so photos can be assigned to the correct album
     TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
@@ -121,13 +123,21 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
       mediaType = "image/jpeg";
     }
 
-    MediaStreamSource streamSource = new MediaStreamSource(
-        getImageAsStream(inputPhoto.getFetchableUrl()), mediaType);
+    MediaStreamSource streamSource =
+        new MediaStreamSource(getImageAsStream(inputPhoto.getFetchableUrl()), mediaType);
     outputPhoto.setMediaSource(streamSource);
 
+    // Put new album ID in job store so photos can be assigned to the correct album
+    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
+    if (photoMappings == null) {
+      photoMappings = new TempPhotosData(jobId);
+      jobStore.create(jobId, photoMappings);
+    }
+
     // Find album to upload photo to
-    String albumId = jobStore.findData(TempPhotosData.class, jobId)
-        .lookupNewAlbumId(inputPhoto.getAlbumId());
+    // String albumId = jobStore.findData(TempPhotosData.class,
+    // uuid).lookupNewAlbumId(inputPhoto.getAlbumId());
+    String albumId = "default";
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
     // Upload photo
