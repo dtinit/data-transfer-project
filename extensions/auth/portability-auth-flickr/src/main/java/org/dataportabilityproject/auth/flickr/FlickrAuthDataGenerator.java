@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 public class FlickrAuthDataGenerator implements AuthDataGenerator {
   private final Flickr flickr;
+  private final static Logger logger = LoggerFactory.getLogger(FlickrAuthDataGenerator.class);
 
   FlickrAuthDataGenerator(AppCredentials appCredentials){
     flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
