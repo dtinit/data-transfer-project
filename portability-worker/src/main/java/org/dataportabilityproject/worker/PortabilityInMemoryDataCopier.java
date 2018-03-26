@@ -86,7 +86,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug("Finished export, results: {}", exportResult);
 
     logger.debug("Starting import");
-    // TODO, use job Id?
     importer.get().importItem(jobId.toString(), importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
 
