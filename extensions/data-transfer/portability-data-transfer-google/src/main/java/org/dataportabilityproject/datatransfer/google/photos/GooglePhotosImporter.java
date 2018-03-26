@@ -40,7 +40,8 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class GooglePhotosImporter implements
+    Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_POST_URL = "https://picasaweb.google.com/data/feed/api/user/default";
   static final String PHOTO_POST_URL_FORMATTER = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
@@ -68,7 +69,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
   }
 
   @Override
-  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData,
+      PhotosContainerResource data) {
     try {
       for (PhotoAlbum album : data.getAlbums()) {
         importSingleAlbum(jobId, authData, album);
