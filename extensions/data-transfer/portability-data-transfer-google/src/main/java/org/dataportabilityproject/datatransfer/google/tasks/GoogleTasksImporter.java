@@ -34,8 +34,12 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
+  private final Logger logger = LoggerFactory.getLogger(GoogleTasksImporter.class);
+
   private final JobStore jobStore;
   private Tasks tasksClient;
 
@@ -73,7 +77,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
         return new ImportResult(ResultType.ERROR, "Error inserting taskList: " + e.getMessage());
       }
 
-      System.out.println("Storing " + oldTasksList.getId() + " as " + insertedTaskList.getId());
+      logger.info("Storing {} as {}", oldTasksList.getId(), insertedTaskList.getId());
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
 
       jobStore.update(id, tempTasksData);
