@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 public class FlickrAuthDataGenerator implements AuthDataGenerator {
   private final Flickr flickr;
-  private final Logger logger = LoggerFactory.getLogger(FlickrAuthDataGenerator.class);
 
   FlickrAuthDataGenerator(AppCredentials appCredentials){
     flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
@@ -43,8 +42,6 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    logger.debug("Generating FlickrAuthConfiguration");
-    // TODO: wire up stuffs
     AuthInterface authInterface = flickr.getAuthInterface();
     Token token = authInterface.getRequestToken(callbackBaseUrl + "/callback1/flickr");
     String url =
