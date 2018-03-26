@@ -3,6 +3,7 @@ package org.dataportabilityproject.auth.google;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.people.v1.PeopleServiceScopes;
+import com.google.api.services.tasks.TasksScopes;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,6 +30,8 @@ public class GoogleAuthDataGeneratorTest {
             + CalendarScopes.CALENDAR
             + "%20"
             + PeopleServiceScopes.CONTACTS
+            + "%20"
+            + TasksScopes.TASKS
             + "&state=NTQzMjE%3D",
         config.getUrl());
   }
