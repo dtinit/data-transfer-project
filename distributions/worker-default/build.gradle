@@ -28,6 +28,7 @@ repositories {
 dependencies {
     compile project(':portability-worker')
 
+    compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
 }

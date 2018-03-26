@@ -29,11 +29,10 @@ import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.config.ConfigUtils;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * {@link ExtensionContext} used by the worker.
- */
+/** {@link ExtensionContext} used by the worker. */
 final class WorkerExtensionContext implements ExtensionContext {
   private static final String WORKER_SETTINGS_PATH = "config/worker.yaml";
   private static final String ENV_WORKER_SETTINGS_PATH = "config/env/worker.yaml";
@@ -47,13 +46,15 @@ final class WorkerExtensionContext implements ExtensionContext {
   WorkerExtensionContext() {
     // TODO init with types
     this.typeManager = new TypeManagerImpl();
-    typeManager.registerType(TokenAuthData.class);
-    typeManager.registerType(TokensAndUrlAuthData.class);
+    typeManager.registerTypes(
+        TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
     registered.put(TypeManager.class, typeManager);
 
     try {
-      // TODO: read settings from files in jar once they are built in - Jim: I think this should be done by the class creating this one
-      ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
+      // TODO: read settings from files in jar once they are built in - Jim: I think this should be
+      // done by the class creating this one
+      ImmutableList<String> settingsFiles =
+          ImmutableList.<String>builder()
               .add(WORKER_SETTINGS_PATH)
               .add(ENV_WORKER_SETTINGS_PATH)
               .add(COMMON_SETTINGS_PATH)
