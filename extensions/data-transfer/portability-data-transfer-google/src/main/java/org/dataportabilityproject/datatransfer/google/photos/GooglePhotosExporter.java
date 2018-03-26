@@ -83,16 +83,20 @@ public class GooglePhotosExporter
       UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     StringPaginationToken paginationToken =
         (StringPaginationToken) exportInformation.getPaginationData();
+    IdOnlyContainerResource idOnlyContainerResource =
+        (IdOnlyContainerResource) exportInformation.getContainerResource();
+
     if (paginationToken != null && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
       // Next thing to export is more albums
       return exportAlbums(authData, Optional.of(paginationToken));
-    } else {
+    } else if (idOnlyContainerResource != null){
       // Next thing to export is photos
-      IdOnlyContainerResource idOnlyContainerResource =
-          (IdOnlyContainerResource) exportInformation.getContainerResource();
       Optional<PaginationData> pageData =
           paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
       return exportPhotos(authData, idOnlyContainerResource.getId(), pageData);
+    } else {
+      // No albums and no photos?
+      return new ExportResult<>(ResultType.ERROR, "No albums or photos to export");
     }
   }
 

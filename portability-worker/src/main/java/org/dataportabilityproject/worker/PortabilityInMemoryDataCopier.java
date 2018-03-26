@@ -18,7 +18,9 @@ package org.dataportabilityproject.worker;
 import com.google.inject.Provider;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -75,7 +77,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      ExportInformation exportInformation) {
+      ExportInformation exportInformation)
+      throws IOException {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
@@ -86,10 +89,18 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
     logger.debug("Finished export, results: {}", exportResult);
 
-    logger.debug("Starting import");
-    importer.get().importItem(jobId, importAuthData, exportResult.getExportedData());
-    logger.debug("Finished import");
+    if (exportResult.getType().equals(ResultType.ERROR)) {
+      logger.warn("Error happened during export: {}", exportResult.getMessage());
+    }
 
+    logger.debug("Starting import");
+    ImportResult importResult = importer.get().importItem(jobId, importAuthData, exportResult.getExportedData());
+    logger.debug("Finished import");
+    if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
+      logger.warn("Error happened during import: {}", importResult.getMessage());
+    }
+
+    // Import and Export were successful, determine what to do next
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
 
     if (null != continuationData) {
