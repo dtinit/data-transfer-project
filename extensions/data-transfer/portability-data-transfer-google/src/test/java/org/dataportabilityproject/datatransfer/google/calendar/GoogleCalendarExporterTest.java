@@ -117,7 +117,7 @@ public class GoogleCalendarExporterTest {
     assertThat(actualCalendars.stream().map(CalendarModel::getId).collect(Collectors.toList()))
         .containsExactly(CALENDAR_ID);
 
-    // Check events (should be empty, even though there is an event in the calendar
+    // Check events (should be empty, even though there is an event in the calendar)
     Collection<CalendarEventModel> actualEvents = result.getExportedData().getEvents();
     assertThat(actualEvents).isEmpty();
     // Should be one container in the resource list
