@@ -12,11 +12,7 @@ import java.util.Objects;
 
 import static java.lang.System.getenv;
 
-/**
- * A secrets store backed by Azure Key Vault.
- *
- * <p>
- */
+/** A secrets store backed by Azure Key Vault. */
 public class AzureKeyVaultStore implements AppCredentialStore {
   private static final String VAULT_ADDRESS = "https://%s.vault.azure.net/";
 
@@ -26,6 +22,7 @@ public class AzureKeyVaultStore implements AppCredentialStore {
   public AzureKeyVaultStore(String keyVaultName) {
     vaultUrl = String.format(VAULT_ADDRESS, keyVaultName);
 
+    // TODO should env vars be sourced from config?
     String azureClientId = getenv("AZURE_CLIENT_ID");
     Objects.requireNonNull(azureClientId, "AZURE_CLIENT_ID not set in environment");
 
