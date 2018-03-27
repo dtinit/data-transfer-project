@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /** Exports Microsoft contacts using the Graph API. */
 public class MicrosoftContactsExporter implements Exporter<TokenAuthData, ContactsModelWrapper> {
@@ -48,7 +49,10 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
   private final TransformerService transformerService;
 
   public MicrosoftContactsExporter(
-      String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TransformerService transformerService) {
     this.contactsUrl = baseUrl + CONTACTS_SUBPATH;
     this.client = client;
     this.objectMapper = objectMapper;
@@ -56,17 +60,17 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
   }
 
   @Override
-  public ExportResult<ContactsModelWrapper> export(TokenAuthData authData) {
+  public ExportResult<ContactsModelWrapper> export(UUID jobId, TokenAuthData authData) {
     return doExport(authData, contactsUrl);
   }
 
   @Override
   public ExportResult<ContactsModelWrapper> export(
-      TokenAuthData authData, ExportInformation continuationData) {
+      UUID jobId, TokenAuthData authData, ExportInformation continuationData) {
     GraphPagination graphPagination = (GraphPagination) continuationData.getPaginationData();
     if (graphPagination != null && graphPagination.getNextLink() != null) {
       return doExport(authData, graphPagination.getNextLink());
-    }else {
+    } else {
       return doExport(authData, contactsUrl);
     }
   }
@@ -105,7 +109,7 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
 
   private ContactsModelWrapper transform(List<Map<String, Object>> rawContacts) {
     StringWriter stringWriter = new StringWriter();
-    try (JCardWriter writer = new JCardWriter(stringWriter) ) {
+    try (JCardWriter writer = new JCardWriter(stringWriter)) {
       for (Map<String, Object> rawContact : rawContacts) {
         TransformResult<VCard> result = transformerService.transform(VCard.class, rawContact);
         if (result.hasProblems()) {

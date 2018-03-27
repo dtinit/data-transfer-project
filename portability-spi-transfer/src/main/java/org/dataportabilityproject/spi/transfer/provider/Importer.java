@@ -18,6 +18,8 @@ package org.dataportabilityproject.spi.transfer.provider;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
+import java.util.UUID;
+
 /** Imports data into a destination service. */
 public interface Importer<A extends AuthData, T extends DataModel> {
   /**
@@ -29,5 +31,5 @@ public interface Importer<A extends AuthData, T extends DataModel> {
    * @return the operation result
    */
   // REVIEW: The original throws IOException. Continue to use or return as part of the result?
-  ImportResult importItem(String jobId, A authData, T data);
+  ImportResult importItem(UUID jobId, A authData, T data);
 }

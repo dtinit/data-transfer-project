@@ -16,11 +16,6 @@
 package org.dataportabilityproject.worker;
 
 import com.google.inject.Provider;
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -32,22 +27,26 @@ import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /** Implementation of {@link InMemoryDataCopier}. */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
   /**
-   * Lazy evaluate exporter and importer as their providers depend on the polled
-   * {@code PortabilityJob} which is not available at startup.
+   * Lazy evaluate exporter and importer as their providers depend on the polled {@code
+   * PortabilityJob} which is not available at startup.
    */
   private final Provider<Exporter> exporter;
+
   private final Provider<Importer> importer;
 
   @Inject
-  public PortabilityInMemoryDataCopier(
-      Provider<Exporter> exporter,
-      Provider<Importer> importer) {
+  public PortabilityInMemoryDataCopier(Provider<Exporter> exporter, Provider<Importer> importer) {
     this.exporter = exporter;
     this.importer = importer;
   }
@@ -73,8 +72,10 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * @param exportInformation Any pagination or resource information to use for subsequent calls.
    */
   private void copyHelper(
-      UUID jobId, AuthData exportAuthData, AuthData importAuthData, ExportInformation exportInformation)
-      throws IOException {
+      UUID jobId,
+      AuthData exportAuthData,
+      AuthData importAuthData,
+      ExportInformation exportInformation) {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
@@ -82,11 +83,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export, ExportInformation: {}", exportInformation);
-    ExportResult<?> exportResult = exporter.get().export(exportAuthData, exportInformation);
+    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
     logger.debug("Finished export, results: {}", exportResult);
 
     logger.debug("Starting import");
-    importer.get().importItem(jobId.toString(), importAuthData, exportResult.getExportedData());
+    importer.get().importItem(jobId, importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
 
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
