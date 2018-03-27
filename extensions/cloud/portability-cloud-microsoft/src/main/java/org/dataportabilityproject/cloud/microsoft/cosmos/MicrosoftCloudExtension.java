@@ -26,7 +26,7 @@ public class MicrosoftCloudExtension implements CloudExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    String vaultName = context.getConfiguration(VAULT_KEY, null);
+    String vaultName = context.getSetting(VAULT_KEY, null);
     Objects.requireNonNull(vaultName, "Vault name not configured: " + VAULT_KEY);
 
     // create the vault
@@ -41,10 +41,10 @@ public class MicrosoftCloudExtension implements CloudExtension {
     String password = vaultStore.getSecret(JOB_STORE_PASSWORD);
     Objects.requireNonNull(password, "JobStore password not set in vault");
 
-    String host = context.getConfiguration(COSMOS_HOST, null);
+    String host = context.getSetting(COSMOS_HOST, null);
     Objects.requireNonNull(host, "Cosmos host not configured: " + COSMOS_HOST);
 
-    int port = Integer.parseInt(context.getConfiguration(COSMOS_PORT, "10350"));
+    int port = Integer.parseInt(context.getSetting(COSMOS_PORT, "10350"));
 
     jobStore = new CosmosStoreInitializer().createStore(username, password, host, port, mapper);
   }
