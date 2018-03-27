@@ -33,7 +33,6 @@ import java.util.UUID;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;

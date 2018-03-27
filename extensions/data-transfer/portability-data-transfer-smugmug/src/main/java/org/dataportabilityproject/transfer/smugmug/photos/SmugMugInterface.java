@@ -33,10 +33,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Map.Entry;
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
@@ -51,13 +47,9 @@ public class SmugMugInterface {
   static final String USER_URL = "/api/v2!authuser";
   static final String ALBUMS_KEY = "UserAlbums";
 
-  // TODO(olsona): do we want to use the Signpost OAuth library?
-  private final OAuthConsumer authConsumer;
   private final HttpTransport httpTransport;
 
-  // TODO(olsona): this!
   SmugMugInterface() {
-    this.authConsumer = null;
     this.httpTransport = null;
   }
 
@@ -77,14 +69,7 @@ public class SmugMugInterface {
   <T> SmugMugResponse<T> makeRequest(
       String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    String signedRequest;
-    try {
-      signedRequest = this.authConsumer.sign(BASE_URL + url + "?_accept=application%2Fjson");
-    } catch (OAuthMessageSignerException
-        | OAuthExpectationFailedException
-        | OAuthCommunicationException e) {
-      throw new IOException("Couldn't get albums", e);
-    }
+    String signedRequest = BASE_URL + url + "?_accept=application%2Fjson"; // TODO(sign request)
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedRequest));
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
@@ -115,13 +100,7 @@ public class SmugMugInterface {
     }
     postRequest.setHeaders(httpHeaders);
 
-    try {
-      postRequest = (HttpRequest) this.authConsumer.sign(postRequest).unwrap();
-    } catch (OAuthMessageSignerException
-        | OAuthExpectationFailedException
-        | OAuthCommunicationException e) {
-      throw new IOException("Couldn't create post request", e);
-    }
+    // TODO(olsona): sign request
 
     HttpResponse response;
     try {
