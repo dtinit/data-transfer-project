@@ -41,11 +41,15 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES =
       ImmutableList.of("contacts", "calendar", "tasks", "photos");
 
-  private volatile Map<String, Map<AuthMode, AuthDataGenerator>> dataTypeAuthGenerators;
+  // Map of AuthDataGenerators needed to import each data type
+  private volatile Map<String, AuthDataGenerator> importAuthDataGenerators;
+  // Map of AuthDataGenerators needed to export each data type
+  private volatile Map<String, AuthDataGenerator> exportAuthDataGenerators;
 
   private AppCredentials appCredentials;
   private HttpTransport httpTransport;
   private TypeManager typeManager;
+  private boolean initialized = false;
 
   public GoogleAuthServiceExtension() {}
 
@@ -79,25 +83,24 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
       return;
     }
 
-    dataTypeAuthGenerators = new HashMap<>();
+    importAuthDataGenerators = new HashMap<>();
+    exportAuthDataGenerators = new HashMap<>();
     httpTransport = context.getService(HttpTransport.class);
     typeManager = context.getService(TypeManager.class);
+    initialized = true;
   }
 
   private synchronized AuthDataGenerator getOrCreateAuthDataGenerator(
       String transferDataType, AuthMode mode) {
-    Preconditions.checkState(appCredentials != null && dataTypeAuthGenerators != null);
+    Preconditions.checkState(initialized, "Trying to getAuthDataGenerator before initialization");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
 
-    if (!dataTypeAuthGenerators.containsKey(transferDataType)) {
-      dataTypeAuthGenerators.put(transferDataType, new HashMap<>());
-    }
+    Map<String, AuthDataGenerator> generators =
+        mode == AuthMode.EXPORT ? exportAuthDataGenerators : importAuthDataGenerators;
 
-    Map<AuthMode, AuthDataGenerator> authDataGenerators =
-        dataTypeAuthGenerators.get(transferDataType);
-    if (!authDataGenerators.containsKey(mode)) {
-      authDataGenerators.put(
-          mode,
+    if (!generators.containsKey(transferDataType)) {
+      generators.put(
+          transferDataType,
           new GoogleAuthDataGenerator(
               REDIRECT_PATH,
               appCredentials,
@@ -106,6 +109,7 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
               transferDataType,
               mode));
     }
-    return authDataGenerators.get(mode);
+
+    return generators.get(transferDataType);
   }
 }

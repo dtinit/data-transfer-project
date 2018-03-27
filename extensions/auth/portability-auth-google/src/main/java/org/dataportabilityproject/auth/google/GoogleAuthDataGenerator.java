@@ -27,12 +27,10 @@ import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ListMultimap;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
@@ -50,35 +48,25 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
-  // The scopes necessary to import or export each supported data type.
-  // Scopes for EXPORT should contain READONLY permissions
-  private static final Map<String, ListMultimap<AuthMode, String>> DATA_TYPE_SCOPES =
-      ImmutableMap.<String, ListMultimap<AuthMode, String>>builder()
-          .put(
-              "calendar",
-              ImmutableListMultimap.<AuthMode, String>builder()
-                  .putAll(AuthMode.IMPORT, Arrays.asList(CalendarScopes.CALENDAR))
-                  .putAll(AuthMode.EXPORT, Arrays.asList(CalendarScopes.CALENDAR_READONLY))
-                  .build())
-          .put(
-              "photos",
-              ImmutableListMultimap.<AuthMode, String>builder()
-                  // picasaweb does not have a READONLY scope
-                  .putAll(AuthMode.IMPORT, Arrays.asList("https://picasaweb.google.com/data/"))
-                  .putAll(AuthMode.EXPORT, Arrays.asList("https://picasaweb.google.com/data/"))
-                  .build())
-          .put(
-              "tasks",
-              ImmutableListMultimap.<AuthMode, String>builder()
-                  .putAll(AuthMode.IMPORT, Arrays.asList(TasksScopes.TASKS))
-                  .putAll(AuthMode.EXPORT, Arrays.asList(TasksScopes.TASKS_READONLY))
-                  .build())
-          .put(
-              "contacts",
-              ImmutableListMultimap.<AuthMode, String>builder()
-                  .putAll(AuthMode.IMPORT, Arrays.asList(PeopleServiceScopes.CONTACTS))
-                  .putAll(AuthMode.EXPORT, Arrays.asList(PeopleServiceScopes.CONTACTS_READONLY))
-                  .build())
+  // The scopes necessary to import each supported data type.
+  // These are READ/WRITE scopes
+  private static final Map<String, List<String>> IMPORT_SCOPES =
+      ImmutableMap.<String, List<String>>builder()
+          .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR))
+          .put("photos", ImmutableList.of("https://picasaweb.google.com/data/"))
+          .put("tasks", ImmutableList.of(TasksScopes.TASKS))
+          .put("contacts", ImmutableList.of(PeopleServiceScopes.CONTACTS))
+          .build();
+
+  // The scopes necessary to export each supported data type.
+  // These should contain READONLY permissions
+  private static final Map<String, List<String>> EXPORT_SCOPES =
+      ImmutableMap.<String, List<String>>builder()
+          .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR_READONLY))
+          // picasaweb does not have a READONLY scope
+          .put("photos", ImmutableList.of("https://picasaweb.google.com/data/"))
+          .put("tasks", ImmutableList.of(TasksScopes.TASKS_READONLY))
+          .put("contacts", ImmutableList.of(PeopleServiceScopes.CONTACTS_READONLY))
           .build();
 
   private final List<String> scopes;
@@ -109,7 +97,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
     this.objectMapper = objectMapper;
-    this.scopes = DATA_TYPE_SCOPES.get(dataType).get(mode);
+    this.scopes = mode == AuthMode.IMPORT ? IMPORT_SCOPES.get(dataType) : EXPORT_SCOPES.get(dataType);
   }
 
   @Override
