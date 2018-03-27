@@ -22,6 +22,7 @@ public class AzureKeyVaultStore implements AppCredentialStore {
   public AzureKeyVaultStore(String keyVaultName) {
     vaultUrl = String.format(VAULT_ADDRESS, keyVaultName);
 
+    // NB: env vars should be sourced in a secure form
     // TODO should env vars be sourced from config?
     String azureClientId = getenv("AZURE_CLIENT_ID");
     Objects.requireNonNull(azureClientId, "AZURE_CLIENT_ID not set in environment");
