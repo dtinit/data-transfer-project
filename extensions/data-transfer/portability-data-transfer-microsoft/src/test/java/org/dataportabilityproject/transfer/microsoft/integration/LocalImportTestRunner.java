@@ -18,14 +18,16 @@ package org.dataportabilityproject.transfer.microsoft.integration;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardWriter;
 import ezvcard.property.StructuredName;
-import java.io.IOException;
-import java.io.StringWriter;
 import org.dataportabilityproject.auth.microsoft.harness.AuthTestDriver;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.transfer.microsoft.MicrosoftTransferExtension;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.UUID;
 
 /** */
 public class LocalImportTestRunner {
@@ -40,7 +42,7 @@ public class LocalImportTestRunner {
         (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter("contacts");
 
     ContactsModelWrapper wrapper = new ContactsModelWrapper(createCards());
-    ImportResult result = contacts.importItem("1", token, wrapper);
+    ImportResult result = contacts.importItem(UUID.randomUUID(), token, wrapper);
   }
 
   private static String createCards() throws IOException {

@@ -16,6 +16,21 @@
 
 package org.dataportabilityproject.datatransfer.google.contacts;
 
+import com.google.api.services.people.v1.PeopleService;
+import com.google.api.services.people.v1.PeopleService.People;
+import com.google.api.services.people.v1.PeopleService.People.CreateContact;
+import com.google.api.services.people.v1.model.Person;
+import ezvcard.VCard;
+import ezvcard.property.StructuredName;
+import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
+
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
 import static org.mockito.Matchers.any;
@@ -23,19 +38,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.PeopleService.People;
-import com.google.api.services.people.v1.PeopleService.People.CreateContact;
-import com.google.api.services.people.v1.model.Person;
-import ezvcard.VCard;
-import ezvcard.property.StructuredName;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
-import org.junit.Before;
-import org.junit.Test;
 
 public class GoogleContactsImporterTest {
 
@@ -73,7 +75,7 @@ public class GoogleContactsImporterTest {
     ContactsModelWrapper wrapper = new ContactsModelWrapper(vCardString);
 
     // Run test
-    contactsService.importItem("jobId", null, wrapper);
+    contactsService.importItem(UUID.randomUUID(), null, wrapper);
 
     // Check that the right methods were called
     verify(people, times(numberOfVCards)).createContact(any(Person.class));

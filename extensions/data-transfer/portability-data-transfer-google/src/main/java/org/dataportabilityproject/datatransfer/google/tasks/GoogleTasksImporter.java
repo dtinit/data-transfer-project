@@ -22,8 +22,6 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
-import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -36,6 +34,9 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.UUID;
 
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
   private final Logger logger = LoggerFactory.getLogger(GoogleTasksImporter.class);
@@ -55,19 +56,18 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
 
   @Override
   public ImportResult importItem(
-      String jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
-    UUID id = UUID.fromString(jobId);
+          UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
 
     Tasks tasksService = getOrCreateTasksService(authData);
-    TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, id);
+    TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, jobId);
     if (tempTasksData == null) {
-      tempTasksData = new TempTasksData(jobId);
-      jobStore.create(id, tempTasksData);
+      tempTasksData = new TempTasksData(jobId.toString());
+      jobStore.create(jobId, tempTasksData);
     }
 
     for (TaskListModel oldTasksList : data.getLists()) {
       // TempTasksData shouldn't be null since we added it.
-      tempTasksData = jobStore.findData(TempTasksData.class, id);
+      tempTasksData = jobStore.findData(TempTasksData.class, jobId);
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
       TaskList insertedTaskList;
 
@@ -80,10 +80,10 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       logger.info("Storing {} as {}", oldTasksList.getId(), insertedTaskList.getId());
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
 
-      jobStore.update(id, tempTasksData);
+      jobStore.update(jobId, tempTasksData);
     }
 
-    tempTasksData = jobStore.findData(TempTasksData.class, id);
+    tempTasksData = jobStore.findData(TempTasksData.class, jobId);
 
     for (TaskModel oldTask : data.getTasks()) {
       Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());

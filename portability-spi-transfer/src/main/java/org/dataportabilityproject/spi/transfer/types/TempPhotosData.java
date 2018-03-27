@@ -23,6 +23,7 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /*
  * TempPhotosData used to store album and photos information before they are ready to be uploaded.
@@ -31,7 +32,7 @@ import java.util.Map;
 public class TempPhotosData extends DataModel {
 
   @JsonProperty("jobId")
-  private final String jobId;
+  private final UUID jobId;
 
   // Map of PhotoAlbums keyed by Album name.
   @JsonProperty("photoAlbums")
@@ -42,7 +43,7 @@ public class TempPhotosData extends DataModel {
   private final Map<String, String> newAlbumIds;
 
   public TempPhotosData(
-      @JsonProperty("jobId") String jobId,
+      @JsonProperty("jobId") UUID jobId,
       @JsonProperty("albums") Map<String, PhotoAlbum> photoAlbums,
       @JsonProperty("newAlbumIds") Map<String, String> newAlbumIds) {
     this.jobId = jobId;
@@ -50,7 +51,7 @@ public class TempPhotosData extends DataModel {
     this.newAlbumIds = newAlbumIds;
   }
 
-  public TempPhotosData(@JsonProperty("jobId") String jobId) {
+  public TempPhotosData(@JsonProperty("jobId") UUID jobId) {
     this.jobId = jobId;
     this.photoAlbums = new HashMap<>();
     this.newAlbumIds = new HashMap<>();

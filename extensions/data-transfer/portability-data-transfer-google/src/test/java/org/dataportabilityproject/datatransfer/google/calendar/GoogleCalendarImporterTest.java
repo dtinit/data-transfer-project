@@ -96,7 +96,7 @@ public class GoogleCalendarImporterTest {
             Collections.singleton(calendarModel), Collections.singleton(eventModel));
 
     // Run test
-    calendarService.importItem(jobId.toString(), null, calendarContainerResource);
+    calendarService.importItem(jobId, null, calendarContainerResource);
 
     // Check the right methods were called
     verify(calendarCalendars).insert(calendarToInsert);

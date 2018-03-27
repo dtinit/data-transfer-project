@@ -218,7 +218,7 @@ public class MicrosoftCalendarImportTest {
     CalendarContainerResource resource =
         new CalendarContainerResource(singleton(calendarModel), singleton(eventModel));
 
-    ImportResult result = importer.importItem(JOB_ID.toString(), token, resource);
+    ImportResult result = importer.importItem(JOB_ID, token, resource);
 
     Assert.assertEquals(ImportResult.ResultType.OK, result.getType());
 
