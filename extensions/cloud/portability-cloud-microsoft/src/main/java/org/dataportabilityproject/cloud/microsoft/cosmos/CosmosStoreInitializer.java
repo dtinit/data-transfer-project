@@ -22,10 +22,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CosmosStoreInitializer extends AbstractCosomosStoreInitializer {
 
   /** Returns a new {@link CosmosStore} instance configured for Azure. */
-  public CosmosStore createStore(ObjectMapper mapper) {
+  public CosmosStore createStore(String username, String password, String host, int port, ObjectMapper mapper) {
     CassandraCluster.Builder builder = CassandraCluster.Builder.newInstance();
-    // TODO configure builder
+
+    builder.username(username);
+    builder.password(password);
+    builder.host(host);
+    builder.port(port);
     CassandraCluster cassandraCluster = builder.build();
+
     Session session = cassandraCluster.createSession(true);
 
     createKeyspace(session);
