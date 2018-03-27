@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
@@ -199,7 +200,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   }
 
   @Override
-  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData, ContactsModelWrapper data) {
+  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData, ContactsModelWrapper data) {
     JCardReader reader = new JCardReader(data.getVCards());
     try {
       // TODO(olsona): address any other problems that might arise in conversion

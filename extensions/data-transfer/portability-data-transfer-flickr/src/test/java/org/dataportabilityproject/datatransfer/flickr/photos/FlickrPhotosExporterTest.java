@@ -16,15 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.flickr.photos;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
@@ -34,12 +25,9 @@ import com.flickr4java.flickr.people.User;
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.PhotoList;
 import com.flickr4java.flickr.photos.PhotosInterface;
-import com.flickr4java.flickr.photos.Size;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
-import java.util.Collection;
-import java.util.Collections;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -53,8 +41,19 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 import org.junit.Test;
 import org.scribe.model.Token;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class FlickrPhotosExporterTest {
   private static final String PHOTO_TITLE = "Title";
@@ -73,7 +72,8 @@ public class FlickrPhotosExporterTest {
 
   @Test
   public void toCommonPhoto() {
-    Photo photo = FlickrTestUtils.initializePhoto(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE);
+    Photo photo =
+        FlickrTestUtils.initializePhoto(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE);
     PhotoModel photoModel = FlickrPhotosExporter.toCommonPhoto(photo, ALBUM_ID);
 
     assertThat(photoModel.getAlbumId()).isEqualTo(ALBUM_ID);
@@ -113,7 +113,7 @@ public class FlickrPhotosExporterTest {
     // run test
     FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
     AuthData authData = new TokenSecretAuthData("token", "secret");
-    ExportResult<PhotosContainerResource> result = exporter.export(authData);
+    ExportResult<PhotosContainerResource> result = exporter.export(UUID.randomUUID(), authData);
 
     // make sure album and photo information is correct
     assertThat(result.getExportedData().getPhotos()).isEmpty();
@@ -151,7 +151,8 @@ public class FlickrPhotosExporterTest {
     int numPhotos = 4;
     PhotoList<Photo> photosList = new PhotoList<>();
     for (int i = 0; i < numPhotos; i++) {
-      photosList.add(FlickrTestUtils.initializePhoto("title" + 1, "url" + i, "description" + i, MEDIA_TYPE));
+      photosList.add(
+          FlickrTestUtils.initializePhoto("title" + 1, "url" + i, "description" + i, MEDIA_TYPE));
     }
     photosList.setPage(page);
     photosList.setPages(page + 1);
@@ -162,7 +163,8 @@ public class FlickrPhotosExporterTest {
     // run test
     FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
     ExportResult<PhotosContainerResource> result =
-        exporter.export(new TokenSecretAuthData("token", "secret"), exportInformation);
+        exporter.export(
+            UUID.randomUUID(), new TokenSecretAuthData("token", "secret"), exportInformation);
     assertThat(result.getExportedData().getPhotos().size()).isEqualTo(numPhotos);
     assertThat(result.getExportedData().getAlbums()).isEmpty();
 

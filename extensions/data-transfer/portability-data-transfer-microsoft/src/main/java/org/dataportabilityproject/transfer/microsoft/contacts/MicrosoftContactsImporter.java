@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.stream.Collectors.toList;
 import static org.dataportabilityproject.transfer.microsoft.common.RequestHelper.batchRequest;
@@ -61,7 +62,7 @@ public class MicrosoftContactsImporter implements Importer<TokenAuthData, Contac
 
   @Override
   public ImportResult importItem(
-      String jobId, TokenAuthData authData, ContactsModelWrapper wrapper) {
+          UUID jobId, TokenAuthData authData, ContactsModelWrapper wrapper) {
     JCardReader reader = new JCardReader(wrapper.getVCards());
     try {
       List<VCard> cards = reader.readAll();
