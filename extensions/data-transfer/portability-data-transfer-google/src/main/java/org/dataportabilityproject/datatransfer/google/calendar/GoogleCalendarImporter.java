@@ -115,7 +115,7 @@ public class GoogleCalendarImporter implements Importer<AuthData, CalendarContai
 
     TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
     if (calendarMappings == null) {
-      calendarMappings = new TempCalendarData(jobId.toString());
+      calendarMappings = new TempCalendarData(jobId);
       jobStore.create(jobId, calendarMappings);
     }
     calendarMappings.addIdMapping(calendarModel.getId(), calendarResult.getId());

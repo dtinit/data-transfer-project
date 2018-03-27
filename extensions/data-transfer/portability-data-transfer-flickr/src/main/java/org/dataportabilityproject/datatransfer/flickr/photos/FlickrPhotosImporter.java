@@ -84,7 +84,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     // photo in it, so we have to wait for the first photo to create the album
     TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
     if (tempPhotosData == null) {
-      tempPhotosData = new TempPhotosData(jobId.toString());
+      tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(jobId, tempPhotosData);
     }
 

@@ -100,7 +100,7 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
     // Put new album ID in job store so photos can be assigned to the correct album
     TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
     if (photoMappings == null) {
-      photoMappings = new TempPhotosData(jobId.toString());
+      photoMappings = new TempPhotosData(jobId);
       jobStore.create(jobId, photoMappings);
     }
     photoMappings.addAlbumId(inputAlbum.getId(), insertedEntry.getGphotoId());

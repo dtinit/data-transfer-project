@@ -72,7 +72,7 @@ public class MicrosoftCalendarImporter
           UUID jobId, TokenAuthData authData, CalendarContainerResource data) {
     TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
     if (calendarMappings == null) {
-      calendarMappings = new TempCalendarData(jobId.toString());
+      calendarMappings = new TempCalendarData(jobId);
       jobStore.create(jobId, calendarMappings);
     }
 
