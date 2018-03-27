@@ -13,46 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway;
+
+package org.dataportabilityproject.api.launcher;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-/** Settings used in the API server. */
-public class ApiSettings {
-  // TODO(rtannenbaum): Change these to URL types instead of String
-  // Base url for all calls within the application
-  private final String baseUrl;
-  // Base url for direct to api calls within the application
-  private final String baseApiUrl;
-
-  public ApiSettings() {
-    baseUrl = null;
-    baseApiUrl = null;
+/** Settings used in both the API and worker servers. */
+public class CommonSettings {
+  public enum Environment {
+    LOCAL,
+    TEST,
+    QA,
+    PROD
   }
+
+  private final String cloud;
+  private final Environment environment;
 
   @JsonCreator
-  public ApiSettings(
-      @JsonProperty(value = "baseUrl", required = true) String baseUrl,
-      @JsonProperty(value = "baseApiUrl", required = true) String baseApiUrl) {
-    this.baseUrl = baseUrl;
-    this.baseApiUrl = baseApiUrl;
+  public CommonSettings(
+      @JsonProperty(value = "cloud", required = true) String cloud,
+      @JsonProperty(value = "environment", required = true) Environment environment) {
+    this.cloud = cloud;
+    this.environment = environment;
   }
 
-  public String getBaseUrl() {
-    return baseUrl;
+  public String getCloud() {
+    return cloud;
   }
 
-  public String getBaseApiUrl() {
-    return baseApiUrl;
+  public Environment getEnvironment() {
+    return environment;
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("baseUrl", baseUrl)
-        .add("baseApiUrl", baseApiUrl)
+        .add("cloud", cloud)
+        .add("environment", environment)
         .toString();
+  }
+
+  // prevent instantiation, use @JsonCreator constructor
+  private CommonSettings() {
+    cloud = null;
+    environment = null;
   }
 }

@@ -17,7 +17,7 @@ package org.dataportabilityproject.gateway.reference;
 
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpHandler;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.ApiSettings;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.api.launcher.TypeManager;

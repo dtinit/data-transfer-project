@@ -16,15 +16,13 @@
 
 package org.dataportabilityproject.worker;
 
-import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import org.dataportabilityproject.api.launcher.CommonSettings;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
+import org.dataportabilityproject.api.launcher.extension.SettingsExtension;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.config.ConfigUtils;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -33,21 +31,17 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
  * {@link ExtensionContext} used by the worker.
  */
 final class WorkerExtensionContext implements ExtensionContext {
-  /**
-   * Custom settings for an extension. This is separate from the required {@code CommonSettings}.
-   */
-  private final Map<String, Object> config;
-
   private final TypeManager typeManager;
   private final Map<Class<?>, Object> registered = new HashMap<>();
+  private final SettingsExtension settingsExtension;
 
-  WorkerExtensionContext() {
+  WorkerExtensionContext(SettingsExtension settingsExtension) {
     this.typeManager = new TypeManagerImpl();
     typeManager.registerType(TokenAuthData.class);
     typeManager.registerType(TokensAndUrlAuthData.class);
 
     registered.put(TypeManager.class, typeManager);
-    config = parseExtensionSettings();
+    this.settingsExtension = settingsExtension;
   }
 
   @Override
@@ -71,24 +65,13 @@ final class WorkerExtensionContext implements ExtensionContext {
     registered.put(type, service);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T> T getConfiguration(String key, T defaultValue) {
-    if (config.containsKey(key)) {
-      return (T) config.get(key);
-    }
-    return defaultValue;
+  public CommonSettings getCommonSettings() {
+    return settingsExtension.getCommonSettings();
   }
 
-  private Map<String, Object> parseExtensionSettings() {
-    try {
-      // TODO: this should add the contents of an extension's custom config directory (TBD), which
-      // allows extensions to structure their custom settings however they want.
-      ImmutableList<String> settingsFiles = ImmutableList.<String>builder().build();
-      InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
-      return ConfigUtils.parseExtensionSettings(in);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Problem parsing cloud extension settings", e);
-    }
+  @Override
+  public <T> T getSetting(String setting, T defaultValue) {
+    return settingsExtension.getSetting(setting, defaultValue);
   }
 }

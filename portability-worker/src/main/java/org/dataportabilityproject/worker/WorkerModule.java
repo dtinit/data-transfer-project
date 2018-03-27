@@ -25,7 +25,6 @@ import com.google.inject.Singleton;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.config.CommonSettingsModule;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
@@ -44,8 +43,8 @@ final class WorkerModule extends AbstractModule {
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
   WorkerModule(
-      CloudExtension cloudExtension,
       ExtensionContext context,
+      CloudExtension cloudExtension,
       List<TransferExtension> transferExtensions,
       SymmetricKeyGenerator symmetricKeyGenerator,
       AsymmetricKeyGenerator asymmetricKeyGenerator) {
@@ -58,11 +57,6 @@ final class WorkerModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    // This allows core worker components to inject a {@code CommonSettings}. Extensions (which
-    // do not necessarily use Guice) may retrieve common settings statically via
-    // CommonSettings.getCommonSettings().
-    install(new CommonSettingsModule());
-
     bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);

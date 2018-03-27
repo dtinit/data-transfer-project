@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.gateway.reference;
+package org.dataportabilityproject.config.yaml;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.ApiSettings;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ApiSettingsModuleTest {
+public class YamlApiSettingsExtensionTest {
   /**
    * baseUrl: https://localhost:3000
    * baseApiUrl: https://localhost:8080
@@ -50,7 +50,7 @@ public class ApiSettingsModuleTest {
   @Test
   public void getApiSettings() throws IOException {
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1);
-    ApiSettings apiSettings = ApiSettingsModule.getApiSettings(settingsFiles);
+    ApiSettings apiSettings = YamlApiSettingsExtension.getApiSettings(settingsFiles);
     assertThat(apiSettings.getBaseUrl()).isEqualTo("https://localhost:3000");
     assertThat(apiSettings.getBaseApiUrl()).isEqualTo("https://localhost:8080");
   }
@@ -59,28 +59,28 @@ public class ApiSettingsModuleTest {
   public void getApiSettings_failOnUnrecognizedFlag() {
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1, API_SETTINGS_4);
     // Unrecognized field "unrecognizedFlag"
-    assertThrows(UnrecognizedPropertyException.class,
-        () -> ApiSettingsModule.getApiSettings(settingsFiles));
+    Assertions.assertThrows(UnrecognizedPropertyException.class,
+        () -> YamlApiSettingsExtension.getApiSettings(settingsFiles));
   }
 
   @Test
   public void getApiSettings_failOnMissingFlag() throws IOException {
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_3);
     // Missing required creator property 'baseApiUrl'
-    assertThrows(MismatchedInputException.class,
-        () -> ApiSettingsModule.getApiSettings(settingsFiles));
+    Assertions.assertThrows(MismatchedInputException.class,
+        () -> YamlApiSettingsExtension.getApiSettings(settingsFiles));
   }
 
   @Test
   public void getApiSettings_override() throws IOException {
     // www.aBaseUrl.com should override https://localhost:3000
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1, API_SETTINGS_2);
-    ApiSettings apiSettings = ApiSettingsModule.getApiSettings(settingsFiles);
+    ApiSettings apiSettings = YamlApiSettingsExtension.getApiSettings(settingsFiles);
     assertThat(apiSettings.getBaseUrl()).isEqualTo("www.aBaseUrl.com");
 
     // reorder settings files - now https://localhost:3000 should override www.aBaseUrl.com
     settingsFiles = ImmutableList.of(API_SETTINGS_2, API_SETTINGS_1);
-    apiSettings = ApiSettingsModule.getApiSettings(settingsFiles);
+    apiSettings = YamlApiSettingsExtension.getApiSettings(settingsFiles);
     assertThat(apiSettings.getBaseUrl()).isEqualTo("https://localhost:3000");
   }
 }

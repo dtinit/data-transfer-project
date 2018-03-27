@@ -25,7 +25,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.inject.Named;
-import org.dataportabilityproject.config.CommonSettingsModule;
+import org.dataportabilityproject.api.launcher.ApiSettings;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.slf4j.Logger;
@@ -38,43 +38,14 @@ import org.slf4j.LoggerFactory;
 public class ReferenceApiModule extends AbstractModule {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceApiModule.class);
 
-  @Provides
-  @Named("httpPort")
-  public int httpPort() {
-    return 8080; // TODO: set with a flag
-  }
+  private final ApiSettings apiSettings;
 
-  @Provides
-  @Named("defaultView")
-  public String defaultView() {
-    return "static/index.html"; // TODO: set with a flag
-  }
-
-  @Provides
-  @Named("httpExecutor")
-  public Executor executor(UncaughtExceptionHandler uncaughtExceptionHandler) {
-    ThreadFactory threadPoolFactory =
-        new ThreadFactoryBuilder()
-            .setNameFormat("http-server-%d")
-            .setUncaughtExceptionHandler(uncaughtExceptionHandler)
-            .build();
-    return Executors.newCachedThreadPool(threadPoolFactory);
-  }
-
-  @Provides
-  public UncaughtExceptionHandler uncaughtExceptionHandler() {
-    return new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread thread, Throwable t) {
-        logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
-      }
-    };
+  public ReferenceApiModule(ApiSettings apiSettings) {
+    this.apiSettings = apiSettings;
   }
 
   @Override
   protected void configure() {
-    install(new ApiSettingsModule());
-    install(new CommonSettingsModule());
     // TODO: Bind actions in single or multiple modules
     MapBinder<String, HttpHandler> mapbinder =
         MapBinder.newMapBinder(binder(), String.class, HttpHandler.class);
@@ -94,5 +65,43 @@ public class ReferenceApiModule extends AbstractModule {
     mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
 
     bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
+  }
+
+  @Provides
+  ApiSettings getApiSettings() {
+    return apiSettings;
+  }
+
+  @Provides
+  @Named("httpPort")
+  public int getHttpPort() {
+    return 8080; // TODO: set with a flag
+  }
+
+  @Provides
+  @Named("defaultView")
+  public String getDefaultView() {
+    return "static/index.html"; // TODO: set with a flag
+  }
+
+  @Provides
+  @Named("httpExecutor")
+  public Executor getExecutor(UncaughtExceptionHandler uncaughtExceptionHandler) {
+    ThreadFactory threadPoolFactory =
+        new ThreadFactoryBuilder()
+            .setNameFormat("http-server-%d")
+            .setUncaughtExceptionHandler(uncaughtExceptionHandler)
+            .build();
+    return Executors.newCachedThreadPool(threadPoolFactory);
+  }
+
+  @Provides
+  public UncaughtExceptionHandler uncaughtExceptionHandler() {
+    return new UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread thread, Throwable t) {
+        logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
+      }
+    };
   }
 }

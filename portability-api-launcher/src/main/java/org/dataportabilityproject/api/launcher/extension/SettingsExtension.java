@@ -13,42 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.launcher;
+package org.dataportabilityproject.api.launcher.extension;
 
-/** Provides information required to bootstrap extensions. */
-public interface ExtensionContext {
+import org.dataportabilityproject.api.launcher.AbstractExtension;
+import org.dataportabilityproject.api.launcher.CommonSettings;
 
-  /** Returns the system logger extension service can use to record events. */
-  Logger getLogger();
-
-  /**
-   * Returns the runtime type manager.
-   *
-   * @return the type manager.
-   */
-  TypeManager getTypeManager();
-
-  /**
-   * Returns a system service such as a type mapper extension services may require.
-   *
-   * @param type the system service type
-   */
-  <T> T getService(Class<T> type);
-
-  /**
-   * Registers a service
-   *
-   * @param type the type to register the service for
-   * @param service the service instance
-   */
-  default <T> void registerService(Class<T> type, T service) {}
+/**
+ * Extension that provides {@link CommonSettings} and extension-specific settings.
+ *
+ * <p>Used by both the worker server, and the API server (by inheritance in
+ * {@link ApiSettingsExtension}).
+ */
+public interface SettingsExtension extends AbstractExtension {
 
   CommonSettings getCommonSettings();
 
   /**
    * Returns the configuration value for {@code setting} or the default value if not found.
    *
-   * @param setting the parameter key
+   * @param setting the extension setting name
    * @param defaultValue the default value. Null may be passed.
    */
   <T> T getSetting(String setting, T defaultValue);

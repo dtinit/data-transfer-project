@@ -19,7 +19,7 @@ package org.dataportabilityproject.cloud.google;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.dataportabilityproject.config.CommonSettings.Environment;
+import org.dataportabilityproject.api.launcher.CommonSettings.Environment;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;

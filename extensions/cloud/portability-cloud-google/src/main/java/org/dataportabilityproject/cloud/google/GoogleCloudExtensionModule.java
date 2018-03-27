@@ -35,9 +35,8 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import org.dataportabilityproject.config.CommonSettings;
-import org.dataportabilityproject.config.CommonSettings.Environment;
-import org.dataportabilityproject.config.CommonSettingsModule;
+import org.dataportabilityproject.api.launcher.CommonSettings;
+import org.dataportabilityproject.api.launcher.CommonSettings.Environment;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtensionModule;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -58,12 +57,15 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
 
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
+  private final CommonSettings commonSettings;
 
   GoogleCloudExtensionModule(
       HttpTransport httpTransport,
-      JsonFactory jsonFactory) {
+      JsonFactory jsonFactory,
+      CommonSettings commonSettings) {
     this.httpTransport = httpTransport;
     this.jsonFactory = jsonFactory;
+    this.commonSettings = commonSettings;
   }
 
   /**
@@ -87,9 +89,13 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Override
   protected void configure() {
     super.configure();
-    install(new CommonSettingsModule());
     bind(JobStore.class).to(GoogleJobStore.class);
     bind(AppCredentialStore.class).to(GoogleAppCredentialStore.class);
+  }
+
+  @Provides
+  CommonSettings getCommonSettings() {
+    return commonSettings;
   }
 
   @Provides

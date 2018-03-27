@@ -18,6 +18,7 @@ package org.dataportabilityproject.gateway;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -25,12 +26,12 @@ import com.google.inject.multibindings.MapBinder;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.dataportabilityproject.api.launcher.ApiSettings;
+import org.dataportabilityproject.api.launcher.extension.ApiSettingsExtension;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.JWTTokenManager;
@@ -79,10 +80,10 @@ public class ApiMain {
       TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory) {
     TypeManager typeManager = new TypeManagerImpl();
 
-    // TODO implement
-    Map<String, Object> configuration = new HashMap<>();
+    ApiSettingsExtension settingsExtension = getApiSettingsExtension();
+    settingsExtension.initialize(null);
 
-    ExtensionContext extensionContext = new ApiExtensionContext(typeManager, configuration);
+    ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension);
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.
@@ -139,7 +140,7 @@ public class ApiMain {
                 keyManagerFactory,
                 authServiceExtensions,
                 tokenManager),
-            new ReferenceApiModule());
+            new ReferenceApiModule(extensionContext.getApiSettings()));
 
     // Launch the application
     // TODO: Support other server implementations, e.g. Jetty, Tomcat
@@ -158,6 +159,17 @@ public class ApiMain {
 
   public void shutdown() {
     // not currently used but in the future it may be to allow HTTP servers to be temporarily paused
+  }
+
+  private ApiSettingsExtension getApiSettingsExtension() {
+    ImmutableList.Builder<ApiSettingsExtension> extensionsBuilder = ImmutableList.builder();
+    ServiceLoader.load(ApiSettingsExtension.class).iterator()
+        .forEachRemaining(extensionsBuilder::add);
+    ImmutableList<ApiSettingsExtension> extensions = extensionsBuilder.build();
+    Preconditions.checkState(
+        extensions.size() == 1,
+        "Exactly one SettingsExtension is required, but found " + extensions.size());
+    return extensions.get(0);
   }
 
   private CloudExtension getCloudExtension() {

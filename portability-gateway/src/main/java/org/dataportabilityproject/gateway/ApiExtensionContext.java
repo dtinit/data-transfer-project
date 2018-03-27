@@ -15,6 +15,9 @@
  */
 package org.dataportabilityproject.gateway;
 
+import org.dataportabilityproject.api.launcher.ApiSettings;
+import org.dataportabilityproject.api.launcher.extension.ApiSettingsExtension;
+import org.dataportabilityproject.api.launcher.CommonSettings;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
@@ -30,10 +33,10 @@ import java.util.Map;
 public class ApiExtensionContext implements ExtensionContext {
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final TypeManager typeManager;
-  private final Map<String, Object> configuration;
+  private final ApiSettingsExtension settingsExtension;
 
-  public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
-    this.configuration = configuration;
+  public ApiExtensionContext(TypeManager typeManager, ApiSettingsExtension settingsExtension) {
+    this.settingsExtension = settingsExtension;
     this.typeManager = typeManager;
     registered.put(TypeManager.class, typeManager);
   }
@@ -60,8 +63,16 @@ public class ApiExtensionContext implements ExtensionContext {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> T getConfiguration(final String key, final T defaultValue) {
-    return (T) configuration.getOrDefault(key, defaultValue);
+  public <T> T getSetting(String setting, T defaultValue) {
+    return settingsExtension.getSetting(setting, defaultValue);
+  }
+
+  @Override
+  public CommonSettings getCommonSettings() {
+    return settingsExtension.getCommonSettings();
+  }
+
+  public ApiSettings getApiSettings() {
+    return settingsExtension.getApiSettings();
   }
 }
