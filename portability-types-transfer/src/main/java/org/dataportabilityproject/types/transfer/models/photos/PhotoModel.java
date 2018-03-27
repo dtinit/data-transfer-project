@@ -17,71 +17,52 @@ package org.dataportabilityproject.types.transfer.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.auto.value.AutoValue;
 
-import javax.annotation.Nullable;
+public class PhotoModel {
+  private final String title;
+  private final String fetchableUrl;
+  private final String description;
+  private final String mediaType;
+  private String dataId;
+  private final String albumId;
 
-@AutoValue
-@JsonDeserialize(builder = PhotoModel.Builder.class)
-public abstract class PhotoModel {
-  @JsonProperty("title")
-  public abstract String getTitle();
-
-  @JsonProperty("mediaType")
-  public abstract String getMediaType();
-
-  @Nullable
-  @JsonProperty("fetchableUrl")
-  public abstract String getFetchableUrl();
-
-  @Nullable
-  @JsonProperty("dataId")
-  public abstract String getDataId();
-
-  @Nullable
-  @JsonProperty("albumId")
-  public abstract String getAlbumId();
-
-  @Nullable
-  @JsonProperty("description")
-  public abstract String getDescription();
-
-  public static Builder builder() {
-    // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
-    // the class name due to a conflict in package names for our generated code, but the conflict
-    // doesn't cause any actual problems with building.
-    return new org.dataportabilityproject.types.transfer.models.photos.AutoValue_PhotoModel
-        .Builder();
+  @JsonCreator
+  public PhotoModel(
+      @JsonProperty("title") String title,
+      @JsonProperty("fetchableUrl") String fetchableUrl,
+      @JsonProperty("description") String description,
+      @JsonProperty("mediaType") String mediaType,
+      @JsonProperty("dataId") String dataId,
+      @JsonProperty("albumId") String albumId) {
+    this.title = title;
+    this.fetchableUrl = fetchableUrl;
+    this.description = description;
+    this.mediaType = mediaType;
+    this.dataId = dataId;
+    this.albumId = albumId;
   }
 
-  public abstract Builder toBuilder();
+  public String getTitle() {
+    return title;
+  }
 
-  @AutoValue.Builder
-  public abstract static class Builder {
-    @JsonCreator
-    private static Builder create() {
-      return PhotoModel.builder();
-    }
+  public String getFetchableUrl() {
+    return fetchableUrl;
+  }
 
-    public abstract PhotoModel build();
+  public String getDescription() {
+    return description;
+  }
 
-    @JsonProperty("title")
-    public abstract Builder setTitle(String title);
+  public String getMediaType() {
+    return mediaType;
+  }
 
-    @JsonProperty("mediaType")
-    public abstract Builder setMediaType(String mediaType);
+  public String getAlbumId() {
+    return albumId;
+  }
 
-    @JsonProperty("fetchableUrl")
-    public abstract Builder setFetchableUrl(String fetchableUrl);
-
-    @JsonProperty("dataId")
-    public abstract Builder setDataId(String dataId);
-
-    @JsonProperty("description")
-    public abstract Builder setDescription(String description);
-
-    @JsonProperty("albumId")
-    public abstract Builder setAlbumId(String albumId);
+  public String getDataId() {
+    return dataId;
   }
 }

@@ -18,6 +18,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  *
  */
@@ -150,7 +153,7 @@ public class MicrosoftPhotosExportTest {
         HttpUrl baseUrl = server.url("");
         MicrosoftPhotosExporter exporter = new MicrosoftPhotosExporter(baseUrl.toString(), client, mapper, jobStore);
 
-        ExportResult<PhotosContainerResource> result = exporter.export(token);
+        ExportResult<PhotosContainerResource> result = exporter.export(UUID.randomUUID(), token, Optional.empty());
 
         PhotosContainerResource  resource = result.getExportedData();
 

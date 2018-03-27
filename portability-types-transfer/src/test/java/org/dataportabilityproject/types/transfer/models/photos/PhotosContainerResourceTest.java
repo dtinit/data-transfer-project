@@ -19,20 +19,9 @@ public class PhotosContainerResourceTest {
 
     List<PhotoModel> photos =
         ImmutableList.of(
-            PhotoModel.builder()
-                .setTitle("Pic1")
-                .setFetchableUrl("http://fake.com/1.jpg")
-                .setDescription("A pic")
-                .setMediaType("image/jpeg")
-                .setAlbumId("id1")
-                .build(),
-            PhotoModel.builder()
-                .setTitle("Pic1")
-                .setFetchableUrl("http://fake.com/pic.jpg")
-                .setDescription("fine art")
-                .setMediaType("image/png")
-                .setAlbumId("id1")
-                .build());
+            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1"),
+            new PhotoModel(
+                "Pic2", "https://fake.com/pic.png", "fine art", "image/png", "p2", "id1"));
 
     ContainerResource data = new PhotosContainerResource(albums, photos);
 

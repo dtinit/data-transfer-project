@@ -16,7 +16,6 @@
 package org.dataportabilityproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -37,6 +36,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,12 +56,6 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
   private final JobStore jobStore;
 
   public MicrosoftPhotosExporter(
-      OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
-    this("https://graph.microsoft.com", client, objectMapper, jobStore);
-  }
-
-  @VisibleForTesting
-  public MicrosoftPhotosExporter(
       String baseUrl, OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
     photosRootUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     photosFolderTemplate = baseUrl + "/v1.0/me/drive/items/%s/children";
@@ -72,9 +66,7 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(TokenAuthData authData) {
-    // TODO replace this with the real job id passed via a param
-    UUID jobId = UUID.randomUUID();
+  public ExportResult<PhotosContainerResource> export( UUID jobId, TokenAuthData authData, Optional<ExportInformation> exportInformation) {
 
     try {
 
@@ -91,12 +83,6 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
       return new ExportResult<>(
           ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
     }
-  }
-
-  @Override
-  public ExportResult<PhotosContainerResource> export(
-      TokenAuthData authData, ExportInformation exportInformation) {
-    return export(authData);
   }
 
   /**
@@ -116,6 +102,7 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
     List<Map<String, Object>> photoItems = new ArrayList<>();
 
     Deque<Map<String, Object>> folderItems = new ArrayDeque<>();
+
     requestItems(photosRootUrl, authData, folderItems, photoItems);
 
     // request items for all folders recursively until the collection is exhausted, adding contained
@@ -226,26 +213,18 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
 
       // NB: descriptions are not available in OneDrive
 
-      PhotoModel.Builder photoBuilder = PhotoModel.builder();
-      photoBuilder
-          .setDescription("")
-          .setTitle(name)
-          .setMediaType(mimeType)
-          .setDataId(id)
-          .setDataId(id);
-
+      String albumId = null;
       // convert the parent folder to an album
       Map<String, Object> parentReference = (Map<String, Object>) photoItem.get("parentReference");
       if (parentReference != null) {
-        String parentId = (String) parentReference.get("id");
+        albumId = (String) parentReference.get("id");
         String parentName = (String) parentReference.get("name");
-        PhotoAlbum album = new PhotoAlbum(parentId, parentName, "");
+        PhotoAlbum album = new PhotoAlbum(albumId, parentName, "");
         albums.add(album);
-
-        photoBuilder.setAlbumId(parentId);
       }
+      PhotoModel photoModel = new PhotoModel(name, null, "", mimeType, id, albumId);
 
-      photoModels.add(photoBuilder.build());
+      photoModels.add(photoModel);
     }
 
     return new PhotosContainerResource(albums, photoModels);

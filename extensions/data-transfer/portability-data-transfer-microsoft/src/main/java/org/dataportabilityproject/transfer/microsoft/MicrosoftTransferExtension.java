@@ -11,6 +11,8 @@ import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarE
 import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
+import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosExporter;
+import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosImporter;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
 
@@ -19,6 +21,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   // TODO: centralized place, or enum type for these?
   private static final String CONTACTS = "contacts";
   private static final String CALENDAR = "calendar";
+  private static final String PHOTOS = "photos";
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
 
   private boolean initialized = false;
@@ -48,6 +51,10 @@ public class MicrosoftTransferExtension implements TransferExtension {
       return new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService);
     }
 
+    if (transferDataType.equals(PHOTOS)) {
+      return new MicrosoftPhotosExporter(BASE_GRAPH_URL, client, mapper, jobStore);
+    }
+
     return null;
   }
 
@@ -63,6 +70,10 @@ public class MicrosoftTransferExtension implements TransferExtension {
     if (transferDataType.equals(CALENDAR)) {
       return new MicrosoftCalendarImporter(
           BASE_GRAPH_URL, client, mapper, transformerService, jobStore);
+    }
+
+    if (transferDataType.equals(PHOTOS)) {
+      return new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore);
     }
 
     return null;

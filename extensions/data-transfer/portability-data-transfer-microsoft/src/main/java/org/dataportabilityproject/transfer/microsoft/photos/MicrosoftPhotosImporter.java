@@ -16,7 +16,6 @@
 package org.dataportabilityproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -60,12 +59,6 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
   private final String uploadPhotoUrlTemplate;
 
   public MicrosoftPhotosImporter(
-      OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
-    this("https://graph.microsoft.com", client, objectMapper, jobStore);
-  }
-
-  @VisibleForTesting
-  public MicrosoftPhotosImporter(
       String baseUrl, OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
 
@@ -80,21 +73,25 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
   @Override
   public ImportResult importItem(
-      String jobId, TokenAuthData authData, PhotosContainerResource resource) {
-    UUID id = UUID.fromString(jobId);
-    TempPhotoData photoData = jobStore.findData(TempPhotoData.class, id);
+      UUID jobId, TokenAuthData authData, PhotosContainerResource resource) {
+    TempPhotoData photoData = jobStore.findData(TempPhotoData.class, jobId);
     if (photoData == null) {
-      photoData = new TempPhotoData(jobId);
-      jobStore.create(id, photoData);
+      photoData = new TempPhotoData(jobId.toString());
+      try {
+        jobStore.create(jobId, photoData);
+      } catch (IOException e) {
+        return new ImportResult(ImportResult.ResultType.ERROR, "Error create temp photo data " + e.getMessage());
+      }
+
     }
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
-      createOneDriveFolder(album, id, authData, photoData);
+      createOneDriveFolder(album, jobId, authData, photoData);
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
-      importPhoto(photoModel, id, authData, photoData);
+      importPhoto(photoModel, jobId, authData, photoData);
     }
     return null;
   }

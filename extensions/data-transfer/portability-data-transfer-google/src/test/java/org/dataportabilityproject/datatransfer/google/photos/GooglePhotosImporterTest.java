@@ -15,23 +15,9 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosImporter.DEFAULT_ALBUM_ID;
-import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosImporter.PHOTO_POST_URL_FORMATTER;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.gdata.client.photos.PicasawebService;
-import com.google.gdata.data.PlainTextConstruct;
-import com.google.gdata.data.media.MediaStreamSource;
 import com.google.gdata.data.photos.PhotoEntry;
 import com.google.gdata.util.ServiceException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.transfer.ImageStreamProvider;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
@@ -39,6 +25,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosImporter.DEFAULT_ALBUM_ID;
+import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosImporter.PHOTO_POST_URL_FORMATTER;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class GooglePhotosImporterTest {
 
@@ -68,7 +67,7 @@ public class GooglePhotosImporterTest {
   public void exportPhoto() throws IOException, ServiceException {
     // Set up
     String description = "description";
-    PhotoModel photoModel = new PhotoModel(PHOTO_TITLE, IMG_URI, description, JPEG_MEDIA_TYPE,
+    PhotoModel photoModel = new PhotoModel(PHOTO_TITLE, IMG_URI, description, JPEG_MEDIA_TYPE, null,
         "album_id");
 
     // Run test

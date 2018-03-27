@@ -32,12 +32,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -53,6 +47,13 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
 
@@ -90,6 +91,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         p.getOriginalSize().getSource(),
         p.getDescription(),
         toMimeType(p.getOriginalFormat()),
+        null, // TODO this needs to be provided
         albumId);
   }
 
