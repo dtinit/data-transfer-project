@@ -19,8 +19,11 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
@@ -33,10 +36,16 @@ import org.slf4j.LoggerFactory;
 public class GoogleAuthServiceExtension implements AuthServiceExtension {
   private static final Logger logger = LoggerFactory.getLogger(GoogleAuthServiceExtension.class);
   private static final String REDIRECT_PATH = "/callback/google";
+
   // TODO: share this between AuthServiceExtension and TransferExtension
-  private static final ImmutableList<String> DEFAULT_AUTH_GENERATOR_SERVICES =
-      ImmutableList.of("contacts", "calendar", "tasks");
-  private volatile GoogleAuthDataGenerator authDataGenerator;
+  private static final ImmutableList<String> SUPPORTED_DATA_TYPES =
+      ImmutableList.of("contacts", "calendar", "tasks", "photos");
+
+  private volatile Map<String, Map<AuthMode, AuthDataGenerator>> dataTypeAuthGenerators;
+
+  private AppCredentials appCredentials;
+  private HttpTransport httpTransport;
+  private TypeManager typeManager;
 
   public GoogleAuthServiceExtension() {}
 
@@ -45,34 +54,23 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
   }
 
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
-    Preconditions.checkNotNull(authDataGenerator);
-    // TODO Create auth data generator for a given mode, usually means a different scope
-    if (DEFAULT_AUTH_GENERATOR_SERVICES.contains(transferDataType)) {
-      return authDataGenerator;
-    }
-    throw new UnsupportedOperationException();
+    return getOrCreateAuthDataGenerator(transferDataType, mode);
   }
 
   @Override
   public List<String> getImportTypes() {
-    return DEFAULT_AUTH_GENERATOR_SERVICES;
+    return SUPPORTED_DATA_TYPES;
   }
 
   @Override
   public List<String> getExportTypes() {
-    return DEFAULT_AUTH_GENERATOR_SERVICES;
+    return SUPPORTED_DATA_TYPES;
   }
 
   @Override
   public void initialize(ExtensionContext context) {
-    makeAuthDataGenerator(context);
-  }
-
-  private synchronized void makeAuthDataGenerator(ExtensionContext context) {
-    Preconditions.checkState(authDataGenerator == null);
-    AppCredentials credentials;
     try {
-      credentials =
+      appCredentials =
           context
               .getService(AppCredentialStore.class)
               .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
@@ -80,12 +78,34 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
       logger.warn("Problem getting AppCredentials: {}", e);
       return;
     }
-    authDataGenerator =
-        new GoogleAuthDataGenerator(
-            REDIRECT_PATH,
-            credentials.getKey(),
-            credentials.getSecret(),
-            context.getService(HttpTransport.class),
-            context.getTypeManager().getMapper());
+
+    dataTypeAuthGenerators = new HashMap<>();
+    httpTransport = context.getService(HttpTransport.class);
+    typeManager = context.getService(TypeManager.class);
+  }
+
+  private synchronized AuthDataGenerator getOrCreateAuthDataGenerator(
+      String transferDataType, AuthMode mode) {
+    Preconditions.checkState(appCredentials != null && dataTypeAuthGenerators != null);
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+
+    if (!dataTypeAuthGenerators.containsKey(transferDataType)) {
+      dataTypeAuthGenerators.put(transferDataType, new HashMap<>());
+    }
+
+    Map<AuthMode, AuthDataGenerator> authDataGenerators =
+        dataTypeAuthGenerators.get(transferDataType);
+    if (!authDataGenerators.containsKey(mode)) {
+      authDataGenerators.put(
+          mode,
+          new GoogleAuthDataGenerator(
+              REDIRECT_PATH,
+              appCredentials,
+              httpTransport,
+              typeManager.getMapper(),
+              transferDataType,
+              mode));
+    }
+    return authDataGenerators.get(mode);
   }
 }
