@@ -122,6 +122,9 @@ public class GooglePhotosExporter implements Exporter<TokensAndUrlAuthData, Phot
       }
 
       ResultType resultType = ResultType.CONTINUE;
+      if (nextPageData == null || continuationData.getContainerResources().isEmpty()) {
+        resultType = ResultType.END;
+      }
       PhotosContainerResource containerResource = new PhotosContainerResource(albums, null);
       return new ExportResult<>(resultType, containerResource, continuationData);
     } catch (ServiceException | IOException e) {
@@ -159,7 +162,12 @@ public class GooglePhotosExporter implements Exporter<TokensAndUrlAuthData, Phot
       }
 
       PhotosContainerResource containerResource = new PhotosContainerResource(null, photos);
-      return new ExportResult<>(ResultType.END, containerResource, continuationData);
+
+      ResultType resultType = ResultType.CONTINUE;
+      if (nextPageData == null) {
+        resultType = ResultType.END;
+      }
+      return new ExportResult<>(resultType, containerResource, continuationData);
     } catch (ServiceException | IOException e) {
       return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }

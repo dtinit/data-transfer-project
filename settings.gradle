@@ -26,6 +26,7 @@ include ':portability-core', ':portability-worker', ':portability-bootstrap-vm'
 
 include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
 
+include ':extensions:auth:portability-auth-flickr'
 include ':extensions:data-transfer:portability-data-transfer-flickr'
 
 include ':extensions:config:portability-config-yaml'
