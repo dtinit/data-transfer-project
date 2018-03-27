@@ -33,8 +33,9 @@ import org.slf4j.LoggerFactory;
 public class GoogleAuthServiceExtension implements AuthServiceExtension {
   private static final Logger logger = LoggerFactory.getLogger(GoogleAuthServiceExtension.class);
   private static final String REDIRECT_PATH = "/callback/google";
+  // TODO: share this between AuthServiceExtension and TransferExtension
   private static final ImmutableList<String> DEFAULT_AUTH_GENERATOR_SERVICES =
-      ImmutableList.of("contacts", "calendar");
+      ImmutableList.of("contacts", "calendar", "tasks");
   private volatile GoogleAuthDataGenerator authDataGenerator;
 
   public GoogleAuthServiceExtension() {}

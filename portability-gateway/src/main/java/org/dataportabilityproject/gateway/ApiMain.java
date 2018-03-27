@@ -46,6 +46,9 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
+import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +80,10 @@ public class ApiMain {
 
   public void initializeHttps(
       TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory) {
+    // TODO init with types
     TypeManager typeManager = new TypeManagerImpl();
+    typeManager.registerTypes(
+        TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
 
     // TODO implement
     Map<String, Object> configuration = new HashMap<>();
