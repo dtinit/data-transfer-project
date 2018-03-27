@@ -1,6 +1,8 @@
 package org.dataportabilityproject.auth.microsoft;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -79,6 +81,9 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
       ObjectMapper mapper,
       String transferDataType,
       AuthMode mode) {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(transferDataType) && mode != null,
+        "A valid mode and transfer data type must be present");
     this.redirectPath = redirectPath;
     this.clientIdSupplier = clientIdSupplier;
     this.clientSecretSupplier = clientSecretSupplier;
@@ -93,9 +98,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     // constructs a request for the Microsoft Graph authorization code.
     String redirectUrl = callbackBaseUrl + redirectPath;
-    String queryPart =
-        constructAuthQueryPart(
-            redirectUrl, id, scopes);
+    String queryPart = constructAuthQueryPart(redirectUrl, id, scopes);
     return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart);
   }
 
