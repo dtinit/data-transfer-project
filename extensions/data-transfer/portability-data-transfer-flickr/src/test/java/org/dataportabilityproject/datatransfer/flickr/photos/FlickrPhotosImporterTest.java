@@ -106,7 +106,7 @@ public class FlickrPhotosImporterTest {
     // Run test
     FlickrPhotosImporter importer = new FlickrPhotosImporter(flickr, jobStore, imageStreamProvider);
     ImportResult result = importer.importItem(
-        jobId.toString(), new TokenSecretAuthData("token", "secret"), photosContainerResource);
+        jobId, new TokenSecretAuthData("token", "secret"), photosContainerResource);
 
     // Verify that the image stream provider got the correct URL and that the correct info was uploaded
     verify(imageStreamProvider).get(FETCHABLE_URL);

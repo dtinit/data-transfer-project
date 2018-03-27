@@ -53,6 +53,7 @@ import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
@@ -76,13 +77,13 @@ public class GoogleContactsExporter
   }
 
   @Override
-  public ExportResult<ContactsModelWrapper> export(TokensAndUrlAuthData authData) {
+  public ExportResult<ContactsModelWrapper> export(UUID jobId, TokensAndUrlAuthData authData) {
     return exportContacts(authData, Optional.empty());
   }
 
   @Override
   public ExportResult<ContactsModelWrapper> export(
-      TokensAndUrlAuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     StringPaginationToken stringPaginationToken =
         (StringPaginationToken) exportInformation.getPaginationData();
     Optional<PaginationData> paginationData = Optional.ofNullable(stringPaginationToken);

@@ -7,6 +7,8 @@ import org.dataportabilityproject.transfer.microsoft.MicrosoftTransferExtension;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 
+import java.util.UUID;
+
 /** Runs a contacts export using a local setup. */
 @Deprecated
 public class LocalExportTestRunner {
@@ -20,6 +22,6 @@ public class LocalExportTestRunner {
 
     Exporter<TokenAuthData, ContactsModelWrapper> contacts =
         (Exporter<TokenAuthData, ContactsModelWrapper>) serviceProvider.getExporter("contacts");
-    ExportResult<ContactsModelWrapper> wrapper = contacts.export(token);
+    ExportResult<ContactsModelWrapper> wrapper = contacts.export(UUID.randomUUID(), token);
   }
 }
