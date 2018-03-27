@@ -24,11 +24,6 @@ import com.google.gdata.data.media.MediaStreamSource;
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 import com.google.gdata.util.ServiceException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -39,6 +34,12 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.UUID;
 
 public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
@@ -68,7 +69,7 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
   }
 
   @Override
-  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
     try {
       for (PhotoAlbum album : data.getAlbums()) {
         importSingleAlbum(jobId, authData, album);
@@ -84,9 +85,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
   }
 
   @VisibleForTesting
-  void importSingleAlbum(String jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
+  void importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
       throws IOException, ServiceException {
-    UUID uuid = UUID.fromString(jobId);
 
     // Set up album
     AlbumEntry outputAlbum = new AlbumEntry();
@@ -98,19 +98,18 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
         .insert(new URL(ALBUM_POST_URL), outputAlbum);
 
     // Put new album ID in job store so photos can be assigned to the correct album
-    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, uuid);
+    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
     if (photoMappings == null) {
-      photoMappings = new TempPhotosData(jobId);
-      jobStore.create(uuid, photoMappings);
+      photoMappings = new TempPhotosData(jobId.toString());
+      jobStore.create(jobId, photoMappings);
     }
     photoMappings.addAlbumId(inputAlbum.getId(), insertedEntry.getGphotoId());
-    jobStore.update(uuid, photoMappings);
+    jobStore.update(jobId, photoMappings);
   }
 
   @VisibleForTesting
-  void importSinglePhoto(String jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
+  void importSinglePhoto(UUID jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
       throws IOException, ServiceException {
-    UUID uuid = UUID.fromString(jobId);
 
     // Set up photo
     PhotoEntry outputPhoto = new PhotoEntry();
@@ -128,7 +127,7 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
     outputPhoto.setMediaSource(streamSource);
 
     // Find album to upload photo to
-    String albumId = jobStore.findData(TempPhotosData.class, uuid)
+    String albumId = jobStore.findData(TempPhotosData.class, jobId)
         .lookupNewAlbumId(inputPhoto.getAlbumId());
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 

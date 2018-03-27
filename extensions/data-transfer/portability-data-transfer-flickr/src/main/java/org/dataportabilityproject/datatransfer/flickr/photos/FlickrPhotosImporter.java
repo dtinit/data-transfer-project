@@ -37,7 +37,6 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -71,7 +70,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @Override
-  public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(UUID jobId, AuthData authData, PhotosContainerResource data) {
     Auth auth;
     try {
       auth = FlickrUtils.getAuth(authData, flickr);
@@ -80,26 +79,25 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
           ImportResult.ResultType.ERROR, "Error authorizing Flickr Auth: " + e.getErrorMessage());
     }
     RequestContext.getRequestContext().setAuth(auth);
-    UUID id = UUID.fromString(jobId);
 
     // Store any album data in the cache because Flickr only allows you to create an album with a
     // photo in it, so we have to wait for the first photo to create the album
-    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, id);
+    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
     if (tempPhotosData == null) {
-      tempPhotosData = new TempPhotosData(jobId);
-      jobStore.create(id, tempPhotosData);
+      tempPhotosData = new TempPhotosData(jobId.toString());
+      jobStore.create(jobId, tempPhotosData);
     }
 
     for (PhotoAlbum album : data.getAlbums()) {
       tempPhotosData.addAlbum(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
     }
-    jobStore.update(id, tempPhotosData);
+    jobStore.update(jobId, tempPhotosData);
 
     for (PhotoModel photo : data.getPhotos()) {
       try {
         String photoId = uploadPhoto(photo);
         String oldAlbumId = photo.getAlbumId();
-        TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
+        TempPhotosData tempData = jobStore.findData(TempPhotosData.class, jobId);
         String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
         if (Strings.isNullOrEmpty(newAlbumId)) {
           // This means that we havent created the new album yet, create the photoset
@@ -112,7 +110,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
           // We've already created a new album, add the photo to the new album
           photosetsInterface.addPhoto(newAlbumId, photoId);
         }
-        jobStore.update(id, tempData);
+        jobStore.update(jobId, tempData);
       } catch (FlickrException | IOException e) {
         // TODO: figure out retries
         return new ImportResult(

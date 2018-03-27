@@ -69,12 +69,11 @@ public class MicrosoftCalendarImporter
   @SuppressWarnings("unchecked")
   @Override
   public ImportResult importItem(
-      String jobId, TokenAuthData authData, CalendarContainerResource data) {
-    UUID id = UUID.fromString(jobId);
-    TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, id);
+          UUID jobId, TokenAuthData authData, CalendarContainerResource data) {
+    TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
     if (calendarMappings == null) {
-      calendarMappings = new TempCalendarData(jobId);
-      jobStore.create(id, calendarMappings);
+      calendarMappings = new TempCalendarData(jobId.toString());
+      jobStore.create(jobId, calendarMappings);
     }
 
     Map<String, String> requestIdToExportedId = new HashMap<>();
@@ -123,7 +122,7 @@ public class MicrosoftCalendarImporter
       calendarMappings.addIdMapping(
           requestIdToExportedId.get(batchRequestId), (String) body.get("id"));
     }
-    jobStore.update(UUID.fromString(jobId), calendarMappings);
+    jobStore.update(jobId, calendarMappings);
 
     List<Map<String, Object>> eventRequests = new ArrayList<>();
     requestId = 1;
