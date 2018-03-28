@@ -24,6 +24,10 @@ import java.lang.reflect.Method;
 import org.dataportabilityproject.config.extension.Flag;
 import org.dataportabilityproject.config.extension.SettingsExtension;
 
+/**
+ * {@link AbstractModule} that binds all @Flag-annotated flags from a {@link SettingsExtension}
+ * as Named annotations to be injected by Guice.
+ */
 public class FlagBindingModule extends AbstractModule {
 
   private SettingsExtension settingsExtension;

@@ -35,7 +35,7 @@ public class YamlWorkerSettingsExtension implements WorkerSettingsExtension {
       commonSettings = YamlCommonSettings.parse();
       yamlExtensionSettings = YamlExtensionSettings.parse();
     } catch (IOException e) {
-      throw new RuntimeException("Problem parsing API flags", e);
+      throw new RuntimeException("Problem parsing worker flags", e);
     }
   }
 

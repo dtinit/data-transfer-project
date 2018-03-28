@@ -22,7 +22,7 @@ import org.dataportabilityproject.api.launcher.Constants.Environment;
 /**
  * Extension that provides settings required by both the API and worker servers.
  *
- * Also provides custom settings that extensions use.
+ * <p>Also provides custom extension settings that extensions use.
  */
 public interface SettingsExtension extends AbstractExtension {
 
@@ -31,7 +31,7 @@ public interface SettingsExtension extends AbstractExtension {
   @Flag Environment environment();
 
   /**
-   * Returns the configuration value for {@code setting} or the default value if not found.
+   * Returns the configuration value for an extension setting or the default value if not found.
    *
    * @param setting the extension setting name
    * @param defaultValue the default value. Null may be passed.
