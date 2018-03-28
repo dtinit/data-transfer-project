@@ -16,13 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.google.contacts;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -36,9 +29,6 @@ import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.Source;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -49,6 +39,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class GoogleContactsExporterTest {
 
@@ -95,7 +97,7 @@ public class GoogleContactsExporterTest {
     // Looking at first page, with at least one page after it
     listConnectionsResponse.setNextPageToken(NEXT_PAGE_TOKEN);
 
-    ExportResult<ContactsModelWrapper> result = contactsService.export(null);
+    ExportResult<ContactsModelWrapper> result = contactsService.export(UUID.randomUUID(), null);
 
     // Check that correct methods were called
     verify(connections).list(SELF_RESOURCE);
@@ -107,8 +109,9 @@ public class GoogleContactsExporterTest {
     // Check continuation data
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
     assertThat(continuationData.getContainerResources()).isEmpty();
-    StringPaginationToken paginationToken = (StringPaginationToken) ((ContinuationData) result
-        .getContinuationData()).getPaginationData();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken)
+            ((ContinuationData) result.getContinuationData()).getPaginationData();
     assertThat(paginationToken.getToken()).isEqualTo(NEXT_PAGE_TOKEN);
 
     // Check that the right number of VCards was returned
@@ -129,7 +132,8 @@ public class GoogleContactsExporterTest {
     when(listConnectionsRequest.setPageToken(NEXT_PAGE_TOKEN)).thenReturn(listConnectionsRequest);
 
     // Run test
-    ExportResult<ContactsModelWrapper> result = contactsService.export(null, exportInformation);
+    ExportResult<ContactsModelWrapper> result =
+        contactsService.export(UUID.randomUUID(), null, exportInformation);
 
     // Verify correct calls were made - i.e., token was added before execution
     InOrder inOrder = Mockito.inOrder(listConnectionsRequest);
