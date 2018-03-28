@@ -67,13 +67,12 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
   @Override
   public ImportResult importItem(
-      String jobId, TokensAndUrlAuthData authData, MailContainerResource data) {
-    UUID id = UUID.fromString(jobId);
+      UUID id, TokensAndUrlAuthData authData, MailContainerResource data) {
 
     Gmail tasksService = getOrCreateGmail(authData);
     TempMailData tempMailData = jobStore.findData(TempMailData.class, id);
     if (tempMailData == null) {
-      tempMailData = new TempMailData(jobId);
+      tempMailData = new TempMailData(id.toString());
       jobStore.create(id, tempMailData);
     }
 

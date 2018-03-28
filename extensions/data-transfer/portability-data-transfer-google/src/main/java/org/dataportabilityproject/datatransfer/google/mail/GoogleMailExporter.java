@@ -26,6 +26,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -54,12 +55,12 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailCo
   }
 
   @Override
-  public ExportResult<MailContainerResource> export(TokensAndUrlAuthData authData) {
-    return export(authData, new ExportInformation(null, null));
+  public ExportResult<MailContainerResource> export(UUID id, TokensAndUrlAuthData authData) {
+    return export(id, authData, new ExportInformation(null, null));
   }
 
   @Override
-  public ExportResult<MailContainerResource> export(
+  public ExportResult<MailContainerResource> export(UUID id,
       TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     // Create a new gmail service for the authorized user
     Gmail gmail = getOrCreateGmail(authData);

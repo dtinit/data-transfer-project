@@ -35,7 +35,7 @@ public class GoogleTransferExtension implements TransferExtension {
   private static final Logger logger = LoggerFactory.getLogger(GoogleTransferExtension.class);
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
-  private ImmutableList<String> supportedServices =
+  private static final ImmutableList<String> SUPPORTED_SERVICES =
       ImmutableList.of("calendar", "contacts", "gmail", "photos", "tasks");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
@@ -49,14 +49,14 @@ public class GoogleTransferExtension implements TransferExtension {
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
+    Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return exporterMap.get(transferDataType);
   }
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
+    Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
   }
 
