@@ -1,30 +1,33 @@
 rootProject.name = 'org.dataportabilityproject'
 
 include ':portability-types-client', ':portability-types-transfer'
-
+include ':portability-spi-service', ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
+include ':libraries:security', ':libraries:config'
+include ':portability-test-utilities'
 include ':portability-api-launcher'
 
-include ':portability-spi-service', ':portability-spi-gateway', ':portability-spi-cloud', ':portability-spi-transfer'
-
-include ':portability-gateway'
-
-include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
-
-include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
-
-include ':extensions:auth:portability-auth-google'
-
-include ':extensions:data-transfer:portability-data-transfer-google', ':extensions:data-transfer:portability-data-transfer-microsoft'
-
-include ':libraries:security'
-
-include ':libraries:config'
-
-include ':portability-test-utilities'
-
-include ':portability-core', ':portability-worker', ':portability-bootstrap-vm'
-
+// Runnable Jar Distributions
 include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
 
+// Jar Components
+// TODO: rename portability-worker to portability-transfer
+// TODO: rename portability-gateway to portability-api
+include ':portability-gateway', ':portability-worker', ':portability-bootstrap-vm'
+
+// Cloud Extensions
+include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
+
+// Flickr Auth and Transfer Extensions
 include ':extensions:auth:portability-auth-flickr'
 include ':extensions:data-transfer:portability-data-transfer-flickr'
+
+// Google Auth and Transfer Extensions
+include ':extensions:auth:portability-auth-google'
+include ':extensions:data-transfer:portability-data-transfer-google'
+
+// Microsoft Auth and Transfer Extensions
+include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
+include ':extensions:data-transfer:portability-data-transfer-microsoft'
+
+// TODO: remove old core dependencies
+include ':portability-core'
