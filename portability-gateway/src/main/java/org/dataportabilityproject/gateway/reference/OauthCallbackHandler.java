@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.ApiSettings;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.FrontendConstantUrls;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.DecrypterFactory;

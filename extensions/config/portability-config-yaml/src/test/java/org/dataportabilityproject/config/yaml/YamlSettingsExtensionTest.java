@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package org.dataportabilityproject.config.yaml;
+
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
@@ -22,21 +24,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import org.dataportabilityproject.config.ConfigUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConfigUtilsTest {
+public class YamlSettingsExtensionTest {
+
   @Test
-  public void parse() {
-    String testYaml = "environment: PROD\ncloud: LOCAL";
+  public void getCustomSettings() {
+    String testYaml = "foo: fooValue\nbar: barValue";
     InputStream in = new ByteArrayInputStream(testYaml.getBytes(StandardCharsets.UTF_8));
     try {
-      Map<String, Object> config = ConfigUtils.parse(in);
-      assertThat(config.get("environment")).isEqualTo("PROD");
-      assertThat(config.get("cloud")).isEqualTo("LOCAL");
+      Map<String, Object> config = YamlSettingsExtension.getCustomSettings(in);
+      assertThat(config.get("foo")).isEqualTo("fooValue");
+      assertThat(config.get("bar")).isEqualTo("barValue");
     } catch (IOException e) {
       fail("Could not parse test yaml. Got exception: " + e);
     }

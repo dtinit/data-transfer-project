@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.ApiSettings;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobAction;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionRequest;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionResponse;

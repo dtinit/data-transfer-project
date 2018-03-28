@@ -13,5 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** Extensions for running the system on Google Cloud Platform. */
-package org.dataportabilityproject.cloud.google;
+
+package org.dataportabilityproject.api.launcher.extension;
+
+import org.dataportabilityproject.api.launcher.ApiSettings;
+
+/**
+ * Extension that provides {@link ApiSettings}, along with {@code CommonSettings} and extension-
+ * specific settings (through inherited {@link SettingsExtension}) to an API server.
+ */
+public interface ApiSettingsExtension extends SettingsExtension {
+  ApiSettings getApiSettings();
+}

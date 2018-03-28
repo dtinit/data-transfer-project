@@ -30,7 +30,7 @@ import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.ApiSettings;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
