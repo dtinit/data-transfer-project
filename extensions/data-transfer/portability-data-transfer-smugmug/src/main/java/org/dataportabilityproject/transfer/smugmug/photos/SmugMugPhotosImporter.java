@@ -61,7 +61,7 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
   }
 
   @Override
-  public ImportResult importItem(String jobId, AuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(UUID jobId, AuthData authData, PhotosContainerResource data) {
     try {
       String folder = null;
       if (!data.getAlbums().isEmpty()) {
@@ -83,9 +83,7 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
   }
 
   @VisibleForTesting
-  void importSingleAlbum(String jobId, String folder, PhotoAlbum inputAlbum) throws  IOException {
-    UUID uuid = UUID.fromString(jobId);
-
+  void importSingleAlbum(UUID jobId, String folder, PhotoAlbum inputAlbum) throws  IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
     String niceName = "Copy-" + inputAlbum.getName().replace(' ', '-');
@@ -109,24 +107,22 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
 
     // Put new album ID in job store so photos can be assigned to correct album
     // TODO(olsona): thread safety!
-    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, uuid);
+    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
-      jobStore.create(uuid, tempPhotosData);
+      jobStore.create(jobId, tempPhotosData);
     }
     tempPhotosData.addAlbumId(inputAlbum.getId(), response.getResponse().getAlbum().getAlbumKey());
   }
 
   @VisibleForTesting
-  void importSinglePhoto(String jobId, PhotoModel inputPhoto) throws IOException {
-    UUID uuid = UUID.fromString(jobId);
-
+  void importSinglePhoto(UUID jobId, PhotoModel inputPhoto) throws IOException {
     // Set up photo
     InputStreamContent content =
             new InputStreamContent(null, getImageAsStream(inputPhoto.getFetchableUrl()));
 
     // Find album to upload photo to
-    String newAlbumKey = jobStore.findData(TempPhotosData.class, uuid).lookupNewAlbumId
+    String newAlbumKey = jobStore.findData(TempPhotosData.class, jobId).lookupNewAlbumId
             (inputPhoto.getAlbumId());
     checkState(
             !Strings.isNullOrEmpty(newAlbumKey), "Cached album key for %s is null", inputPhoto

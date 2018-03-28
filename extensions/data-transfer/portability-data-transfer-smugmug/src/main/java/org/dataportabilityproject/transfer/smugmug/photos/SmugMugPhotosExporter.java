@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -62,12 +63,12 @@ public class SmugMugPhotosExporter implements Exporter<AuthData, PhotosContainer
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(AuthData authData) {
+  public ExportResult<PhotosContainerResource> export(UUID jobId, AuthData authData) {
     return exportAlbums(Optional.empty());
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(AuthData authData,
+  public ExportResult<PhotosContainerResource> export(UUID jobId, AuthData authData,
       ExportInformation exportInformation) {
     return null;
   }
