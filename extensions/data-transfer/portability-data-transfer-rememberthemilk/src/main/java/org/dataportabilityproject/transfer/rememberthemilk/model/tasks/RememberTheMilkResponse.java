@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.model.tasks;
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
 
-public class ListAddResponse extends RememberTheMilkResponse {
+/** A generic response from the remember the milk service. */
+public abstract class RememberTheMilkResponse {
 
-  @Key("list")
-  public ListInfo listInfo;
+  @Key("@stat")
+  public String stat;
+
+  @Key("err")
+  public Error error;
 }

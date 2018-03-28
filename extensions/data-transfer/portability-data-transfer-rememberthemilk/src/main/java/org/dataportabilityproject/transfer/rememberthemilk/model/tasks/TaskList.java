@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.model.tasks;
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
+import com.google.common.base.Joiner;
 
-public class GetListResponse extends RememberTheMilkResponse {
+import java.util.List;
 
-  @Key("tasks")
-  public Tasks tasks;
+/** A list of one or more {@link Task} contained in a {@link TaskSeries}. */
+public class TaskList {
+
+  @Key("@id")
+  public int id;
+
+  @Key("taskseries")
+  public List<TaskSeries> taskSeriesList;
 
   @Override
   public String toString() {
-    return null == tasks ? stat : tasks.toString();
+    return String.format(
+        "(list id=%d children:[%s])",
+        id,
+        (taskSeriesList == null || taskSeriesList.isEmpty())
+            ? ""
+            : Joiner.on("\n").join(taskSeriesList));
   }
 }

@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.model.tasks;
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
 
-/**
- * Response from rtm.auth.getFrob
- *
- * <p>Example: //<?xml version='1.0' encoding='UTF-8'?><rsp
- * stat="ok"><frob>d27f3ecf5497d7fdd79aea0ba1ebe9bad375ce7b</frob></rsp>
- */
-public class Frob extends RememberTheMilkResponse {
+public class GetListResponse extends RememberTheMilkResponse {
 
-  @Key("frob")
-  public String frob;
+  @Key("tasks")
+  public Tasks tasks;
 
   @Override
   public String toString() {
-    return "frob(stat=" + stat + ", frob=" + frob + ")";
+    return null == tasks ? stat : tasks.toString();
   }
 }

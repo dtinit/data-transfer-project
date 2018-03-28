@@ -13,35 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.model.tasks;
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
 
-public class ListInfo {
+/** Error details from RTM */
+public class Error {
 
-  @Key("@id")
-  public int id;
+  @Key("@code")
+  public int code;
 
-  @Key("@name")
-  public String name;
-
-  @Key("@deleted")
-  public boolean deleted;
-
-  @Key("@locked")
-  public boolean locked;
-
-  @Key("@archived")
-  public boolean archived;
-
-  @Key("@position")
-  public int position;
-
-  @Key("@smart")
-  public boolean smart;
+  @Key("@msg")
+  public String msg;
 
   @Override
   public String toString() {
-    return String.format("List(id=%d, name=%s)", id, name);
+    return String.format("Error(code=%d msg=%s)", code, msg);
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.microsoft;
+package org.dataportabilityproject.transfer.rememberthemilk;
 
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;

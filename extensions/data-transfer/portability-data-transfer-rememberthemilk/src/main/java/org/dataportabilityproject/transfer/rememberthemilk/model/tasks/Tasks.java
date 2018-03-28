@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.model.tasks;
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
+import com.google.common.base.Joiner;
 
-/** Error details from RTM */
-public class Error {
+import java.util.List;
 
-  @Key("@code")
-  public int code;
+/** A set of task lists. */
+public class Tasks {
 
-  @Key("@msg")
-  public String msg;
+  @Key("@rev")
+  public String rev;
+
+  @Key("list")
+  public List<TaskList> list;
 
   @Override
   public String toString() {
-    return String.format("Error(code=%d msg=%s)", code, msg);
+    return String.format(
+        "Tasks(rev=%s List=%s)",
+        rev, (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
   }
 }

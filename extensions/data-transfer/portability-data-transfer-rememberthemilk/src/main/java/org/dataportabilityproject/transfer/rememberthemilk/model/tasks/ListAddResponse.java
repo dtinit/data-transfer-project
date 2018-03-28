@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.model.tasks;
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
-import com.google.common.base.Joiner;
 
-import java.util.List;
+public class ListAddResponse extends RememberTheMilkResponse {
 
-/** A collection of notes that exist on a task/taskseries */
-public class Notes {
-
-  @Key("note")
-  public List<String> notes;
-
-  @Override
-  public String toString() {
-    return (notes == null || notes.isEmpty()) ? "" : Joiner.on("; ").join(notes);
-  }
+  @Key("list")
+  public ListInfo listInfo;
 }

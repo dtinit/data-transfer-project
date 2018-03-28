@@ -13,19 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-package org.dataportabilityproject.transfer.microsoft.tasks;
+import com.google.api.client.util.Key;
 
-import org.dataportabilityproject.spi.transfer.provider.ImportResult;
-import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
-import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
+public class ListInfo {
 
-import java.util.UUID;
+  @Key("@id")
+  public int id;
 
-public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskContainerResource> {
+  @Key("@name")
+  public String name;
+
+  @Key("@deleted")
+  public boolean deleted;
+
+  @Key("@locked")
+  public boolean locked;
+
+  @Key("@archived")
+  public boolean archived;
+
+  @Key("@position")
+  public int position;
+
+  @Key("@smart")
+  public boolean smart;
+
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data) {
-    return null;
+  public String toString() {
+    return String.format("List(id=%d, name=%s)", id, name);
   }
 }
