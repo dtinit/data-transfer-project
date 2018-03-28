@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.config.yaml;
+package org.dataportabilityproject.config.yaml.parse;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +28,7 @@ import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.config.ConfigUtils;
 
 /**
- * Internal class to parse required common settings (see {@code SettingsExtension}) from YAML config
+ * Class to parse required common settings (see {@code SettingsExtension}) from YAML config
  * files on the classpath.
  *
  * <p>Distributions must configure API settings in config/common.yaml and (optional)
@@ -40,7 +39,7 @@ import org.dataportabilityproject.config.ConfigUtils;
  * for the appropriate environment into config/env/common.yaml in the jar. TODO(#202): Do this for
  * the sample Google deployments as a reference.
  */
-final class YamlCommonSettings {
+public final class YamlCommonSettings {
   private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
   private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
 
@@ -55,15 +54,17 @@ final class YamlCommonSettings {
     this.environment = environment;
   }
 
-  @JsonProperty String cloud() {
+  @JsonProperty
+  public String cloud() {
     return cloud;
   }
 
-  @JsonProperty Environment environment() {
+  @JsonProperty
+  public Environment environment() {
     return environment;
   }
 
-  static YamlCommonSettings parse() throws IOException {
+  public static YamlCommonSettings parse() throws IOException {
     // Any setting in both a base and env config will be overridden by the env definition.
     // This is enforced by the ordering of the settings files in the list below.
     ImmutableList<String> settingsFiles = ImmutableList.<String>builder()

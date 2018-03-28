@@ -14,29 +14,54 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.config.yaml;
+package org.dataportabilityproject.config.yaml.extension;
 
 import java.io.IOException;
 import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.config.extension.ApiSettingsExtension;
 import org.dataportabilityproject.config.extension.Flag;
-import org.dataportabilityproject.config.extension.WorkerSettingsExtension;
+import org.dataportabilityproject.config.yaml.parse.YamlApiSettings;
+import org.dataportabilityproject.config.yaml.parse.YamlCommonSettings;
+import org.dataportabilityproject.config.yaml.parse.YamlExtensionSettings;
 
 /**
- * {@link WorkerSettingsExtension} that parses configuration from YAML files on the classpath.
+ * {@link ApiSettingsExtension} that parses configuration from YAML files on the classpath.
+ *
+ * <p>Distributions must configure API settings in config/api.yaml and (optional)
+ * config/env/api.yaml. See distributions/demo-server as an example.
+ *
+ * <p>The env/ file is an optional mechanism to allow environment-specific overrides of settings in
+ * the base api.yaml. This requires a distribution's build.gradle to copy the api.yaml file
+ * for the appropriate environment into config/env/api.yaml in the jar. TODO(#202): Do this for
+ * the sample Google deployments as a reference.
  */
-public class YamlWorkerSettingsExtension implements WorkerSettingsExtension {
+public class YamlApiSettingsExtension implements ApiSettingsExtension {
+  private YamlApiSettings apiSettings;
   private YamlCommonSettings commonSettings;
   private YamlExtensionSettings yamlExtensionSettings;
 
   @Override
   public void initialize(ExtensionContext context) {
     try {
+      apiSettings = YamlApiSettings.parse();
       commonSettings = YamlCommonSettings.parse();
       yamlExtensionSettings = YamlExtensionSettings.parse();
     } catch (IOException e) {
-      throw new RuntimeException("Problem parsing worker flags", e);
+      throw new RuntimeException("Problem parsing API flags", e);
     }
+  }
+
+  @Override
+  @Flag
+  public String baseUrl() {
+    return apiSettings.baseUrl();
+  }
+
+  @Override
+  @Flag
+  public String baseApiUrl() {
+    return apiSettings.baseApiUrl();
   }
 
   @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.config.yaml;
+package org.dataportabilityproject.config.yaml.parse;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import org.dataportabilityproject.config.yaml.parse.YamlApiSettings;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;

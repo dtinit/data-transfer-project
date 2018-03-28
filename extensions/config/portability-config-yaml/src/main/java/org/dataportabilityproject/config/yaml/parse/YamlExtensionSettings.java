@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.config.yaml;
+package org.dataportabilityproject.config.yaml.parse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -27,7 +27,7 @@ import java.util.Map;
 import org.dataportabilityproject.config.ConfigUtils;
 
 /** Class to parse custom extension settings from a YAML config file on the classpath. */
-final class YamlExtensionSettings {
+public final class YamlExtensionSettings {
   // YAML file where custom extension settings may be configured.
   private static final String EXTENSION_SETTINGS_PATH = "config/extension.yaml";
 
@@ -37,7 +37,7 @@ final class YamlExtensionSettings {
     this.extensionSettings = extensionSettings;
   }
 
-  static YamlExtensionSettings parse() throws RuntimeException {
+  public static YamlExtensionSettings parse() throws RuntimeException {
     ImmutableList<String> settingsFiles = ImmutableList.of(EXTENSION_SETTINGS_PATH);
     InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
     return parse(in);
@@ -57,7 +57,7 @@ final class YamlExtensionSettings {
     }
   }
 
-  <T> T getSetting(String setting, T defaultValue) {
+  public <T> T getSetting(String setting, T defaultValue) {
     if (extensionSettings.containsKey(setting)) {
       return (T) extensionSettings.get(setting);
     }

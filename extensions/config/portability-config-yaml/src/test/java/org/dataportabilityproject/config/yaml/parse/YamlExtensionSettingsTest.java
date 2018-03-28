@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.config.yaml;
+package org.dataportabilityproject.config.yaml.parse;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import org.dataportabilityproject.config.yaml.parse.YamlExtensionSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;

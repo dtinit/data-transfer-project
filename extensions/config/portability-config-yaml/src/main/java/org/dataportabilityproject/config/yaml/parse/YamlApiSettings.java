@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.config.yaml;
+package org.dataportabilityproject.config.yaml.parse;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,10 +26,10 @@ import java.io.InputStream;
 import org.dataportabilityproject.config.ConfigUtils;
 
 /**
- * Internal class to parse required API settings (see {@code ApiSettingsExtension}) from YAML config
+ * Class to parse required API settings (see {@code ApiSettingsExtension}) from YAML config
  * files on the classpath.
  */
-final class YamlApiSettings {
+public final class YamlApiSettings {
   private static final String API_SETTINGS_PATH = "config/api.yaml";
   private static final String ENV_API_SETTINGS_PATH = "config/env/api.yaml";
 
@@ -47,15 +47,17 @@ final class YamlApiSettings {
     this.baseApiUrl = baseApiUrl;
   }
 
-  @JsonProperty String baseUrl() {
+  @JsonProperty
+  public String baseUrl() {
     return baseUrl;
   }
 
-  @JsonProperty String baseApiUrl() {
+  @JsonProperty
+  public String baseApiUrl() {
     return baseApiUrl;
   }
 
-  static YamlApiSettings parse() throws IOException {
+  public static YamlApiSettings parse() throws IOException {
     // Any setting in both a base and env config will be overridden by the env definition.
     // This is enforced by the ordering of the settings files in the list below.
     ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
