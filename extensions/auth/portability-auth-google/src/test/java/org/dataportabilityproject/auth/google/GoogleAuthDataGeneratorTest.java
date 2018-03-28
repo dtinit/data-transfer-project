@@ -3,9 +3,6 @@ package org.dataportabilityproject.auth.google;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.services.calendar.CalendarScopes;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
-import com.google.api.services.gmail.GmailScopes;
-import com.google.api.services.people.v1.PeopleServiceScopes;
-import com.google.api.services.tasks.TasksScopes;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.junit.Assert;
@@ -54,12 +51,6 @@ public class GoogleAuthDataGeneratorTest {
             + "&redirect_uri=http://localhost/testredirect&response_type=code"
             + "&scope="
             + CalendarScopes.CALENDAR_READONLY
-            + "%20"
-            + PeopleServiceScopes.CONTACTS
-            + "%20"
-            + GmailScopes.GMAIL_MODIFY
-            + "%20"
-            + TasksScopes.TASKS
             + "&state=NTQzMjE%3D",
         config.getUrl());
   }
