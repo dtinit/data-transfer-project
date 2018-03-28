@@ -129,6 +129,13 @@ public class GooglePhotosExporterTest {
         .containsExactly(ALBUM_ID);
   }
 
+  @Test
+  public void exportAlbumSubsequentSet() {
+    setUpSingleAlbumResponse();
+
+    int start = 2;
+  }
+
   /**
    * Sets up a response with a single album, containing a single photo
    */
