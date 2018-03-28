@@ -15,12 +15,13 @@
  */
 package org.dataportabilityproject.gateway;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.dataportabilityproject.config.extension.ApiSettingsExtension;
 
 /**
  * Provides a context for initializing extensions.
@@ -30,10 +31,10 @@ import java.util.Map;
 public class ApiExtensionContext implements ExtensionContext {
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final TypeManager typeManager;
-  private final Map<String, Object> configuration;
+  private final ApiSettingsExtension settingsExtension;
 
-  public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
-    this.configuration = configuration;
+  public ApiExtensionContext(TypeManager typeManager, ApiSettingsExtension settingsExtension) {
+    this.settingsExtension = settingsExtension;
     this.typeManager = typeManager;
     registered.put(TypeManager.class, typeManager);
   }
@@ -60,8 +61,18 @@ public class ApiExtensionContext implements ExtensionContext {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> T getConfiguration(final String key, final T defaultValue) {
-    return (T) configuration.getOrDefault(key, defaultValue);
+  public <T> T getSetting(String setting, T defaultValue) {
+    return settingsExtension.getSetting(setting, defaultValue);
   }
+
+  @Override
+  public String cloud() {
+    return settingsExtension.cloud();
+  }
+
+  @Override
+  public Environment environment() {
+    return settingsExtension.environment();
+  }
+
 }

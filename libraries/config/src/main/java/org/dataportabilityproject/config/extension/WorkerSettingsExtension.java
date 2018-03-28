@@ -13,5 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** Extensions for running the system on Google Cloud Platform. */
-package org.dataportabilityproject.cloud.google;
+
+package org.dataportabilityproject.config.extension;
+
+/** Extension that provides settings required by the worker server. */
+public interface WorkerSettingsExtension extends SettingsExtension {
+  // TODO: Fill in worker-specific flags here as needed.
+}

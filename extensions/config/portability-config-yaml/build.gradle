@@ -13,5 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** Extensions for running the system on Google Cloud Platform. */
-package org.dataportabilityproject.cloud.google;
+
+dependencies {
+    compile project(':portability-api-launcher')
+    compile project(':libraries:config')
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+
+    testCompile("junit:junit:${junitVersion}")
+    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
+}

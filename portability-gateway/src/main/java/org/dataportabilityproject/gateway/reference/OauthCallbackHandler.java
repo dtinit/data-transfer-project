@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.FrontendConstantUrls;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.DecrypterFactory;
@@ -36,7 +37,6 @@ import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
@@ -58,7 +58,8 @@ final class OauthCallbackHandler implements HttpHandler {
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
-  private final ApiSettings apiSettings;
+  private final String baseUrl;
+  private final String baseApiUrl;
 
   @Inject
   OauthCallbackHandler(
@@ -66,12 +67,14 @@ final class OauthCallbackHandler implements HttpHandler {
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
       TypeManager typeManager,
-      ApiSettings apiSettings) {
+      @Named("baseUrl") String baseUrl,
+      @Named("baseApiUrl") String baseApiUrl) {
     this.registry = registry;
     this.store = store;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
-    this.apiSettings = apiSettings;
+    this.baseUrl = baseUrl;
+    this.baseApiUrl = baseApiUrl;
 
     logger.debug("Using jobstore: {} in DataTransferHandler", store);
 
@@ -169,7 +172,7 @@ final class OauthCallbackHandler implements HttpHandler {
       // Generate auth data
       AuthData authData =
           generator.generateAuthData(
-              apiSettings.getBaseApiUrl(), oauthVerifier, jobId.toString(), initialAuthData, null);
+              baseApiUrl, oauthVerifier, jobId.toString(), initialAuthData, null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Serialize and encrypt the auth data
@@ -179,7 +182,7 @@ final class OauthCallbackHandler implements HttpHandler {
       ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
       redirect =
-          apiSettings.getBaseUrl()
+          baseUrl
               + ((authMode == AuthMode.EXPORT)
                   ? FrontendConstantUrls.URL_NEXT_PAGE
                   : FrontendConstantUrls.URL_COPY_PAGE);

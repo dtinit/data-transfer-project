@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -28,14 +29,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.apache.http.HttpHeaders;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.FrontendConstantUrls;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
@@ -60,7 +60,8 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
-  private final ApiSettings apiSettings;
+  private final String baseUrl;
+  private final String baseApiUrl;
 
   @Inject
   SimpleLoginSubmitHandler(
@@ -68,12 +69,14 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
       TypeManager typeManager,
-      ApiSettings apiSettings) {
+      @Named("baseUrl") String baseUrl,
+      @Named("baseApiUrl") String baseApiUrl) {
     this.registry = registry;
     this.store = store;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
-    this.apiSettings = apiSettings;
+    this.baseUrl = baseUrl;
+    this.baseApiUrl = baseApiUrl;
   }
 
   public void handle(HttpExchange exchange) throws IOException {
@@ -142,7 +145,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       // Generate and store auth data
       AuthData authData =
           generator.generateAuthData(
-              apiSettings.getBaseApiUrl(),
+              baseApiUrl,
               request.getUsername(),
               jobId.toString(),
               null,
@@ -164,7 +167,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
           job.importService(),
           job.transferDataType(),
           Status.INPROCESS,
-          apiSettings.getBaseUrl()
+          baseUrl
               + (authMode == AuthMode.EXPORT
                   ? FrontendConstantUrls.URL_NEXT_PAGE
                   : FrontendConstantUrls.URL_COPY_PAGE));

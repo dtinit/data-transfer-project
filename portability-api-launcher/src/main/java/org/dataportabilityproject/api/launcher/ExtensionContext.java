@@ -15,6 +15,8 @@
  */
 package org.dataportabilityproject.api.launcher;
 
+import org.dataportabilityproject.api.launcher.Constants.Environment;
+
 /** Provides information required to bootstrap extensions. */
 public interface ExtensionContext {
 
@@ -44,10 +46,14 @@ public interface ExtensionContext {
   default <T> void registerService(Class<T> type, T service) {}
 
   /**
-   * Returns the configuration parameter for the key or the default value if not found.
+   * Returns the configuration value for an extension setting, or the default value if not found.
    *
-   * @param key the parameter key
+   * @param setting the parameter key
    * @param defaultValue the default value. Null may be passed.
    */
-  <T> T getConfiguration(String key, T defaultValue);
+  <T> T getSetting(String setting, T defaultValue);
+
+  // Required settings
+  String cloud();
+  Environment environment();
 }
