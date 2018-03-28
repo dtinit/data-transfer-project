@@ -45,7 +45,7 @@ public class ReferenceApiModule extends FlagBindingModule {
   @Override
   protected void configure() {
     // binds flags from ExtensionContext to @Named annotations
-    super.configure();
+    bindFlags();
     // TODO: requireBinding for Strings annotated with @Named("baseUrl") and @Named("baseApiUrl")
 
     // TODO: Bind actions in single or multiple modules

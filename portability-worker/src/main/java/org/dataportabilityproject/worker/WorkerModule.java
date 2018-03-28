@@ -59,7 +59,7 @@ final class WorkerModule extends FlagBindingModule {
   @Override
   protected void configure() {
     // binds flags from ExtensionContext to @Named annotations
-    super.configure();
+    bindFlags();
 
     bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
