@@ -38,14 +38,16 @@ import org.slf4j.LoggerFactory;
 public class ReferenceApiModule extends FlagBindingModule {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceApiModule.class);
 
+  private final ExtensionContext context;
+
   public ReferenceApiModule(ExtensionContext context) {
-    super(context);
+    this.context = context;
   }
 
   @Override
   protected void configure() {
     // binds flags from ExtensionContext to @Named annotations
-    bindFlags();
+    bindFlags(context);
     // TODO: requireBinding for Strings annotated with @Named("baseUrl") and @Named("baseApiUrl")
 
     // TODO: Bind actions in single or multiple modules

@@ -30,14 +30,9 @@ import org.dataportabilityproject.config.extension.SettingsExtension;
  * as Named annotations to be injected by Guice.
  */
 public abstract class FlagBindingModule extends AbstractModule {
-  private final ExtensionContext context;
-
-  public FlagBindingModule(ExtensionContext context) {
-    this.context = context;
-  }
 
   @SuppressWarnings("unchecked")
-  protected void bindFlags() {
+  protected void bindFlags(ExtensionContext context) {
     // Automatically bind all flags in our ExtensionContext to a Named annotation. e.g., binds:
     // settingsExtension.cloud() to a String annotated with @Named("cloud"), so core classes
     // may inject '@Named("cloud") String cloud'.

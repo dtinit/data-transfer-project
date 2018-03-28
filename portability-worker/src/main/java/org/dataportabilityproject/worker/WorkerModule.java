@@ -48,7 +48,6 @@ final class WorkerModule extends FlagBindingModule {
       List<TransferExtension> transferExtensions,
       SymmetricKeyGenerator symmetricKeyGenerator,
       AsymmetricKeyGenerator asymmetricKeyGenerator) {
-    super(context);
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
@@ -59,7 +58,7 @@ final class WorkerModule extends FlagBindingModule {
   @Override
   protected void configure() {
     // binds flags from ExtensionContext to @Named annotations
-    bindFlags();
+    bindFlags(context);
 
     bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
