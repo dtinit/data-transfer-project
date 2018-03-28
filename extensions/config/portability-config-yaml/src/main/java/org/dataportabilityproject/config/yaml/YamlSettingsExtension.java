@@ -47,7 +47,7 @@ public class YamlSettingsExtension implements SettingsExtension {
 
   @Override
   public <T> T getSetting(String setting, T defaultValue) {
-    if (setting.contains(setting)) {
+    if (settings.containsKey(setting)) {
       return (T) settings.get(setting);
     }
     return defaultValue;
