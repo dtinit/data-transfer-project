@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -14,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.microsoft.model.tasks;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
+import com.google.api.client.util.Key;
 
-    compile("com.google.api-client:google-api-client:${googleApiClient}")
+/**
+ * Response from rtm.auth.getFrob
+ *
+ * <p>Example: //<?xml version='1.0' encoding='UTF-8'?><rsp
+ * stat="ok"><frob>d27f3ecf5497d7fdd79aea0ba1ebe9bad375ce7b</frob></rsp>
+ */
+public class Frob extends RememberTheMilkResponse {
 
+  @Key("frob")
+  public String frob;
+
+  @Override
+  public String toString() {
+    return "frob(stat=" + stat + ", frob=" + frob + ")";
+  }
 }

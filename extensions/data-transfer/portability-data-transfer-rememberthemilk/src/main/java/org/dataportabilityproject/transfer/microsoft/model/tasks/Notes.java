@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -14,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.microsoft.model.tasks;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
+import com.google.api.client.util.Key;
+import com.google.common.base.Joiner;
 
-    compile("com.google.api-client:google-api-client:${googleApiClient}")
+import java.util.List;
 
+/** A collection of notes that exist on a task/taskseries */
+public class Notes {
+
+  @Key("note")
+  public List<String> notes;
+
+  @Override
+  public String toString() {
+    return (notes == null || notes.isEmpty()) ? "" : Joiner.on("; ").join(notes);
+  }
 }

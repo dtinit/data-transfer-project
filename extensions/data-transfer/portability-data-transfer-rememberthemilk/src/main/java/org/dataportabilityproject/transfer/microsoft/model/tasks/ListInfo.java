@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -14,11 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.microsoft.model.tasks;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
+import com.google.api.client.util.Key;
 
-    compile("com.google.api-client:google-api-client:${googleApiClient}")
+public class ListInfo {
 
+  @Key("@id")
+  public int id;
+
+  @Key("@name")
+  public String name;
+
+  @Key("@deleted")
+  public boolean deleted;
+
+  @Key("@locked")
+  public boolean locked;
+
+  @Key("@archived")
+  public boolean archived;
+
+  @Key("@position")
+  public int position;
+
+  @Key("@smart")
+  public boolean smart;
+
+  @Override
+  public String toString() {
+    return String.format("List(id=%d, name=%s)", id, name);
+  }
 }

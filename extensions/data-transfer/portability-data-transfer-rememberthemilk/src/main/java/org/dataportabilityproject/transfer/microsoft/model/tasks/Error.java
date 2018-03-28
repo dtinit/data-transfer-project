@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -14,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.microsoft.model.tasks;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
+import com.google.api.client.util.Key;
 
-    compile("com.google.api-client:google-api-client:${googleApiClient}")
+/** Error details from RTM */
+public class Error {
 
+  @Key("@code")
+  public int code;
+
+  @Key("@msg")
+  public String msg;
+
+  @Override
+  public String toString() {
+    return String.format("Error(code=%d msg=%s)", code, msg);
+  }
 }

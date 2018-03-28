@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -14,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataportabilityproject.transfer.microsoft.model.tasks;
 
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
+import com.google.api.client.util.Key;
 
-    compile("com.google.api-client:google-api-client:${googleApiClient}")
+import java.util.List;
 
+/**
+ * Resonse to rtm.lists.getList. See:
+ * https://www.rememberthemilk.com/services/api/methods/rtm.lists.getList.rtm
+ */
+public class ListInfoList {
+
+  @Key("list")
+  public List<ListInfo> lists;
 }
