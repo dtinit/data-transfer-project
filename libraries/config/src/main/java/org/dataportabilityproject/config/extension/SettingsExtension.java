@@ -25,7 +25,6 @@ import org.dataportabilityproject.api.launcher.Constants.Environment;
  * <p>Also provides custom extension settings that extensions use.
  */
 public interface SettingsExtension extends AbstractExtension {
-
   @Flag String cloud();
 
   @Flag Environment environment();

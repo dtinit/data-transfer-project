@@ -29,8 +29,7 @@ import org.dataportabilityproject.config.extension.SettingsExtension;
  * as Named annotations to be injected by Guice.
  */
 public class FlagBindingModule extends AbstractModule {
-
-  private SettingsExtension settingsExtension;
+  private final SettingsExtension settingsExtension;
 
   public FlagBindingModule(SettingsExtension settingsExtension) {
     this.settingsExtension = settingsExtension;
