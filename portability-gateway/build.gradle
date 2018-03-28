@@ -38,6 +38,7 @@ jar {
 dependencies {
     compile project(':libraries:config')
     compile project(':libraries:security')
+    compile project(':portability-api-launcher')
     compile project(':portability-spi-service')
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-gateway')
@@ -59,7 +60,6 @@ dependencies {
     compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 
     testCompile("junit:junit:${junitVersion}")
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 

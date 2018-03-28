@@ -16,11 +16,11 @@
 package org.dataportabilityproject.gateway.reference;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.sun.net.httpserver.HttpHandler;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 
 /** {@link HttpHandler} that handles starting a copy job. */
@@ -33,17 +33,17 @@ final class CopySetupHandler extends SetupHandler {
       AuthServiceProviderRegistry registry,
       JobStore store,
       SymmetricKeyGenerator symmetricKeyGenerator,
-      ApiSettings apiSettings,
       TokenManager tokenManager,
-      TypeManager typeManager) {
+      TypeManager typeManager,
+      @Named("baseApiUrl") String baseApiUrl) {
     super(
         registry,
-        apiSettings,
         store,
         symmetricKeyGenerator,
         Mode.COPY,
         PATH,
         tokenManager,
-        typeManager);
+        typeManager,
+        baseApiUrl);
   }
 }

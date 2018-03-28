@@ -23,13 +23,14 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobAction;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionRequest;
 import org.dataportabilityproject.gateway.action.createjob.CreateJobActionResponse;
@@ -39,7 +40,6 @@ import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
@@ -62,25 +62,25 @@ final class DataTransferHandler implements HttpHandler {
   private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
   private final CreateJobAction createJobAction;
   private final AuthServiceProviderRegistry registry;
-  private final ApiSettings apiSettings;
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
+  private final String baseApiUrl;
 
   @Inject
   DataTransferHandler(
       CreateJobAction createJobAction,
       AuthServiceProviderRegistry registry,
-      ApiSettings apiSettings,
       JobStore store,
       TypeManager typeManager,
-      SymmetricKeyGenerator symmetricKeyGenerator) {
+      SymmetricKeyGenerator symmetricKeyGenerator,
+      @Named("baseApiUrl") String baseApiUrl) {
     this.createJobAction = createJobAction;
     this.registry = registry;
-    this.apiSettings = apiSettings;
     this.store = store;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
+    this.baseApiUrl = baseApiUrl;
 
     logger.debug("Using jobstore: {} in DataTransferHandler", store);
   }
@@ -124,7 +124,7 @@ final class DataTransferHandler implements HttpHandler {
         request.getSource());
 
     AuthFlowConfiguration authFlowConfiguration =
-        generator.generateConfiguration(apiSettings.getBaseApiUrl(), encodedJobId);
+        generator.generateConfiguration(baseApiUrl, encodedJobId);
     Preconditions.checkNotNull(
         authFlowConfiguration,
         "AuthFlowConfiguration not found for type: %s, service: %s",
