@@ -15,12 +15,15 @@
  */
 package org.dataportabilityproject.gateway;
 
+import com.google.common.base.Preconditions;
+import java.util.HashMap;
+import java.util.Map;
+import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.dataportabilityproject.api.launcher.Flag;
+import org.dataportabilityproject.config.extension.SettingsExtension;
 
 /**
  * Provides a context for initializing extensions.
@@ -30,12 +33,27 @@ import java.util.Map;
 public class ApiExtensionContext implements ExtensionContext {
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final TypeManager typeManager;
-  private final Map<String, Object> configuration;
+  private final SettingsExtension settingsExtension;
 
-  public ApiExtensionContext(TypeManager typeManager, Map<String, Object> configuration) {
-    this.configuration = configuration;
+  // Required settings
+  private final String cloud;
+  private final Environment environment;
+  private final String baseUrl;
+  private final String baseApiUrl;
+
+  public ApiExtensionContext(TypeManager typeManager, SettingsExtension settingsExtension) {
     this.typeManager = typeManager;
+    this.settingsExtension = settingsExtension;
     registered.put(TypeManager.class, typeManager);
+
+    cloud = settingsExtension.getSetting("cloud", null);
+    Preconditions.checkNotNull(cloud, "Required setting 'cloud' is missing");
+    environment = Environment.valueOf(settingsExtension.getSetting("environment", null));
+    Preconditions.checkNotNull(environment, "Required setting 'environment' is missing");
+    baseUrl = settingsExtension.getSetting("baseUrl", null);
+    Preconditions.checkNotNull(baseUrl, "Required setting 'baseUrl' is missing");
+    baseApiUrl = settingsExtension.getSetting("baseApiUrl", null);
+    Preconditions.checkNotNull(baseApiUrl, "Required setting 'baseApiUrl' is missing");
   }
 
   @Override
@@ -60,8 +78,29 @@ public class ApiExtensionContext implements ExtensionContext {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> T getConfiguration(final String key, final T defaultValue) {
-    return (T) configuration.getOrDefault(key, defaultValue);
+  public <T> T getSetting(String setting, T defaultValue) {
+    return settingsExtension.getSetting(setting, defaultValue);
+  }
+
+  @Override
+  @Flag
+  public String cloud() {
+    return cloud;
+  }
+
+  @Override
+  @Flag
+  public Environment environment() {
+    return environment;
+  }
+
+  @Flag
+  public String baseUrl() {
+    return baseUrl;
+  }
+
+  @Flag
+  public String baseApiUrl() {
+    return baseApiUrl;
   }
 }

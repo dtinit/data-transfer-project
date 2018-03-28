@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.cloud.google.GoogleCloudExtensionModule.Environment;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -45,12 +44,8 @@ public class GoogleCloudExtension implements CloudExtension {
         !initialized, "Attempting to initialize GoogleCloudExtension more than once");
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
-    // TODO: "cloud" and "environment" should be global flag names
-    String cloud = context.getConfiguration("cloud", "");
-    Environment environment =
-        Environment.valueOf(context.getConfiguration("environment", Environment.LOCAL.name()));
     injector = Guice.createInjector(new GoogleCloudExtensionModule(httpTransport, jsonFactory,
-        cloud, environment));
+        context.cloud(), context.environment()));
     initialized = true;
   }
 

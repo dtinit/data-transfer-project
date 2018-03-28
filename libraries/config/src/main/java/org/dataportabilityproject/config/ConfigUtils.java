@@ -16,32 +16,19 @@
 
 package org.dataportabilityproject.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
-import java.util.Map;
 
 /**
- * Common utilities for yaml configuration parsing.
+ * Common utilities for parsing configuration from files on the classpath.
  */
 public class ConfigUtils {
-
   /**
-   * Parses an input stream to a yaml configuration file into a generic Map<String, Object>.
+   * Concatenates {@link InputStream}s to multiple configuration files on the classpath into a
+   * single {@link InputStream}.
    */
-  public static Map<String, Object> parse(InputStream in) throws IOException {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    return mapper.readValue(in, Map.class);
-  }
-
-  /**
-   * Concatenates {@link InputStream}s to multiple yaml configuration files into a single
-   * {@link InputStream}.
-   */
-  public static InputStream getSettingsCombinedInputStream(ImmutableList<String> settingsFiles) {
+  public static InputStream getCombinedInputStream(ImmutableList<String> settingsFiles) {
     return settingsFiles.stream()
         .map(file -> ConfigUtils.class.getClassLoader().getResourceAsStream(file))
         .reduce(null, (in1, in2) -> combineStreams(in1, in2));

@@ -13,5 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** Extensions for running the system on Google Cloud Platform. */
-package org.dataportabilityproject.cloud.google;
+package org.dataportabilityproject.config.extension;
+
+
+import org.dataportabilityproject.api.launcher.AbstractExtension;
+
+/**
+ * Extension that provides settings.
+ */
+public interface SettingsExtension extends AbstractExtension {
+  /**
+   * Returns the configuration value for an extension setting or the default value if not found.
+   *
+   * @param setting the extension setting name
+   * @param defaultValue the default value. Null may be passed.
+   */
+  <T> T getSetting(String setting, T defaultValue);
+}
