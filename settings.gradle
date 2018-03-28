@@ -28,3 +28,5 @@ include ':distributions:worker-default', ':distributions:gateway-default', ':dis
 
 include ':extensions:auth:portability-auth-flickr'
 include ':extensions:data-transfer:portability-data-transfer-flickr'
+
+include ':extensions:config:portability-config-yaml'
