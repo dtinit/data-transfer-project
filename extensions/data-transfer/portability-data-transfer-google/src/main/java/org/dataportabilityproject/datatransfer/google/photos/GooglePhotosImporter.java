@@ -46,6 +46,8 @@ public class GooglePhotosImporter
   static final String ALBUM_POST_URL = "https://picasaweb.google.com/data/feed/api/user/default";
   static final String PHOTO_POST_URL_FORMATTER =
       "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
+  // The default album to upload to if the photo is not associated with an album
+  static final String DEFAULT_ALBUM_ID = "default";
 
   private final JobStore jobStore;
   private volatile PicasawebService photosService;
@@ -70,7 +72,8 @@ public class GooglePhotosImporter
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(
+      UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
     try {
       for (PhotoAlbum album : data.getAlbums()) {
         importSingleAlbum(jobId, authData, album);
@@ -134,10 +137,10 @@ public class GooglePhotosImporter
       jobStore.create(jobId, photoMappings);
     }
 
-    // Find album to upload photo to
-    // String albumId = jobStore.findData(TempPhotosData.class,
+    // TODO: Find album to upload photo to from the jobstore
+    // TODO: String albumId = jobStore.findData(TempPhotosData.class,
     // uuid).lookupNewAlbumId(inputPhoto.getAlbumId());
-    String albumId = "default";
+    String albumId = DEFAULT_ALBUM_ID;
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
     // Upload photo

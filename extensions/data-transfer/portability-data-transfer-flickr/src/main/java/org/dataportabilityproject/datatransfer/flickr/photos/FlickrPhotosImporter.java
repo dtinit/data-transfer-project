@@ -26,13 +26,8 @@ import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Collection;
-import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
@@ -43,6 +38,13 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collection;
+import java.util.UUID;
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
   @VisibleForTesting static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
@@ -81,13 +83,15 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
     RequestContext.getRequestContext().setAuth(auth);
 
-    // Store any album data in the cache because Flickr only allows you to create an album with a
-    // photo in it, so we have to wait for the first photo to create the album
     TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(jobId, tempPhotosData);
     }
+
+    Preconditions.checkArgument(
+        data.getAlbums() != null || data.getPhotos() != null,
+        "" + "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
       importAlbums(data.getAlbums(), tempPhotosData);
@@ -95,26 +99,31 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
 
     if (data.getPhotos() != null) {
-      try {
-        importPhotos(jobId, data.getPhotos());
-      } catch (FlickrException | IOException e) {
-        return new ImportResult(ResultType.ERROR, "Error importing photo: " + e.getMessage());
+      for(PhotoModel photo : data.getPhotos()) {
+        try {
+          importSinglePhoto(jobId, photo);
+        } catch (FlickrException | IOException e) {
+          return new ImportResult(ResultType.ERROR, "Error importing photo " + e.getMessage());
+        }
       }
     }
 
     return new ImportResult(ImportResult.ResultType.OK);
   }
 
+  // Store any album data in the cache because Flickr only allows you to create an album with a
+  // photo in it, so we have to wait for the first photo to create the album
   private void importAlbums(Collection<PhotoAlbum> albums, TempPhotosData tempPhotosData) {
     for (PhotoAlbum album : albums) {
       tempPhotosData.addAlbum(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
     }
   }
 
-  private void importPhotos(UUID id, Collection<PhotoModel> photos)
+  private void importSinglePhoto(UUID id, PhotoModel photo)
       throws FlickrException, IOException {
-    for (PhotoModel photo : photos) {
       String photoId = uploadPhoto(photo);
+
+      // TODO: what happens when the photo isn't associated with an album?
       String oldAlbumId = photo.getAlbumId();
       TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
       String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
@@ -130,7 +139,6 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         photosetsInterface.addPhoto(newAlbumId, photoId);
       }
       jobStore.update(id, tempData);
-    }
   }
 
   private String uploadPhoto(PhotoModel photo) throws IOException, FlickrException {
