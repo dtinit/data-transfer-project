@@ -13,5 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** Extensions for running the system on Google Cloud Platform. */
-package org.dataportabilityproject.cloud.google;
+
+package org.dataportabilityproject.api.launcher;
+
+public class Constants {
+  public enum Environment {
+    LOCAL,
+    TEST,
+    QA,
+    PROD
+  }
+}

@@ -30,14 +30,13 @@ import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.dataportabilityproject.gateway.ApiSettings;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.gateway.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
@@ -59,28 +58,28 @@ abstract class SetupHandler implements HttpHandler {
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final AuthServiceProviderRegistry registry;
-  private final ApiSettings apiSettings;
   private final Mode mode;
   private final String handlerUrlPath;
   private final TokenManager tokenManager;
+  private final String baseApiUrl;
 
   protected SetupHandler(
       AuthServiceProviderRegistry registry,
-      ApiSettings apiSettings,
       JobStore store,
       SymmetricKeyGenerator symmetricKeyGenerator,
       Mode mode,
       String handlerUrlPath,
       TokenManager tokenManager,
-      TypeManager typeManager) {
+      TypeManager typeManager,
+      String baseApiUrl) {
     this.store = store;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.registry = registry;
-    this.apiSettings = apiSettings;
     this.mode = mode;
     this.handlerUrlPath = handlerUrlPath;
     this.objectMapper = typeManager.getMapper();
     this.tokenManager = tokenManager;
+    this.baseApiUrl = baseApiUrl;
   }
 
   @Override
@@ -151,7 +150,7 @@ abstract class SetupHandler implements HttpHandler {
 
     String encodedJobId = ReferenceApiUtils.encodeJobId(jobId);
     AuthFlowConfiguration authFlowConfiguration =
-        generator.generateConfiguration(apiSettings.getBaseApiUrl(), encodedJobId);
+        generator.generateConfiguration(baseApiUrl, encodedJobId);
     Preconditions.checkNotNull(
         authFlowConfiguration,
         "AuthFlowConfiguration not found for type: %s, service: %s",

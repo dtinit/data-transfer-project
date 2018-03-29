@@ -1,8 +1,8 @@
 # Data Transfer Project
 
 ## Overview
-The goal of the Data Transfer Project (name is a work in progress) is to make it easy to transfer data
-from one service provider (e.g. Google) to another (e.g. Microsoft).
+The goal of the Data Transfer Project is to make it easy for individuals to copy data
+from one online service provider to another.
 
 See [Data Transfer Project Overview](Documentation/Overview.md)
 
