@@ -115,7 +115,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   // photo in it, so we have to wait for the first photo to create the album
   private void importAlbums(Collection<PhotoAlbum> albums, TempPhotosData tempPhotosData) {
     for (PhotoAlbum album : albums) {
-      tempPhotosData.addAlbum(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
+      tempPhotosData.addTempAlbumMapping(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
     }
   }
 
@@ -129,11 +129,12 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
       if (Strings.isNullOrEmpty(newAlbumId)) {
         // This means that we havent created the new album yet, create the photoset
-        PhotoAlbum album = tempData.lookupAlbum(CACHE_ALBUM_METADATA_PREFIX + oldAlbumId);
+        PhotoAlbum album = tempData.lookupTempAlbum(CACHE_ALBUM_METADATA_PREFIX + oldAlbumId);
         Photoset photoset =
             photosetsInterface.create(
                 COPY_PREFIX + album.getName(), album.getDescription(), photoId);
         tempData.addAlbumId(oldAlbumId, photoset.getId());
+        tempData.removeTempPhotoAlbum(CACHE_ALBUM_METADATA_PREFIX + oldAlbumId);
       } else {
         // We've already created a new album, add the photo to the new album
         photosetsInterface.addPhoto(newAlbumId, photoId);
