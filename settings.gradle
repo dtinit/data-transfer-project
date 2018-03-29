@@ -6,6 +6,9 @@ include ':libraries:security', ':libraries:config'
 include ':portability-test-utilities'
 include ':portability-api-launcher'
 
+// Configuration
+include ':extensions:config:portability-config-yaml'
+
 // Runnable Jar Distributions
 include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
 

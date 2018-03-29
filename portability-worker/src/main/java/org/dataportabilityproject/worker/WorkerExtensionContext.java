@@ -16,58 +16,42 @@
 
 package org.dataportabilityproject.worker;
 
-import com.google.common.collect.ImmutableList;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
+import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.config.ConfigUtils;
+import org.dataportabilityproject.api.launcher.Flag;
+import org.dataportabilityproject.config.extension.SettingsExtension;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /** {@link ExtensionContext} used by the worker. */
-final class WorkerExtensionContext implements ExtensionContext {
-  private static final String WORKER_SETTINGS_PATH = "config/worker.yaml";
-  private static final String ENV_WORKER_SETTINGS_PATH = "config/env/worker.yaml";
-  private static final String COMMON_SETTINGS_PATH = "config/common.yaml";
-  private static final String ENV_COMMON_SETTINGS_PATH = "config/env/common.yaml";
-
-  private final Map<String, Object> config;
+public class WorkerExtensionContext implements ExtensionContext {
   private final TypeManager typeManager;
   private final Map<Class<?>, Object> registered = new HashMap<>();
+  private final SettingsExtension settingsExtension;
 
-  WorkerExtensionContext() {
-    // TODO init with types
+  // Required settings
+  private final String cloud;
+  private final Environment environment;
+
+  WorkerExtensionContext(SettingsExtension settingsExtension) {
     this.typeManager = new TypeManagerImpl();
     typeManager.registerTypes(
         TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
+
     registered.put(TypeManager.class, typeManager);
+    this.settingsExtension = settingsExtension;
 
-    try {
-      // TODO: read settings from files in jar once they are built in - Jim: I think this should be
-      // done by the class creating this one
-      ImmutableList<String> settingsFiles =
-          ImmutableList.<String>builder()
-              .add(WORKER_SETTINGS_PATH)
-              .add(ENV_WORKER_SETTINGS_PATH)
-              .add(COMMON_SETTINGS_PATH)
-              .add(ENV_COMMON_SETTINGS_PATH)
-              .build();
-      // InputStream in = ConfigUtils.getSettingsCombinedInputStream(settingsFiles);
-
-      String tempSettings = "environment: LOCAL\ncloud: local";
-      InputStream in = new ByteArrayInputStream(tempSettings.getBytes(StandardCharsets.UTF_8));
-      config = ConfigUtils.parse(in);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Problem parsing cloud extension settings", e);
-    }
+    cloud = settingsExtension.getSetting("cloud", null);
+    Preconditions.checkNotNull(cloud, "Required setting 'cloud' is missing");
+    environment = Environment.valueOf(settingsExtension.getSetting("environment", null));
+    Preconditions.checkNotNull(environment, "Required setting 'environment' is missing");
   }
 
   @Override
@@ -91,12 +75,20 @@ final class WorkerExtensionContext implements ExtensionContext {
     registered.put(type, service);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T> T getConfiguration(String key, T defaultValue) {
-    if (config.containsKey(key)) {
-      return (T) config.get(key);
-    }
-    return defaultValue;
+  public <T> T getSetting(String setting, T defaultValue) {
+    return settingsExtension.getSetting(setting, defaultValue);
+  }
+
+  @Override
+  @Flag
+  public String cloud() {
+    return cloud;
+  }
+
+  @Override
+  @Flag
+  public Environment environment() {
+    return environment;
   }
 }
