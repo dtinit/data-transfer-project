@@ -32,5 +32,12 @@ include ':extensions:data-transfer:portability-data-transfer-google'
 include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 include ':extensions:data-transfer:portability-data-transfer-microsoft'
 
+// Flickr Auth and Transfer Extensions
+include ':extensions:auth:portability-auth-flickr'
+include ':extensions:data-transfer:portability-data-transfer-flickr'
+
+// SmugMug
+include ':extensions:data-transfer:portability-data-transfer-smugmug'
+
 // TODO: remove old core dependencies
 include ':portability-core'
