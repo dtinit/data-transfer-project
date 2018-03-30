@@ -83,7 +83,7 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
   }
 
   @VisibleForTesting
-  void importSingleAlbum(UUID jobId, String folder, PhotoAlbum inputAlbum) throws  IOException {
+  void importSingleAlbum(UUID jobId, String folder, PhotoAlbum inputAlbum) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
     String niceName = "Copy-" + inputAlbum.getName().replace(' ', '-');
