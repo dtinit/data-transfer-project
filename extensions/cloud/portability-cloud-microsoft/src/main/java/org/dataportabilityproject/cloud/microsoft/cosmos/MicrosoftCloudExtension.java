@@ -133,7 +133,7 @@ public class MicrosoftCloudExtension implements CloudExtension {
   private String getVaultKey(String key) {
     String secret = vaultStore.getSecret(key);
     if (secret == null) {
-      throw new RuntimeException("Unable to retrieve secret from Azure Vault: " + key);
+      throw new MicrosoftStorageException("Unable to retrieve secret from Azure Vault: " + key);
     }
     return secret;
   }

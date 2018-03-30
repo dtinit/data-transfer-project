@@ -15,11 +15,9 @@
  */
 
 dependencies {
+    
     compile project(':portability-spi-cloud')
 
-    compile "com.datastax.cassandra:cassandra-driver-core:3.4.0"
-
-//    compile 'com.microsoft.azure:azure:1.4.0'
     compile 'com.microsoft.azure:azure-mgmt-keyvault:1.3.0'
     compile 'com.microsoft.azure:azure-keyvault:1.0.0'
     compile 'com.microsoft.azure:azure-client-runtime:[1.1.0,2.0.0)'
@@ -29,14 +27,4 @@ dependencies {
 
     compile 'com.microsoft.azure:azure-storage:7.0.0'
     
-//    compile "com.microsoft.azure:azure:1.4.0"
-//    compile "com.microsoft.azure:azure-keyvault:${azureKeyVaultVersion}"
-//    compile "com.microsoft.azure:azure-keyvault-cryptography:${azureKeyVaultVersion}"
-//    compile "com.microsoft.azure:azure-keyvault-extensions:${azureKeyVaultVersion}"
-//    compile "com.microsoft.azure:azure-keyvault-core:${azureKeyVaultVersion}"
-//    compile "com.microsoft.azure:azure-client-runtime:1.1.0"
-//    compile "com.microsoft.azure:azure-client-authentication:1.1.0"
-
-    testCompile 'org.apache.cassandra:cassandra-all:3.11.1'
-    testCompile 'org.scassandra:java-client:1.1.2'
 }

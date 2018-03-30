@@ -37,7 +37,8 @@ public class AzureTableStore implements JobStore {
   private static final String JOB_TABLE = "DP_JOBS";
   private static final String JOB_DATA_TABLE = "DP_JOB_DATA";
 
-  private static final String BLOB_CONTAINER = "dataportability";  // Azure rules: The container name must be lowercase
+  private static final String BLOB_CONTAINER =
+      "dataportability"; // Azure rules: The container name must be lowercase
   private static final int UNKNOWN_LENGTH = -1;
 
   private final TableStoreConfiguration configuration;
@@ -76,7 +77,7 @@ public class AzureTableStore implements JobStore {
 
       blobClient.getContainerReference(BLOB_CONTAINER).createIfNotExists();
     } catch (StorageException | URISyntaxException | InvalidKeyException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 
@@ -147,7 +148,7 @@ public class AzureTableStore implements JobStore {
       DataWrapper wrapper = result.getResultAsType();
       return configuration.getMapper().readValue(wrapper.getSerialized(), PortabilityJob.class);
     } catch (StorageException | URISyntaxException | IOException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 
@@ -162,7 +163,7 @@ public class AzureTableStore implements JobStore {
     try {
       create(jobId, JOB_DATA_TABLE, null, model);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 
@@ -179,7 +180,7 @@ public class AzureTableStore implements JobStore {
     try {
       remove(jobId, JOB_DATA_TABLE);
     } catch (IOException e) {
-      throw new RuntimeException();
+      throw new MicrosoftStorageException("Unable to remove data for job: " + jobId);
     }
   }
 
@@ -190,7 +191,7 @@ public class AzureTableStore implements JobStore {
       CloudBlockBlob blob = reference.getBlockBlobReference(jobId.toString() + "-" + key);
       blob.upload(stream, UNKNOWN_LENGTH);
     } catch (StorageException | URISyntaxException | IOException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 
@@ -201,7 +202,7 @@ public class AzureTableStore implements JobStore {
       CloudBlockBlob blob = reference.getBlockBlobReference(jobId.toString() + "-" + key);
       return blob.openInputStream();
     } catch (StorageException | URISyntaxException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 
@@ -230,7 +231,7 @@ public class AzureTableStore implements JobStore {
       }
       return UUID.fromString(iter.next().getRowKey());
     } catch (StorageException | URISyntaxException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 
@@ -278,7 +279,7 @@ public class AzureTableStore implements JobStore {
       DataWrapper wrapper = result.getResultAsType();
       return configuration.getMapper().readValue(wrapper.getSerialized(), type);
     } catch (StorageException | IOException | URISyntaxException e) {
-      throw new RuntimeException(e);
+      throw new MicrosoftStorageException(e);
     }
   }
 }
