@@ -16,29 +16,61 @@
 
 package org.dataportabilityproject.transfer.rememberthemilk;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksExporter;
+import org.dataportabilityproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksImporter;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
 public class RememberTheMilkTransferExtension implements TransferExtension {
+  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("tasks");
+  private static final String RTM_KEY = "RTM_KEY";
+  private static final String RTM_SECRET = "RTM_SECRET";
+
+  private RememberTheMilkTasksExporter exporter;
+  private RememberTheMilkTasksImporter importer;
+  private boolean initialized = false;
+
   @Override
   public String getServiceId() {
-    return null;
+    return "remember the milk";
   }
 
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
-    return null;
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+    return exporter;
   }
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
-    return null;
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+    return importer;
   }
 
   @Override
   public void initialize(ExtensionContext context) {
+    if (initialized) return;
 
+    JobStore jobStore = context.getService(JobStore.class);
+    AppCredentials credentials;
+    try {
+      credentials =
+          context.getService(AppCredentialStore.class).getAppCredentials(RTM_KEY, RTM_SECRET);
+    } catch (IOException e) {
+      return;
+    }
+
+    exporter = new RememberTheMilkTasksExporter(credentials);
+    importer = new RememberTheMilkTasksImporter(credentials, jobStore);
+
+    initialized = true;
   }
 }

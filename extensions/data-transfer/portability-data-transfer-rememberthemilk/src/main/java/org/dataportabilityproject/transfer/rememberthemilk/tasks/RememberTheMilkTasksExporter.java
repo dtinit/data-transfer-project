@@ -16,6 +16,8 @@
 
 package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,16 +34,27 @@ import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.Task;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskList;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
-  private final RememberTheMilkService service;
+  private final AppCredentials appCredentials;
+  private RememberTheMilkService service;
 
-  public RememberTheMilkTasksExporter(RememberTheMilkSignatureGenerator signatureGenerator) {
-    service = new RememberTheMilkService(signatureGenerator);
+  public RememberTheMilkTasksExporter(AppCredentials appCredentials) {
+    this.appCredentials = appCredentials;
+    this.service = null;
+  }
+
+  @VisibleForTesting
+  public RememberTheMilkTasksExporter(
+      AppCredentials appCredentials, RememberTheMilkService service) {
+    this.appCredentials = appCredentials;
+    this.service = service;
   }
 
   @Override
@@ -52,16 +65,20 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
   @Override
   public ExportResult<TaskContainerResource> export(
       UUID jobId, AuthData authData, ExportInformation exportInformation) {
+    // Create new service for the authorized user
+    RememberTheMilkService service = getOrCreateService(authData);
+
     IdOnlyContainerResource resource =
         (IdOnlyContainerResource) exportInformation.getContainerResource();
     if (resource != null) {
-      return exportTask(resource);
+      return exportTask(service, resource);
     } else {
-      return exportTaskList();
+      return exportTaskList(service);
     }
   }
 
-  private ExportResult exportTask(IdOnlyContainerResource resource) {
+  private ExportResult exportTask(
+      RememberTheMilkService service, IdOnlyContainerResource resource) {
     String oldListId = resource.getId();
     GetListResponse oldList = null;
     try {
@@ -89,7 +106,7 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     return new ExportResult(ResultType.CONTINUE, taskContainerResource, null);
   }
 
-  private ExportResult exportTaskList() {
+  private ExportResult exportTaskList(RememberTheMilkService service) {
     List<TaskListModel> lists = new ArrayList<>();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
@@ -114,5 +131,15 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     subResources.forEach(resource -> continuationData.addContainerResource(resource));
     // TODO: what do we do with pagination data?
     return new ExportResult(ResultType.CONTINUE, taskContainerResource, continuationData);
+  }
+
+  private RememberTheMilkService getOrCreateService(AuthData authData) {
+    Preconditions.checkArgument(authData instanceof TokenAuthData);
+    return service == null ? createService((TokenAuthData) authData) : service;
+  }
+
+  private RememberTheMilkService createService(TokenAuthData authData) {
+    return new RememberTheMilkService(
+        new RememberTheMilkSignatureGenerator(appCredentials, authData.getToken()));
   }
 }

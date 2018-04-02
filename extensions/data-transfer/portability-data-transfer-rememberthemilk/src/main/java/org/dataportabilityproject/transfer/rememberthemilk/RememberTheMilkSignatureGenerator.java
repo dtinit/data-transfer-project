@@ -41,7 +41,7 @@ public final class RememberTheMilkSignatureGenerator {
   private final AppCredentials appCredentials;
   private final String authToken;
 
-  RememberTheMilkSignatureGenerator(AppCredentials appCredentials, @Nullable String authToken) {
+  public RememberTheMilkSignatureGenerator(AppCredentials appCredentials, @Nullable String authToken) {
     this.appCredentials = Preconditions.checkNotNull(appCredentials);
     this.authToken = authToken;
   }
