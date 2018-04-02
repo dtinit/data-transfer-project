@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import org.dataportabilityproject.transfer.rememberthemilk.RememberTheMilkSignatureGenerator;
+import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListResponse;
+import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListsResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListAddResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.RememberTheMilkResponse;
@@ -72,6 +74,16 @@ class RememberTheMilkService {
     TaskAddResponse taskAddResponse =
         makeRequest(RememberTheMilkMethods.TASK_ADD, params, TaskAddResponse.class);
     return taskAddResponse.taskList.taskSeriesList.get(0);
+  }
+
+  public GetListResponse getList(String listId) throws IOException {
+    Map<String, String> params = ImmutableMap.of("list_id", listId);
+    return makeRequest(RememberTheMilkMethods.LISTS_GET_LIST, params, GetListResponse.class);
+  }
+
+  public GetListsResponse getLists() throws IOException{
+    return makeRequest(
+        RememberTheMilkMethods.LISTS_GET_LIST, ImmutableMap.of(), GetListsResponse.class);
   }
 
   private <T extends RememberTheMilkResponse> T makeRequest(
