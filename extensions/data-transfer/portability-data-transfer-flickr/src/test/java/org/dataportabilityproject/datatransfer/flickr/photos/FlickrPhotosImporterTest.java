@@ -125,8 +125,7 @@ public class FlickrPhotosImporterTest {
     assertThat(tempPhotosData).isNotNull();
 
     String expectedAlbumKey = FlickrPhotosImporter.CACHE_ALBUM_METADATA_PREFIX + ALBUM_ID;
-    assertThat(tempPhotosData.lookupTempAlbum(expectedAlbumKey)).isNotNull();
-    assertThat(tempPhotosData.lookupTempAlbum(expectedAlbumKey)).isEqualTo(PHOTO_ALBUM);
+    assertThat(tempPhotosData.lookupTempAlbum(expectedAlbumKey)).isNull();
     assertThat(tempPhotosData.lookupNewAlbumId(ALBUM_ID)).isEqualTo(FLICKR_ALBUM_ID);
   }
 }
