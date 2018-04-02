@@ -16,17 +16,19 @@
 
 package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
+import java.io.IOException;
+import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.spi.transfer.types.TempTasksData;
 import org.dataportabilityproject.transfer.rememberthemilk.RememberTheMilkSignatureGenerator;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
+import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
-
-import java.io.IOException;
-import java.util.UUID;
+import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 
 public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskContainerResource> {
   private final JobStore jobstore;
@@ -41,11 +43,26 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   @Override
   public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data) {
     String timeline;
+
+    TempTasksData tempTasksData = jobstore.findData(TempTasksData.class, jobId);
+    if (tempTasksData == null) {
+      tempTasksData = new TempTasksData(jobId.toString());
+      jobstore.create(jobId, tempTasksData);
+    }
+
     try {
       timeline = rememberTheMilkService.createTimeline();
 
       for (TaskListModel taskList : data.getLists()) {
         ListInfo listInfo = rememberTheMilkService.createTaskList(taskList.getName(), timeline);
+        tempTasksData.addTaskListId(taskList.getId(), Long.toString(listInfo.id));
+      }
+      jobstore.update(jobId, tempTasksData);
+
+      for (TaskModel task : data.getTasks()) {
+        String newList = tempTasksData.lookupNewTaskListId(task.getTaskListId());
+        TaskSeries addedTask = rememberTheMilkService.createTask(task.getText(), timeline, newList);
+        //todo: add notes
       }
     } catch (IOException e) {
       return new ImportResult(ImportResult.ResultType.ERROR);

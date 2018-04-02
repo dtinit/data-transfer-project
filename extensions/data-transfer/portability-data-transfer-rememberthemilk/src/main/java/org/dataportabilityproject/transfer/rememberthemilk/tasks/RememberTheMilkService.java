@@ -15,55 +15,68 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
-import com.google.api.client.http.*;
+import static com.google.common.base.Preconditions.checkState;
+
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.api.client.xml.XmlNamespaceDictionary;
 import com.google.api.client.xml.XmlObjectParser;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
 import org.dataportabilityproject.transfer.rememberthemilk.RememberTheMilkSignatureGenerator;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListAddResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.RememberTheMilkResponse;
+import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskAddResponse;
+import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkState;
-
 class RememberTheMilkService {
-  private RememberTheMilkSignatureGenerator signatureGenerator;
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+  private RememberTheMilkSignatureGenerator signatureGenerator;
 
-  RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator){
+  RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
     this.signatureGenerator = signatureGenerator;
   }
 
   public String createTimeline() throws IOException {
     TimelineCreateResponse timelineCreateResponse =
-            makeRequest(
-                    RememberTheMilkMethods.TIMELINES_CREATE,
-                    ImmutableMap.of(),
-                    TimelineCreateResponse.class);
+        makeRequest(
+            RememberTheMilkMethods.TIMELINES_CREATE,
+            ImmutableMap.of(),
+            TimelineCreateResponse.class);
     checkState(!Strings.isNullOrEmpty(timelineCreateResponse.timeline));
     return timelineCreateResponse.timeline;
   }
 
   public ListInfo createTaskList(String name, String timeline) throws IOException {
     Map<String, String> params =
-            ImmutableMap.of("timeline", timeline, "name", ("Copy of: " + name));
+        ImmutableMap.of("timeline", timeline, "name", ("Copy of: " + name));
     ListAddResponse response =
-            makeRequest(RememberTheMilkMethods.LISTS_ADD, params, ListAddResponse.class);
+        makeRequest(RememberTheMilkMethods.LISTS_ADD, params, ListAddResponse.class);
     checkState(response.listInfo != null, "Added list is null");
     checkState(response.listInfo.id != 0, "Added list has id of zero");
     return response.listInfo;
   }
 
+  public TaskSeries createTask(String name, String timeline, String listId) throws IOException {
+    Map<String, String> params =
+        ImmutableMap.of("timeline", timeline, "name", name, "list_id", listId);
+    TaskAddResponse taskAddResponse =
+        makeRequest(RememberTheMilkMethods.TASK_ADD, params, TaskAddResponse.class);
+    return taskAddResponse.taskList.taskSeriesList.get(0);
+  }
+
   private <T extends RememberTheMilkResponse> T makeRequest(
-          RememberTheMilkMethods method, Map<String, String> parameters, Class<T> dataClass)
-          throws IOException {
+      RememberTheMilkMethods method, Map<String, String> parameters, Class<T> dataClass)
+      throws IOException {
 
     StringBuilder parameterString = new StringBuilder();
     for (String key : parameters.keySet()) {
@@ -80,14 +93,14 @@ class RememberTheMilkService {
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
       throw new IOException(
-              "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
 
     T parsedResponse = response.parseAs(dataClass);
 
     if (parsedResponse.error != null) {
       throw new IOException(
-              "Error making call to " + signedUrl + " error: " + parsedResponse.error);
+          "Error making call to " + signedUrl + " error: " + parsedResponse.error);
     }
 
     return parsedResponse;
