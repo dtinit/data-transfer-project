@@ -34,6 +34,9 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResou
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 
+/*
+ * Importer for Tasks data type to Remember The Milk Service.
+ */
 public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskContainerResource> {
   private final JobStore jobstore;
   private final AppCredentials appCredentials;

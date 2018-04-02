@@ -41,6 +41,9 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResou
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 
+/*
+ * Exporter for Tasks data type from Remember The Milk Service.
+ */
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
   private final AppCredentials appCredentials;
   private RememberTheMilkService service;

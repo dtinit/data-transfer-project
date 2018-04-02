@@ -28,12 +28,14 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksExporter;
 import org.dataportabilityproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksImporter;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RememberTheMilkTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("tasks");
   private static final String RTM_KEY = "RTM_KEY";
   private static final String RTM_SECRET = "RTM_SECRET";
-
+  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkTransferExtension.class);
   private RememberTheMilkTasksExporter exporter;
   private RememberTheMilkTasksImporter importer;
   private boolean initialized = false;
@@ -45,12 +47,16 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
 
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
+    Preconditions.checkArgument(
+        initialized, "RememberTheMilkTransferExtension not initialized. Unable to get Exporter");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
     return exporter;
   }
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
+    Preconditions.checkArgument(
+        initialized, "RememberTheMilkTransferExtension not initialized. Unable to get Importer");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
     return importer;
   }
@@ -65,6 +71,10 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
       credentials =
           context.getService(AppCredentialStore.class).getAppCredentials(RTM_KEY, RTM_SECRET);
     } catch (IOException e) {
+      logger.warn(
+          "Error retrieving RememberTheMilk Credentials. Did you set {} and {}?",
+          RTM_KEY,
+          RTM_SECRET);
       return;
     }
 
