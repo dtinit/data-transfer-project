@@ -28,6 +28,12 @@ import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collection;
+import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
@@ -39,16 +45,10 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Collection;
-import java.util.UUID;
-
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
-  @VisibleForTesting static final String CACHE_ALBUM_METADATA_PREFIX = "meta-";
   @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
+  @VisibleForTesting static final String DEFAULT_ALBUM = "Default";
+
   private final JobStore jobStore;
   private final Flickr flickr;
   private final Uploader uploader;
@@ -99,7 +99,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
 
     if (data.getPhotos() != null) {
-      for(PhotoModel photo : data.getPhotos()) {
+      for (PhotoModel photo : data.getPhotos()) {
         try {
           importSinglePhoto(jobId, photo);
         } catch (FlickrException | IOException e) {
@@ -115,31 +115,39 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   // photo in it, so we have to wait for the first photo to create the album
   private void importAlbums(Collection<PhotoAlbum> albums, TempPhotosData tempPhotosData) {
     for (PhotoAlbum album : albums) {
-      tempPhotosData.addTempAlbumMapping(CACHE_ALBUM_METADATA_PREFIX + album.getId(), album);
+      tempPhotosData.addTempAlbumMapping(album.getId(), album);
     }
   }
 
-  private void importSinglePhoto(UUID id, PhotoModel photo)
-      throws FlickrException, IOException {
-      String photoId = uploadPhoto(photo);
+  private void importSinglePhoto(UUID id, PhotoModel photo) throws FlickrException, IOException {
+    String photoId = uploadPhoto(photo);
 
-      // TODO: what happens when the photo isn't associated with an album?
-      String oldAlbumId = photo.getAlbumId();
-      TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
-      String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
-      if (Strings.isNullOrEmpty(newAlbumId)) {
-        // This means that we havent created the new album yet, create the photoset
-        PhotoAlbum album = tempData.lookupTempAlbum(CACHE_ALBUM_METADATA_PREFIX + oldAlbumId);
-        Photoset photoset =
-            photosetsInterface.create(
-                COPY_PREFIX + album.getName(), album.getDescription(), photoId);
-        tempData.addAlbumId(oldAlbumId, photoset.getId());
-        tempData.removeTempPhotoAlbum(CACHE_ALBUM_METADATA_PREFIX + oldAlbumId);
-      } else {
-        // We've already created a new album, add the photo to the new album
-        photosetsInterface.addPhoto(newAlbumId, photoId);
-      }
-      jobStore.update(id, tempData);
+    // TODO: what happens when the photo isn't associated with an album?
+    String oldAlbumId = photo.getAlbumId();
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(oldAlbumId), "Photo is not associated with an AlbumId");
+
+    TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
+    String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
+
+    if (Strings.isNullOrEmpty(newAlbumId)) {
+      // This means that we havent created the new album yet, create the photoset
+      PhotoAlbum album = tempData.lookupTempAlbum(oldAlbumId);
+      // TODO: handle what happens if the album doesn't exit?
+      Preconditions.checkArgument(album != null, "Album not found: {}", oldAlbumId);
+
+      Photoset photoset =
+          photosetsInterface.create(COPY_PREFIX + album.getName(), album.getDescription(), photoId);
+
+      // Update the temp mapping to reflect that we've created the album
+      tempData.addAlbumId(oldAlbumId, photoset.getId());
+      tempData.removeTempPhotoAlbum(oldAlbumId);
+    } else {
+      // We've already created the album this photo belongs in, simply add it to the new album
+      photosetsInterface.addPhoto(newAlbumId, photoId);
+    }
+
+    jobStore.update(id, tempData);
   }
 
   private String uploadPhoto(PhotoModel photo) throws IOException, FlickrException {
