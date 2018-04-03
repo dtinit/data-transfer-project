@@ -35,8 +35,8 @@ public class TempPhotosData extends DataModel {
   private final UUID jobId;
 
   // Map of PhotoAlbums keyed by Album name.
-  @JsonProperty("photoAlbums")
-  private final Map<String, PhotoAlbum> photoAlbums;
+  @JsonProperty("tempPhotoAlbums")
+  private final Map<String, PhotoAlbum> tempPhotoAlbums;
 
   // Map of newAlbumIds keyed by the old album name.
   @JsonProperty("newAlbumIds")
@@ -44,27 +44,27 @@ public class TempPhotosData extends DataModel {
 
   public TempPhotosData(
       @JsonProperty("jobId") UUID jobId,
-      @JsonProperty("albums") Map<String, PhotoAlbum> photoAlbums,
+      @JsonProperty("tempPhotoAlbums") Map<String, PhotoAlbum> tempPhotoAlbums,
       @JsonProperty("newAlbumIds") Map<String, String> newAlbumIds) {
     this.jobId = jobId;
-    this.photoAlbums = photoAlbums;
+    this.tempPhotoAlbums = tempPhotoAlbums;
     this.newAlbumIds = newAlbumIds;
   }
 
   public TempPhotosData(@JsonProperty("jobId") UUID jobId) {
     this.jobId = jobId;
-    this.photoAlbums = new HashMap<>();
+    this.tempPhotoAlbums = new HashMap<>();
     this.newAlbumIds = new HashMap<>();
   }
 
   // Adds the <Key, PhotoAlbum> mapping provided
-  public void addAlbum(String key, PhotoAlbum album) {
-    photoAlbums.put(key, album);
+  public void addTempAlbumMapping(String key, PhotoAlbum album) {
+    tempPhotoAlbums.put(key, album);
   }
 
   // Looks up the PhotoAlbum corresponding to the key provided
-  public PhotoAlbum lookupAlbum(String key) {
-    return photoAlbums.getOrDefault(key, null);
+  public PhotoAlbum lookupTempAlbum(String key) {
+    return tempPhotoAlbums.getOrDefault(key, null);
   }
 
   // Adds a mapping from old album id to new album id
@@ -75,5 +75,12 @@ public class TempPhotosData extends DataModel {
   // returns the album id mapped to by old album id
   public String lookupNewAlbumId(String oldAlbumId) {
     return newAlbumIds.getOrDefault(oldAlbumId, "");
+  }
+
+  // removes the temp photo album
+  public void removeTempPhotoAlbum(String key) {
+    if (tempPhotoAlbums.containsKey(key)) {
+      tempPhotoAlbums.remove(key);
+    }
   }
 }

@@ -8,6 +8,8 @@ import org.dataportabilityproject.datatransfer.google.calendar.GoogleCalendarExp
 import org.dataportabilityproject.datatransfer.google.calendar.GoogleCalendarImporter;
 import org.dataportabilityproject.datatransfer.google.contacts.GoogleContactsExporter;
 import org.dataportabilityproject.datatransfer.google.contacts.GoogleContactsImporter;
+import org.dataportabilityproject.datatransfer.google.photos.GooglePhotosExporter;
+import org.dataportabilityproject.datatransfer.google.photos.GooglePhotosImporter;
 import org.dataportabilityproject.datatransfer.google.tasks.GoogleTasksExporter;
 import org.dataportabilityproject.datatransfer.google.tasks.GoogleTasksImporter;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
@@ -22,7 +24,8 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
-  private ImmutableList<String> supportedServices = ImmutableList.of("calendar", "contacts", "tasks");
+  private ImmutableList<String> supportedServices =
+      ImmutableList.of("calendar", "contacts", "tasks", "photos");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private JobStore jobStore;
@@ -52,20 +55,22 @@ public class GoogleTransferExtension implements TransferExtension {
     // Note: initialize could be called twice in an account migration scenario where we import and
     // export to the same service provider. So just return rather than throwing if called multiple
     // times.
-    if(initialized) return;
+    if (initialized) return;
 
     jobStore = context.getService(JobStore.class);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("contacts", new GoogleContactsImporter());
-    importerBuilder.put("calendar", new GoogleCalendarImporter(jobStore)) ;
+    importerBuilder.put("calendar", new GoogleCalendarImporter(jobStore));
     importerBuilder.put("tasks", new GoogleTasksImporter(jobStore));
+    importerBuilder.put("photos", new GooglePhotosImporter(jobStore));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put("contacts", new GoogleContactsExporter());
     exporterBuilder.put("calendar", new GoogleCalendarExporter());
     exporterBuilder.put("tasks", new GoogleTasksExporter());
+    exporterBuilder.put("photos", new GooglePhotosExporter());
     exporterMap = exporterBuilder.build();
 
     initialized = true;
