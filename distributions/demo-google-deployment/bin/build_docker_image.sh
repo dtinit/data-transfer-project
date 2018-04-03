@@ -15,22 +15,23 @@
 #
 # -----------------------------------------------------------------------
 # Interactive script to build a Docker image for the given binary and environment.
-# Can optionally build a new jar, build a new docker image, and upload it to GCP based on the
-# command prompts.
+# Can optionally also run and/or upload the image to GCP Container Registry.
 #
-# Usage: ./config/gcp/build_and_upload_docker_image.sh <binary> <env> [project-suffix]
+# Usage: ./distributions/demo-google-deployment/bin/build_docker_image.sh <binary> <env>
+# [project-suffix]
 # - binary is required and specifies which server to build.
 #     This should be one of: api, worker
 #     ex: api will build the portability-api binary
-# - env is the environment you would like to build in. This should correspond to an environment dir
+# - env is the environment you would like to build for. This should correspond to an environment dir
 #     in config/environments. Settings for this environment are copied into the binary.
 # - project-suffix is required except for env=local
 #
-# Must be run from the root source directory data-portability/
+# Must be run from the root source directory data-transfer-project/
 #
 # ex: build_and_upload_docker_image.sh api qa qa2
-# Will package and deploy portability-api using config/environments/qa/settings.yaml and
+# Will package and deploy api.jar using resources/config/environments/qa/settings.yaml and
 # project BASE_PROJECT_ID-qa2
+# TODO: Implement copying of env-specific settings. See note in copyResources in build.gradle
 #
 #!/bin/sh
 
@@ -41,7 +42,7 @@ fi
 
 # Constants
 # script below sets env variables BASE_PROJECT_ID
-source config/gcp/init_project_vars.sh
+source distributions/demo-google-deployment/bin/init_project_vars.sh
 
 echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
@@ -59,11 +60,13 @@ fi
 BINARY=$1
 ENV=$2
 PROJECT_ID_SUFFIX=$3
-SRC_DIR="portability-$BINARY"
+SRC_DIR=$BINARY
 GIT_COMMIT=$(git log -1 --format=%h)
+PORT=8080
 DEBUG_PORT=5005
 if [[ $BINARY == "worker" ]]; then
   DEBUG_PORT=5006
+  PORT=8082
 fi
 
 docker=$(which docker)|| { echo "docker not found. Please install it and try again." >&2; exit 1; }
@@ -73,54 +76,52 @@ read -p "
 You should build a new jar if there are java or index.html changes. Build jar? (Y/n): " response
 
 if [[ ! ${response} =~ ^(no|n| ) ]]; then
-  ./bin/build_and_run_jar.sh $BINARY $ENV
+   ./gradlew --warn -PcloudType=google clean check :distributions:demo-google-deployment:${BINARY}:shadowJar
 fi
 
 # Grab env and cloud flags from settings/common.yaml
-SETTINGS_FILE="config/environments/$ENV/settings/common.yaml"
+SETTINGS_FILE="distributions/demo-google-deployment/resources/config/common.yaml"
+# TODO: once move GCP environment env-specific settings over, SETTINGS_FILE should be
+# "distributions/demo-google-deployment/resources/config/environments/$ENV/settings/common.yaml"
 echo -e "\nParsing settings file $SETTINGS_FILE"
 if [[ ! -e ${SETTINGS_FILE} ]]; then
   echo "Invalid environment $ENV entered. No settings file found at $SETTINGS_FILE. Aborting."
   exit 1
 fi
-FLAG_ENV=$(grep -o 'env: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
-FLAG_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+YAML_SETTING_ENVIRONMENT=$(grep -o 'environment: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
+YAML_SETTING_CLOUD=$(grep -o 'cloud: [^, }]*' ${SETTINGS_FILE} | sed 's/^.*: //')
 
+# TODO: Check environment and cloud settings are the same as the passed in flags
 
-# Generate Dockerfile based on env/settings.yaml.
-# For now all flags will be passed to binary at run time via ENTRYPOINT but still in "image compile
-# time". In the future, should look into ways of compiling these settings into the binary itself
-# rather than the image. Also, it would be cleaner to pass settings.yaml directly rather than
-# individual flags.
-
+# Checks and settings for connecting to GCP when env==LOCAL.
 # LOCAL_DEBUG_SETTINGS are only set for env=LOCAL. They should not be used for prod environments.
 LOCAL_DEBUG_SETTINGS=""
 OPTIONAL_DEBUG_FLAG=""
-if [[ ${FLAG_ENV} == "LOCAL" ]]; then
+if [[ ${ENV} == "local" ]]; then
   LOCAL_DEBUG_SETTINGS="EXPOSE $DEBUG_PORT/tcp"
   OPTIONAL_DEBUG_FLAG="\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$DEBUG_PORT\","
   # Setup for allowing local instance to talk to GCP. This is useful for debugging as well as
   # avoiding the need for a local impl for each service we use.
-  if [[ ${FLAG_CLOUD} == "GOOGLE" ]]; then
-    CREDS_FILE=config/gcp/service_acct_creds.json
-    read -p "
+  CREDS_FILE=distributions/demo-google-deployment/bin/service_acct_creds.json
+  read -p "
 Caution!
 
-You are using --cloud=GOOGLE which is not the default for env=LOCAL. This will connect to GCP, and
-requires you download service account credentials to the following location:
+Since you are using environment==LOCAL, this deployment will connect to GCP when running locally on
+your machine, and requires you download service account credentials to the following location:
 $CREDS_FILE.
 
 Continue? (Y/n): " response
-    if [[ ${response} =~ ^(no|n| ) ]]; then
-      echo "Aborting"
-      exit 0
-    fi
-    LOCAL_DEBUG_SETTINGS=$LOCAL_DEBUG_SETTINGS"
+  if [[ ${response} =~ ^(no|n| ) ]]; then
+    echo "Aborting"
+    exit 0
+  fi
+# Note: Normally (for non-local), these variables are stored securely as Kubernetes secrets. For
+# local, we simply set the environment variables in the Dockerfile.
+LOCAL_DEBUG_SETTINGS=$LOCAL_DEBUG_SETTINGS"
 COPY $CREDS_FILE /service_acct_creds.json
 ENV GOOGLE_PROJECT_ID=$LOCAL_GCP_PROJECT
 ENV GOOGLE_APPLICATION_CREDENTIALS=/service_acct_creds.json
 EXPOSE 5005/tcp"
-  fi
 fi
 
 # And onto generating the dockerfile...
@@ -128,10 +129,10 @@ fi
 # once uploaded to GCP, pull the image and 'docker inspect' it
 cat >Dockerfile <<EOF
 FROM gcr.io/google-appengine/openjdk:8
-COPY $SRC_DIR/build/libs/$SRC_DIR-1.0-SNAPSHOT.jar /$BINARY.jar
+COPY distributions/demo-google-deployment/$BINARY/build/libs/$BINARY-all.jar /$BINARY.jar
 $LOCAL_DEBUG_SETTINGS
 ENTRYPOINT ["java", $OPTIONAL_DEBUG_FLAG "-jar", "/$BINARY.jar"]
-EXPOSE 8080/tcp
+EXPOSE ${PORT}/tcp
 LABEL git_commit=$GIT_COMMIT
 EOF
 
@@ -140,7 +141,7 @@ echo -e "\nGenerated Dockerfile:
 cat Dockerfile
 echo -e "-------------------------------"
 
-if [[  ${FLAG_ENV} != "LOCAL" ]]; then
+if [[  ${ENV} != "local" ]]; then
   if grep -q GOOGLE_APPLICATION_CREDENTIALS Dockerfile; then
   echo -e "\nProblem found in Dockerfile. Did you edit LOCAL_DEBUG_SETTINGS above?
 
@@ -158,7 +159,7 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   echo "Exiting"
   exit 0
 else
-  if [[ ${FLAG_ENV} == "LOCAL" ]]; then
+  if [[ ${ENV} == "local" ]]; then
     IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$SRC_DIR"
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
@@ -258,7 +259,7 @@ if [[ ${ENV} == "local" ]]; then
   if [[ ${response} =~ ^(no|n| ) ]]; then
     echo "Continuing"
   else
-    docker run -ti --rm -p 8080:8080 -p ${DEBUG_PORT}:${DEBUG_PORT} $IMAGE
+    docker run -ti --rm -p ${PORT}:${PORT} -p ${DEBUG_PORT}:${DEBUG_PORT} $IMAGE
   fi
 fi
 

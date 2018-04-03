@@ -1,0 +1,5 @@
+# Google cloud settings specific to the local environment
+# TODO(rtannenbaum): Move environment: local into a subdir for the local env, and include other
+# envs as well.
+environment: LOCAL
+cloud: GOOGLE
