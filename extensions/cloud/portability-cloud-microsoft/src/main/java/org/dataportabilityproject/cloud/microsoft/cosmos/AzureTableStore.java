@@ -103,7 +103,7 @@ public class AzureTableStore implements JobStore {
   @Override
   public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {
-    Preconditions.checkNotNull(jobId, "Job not persisted");
+    Preconditions.checkNotNull(jobId, "Job is null");
     Preconditions.checkNotNull(job, "Job is null");
     try {
 
@@ -136,7 +136,7 @@ public class AzureTableStore implements JobStore {
 
   @Override
   public PortabilityJob findJob(UUID jobId) {
-    Preconditions.checkNotNull(jobId, "Job not persisted");
+    Preconditions.checkNotNull(jobId, "Job id is null");
     try {
 
       CloudTable table = tableClient.getTableReference(JOB_TABLE);
@@ -154,7 +154,7 @@ public class AzureTableStore implements JobStore {
 
   @Override
   public void remove(UUID jobId) throws IOException {
-    Preconditions.checkNotNull(jobId, "Job not persisted");
+    Preconditions.checkNotNull(jobId, "Job id is null");
     remove(jobId, JOB_TABLE);
   }
 
@@ -242,7 +242,7 @@ public class AzureTableStore implements JobStore {
 
       String serializedJob = configuration.getMapper().writeValueAsString(type);
       DataWrapper wrapper =
-          new DataWrapper(configuration.getPartitionKey(), jobId.toString(), state, serializedJob);
+          new DataWrapper(configuration.getPartitionKey(), jobId.toString(), state, serializedJob);   // job id used as key
       TableOperation insert = TableOperation.insert(wrapper);
       table.execute(insert);
     } catch (JsonProcessingException | StorageException | URISyntaxException e) {

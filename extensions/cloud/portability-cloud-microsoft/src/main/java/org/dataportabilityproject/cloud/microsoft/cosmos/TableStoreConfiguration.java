@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 
 /** Configuration required to initialize the Azure job store */
-public class TableStoreConfiguration {
+class TableStoreConfiguration {
   private String accountName;
   private String accountKey;
   private String blobKey;
