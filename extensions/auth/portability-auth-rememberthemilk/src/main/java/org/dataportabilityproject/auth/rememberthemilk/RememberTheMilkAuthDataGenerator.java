@@ -65,8 +65,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
       URL authUrlUnsigned = new URL(AUTH_URL + "?perms=" + perms);
       authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
     } catch (Exception e) {
-      logger.warn("Error generating Authentication URL");
-      e.printStackTrace();
+      logger.warn("Error generating Authentication URL: {}", e.getMessage());
       return null;
     }
 
@@ -81,7 +80,6 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
       return new TokenAuthData(getToken(authCode));
     } catch (IOException e) {
       logger.warn("Error getting AuthToken: " + e.getMessage());
-      e.printStackTrace();
       return null;
     }
   }
@@ -104,7 +102,6 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
     Preconditions.checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
     Preconditions.checkState(
         !Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty", authElement);
-    logger.debug("Auth Token: " + authElement);
     return authElement.auth.token;
   }
 }

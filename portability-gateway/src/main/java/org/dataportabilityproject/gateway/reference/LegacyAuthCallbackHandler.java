@@ -85,7 +85,6 @@ final class LegacyAuthCallbackHandler implements HttpHandler {
       redirect = handleExchange(exchange);
     } catch (Exception e) {
       logger.warn("Error handling request: {}", e.getMessage());
-      e.printStackTrace();
     }
 
     logger.debug("redirecting to: {}", redirect);
