@@ -39,7 +39,8 @@ include ':extensions:data-transfer:portability-data-transfer-flickr'
 // SmugMug
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
 
-// Remember The Milk
+// Remember the milk
+include ':extensions:auth:portability-auth-remember-the-milk'
 include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 
 // TODO: remove old core dependencies
