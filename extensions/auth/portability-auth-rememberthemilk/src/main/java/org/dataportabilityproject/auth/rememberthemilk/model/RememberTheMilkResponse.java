@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-dependencies {
-    compile project(':portability-spi-gateway')
-    compile project(':portability-spi-cloud')
+package org.dataportabilityproject.auth.rememberthemilk.model;
 
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-    compile group: 'com.fasterxml', name: 'jackson-xml-databind', version: '0.6.2'
+import com.google.api.client.util.Key;
 
-    compile("com.google.http-client:google-http-client-xml:${googleApiClient}")
-    compile("com.google.api-client:google-api-client:${googleApiClient}")
+/** A generic response from the remember the milk service. */
+public abstract class RememberTheMilkResponse {
+
+  @Key("@stat")
+  public String stat;
+
+  @Key("err")
+  public Error error;
 }

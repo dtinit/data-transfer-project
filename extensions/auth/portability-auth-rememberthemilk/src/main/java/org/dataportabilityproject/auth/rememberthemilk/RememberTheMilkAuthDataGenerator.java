@@ -16,26 +16,95 @@
 
 package org.dataportabilityproject.auth.rememberthemilk;
 
+import com.fasterxml.jackson.xml.XmlMapper;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.io.IOException;
+import java.net.URL;
+import org.dataportabilityproject.auth.rememberthemilk.model.AuthElement;
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
+  private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
+  private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+  private static final String GET_TOKEN_URL =
+      "https://api.rememberthemilk.com/services/rest/?method=rtm.auth.getToken";
 
-  public RememberTheMilkAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
+  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
+  private final RememberTheMilkSignatureGenerator signatureGenerator;
+  private final String perms;
+  private final XmlMapper xmlMapper;
 
+  public RememberTheMilkAuthDataGenerator(
+      AppCredentials appCredentials, AuthMode authMode) {
+    signatureGenerator = new RememberTheMilkSignatureGenerator(appCredentials);
+    perms = (authMode == AuthMode.IMPORT) ? "write" : "read";
+    this.xmlMapper = new XmlMapper();
   }
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    return null;
+    // NOTE: callbackBaseUrl is unused. After authentication, RememberTheMilk will redirect
+    // to the callback set when we configured the application. To change this visit:
+    // https://www.rememberthemilk.com/help/contact/support/?ctx=api.update&report=1
+    URL authUrlSigned;
+    try {
+      URL authUrlUnsigned = new URL(AUTH_URL + "?perms=" + perms);
+      authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
+    } catch (Exception e) {
+      logger.warn("Error generating Authentication URL");
+      e.printStackTrace();
+      return null;
+    }
+
+    return new AuthFlowConfiguration(authUrlSigned.toString(), null);
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
-      AuthData initialAuthData, String extra) {
-    return null;
+  public AuthData generateAuthData(
+      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+    // callbackbaseurl, id, initialAuthData and extra are not used.
+    try {
+      return new TokenAuthData(getToken(authCode));
+    } catch (IOException e) {
+      logger.warn("Error getting AuthToken: " + e.getMessage());
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  private String getToken(String frob) throws IOException {
+    URL url = new URL(GET_TOKEN_URL + "&frob=" + frob);
+    URL signedUrl = signatureGenerator.getSignature(url);
+
+    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
+    HttpResponse response = getRequest.execute();
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    }
+
+    AuthElement authElement = xmlMapper.readValue(response.getContent(), AuthElement.class);
+
+    Preconditions.checkState(authElement.stat.equals("ok"), "state must be ok: %s", authElement);
+    Preconditions.checkState(
+        !Strings.isNullOrEmpty(authElement.auth.token), "token must not be empty", authElement);
+    logger.debug("Auth Token: " + authElement);
+    return authElement.auth.token;
   }
 }
