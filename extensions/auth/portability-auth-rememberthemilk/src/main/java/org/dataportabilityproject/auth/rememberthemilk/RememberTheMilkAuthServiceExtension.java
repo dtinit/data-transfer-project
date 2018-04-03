@@ -36,7 +36,8 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
 
   private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthServiceExtension.class);
   private final List<String> supportedServices = ImmutableList.of("tasks");
-  private RememberTheMilkAuthDataGenerator authDataGenerator;
+  private RememberTheMilkAuthDataGenerator importAuthDataGenerator;
+  private RememberTheMilkAuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;
 
   @Override
@@ -49,8 +50,10 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
     Preconditions.checkArgument(
         initialized,
         "RememberTheMilkAuthServiceExtension is not initialized! Unable to retrieve AuthDataGenerator");
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
-    return authDataGenerator;
+    Preconditions.checkArgument(
+        supportedServices.contains(transferDataType),
+        "Transfer type [" + transferDataType + "] is not supported in RememberTheMilk");
+    return (mode == AuthMode.IMPORT) ? importAuthDataGenerator : exportAuthDataGenerator;
   }
 
   @Override
@@ -65,17 +68,22 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
 
   @Override
   public void initialize(ExtensionContext context) {
-    AppCredentials appCredentials = null;
+    if (initialized) return;
+
+    AppCredentials appCredentials;
     try {
       appCredentials =
           context.getService(AppCredentialStore.class).getAppCredentials(RTM_KEY, RTM_SECRET);
     } catch (IOException e) {
-      logger.debug(
+      logger.warn(
           "Error retrieving RememberTheMilk Credentials. Did you set {} and {}?",
           RTM_KEY,
           RTM_SECRET);
+      return;
     }
-    authDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials);
+
+    importAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.IMPORT);
+    exportAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.EXPORT);
     initialized = true;
   }
 }

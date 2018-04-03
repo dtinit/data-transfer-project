@@ -17,13 +17,14 @@
 package org.dataportabilityproject.auth.rememberthemilk;
 
 import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
 
-  public RememberTheMilkAuthDataGenerator(AppCredentials appCredentials) {
+  public RememberTheMilkAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
 
   }
 

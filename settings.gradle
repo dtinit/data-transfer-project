@@ -32,16 +32,12 @@ include ':extensions:data-transfer:portability-data-transfer-google'
 include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 include ':extensions:data-transfer:portability-data-transfer-microsoft'
 
-// Flickr Auth and Transfer Extensions
-include ':extensions:auth:portability-auth-flickr'
-include ':extensions:data-transfer:portability-data-transfer-flickr'
+// Remember The Milk Auth and Transfer Extensions
+include ':extensions:auth:portability-auth-rememberthemilk'
+include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 
 // SmugMug
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
-
-// Remember the milk
-include ':extensions:auth:portability-auth-remember-the-milk'
-include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 
 // TODO: remove old core dependencies
 include ':portability-core'
