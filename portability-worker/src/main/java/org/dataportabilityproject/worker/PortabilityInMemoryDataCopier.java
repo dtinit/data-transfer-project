@@ -99,6 +99,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug("Finished import");
     if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
       logger.warn("Error happened during import: {}", importResult.getMessage());
+      return;
     }
 
     // Import and Export were successful, determine what to do next
