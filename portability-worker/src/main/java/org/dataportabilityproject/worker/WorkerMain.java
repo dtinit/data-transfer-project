@@ -17,6 +17,8 @@ package org.dataportabilityproject.worker;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
@@ -64,6 +66,7 @@ public class WorkerMain {
 
     // TODO this should be moved into a service extension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(JsonFactory.class, new JacksonFactory());
 
     ServiceLoader.load(ServiceExtension.class)
         .iterator()

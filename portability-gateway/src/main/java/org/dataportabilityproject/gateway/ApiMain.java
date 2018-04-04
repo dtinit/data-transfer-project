@@ -17,6 +17,8 @@ package org.dataportabilityproject.gateway;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -88,6 +90,9 @@ public class ApiMain {
     settingsExtension.initialize(null);
 
     ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension);
+
+    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(JsonFactory.class, new JacksonFactory());
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.

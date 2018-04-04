@@ -130,8 +130,8 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
                 "You are attempting to obtain credentials from somewhere "
                     + "other than Kubernetes secrets in prod. You may have accidentally copied "
                     + "creds into your image, which we provide as a local debugging mechanism "
-                    + "only. See GCP build script (config/gcp/build_and_upload_docker_image.sh) "
-                    + "for more info. Creds location was: %s",
+                    + "only. See GCP build script (distributions/demo-google-deployment/bin/"
+                    + "build_docker_image.sh) for more info. Creds location was: %s",
                 credsLocation);
         throw new GoogleCredentialException(cause);
       }
@@ -197,7 +197,8 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
    */
   private void validateUsingGoogle(String cloud) {
     if (!cloud.equals(GOOGLE_CLOUD_NAME)) {
-      throw new IllegalStateException("Injecting Google objects when cloud != Google!");
+      throw new IllegalStateException("Injecting Google objects when cloud != Google! (cloud was "
+        + cloud);
     }
   }
 

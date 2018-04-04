@@ -10,7 +10,10 @@ include ':portability-api-launcher'
 include ':extensions:config:portability-config-yaml'
 
 // Runnable Jar Distributions
+// Defaults
 include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
+// Google
+include ':distributions:demo-google-deployment:api', ':distributions:demo-google-deployment:worker'
 
 // Jar Components
 // TODO: rename portability-worker to portability-transfer

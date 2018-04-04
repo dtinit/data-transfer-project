@@ -36,7 +36,6 @@ repositories {
     jcenter()
 }
 
-
 def CLIENT_ID_PREFIX = 'data.portability.key.'
 def CLIENT_SECRET_PREFIX = 'data.portability.secret.'
 def JWT_KEY = 'data.portability.jwt.key'
@@ -85,15 +84,19 @@ task createSecretsFile() {
 
 mainClassName = 'org.dataportabilityproject.bootstrap.vm.SingleVMMain'
 
-// TODO: refactor this to base build.gradle so other distros (like demo-google-deployment) may use
+copyResources()
+
 shadowJar {
     mergeServiceFiles()
     exclude '**/pom.properties'
     exclude '**/pom.xml'
+}
+
+shadowJar.dependsOn(createSecretsFile)
+
+def copyResources() {
     copy {
         from 'resources/'
         into 'src/main/resources'
     }
 }
-
-shadowJar.dependsOn(createSecretsFile)

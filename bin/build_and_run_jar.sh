@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# Interactive script to build a new jar.
+# DEPRECATED. Interactive script to build a new jar.
+# TODO: Remove this file once index.html copying logic is moved into
+# distributions/demo-google-deployment/api/build.gradle.
 #
 # Usage: ./config/gcp/build_jar.sh <binary> <env> <cloud> <distribution>
 # - binary is required and specifies which server to build.

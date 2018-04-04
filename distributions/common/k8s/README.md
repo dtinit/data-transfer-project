@@ -1,6 +1,6 @@
 # Kubernetes
 
-This directory contains configuration for Data Portability to run
+This directory contains configuration for Data Transfer Project to run
 with Kubernetes using the Docker container format.
 
 ## Tailing the container logs
