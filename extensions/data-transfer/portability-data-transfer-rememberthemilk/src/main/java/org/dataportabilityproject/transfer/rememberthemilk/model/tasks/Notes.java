@@ -20,7 +20,7 @@ import com.google.common.base.Joiner;
 
 import java.util.List;
 
-/** A collection of notes that exist on a task/taskseries */
+/** A collection of notes that exist on a tasks/taskseries */
 public class Notes {
 
   @Key("note")

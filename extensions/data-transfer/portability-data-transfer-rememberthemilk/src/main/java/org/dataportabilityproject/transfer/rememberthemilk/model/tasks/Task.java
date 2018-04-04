@@ -27,7 +27,7 @@ public class Task {
   public String due;
 
   @Key("@has_due_time")
-  public boolean has_due_time;
+  public int has_due_time;
 
   @Key("@added")
   public String added;
@@ -42,7 +42,7 @@ public class Task {
   public String priority;
 
   @Key("@postponed")
-  public boolean postponed;
+  public int postponed;
 
   @Key("@estimate")
   public String estimate;

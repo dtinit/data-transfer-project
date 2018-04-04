@@ -28,7 +28,6 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
-import org.dataportabilityproject.transfer.rememberthemilk.RememberTheMilkSignatureGenerator;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.Task;
@@ -94,8 +93,8 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     List<TaskModel> tasks = new ArrayList<>();
 
     for (TaskList taskList : taskLists) {
-      if (taskList.taskSeriesList != null) {
-        for (TaskSeries taskSeries : taskList.taskSeriesList) {
+      if (taskList.taskseries != null) {
+        for (TaskSeries taskSeries : taskList.taskseries) {
           tasks.add(new TaskModel(oldListId, taskSeries.name, taskSeries.notes.toString()));
           for (Task task : taskSeries.tasks) {
             // Do something here with completion date, but its odd there can be more than one.

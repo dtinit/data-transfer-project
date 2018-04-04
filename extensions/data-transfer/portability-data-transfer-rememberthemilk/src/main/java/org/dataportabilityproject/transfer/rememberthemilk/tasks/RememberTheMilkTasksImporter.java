@@ -18,13 +18,13 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempTasksData;
-import org.dataportabilityproject.transfer.rememberthemilk.RememberTheMilkSignatureGenerator;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
@@ -33,6 +33,8 @@ import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Importer for Tasks data type to Remember The Milk Service.
@@ -40,7 +42,7 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskContainerResource> {
   private final JobStore jobstore;
   private final AppCredentials appCredentials;
-
+  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksImporter.class);
   private RememberTheMilkService service;
 
   public RememberTheMilkTasksImporter(AppCredentials appCredentials, JobStore jobStore) {
@@ -50,11 +52,13 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   }
 
   @VisibleForTesting
-  public RememberTheMilkTasksImporter(AppCredentials appCredentials, JobStore jobStore, RememberTheMilkService service) {
+  public RememberTheMilkTasksImporter(
+      AppCredentials appCredentials, JobStore jobStore, RememberTheMilkService service) {
     this.jobstore = jobStore;
     this.appCredentials = appCredentials;
     this.service = service;
   }
+
   @Override
   public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data) {
     String timeline;
@@ -79,10 +83,12 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       for (TaskModel task : data.getTasks()) {
         String newList = tempTasksData.lookupNewTaskListId(task.getTaskListId());
         TaskSeries addedTask = service.createTask(task.getText(), timeline, newList);
-        //todo: add notes
+        // todo: add notes
       }
-    } catch (IOException e) {
-      return new ImportResult(ImportResult.ResultType.ERROR);
+    } catch (Exception e) {
+      logger.warn("Error importing item: " + e.getMessage());
+      logger.warn(Throwables.getStackTraceAsString(e));
+      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
     }
     return new ImportResult(ImportResult.ResultType.OK);
   }

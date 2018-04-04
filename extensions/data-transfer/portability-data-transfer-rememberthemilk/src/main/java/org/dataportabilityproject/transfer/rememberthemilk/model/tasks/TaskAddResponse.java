@@ -19,6 +19,9 @@ import com.google.api.client.util.Key;
 
 public class TaskAddResponse extends RememberTheMilkResponse {
 
-  @Key("list")
-  public TaskList taskList;
+  @Key("transaction")
+  public Transaction transaction;
+
+  @Key("taskseries")
+  public TaskList list;
 }

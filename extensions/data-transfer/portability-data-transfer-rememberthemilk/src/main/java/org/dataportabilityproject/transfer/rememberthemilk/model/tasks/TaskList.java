@@ -27,15 +27,15 @@ public class TaskList {
   public int id;
 
   @Key("taskseries")
-  public List<TaskSeries> taskSeriesList;
+  public List<TaskSeries> taskseries;
 
   @Override
   public String toString() {
     return String.format(
         "(list id=%d children:[%s])",
         id,
-        (taskSeriesList == null || taskSeriesList.isEmpty())
+        (taskseries == null || taskseries.isEmpty())
             ? ""
-            : Joiner.on("\n").join(taskSeriesList));
+            : Joiner.on("\n").join(taskseries));
   }
 }

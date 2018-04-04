@@ -26,19 +26,22 @@ public class ListInfo {
   public String name;
 
   @Key("@deleted")
-  public boolean deleted;
+  public int deleted;
 
   @Key("@locked")
-  public boolean locked;
+  public int locked;
 
   @Key("@archived")
-  public boolean archived;
+  public int archived;
 
   @Key("@position")
   public int position;
 
   @Key("@smart")
-  public boolean smart;
+  public int smart;
+
+  @Key("@sort_order")
+  public int sort_order;
 
   @Override
   public String toString() {

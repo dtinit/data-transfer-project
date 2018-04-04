@@ -19,6 +19,9 @@ import com.google.api.client.util.Key;
 
 public class ListAddResponse extends RememberTheMilkResponse {
 
+  @Key("transaction")
+  public Transaction transaction;
+
   @Key("list")
-  public ListInfo listInfo;
+  public ListInfo list;
 }

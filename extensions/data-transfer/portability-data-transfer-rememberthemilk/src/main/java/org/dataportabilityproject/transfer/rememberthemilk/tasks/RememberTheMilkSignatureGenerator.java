@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.rememberthemilk;
+package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -36,12 +36,12 @@ import java.util.stream.Collectors;
  * Generates signatures hash based on the algorithm described:
  * https://www.rememberthemilk.com/services/api/authentication.rtm
  */
-public final class RememberTheMilkSignatureGenerator {
+final class RememberTheMilkSignatureGenerator {
 
   private final AppCredentials appCredentials;
   private final String authToken;
 
-  public RememberTheMilkSignatureGenerator(AppCredentials appCredentials, @Nullable String authToken) {
+  public RememberTheMilkSignatureGenerator(AppCredentials appCredentials, String authToken) {
     this.appCredentials = Preconditions.checkNotNull(appCredentials);
     this.authToken = authToken;
   }
