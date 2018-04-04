@@ -72,7 +72,6 @@ public class JWTTokenManager implements TokenManager {
       return true;
     } catch (JWTVerificationException exception) {
       logger.debug("Error verifying token: {}", exception);
-      logger.debug("Token: {}", token);
       return false;
     }
   }

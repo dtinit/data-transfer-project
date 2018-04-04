@@ -81,8 +81,6 @@ final class DataTransferHandler implements HttpHandler {
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
     this.baseApiUrl = baseApiUrl;
-
-    logger.debug("Using jobstore: {} in DataTransferHandler", store);
   }
 
   /** Services the {@link CreateJobAction} via the {@link HttpExchange}. */
@@ -132,7 +130,6 @@ final class DataTransferHandler implements HttpHandler {
         request.getSource());
 
     PortabilityJob job = store.findJob(actionResponse.getId());
-    logger.debug("Found job: {} in DTH", job);
 
     // If present, store initial auth data for export services, e.g. used for oauth1
     if (authFlowConfiguration.getInitialAuthData() != null) {
@@ -162,11 +159,6 @@ final class DataTransferHandler implements HttpHandler {
           job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
 
       store.updateJob(actionResponse.getId(), updatedPortabilityJob);
-
-      logger.debug("Updated job is: {}", updatedPortabilityJob);
-
-      PortabilityJob storejob = store.findJob(actionResponse.getId());
-      logger.debug("Job looked up in jobstore is: {} -> {}", actionResponse.getId(), storejob);
     }
 
     dataTransferResponse =
