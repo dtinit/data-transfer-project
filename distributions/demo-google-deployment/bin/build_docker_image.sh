@@ -60,7 +60,6 @@ fi
 BINARY=$1
 ENV=$2
 PROJECT_ID_SUFFIX=$3
-SRC_DIR=$BINARY
 GIT_COMMIT=$(git log -1 --format=%h)
 PORT=8080
 DEBUG_PORT=5005
@@ -160,7 +159,7 @@ if [[ ${response} =~ ^(no|n| ) ]]; then
   exit 0
 else
   if [[ ${ENV} == "local" ]]; then
-    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$SRC_DIR"
+    IMAGE_NAME="gcr.io/$PROJECT_ID-$ENV/$BINARY"
     read -p "Using local version tag v1. OK? (Y/n): " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Exiting"
@@ -170,7 +169,7 @@ else
       echo "Using version tag v1"
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${ENV}"
-    IMAGE_NAME="gcr.io/$PROJECT_ID/$SRC_DIR"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/$BINARY"
   else
     if [ -z $PROJECT_ID_SUFFIX ]; then
       echo -e "ERROR: Since env=${ENV} (!= local), you must provide a project ID suffix, i.e. 'qa8'
@@ -178,7 +177,7 @@ else
       exit 1
     fi
     PROJECT_ID="${BASE_PROJECT_ID}-${PROJECT_ID_SUFFIX}"
-    IMAGE_NAME="gcr.io/$PROJECT_ID/$SRC_DIR"
+    IMAGE_NAME="gcr.io/$PROJECT_ID/$BINARY"
     read -p "Changing your default project to ${PROJECT_ID}. OK? (Y/n) " response
     if [[ ${response} =~ ^(no|n| ) ]]; then
       echo "Aborting"
