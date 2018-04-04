@@ -61,6 +61,7 @@ public class ReferenceApiModule extends FlagBindingModule {
     mapbinder.addBinding(DataTransferHandler.PATH).to(DataTransferHandler.class);
     mapbinder.addBinding(ListDataTypesHandler.PATH).to(ListDataTypesHandler.class);
     mapbinder.addBinding(ListServicesHandler.PATH).to(ListServicesHandler.class);
+    mapbinder.addBinding(LegacyAuthCallbackHandler.PATH).to(LegacyAuthCallbackHandler.class);
     mapbinder.addBinding(OauthCallbackHandler.PATH).to(OauthCallbackHandler.class);
     mapbinder.addBinding(Oauth2CallbackHandler.PATH).to(Oauth2CallbackHandler.class);
     mapbinder.addBinding(SimpleLoginSubmitHandler.PATH).to(SimpleLoginSubmitHandler.class);
