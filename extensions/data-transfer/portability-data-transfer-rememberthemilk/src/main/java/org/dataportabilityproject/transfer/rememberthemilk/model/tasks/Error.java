@@ -15,15 +15,16 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.api.client.util.Key;
 
 /** Error details from RTM */
 public class Error {
 
-  @Key("@code")
+  @JacksonXmlProperty(isAttribute = true, localName = "code")
   public int code;
 
-  @Key("@msg")
+  @JacksonXmlProperty(isAttribute = true, localName = "msg")
   public String msg;
 
   @Override

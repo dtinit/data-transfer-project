@@ -15,40 +15,53 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
+import com.fasterxml.jackson.xml.annotate.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.api.client.util.Joiner;
 import com.google.api.client.util.Key;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm */
 public class TaskSeries {
 
-  @Key("@id")
+  @JacksonXmlProperty(isAttribute = true, localName = "id")
   public int id;
 
-  @Key("@created")
+  @JacksonXmlProperty(isAttribute = true, localName = "created")
   public String created;
 
-  @Key("@modified")
+  @JacksonXmlProperty(isAttribute = true, localName = "modified")
   public String modified;
 
-  @Key("@name")
+  @JacksonXmlProperty(isAttribute = true, localName = "name")
   public String name;
 
-  @Key("@source")
+  @JacksonXmlProperty(isAttribute = true, localName = "source")
   public String source;
 
-  @Key("tags")
+  @JacksonXmlProperty(isAttribute = true, localName = "location_id")
+  public String location_id;
+
+  @JacksonXmlProperty(localName = "url")
+  public String url;
+
+  @JacksonXmlProperty(localName = "tags")
   public String tags;
 
-  @Key("participants")
+  @JacksonXmlProperty(localName ="participants")
   public String participants;
 
-  @Key("notes")
+  @JacksonXmlProperty(localName ="notes")
   public Notes notes;
 
-  @Key("task")
+  @JacksonXmlProperty(localName ="tasks")
   public List<Task> tasks;
+
+  // Either tasks or task will be present - not both
+  @JacksonXmlProperty(localName = "task")
+  public Task task;
 
   @Override
   public String toString() {

@@ -15,13 +15,13 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 
 public class TaskAddResponse extends RememberTheMilkResponse {
 
-  @Key("transaction")
+  @JacksonXmlProperty(localName = "transaction")
   public Transaction transaction;
 
-  @Key("taskseries")
+  @JacksonXmlProperty(localName = "list")
   public TaskList list;
 }

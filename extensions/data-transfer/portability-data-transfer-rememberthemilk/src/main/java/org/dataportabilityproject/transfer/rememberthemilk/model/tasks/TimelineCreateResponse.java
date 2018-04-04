@@ -15,10 +15,10 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 
 public class TimelineCreateResponse extends RememberTheMilkResponse {
 
-  @Key("timeline")
+  @JacksonXmlProperty(isAttribute = true, localName = "timeline")
   public String timeline;
 }

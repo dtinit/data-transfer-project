@@ -15,14 +15,15 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.api.client.util.Key;
 
 /** A generic response from the remember the milk service. */
 public abstract class RememberTheMilkResponse {
 
-  @Key("@stat")
+  @JacksonXmlProperty(isAttribute = true, localName = "stat")
   public String stat;
 
-  @Key("err")
+  @JacksonXmlProperty(localName = "err")
   public Error error;
 }
