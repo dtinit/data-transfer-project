@@ -77,7 +77,6 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
         return new ImportResult(ResultType.ERROR, "Error inserting taskList: " + e.getMessage());
       }
 
-      logger.info("Storing {} as {}", oldTasksList.getId(), insertedTaskList.getId());
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
 
       jobStore.update(jobId, tempTasksData);

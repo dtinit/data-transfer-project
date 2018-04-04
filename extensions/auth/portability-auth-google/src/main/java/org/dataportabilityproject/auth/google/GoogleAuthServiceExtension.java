@@ -79,7 +79,8 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
               .getService(AppCredentialStore.class)
               .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
     } catch (IOException e) {
-      logger.warn("Problem getting AppCredentials: {}", e);
+      logger.warn(
+          "Problem getting AppCredentials: {}. Did you set GOOGLE_KEY and GOOGLE_SECRET?", e);
       return;
     }
 
