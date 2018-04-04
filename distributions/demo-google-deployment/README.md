@@ -3,7 +3,7 @@
 ## GKE
 We run Kubernetes on Google Cloud Platform using GKE. This is scripted
 at _setup_gke_environment.sh_. Our Kubernetes objects are stored in the
-[k8s/](../../config/k8s/README.md) directory. We use Docker as our Kubernetes
+[k8s/](../common/k8s/README.md) directory. We use Docker as our Kubernetes
 container format.
 
 ## Project-specific settings
@@ -19,17 +19,11 @@ encrypted with Cloud KMS and stored encrypted in an
 _'encrypted_secrets/'_ directory.
 
 #### Local development
-For local development only, secrets may be stored in gradle properties.
-Add any test secrets to your local _~/.gradle/gradle.properties_ file. A
-sample is provided in _gradle_example.properties_. This is controlled by
-configuring _cloud=LOCAL_ in your distribution's _common.yaml_.
-
-We also provide functionality for local instances to point to a test GCP
-project by specifying _cloud=GOOGLE_. The project this points to, as
-well as credentials to access it, are configured in our Docker image
-build [script](build_docker_image.sh). The project ID should be specified
-in LOCAL_GCP_PROJECT in _init_common_vars.sh_. See 
-_init_common_vars_example.sh_ for an example. Credentials
+When using the LOCAL environment, local instances point to a test GCP
+project. The project this points to, as well as credentials to access it,
+are configured in our Docker image build [script](bin/build_docker_image.sh).
+The project ID should be specified in LOCAL_GCP_PROJECT in _init_common_vars.sh_.
+See _init_common_vars_example.sh_ for an example. Credentials
 for that project's service account should be accessed from API >
 Credentials > service account credentials in GoogleCloudPlatform and
 copied into _service_account_creds.json_ locally.
@@ -47,7 +41,7 @@ time a bundle changes. index.html itself is served from our backend.
 This ensures that our app always fetches the newest static content.
 
 ## Docker
-We use a [script](build_docker_image.sh) to build our Docker
+We use a [script](bin/build_docker_image.sh) to build our Docker
 images. Given an environment name, the script copies the appropriate
 resources (index.html and settings yaml) and compiles a new jar. It then
 generates a Dockerfile which sets our jar as the ENTRYPOINT. The script
