@@ -15,11 +15,11 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 
 public class GetListResponse extends RememberTheMilkResponse {
 
-  @Key("tasks")
+  @JacksonXmlProperty(localName = "tasks")
   public Tasks tasks;
 
   @Override

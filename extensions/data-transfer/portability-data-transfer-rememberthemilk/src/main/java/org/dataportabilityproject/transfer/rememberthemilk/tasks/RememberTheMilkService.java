@@ -82,7 +82,7 @@ class RememberTheMilkService {
 
   public GetListResponse getList(String listId) throws IOException {
     Map<String, String> params = ImmutableMap.of("list_id", listId);
-    return makeRequest(RememberTheMilkMethods.LISTS_GET_LIST, params, GetListResponse.class);
+    return makeRequest(RememberTheMilkMethods.TASK_GET_LIST, params, GetListResponse.class);
   }
 
   public GetListsResponse getLists() throws IOException {
@@ -128,6 +128,7 @@ class RememberTheMilkService {
   public enum RememberTheMilkMethods {
     LISTS_GET_LIST("rtm.lists.getList"),
     LISTS_ADD("rtm.lists.add"),
+    TASK_GET_LIST("rtm.tasks.getList"),
     TASK_ADD("rtm.tasks.add"),
     TIMELINES_CREATE("rtm.timelines.create");
 

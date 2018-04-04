@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.fasterxml.jackson.xml.XmlMapper;
 import java.io.IOException;
-import java.util.List;
 import org.junit.Test;
 
 public class ModelTest {
@@ -94,12 +93,38 @@ public class ModelTest {
 
   @Test
   public void parseError() throws IOException {
-    String content = "<?xml version='1.0' encoding='UTF-8'?>"
-        + "<rsp stat=\"fail\">"
-        + "  <err code=\"96\" msg=\"Invalid signature\"/>"
-        + "</rsp>\n";
+    String content =
+        "<?xml version='1.0' encoding='UTF-8'?>"
+            + "<rsp stat=\"fail\">"
+            + "  <err code=\"96\" msg=\"Invalid signature\"/>"
+            + "</rsp>\n";
 
     // try to parse it as a specific response (which extends RmbrTheMilkResponse
     ListAddResponse listAddResponse = mapper.readValue(content, ListAddResponse.class);
+  }
+
+  @Test
+  public void parseGetListsResponse() throws IOException {
+    String content =
+        "<?xml version='1.0' encoding='UTF-8'?>"
+            + "<rsp stat=\"ok\">"
+            + "  <lists>"
+            + "    <list id=\"123\" name=\"Inbox\" deleted=\"0\" locked=\"1\" archived=\"0\" position=\"-1\" smart=\"0\" sort_order=\"0\"/>"
+            + "    <list id=\"43132027\" name=\"Sent\" deleted=\"0\" locked=\"1\" archived=\"0\" position=\"1\" smart=\"0\" sort_order=\"0\"/>"
+            + "    <list id=\"43132028\" name=\"Personal\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/>"
+            + "    <list id=\"43132029\" name=\"Work\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/>"
+            + "   </lists>"
+            + "</rsp>";
+
+    GetListsResponse response = mapper.readValue(content, GetListsResponse.class);
+
+    assertThat(response.lists.size()).isEqualTo(4);
+  }
+
+  @Test
+  public void parseGetListResponse() throws IOException {
+    String content = "<?xml version='1.0' encoding='UTF-8'?>"
+        + "<rsp stat=\"ok\">"
+        + "<lists><list id=\"43132026\" name=\"Inbox\" deleted=\"0\" locked=\"1\" archived=\"0\" position=\"-1\" smart=\"0\" sort_order=\"0\"/><list id=\"43132027\" name=\"Sent\" deleted=\"0\" locked=\"1\" archived=\"0\" position=\"1\" smart=\"0\" sort_order=\"0\"/><list id=\"43132028\" name=\"Personal\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43132029\" name=\"Work\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43610060\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43610146\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43610172\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43612939\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43612966\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43613071\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43613095\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43613137\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614070\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614082\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614103\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614131\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/></lists></rsp>\n";
   }
 }

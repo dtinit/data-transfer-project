@@ -114,7 +114,7 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
 
     List<ListInfo> listInfoList;
     try {
-      listInfoList = service.getLists().listInfoList.lists;
+      listInfoList = service.getLists().lists;
     } catch (IOException e) {
       return new ExportResult(ResultType.ERROR, "Error retrieving lists: " + e.getMessage());
     }
