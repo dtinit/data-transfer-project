@@ -36,7 +36,7 @@ public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("calendar", "contacts", "gmail", "photos", "tasks");
+      ImmutableList.of("calendar", "contacts", "mail", "photos", "tasks");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;

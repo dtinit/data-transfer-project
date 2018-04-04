@@ -99,6 +99,7 @@ final class JobProcessor {
       // Decrypt one more time
       Decrypter innerAuthDataDecrypter = DecrypterFactory.create(innerSymmetricKey);
 
+      logger.debug("singlyEncryptedExportAuthData.length(): {}", singlyEncryptedExportAuthData.length());
       String serializedExportAuthData =
           innerAuthDataDecrypter.decrypt(singlyEncryptedExportAuthData);
       AuthData exportAuthData = deSerialize(serializedExportAuthData);

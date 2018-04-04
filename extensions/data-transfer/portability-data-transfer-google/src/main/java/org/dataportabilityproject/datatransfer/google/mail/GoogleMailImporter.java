@@ -79,7 +79,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     // Lazy init the request for all labels in the destination account, since it may not be needed
     // Mapping of labelName -> destination label id
     Supplier<Map<String, String>> allDestinationLabels =
-        Suppliers.memoize(allDestinationLabelsSupplier());
+        Suppliers.memoize(allDestinationLabelsSupplier(authData));
 
     boolean newMappingsCreated = false;
 
@@ -176,7 +176,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
               .setRaw(mailMessageModel.getRawString())
               .setLabelIds(importedLabelIds.build());
       try {
-        gmail.users().messages().insert(USER, newMessage).execute();
+        getOrCreateGmail(authData).users().messages().insert(USER, newMessage).execute();
       } catch (IOException e) {
         return new ImportResult(ResultType.ERROR, "Error importing message: " + e.getMessage());
       }
@@ -186,13 +186,13 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   /** Supplies a mapping of Label Name -> Label Id (in the import account). */
-  private Supplier<Map<String, String>> allDestinationLabelsSupplier() {
+  private Supplier<Map<String, String>> allDestinationLabelsSupplier(TokensAndUrlAuthData authData) {
     return new Supplier<Map<String, String>>() {
       @Override
       public Map<String, String> get() {
         ListLabelsResponse response = null;
         try {
-          response = gmail.users().labels().list(USER).execute();
+          response = getOrCreateGmail(authData).users().labels().list(USER).execute();
         } catch (IOException e) {
           throw new RuntimeException("Unable to list labels for user", e);
         }
