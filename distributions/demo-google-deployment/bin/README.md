@@ -21,7 +21,8 @@ _'encrypted_secrets/'_ directory.
 #### Local development
 For local development only, secrets may be stored in gradle properties.
 Add any test secrets to your local _~/.gradle/gradle.properties_ file. A
-sample is provided in _gradle_example.properties_.
+sample is provided in _gradle_example.properties_. This is controlled by
+configuring _cloud=LOCAL_ in your distribution's _common.yaml_.
 
 We also provide functionality for local instances to point to a test GCP
 project by specifying _cloud=GOOGLE_. The project this points to, as
