@@ -24,7 +24,7 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /** Factory for creating {@link Credential} objects from {@link TokensAndUrlAuthData}. */
-public final class GoogleCredentialFactory {
+public class GoogleCredentialFactory {
 
   // TODO: Determine correct duration in production
   private static final long EXPIRE_TIME_IN_SECONDS = 0L;

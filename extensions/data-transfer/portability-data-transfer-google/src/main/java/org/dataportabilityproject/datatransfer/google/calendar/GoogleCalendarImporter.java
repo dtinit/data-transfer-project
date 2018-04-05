@@ -30,16 +30,15 @@ public class GoogleCalendarImporter implements Importer<TokensAndUrlAuthData, Ca
   private volatile Calendar calendarInterface;
 
   public GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
-    this.calendarInterface = null; // lazily initialized for the given request
+    // calendarInterface lazily initialized for each request
+    this(credentialFactory,jobStore, null);
   }
 
   @VisibleForTesting
-  GoogleCalendarImporter(JobStore jobStore, Calendar calendarInterface) {
-    this.credentialFactory = null;
-    this.calendarInterface = calendarInterface;
+  GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Calendar calendarInterface) {
+    this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+    this.calendarInterface = calendarInterface;
   }
 
   private static EventAttendee transformToEventAttendee(CalendarAttendeeModel attendee) {
