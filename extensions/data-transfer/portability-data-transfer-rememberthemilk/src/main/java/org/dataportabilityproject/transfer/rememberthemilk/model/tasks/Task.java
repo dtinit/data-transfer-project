@@ -15,42 +15,51 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 /** Represents a single Task */
 public class Task {
 
-  @Key("@id")
+  @JacksonXmlProperty(isAttribute = true, localName = "id")
   public int id;
 
-  @Key("@due")
+  @JacksonXmlProperty(isAttribute = true, localName = "due")
   public String due;
 
-  @Key("@has_due_time")
-  public boolean has_due_time;
+  @JacksonXmlProperty(isAttribute = true, localName = "has_due_time")
+  public int has_due_time;
 
-  @Key("@added")
+  @JacksonXmlProperty(isAttribute = true, localName = "added")
   public String added;
 
-  @Key("@completed")
+  @JacksonXmlProperty(isAttribute = true, localName = "completed")
   public String completed;
 
-  @Key("@deleted")
+  @JacksonXmlProperty(isAttribute = true, localName = "deleted")
   public String deleted;
 
-  @Key("@priority")
+  @JacksonXmlProperty(isAttribute = true, localName = "priority")
   public String priority;
 
-  @Key("@postponed")
-  public boolean postponed;
+  @JacksonXmlProperty(isAttribute = true, localName = "postponed")
+  public int postponed;
 
-  @Key("@estimate")
+  @JacksonXmlProperty(isAttribute = true, localName = "estimate")
   public String estimate;
 
   @Override
   public String toString() {
-    return String.format(
-        "Task(id=%d due=%s has_due_time=%s added=%s completed=%s deleted=%s priority=%s postponed=%s",
-        id, due, has_due_time, added, completed, deleted, priority, postponed);
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .add("due", due)
+        .add("has_due_time", has_due_time)
+        .add("added", added)
+        .add("completed", completed)
+        .add("deleted", deleted)
+        .add("priority", priority)
+        .add("postponed", postponed)
+        .add("estimate", estimate)
+        .toString();
   }
 }

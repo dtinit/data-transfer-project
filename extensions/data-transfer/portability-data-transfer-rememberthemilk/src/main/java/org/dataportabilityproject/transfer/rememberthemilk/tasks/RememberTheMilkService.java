@@ -17,6 +17,7 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.fasterxml.jackson.xml.XmlMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
@@ -24,13 +25,12 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
-import com.google.api.client.xml.XmlNamespaceDictionary;
-import com.google.api.client.xml.XmlObjectParser;
+import com.google.api.client.util.IOUtils;
 import com.google.common.collect.ImmutableMap;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
-import org.dataportabilityproject.transfer.rememberthemilk.RememberTheMilkSignatureGenerator;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListsResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListAddResponse;
@@ -39,10 +39,14 @@ import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.RememberT
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskAddResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class RememberTheMilkService {
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private RememberTheMilkSignatureGenerator signatureGenerator;
+  private Logger logger = LoggerFactory.getLogger(RememberTheMilkService.class);
+  private XmlMapper xmlMapper = new XmlMapper();
 
   RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
     this.signatureGenerator = signatureGenerator;
@@ -63,25 +67,25 @@ class RememberTheMilkService {
         ImmutableMap.of("timeline", timeline, "name", ("Copy of: " + name));
     ListAddResponse response =
         makeRequest(RememberTheMilkMethods.LISTS_ADD, params, ListAddResponse.class);
-    checkState(response.listInfo != null, "Added list is null");
-    checkState(response.listInfo.id != 0, "Added list has id of zero");
-    return response.listInfo;
+    checkState(response.list != null, "Added list is null");
+    checkState(response.list.id != 0, "Added list has id of zero");
+    return response.list;
   }
 
   public TaskSeries createTask(String name, String timeline, String listId) throws IOException {
     Map<String, String> params =
         ImmutableMap.of("timeline", timeline, "name", name, "list_id", listId);
     TaskAddResponse taskAddResponse =
-        makeRequest(RememberTheMilkMethods.TASK_ADD, params, TaskAddResponse.class);
-    return taskAddResponse.taskList.taskSeriesList.get(0);
+        makeRequest(RememberTheMilkMethods.TASKS_ADD, params, TaskAddResponse.class);
+    return taskAddResponse.list.taskseries.get(0);
   }
 
   public GetListResponse getList(String listId) throws IOException {
     Map<String, String> params = ImmutableMap.of("list_id", listId);
-    return makeRequest(RememberTheMilkMethods.LISTS_GET_LIST, params, GetListResponse.class);
+    return makeRequest(RememberTheMilkMethods.TASKS_GET_LIST, params, GetListResponse.class);
   }
 
-  public GetListsResponse getLists() throws IOException{
+  public GetListsResponse getLists() throws IOException {
     return makeRequest(
         RememberTheMilkMethods.LISTS_GET_LIST, ImmutableMap.of(), GetListsResponse.class);
   }
@@ -100,7 +104,6 @@ class RememberTheMilkService {
 
     HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
-    getRequest.setParser(new XmlObjectParser(new XmlNamespaceDictionary().set("", "")));
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
@@ -108,7 +111,7 @@ class RememberTheMilkService {
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
 
-    T parsedResponse = response.parseAs(dataClass);
+    T parsedResponse = xmlMapper.readValue(response.getContent(), dataClass);
 
     if (parsedResponse.error != null) {
       throw new IOException(
@@ -119,13 +122,10 @@ class RememberTheMilkService {
   }
 
   public enum RememberTheMilkMethods {
-    CHECK_TOKEN("rtm.auth.checkToken"),
-    GET_FROB("rtm.auth.getFrob"),
     LISTS_GET_LIST("rtm.lists.getList"),
     LISTS_ADD("rtm.lists.add"),
-    GET_TOKEN("rtm.auth.getToken"),
     TASKS_GET_LIST("rtm.tasks.getList"),
-    TASK_ADD("rtm.tasks.add"),
+    TASKS_ADD("rtm.tasks.add"),
     TIMELINES_CREATE("rtm.timelines.create");
 
     private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";

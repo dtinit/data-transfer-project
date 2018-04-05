@@ -15,24 +15,27 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Key;
-import com.google.common.base.Joiner;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/** A set of task lists. */
+/** A set of tasks lists. */
 public class Tasks {
 
-  @Key("@rev")
+  @JacksonXmlProperty(localName = "list")
+  public final List<TaskList> list = new ArrayList<>();
+
+  @JacksonXmlProperty(isAttribute = true, localName = "rev")
   public String rev;
 
-  @Key("list")
-  public List<TaskList> list;
+  public void setList(TaskList singleTaskList) {
+    this.list.add(singleTaskList);
+  }
 
   @Override
   public String toString() {
-    return String.format(
-        "Tasks(rev=%s List=%s)",
-        rev, (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
+    return MoreObjects.toStringHelper(this).add("rev", rev).add("list", list).toString();
   }
 }

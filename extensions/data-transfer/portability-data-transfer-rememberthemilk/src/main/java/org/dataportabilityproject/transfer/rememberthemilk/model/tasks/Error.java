@@ -15,19 +15,20 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 /** Error details from RTM */
 public class Error {
 
-  @Key("@code")
+  @JacksonXmlProperty(isAttribute = true, localName = "code")
   public int code;
 
-  @Key("@msg")
+  @JacksonXmlProperty(isAttribute = true, localName = "msg")
   public String msg;
 
   @Override
   public String toString() {
-    return String.format("Error(code=%d msg=%s)", code, msg);
+    return MoreObjects.toStringHelper(this).add("code", code).add("msg", msg).toString();
   }
 }

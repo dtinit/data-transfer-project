@@ -15,58 +15,66 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.google.api.client.util.Joiner;
-import com.google.api.client.util.Key;
+import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm */
 public class TaskSeries {
 
-  @Key("@id")
+  @JacksonXmlProperty(isAttribute = true, localName = "id")
   public int id;
 
-  @Key("@created")
+  @JacksonXmlProperty(isAttribute = true, localName = "created")
   public String created;
 
-  @Key("@modified")
+  @JacksonXmlProperty(isAttribute = true, localName = "modified")
   public String modified;
 
-  @Key("@name")
+  @JacksonXmlProperty(isAttribute = true, localName = "name")
   public String name;
 
-  @Key("@source")
+  @JacksonXmlProperty(isAttribute = true, localName = "source")
   public String source;
 
-  @Key("@authUrl")
-  public String url;
-
-  @Key("@location_id")
+  @JacksonXmlProperty(isAttribute = true, localName = "location_id")
   public String location_id;
 
-  @Key("tags")
+  @JacksonXmlProperty(localName = "url")
+  public String url;
+
+  @JacksonXmlProperty(localName = "tags")
   public String tags;
 
-  @Key("participants")
+  @JacksonXmlProperty(localName = "participants")
   public String participants;
 
-  @Key("notes")
+  @JacksonXmlProperty(localName = "notes")
   public Notes notes;
 
-  @Key("task")
-  public List<Task> tasks;
+  @JacksonXmlProperty(localName = "tasks")
+  public List<Task> tasks = new ArrayList<>();
+
+  public void setTask(Task singleTask) {
+    this.tasks.add(singleTask);
+  }
 
   @Override
   public String toString() {
-    return String.format(
-        "TaskSeries(id=%d created=%s modified=%s name=%s source=%s authUrl=%s, notes=%s tasks:%s)",
-        id,
-        created,
-        modified,
-        name,
-        source,
-        url,
-        notes,
-        (tasks == null || tasks.isEmpty()) ? "" : Joiner.on('\n').join(tasks));
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .add("created", created)
+        .add("modified", modified)
+        .add("name", name)
+        .add("source", source)
+        .add("location_id", location_id)
+        .add("url", url)
+        .add("tags", tags)
+        .add("participants", participants)
+        .add("notes", notes)
+        .add("tasks", tasks)
+        .toString();
   }
 }
