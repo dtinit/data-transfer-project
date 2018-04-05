@@ -1,3 +1,0 @@
-# API settings for Google cloud specific to the local environment
-baseUrl: http://localhost:3000
-baseApiUrl: http://localhost:8080

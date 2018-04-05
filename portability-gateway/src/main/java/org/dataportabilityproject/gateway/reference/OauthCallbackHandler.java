@@ -75,9 +75,6 @@ final class OauthCallbackHandler implements HttpHandler {
     this.objectMapper = typeManager.getMapper();
     this.baseUrl = baseUrl;
     this.baseApiUrl = baseApiUrl;
-
-    logger.debug("Using jobstore: {} in DataTransferHandler", store);
-
   }
 
   @Override
@@ -125,7 +122,6 @@ final class OauthCallbackHandler implements HttpHandler {
       UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
 
       PortabilityJob job = store.findJob(jobId);
-      logger.debug("Found job: {}->{} in OCH", jobId, job);
 
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 

@@ -85,9 +85,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    logger.debug("Starting export, ExportInformation: {}", exportInformation);
+    logger.debug("Starting export");
     ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    logger.debug("Finished export, results: {}", exportResult);
+    logger.debug("Finished export");
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
       logger.warn("Error happened during export: {}", exportResult.getMessage());
@@ -99,6 +99,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug("Finished import");
     if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
       logger.warn("Error happened during import: {}", importResult.getMessage());
+      return;
     }
 
     // Import and Export were successful, determine what to do next
@@ -107,7 +108,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     if (null != continuationData) {
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
-        logger.debug("start off a new copy iteration with pagination info");
+        logger.debug("starting off a new copy iteration with pagination info");
         copyHelper(
             jobId,
             exportAuthData,

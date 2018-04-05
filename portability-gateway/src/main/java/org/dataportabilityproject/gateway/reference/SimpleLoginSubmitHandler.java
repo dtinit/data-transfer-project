@@ -86,7 +86,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
 
     DataTransferResponse response = handleExchange(exchange);
 
-    logger.debug("simpleLoginSubmit, redirecting to: {}", response.getNextUrl());
+    logger.debug("redirecting to: {}", response.getNextUrl());
     // Mark the response as type Json and send
     exchange
         .getResponseHeaders()

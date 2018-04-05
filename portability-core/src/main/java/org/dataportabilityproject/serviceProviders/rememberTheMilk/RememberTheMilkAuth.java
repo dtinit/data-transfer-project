@@ -99,7 +99,7 @@ public class RememberTheMilkAuth implements OfflineAuthDataGenerator {
     return authElement;
   }
 
-  private String getFrob() throws IOException {
+  private String  getFrob() throws IOException {
     URL url = new URL(RememberTheMilkMethods.GET_FROB.getUrl());
     URL signedUrl = signatureGenerator.getSignature(url);
 

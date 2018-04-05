@@ -67,8 +67,8 @@ public class GoogleCloudModule extends AbstractModule {
                 "You are attempting to obtain credentials from somewhere "
                     + "other than Kubernetes secrets in prod. You may have accidentally copied creds "
                     + "into your image, which we provide as a local debugging mechanism only. See GCP "
-                    + "build script (config/gcp/build_and_upload_docker_image.sh) for more info. Creds "
-                    + "location was: %s",
+                    + "build script (distributions/demo-google-deployment/bin/build_docker_image.sh)"
+                    + "for more info. Creds location was: %s",
                 credsLocation);
         throw new GoogleCredentialException(cause);
       }
