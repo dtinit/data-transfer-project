@@ -83,7 +83,9 @@ public class AzureTableStore implements JobStore {
 
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
+
     Preconditions.checkNotNull(jobId, "Job id is null");
+
     Preconditions.checkNotNull(job, "Job is null");
 
     try {
@@ -91,7 +93,7 @@ public class AzureTableStore implements JobStore {
       create(jobId, JOB_TABLE, job.jobAuthorization().state().name(), job);
 
     } catch (JsonProcessingException e) {
-      throw new IOException(e);
+      throw new IOException("Error creating job: " + jobId, e);
     }
   }
 
@@ -103,8 +105,11 @@ public class AzureTableStore implements JobStore {
   @Override
   public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {
+
     Preconditions.checkNotNull(jobId, "Job is null");
+
     Preconditions.checkNotNull(job, "Job is null");
+
     try {
 
       CloudTable table = tableClient.getTableReference(JOB_TABLE);
@@ -130,7 +135,7 @@ public class AzureTableStore implements JobStore {
       table.execute(insert);
 
     } catch (JsonProcessingException | StorageException | URISyntaxException e) {
-      throw new IOException(e);
+      throw new IOException("Error updating job: " + jobId, e);
     }
   }
 
@@ -148,7 +153,7 @@ public class AzureTableStore implements JobStore {
       DataWrapper wrapper = result.getResultAsType();
       return configuration.getMapper().readValue(wrapper.getSerialized(), PortabilityJob.class);
     } catch (StorageException | URISyntaxException | IOException e) {
-      throw new MicrosoftStorageException(e);
+      throw new MicrosoftStorageException("Error finding job: " + jobId, e);
     }
   }
 
@@ -163,7 +168,7 @@ public class AzureTableStore implements JobStore {
     try {
       create(jobId, JOB_DATA_TABLE, null, model);
     } catch (IOException e) {
-      throw new MicrosoftStorageException(e);
+      throw new MicrosoftStorageException("Error creating job: " + jobId, e);
     }
   }
 
@@ -191,7 +196,7 @@ public class AzureTableStore implements JobStore {
       CloudBlockBlob blob = reference.getBlockBlobReference(jobId.toString() + "-" + key);
       blob.upload(stream, UNKNOWN_LENGTH);
     } catch (StorageException | URISyntaxException | IOException e) {
-      throw new MicrosoftStorageException(e);
+      throw new MicrosoftStorageException("Error creating stream for job: " + jobId, e);
     }
   }
 
@@ -202,7 +207,7 @@ public class AzureTableStore implements JobStore {
       CloudBlockBlob blob = reference.getBlockBlobReference(jobId.toString() + "-" + key);
       return blob.openInputStream();
     } catch (StorageException | URISyntaxException e) {
-      throw new MicrosoftStorageException(e);
+      throw new MicrosoftStorageException("Error returning stream for job: " + jobId, e);
     }
   }
 
@@ -231,7 +236,7 @@ public class AzureTableStore implements JobStore {
       }
       return UUID.fromString(iter.next().getRowKey());
     } catch (StorageException | URISyntaxException e) {
-      throw new MicrosoftStorageException(e);
+      throw new MicrosoftStorageException("Error finding first job", e);
     }
   }
 
@@ -242,11 +247,15 @@ public class AzureTableStore implements JobStore {
 
       String serializedJob = configuration.getMapper().writeValueAsString(type);
       DataWrapper wrapper =
-          new DataWrapper(configuration.getPartitionKey(), jobId.toString(), state, serializedJob);   // job id used as key
+          new DataWrapper(
+              configuration.getPartitionKey(),
+              jobId.toString(),
+              state,
+              serializedJob); // job id used as key
       TableOperation insert = TableOperation.insert(wrapper);
       table.execute(insert);
     } catch (JsonProcessingException | StorageException | URISyntaxException e) {
-      throw new IOException(e);
+      throw new IOException("Error creating data for job: " + jobId, e);
     }
   }
 
@@ -264,7 +273,7 @@ public class AzureTableStore implements JobStore {
       table.execute(delete);
 
     } catch (StorageException | URISyntaxException e) {
-      throw new IOException(e);
+      throw new IOException("Error removing data for job: " + jobId, e);
     }
   }
 
@@ -279,7 +288,7 @@ public class AzureTableStore implements JobStore {
       DataWrapper wrapper = result.getResultAsType();
       return configuration.getMapper().readValue(wrapper.getSerialized(), type);
     } catch (StorageException | IOException | URISyntaxException e) {
-      throw new MicrosoftStorageException(e);
+      throw new MicrosoftStorageException("Error finding data for job: " + jobId, e);
     }
   }
 }

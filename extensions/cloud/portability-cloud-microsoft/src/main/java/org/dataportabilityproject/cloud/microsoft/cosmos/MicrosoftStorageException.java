@@ -22,6 +22,10 @@ public class MicrosoftStorageException extends RuntimeException {
     super(cause);
   }
 
+  public MicrosoftStorageException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
   public MicrosoftStorageException(String message) {
     super(message);
   }
