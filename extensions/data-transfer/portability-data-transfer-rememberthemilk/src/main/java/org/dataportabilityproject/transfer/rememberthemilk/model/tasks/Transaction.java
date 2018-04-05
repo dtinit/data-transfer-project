@@ -25,5 +25,4 @@ public class Transaction {
 
   @Key("undoable")
   public int undoable;
-
 }

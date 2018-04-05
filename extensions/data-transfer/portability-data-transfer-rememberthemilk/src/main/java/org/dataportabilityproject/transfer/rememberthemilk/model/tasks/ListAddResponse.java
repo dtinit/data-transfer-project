@@ -16,7 +16,6 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
-import com.google.api.client.util.Key;
 
 public class ListAddResponse extends RememberTheMilkResponse {
 

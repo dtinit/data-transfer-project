@@ -17,6 +17,7 @@ package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.common.base.Joiner;
+
 import java.util.ArrayList;
 import java.util.List;
 

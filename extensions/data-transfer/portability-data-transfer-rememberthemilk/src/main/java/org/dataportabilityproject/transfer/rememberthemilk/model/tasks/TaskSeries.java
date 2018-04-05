@@ -15,10 +15,8 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import com.fasterxml.jackson.xml.annotate.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.api.client.util.Joiner;
-import com.google.api.client.util.Key;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,13 +48,13 @@ public class TaskSeries {
   @JacksonXmlProperty(localName = "tags")
   public String tags;
 
-  @JacksonXmlProperty(localName ="participants")
+  @JacksonXmlProperty(localName = "participants")
   public String participants;
 
-  @JacksonXmlProperty(localName ="notes")
+  @JacksonXmlProperty(localName = "notes")
   public Notes notes;
 
-  @JacksonXmlProperty(localName ="tasks")
+  @JacksonXmlProperty(localName = "tasks")
   public List<Task> tasks = new ArrayList<>();
 
   public void setTask(Task singleTask) {

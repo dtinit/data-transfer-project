@@ -16,36 +16,35 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
-import com.google.api.client.util.Key;
 
 /** Represents a single Task */
 public class Task {
 
-  @JacksonXmlProperty(isAttribute = true, localName ="id")
+  @JacksonXmlProperty(isAttribute = true, localName = "id")
   public int id;
 
-  @JacksonXmlProperty(isAttribute = true, localName="due")
+  @JacksonXmlProperty(isAttribute = true, localName = "due")
   public String due;
 
-  @JacksonXmlProperty(isAttribute = true, localName="has_due_time")
+  @JacksonXmlProperty(isAttribute = true, localName = "has_due_time")
   public int has_due_time;
 
-  @JacksonXmlProperty(isAttribute = true, localName="added")
+  @JacksonXmlProperty(isAttribute = true, localName = "added")
   public String added;
 
-  @JacksonXmlProperty(isAttribute = true, localName="completed")
+  @JacksonXmlProperty(isAttribute = true, localName = "completed")
   public String completed;
 
-  @JacksonXmlProperty(isAttribute = true, localName="deleted")
+  @JacksonXmlProperty(isAttribute = true, localName = "deleted")
   public String deleted;
 
-  @JacksonXmlProperty(isAttribute = true, localName="priority")
+  @JacksonXmlProperty(isAttribute = true, localName = "priority")
   public String priority;
 
-  @JacksonXmlProperty(isAttribute = true, localName="postponed")
+  @JacksonXmlProperty(isAttribute = true, localName = "postponed")
   public int postponed;
 
-  @JacksonXmlProperty(isAttribute = true, localName="estimate")
+  @JacksonXmlProperty(isAttribute = true, localName = "estimate")
   public String estimate;
 
   @Override
