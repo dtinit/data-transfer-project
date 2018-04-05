@@ -18,10 +18,6 @@ package org.dataportabilityproject.auth.microsoft;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
@@ -30,6 +26,11 @@ import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.A
 import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /** Bootstraps the Mirosoft authentication extension. */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final String REDIRECT_PATH = "/callback/microsoft";
@@ -37,11 +38,12 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
       ImmutableList.<String>builder().add("calendar", "contacts").build();
 
   private AppCredentials appCredentials;
-  private volatile Map<String, MicrosoftAuthDataGenerator> importAuthDataGenerators;
-  private volatile Map<String, MicrosoftAuthDataGenerator> exportAuthDataGenerators;
   private boolean initialized = false;
   private OkHttpClient okHttpClient;
   private ObjectMapper mapper;
+
+  private Map<String, MicrosoftAuthDataGenerator> importAuthDataGenerators;
+  private Map<String, MicrosoftAuthDataGenerator> exportAuthDataGenerators;
 
   public String getServiceId() {
     return "microsoft";
@@ -73,9 +75,8 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
 
     AppCredentialStore appCredentialStore = context.getService(AppCredentialStore.class);
     try {
-      AppCredentials credentials =
-          appCredentialStore.getAppCredentials("MICROSOFT_KEY", "MICROSOFT_SECRET");
-      if (credentials == null) {
+      appCredentials = appCredentialStore.getAppCredentials("MICROSOFT_KEY", "MICROSOFT_SECRET");
+      if (appCredentials == null) {
         throw new IllegalStateException("Microsoft Graph API credentials not found");
       }
     } catch (IOException e) {
