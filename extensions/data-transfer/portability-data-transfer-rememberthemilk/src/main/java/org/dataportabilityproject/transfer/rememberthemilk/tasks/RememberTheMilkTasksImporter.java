@@ -86,8 +86,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
         // todo: add notes
       }
     } catch (Exception e) {
-      logger.warn("Error importing item: " + e.getMessage());
-      logger.warn(Throwables.getStackTraceAsString(e));
+      logger.warn("Error importing item: " + Throwables.getStackTraceAsString(e));
       return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
     }
     return new ImportResult(ImportResult.ResultType.OK);

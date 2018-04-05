@@ -19,6 +19,7 @@ import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 
 public class TaskAddResponse extends RememberTheMilkResponse {
 
+  // The transaction id associated with the task addition
   @JacksonXmlProperty(localName = "transaction")
   public Transaction transaction;
 

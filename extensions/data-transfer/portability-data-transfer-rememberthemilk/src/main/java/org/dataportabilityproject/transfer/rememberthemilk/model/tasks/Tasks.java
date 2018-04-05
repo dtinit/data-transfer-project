@@ -28,7 +28,7 @@ public class Tasks {
   public String rev;
 
   @JacksonXmlProperty(localName = "list")
-  public List<TaskList> list = new ArrayList<>();
+  final public List<TaskList> list = new ArrayList<>();
 
   public void setList(TaskList singleTaskList) {
     this.list.add(singleTaskList);

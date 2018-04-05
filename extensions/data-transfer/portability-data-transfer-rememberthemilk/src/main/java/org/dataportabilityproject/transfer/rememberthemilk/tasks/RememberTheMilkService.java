@@ -111,11 +111,7 @@ class RememberTheMilkService {
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    IOUtils.copy(response.getContent(), bos, true);
-    String content = bos.toString();
-    logger.debug("{}: {}", dataClass.getName(), content);
-    T parsedResponse = xmlMapper.readValue(content, dataClass);
+    T parsedResponse = xmlMapper.readValue(response.getContent(), dataClass);
 
     if (parsedResponse.error != null) {
       throw new IOException(
