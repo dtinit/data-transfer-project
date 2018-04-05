@@ -47,10 +47,8 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
     serviceProviderMap.forEach(
         (service, provider) -> {
           List<String> importTypes = provider.getImportTypes();
-          System.out.println("Service : " + service);
           List<String> exportTypes = provider.getExportTypes();
           for (String type : importTypes) {
-            System.out.println("importTypes : " + type);
             Preconditions.checkArgument(
                 exportTypes.contains(type),
                 "TransferDataType [%s] is available for import but not export in [%s] AuthServiceExtension",
@@ -71,7 +69,6 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   public AuthDataGenerator getAuthDataGenerator(
       String serviceId, String transferDataType, AuthMode mode) {
     AuthServiceExtension provider = authServiceProviderMap.get(serviceId);
-    System.out.println("serviceId : " + serviceId + ", transferDataType : " + transferDataType+ ", mode : " + mode);
     Preconditions.checkArgument(
         provider != null, "AuthServiceExtension not found for serviceId [%s]", serviceId);
     switch (mode) {

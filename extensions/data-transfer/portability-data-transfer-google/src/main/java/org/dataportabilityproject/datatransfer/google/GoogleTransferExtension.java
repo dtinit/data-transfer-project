@@ -87,17 +87,7 @@ public class GoogleTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
-    AppCredentials appCredentials;
-    try {
-      appCredentials =
-          context
-              .getService(AppCredentialStore.class)
-              .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
-    } catch (IOException e) {
-      throw new RuntimeException("Problem getting AppCredentials: {}", e);
-      }
-
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("contacts", new GoogleContactsImporter(credentialFactory));
     importerBuilder.put("calendar", new GoogleCalendarImporter(credentialFactory, jobStore));
     importerBuilder.put("mail", new GoogleMailImporter(appCredentials, jobStore)) ;

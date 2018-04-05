@@ -31,6 +31,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
@@ -73,23 +74,58 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   public ImportResult importItem(
       UUID id, TokensAndUrlAuthData authData, MailContainerResource data) {
 
-    Gmail tasksService = getOrCreateGmail(authData);
-    TempMailData tempMailData = jobStore.findData(TempMailData.class, id);
-    if (tempMailData == null) {
-      tempMailData = new TempMailData(id.toString());
-      jobStore.create(id, tempMailData);
-    }
+    // Initialize the temp storage of import folder/label mappings associated with this job
+    TempMailData tempMailData = getOrCreateMailData(id);
 
     // Lazy init the request for all labels in the destination account, since it may not be needed
     // Mapping of labelName -> destination label id
     Supplier<Map<String, String>> allDestinationLabels =
         Suppliers.memoize(allDestinationLabelsSupplier(authData));
 
-    boolean newMappingsCreated = false;
+    // Import folders/labels
+    ImportResult result =
+        importLabels(id, authData, tempMailData, allDestinationLabels, data.getFolders());
+    if (result != ImportResult.OK) {
+      logger.warn("Error after importing labels");
+      return result;
+    }
 
-    // PROCESS CONTAINERS (labels)
-    // Add incoming labels in gmail and store ids
-    for (MailContainerModel mailContainerModel : data.getFolders()) {
+    // Import the special DTP label
+    result = importDTPLabel(id, authData, tempMailData, allDestinationLabels);
+    if (result != ImportResult.OK) {
+      logger.warn("Error after importing DTP table");
+      return result;
+    }
+
+    // Import labels from the given set of messages
+    result =
+        importLabelsForMessages(
+            id, authData, tempMailData, allDestinationLabels, data.getMessages());
+    if (result != ImportResult.OK) {
+      logger.warn("Error after importing labels for messages");
+      return result;
+    }
+
+    // Import messages
+    result = importMessages(authData, tempMailData, data.getMessages());
+    if (result != ImportResult.OK) {
+      logger.warn("Error after importing messages");
+      return result;
+    }
+    return result;
+  }
+
+  /**
+   * Creates a label in the import account, if it doesn't already exist, for all {@code folders} .
+   */
+  private ImportResult importLabels(
+      UUID id,
+      TokensAndUrlAuthData authData,
+      TempMailData tempMailData,
+      Supplier<Map<String, String>> allDestinationLabels,
+      Collection<MailContainerModel> folders) {
+    boolean newMappingsCreated = false;
+    for (MailContainerModel mailContainerModel : folders) {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(mailContainerModel.getName()));
       String exportedLabelName = mailContainerModel.getName();
       // Check if we have it in temp data
@@ -111,6 +147,20 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       }
     }
 
+    // Persist temp data in case we added mappings along the way
+    if (newMappingsCreated) {
+      jobStore.update(id, tempMailData);
+    }
+    return ImportResult.OK;
+  }
+
+  /** Creates a label in the import account to associate with all imported messages. */
+  private ImportResult importDTPLabel(
+      UUID id,
+      TokensAndUrlAuthData authData,
+      TempMailData tempMailData,
+      Supplier<Map<String, String>> allDestinationLabels) {
+    boolean newMappingsCreated = false;
     // Retrieve, and optionally create on demand, the migration label id
     String migratedLabelId = tempMailData.getImportedId(LABEL);
     if (migratedLabelId == null) {
@@ -132,8 +182,25 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       }
     }
 
-    // PROCESS LABELS FROM MESSAGES(messages)
-    for (MailMessageModel mailMessageModel : data.getMessages()) {
+    // Persist temp data in case we added mappings along the way
+    if (newMappingsCreated) {
+      jobStore.update(id, tempMailData);
+    }
+    return ImportResult.OK;
+  }
+
+  /**
+   * Creates a label in the import account, if it doesn't already exist, for all labels associated
+   * with the give {@code messages} .
+   */
+  private ImportResult importLabelsForMessages(
+      UUID id,
+      TokensAndUrlAuthData authData,
+      TempMailData tempMailData,
+      Supplier<Map<String, String>> allDestinationLabels,
+      Collection<MailMessageModel> messages) {
+    boolean newMappingsCreated = false;
+    for (MailMessageModel mailMessageModel : messages) {
       // Get or create label ids associated with this message
       for (String exportedLabelName : mailMessageModel.getContainerIds()) {
         // Check if we have it in temp data
@@ -160,9 +227,17 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     if (newMappingsCreated) {
       jobStore.update(id, tempMailData);
     }
+    return ImportResult.OK;
+  }
 
-    // PROCESS MESSAGES
-    for (MailMessageModel mailMessageModel : data.getMessages()) {
+  /**
+   * Import each message in {@code messages} into the import account with it's associated labels.
+   */
+  private ImportResult importMessages(
+      TokensAndUrlAuthData authData,
+      TempMailData tempMailData,
+      Collection<MailMessageModel> messages) {
+    for (MailMessageModel mailMessageModel : messages) {
 
       // Gather the label ids that will be associated with this message
       ImmutableList.Builder<String> importedLabelIds = ImmutableList.builder();
@@ -174,7 +249,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         } else {
           logger.warn(
               "labels should have been added prior to importing messages"); // TODO remove after
-                                                                            // testing
+          // testing
         }
         // Always add the migrated id
         importedLabelIds.add(tempMailData.getImportedId(LABEL));
@@ -190,12 +265,21 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         return new ImportResult(ResultType.ERROR, "Error importing message: " + e.getMessage());
       }
     }
-
     return new ImportResult(ResultType.OK);
   }
 
+  private TempMailData getOrCreateMailData(UUID id) {
+    TempMailData tempMailData = jobStore.findData(TempMailData.class, id);
+    if (tempMailData == null) {
+      tempMailData = new TempMailData(id.toString());
+      jobStore.create(id, tempMailData);
+    }
+    return tempMailData;
+  }
+
   /** Supplies a mapping of Label Name -> Label Id (in the import account). */
-  private Supplier<Map<String, String>> allDestinationLabelsSupplier(TokensAndUrlAuthData authData) {
+  private Supplier<Map<String, String>> allDestinationLabelsSupplier(
+      TokensAndUrlAuthData authData) {
     return new Supplier<Map<String, String>>() {
       @Override
       public Map<String, String> get() {
@@ -217,7 +301,8 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   /** Creates the given {@code labelName} in the import service provider and returns the id. */
-  private String createImportedLabelId(TokensAndUrlAuthData authData, String labelName) throws IOException {
+  private String createImportedLabelId(TokensAndUrlAuthData authData, String labelName)
+      throws IOException {
     Label newLabel =
         new Label()
             .setName(labelName)
@@ -231,16 +316,18 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
-    Credential credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
-        .setTransport(GoogleStaticObjects.getHttpTransport())
-        .setJsonFactory(GoogleStaticObjects.JSON_FACTORY)
-        .setClientAuthentication(
-            new ClientParametersAuthentication(appCredentials.getKey(), appCredentials.getSecret()))
-        .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
-        .build()
-        .setAccessToken(authData.getAccessToken())
-        .setRefreshToken(authData.getRefreshToken())
-        .setExpiresInSeconds(0L);
+    Credential credential =
+        new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
+            .setTransport(GoogleStaticObjects.getHttpTransport())
+            .setJsonFactory(GoogleStaticObjects.JSON_FACTORY)
+            .setClientAuthentication(
+                new ClientParametersAuthentication(
+                    appCredentials.getKey(), appCredentials.getSecret()))
+            .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
+            .build()
+            .setAccessToken(authData.getAccessToken())
+            .setRefreshToken(authData.getRefreshToken())
+            .setExpiresInSeconds(0L);
     return new Gmail.Builder(
             GoogleStaticObjects
                 .getHttpTransport(), // TODO: Get transport and factory from constructor

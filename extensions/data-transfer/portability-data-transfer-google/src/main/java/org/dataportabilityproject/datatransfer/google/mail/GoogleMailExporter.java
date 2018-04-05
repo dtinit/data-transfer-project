@@ -73,9 +73,6 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
     // Create a new gmail service for the authorized user
     Gmail gmail = getOrCreateGmail(authData);
 
-    IdOnlyContainerResource resource =
-        (IdOnlyContainerResource) exportInformation.getContainerResource();
-
     Messages.List request = null;
     try {
       request = gmail.users().messages().list(USER).setMaxResults(PAGE_SIZE);
