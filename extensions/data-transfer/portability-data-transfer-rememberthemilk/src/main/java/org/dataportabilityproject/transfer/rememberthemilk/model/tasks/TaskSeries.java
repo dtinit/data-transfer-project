@@ -57,11 +57,11 @@ public class TaskSeries {
   public Notes notes;
 
   @JacksonXmlProperty(localName ="tasks")
-  public List<Task> tasks;
+  public List<Task> tasks = new ArrayList<>();
 
-  // Either tasks or task will be present - not both
-  @JacksonXmlProperty(localName = "task")
-  public Task task;
+  public void setTask(Task singleTask) {
+    this.tasks.add(singleTask);
+  }
 
   @Override
   public String toString() {

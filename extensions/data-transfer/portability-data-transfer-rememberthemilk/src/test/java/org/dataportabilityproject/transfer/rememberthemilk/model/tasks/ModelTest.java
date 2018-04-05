@@ -16,11 +16,12 @@
 
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.fasterxml.jackson.xml.XmlMapper;
-import java.io.IOException;
 import org.junit.Test;
+
+import java.io.IOException;
+
+import static com.google.common.truth.Truth.assertThat;
 
 public class ModelTest {
   private XmlMapper mapper = new XmlMapper();
@@ -76,19 +77,19 @@ public class ModelTest {
   @Test
   public void parseTaskSeries() throws IOException {
     String taskSeriesContent =
-        "    <taskseries id=\"1234\" created=\"2015-05-07T10:19:54Z\" modified=\"2015-05-07T10:19:54Z\"\n"
-            + "             name=\"Get Bananas\" source=\"api\">"
+        "<taskseries id=\"1234\" created=\"2015-05-07T10:19:54Z\" modified=\"2015-05-07T10:19:54Z\"\n"
+            + "      name=\"Get Bananas\" source=\"api\">"
             + "      <tags/>\n"
             + "      <participants/>\n"
             + "      <notes/>\n"
             + "      <task id=\"123456789\" due=\"\" has_due_time=\"0\" added=\"2015-05-07T10:19:54Z\"\n"
             + "        completed=\"\" deleted=\"\" priority=\"N\" postponed=\"0\" estimate=\"\"/>\n"
-            + "    </taskseries>\n";
+            + "</taskseries>\n";
 
     TaskSeries taskSeries = mapper.readValue(taskSeriesContent, TaskSeries.class);
-    assertThat(taskSeries.tasks).isNull();
-    assertThat(taskSeries.task).isNotNull();
-    assertThat(taskSeries.task.id).isEqualTo(123456789);
+    assertThat(taskSeries.tasks).isNotNull();
+    assertThat(taskSeries.tasks.size()).isEqualTo(1);
+    assertThat(taskSeries.tasks.get(0).id).isEqualTo(123456789);
   }
 
   @Test
@@ -123,8 +124,16 @@ public class ModelTest {
 
   @Test
   public void parseGetListResponse() throws IOException {
-    String content = "<?xml version='1.0' encoding='UTF-8'?>"
-        + "<rsp stat=\"ok\">"
-        + "<lists><list id=\"43132026\" name=\"Inbox\" deleted=\"0\" locked=\"1\" archived=\"0\" position=\"-1\" smart=\"0\" sort_order=\"0\"/><list id=\"43132027\" name=\"Sent\" deleted=\"0\" locked=\"1\" archived=\"0\" position=\"1\" smart=\"0\" sort_order=\"0\"/><list id=\"43132028\" name=\"Personal\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43132029\" name=\"Work\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43610060\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43610146\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43610172\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43612939\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43612966\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43613071\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43613095\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43613137\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614070\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614082\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614103\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/><list id=\"43614131\" name=\"Copy of: Siham Hussein's list\" deleted=\"0\" locked=\"0\" archived=\"0\" position=\"0\" smart=\"0\" sort_order=\"0\"/></lists></rsp>\n";
+    String content =
+        "<?xml version='1.0' encoding='UTF-8'?>"
+            + "<rsp stat=\"ok\">"
+            + "  <tasks rev=\"abcdefg\">"
+            + "    <list id=\"1234\"/>"
+            + "    <list id=\"5678\"/>"
+            + "  </tasks>"
+            + "</rsp>\n";
+
+    GetListResponse getListResponse = mapper.readValue(content, GetListResponse.class);
+    assertThat(getListResponse.tasks.list.size()).isEqualTo(2);
   }
 }

@@ -27,11 +27,9 @@ public class TaskList {
   public int id;
 
   @JacksonXmlProperty(localName = "taskseries")
-  public List<TaskSeries> taskseries;
+  public List<TaskSeries> taskseries = new ArrayList<>();
 
-  // Needed if there's only 1 element (with no wrapper)
   public void setTaskseries(TaskSeries singleSeries) {
-    this.taskseries = new ArrayList<>();
     taskseries.add(singleSeries);
   }
 

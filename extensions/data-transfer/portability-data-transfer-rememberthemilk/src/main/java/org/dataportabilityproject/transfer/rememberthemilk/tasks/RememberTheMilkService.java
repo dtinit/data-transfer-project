@@ -76,13 +76,13 @@ class RememberTheMilkService {
     Map<String, String> params =
         ImmutableMap.of("timeline", timeline, "name", name, "list_id", listId);
     TaskAddResponse taskAddResponse =
-        makeRequest(RememberTheMilkMethods.TASK_ADD, params, TaskAddResponse.class);
+        makeRequest(RememberTheMilkMethods.TASKS_ADD, params, TaskAddResponse.class);
     return taskAddResponse.list.taskseries.get(0);
   }
 
   public GetListResponse getList(String listId) throws IOException {
     Map<String, String> params = ImmutableMap.of("list_id", listId);
-    return makeRequest(RememberTheMilkMethods.TASK_GET_LIST, params, GetListResponse.class);
+    return makeRequest(RememberTheMilkMethods.TASKS_GET_LIST, params, GetListResponse.class);
   }
 
   public GetListsResponse getLists() throws IOException {
@@ -114,7 +114,7 @@ class RememberTheMilkService {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     IOUtils.copy(response.getContent(), bos, true);
     String content = bos.toString();
-    logger.debug("Content: {}", content);
+    logger.debug("{}: {}", dataClass.getName(), content);
     T parsedResponse = xmlMapper.readValue(content, dataClass);
 
     if (parsedResponse.error != null) {
@@ -128,8 +128,8 @@ class RememberTheMilkService {
   public enum RememberTheMilkMethods {
     LISTS_GET_LIST("rtm.lists.getList"),
     LISTS_ADD("rtm.lists.add"),
-    TASK_GET_LIST("rtm.tasks.getList"),
-    TASK_ADD("rtm.tasks.add"),
+    TASKS_GET_LIST("rtm.tasks.getList"),
+    TASKS_ADD("rtm.tasks.add"),
     TIMELINES_CREATE("rtm.timelines.create");
 
     private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";

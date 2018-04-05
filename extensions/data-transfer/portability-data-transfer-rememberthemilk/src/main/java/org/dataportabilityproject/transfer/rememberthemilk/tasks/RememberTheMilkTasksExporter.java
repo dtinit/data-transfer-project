@@ -130,7 +130,7 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
 
     TaskContainerResource taskContainerResource = new TaskContainerResource(lists, null);
     ContinuationData continuationData = new ContinuationData(null);
-    subResources.forEach(resource -> continuationData.addContainerResource(resource));
+    subResources.forEach(continuationData::addContainerResource);
     // TODO: what do we do with pagination data?
     return new ExportResult(ResultType.CONTINUE, taskContainerResource, continuationData);
   }

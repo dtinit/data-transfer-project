@@ -18,6 +18,7 @@ package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.common.base.Joiner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** A set of tasks lists. */
@@ -26,8 +27,12 @@ public class Tasks {
   @JacksonXmlProperty(isAttribute = true, localName = "rev")
   public String rev;
 
-  @JacksonXmlProperty(localName =  "list")
-  public List<TaskList> list;
+  @JacksonXmlProperty(localName = "list")
+  public List<TaskList> list = new ArrayList<>();
+
+  public void setList(TaskList singleTaskList) {
+    this.list.add(singleTaskList);
+  }
 
   @Override
   public String toString() {
