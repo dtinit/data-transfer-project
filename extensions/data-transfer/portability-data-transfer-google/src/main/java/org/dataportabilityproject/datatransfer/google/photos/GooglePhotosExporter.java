@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -25,22 +24,26 @@ import com.google.gdata.data.photos.AlbumFeed;
 import com.google.gdata.data.photos.GphotoEntry;
 import com.google.gdata.data.photos.UserFeed;
 import com.google.gdata.util.ServiceException;
-import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
-import org.dataportabilityproject.spi.transfer.provider.ExportResult;
-import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
-import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.types.*;
-import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
-import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
-import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
+import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.types.ContinuationData;
+import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
+import org.dataportabilityproject.spi.transfer.types.PaginationData;
+import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
+import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class GooglePhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -58,14 +61,16 @@ public class GooglePhotosExporter
   static final String URL_PHOTO_FEED_FORMAT =
       "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s?imgmax=d&start-index=%s&max-results=%d";
 
+  private final GoogleCredentialFactory credentialFactory;
   private volatile PicasawebService photosService;
 
-  public GooglePhotosExporter() {
-    this.photosService = null;
+  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
+    this(credentialFactory, null);
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(PicasawebService photosService) {
+  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, PicasawebService photosService) {
+    this.credentialFactory = credentialFactory;
     this.photosService = photosService;
   }
 
@@ -196,9 +201,7 @@ public class GooglePhotosExporter
   }
 
   private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
     service.setOAuth2Credentials(credential);
     return service;

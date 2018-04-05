@@ -16,12 +16,14 @@
 
 package org.dataportabilityproject.datatransfer.google.tasks;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -35,28 +37,27 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.UUID;
-
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
   private final Logger logger = LoggerFactory.getLogger(GoogleTasksImporter.class);
 
+  private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private Tasks tasksClient;
 
-  public GoogleTasksImporter(JobStore jobStore) {
-    this(jobStore, null);
+  public GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+    this(credentialFactory, jobStore, null);
   }
 
   @VisibleForTesting
-  public GoogleTasksImporter(JobStore jobStore, Tasks tasksClient) {
+  GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Tasks tasksClient) {
+    this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.tasksClient = tasksClient;
   }
 
   @Override
   public ImportResult importItem(
-          UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
+      UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
 
     Tasks tasksService = getOrCreateTasksService(authData);
     TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, jobId);
@@ -102,11 +103,9 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
   }
 
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
