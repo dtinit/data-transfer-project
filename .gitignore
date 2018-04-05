@@ -1,21 +1,58 @@
-.idea
+.gradle/
+gradle/
+**/gradlew
+**/gradlew.bat
+*.log
+
+secrets.csv
+#!distributions/demo-server/src/main/resources/
+#!distributions/demo-server/src/main/resources/demo-selfsigned-keystore.jks
+
+#**/src/main/resources/settings/*.yaml
+# Dockerfile is generated each time we run build.sh
+Dockerfile
+
+# compiled output
 build/
 out/
 target/
-.gradle/
-.../gradle/
-**/gradlew
-**/gradlew.bat
-**/generated/
+/dist
+/tmp
+/out-tsc
+
+node_modules
+
+# IDEs and editors
+.idea
 *.iml
-*.log
-config/local/secrets.csv
-config/test/secrets.csv
-config/qa/secrets.csv
-distributions/**/src/main/resources/
-!distributions/demo-server/src/main/resources/
-distributions/demo-server/src/main/resources/**
-!distributions/demo-server/src/main/resources/demo-selfsigned-keystore.jks
-**/src/main/resources/settings/*.yaml
-# Dockerfile is generated each time we run build.sh
-Dockerfile
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+testem.log
+
+# e2e
+/e2e/*.js
+/e2e/*.map
+
+# System Files
+.DS_Store
+Thumbs.db
+
+app_data/

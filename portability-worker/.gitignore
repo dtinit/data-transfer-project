@@ -1,5 +1,0 @@
-*~
-target/**
-dependency-reduced-pom.xml
-# Resources are generated at each build and copied into src/main/resources
-src/main/resources/*

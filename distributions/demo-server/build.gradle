@@ -86,8 +86,7 @@ task createSecretsFile() {
 
 mainClassName = 'org.dataportabilityproject.bootstrap.vm.SingleVMMain'
 
-copyResources()
-
+// TODO: refactor this to base build.gradle so other distros (like demo-google-deployment) may use
 shadowJar {
     mergeServiceFiles()
     exclude '**/pom.properties'
@@ -95,10 +94,3 @@ shadowJar {
 }
 
 shadowJar.dependsOn(createSecretsFile)
-
-def copyResources() {
-    copy {
-        from 'resources/'
-        into 'src/main/resources'
-    }
-}
