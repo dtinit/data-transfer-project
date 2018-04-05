@@ -75,11 +75,11 @@ final class JobProcessor {
           job.exportService(),
           job.importService());
 
-      // Decrypt the encrypted outer symmetric key, which have been encrypted with our public key
-      Decrypter decrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
-      byte[] decryptedSymmetricKey =
-          BaseEncoding.base64Url().decode(decrypter.decrypt(jobAuthorization.authSecretKey()));
-      SecretKey outerSymmetricKey = symmetricKeyGenerator.parse(decryptedSymmetricKey);
+      // Decrypt the encrypted outer symmetric key, which has been encrypted with our public key
+      Decrypter workerKeyDecrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
+      byte[] encodedOuterSymmetricKey =
+          BaseEncoding.base64Url().decode(workerKeyDecrypter.decrypt(jobAuthorization.authSecretKey()));
+      SecretKey outerSymmetricKey = symmetricKeyGenerator.parse(encodedOuterSymmetricKey);
 
       // Decrypt the doubly encrypted export and import credentials, which have been doubly
       // encrypted with two symmetric keys
@@ -99,7 +99,6 @@ final class JobProcessor {
       // Decrypt one more time
       Decrypter innerAuthDataDecrypter = DecrypterFactory.create(innerSymmetricKey);
 
-      logger.debug("singlyEncryptedExportAuthData.length(): {}", singlyEncryptedExportAuthData.length());
       String serializedExportAuthData =
           innerAuthDataDecrypter.decrypt(singlyEncryptedExportAuthData);
       AuthData exportAuthData = deSerialize(serializedExportAuthData);

@@ -17,6 +17,7 @@
 package org.dataportabilityproject.datatransfer.google.mail;
 
 import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Label;
@@ -38,6 +39,7 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempMailData;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerModel;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerResource;
@@ -52,15 +54,17 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private static final String USER = "me";
   private static final String LABEL = "DTP-migrated";
 
+  private AppCredentials appCredentials;
   private final JobStore jobStore;
   private final Gmail gmail;
 
-  public GoogleMailImporter(JobStore jobStore) {
-    this(jobStore, null);
+  public GoogleMailImporter(AppCredentials appCredentials, JobStore jobStore) {
+    this(appCredentials, jobStore, null);
   }
 
   @VisibleForTesting
-  public GoogleMailImporter(JobStore jobStore, Gmail gmail) {
+  public GoogleMailImporter(AppCredentials appCredentials, JobStore jobStore, Gmail gmail) {
+    this.appCredentials = appCredentials;
     this.jobStore = jobStore;
     this.gmail = gmail;
   }
@@ -96,7 +100,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         // Found no existing map or label named the same, create a new one
         if (importerLabelId == null) {
           try {
-            importerLabelId = createImportedLabelId(mailContainerModel.getName());
+            importerLabelId = createImportedLabelId(authData, mailContainerModel.getName());
           } catch (IOException e) {
             return new ImportResult(
                 ResultType.ERROR, "Unable to create imported label for user: " + e.getMessage());
@@ -112,10 +116,13 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     if (migratedLabelId == null) {
       // If a label with the same name already exists in the destination account, use that
       migratedLabelId = allDestinationLabels.get().get(LABEL);
+      tempMailData.addFolderIdMapping(LABEL, migratedLabelId);
+      newMappingsCreated = true;
+
       // Found no existing map or label named the same, create a new one
       if (migratedLabelId == null) {
         try {
-          migratedLabelId = createImportedLabelId(LABEL);
+          migratedLabelId = createImportedLabelId(authData, LABEL);
         } catch (IOException e) {
           return new ImportResult(
               ResultType.ERROR, "Unable to create imported label for user: " + e.getMessage());
@@ -137,7 +144,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
           // Found no existing map or label named the same, create a new one
           if (importerLabelId == null) {
             try {
-              importerLabelId = createImportedLabelId(exportedLabelName);
+              importerLabelId = createImportedLabelId(authData, exportedLabelName);
             } catch (IOException e) {
               return new ImportResult(
                   ResultType.ERROR, "Unable to create imported label for user: " + e.getMessage());
@@ -169,6 +176,8 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
               "labels should have been added prior to importing messages"); // TODO remove after
                                                                             // testing
         }
+        // Always add the migrated id
+        importedLabelIds.add(tempMailData.getImportedId(LABEL));
       }
       // Create the message to import
       Message newMessage =
@@ -208,13 +217,13 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   /** Creates the given {@code labelName} in the import service provider and returns the id. */
-  private String createImportedLabelId(String labelName) throws IOException {
+  private String createImportedLabelId(TokensAndUrlAuthData authData, String labelName) throws IOException {
     Label newLabel =
         new Label()
             .setName(labelName)
             .setLabelListVisibility("labelShow")
             .setMessageListVisibility("show");
-    return gmail.users().labels().create(USER, newLabel).execute().getId();
+    return getOrCreateGmail(authData).users().labels().create(USER, newLabel).execute().getId();
   }
 
   private Gmail getOrCreateGmail(TokensAndUrlAuthData authData) {
@@ -222,9 +231,16 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
+        .setTransport(GoogleStaticObjects.getHttpTransport())
+        .setJsonFactory(GoogleStaticObjects.JSON_FACTORY)
+        .setClientAuthentication(
+            new ClientParametersAuthentication(appCredentials.getKey(), appCredentials.getSecret()))
+        .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
+        .build()
+        .setAccessToken(authData.getAccessToken())
+        .setRefreshToken(authData.getRefreshToken())
+        .setExpiresInSeconds(0L);
     return new Gmail.Builder(
             GoogleStaticObjects
                 .getHttpTransport(), // TODO: Get transport and factory from constructor

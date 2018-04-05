@@ -17,6 +17,7 @@
 package org.dataportabilityproject.datatransfer.google.mail;
 
 import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users.Messages;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -36,18 +38,27 @@ import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerResource;
 import org.dataportabilityproject.types.transfer.models.mail.MailMessageModel;
 
 public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataModel> {
-  private static final long PAGE_SIZE = 50;
+  private static final long PAGE_SIZE = 50; // TODO configure this in production
   private static final String USER = "me";
+
+  private final GoogleCredentialFactory credentialFactory;
   private volatile Gmail gmail;
 
+  public GoogleMailExporter(GoogleCredentialFactory credentialFactory) {
+    this.credentialFactory = credentialFactory;
+    this.gmail = null;
+  }
+
   @VisibleForTesting
-  GoogleMailExporter(Gmail gmail) {
+  GoogleMailExporter(GoogleCredentialFactory credentialFactory, Gmail gmail) {
+    this.credentialFactory = credentialFactory;
     this.gmail = gmail;
   }
 
@@ -118,11 +129,9 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
   }
 
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

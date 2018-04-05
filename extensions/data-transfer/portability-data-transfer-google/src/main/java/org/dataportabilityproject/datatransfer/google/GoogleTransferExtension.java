@@ -87,10 +87,20 @@ public class GoogleTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
+    AppCredentials appCredentials;
+    try {
+      appCredentials =
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
+    } catch (IOException e) {
+      throw new RuntimeException("Problem getting AppCredentials: {}", e);
+      }
+
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("contacts", new GoogleContactsImporter(credentialFactory));
     importerBuilder.put("calendar", new GoogleCalendarImporter(credentialFactory, jobStore));
-    importerBuilder.put("mail", new GoogleMailImporter(jobStore)) ;
+    importerBuilder.put("mail", new GoogleMailImporter(appCredentials, jobStore)) ;
     importerBuilder.put("tasks", new GoogleTasksImporter(credentialFactory, jobStore));
     importerBuilder.put("photos", new GooglePhotosImporter(credentialFactory, jobStore));
     importerMap = importerBuilder.build();
@@ -98,9 +108,10 @@ public class GoogleTransferExtension implements TransferExtension {
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put("contacts", new GoogleContactsExporter(credentialFactory));
     exporterBuilder.put("calendar", new GoogleCalendarExporter(credentialFactory));
-    exporterBuilder.put("mail", new GoogleMailExporter());
+    exporterBuilder.put("mail", new GoogleMailExporter(credentialFactory));
     exporterBuilder.put("tasks", new GoogleTasksExporter(credentialFactory));
     exporterBuilder.put("photos", new GooglePhotosExporter(credentialFactory));
+
     exporterMap = exporterBuilder.build();
 
     initialized = true;
