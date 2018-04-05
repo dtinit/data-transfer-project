@@ -80,7 +80,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     }
   }
 
-  private ExportResult getTasks(
+  private ExportResult<TaskContainerResource> getTasks(
       Tasks tasksService, IdOnlyContainerResource resource, PaginationData paginationData)
       throws IOException {
     Tasks.TasksOperations.List query =
@@ -110,7 +110,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     return new ExportResult<>(resultType, taskContainerResource, new ContinuationData(newPage));
   }
 
-  private ExportResult getTasksList(Tasks tasksSerivce, PaginationData paginationData)
+  private ExportResult<TaskContainerResource> getTasksList(Tasks tasksSerivce, PaginationData paginationData)
       throws IOException {
     Tasks.Tasklists.List query = tasksSerivce.tasklists().list().setMaxResults(PAGE_SIZE);
     if (paginationData != null) {
@@ -142,7 +142,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     ContinuationData continuationData = new ContinuationData(newPage);
     newResourcesBuilder
         .build()
-        .forEach(resource -> continuationData.addContainerResource(resource));
+        .forEach(continuationData::addContainerResource);
     return new ExportResult<>(resultType, taskContainerResource, continuationData);
   }
 
