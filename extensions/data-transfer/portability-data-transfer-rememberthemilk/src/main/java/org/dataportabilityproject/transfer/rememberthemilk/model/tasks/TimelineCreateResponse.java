@@ -16,9 +16,15 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 public class TimelineCreateResponse extends RememberTheMilkResponse {
 
   @JacksonXmlProperty(isAttribute = true, localName = "timeline")
   public String timeline;
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("timeline", timeline).toString();
+  }
 }

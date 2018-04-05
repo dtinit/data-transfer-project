@@ -16,7 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
-import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,20 +24,18 @@ import java.util.List;
 /** A list of one or more {@link Task} contained in a {@link TaskSeries}. */
 public class TaskList {
 
+  @JacksonXmlProperty(localName = "taskseries")
+  public final List<TaskSeries> taskseries = new ArrayList<>();
+
   @JacksonXmlProperty(isAttribute = true, localName = "id")
   public int id;
 
-  @JacksonXmlProperty(localName = "taskseries")
-  final public List<TaskSeries> taskseries = new ArrayList<>();
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("id", id).add("taskseries", taskseries).toString();
+  }
 
   public void setTaskseries(TaskSeries singleSeries) {
     taskseries.add(singleSeries);
-  }
-
-  @Override
-  public String toString() {
-    return String.format(
-        "(list id=%d children:[%s])",
-        id, (taskseries == null || taskseries.isEmpty()) ? "" : Joiner.on("\n").join(taskseries));
   }
 }

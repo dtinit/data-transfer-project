@@ -16,7 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
-import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 
 import java.util.List;
 
@@ -28,6 +28,6 @@ public class Notes {
 
   @Override
   public String toString() {
-    return (notes == null || notes.isEmpty()) ? "" : Joiner.on("; ").join(notes);
+    return MoreObjects.toStringHelper(this).add("notes", notes).toString();
   }
 }

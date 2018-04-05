@@ -16,6 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 /** A generic response from the remember the milk service. */
 public abstract class RememberTheMilkResponse {
@@ -25,4 +26,9 @@ public abstract class RememberTheMilkResponse {
 
   @JacksonXmlProperty(localName = "err")
   public Error error;
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("stat", stat).add("error", error).toString();
+  }
 }

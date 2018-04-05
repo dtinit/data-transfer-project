@@ -16,7 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
-import com.google.api.client.util.Joiner;
+import com.google.common.base.MoreObjects;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,14 +63,18 @@ public class TaskSeries {
 
   @Override
   public String toString() {
-    return String.format(
-        "TaskSeries(id=%d, created=%s, modified=%s, name=%s, source=%s, notes=%s, tasks:%s)",
-        id,
-        created,
-        modified,
-        name,
-        source,
-        notes,
-        (tasks == null || tasks.isEmpty()) ? "" : Joiner.on('\n').join(tasks));
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .add("created", created)
+        .add("modified", modified)
+        .add("name", name)
+        .add("source", source)
+        .add("location_id", location_id)
+        .add("url", url)
+        .add("tags", tags)
+        .add("participants", participants)
+        .add("notes", notes)
+        .add("tasks", tasks)
+        .toString();
   }
 }

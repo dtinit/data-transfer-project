@@ -16,6 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 public class GetListResponse extends RememberTheMilkResponse {
 
@@ -24,6 +25,6 @@ public class GetListResponse extends RememberTheMilkResponse {
 
   @Override
   public String toString() {
-    return null == tasks ? stat : tasks.toString();
+    return MoreObjects.toStringHelper(this).add("tasks", tasks).toString();
   }
 }

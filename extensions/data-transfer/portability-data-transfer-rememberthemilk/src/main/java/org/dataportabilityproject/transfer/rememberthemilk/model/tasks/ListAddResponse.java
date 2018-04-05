@@ -16,6 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 public class ListAddResponse extends RememberTheMilkResponse {
 
@@ -24,4 +25,12 @@ public class ListAddResponse extends RememberTheMilkResponse {
 
   @JacksonXmlProperty(localName = "list")
   public ListInfo list;
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("transaction", transaction)
+        .add("list", list)
+        .toString();
+  }
 }

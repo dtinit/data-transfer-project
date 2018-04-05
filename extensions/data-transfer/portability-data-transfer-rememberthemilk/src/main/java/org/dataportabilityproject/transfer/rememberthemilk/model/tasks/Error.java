@@ -16,6 +16,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
+import com.google.common.base.MoreObjects;
 
 /** Error details from RTM */
 public class Error {
@@ -28,6 +29,6 @@ public class Error {
 
   @Override
   public String toString() {
-    return String.format("Error(code=%d msg=%s)", code, msg);
+    return MoreObjects.toStringHelper(this).add("code", code).add("msg", msg).toString();
   }
 }

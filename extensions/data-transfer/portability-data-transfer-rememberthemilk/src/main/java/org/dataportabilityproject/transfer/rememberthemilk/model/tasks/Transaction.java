@@ -17,6 +17,7 @@
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
+import com.google.common.base.MoreObjects;
 
 /* A Transaction Object as detailed in https://www.rememberthemilk.com/services/api/timelines.rtm
  * A transaction is returned in each state changing request such as ListAdd and TaskAdd*/
@@ -24,8 +25,12 @@ public class Transaction {
   // The id of the transaction
   @Key("@id")
   public int id;
-
   // Whether this transaction is undoable or not.
   @Key("undoable")
   public int undoable;
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("id", id).add("undoable", undoable).toString();
+  }
 }
