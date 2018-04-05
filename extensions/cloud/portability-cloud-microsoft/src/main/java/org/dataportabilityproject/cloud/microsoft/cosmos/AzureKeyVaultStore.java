@@ -51,7 +51,7 @@ public class AzureKeyVaultStore implements AppCredentialStore {
   }
 
   /** Normalizes a key to adhere to Azure Vault naming requirements. */
-  private String normalize(String key) {
+  private static String normalize(String key) {
     return key.replace("_", "");
   }
 }
