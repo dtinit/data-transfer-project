@@ -42,5 +42,7 @@ include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 // SmugMug
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
 
+include ':client'
+
 // TODO: remove old core dependencies
 include ':portability-core'

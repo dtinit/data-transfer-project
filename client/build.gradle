@@ -1,0 +1,95 @@
+/**
+ * This subproject builds the Angular client UI web app using Node.
+ *
+ * Two build mechanisms are included:
+ *
+ * 1. The webapp may be built using and run locally installed copies of Node and the Angular CLI. Installation can be performed by invoking the installLocalAngularCli task.
+ *    Installation only needs to be performed once.
+ *
+ * 2. The webapp may be built and run using a copy of Node preinstalled on the host machine. If the Angular CLI is not present on the host, it can be installed by invoking the
+ *    installHostAngularCli task.
+ *
+ * To build a copy of the webapp, invoke the buildLocalWebApp or buildHostWebApp task.
+ *
+ * To run a local development server, invoke the runLocalWebApp or runHostWebApp task
+ *
+ */
+plugins {
+    id "com.moowork.node" version "1.2.0"
+}
+
+task installLocalAngularCli(type: NpmTask) {
+    group = BasePlugin.BUILD_GROUP
+    description = "Installs a local copy of Angular CLI"
+    args = ["install", "@angular/cli"]
+}
+
+task buildLocalWebApp(type: NodeTask) {
+    group = BasePlugin.BUILD_GROUP
+    description = "Builds the client webapp using the local Angular CLI installation"
+    script = file("node_modules/.bin/ng")
+    args = ["build", "--env", "localhttps"]
+}
+
+
+task runLocalWebApp(type: NodeTask) {
+    description = "Runs the client webapp in development mode using the local Angular CLI installation"
+    script = file("node_modules/.bin/ng")
+    args = ["serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"]
+}
+
+
+task installHostAngularCli(type: Exec) {
+    group = BasePlugin.BUILD_GROUP
+    description = "Installs a copy of Angular CLI using the host Node installation"
+    workingDir "$projectDir"
+    inputs.dir "$projectDir"
+    if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
+        commandLine "npm.cmd", "install"
+    } else {
+        commandLine "npm", "install"
+    }
+}
+
+task buildHostWebApp(type: Exec) {
+    group = BasePlugin.BUILD_GROUP
+    description = "Builds the client webapp using the host Angular CLI installation"
+    workingDir "$projectDir"
+    inputs.dir "$projectDir"
+    if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
+        commandLine "ng.cmd", "build", "--env", "localhttps"
+    } else {
+        commandLine "ng", "build", "--env", "localhttps"
+    }
+}
+
+task rundHostWebApp(type: Exec) {
+    group = BasePlugin.BUILD_GROUP
+    description = "Runs the client webapp in development mode using the host Angular CLI installation"
+    workingDir "$projectDir"
+    inputs.dir "$projectDir"
+    if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
+        commandLine "ng.cmd", "serve", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+    } else {
+        commandLine "ng", "serve", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+    }
+}
+
+task buildWebApp {
+    if (project.rootProject.ext.cloudType == "host") {
+        dependsOn buildHostWebApp
+    } else {
+        dependsOn buildLocalWebApp
+    }
+}
+
+
+task installTools {
+    if (project.rootProject.ext.cloudType == "host") {
+        dependsOn installHostAngularCli
+    } else {
+        dependsOn installLocalAngularCli
+    }
+}
+
+
