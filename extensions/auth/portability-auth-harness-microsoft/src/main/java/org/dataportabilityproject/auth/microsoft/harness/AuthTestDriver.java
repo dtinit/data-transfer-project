@@ -12,8 +12,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.dataportabilityproject.auth.microsoft.MicrosoftAuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
-import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
 /** */

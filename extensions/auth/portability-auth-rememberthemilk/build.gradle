@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 dependencies {
-    compile project(':portability-spi-gateway')
+    compile project(':portability-spi-api')
     compile project(':portability-spi-cloud')
 
     compile("org.slf4j:slf4j-api:${slf4jVersion}")

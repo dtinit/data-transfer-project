@@ -17,5 +17,5 @@
 
 dependencies {
     compile project(':portability-worker')
-    compile project(':portability-gateway')
+    compile project(':portability-api')
 }

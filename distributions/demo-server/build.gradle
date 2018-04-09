@@ -57,7 +57,7 @@ dependencies {
 
     compile project(':portability-bootstrap-vm')
 
-    compile project(':portability-gateway')
+    compile project(':portability-api')
     compile project(':portability-worker')
 
     compile project(':extensions:config:portability-config-yaml')

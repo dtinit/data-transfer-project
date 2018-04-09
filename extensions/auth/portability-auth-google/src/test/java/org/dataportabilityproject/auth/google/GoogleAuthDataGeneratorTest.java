@@ -2,8 +2,8 @@ package org.dataportabilityproject.auth.google;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.services.calendar.CalendarScopes;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
-import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.junit.Assert;
 import org.junit.Test;
