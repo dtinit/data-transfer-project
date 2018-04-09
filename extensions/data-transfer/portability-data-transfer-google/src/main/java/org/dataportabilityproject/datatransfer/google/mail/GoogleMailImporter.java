@@ -16,8 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.google.mail;
 
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Label;
@@ -34,13 +32,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempMailData;
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerModel;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerResource;
@@ -55,17 +53,17 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private static final String USER = "me";
   private static final String LABEL = "DTP-migrated";
 
-  private AppCredentials appCredentials;
+  private GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private final Gmail gmail;
 
-  public GoogleMailImporter(AppCredentials appCredentials, JobStore jobStore) {
-    this(appCredentials, jobStore, null);
+  public GoogleMailImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+    this(credentialFactory, jobStore, null);
   }
 
   @VisibleForTesting
-  public GoogleMailImporter(AppCredentials appCredentials, JobStore jobStore, Gmail gmail) {
-    this.appCredentials = appCredentials;
+  public GoogleMailImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Gmail gmail) {
+    this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.gmail = gmail;
   }
@@ -316,23 +314,9 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
-            .setTransport(GoogleStaticObjects.getHttpTransport())
-            .setJsonFactory(GoogleStaticObjects.JSON_FACTORY)
-            .setClientAuthentication(
-                new ClientParametersAuthentication(
-                    appCredentials.getKey(), appCredentials.getSecret()))
-            .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
-            .build()
-            .setAccessToken(authData.getAccessToken())
-            .setRefreshToken(authData.getRefreshToken())
-            .setExpiresInSeconds(0L);
+    Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-            GoogleStaticObjects
-                .getHttpTransport(), // TODO: Get transport and factory from constructor
-            GoogleStaticObjects.JSON_FACTORY,
-            credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

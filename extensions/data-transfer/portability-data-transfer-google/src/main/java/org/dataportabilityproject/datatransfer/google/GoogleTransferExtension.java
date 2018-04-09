@@ -90,7 +90,7 @@ public class GoogleTransferExtension implements TransferExtension {
      ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("contacts", new GoogleContactsImporter(credentialFactory));
     importerBuilder.put("calendar", new GoogleCalendarImporter(credentialFactory, jobStore));
-    importerBuilder.put("mail", new GoogleMailImporter(appCredentials, jobStore)) ;
+    importerBuilder.put("mail", new GoogleMailImporter(credentialFactory, jobStore)) ;
     importerBuilder.put("tasks", new GoogleTasksImporter(credentialFactory, jobStore));
     importerBuilder.put("photos", new GooglePhotosImporter(credentialFactory, jobStore));
     importerMap = importerBuilder.build();
