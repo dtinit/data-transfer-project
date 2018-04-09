@@ -39,7 +39,7 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
 
   // TODO: share this between AuthServiceExtension and TransferExtension
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES =
-      ImmutableList.of("contacts", "calendar", "tasks", "photos");
+      ImmutableList.of("contacts", "calendar", "mail", "photos", "tasks");
 
   // Map of AuthDataGenerators needed to import each data type
   private volatile Map<String, AuthDataGenerator> importAuthDataGenerators;

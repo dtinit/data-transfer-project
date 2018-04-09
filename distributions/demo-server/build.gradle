@@ -54,7 +54,6 @@ dependencies {
     compile project(':extensions:auth:portability-auth-google')
     compile project(':extensions:auth:portability-auth-flickr')
     compile project(':extensions:auth:portability-auth-rememberthemilk')
-
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')

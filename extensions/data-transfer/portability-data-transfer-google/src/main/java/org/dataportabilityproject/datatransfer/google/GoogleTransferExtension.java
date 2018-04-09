@@ -14,6 +14,8 @@ import org.dataportabilityproject.datatransfer.google.contacts.GoogleContactsExp
 import org.dataportabilityproject.datatransfer.google.contacts.GoogleContactsImporter;
 import org.dataportabilityproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.dataportabilityproject.datatransfer.google.photos.GooglePhotosImporter;
+import org.dataportabilityproject.datatransfer.google.mail.GoogleMailExporter;
+import org.dataportabilityproject.datatransfer.google.mail.GoogleMailImporter;
 import org.dataportabilityproject.datatransfer.google.tasks.GoogleTasksExporter;
 import org.dataportabilityproject.datatransfer.google.tasks.GoogleTasksImporter;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
@@ -33,8 +35,8 @@ public class GoogleTransferExtension implements TransferExtension {
   private static final Logger logger = LoggerFactory.getLogger(GoogleTransferExtension.class);
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
-  private ImmutableList<String> supportedServices =
-      ImmutableList.of("calendar", "contacts", "tasks", "photos");
+  private static final ImmutableList<String> SUPPORTED_SERVICES =
+      ImmutableList.of("calendar", "contacts", "mail", "photos", "tasks");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -47,14 +49,14 @@ public class GoogleTransferExtension implements TransferExtension {
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
+    Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return exporterMap.get(transferDataType);
   }
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
+    Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
   }
 
@@ -85,9 +87,10 @@ public class GoogleTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("contacts", new GoogleContactsImporter(credentialFactory));
     importerBuilder.put("calendar", new GoogleCalendarImporter(credentialFactory, jobStore));
+    importerBuilder.put("mail", new GoogleMailImporter(credentialFactory, jobStore)) ;
     importerBuilder.put("tasks", new GoogleTasksImporter(credentialFactory, jobStore));
     importerBuilder.put("photos", new GooglePhotosImporter(credentialFactory, jobStore));
     importerMap = importerBuilder.build();
@@ -95,8 +98,10 @@ public class GoogleTransferExtension implements TransferExtension {
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put("contacts", new GoogleContactsExporter(credentialFactory));
     exporterBuilder.put("calendar", new GoogleCalendarExporter(credentialFactory));
+    exporterBuilder.put("mail", new GoogleMailExporter(credentialFactory));
     exporterBuilder.put("tasks", new GoogleTasksExporter(credentialFactory));
     exporterBuilder.put("photos", new GooglePhotosExporter(credentialFactory));
+
     exporterMap = exporterBuilder.build();
 
     initialized = true;
