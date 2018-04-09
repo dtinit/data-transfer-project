@@ -19,6 +19,7 @@ plugins {
 }
 
 task installLocalAngularCli(type: NpmTask) {
+    dependsOn npmInstall
     group = BasePlugin.BUILD_GROUP
     description = "Installs a local copy of Angular CLI"
     args = ["install", "@angular/cli"]
