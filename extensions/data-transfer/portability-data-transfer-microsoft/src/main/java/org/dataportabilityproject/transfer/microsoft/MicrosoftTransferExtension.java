@@ -35,7 +35,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
-    // TODO consider memoizing w/ Supplier but we will only use once and pass to worker.
+    // TODO consider memoizing w/ Supplier but we will only use once and pass to transfer.
     // This could allow us to refactor these params into supplier.
     OkHttpClient client = new OkHttpClient.Builder().build();
     ObjectMapper mapper = new ObjectMapper();

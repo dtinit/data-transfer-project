@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A service that polls storage for a job to process in two steps: <br>
- * (1) find an unassigned job for this worker <br>
+ * (1) find an unassigned job for this transfer <br>
  * (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
@@ -53,8 +53,8 @@ class JobPollingService extends AbstractScheduledService {
     if (JobMetadata.isInitialized()) {
       pollUntilJobIsReady();
     } else {
-      // Poll for an unassigned job to process with this worker instance.
-      // Once a worker instance is assigned, the client will populate storage with
+      // Poll for an unassigned job to process with this transfer instance.
+      // Once a transfer instance is assigned, the client will populate storage with
       // auth data encrypted with this instances public key and the copy process can begin
       pollForUnassignedJob();
     }
@@ -67,7 +67,7 @@ class JobPollingService extends AbstractScheduledService {
 
   /**
    * Polls for an unassigned job, and once found, initializes the global singleton job metadata
-   * object for this running instance of the worker.
+   * object for this running instance of the transfer.
    */
   private void pollForUnassignedJob() throws IOException {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
@@ -79,11 +79,11 @@ class JobPollingService extends AbstractScheduledService {
     Preconditions.checkState(!JobMetadata.isInitialized());
     KeyPair keyPair = asymmetricKeyGenerator.generate();
     PublicKey publicKey = keyPair.getPublic();
-    // TODO: Back up private key (keyPair.getPrivate()) in case this worker dies mid-copy, so we
+    // TODO: Back up private key (keyPair.getPrivate()) in case this transfer dies mid-copy, so we
     // don't have to make the user start from scratch. Some options are to manage this key pair
     // within our hosting platform's key management system rather than generating here, or to
     // encrypt and store the private key on the client.
-    // Note: claimJob may fail if another worker beat us to it. That's ok -- this worker will keep
+    // Note: claimJob may fail if another transfer beat us to it. That's ok -- this transfer will keep
     // polling until it can claim a job.
     claimJob(jobId, keyPair);
     logger.debug(
@@ -96,7 +96,7 @@ class JobPollingService extends AbstractScheduledService {
   private void claimJob(UUID jobId, KeyPair keyPair) throws IOException {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
-    // Verify no worker key
+    // Verify no transfer key
     if (existingJob.jobAuthorization().authPublicKey() != null) {
       throw new IOException("public key cannot be persisted again");
     }
@@ -115,7 +115,7 @@ class JobPollingService extends AbstractScheduledService {
                     .build())
             .build();
     // Attempt to 'claim' this job by validating it is still in state CREDS_AVAILABLE as we
-    // update it to state CREDS_ENCRYPTION_KEY_GENERATED, along with our key. If another worker
+    // update it to state CREDS_ENCRYPTION_KEY_GENERATED, along with our key. If another transfer
     // instance polled the same job, and already claimed it, it will have updated the job's state
     // to CREDS_ENCRYPTION_KEY_GENERATED.
     try {
@@ -130,7 +130,7 @@ class JobPollingService extends AbstractScheduledService {
           "Could not 'claim' job "
               + jobId
               + ". It was probably already "
-              + "claimed by another worker",
+              + "claimed by another transfer",
           e);
     }
     JobMetadata.init(

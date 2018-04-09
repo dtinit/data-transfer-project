@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import com.google.inject.Inject;
 
-/**
- * Polls a {@code PortabilityJob} for this worker to process.
- *
- * <p>
- *
- * <p>Lightweight wrapper around an {@code AbstractScheduledService} so as to not expose its
- * implementation details.
- */
-final class JobPoller {
-  private final JobPollingService jobPollingService;
+/** Polls and processes a {@code PortabilityJob}. */
+final class Worker {
+  private final JobPoller jobPoller;
+  private final JobProcessor jobProcessor;
 
   @Inject
-  JobPoller(JobPollingService jobPollingService) {
-    this.jobPollingService = jobPollingService;
+  Worker(JobPoller jobPoller, JobProcessor jobProcessor) {
+    this.jobPoller = jobPoller;
+    this.jobProcessor = jobProcessor;
   }
 
-  void pollJob() {
-    jobPollingService.startAsync();
-    jobPollingService.awaitTerminated();
+  void doWork() {
+    jobPoller.pollJob();
+    jobProcessor.processJob();
   }
 }

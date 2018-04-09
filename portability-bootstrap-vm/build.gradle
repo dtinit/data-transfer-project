@@ -16,6 +16,6 @@
 
 
 dependencies {
-    compile project(':portability-worker')
     compile project(':portability-api')
+    compile project(':portability-transfer')
 }

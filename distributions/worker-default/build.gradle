@@ -26,7 +26,7 @@ repositories {
 }
 
 dependencies {
-    compile project(':portability-worker')
+    compile project(':portability-transfer')
 
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
@@ -35,7 +35,7 @@ dependencies {
 
 addCloudExtensionDependency(project)
 
-mainClassName = 'org.dataportabilityproject.worker.WorkerMain'
+mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
 
 shadowJar {
     mergeServiceFiles()

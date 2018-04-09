@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.when;
@@ -89,7 +89,7 @@ public class JobPollingServiceTest {
   }
 
   // TODO(data-portability/issues/43): Make this an integration test which uses both the API and
-  // worker, rather than simulating API calls, in case this test ever diverges from what the API
+  // transfer, rather than simulating API calls, in case this test ever diverges from what the API
   // actually does.
   @Test
   public void pollingLifeCycle() throws Exception {

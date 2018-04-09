@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -26,7 +26,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.util.List;
 import java.util.ServiceLoader;
-import org.dataportabilityproject.api.launcher.ExtensionContext;
+
 import org.dataportabilityproject.config.extension.SettingsExtension;
 import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main class to bootstrap a portability worker that will operate on a single job whose state is
+ * Main class to bootstrap a portability transfer that will operate on a single job whose state is
  * held in {@link JobMetadata}.
  */
 public class WorkerMain {

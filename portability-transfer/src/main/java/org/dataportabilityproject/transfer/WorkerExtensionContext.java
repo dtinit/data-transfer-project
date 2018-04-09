@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** {@link ExtensionContext} used by the worker. */
+/** {@link ExtensionContext} used by the transfer. */
 public class WorkerExtensionContext implements ExtensionContext {
   private final TypeManager typeManager;
   private final Map<Class<?>, Object> registered = new HashMap<>();

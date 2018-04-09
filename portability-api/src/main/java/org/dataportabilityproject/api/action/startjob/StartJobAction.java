@@ -60,21 +60,21 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
    * Starts a job using the following flow:
    * <li>Validate auth data is present in cookies
    * <li>Set Job to state CREDS_AVAILABLE
-   * <li>Wait for a worker to be assigned
-   * <li>Once worker assigned, grab worker key to encrypt auth data from cookies
+   * <li>Wait for a transfer to be assigned
+   * <li>Once transfer assigned, grab transfer key to encrypt auth data from cookies
    * <li>Update job with auth data
    */
   @Override
   public StartJobActionResponse handle(StartJobActionRequest request) {
     UUID jobId = request.getJobId();
-    // Update the job to indicate to worker processes that creds are available for encryption
+    // Update the job to indicate to transfer processes that creds are available for encryption
     updateStateToCredsAvailable(jobId);
 
-    // Poll and block until a public key is assigned to this job, e.g. from a specific worker
+    // Poll and block until a public key is assigned to this job, e.g. from a specific transfer
     // instance
     PortabilityJob job = pollForPublicKey(jobId);
 
-    // Update this job with credentials encrypted with a public key, e.g. for a specific worker
+    // Update this job with credentials encrypted with a public key, e.g. for a specific transfer
     // instance
     encryptAndUpdateJobWithCredentials(
         jobId,
@@ -111,8 +111,8 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
    * be used to encrypt credentials.
    */
   private PortabilityJob pollForPublicKey(UUID jobId) {
-    // Loop until the worker updates it to assigned without auth data state, e.g. at that point
-    // the worker instance key will be populated
+    // Loop until the transfer updates it to assigned without auth data state, e.g. at that point
+    // the transfer instance key will be populated
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
@@ -136,7 +136,7 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
         job.jobAuthorization().authPublicKey(),
         "Expected job "
             + jobId
-            + " to have a worker instance's public key after being assigned "
+            + " to have a transfer instance's public key after being assigned "
             + "(state CREDS_ENCRYPTION_KEY_GENERATED)");
     Preconditions.checkState(
         job.jobAuthorization().encryptedExportAuthData() == null,

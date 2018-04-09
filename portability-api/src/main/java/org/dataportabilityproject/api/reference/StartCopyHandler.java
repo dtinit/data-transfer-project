@@ -69,7 +69,7 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
 
-    // We have the data, now update to 'pending worker assignment' so a worker may be assigned
+    // We have the data, now update to 'pending transfer assignment' so a transfer may be assigned
     StartJobActionRequest request = new StartJobActionRequest(jobId, exportAuthCookieValue, importAuthCookieValue);
     StartJobActionResponse response = startJobAction.handle(request);
 

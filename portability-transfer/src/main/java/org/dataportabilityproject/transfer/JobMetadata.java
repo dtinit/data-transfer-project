@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import com.google.common.base.Preconditions;
 
@@ -21,11 +21,11 @@ import java.security.KeyPair;
 import java.util.UUID;
 
 /**
- * A class that contains metadata for a worker's job.
+ * A class that contains metadata for a transfer's job.
  *
  * <p>
  *
- * <p>This class is completely static to ensure it is a singleton within each worker instance.
+ * <p>This class is completely static to ensure it is a singleton within each transfer instance.
  */
 final class JobMetadata {
   private static KeyPair keyPair = null;

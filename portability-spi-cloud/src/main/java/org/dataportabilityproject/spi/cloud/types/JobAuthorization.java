@@ -49,7 +49,7 @@ public abstract class JobAuthorization {
   @JsonProperty("authSecretKey")
   public abstract String authSecretKey();
 
-  /** The PublicKey of the 'worker' instance assigned to this job, encoded for storage. */
+  /** The PublicKey of the 'transfer' instance assigned to this job, encoded for storage. */
   @Nullable
   @JsonProperty("authPublicKey")
   public abstract String authPublicKey();
@@ -64,10 +64,10 @@ public abstract class JobAuthorization {
     // The api authorization flow has completed and raw credentials are temporarily available in
     // the api server.
     CREDS_AVAILABLE,
-    // A worker has spun up and generated a key to encrypt the credentials above so that it (alone)
+    // A transfer has spun up and generated a key to encrypt the credentials above so that it (alone)
     // may use them.
     CREDS_ENCRYPTION_KEY_GENERATED,
-    // The api server has encrypted the credentials for the worker to use.
+    // The api server has encrypted the credentials for the transfer worker to use.
     CREDS_ENCRYPTED,
   }
 
@@ -104,7 +104,7 @@ public abstract class JobAuthorization {
     @JsonProperty("authSecretKey")
     public abstract Builder setAuthSecretKey(String authSecretKey);
 
-    /** The PublicKey of the 'worker' instance assigned to this job, encoded for storage. */
+    /** The PublicKey of the 'transfer' instance assigned to this job, encoded for storage. */
     @JsonProperty("authPublicKey")
     public abstract Builder setAuthPublicKey(String authPublicKey);
 

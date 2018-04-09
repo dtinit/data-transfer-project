@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.worker;
+package org.dataportabilityproject.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -36,7 +36,7 @@ import java.util.UUID;
 
 /**
  * Process a job in two steps: <br>
- * (1) Decrypt the stored credentials, which have been encrypted with this worker's public key<br>
+ * (1) Decrypt the stored credentials, which have been encrypted with this transfer's public key<br>
  * (2)Run the copy job
  */
 final class JobProcessor {
