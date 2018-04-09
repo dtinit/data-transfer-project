@@ -16,13 +16,17 @@
 
 package org.dataportabilityproject.datatransfer.google.tasks;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -37,21 +41,18 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResou
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskContainerResource> {
-  private static final long PAGE_SIZE = 50;
+  private static final long PAGE_SIZE = 50; // TODO: configure correct size in production
+  private final GoogleCredentialFactory credentialFactory;
   private volatile Tasks tasksClient;
 
-  public GoogleTasksExporter() {
-    this.tasksClient = null;
+  public GoogleTasksExporter(GoogleCredentialFactory credentialFactory) {
+    this(credentialFactory, null);
   }
 
   @VisibleForTesting
-  GoogleTasksExporter(Tasks tasksClient) {
+  GoogleTasksExporter(GoogleCredentialFactory credentialFactory, Tasks tasksClient) {
+    this.credentialFactory = credentialFactory;
     this.tasksClient = tasksClient;
   }
 
@@ -151,11 +152,9 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
   }
 
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.common.base.Charsets;
@@ -53,6 +54,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   private static final Map<String, List<String>> IMPORT_SCOPES =
       ImmutableMap.<String, List<String>>builder()
           .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR))
+          .put("mail", ImmutableList.of(GmailScopes.GMAIL_MODIFY))
           .put("photos", ImmutableList.of("https://picasaweb.google.com/data/"))
           .put("tasks", ImmutableList.of(TasksScopes.TASKS))
           .put("contacts", ImmutableList.of(PeopleServiceScopes.CONTACTS))
@@ -63,6 +65,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   private static final Map<String, List<String>> EXPORT_SCOPES =
       ImmutableMap.<String, List<String>>builder()
           .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR_READONLY))
+          .put("mail", ImmutableList.of(GmailScopes.GMAIL_READONLY))
           // picasaweb does not have a READONLY scope
           .put("photos", ImmutableList.of("https://picasaweb.google.com/data/"))
           .put("tasks", ImmutableList.of(TasksScopes.TASKS_READONLY))

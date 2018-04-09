@@ -38,6 +38,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
   @Inject
   public PortabilityAuthServiceProviderRegistry(
       Map<String, AuthServiceExtension> serviceProviderMap) {
+
     ImmutableMap.Builder<String, AuthServiceExtension> serviceProviderBuilder =
         ImmutableMap.builder();
     ImmutableSet.Builder<String> supportedImportTypesBuilder = ImmutableSet.builder();
