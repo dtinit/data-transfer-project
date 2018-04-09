@@ -50,6 +50,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private final Logger logger = LoggerFactory.getLogger(GoogleMailImporter.class);
 
   private static final long MAX_RESULTS_PER_REQUEST = 10L;
+  // The special value me can be used to indicate the authenticated user to the gmail api
   private static final String USER = "me";
   private static final String LABEL = "DTP-migrated";
 

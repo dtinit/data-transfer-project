@@ -46,6 +46,7 @@ import org.dataportabilityproject.types.transfer.models.mail.MailMessageModel;
 
 public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataModel> {
   private static final long PAGE_SIZE = 50; // TODO configure this in production
+  // The special value me can be used to indicate the authenticated user to the gmail api
   private static final String USER = "me";
 
   private final GoogleCredentialFactory credentialFactory;
