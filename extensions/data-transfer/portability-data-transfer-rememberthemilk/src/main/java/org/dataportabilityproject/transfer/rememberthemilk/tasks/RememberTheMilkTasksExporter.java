@@ -95,11 +95,11 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     for (TaskList taskList : taskLists) {
       if (taskList.taskseries != null) {
         for (TaskSeries taskSeries : taskList.taskseries) {
-          // figure out what to do with notes
+          // TODO: figure out what to do with notes
           String notesStr = taskSeries.notes == null ? "" : taskSeries.notes.toString();
           tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr));
           for (Task task : taskSeries.tasks) {
-            // Do something here with completion date, but its odd there can be more than one.
+            // TODO: handle completion date, but its odd there can be more than one.
           }
         }
       }
