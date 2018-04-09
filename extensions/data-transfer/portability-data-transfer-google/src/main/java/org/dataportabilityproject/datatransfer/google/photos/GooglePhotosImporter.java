@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gdata.client.photos.PicasawebService;
@@ -24,6 +23,12 @@ import com.google.gdata.data.media.MediaStreamSource;
 import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 import com.google.gdata.util.ServiceException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -34,11 +39,6 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.UUID;
 
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -49,18 +49,22 @@ public class GooglePhotosImporter
   // The default album to upload to if the photo is not associated with an album
   static final String DEFAULT_ALBUM_ID = "default";
 
+  private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private volatile PicasawebService photosService;
 
-  public GooglePhotosImporter(JobStore jobStore) {
-    this.photosService = null;
-    this.jobStore = jobStore;
+  public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+    this(credentialFactory, jobStore, null);
   }
 
   @VisibleForTesting
-  GooglePhotosImporter(PicasawebService photosService, JobStore jobStore) {
-    this.photosService = photosService;
+  GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      PicasawebService photosService) {
+    this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+    this.photosService = photosService;
   }
 
   // We should pull this out into a common library.
@@ -152,9 +156,7 @@ public class GooglePhotosImporter
   }
 
   private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
     service.setOAuth2Credentials(credential);
     return service;

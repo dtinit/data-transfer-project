@@ -16,11 +16,27 @@
 
 package org.dataportabilityproject.datatransfer.google.calendar;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.MAX_ATTENDEES;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -36,21 +52,6 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.MAX_ATTENDEES;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class GoogleCalendarExporterTest {
   private static final UUID JOB_ID = UUID.fromString("9b969983-a09b-4cb0-8017-7daae758126b");
 
@@ -62,6 +63,7 @@ public class GoogleCalendarExporterTest {
 
   private static final String NEXT_TOKEN = "next_token";
 
+  private GoogleCredentialFactory credentialFactory;
   private GoogleCalendarExporter googleCalendarExporter;
 
   private Calendar calendarClient;
@@ -81,8 +83,9 @@ public class GoogleCalendarExporterTest {
     calendarListRequest = mock(Calendar.CalendarList.List.class);
     calendarEvents = mock(Calendar.Events.class);
     eventListRequest = mock(Calendar.Events.List.class);
+    credentialFactory = mock(GoogleCredentialFactory.class);
 
-    googleCalendarExporter = new GoogleCalendarExporter(calendarClient);
+    googleCalendarExporter = new GoogleCalendarExporter(credentialFactory, calendarClient);
 
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
 
@@ -92,6 +95,8 @@ public class GoogleCalendarExporterTest {
 
     when(calendarEvents.list(CALENDAR_ID)).thenReturn(eventListRequest);
     when(eventListRequest.setMaxAttendees(MAX_ATTENDEES)).thenReturn(eventListRequest);
+
+    verifyZeroInteractions(credentialFactory);
   }
 
   @Test
