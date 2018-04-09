@@ -30,6 +30,9 @@
  *
  * Where <type> is "google", "microsoft", or another provider
  *
+ * To specify whether to use a local or host installation of Node to build the client web app, use: "-PnodeType=local" (default) or "-PnodeType=host"
+ * 
+ *
  * TODO: take in a parameter - configDir as well (e.g. demo-google-deployment), and copy the
  * contents of that into src/main/resources.
  */
@@ -44,8 +47,9 @@ plugins {
     id 'java'
 }
 
+ext.nodeType = hasProperty('nodeType') ? nodeType : 'local'
 ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
-println "Cloud type: ${ext.cloudType}";
+println "Node installation: ${ext.nodeType}, Cloud type: ${ext.cloudType}";
 
 def sourceProjects() {
     // define projects containing source code
