@@ -76,7 +76,7 @@ task rundHostWebApp(type: Exec) {
 }
 
 task buildWebApp {
-    if (project.rootProject.ext.cloudType == "host") {
+    if (project.rootProject.ext.nodeType == "host") {
         dependsOn buildHostWebApp
     } else {
         dependsOn buildLocalWebApp
@@ -85,7 +85,7 @@ task buildWebApp {
 
 
 task installTools {
-    if (project.rootProject.ext.cloudType == "host") {
+    if (project.rootProject.ext.nodeType == "host") {
         dependsOn installHostAngularCli
     } else {
         dependsOn installLocalAngularCli
