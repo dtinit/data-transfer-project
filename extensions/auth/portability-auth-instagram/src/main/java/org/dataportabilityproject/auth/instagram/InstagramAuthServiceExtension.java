@@ -32,7 +32,7 @@ public class InstagramAuthServiceExtension implements AuthServiceExtension {
   private final Logger logger = LoggerFactory.getLogger(InstagramAuthServiceExtension.class);
   private static final String INSTAGRAM_KEY = "INSTAGRAM_KEY";
   private static final String INSTAGRAM_SECRET = "INSTAGRAM_SECRET";
-  private static final String INSTAGRAM_SERVICE_ID = "remember the milk";
+  private static final String INSTAGRAM_SERVICE_ID = "instagram";
   private final List<String> SUPPORTED_SERVICES = ImmutableList.of("photos");
   private InstagramAuthDataGenerator importAuthDataGenerator;
   private InstagramAuthDataGenerator exportAuthDataGenerator;
