@@ -14,14 +14,9 @@
 ###  From top level directory
 * Install Git: `sudo apt-get install git-all`
 * Install Gradle: `sudo apt-get install gradle`
-
-### From /client directory
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
  * Install Node: `nvm install node`
  * Install Angular: `npm install -g @angular/cli`
- * Install modules: `npm install`
- * Test `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
- * Test using SSL: `ng serve --ssl  --port 3000 --proxy-config proxy.https.conf.json --environment localhttps`
  
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
@@ -78,37 +73,33 @@ subdirectory contains a `settings.yaml` and `common.yaml` for PortabilityFlags v
 For local development and testing, a `secrets.csv` file should be included in `config/environments/local`.
 This should contain all your API keys, see `secrets_template.csv` (TODO: add sample) for an example.
 
-## Building/Running the API server locally
-The following builds and optionally runs the API server on `port:8080`
+## Creating the Docker Network
 
- * `bin/build_and_run_jar.sh api local`
-   * This copies over LOCAL secrets and settings and compiles the api jar.
-   * This will also prompt you to run the jar.
+* docker network create dataportability
 
-## Building/Running the Worker locally
-The following builds and optionally runs the worker binary
+## Building/Running the API server and worker locally
+The following builds and optionally runs the demo server (containing the API and Transfer Worker)
+on `port:8080`
 
- * `bin/build_and_run_jar.sh worker local`
-   * This copies over LOCAL secrets and settings and compiles the worker jar.
-   * This will also prompt you to run the jar.
+ * `./gradlew :distributions:demo-server:dockerize`
+   * This copies over LOCAL secrets and settings (configured in ~/.gradle/properties.gradle) using
+   the LocalCloud implementation
+   * This will also build the docker image.
+ *` docker run --rm -p 8080:8080 -p 5005:5005 --name demoserver --network dataportability dataportability/demoserver`
+   * This will run the demo server image that was just created on localhost:8080
+   * To test that this works as expected, visit https://localhost:8080/_/listDataTypes
 
-## Running angular in dev mode
+## Building/Running the Web Application locally
+The following builds and optionally runs the web application. Before running the web application,
+make sure you have started the demoserver locally (step above) on the docker network that you created.
 
-The following commands will run the angular frontend in dev mode locally proxying requests to the local webserver.
-
-* `cd client/`
-* [optional] `npm install` #required first time through
-* `ng serve --port 3000 --proxy-config proxy.conf.json --environment local`
-* Or, using SSL: `ng serve --ssl  --port 3000 --proxy-config proxy.https.conf.json --environment localhttps`
-
-## Running angular tests
-
-The following commands will run the angular frontend in dev mode locally proxying requests to the local webserver.
-
-* `cd client/`
-* `ng test --env=local -sm=false`
-  * Flag for environment set to local
-  * Flag for sourcemaps set to false gives better debugging messages
+ * `./gradlew -PcloudType=local :distributions:demo-server:dockerize`
+   # TODO: the docker image creation for the webapp should be split out into the :client module
+   * In addition to creating the Docker image for the Demoserver, this also creates the web
+   application docker image
+ * `docker run --rm -p 3000:443 --name client --network dataportability dataportability/client`
+   * This will run the web application locally on the dataportability docker network.
+   * You should now be able to access the web application at https://localhost:3000
 
 ## Deploying in production
 
