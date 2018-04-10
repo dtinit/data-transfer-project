@@ -22,9 +22,9 @@ import java.io.IOException;
 import java.util.List;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
-import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry;
-import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

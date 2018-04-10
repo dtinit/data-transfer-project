@@ -59,15 +59,15 @@ public abstract class JobAuthorization {
   /** The current authorization state of the job. */
   public enum State {
     // The job is in the process of obtaining export and import authorization credentials via the
-    // gateway auth flow.
+    // api auth flow.
     INITIAL,
-    // The gateway authorization flow has completed and raw credentials are temporarily available in
-    // the gateway server.
+    // The api authorization flow has completed and raw credentials are temporarily available in
+    // the api server.
     CREDS_AVAILABLE,
     // A worker has spun up and generated a key to encrypt the credentials above so that it (alone)
     // may use them.
     CREDS_ENCRYPTION_KEY_GENERATED,
-    // The gateway server has encrypted the credentials for the worker to use.
+    // The api server has encrypted the credentials for the worker to use.
     CREDS_ENCRYPTED,
   }
 

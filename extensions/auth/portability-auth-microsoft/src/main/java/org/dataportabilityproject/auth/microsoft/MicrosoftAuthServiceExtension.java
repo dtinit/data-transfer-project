@@ -21,9 +21,9 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
-import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
-import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
 import java.io.IOException;
