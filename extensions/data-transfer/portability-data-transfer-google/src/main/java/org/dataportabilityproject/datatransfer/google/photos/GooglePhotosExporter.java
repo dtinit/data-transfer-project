@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.MediaContent;
+import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.AlbumFeed;
 import com.google.gdata.data.photos.GphotoEntry;
 import com.google.gdata.data.photos.UserFeed;
@@ -121,24 +122,25 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    if (albumFeed.getEntries().size() == maxResults) {
+    List<AlbumEntry> entries = albumFeed.getAlbumEntries();
+    if (entries.size() == maxResults) {
       int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    List<PhotoAlbum> albums = new ArrayList<>(albumFeed.getEntries().size());
+    List<PhotoAlbum> albums = new ArrayList<>(entries.size());
 
-    for (GphotoEntry googleAlbum : albumFeed.getEntries()) {
+    for (AlbumEntry googleAlbum : entries) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
-              googleAlbum.getGphotoId(),
+              googleAlbum.getId(),
               googleAlbum.getTitle().getPlainText(),
               googleAlbum.getDescription().getPlainText()));
 
       // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
     ResultType resultType = ResultType.CONTINUE;
@@ -172,14 +174,15 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    if (photoFeed.getEntries().size() == maxResults) {
+    List<GphotoEntry> entries = photoFeed.getEntries();
+    if (entries.size() == maxResults) {
       int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + nextPageStart);
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    List<PhotoModel> photos = new ArrayList<>(photoFeed.getEntries().size());
-    for (GphotoEntry photo : photoFeed.getEntries()) {
+    List<PhotoModel> photos = new ArrayList<>(entries.size());
+    for (GphotoEntry photo : entries) {
       MediaContent mediaContent = (MediaContent) photo.getContent();
       photos.add(
           new PhotoModel(
