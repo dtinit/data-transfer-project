@@ -29,6 +29,9 @@ include ':extensions:data-transfer:portability-data-transfer-flickr'
 include ':extensions:auth:portability-auth-google'
 include ':extensions:data-transfer:portability-data-transfer-google'
 
+// Instagram Auth and Transfer Extensions
+include ':extensions:data-transfer:portability-data-transfer-instagram'
+
 // Microsoft Auth and Transfer Extensions
 include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 include ':extensions:data-transfer:portability-data-transfer-microsoft'
