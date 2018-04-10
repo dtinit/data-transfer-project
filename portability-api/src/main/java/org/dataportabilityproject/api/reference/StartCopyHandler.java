@@ -41,9 +41,7 @@ final class StartCopyHandler implements HttpHandler {
 
   @Inject
   StartCopyHandler(
-      StartJobAction startJobAction,
-      TokenManager tokenManager,
-      TypeManager typeManager) {
+      StartJobAction startJobAction, TokenManager tokenManager, TypeManager typeManager) {
     this.startJobAction = startJobAction;
     this.tokenManager = tokenManager;
     this.objectMapper = typeManager.getMapper();
@@ -69,18 +67,20 @@ final class StartCopyHandler implements HttpHandler {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");
 
-    // We have the data, now update to 'pending transfer assignment' so a transfer may be assigned
-    StartJobActionRequest request = new StartJobActionRequest(jobId, exportAuthCookieValue, importAuthCookieValue);
+    // We have the data, now update to 'pending transfer worker assignment' so a transfer worker may
+    // be assigned
+    StartJobActionRequest request =
+        new StartJobActionRequest(jobId, exportAuthCookieValue, importAuthCookieValue);
     StartJobActionResponse response = startJobAction.handle(request);
 
     // TODO: Determine if we need more fields populated or a new object
     DataTransferResponse dataTransferResponse =
-            new DataTransferResponse(
-                "", //job.exportService(),
-                "", //job.importService(),
-                "", //job.transferDataType(),
-                Status.INPROCESS,
-                "" //FrontendConstantUrls.URL_COPY_PAGE);
+        new DataTransferResponse(
+            "", // job.exportService(),
+            "", // job.importService(),
+            "", // job.transferDataType(),
+            Status.INPROCESS,
+            "" // FrontendConstantUrls.URL_COPY_PAGE);
             );
 
     // Mark the response as type Json and send

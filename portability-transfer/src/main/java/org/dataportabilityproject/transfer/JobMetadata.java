@@ -16,16 +16,16 @@
 package org.dataportabilityproject.transfer;
 
 import com.google.common.base.Preconditions;
-
 import java.security.KeyPair;
 import java.util.UUID;
 
 /**
- * A class that contains metadata for a transfer's job.
+ * A class that contains metadata for a transfer worker's job.
  *
  * <p>
  *
- * <p>This class is completely static to ensure it is a singleton within each transfer instance.
+ * <p>This class is completely static to ensure it is a singleton within each transfer worker
+ * instance.
  */
 final class JobMetadata {
   private static KeyPair keyPair = null;

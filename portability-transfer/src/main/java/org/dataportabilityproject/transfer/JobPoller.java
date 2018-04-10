@@ -18,7 +18,7 @@ package org.dataportabilityproject.transfer;
 import com.google.inject.Inject;
 
 /**
- * Polls a {@code PortabilityJob} for this transfer to process.
+ * Polls a {@code PortabilityJob} for this transfer worker to process.
  *
  * <p>
  *

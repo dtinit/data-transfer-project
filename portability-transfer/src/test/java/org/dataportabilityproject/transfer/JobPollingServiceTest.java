@@ -88,9 +88,9 @@ public class JobPollingServiceTest {
     jobPollingService = new JobPollingService(store, asymmetricKeyGenerator);
   }
 
-  // TODO(data-portability/issues/43): Make this an integration test which uses both the API and
-  // transfer, rather than simulating API calls, in case this test ever diverges from what the API
-  // actually does.
+  // TODO(data-transfer-project/issues/43): Make this an integration test which uses both the API
+  // and transfer worker, rather than simulating API calls, in case this test ever diverges from
+  // what the API actually does.
   @Test
   public void pollingLifeCycle() throws Exception {
 

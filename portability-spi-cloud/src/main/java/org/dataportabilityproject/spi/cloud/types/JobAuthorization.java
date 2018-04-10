@@ -37,7 +37,10 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedImportAuthData")
   public abstract String encryptedImportAuthData();
 
-  /** The SecretKey used to encrypt all data, including auth data, associated with this job, encoded for storage. */
+  /**
+   * The SecretKey used to encrypt all data, including auth data, associated with this job, encoded
+   * for storage.
+   */
   @JsonProperty("sessionSecretKey")
   public abstract String sessionSecretKey();
 
@@ -49,7 +52,7 @@ public abstract class JobAuthorization {
   @JsonProperty("authSecretKey")
   public abstract String authSecretKey();
 
-  /** The PublicKey of the 'transfer' instance assigned to this job, encoded for storage. */
+  /** The PublicKey of the 'transfer worker' instance assigned to this job, encoded for storage. */
   @Nullable
   @JsonProperty("authPublicKey")
   public abstract String authPublicKey();
@@ -64,7 +67,8 @@ public abstract class JobAuthorization {
     // The api authorization flow has completed and raw credentials are temporarily available in
     // the api server.
     CREDS_AVAILABLE,
-    // A transfer has spun up and generated a key to encrypt the credentials above so that it (alone)
+    // A transfer worker has spun up and generated a key to encrypt the credentials above so that it
+    // (alone)
     // may use them.
     CREDS_ENCRYPTION_KEY_GENERATED,
     // The api server has encrypted the credentials for the transfer worker to use.
@@ -93,18 +97,23 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedImportAuthData")
     public abstract Builder setEncryptedImportAuthData(String authData);
 
-    /** The SecretKey used to encrypt all data, including auth data, associated with this job, encoded for storage. */
+    /**
+     * The SecretKey used to encrypt all data, including auth data, associated with this job,
+     * encoded for storage.
+     */
     @JsonProperty("sessionSecretKey")
     public abstract Builder setSessionSecretKey(String sessionSecretKey);
 
     /**
-     * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
-     * before storage.
+     * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the
+     * authPublicKey before storage.
      */
     @JsonProperty("authSecretKey")
     public abstract Builder setAuthSecretKey(String authSecretKey);
 
-    /** The PublicKey of the 'transfer' instance assigned to this job, encoded for storage. */
+    /**
+     * The PublicKey of the 'transfer worker' instance assigned to this job, encoded for storage.
+     */
     @JsonProperty("authPublicKey")
     public abstract Builder setAuthPublicKey(String authPublicKey);
 

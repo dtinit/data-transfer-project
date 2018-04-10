@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.dataportabilityproject.security.Decrypter;
 import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
@@ -30,13 +33,10 @@ import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.util.UUID;
-
 /**
  * Process a job in two steps: <br>
- * (1) Decrypt the stored credentials, which have been encrypted with this transfer's public key<br>
+ * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
+ * key<br>
  * (2)Run the copy job
  */
 final class JobProcessor {
@@ -78,7 +78,8 @@ final class JobProcessor {
       // Decrypt the encrypted outer symmetric key, which has been encrypted with our public key
       Decrypter workerKeyDecrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
       byte[] encodedOuterSymmetricKey =
-          BaseEncoding.base64Url().decode(workerKeyDecrypter.decrypt(jobAuthorization.authSecretKey()));
+          BaseEncoding.base64Url()
+              .decode(workerKeyDecrypter.decrypt(jobAuthorization.authSecretKey()));
       SecretKey outerSymmetricKey = symmetricKeyGenerator.parse(encodedOuterSymmetricKey);
 
       // Decrypt the doubly encrypted export and import credentials, which have been doubly

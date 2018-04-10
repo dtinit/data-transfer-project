@@ -67,14 +67,17 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
   @Override
   public StartJobActionResponse handle(StartJobActionRequest request) {
     UUID jobId = request.getJobId();
-    // Update the job to indicate to transfer processes that creds are available for encryption
+    // Update the job to indicate to transfer worker processes that creds are available for
+    // encryption
     updateStateToCredsAvailable(jobId);
 
     // Poll and block until a public key is assigned to this job, e.g. from a specific transfer
+    // worker
     // instance
     PortabilityJob job = pollForPublicKey(jobId);
 
     // Update this job with credentials encrypted with a public key, e.g. for a specific transfer
+    // worker
     // instance
     encryptAndUpdateJobWithCredentials(
         jobId,
@@ -111,8 +114,8 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
    * be used to encrypt credentials.
    */
   private PortabilityJob pollForPublicKey(UUID jobId) {
-    // Loop until the transfer updates it to assigned without auth data state, e.g. at that point
-    // the transfer instance key will be populated
+    // Loop until the transfer worker updates it to assigned without auth data state, e.g. at that
+    // point the transfer worker instance key will be populated
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
@@ -136,7 +139,7 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
         job.jobAuthorization().authPublicKey(),
         "Expected job "
             + jobId
-            + " to have a transfer instance's public key after being assigned "
+            + " to have a transfer worker instance's public key after being assigned "
             + "(state CREDS_ENCRYPTION_KEY_GENERATED)");
     Preconditions.checkState(
         job.jobAuthorization().encryptedExportAuthData() == null,
