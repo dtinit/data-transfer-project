@@ -70,9 +70,9 @@ task runHostWebApp(type: Exec) {
     workingDir "$projectDir"
     inputs.dir "$projectDir"
     if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
-        commandLine "ng.cmd", "serve", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+        commandLine "ng.cmd", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
     } else {
-        commandLine "ng", "serve", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+        commandLine "ng", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
     }
 }
 
