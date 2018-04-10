@@ -11,13 +11,12 @@ include ':extensions:config:portability-config-yaml'
 
 // Runnable Jar Distributions
 // Defaults
-include ':distributions:worker-default', ':distributions:gateway-default', ':distributions:demo-server'
+include ':distributions:transfer-default', ':distributions:gateway-default', ':distributions:demo-server'
 // Google
-include ':distributions:demo-google-deployment:api', ':distributions:demo-google-deployment:worker'
+include ':distributions:demo-google-deployment:api', ':distributions:demo-google-deployment:transfer'
 
 // Jar Components
-// TODO: rename portability-worker to portability-transfer
-include ':portability-api', ':portability-worker', ':portability-bootstrap-vm'
+include ':portability-api', ':portability-transfer', ':portability-bootstrap-vm'
 
 // Cloud Extensions
 include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Generates secret keys, e.g. for use to associate with a job and encrypt data between the client,
- * api, and worker.
+ * api, and transfer worker.
  */
 public class SecretKeyGenerator {
   public static final String ALGORITHM = "AES";
