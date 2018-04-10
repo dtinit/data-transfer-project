@@ -35,20 +35,23 @@ import com.google.common.collect.ImmutableSet;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.types.*;
+import org.dataportabilityproject.spi.transfer.types.ContinuationData;
+import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
+import org.dataportabilityproject.spi.transfer.types.IntPaginationToken;
+import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
-import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
-import org.scribe.model.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
@@ -103,13 +106,13 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(AuthData authData) {
-    return export(authData, new ExportInformation(null, null));
+  public ExportResult<PhotosContainerResource> export(UUID jobId, AuthData authData) {
+    return export(jobId, authData, new ExportInformation(null, null));
   }
 
   @Override
   public ExportResult<PhotosContainerResource> export(
-      AuthData authData, ExportInformation exportInformation) {
+      UUID jobId, AuthData authData, ExportInformation exportInformation) {
     Auth auth;
     try {
       auth = FlickrUtils.getAuth(authData, flickr);

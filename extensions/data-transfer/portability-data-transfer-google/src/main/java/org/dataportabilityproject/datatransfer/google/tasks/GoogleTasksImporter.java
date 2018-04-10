@@ -16,7 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.google.tasks;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
@@ -24,6 +23,7 @@ import com.google.api.services.tasks.model.TaskList;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -40,34 +40,35 @@ import org.slf4j.LoggerFactory;
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
   private final Logger logger = LoggerFactory.getLogger(GoogleTasksImporter.class);
 
+  private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private Tasks tasksClient;
 
-  public GoogleTasksImporter(JobStore jobStore) {
-    this(jobStore, null);
+  public GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+    this(credentialFactory, jobStore, null);
   }
 
   @VisibleForTesting
-  public GoogleTasksImporter(JobStore jobStore, Tasks tasksClient) {
+  GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Tasks tasksClient) {
+    this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.tasksClient = tasksClient;
   }
 
   @Override
   public ImportResult importItem(
-      String jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
-    UUID id = UUID.fromString(jobId);
+      UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
 
     Tasks tasksService = getOrCreateTasksService(authData);
-    TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, id);
+    TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, jobId);
     if (tempTasksData == null) {
-      tempTasksData = new TempTasksData(jobId);
-      jobStore.create(id, tempTasksData);
+      tempTasksData = new TempTasksData(jobId.toString());
+      jobStore.create(jobId, tempTasksData);
     }
 
     for (TaskListModel oldTasksList : data.getLists()) {
       // TempTasksData shouldn't be null since we added it.
-      tempTasksData = jobStore.findData(TempTasksData.class, id);
+      tempTasksData = jobStore.findData(TempTasksData.class, jobId);
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
       TaskList insertedTaskList;
 
@@ -77,13 +78,12 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
         return new ImportResult(ResultType.ERROR, "Error inserting taskList: " + e.getMessage());
       }
 
-      logger.info("Storing {} as {}", oldTasksList.getId(), insertedTaskList.getId());
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
 
-      jobStore.update(id, tempTasksData);
+      jobStore.update(jobId, tempTasksData);
     }
 
-    tempTasksData = jobStore.findData(TempTasksData.class, id);
+    tempTasksData = jobStore.findData(TempTasksData.class, jobId);
 
     for (TaskModel oldTask : data.getTasks()) {
       Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
@@ -103,11 +103,9 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
   }
 
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

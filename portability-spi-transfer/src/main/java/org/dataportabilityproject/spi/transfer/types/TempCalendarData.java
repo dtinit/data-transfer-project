@@ -18,9 +18,11 @@ package org.dataportabilityproject.spi.transfer.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.dataportabilityproject.types.transfer.models.DataModel;
+
 import java.util.HashMap;
 import java.util.Map;
-import org.dataportabilityproject.types.transfer.models.DataModel;
+import java.util.UUID;
 
 /**
  * Temporary data for calendar export/import.
@@ -32,26 +34,26 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 public class TempCalendarData extends DataModel {
 
   @JsonProperty("jobId")
-  private final String jobId;
+  private final UUID jobId;
 
   @JsonProperty("calendarMappings")
   private final Map<String, String> calendarMappings;
 
   @JsonCreator
   public TempCalendarData(
-      @JsonProperty("jobId") String jobId,
+      @JsonProperty("jobId") UUID jobId,
       @JsonProperty("calendarMappings") Map<String, String> calendarMappings) {
     this.jobId = jobId;
     this.calendarMappings = calendarMappings;
   }
 
-  public TempCalendarData(String jobId) {
+  public TempCalendarData(UUID jobId) {
     this.jobId = jobId;
     calendarMappings = new HashMap<>();
   }
 
   /** Returns the job id this data is associated with. */
-  public String getJobId() {
+  public UUID getJobId() {
     return jobId;
   }
 

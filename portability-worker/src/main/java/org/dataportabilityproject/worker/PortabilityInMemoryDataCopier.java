@@ -16,14 +16,11 @@
 package org.dataportabilityproject.worker;
 
 import com.google.inject.Provider;
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -32,22 +29,26 @@ import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /** Implementation of {@link InMemoryDataCopier}. */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
   /**
-   * Lazy evaluate exporter and importer as their providers depend on the polled
-   * {@code PortabilityJob} which is not available at startup.
+   * Lazy evaluate exporter and importer as their providers depend on the polled {@code
+   * PortabilityJob} which is not available at startup.
    */
   private final Provider<Exporter> exporter;
+
   private final Provider<Importer> importer;
 
   @Inject
-  public PortabilityInMemoryDataCopier(
-      Provider<Exporter> exporter,
-      Provider<Importer> importer) {
+  public PortabilityInMemoryDataCopier(Provider<Exporter> exporter, Provider<Importer> importer) {
     this.exporter = exporter;
     this.importer = importer;
   }
@@ -73,7 +74,10 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * @param exportInformation Any pagination or resource information to use for subsequent calls.
    */
   private void copyHelper(
-      UUID jobId, AuthData exportAuthData, AuthData importAuthData, ExportInformation exportInformation)
+      UUID jobId,
+      AuthData exportAuthData,
+      AuthData importAuthData,
+      ExportInformation exportInformation)
       throws IOException {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
@@ -81,20 +85,30 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    logger.debug("Starting export, ExportInformation: {}", exportInformation);
-    ExportResult<?> exportResult = exporter.get().export(exportAuthData, exportInformation);
-    logger.debug("Finished export, results: {}", exportResult);
+    logger.debug("Starting export");
+    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    logger.debug("Finished export");
+
+    if (exportResult.getType().equals(ResultType.ERROR)) {
+      logger.warn("Error happened during export: {}", exportResult.getMessage());
+      return;
+    }
 
     logger.debug("Starting import");
-    importer.get().importItem(jobId.toString(), importAuthData, exportResult.getExportedData());
+    ImportResult importResult = importer.get().importItem(jobId, importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
+    if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
+      logger.warn("Error happened during import: {}", importResult.getMessage());
+      return;
+    }
 
+    // Import and Export were successful, determine what to do next
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
 
     if (null != continuationData) {
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
-        logger.debug("start off a new copy iteration with pagination info");
+        logger.debug("starting off a new copy iteration with pagination info");
         copyHelper(
             jobId,
             exportAuthData,

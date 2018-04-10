@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
@@ -61,6 +62,8 @@ public class GooglePhotosExporterTest {
 
   private GooglePhotosExporter googlePhotosExporter;
 
+  private GoogleCredentialFactory googleCredentialFactory;
+
   private PicasawebService photoService;
 
   private UserFeed usersAlbumsFeed;
@@ -78,7 +81,7 @@ public class GooglePhotosExporterTest {
     contentType = mock(ContentType.class);
     mediaContent = mock(MediaContent.class);
 
-    googlePhotosExporter = new GooglePhotosExporter(MAX_RESULTS, photoService);
+    googlePhotosExporter = new GooglePhotosExporter(googleCredentialFactory, photoService, MAX_RESULTS);
 
     when(photoService.getFeed(Matchers.any(URL.class), Matchers.eq(UserFeed.class)))
         .thenReturn(usersAlbumsFeed);
@@ -95,7 +98,7 @@ public class GooglePhotosExporterTest {
     int start = 1;
 
     // Run test
-    ExportResult<PhotosContainerResource> result = googlePhotosExporter.export(null);
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter.export(null, null);
 
     // Check results
     // Verify correct methods were called

@@ -20,7 +20,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -30,22 +32,24 @@ import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttendeeModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
-public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContainerResource> {
+public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
 
+  private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;
 
-  public GoogleCalendarExporter() {
-    this.calendarInterface = null;
+  public GoogleCalendarExporter(GoogleCredentialFactory credentialFactory) {
+    this(credentialFactory, null);
   }
 
   @VisibleForTesting
-  GoogleCalendarExporter(Calendar calendarInterface) {
+  GoogleCalendarExporter(GoogleCredentialFactory credentialFactory, Calendar calendarInterface) {
+    this.credentialFactory = credentialFactory;
     this.calendarInterface = calendarInterface;
   }
 
@@ -97,13 +101,13 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(AuthData authData) {
+  public ExportResult<CalendarContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
     return exportCalendars(authData, Optional.empty());
   }
 
   @Override
   public ExportResult<CalendarContainerResource> export(
-      AuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     StringPaginationToken paginationToken =
         (StringPaginationToken) exportInformation.getPaginationData();
     if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
@@ -120,7 +124,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   }
 
   private ExportResult<CalendarContainerResource> exportCalendars(
-      AuthData authData, Optional<PaginationData> pageData) {
+      TokensAndUrlAuthData authData, Optional<PaginationData> pageData) {
     Calendar.CalendarList.List listRequest;
     CalendarList listResult;
 
@@ -173,7 +177,7 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
   }
 
   private ExportResult<CalendarContainerResource> getCalendarEvents(
-      AuthData authData, String id, Optional<PaginationData> pageData) {
+      TokensAndUrlAuthData authData, String id, Optional<PaginationData> pageData) {
     Calendar.Events.List listRequest;
     Events listResult;
 
@@ -224,15 +228,14 @@ public class GoogleCalendarExporter implements Exporter<AuthData, CalendarContai
         resultType, calendarContainerResource, continuationData);
   }
 
-  private Calendar getOrCreateCalendarInterface(AuthData authData) {
+  private Calendar getOrCreateCalendarInterface(TokensAndUrlAuthData authData) {
     return calendarInterface == null ? makeCalendarInterface(authData) : calendarInterface;
   }
 
-  private synchronized Calendar makeCalendarInterface(AuthData authData) {
-    // TODO(olsona): get credential using authData
-    Credential credential = null;
+  private synchronized Calendar makeCalendarInterface(TokensAndUrlAuthData authData) {
+    Credential credential = credentialFactory.createCredential(authData);
     return new Calendar.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

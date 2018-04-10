@@ -19,6 +19,7 @@ package org.dataportabilityproject.datatransfer.google.calendar;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.calendar.Calendar;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
 import org.dataportabilityproject.cloud.local.LocalJobStore;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
@@ -45,6 +47,7 @@ public class GoogleCalendarImporterTest {
 
   private GoogleCalendarImporter calendarService;
   private JobStore jobStore;
+  private GoogleCredentialFactory credentialFactory;
 
   private Calendar calendarClient;
   private Calendar.Calendars calendarCalendars;
@@ -59,13 +62,16 @@ public class GoogleCalendarImporterTest {
     calendarInsertRequest = mock(Calendar.Calendars.Insert.class);
     calendarEvents = mock(Calendar.Events.class);
     eventInsertRequest = mock(Calendar.Events.Insert.class);
+    credentialFactory = mock(GoogleCredentialFactory.class);
 
     jobStore = new LocalJobStore();
 
-    calendarService = new GoogleCalendarImporter(calendarClient, jobStore);
+    calendarService = new GoogleCalendarImporter(credentialFactory, jobStore, calendarClient);
 
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
     when(calendarClient.events()).thenReturn(calendarEvents);
+
+    verifyZeroInteractions(credentialFactory);
   }
 
   @Test
@@ -96,7 +102,7 @@ public class GoogleCalendarImporterTest {
             Collections.singleton(calendarModel), Collections.singleton(eventModel));
 
     // Run test
-    calendarService.importItem(jobId.toString(), null, calendarContainerResource);
+    calendarService.importItem(jobId, null, calendarContainerResource);
 
     // Check the right methods were called
     verify(calendarCalendars).insert(calendarToInsert);

@@ -106,7 +106,7 @@ public class FlickrPhotosImporterTest {
     // Run test
     FlickrPhotosImporter importer = new FlickrPhotosImporter(flickr, jobStore, imageStreamProvider);
     ImportResult result = importer.importItem(
-        jobId.toString(), new TokenSecretAuthData("token", "secret"), photosContainerResource);
+        jobId, new TokenSecretAuthData("token", "secret"), photosContainerResource);
 
     // Verify that the image stream provider got the correct URL and that the correct info was uploaded
     verify(imageStreamProvider).get(FETCHABLE_URL);
@@ -124,9 +124,8 @@ public class FlickrPhotosImporterTest {
     TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
     assertThat(tempPhotosData).isNotNull();
 
-    String expectedAlbumKey = FlickrPhotosImporter.CACHE_ALBUM_METADATA_PREFIX + ALBUM_ID;
-    assertThat(tempPhotosData.lookupAlbum(expectedAlbumKey)).isNotNull();
-    assertThat(tempPhotosData.lookupAlbum(expectedAlbumKey)).isEqualTo(PHOTO_ALBUM);
+    String expectedAlbumKey = ALBUM_ID;
+    assertThat(tempPhotosData.lookupTempAlbum(expectedAlbumKey)).isNull();
     assertThat(tempPhotosData.lookupNewAlbumId(ALBUM_ID)).isEqualTo(FLICKR_ALBUM_ID);
   }
 }

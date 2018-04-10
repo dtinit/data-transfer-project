@@ -12,7 +12,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.dataportabilityproject.auth.microsoft.MicrosoftAuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.types.AuthFlowConfiguration;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
 /** */
@@ -50,7 +51,8 @@ public class AuthTestDriver {
     ObjectMapper mapper = new ObjectMapper();
 
     MicrosoftAuthDataGenerator dataGenerator =
-        new MicrosoftAuthDataGenerator("/response", () -> clientId, () -> secret, client, mapper);
+        new MicrosoftAuthDataGenerator(
+            "/response", () -> clientId, () -> secret, client, mapper, "contacts", AuthMode.EXPORT);
 
     AuthFlowConfiguration configuration = dataGenerator.generateConfiguration(callbackBase, "1");
 

@@ -16,7 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.google.tasks;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.TaskList;
@@ -25,7 +24,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -41,26 +42,28 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 
 public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskContainerResource> {
-  private static final long PAGE_SIZE = 50;
+  private static final long PAGE_SIZE = 50; // TODO: configure correct size in production
+  private final GoogleCredentialFactory credentialFactory;
   private volatile Tasks tasksClient;
 
-  public GoogleTasksExporter() {
-    this.tasksClient = null;
+  public GoogleTasksExporter(GoogleCredentialFactory credentialFactory) {
+    this(credentialFactory, null);
   }
 
   @VisibleForTesting
-  GoogleTasksExporter(Tasks tasksClient) {
+  GoogleTasksExporter(GoogleCredentialFactory credentialFactory, Tasks tasksClient) {
+    this.credentialFactory = credentialFactory;
     this.tasksClient = tasksClient;
   }
 
   @Override
-  public ExportResult<TaskContainerResource> export(TokensAndUrlAuthData authData) {
-    return export(authData, new ExportInformation(null, null));
+  public ExportResult<TaskContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
+    return export(jobId, authData, new ExportInformation(null, null));
   }
 
   @Override
   public ExportResult<TaskContainerResource> export(
-      TokensAndUrlAuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
     // Create a new tasks service for the authorized user
     Tasks tasksService = getOrCreateTasksService(authData);
 
@@ -78,7 +81,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     }
   }
 
-  private ExportResult getTasks(
+  private ExportResult<TaskContainerResource> getTasks(
       Tasks tasksService, IdOnlyContainerResource resource, PaginationData paginationData)
       throws IOException {
     Tasks.TasksOperations.List query =
@@ -108,7 +111,8 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     return new ExportResult<>(resultType, taskContainerResource, new ContinuationData(newPage));
   }
 
-  private ExportResult getTasksList(Tasks tasksSerivce, PaginationData paginationData) throws IOException {
+  private ExportResult<TaskContainerResource> getTasksList(Tasks tasksSerivce, PaginationData paginationData)
+      throws IOException {
     Tasks.Tasklists.List query = tasksSerivce.tasklists().list().setMaxResults(PAGE_SIZE);
     if (paginationData != null) {
       query.setPageToken(((StringPaginationToken) paginationData).getToken());
@@ -117,25 +121,30 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     ImmutableList.Builder<TaskListModel> newTaskListsBuilder = ImmutableList.builder();
     ImmutableList.Builder<IdOnlyContainerResource> newResourcesBuilder = ImmutableList.builder();
 
-    for(TaskList taskList : result.getItems()) {
+    for (TaskList taskList : result.getItems()) {
       newTaskListsBuilder.add(new TaskListModel(taskList.getId(), taskList.getTitle()));
       newResourcesBuilder.add(new IdOnlyContainerResource(taskList.getId()));
     }
 
     PaginationData newPage = null;
     ResultType resultType = ResultType.END;
-    if(result.getNextPageToken()!=null) {
+    if (result.getNextPageToken() != null) {
       newPage = new StringPaginationToken(result.getNextPageToken());
       resultType = ResultType.CONTINUE;
     }
 
     List<IdOnlyContainerResource> newResources = newResourcesBuilder.build();
-    if(!newResources.isEmpty()) { resultType = ResultType.CONTINUE; }
+    if (!newResources.isEmpty()) {
+      resultType = ResultType.CONTINUE;
+    }
 
-    TaskContainerResource taskContainerResource = new TaskContainerResource(newTaskListsBuilder.build(), null);
+    TaskContainerResource taskContainerResource =
+        new TaskContainerResource(newTaskListsBuilder.build(), null);
     ContinuationData continuationData = new ContinuationData(newPage);
-    newResourcesBuilder.build().forEach(resource -> continuationData.addContainerResource(resource));
-    return new ExportResult<>(resultType,taskContainerResource, continuationData);
+    newResourcesBuilder
+        .build()
+        .forEach(continuationData::addContainerResource);
+    return new ExportResult<>(resultType, taskContainerResource, continuationData);
   }
 
   private Tasks getOrCreateTasksService(TokensAndUrlAuthData authData) {
@@ -143,11 +152,9 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
   }
 
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

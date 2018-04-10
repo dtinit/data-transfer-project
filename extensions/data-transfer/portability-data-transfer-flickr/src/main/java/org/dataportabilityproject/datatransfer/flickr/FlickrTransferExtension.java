@@ -18,6 +18,7 @@ package org.dataportabilityproject.datatransfer.flickr;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.datatransfer.flickr.photos.FlickrPhotosExporter;
 import org.dataportabilityproject.datatransfer.flickr.photos.FlickrPhotosImporter;
@@ -29,8 +30,6 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Set;
 
 public class FlickrTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "flickr";
@@ -76,7 +75,11 @@ public class FlickrTransferExtension implements TransferExtension {
               .getService(AppCredentialStore.class)
               .getAppCredentials(FLICKR_KEY, FLICKER_SECRET);
     } catch (Exception e) {
-      logger.warn("Problem getting AppCredentials: {}", e);
+      logger.warn(
+          "Problem getting AppCredentials: {} Did you set {} and {}?",
+          e.getMessage(),
+          FLICKR_KEY,
+          FLICKER_SECRET);
       initialized = false;
       return;
     }

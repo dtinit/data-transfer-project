@@ -22,6 +22,7 @@ import static org.dataportabilityproject.datatransfer.google.common.GoogleStatic
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.MAX_ATTENDEES;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.calendar.Calendar;
@@ -33,7 +34,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -50,6 +53,8 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 public class GoogleCalendarExporterTest {
+  private static final UUID JOB_ID = UUID.fromString("9b969983-a09b-4cb0-8017-7daae758126b");
+
   private static final String CALENDAR_ID = "calendar_id";
   private static final CalendarListEntry CALENDAR_LIST_ENTRY =
       new CalendarListEntry().setId(CALENDAR_ID);
@@ -58,6 +63,7 @@ public class GoogleCalendarExporterTest {
 
   private static final String NEXT_TOKEN = "next_token";
 
+  private GoogleCredentialFactory credentialFactory;
   private GoogleCalendarExporter googleCalendarExporter;
 
   private Calendar calendarClient;
@@ -77,8 +83,9 @@ public class GoogleCalendarExporterTest {
     calendarListRequest = mock(Calendar.CalendarList.List.class);
     calendarEvents = mock(Calendar.Events.class);
     eventListRequest = mock(Calendar.Events.List.class);
+    credentialFactory = mock(GoogleCredentialFactory.class);
 
-    googleCalendarExporter = new GoogleCalendarExporter(calendarClient);
+    googleCalendarExporter = new GoogleCalendarExporter(credentialFactory, calendarClient);
 
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
 
@@ -88,6 +95,8 @@ public class GoogleCalendarExporterTest {
 
     when(calendarEvents.list(CALENDAR_ID)).thenReturn(eventListRequest);
     when(eventListRequest.setMaxAttendees(MAX_ATTENDEES)).thenReturn(eventListRequest);
+
+    verifyZeroInteractions(credentialFactory);
   }
 
   @Test
@@ -98,7 +107,7 @@ public class GoogleCalendarExporterTest {
     calendarListResponse.setNextPageToken(NEXT_TOKEN);
 
     // Run test
-    ExportResult<CalendarContainerResource> result = googleCalendarExporter.export(null);
+    ExportResult<CalendarContainerResource> result = googleCalendarExporter.export(JOB_ID, null);
 
     // Check results
     // Verify correct methods were called
@@ -141,7 +150,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        googleCalendarExporter.export(null, exportInformation);
+        googleCalendarExporter.export(UUID.randomUUID(), null, exportInformation);
 
     // Check results
     // Verify correct calls were made
@@ -167,7 +176,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        googleCalendarExporter.export(null, exportInformation);
+        googleCalendarExporter.export(UUID.randomUUID(), null, exportInformation);
 
     // Check results
     // Verify correct methods were called
@@ -188,7 +197,8 @@ public class GoogleCalendarExporterTest {
 
     // Check pagination token
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
-    StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) continuationData.getPaginationData();
     assertThat(paginationToken.getToken()).isEqualTo(EVENT_TOKEN_PREFIX + NEXT_TOKEN);
   }
 
@@ -203,8 +213,8 @@ public class GoogleCalendarExporterTest {
     eventListResponse.setNextPageToken(null);
 
     // Run test
-    ExportResult<CalendarContainerResource> result = googleCalendarExporter
-        .export(null, exportInformation);
+    ExportResult<CalendarContainerResource> result =
+        googleCalendarExporter.export(UUID.randomUUID(), null, exportInformation);
 
     // Check results
     // Verify correct methods were called in order
@@ -214,7 +224,8 @@ public class GoogleCalendarExporterTest {
 
     // Check pagination token
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
-    StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) continuationData.getPaginationData();
     assertThat(paginationToken).isNull();
   }
 

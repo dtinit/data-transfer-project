@@ -25,9 +25,9 @@ import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
-import org.dataportabilityproject.spi.gateway.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.gateway.auth.AuthServiceProviderRegistry.AuthMode;
-import org.dataportabilityproject.spi.gateway.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
 
   // TODO: share this between AuthServiceExtension and TransferExtension
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES =
-      ImmutableList.of("contacts", "calendar", "tasks", "photos");
+      ImmutableList.of("contacts", "calendar", "mail", "photos", "tasks");
 
   // Map of AuthDataGenerators needed to import each data type
   private volatile Map<String, AuthDataGenerator> importAuthDataGenerators;
@@ -79,7 +79,8 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
               .getService(AppCredentialStore.class)
               .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
     } catch (IOException e) {
-      logger.warn("Problem getting AppCredentials: {}", e);
+      logger.warn(
+          "Problem getting AppCredentials: {}. Did you set GOOGLE_KEY and GOOGLE_SECRET?", e);
       return;
     }
 

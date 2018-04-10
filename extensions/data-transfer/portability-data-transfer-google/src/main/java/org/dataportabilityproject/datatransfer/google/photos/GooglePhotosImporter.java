@@ -15,7 +15,6 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
-import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gdata.client.photos.PicasawebService;
@@ -29,6 +28,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -40,23 +40,31 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class GooglePhotosImporter
+    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_POST_URL = "https://picasaweb.google.com/data/feed/api/user/default";
-  static final String PHOTO_POST_URL_FORMATTER = "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
+  static final String PHOTO_POST_URL_FORMATTER =
+      "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
+  // The default album to upload to if the photo is not associated with an album
+  static final String DEFAULT_ALBUM_ID = "default";
 
+  private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private volatile PicasawebService photosService;
 
-  public GooglePhotosImporter(JobStore jobStore) {
-    this.photosService = null;
-    this.jobStore = jobStore;
+  public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+    this(credentialFactory, jobStore, null);
   }
 
   @VisibleForTesting
-  GooglePhotosImporter(PicasawebService photosService, JobStore jobStore) {
-    this.photosService = photosService;
+  GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      PicasawebService photosService) {
+    this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+    this.photosService = photosService;
   }
 
   // We should pull this out into a common library.
@@ -68,7 +76,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
   }
 
   @Override
-  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(
+      UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
     try {
       for (PhotoAlbum album : data.getAlbums()) {
         importSingleAlbum(jobId, authData, album);
@@ -84,9 +93,8 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
   }
 
   @VisibleForTesting
-  void importSingleAlbum(String jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
+  void importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
       throws IOException, ServiceException {
-    UUID uuid = UUID.fromString(jobId);
 
     // Set up album
     AlbumEntry outputAlbum = new AlbumEntry();
@@ -94,23 +102,22 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
     outputAlbum.setDescription(new PlainTextConstruct(inputAlbum.getDescription()));
 
     // Upload album
-    AlbumEntry insertedEntry = getOrCreatePhotosService(authData)
-        .insert(new URL(ALBUM_POST_URL), outputAlbum);
+    AlbumEntry insertedEntry =
+        getOrCreatePhotosService(authData).insert(new URL(ALBUM_POST_URL), outputAlbum);
 
     // Put new album ID in job store so photos can be assigned to the correct album
-    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, uuid);
+    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
     if (photoMappings == null) {
       photoMappings = new TempPhotosData(jobId);
-      jobStore.create(uuid, photoMappings);
+      jobStore.create(jobId, photoMappings);
     }
     photoMappings.addAlbumId(inputAlbum.getId(), insertedEntry.getGphotoId());
-    jobStore.update(uuid, photoMappings);
+    jobStore.update(jobId, photoMappings);
   }
 
   @VisibleForTesting
-  void importSinglePhoto(String jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
+  void importSinglePhoto(UUID jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
       throws IOException, ServiceException {
-    UUID uuid = UUID.fromString(jobId);
 
     // Set up photo
     PhotoEntry outputPhoto = new PhotoEntry();
@@ -123,13 +130,21 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
       mediaType = "image/jpeg";
     }
 
-    MediaStreamSource streamSource = new MediaStreamSource(
-        getImageAsStream(inputPhoto.getFetchableUrl()), mediaType);
+    MediaStreamSource streamSource =
+        new MediaStreamSource(getImageAsStream(inputPhoto.getFetchableUrl()), mediaType);
     outputPhoto.setMediaSource(streamSource);
 
-    // Find album to upload photo to
-    String albumId = jobStore.findData(TempPhotosData.class, uuid)
-        .lookupNewAlbumId(inputPhoto.getAlbumId());
+    // Put new album ID in job store so photos can be assigned to the correct album
+    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
+    if (photoMappings == null) {
+      photoMappings = new TempPhotosData(jobId);
+      jobStore.create(jobId, photoMappings);
+    }
+
+    // TODO: Find album to upload photo to from the jobstore
+    // TODO: String albumId = jobStore.findData(TempPhotosData.class,
+    // uuid).lookupNewAlbumId(inputPhoto.getAlbumId());
+    String albumId = DEFAULT_ALBUM_ID;
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
     // Upload photo
@@ -141,9 +156,7 @@ public class GooglePhotosImporter implements Importer<TokensAndUrlAuthData, Phot
   }
 
   private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
-    Credential credential =
-        new Credential(BearerToken.authorizationHeaderAccessMethod())
-            .setAccessToken(authData.getAccessToken());
+    Credential credential = credentialFactory.createCredential(authData);
     PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
     service.setOAuth2Credentials(credential);
     return service;

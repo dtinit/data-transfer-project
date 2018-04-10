@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
 
@@ -65,7 +66,7 @@ public class MicrosoftCalendarExporter
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(TokenAuthData authData) {
+  public ExportResult<CalendarContainerResource> export(UUID jobId, TokenAuthData authData) {
     Request.Builder calendarsBuilder = getBuilder(baseUrl + CALENDARS_SUBPATH, authData);
 
     List<CalendarModel> calendarModels = new ArrayList<>();
@@ -161,7 +162,7 @@ public class MicrosoftCalendarExporter
 
   @Override
   public ExportResult<CalendarContainerResource> export(
-      TokenAuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokenAuthData authData, ExportInformation exportInformation) {
     // TODO support pagination
     throw new UnsupportedOperationException();
   }

@@ -1,3 +1,8 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
+import java.nio.file.Paths
+
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -20,22 +25,28 @@
  * <p>
  * To enable OAuth secrets for testing, edit your gradle.settings file in the user home/.gradle directory (NOT the one in the source directory). Add the appropriate entries, e.g.:
  *
- * ddata.portability.key.microsoft=keyms
+ * data.portability.key.microsoft=keyms
  * data.portability.secret.microsoft=secretms
- * ddata.portability.key.google=keygoogle
+ * data.portability.key.google=keygoogle
  * data.portability.secret.google=secretgoogle
  */
-plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
-    id 'java'
-    id 'application'
+
+buildscript{
+    dependencies {
+        classpath ('javax.activation:activation:1.1.1')  // this dependency is required as a workaround to a reification error thrown when using the Docker plugin with Java 9
+    }
 }
 
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.bmuschko.docker-remote-api' version '3.2.6'
+}
 
 repositories {
     jcenter()
 }
-
 
 def CLIENT_ID_PREFIX = 'data.portability.key.'
 def CLIENT_SECRET_PREFIX = 'data.portability.secret.'
@@ -43,20 +54,23 @@ def JWT_KEY = 'data.portability.jwt.key'
 def JWT_SECRET = 'data.portability.jwt.secret'
 
 dependencies {
+
     compile project(':portability-bootstrap-vm')
 
-    compile project(':portability-gateway')
+    compile project(':portability-api')
     compile project(':portability-worker')
+
+    compile project(':extensions:config:portability-config-yaml')
 
     // TODO: depend on these based on list in flag values.
     compile project(':extensions:auth:portability-auth-microsoft')
     compile project(':extensions:auth:portability-auth-google')
     compile project(':extensions:auth:portability-auth-flickr')
-
+    compile project(':extensions:auth:portability-auth-rememberthemilk')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
-
+    compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
 }
 
 addCloudExtensionDependency(project)
@@ -73,9 +87,9 @@ task createSecretsFile() {
             } else if (key.startsWith(CLIENT_SECRET_PREFIX) && key.length() > CLIENT_SECRET_PREFIX.length()) {
                 def keyPrefix = key.substring(CLIENT_SECRET_PREFIX.length()).toUpperCase();
                 propFile.append("${keyPrefix}_SECRET=${val}\n");
-            }  else if (JWT_KEY.equals(key)){
+            } else if (JWT_KEY.equals(key)) {
                 propFile.append("JWT_KEY=${val}\n");
-            }  else if (JWT_SECRET.equals(key)){
+            } else if (JWT_SECRET.equals(key)) {
                 propFile.append("JWT_SECRET=${val}\n");
             }
         }
@@ -89,10 +103,88 @@ shadowJar {
     mergeServiceFiles()
     exclude '**/pom.properties'
     exclude '**/pom.xml'
-    copy {
-        from 'resources/'
-        into 'src/main/resources'
-    }
 }
 
 shadowJar.dependsOn(createSecretsFile)
+
+task createApiServerDockerfile(type: Dockerfile) {
+    description = 'Builds the API Server Dockerfile'
+    group = 'docker'
+    destFile project.file("${buildDir}/apiserver/Dockerfile")
+    from "${javaDockerContainer}"
+    exposePort 8080
+    copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
+    defaultCommand("java", "-jar", "/app/demo-server-all.jar")
+
+    // Read in secrets and set them as environment variables.
+    // NB: This is for demo purposes only. Production systems should manage and set secrets in a secure way.
+    def secretsFile = file(Paths.get(System.getProperty('user.home')).resolve('.gradle/dataportability.secrets.properties'))
+    if (secretsFile.exists()) {
+        def props = new Properties()
+        secretsFile.withInputStream { props.load(it) }
+        props.each { k, v -> environmentVariable(k, v) }
+    }
+
+}
+
+task createClientDockerfile(type: Dockerfile) {
+    description = 'Builds the Client Dockerfile'
+    group = 'docker'
+    destFile project.file("${buildDir}/client/Dockerfile")
+    from "nginx"
+    exposePort 80
+    copyFile("src/config/client/nginx.conf", "/etc/nginx")
+    copyFile("build/webapp/html", "/usr/share/nginx/html")
+    copyFile("build/webapp/test-keys/server.crt", "/etc/ssl/certs")
+    copyFile("build/webapp/test-keys/server.key", "/etc/ssl")
+}
+
+task buildApiServerImage(type: DockerBuildImage) {
+    description = 'Builds the API Server Docker image'
+    dependsOn shadowJar, createApiServerDockerfile
+    dockerFile = project.file("${buildDir}/apiserver/Dockerfile")
+    inputDir = project.file(".")
+    tag = 'dataportability/apiserver:latest'
+}
+
+task copyWebApp {
+    dependsOn ":client:buildWebApp"
+    doLast {
+        group = 'docker'
+        // The static webapp must be copied since Docker requires included files to be in a subdirectory relative to where Docker is executed
+        copy {
+            from '../../client/build/resources'
+            into 'build/webapp/html'
+        }
+        copy {
+            from '../../client/src/test-keys/server.crt'
+            into 'build/webapp/test-keys'
+        }
+        copy {
+            from '../../client/src/test-keys/server.key'
+            into 'build/webapp/test-keys'
+        }
+    }
+}
+
+task buildClientImage(type: DockerBuildImage) {
+    description = 'Builds the Client Docker image'
+    dependsOn shadowJar, createClientDockerfile, copyWebApp
+    dockerFile = project.file("${buildDir}/client/Dockerfile")
+    inputDir = project.file(".")
+    tag = 'dataportability/client:latest'
+}
+
+task dockerize {
+    description = 'Builds the Client and API Server Docker images'
+    group = 'docker'
+    dependsOn buildApiServerImage, buildClientImage
+}
+
+task installToolsAndDockerize {
+    description = 'Installs required build tools and builds the Client and API Server Docker images'
+    group = 'docker'
+    dependsOn ":client:installTools", buildApiServerImage, buildClientImage
+}
+
+

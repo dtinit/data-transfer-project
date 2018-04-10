@@ -16,7 +16,10 @@
 
 package org.dataportabilityproject.datatransfer.google.contacts;
 
-import com.google.api.client.auth.oauth2.BearerToken;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.model.EmailAddress;
@@ -32,6 +35,12 @@ import ezvcard.io.json.JCardReader;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -40,15 +49,6 @@ import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWr
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
-
 public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, ContactsModelWrapper> {
 
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
@@ -56,14 +56,17 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
       new FieldMetadata().setPrimary(false);
 
   private static final Logger logger = LoggerFactory.getLogger(GoogleContactsExporter.class);
+  private final GoogleCredentialFactory credentialFactory;
   private volatile PeopleService peopleService;
 
-  public GoogleContactsImporter() {
-    this.peopleService = null;
+  public GoogleContactsImporter(GoogleCredentialFactory credentialFactory) {
+    this.credentialFactory = credentialFactory;
+    this.peopleService = null; // lazily initialized for the given request
   }
 
   @VisibleForTesting
   GoogleContactsImporter(PeopleService peopleService) {
+    this.credentialFactory = null; // unused in tests
     this.peopleService = peopleService;
   }
 
@@ -199,7 +202,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   }
 
   @Override
-  public ImportResult importItem(String jobId, TokensAndUrlAuthData authData, ContactsModelWrapper data) {
+  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData, ContactsModelWrapper data) {
     JCardReader reader = new JCardReader(data.getVCards());
     try {
       // TODO(olsona): address any other problems that might arise in conversion
@@ -219,10 +222,9 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   }
 
   private synchronized PeopleService makePeopleService(TokensAndUrlAuthData authData) {
-    Credential credential= new Credential(BearerToken.authorizationHeaderAccessMethod())
-                .setAccessToken(authData.getAccessToken());;
+    Credential credential = credentialFactory.createCredential(authData);
     return new PeopleService.Builder(
-            GoogleStaticObjects.getHttpTransport(), GoogleStaticObjects.JSON_FACTORY, credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
