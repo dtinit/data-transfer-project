@@ -64,7 +64,7 @@ task buildHostWebApp(type: Exec) {
     }
 }
 
-task rundHostWebApp(type: Exec) {
+task runHostWebApp(type: Exec) {
     group = BasePlugin.BUILD_GROUP
     description = "Runs the client webapp in development mode using the host Angular CLI installation"
     workingDir "$projectDir"
