@@ -19,9 +19,7 @@ import org.dataportabilityproject.api.launcher.AbstractExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 
-/**
- * Transfer extensions implement this contract to be loaded in a worker process.
- */
+/** Transfer extensions implement this contract to be loaded in a transfer worker process. */
 public interface TransferExtension extends AbstractExtension {
 
   /** The key associated with this extension's service. */

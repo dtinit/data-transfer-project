@@ -3,7 +3,7 @@ package org.dataportabilityproject.bootstrap.vm;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import org.dataportabilityproject.api.ApiMain;
 import org.dataportabilityproject.api.reference.ReferenceApiServer;
-import org.dataportabilityproject.worker.WorkerMain;
+import org.dataportabilityproject.transfer.WorkerMain;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;

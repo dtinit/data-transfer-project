@@ -14,8 +14,32 @@
  * limitations under the License.
  */
 
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'java'
+    id 'application'
+}
+
+
+repositories {
+    jcenter()
+}
 
 dependencies {
-    compile project(':portability-api')
     compile project(':portability-transfer')
+
+    compile project(':extensions:data-transfer:portability-data-transfer-flickr')
+    compile project(':extensions:data-transfer:portability-data-transfer-google')
+    compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
 }
+
+addCloudExtensionDependency(project)
+
+mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
+
+shadowJar {
+    mergeServiceFiles()
+    exclude '**/pom.properties'
+    exclude '**/pom.xml'
+}
+

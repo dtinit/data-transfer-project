@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Google Inc.
+# Copyright 2018 Data Transfer Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 # Usage: ./distributions/demo-google-deployment/bin/build_docker_image.sh <binary> <env>
 # [project-suffix]
 # - binary is required and specifies which server to build.
-#     This should be one of: api, worker
+#     This should be one of: api, transfer
 #     ex: api will build the portability-api binary
 # - env is the environment you would like to build for. This should correspond to an environment dir
 #     in config/environments. Settings for this environment are copied into the binary.
@@ -48,7 +48,7 @@ echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
 
 if [ -z $1 ]; then
-  echo "ERROR: Must provide a binary: 'api' or 'worker'"
+  echo "ERROR: Must provide a binary: 'api' or 'transfer'"
   exit 1
 fi
 
@@ -63,7 +63,7 @@ PROJECT_ID_SUFFIX=$3
 GIT_COMMIT=$(git log -1 --format=%h)
 PORT=8080
 DEBUG_PORT=5005
-if [[ $BINARY == "worker" ]]; then
+if [[ $BINARY == "transfer" ]]; then
   DEBUG_PORT=5006
   PORT=8082
 fi
