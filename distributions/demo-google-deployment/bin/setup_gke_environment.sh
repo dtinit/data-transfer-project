@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Google Inc.
+# Copyright 2018 Data Transfer Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ fi
 
 # Constants
 NUM_API_INSTANCES=2 #Number of API instances to run
-NUM_WORKER_INSTANCES=3 #Number of worker instances to run
+NUM_TRANSFER_INSTANCES=3 #Number of transfer instances to run
 ZONE=us-central1-a
 STATIC_BUCKET_NAME=static-bucket
 API_NODE_PORT=30580 #If this changes, change nodePort in api-service.yaml too
@@ -134,15 +134,15 @@ create_api_backend_service() {
   kubectl create -f ../k8s/api-service.yaml
 }
 
-# Helper function to create an api or worker pool
-create_backend_pool() { # args: ${1}: backend name, "api" or "worker"
+# Helper function to create an api or transfer worker pool
+create_backend_pool() { # args: ${1}: backend name, "api" or "transfer"
   BACKEND=${1}
-  if [[ ${BACKEND} != "api" && ${BACKEND} != "worker" ]]; then
+  if [[ ${BACKEND} != "api" && ${BACKEND} != "transfer" ]]; then
     echo -e "Invalid backend ${BACKEND}"
     exit 1
   fi
   echo -e "Creating ${BACKEND} pool"
-  NUM_INSTANCES=${NUM_WORKER_INSTANCES}
+  NUM_INSTANCES=${NUM_TRANSFER_INSTANCES}
   if [[ ${BACKEND} == "api" ]]; then
     NUM_INSTANCES=${NUM_API_INSTANCES}
   fi
@@ -325,8 +325,8 @@ else
   exit 0
 fi
 
-print_step "Creating credentials for service account to access GCP APIs. Both the API and worker
-pools, which we are about to create below, will import these credentials in create_backend_pool."
+print_step "Creating credentials for service account to access GCP APIs. Both the API and transfer
+worker pools, which we are about to create below, will import these credentials in create_backend_pool."
 gcloud iam service-accounts keys create \
     /tmp/service_account_creds.json \
     --iam-account=${SERVICE_ACCOUNT}
@@ -334,8 +334,8 @@ gcloud iam service-accounts keys create \
 # Create the API pool
 create_backend_pool "api"
 
-# Create the worker pool
-create_backend_pool "worker"
+# Create the transfer worker pool
+create_backend_pool "transfer"
 
 # Clean up service account creds so we don't leave these lying around on our local machines
 rm /tmp/service_account_creds.json
