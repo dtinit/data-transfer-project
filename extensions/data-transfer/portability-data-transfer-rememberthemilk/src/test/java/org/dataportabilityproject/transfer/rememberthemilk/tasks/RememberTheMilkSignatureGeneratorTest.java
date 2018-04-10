@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.serviceProviders.rememberTheMilk;
+
+package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import java.net.URL;
-import org.dataportabilityproject.shared.AppCredentials;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.junit.Test;
 
 public class RememberTheMilkSignatureGeneratorTest {
@@ -26,7 +27,7 @@ public class RememberTheMilkSignatureGeneratorTest {
   private static final String SECRET = "BANANAS2";
   private static final String TOKEN = "BANANAS3";
 
-  private static final AppCredentials APP_CREDENTIALS = AppCredentials.create(KEY, SECRET);
+  private static final AppCredentials APP_CREDENTIALS = new AppCredentials(KEY, SECRET);
   private static final RememberTheMilkSignatureGenerator SIGNATURE_GENERATOR =
       new RememberTheMilkSignatureGenerator(APP_CREDENTIALS, TOKEN);
 
