@@ -60,8 +60,8 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
    * Starts a job using the following flow:
    * <li>Validate auth data is present in cookies
    * <li>Set Job to state CREDS_AVAILABLE
-   * <li>Wait for a transfer to be assigned
-   * <li>Once transfer assigned, grab transfer key to encrypt auth data from cookies
+   * <li>Wait for a transfer worker to be assigned
+   * <li>Once transfer worker assigned, grab transfer key to encrypt auth data from cookies
    * <li>Update job with auth data
    */
   @Override
