@@ -13,16 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-dependencies {
-    compile project(':portability-spi-api')
-    compile project(':portability-spi-cloud')
+package org.dataportabilityproject.auth.instagram;
 
-    // logging
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+import static org.junit.Assert.assertNull;
 
-    testCompile("com.google.truth:truth:${truthVersion}")
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.mockito:mockito-all:${mockitoVersion}")
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
+
+/** Initial test for GoogleAuthDataGenerator. */
+@RunWith(MockitoJUnitRunner.class)
+public class InstagramAuthDataGeneratorTest {
+
+  @Test
+  public void generateConfiguration() {
+    assertNull(new InstagramAuthDataGenerator().generateConfiguration(null, null));
+  }
+
+  @Test
+  public void generateAuthData() {
+    assertNull(new InstagramAuthDataGenerator().generateAuthData(null, null, null, null, null));
+  }
+
+
+
 }
-
