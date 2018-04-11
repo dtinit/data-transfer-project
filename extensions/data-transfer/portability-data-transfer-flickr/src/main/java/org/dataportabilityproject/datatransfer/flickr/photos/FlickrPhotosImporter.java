@@ -124,8 +124,10 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
     String oldAlbumId = photo.getAlbumId();
 
-    // If the photo wasn't associated with an album, we can just import it to Flickr without
-    // adding it to a photset. This will mean it lives in the users cameraroll.
+    // If the photo wasn't associated with an album, we don't have to do anything else, since we've
+    // already uploaded it above. This will mean it lives in the user's cameraroll and not in an album.
+    // If the uploadPhoto() call fails above, an exception will be thrown, so we don't have to worry
+    // about the photo not being uploaded here.
     if (Strings.isNullOrEmpty(oldAlbumId)) {
       return;
     }
