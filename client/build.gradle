@@ -55,6 +55,7 @@ task installHostAngularCli(type: Exec) {
 task buildHostWebApp(type: Exec) {
     group = BasePlugin.BUILD_GROUP
     description = "Builds the client webapp using the host Angular CLI installation"
+    dependsOn npmInstall
     workingDir "$projectDir"
     inputs.dir "$projectDir"
     if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
@@ -64,15 +65,15 @@ task buildHostWebApp(type: Exec) {
     }
 }
 
-task rundHostWebApp(type: Exec) {
+task runHostWebApp(type: Exec) {
     group = BasePlugin.BUILD_GROUP
     description = "Runs the client webapp in development mode using the host Angular CLI installation"
     workingDir "$projectDir"
     inputs.dir "$projectDir"
     if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
-        commandLine "ng.cmd", "serve", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+        commandLine "ng.cmd", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
     } else {
-        commandLine "ng", "serve", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+        commandLine "ng", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
     }
 }
 

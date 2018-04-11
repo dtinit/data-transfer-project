@@ -58,7 +58,7 @@ dependencies {
     compile project(':portability-bootstrap-vm')
 
     compile project(':portability-api')
-    compile project(':portability-worker')
+    compile project(':portability-transfer')
 
     compile project(':extensions:config:portability-config-yaml')
 
@@ -107,10 +107,10 @@ shadowJar {
 
 shadowJar.dependsOn(createSecretsFile)
 
-task createApiServerDockerfile(type: Dockerfile) {
+task createDemoServerDockerfile(type: Dockerfile) {
     description = 'Builds the API Server Dockerfile'
     group = 'docker'
-    destFile project.file("${buildDir}/apiserver/Dockerfile")
+    destFile project.file("${buildDir}/demoserver/Dockerfile")
     from "${javaDockerContainer}"
     exposePort 8080
     copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
@@ -132,19 +132,19 @@ task createClientDockerfile(type: Dockerfile) {
     group = 'docker'
     destFile project.file("${buildDir}/client/Dockerfile")
     from "nginx"
-    exposePort 80
+    exposePort 3000
     copyFile("src/config/client/nginx.conf", "/etc/nginx")
     copyFile("build/webapp/html", "/usr/share/nginx/html")
     copyFile("build/webapp/test-keys/server.crt", "/etc/ssl/certs")
     copyFile("build/webapp/test-keys/server.key", "/etc/ssl")
 }
 
-task buildApiServerImage(type: DockerBuildImage) {
+task buildDemoServerImage(type: DockerBuildImage) {
     description = 'Builds the API Server Docker image'
-    dependsOn shadowJar, createApiServerDockerfile
-    dockerFile = project.file("${buildDir}/apiserver/Dockerfile")
+    dependsOn shadowJar, createDemoServerDockerfile
+    dockerFile = project.file("${buildDir}/demoserver/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/apiserver:latest'
+    tag = 'dataportability/demoserver:latest'
 }
 
 task copyWebApp {
@@ -178,13 +178,13 @@ task buildClientImage(type: DockerBuildImage) {
 task dockerize {
     description = 'Builds the Client and API Server Docker images'
     group = 'docker'
-    dependsOn buildApiServerImage, buildClientImage
+    dependsOn buildDemoServerImage, buildClientImage
 }
 
 task installToolsAndDockerize {
     description = 'Installs required build tools and builds the Client and API Server Docker images'
     group = 'docker'
-    dependsOn ":client:installTools", buildApiServerImage, buildClientImage
+    dependsOn ":client:installTools", buildDemoServerImage, buildClientImage
 }
 
 

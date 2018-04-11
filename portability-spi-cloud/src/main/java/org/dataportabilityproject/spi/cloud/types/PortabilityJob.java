@@ -209,7 +209,7 @@ public abstract class PortabilityJob {
               jobAuthorization.authPublicKey());
           break;
         case CREDS_ENCRYPTION_KEY_GENERATED:
-          // Expected associated keys from the assigned worker to be present
+          // Expected associated keys from the assigned transfer worker to be present
           isSet(jobAuthorization.sessionSecretKey(), jobAuthorization.authPublicKey());
           isUnset(
               jobAuthorization.encryptedExportAuthData(),
