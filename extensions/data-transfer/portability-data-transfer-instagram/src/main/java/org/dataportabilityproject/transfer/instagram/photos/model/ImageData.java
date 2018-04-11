@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.instagram.photos;
 
-import static org.junit.Assert.assertNull;
+package org.dataportabilityproject.transfer.instagram.photos.model;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+/** DataModel for a single image object in the Instagram API. Instantiated by JSON mapping. */
+public final class ImageData {
 
-@RunWith(MockitoJUnitRunner.class)
-public class InstagramPhotoExporterTest {
+  private String url;
 
-  @Test
-  public void exporter() {
-    // TODO: implement
-    // new InstagramPhotoExporter().export(null, null);
+  private int height;
+
+  private int width;
+
+  public String getUrl() {
+    return url;
+  }
+
+  public int getHeight() {
+    return height;
+  }
+
+  public int getWidth() {
+    return width;
   }
 }
