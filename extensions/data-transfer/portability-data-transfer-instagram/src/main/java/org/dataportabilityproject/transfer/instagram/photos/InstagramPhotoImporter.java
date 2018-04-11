@@ -31,6 +31,7 @@ public class InstagramPhotoImporter implements
   @Override
   public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
       PhotosContainerResource data) {
-    return null; // TODO: implement
+    // TODO(#337): Import is not supported for Instagram since their API does not support upload
+    return null;
   }
 }
