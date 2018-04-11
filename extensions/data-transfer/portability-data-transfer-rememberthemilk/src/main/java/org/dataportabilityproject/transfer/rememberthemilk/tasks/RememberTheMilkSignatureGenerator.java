@@ -17,7 +17,9 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
+import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
 import javax.annotation.Nullable;
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generates signatures hash based on the algorithm described:
@@ -41,8 +44,10 @@ final class RememberTheMilkSignatureGenerator {
   private final AppCredentials appCredentials;
   private final String authToken;
 
+  // Auth Token is required for the Signature Generator when created within the data transfer
   public RememberTheMilkSignatureGenerator(AppCredentials appCredentials, String authToken) {
     this.appCredentials = Preconditions.checkNotNull(appCredentials);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(authToken));
     this.authToken = authToken;
   }
 
@@ -55,9 +60,8 @@ final class RememberTheMilkSignatureGenerator {
     String secret = appCredentials.getSecret();
 
     map.put("api_key", apiKey);
-    if (null != authToken) {
-      map.put("auth_token", authToken);
-    }
+    map.put("auth_token", authToken);
+
     List<String> orderedKeys = map.keySet().stream().collect(Collectors.toList());
     Collections.sort(orderedKeys);
 
@@ -67,21 +71,14 @@ final class RememberTheMilkSignatureGenerator {
       sb.append(key).append(map.get(key));
     }
 
+    LoggerFactory.getLogger(RememberTheMilkSignatureGenerator.class).debug("Generating MD5 for: {}", sb.toString());
+
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
-      byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
+      byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_16));
       String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
       return new URL(
-          url
-              + "&"
-              + "api_key"
-              + "="
-              + apiKey
-              + (authToken == null ? "" : ("&" + "auth_token" + "=" + authToken))
-              + "&"
-              + "api_sig"
-              + "="
-              + signature);
+          url + "&api_key=" + apiKey + "&auth_token=" + authToken + "&api_sig=" + signature);
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Couldn't find MD5 hash", e);
     } catch (MalformedURLException e) {

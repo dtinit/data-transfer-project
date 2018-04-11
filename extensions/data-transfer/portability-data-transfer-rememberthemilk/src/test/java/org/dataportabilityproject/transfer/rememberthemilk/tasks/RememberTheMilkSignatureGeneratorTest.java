@@ -36,7 +36,7 @@ public class RememberTheMilkSignatureGeneratorTest {
     URL url = new URL("http://example.com?yxz=foo&feg=bar&abc=baz");
     URL expected =
         new URL(
-            "http://example.com?yxz=foo&feg=bar&abc=baz&api_key=BANANAS1&auth_token=BANANAS3&api_sig=b48f0dd1a18179b3068b16728e214561");
+            "http://example.com?yxz=foo&feg=bar&abc=baz&api_key=BANANAS1&auth_token=BANANAS3&api_sig=8c8a6a1b743ef1571a79daf4dd7c01b3");
     assertThat(SIGNATURE_GENERATOR.getSignature(url)).isEqualTo(expected);
   }
 }

@@ -27,9 +27,12 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.api.client.util.IOUtils;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.escape.Escaper;
+import com.google.common.net.UrlEscapers;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListsResponse;
@@ -45,8 +48,8 @@ import org.slf4j.LoggerFactory;
 class RememberTheMilkService {
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private RememberTheMilkSignatureGenerator signatureGenerator;
-  private Logger logger = LoggerFactory.getLogger(RememberTheMilkService.class);
   private XmlMapper xmlMapper = new XmlMapper();
+  private Escaper escaper = UrlEscapers.urlFragmentEscaper();
 
   RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
     this.signatureGenerator = signatureGenerator;
@@ -96,7 +99,12 @@ class RememberTheMilkService {
 
     StringBuilder parameterString = new StringBuilder();
     for (String key : parameters.keySet()) {
-      parameterString.append("&").append(key).append("=").append(parameters.get(key));
+      // Encode the query param value string as it could contain whitespace
+      parameterString
+          .append("&")
+          .append(escaper.escape(key))
+          .append("=")
+          .append(escaper.escape(parameters.get(key)));
     }
 
     URL url = new URL(method.getUrl() + parameterString);

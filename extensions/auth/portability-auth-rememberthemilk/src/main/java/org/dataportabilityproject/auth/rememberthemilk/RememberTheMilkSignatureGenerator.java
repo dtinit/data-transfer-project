@@ -46,7 +46,7 @@ public final class RememberTheMilkSignatureGenerator {
   public URL getSignature(URL url) throws MalformedURLException {
     String query = url.getQuery();
     Map<String, String> map =
-        new HashMap<>(Splitter.on('&').trimResults().withKeyValueSeparator("=").split(query));
+        new HashMap<>(Splitter.on('&').withKeyValueSeparator("=").split(query));
 
     String apiKey = appCredentials.getKey();
     String secret = appCredentials.getSecret();
@@ -66,16 +66,7 @@ public final class RememberTheMilkSignatureGenerator {
       MessageDigest md = MessageDigest.getInstance("MD5");
       byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
       String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
-      return new URL(
-          url
-              + "&"
-              + "api_key"
-              + "="
-              + apiKey
-              + "&"
-              + "api_sig"
-              + "="
-              + signature);
+      return new URL(url + "&api_key=" + apiKey + "&api_sig=" + signature);
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Couldn't find MD5 hash", e);
     } catch (MalformedURLException e) {
