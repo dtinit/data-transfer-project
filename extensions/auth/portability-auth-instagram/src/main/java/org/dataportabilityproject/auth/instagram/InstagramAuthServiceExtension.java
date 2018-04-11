@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.auth.instagram;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -29,12 +30,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class InstagramAuthServiceExtension implements AuthServiceExtension {
-  private final Logger logger = LoggerFactory.getLogger(InstagramAuthServiceExtension.class);
   private static final String INSTAGRAM_KEY = "INSTAGRAM_KEY";
   private static final String INSTAGRAM_SECRET = "INSTAGRAM_SECRET";
   private static final String INSTAGRAM_SERVICE_ID = "instagram";
-  private final List<String> SUPPORTED_SERVICES = ImmutableList.of("photos");
-  private InstagramAuthDataGenerator importAuthDataGenerator;
+  private final Logger logger = LoggerFactory.getLogger(InstagramAuthServiceExtension.class);
+  private final List<String> SUPPORTED_EXPORT_SERVICES = ImmutableList.of("photos");
+
   private InstagramAuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;
 
@@ -48,25 +49,27 @@ public class InstagramAuthServiceExtension implements AuthServiceExtension {
     Preconditions.checkArgument(
         initialized,
         "InstagramAuthServiceExtension is not initialized! Unable to retrieve AuthDataGenerator");
+    Preconditions.checkArgument(mode == AuthMode.EXPORT, "Importing to Instagram is not supported");
     Preconditions.checkArgument(
-        SUPPORTED_SERVICES.contains(transferDataType),
+        SUPPORTED_EXPORT_SERVICES.contains(transferDataType),
         "Transfer type [" + transferDataType + "] is not supported in Instagram");
-    return (mode == AuthMode.IMPORT) ? importAuthDataGenerator : exportAuthDataGenerator;
+    return exportAuthDataGenerator;
   }
 
   @Override
   public List<String> getImportTypes() {
-    return SUPPORTED_SERVICES;
+    // Instagram does not support importing
+    return ImmutableList.of();
   }
 
   @Override
   public List<String> getExportTypes() {
-    return SUPPORTED_SERVICES;
+    return SUPPORTED_EXPORT_SERVICES;
   }
 
   @Override
   public void initialize(ExtensionContext context) {
-    if (initialized)  {
+    if (initialized) {
       logger.warn("InstagramAuthServiceExtension already initalized");
       return;
     }
@@ -74,7 +77,9 @@ public class InstagramAuthServiceExtension implements AuthServiceExtension {
     AppCredentials appCredentials;
     try {
       appCredentials =
-          context.getService(AppCredentialStore.class).getAppCredentials(INSTAGRAM_KEY, INSTAGRAM_SECRET);
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials(INSTAGRAM_KEY, INSTAGRAM_SECRET);
     } catch (IOException e) {
       logger.warn(
           "Error retrieving Instagram Credentials. Did you set {} and {}?",
@@ -83,10 +88,9 @@ public class InstagramAuthServiceExtension implements AuthServiceExtension {
       return;
     }
 
-    importAuthDataGenerator =
-        new InstagramAuthDataGenerator();
     exportAuthDataGenerator =
-        new InstagramAuthDataGenerator();
+        new InstagramAuthDataGenerator(appCredentials, context.getService(HttpTransport.class));
+
     initialized = true;
   }
 }
