@@ -15,6 +15,9 @@
  */
 package org.dataportabilityproject.transfer.instagram;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -71,7 +74,10 @@ public class InstagramTransferExtension implements TransferExtension {
       return;
     }
 
+    ObjectMapper mapper =
+        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     JobStore jobStore = context.getService(JobStore.class);
+    HttpTransport httpTransport = context.getService(HttpTransport.class);
     AppCredentials credentials;
     try {
       credentials =
@@ -86,7 +92,7 @@ public class InstagramTransferExtension implements TransferExtension {
       return;
     }
 
-    exporter = new InstagramPhotoExporter();
+    exporter = new InstagramPhotoExporter(mapper, httpTransport);
     importer = new InstagramPhotoImporter();
 
     initialized = true;
