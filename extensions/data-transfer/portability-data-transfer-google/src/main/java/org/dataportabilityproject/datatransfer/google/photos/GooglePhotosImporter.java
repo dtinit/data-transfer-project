@@ -39,6 +39,8 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -48,6 +50,7 @@ public class GooglePhotosImporter
       "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
   // The default album to upload to if the photo is not associated with an album
   static final String DEFAULT_ALBUM_ID = "default";
+  static final Logger logger = LoggerFactory.getLogger(GooglePhotosImporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -78,10 +81,13 @@ public class GooglePhotosImporter
   @Override
   public ImportResult importItem(
       UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
+    if (data.getAlbums() != null && data.getAlbums().size() > 0) {
+      logger.warn(
+          "Importing albums in Google Photos is not supported. "
+              + "Photos will be added to the default album.");
+    }
+
     try {
-      for (PhotoAlbum album : data.getAlbums()) {
-        importSingleAlbum(jobId, authData, album);
-      }
       for (PhotoModel photo : data.getPhotos()) {
         importSinglePhoto(jobId, authData, photo);
       }
@@ -89,30 +95,8 @@ public class GooglePhotosImporter
       // TODO(olsona): we shouldn't just error out if there's a single problem - should retry
       return new ImportResult(ResultType.ERROR, e.getMessage());
     }
+
     return ImportResult.OK;
-  }
-
-  @VisibleForTesting
-  void importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
-      throws IOException, ServiceException {
-
-    // Set up album
-    AlbumEntry outputAlbum = new AlbumEntry();
-    outputAlbum.setTitle(new PlainTextConstruct("copy of " + inputAlbum.getName()));
-    outputAlbum.setDescription(new PlainTextConstruct(inputAlbum.getDescription()));
-
-    // Upload album
-    AlbumEntry insertedEntry =
-        getOrCreatePhotosService(authData).insert(new URL(ALBUM_POST_URL), outputAlbum);
-
-    // Put new album ID in job store so photos can be assigned to the correct album
-    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
-    if (photoMappings == null) {
-      photoMappings = new TempPhotosData(jobId);
-      jobStore.create(jobId, photoMappings);
-    }
-    photoMappings.addAlbumId(inputAlbum.getId(), insertedEntry.getGphotoId());
-    jobStore.update(jobId, photoMappings);
   }
 
   @VisibleForTesting
@@ -134,16 +118,6 @@ public class GooglePhotosImporter
         new MediaStreamSource(getImageAsStream(inputPhoto.getFetchableUrl()), mediaType);
     outputPhoto.setMediaSource(streamSource);
 
-    // Put new album ID in job store so photos can be assigned to the correct album
-    TempPhotosData photoMappings = jobStore.findData(TempPhotosData.class, jobId);
-    if (photoMappings == null) {
-      photoMappings = new TempPhotosData(jobId);
-      jobStore.create(jobId, photoMappings);
-    }
-
-    // TODO: Find album to upload photo to from the jobstore
-    // TODO: String albumId = jobStore.findData(TempPhotosData.class,
-    // uuid).lookupNewAlbumId(inputPhoto.getAlbumId());
     String albumId = DEFAULT_ALBUM_ID;
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
