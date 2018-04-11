@@ -31,9 +31,10 @@ import java.nio.file.Paths
  * data.portability.secret.google=secretgoogle
  */
 
-buildscript{
+buildscript {
     dependencies {
-        classpath ('javax.activation:activation:1.1.1')  // this dependency is required as a workaround to a reification error thrown when using the Docker plugin with Java 9
+        // this dependency is required as a workaround to a reification error thrown when using the Docker plugin with Java 9
+        classpath('javax.activation:activation:1.1.1')
     }
 }
 
@@ -114,9 +115,13 @@ task createDemoServerDockerfile(type: Dockerfile) {
     group = 'docker'
     destFile project.file("${buildDir}/demoserver/Dockerfile")
     from "${javaDockerContainer}"
+    // Port the API server is accessed from
     exposePort 8080
+    // Port to open up for the debugger
+    exposePort 5005
     copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
-    defaultCommand("java", "-jar", "/app/demo-server-all.jar")
+
+    defaultCommand("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005", "-jar", "/app/demo-server-all.jar")
 
     // Read in secrets and set them as environment variables.
     // NB: This is for demo purposes only. Production systems should manage and set secrets in a secure way.
