@@ -15,24 +15,106 @@
  */
 package org.dataportabilityproject.transfer.instagram.photos;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.spi.transfer.types.PaginationData;
+import org.dataportabilityproject.transfer.instagram.photos.model.MediaFeedData;
+import org.dataportabilityproject.transfer.instagram.photos.model.MediaResponse;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
+import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class InstagramPhotoExporter implements
     Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+  private static final String MEDIA_URL = "https://api.instagram.com/v1/users/self/media/recent";
+  private static final String FAKE_ALBUM_ID = "instagramAlbum";
+
+  private final ObjectMapper objectMapper;
+  private final HttpTransport httpTransport;
+
+  public InstagramPhotoExporter(ObjectMapper objectMapper, HttpTransport httpTransport) {
+    this.objectMapper = objectMapper;
+    this.httpTransport = httpTransport;
+  }
 
   @Override
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
-    return null; // TODO: implement
+    return exportPhotos(authData, Optional.empty());
   }
 
   @Override
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       ExportInformation exportInformation) {
-    return null; // TODO: implement
+    return exportPhotos(authData, Optional.of(exportInformation.getPaginationData()));
+  }
+
+  private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
+      Optional<PaginationData> pageData) {
+    Preconditions.checkNotNull(authData);
+    MediaResponse response;
+    try {
+      response = makeRequest(MEDIA_URL, MediaResponse.class, authData);
+    } catch (IOException e) {
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+    }
+
+    List<PhotoModel> photos = new ArrayList<>();
+
+    // TODO: check out paging.
+    for (MediaFeedData photo : response.getData()) {
+      // TODO json mapping is broken.
+      String photoId = photo.getId();
+      String url = photo.getImages().getStandardResolution().getUrl();
+      String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
+      photos.add(new PhotoModel("Instagram photo: " + photoId, url, text, null, FAKE_ALBUM_ID));
+    }
+
+    List<PhotoAlbum> albums = new ArrayList<>();
+
+    if (!photos.isEmpty() && !pageData.isPresent()) {
+      albums.add(
+          new PhotoAlbum(
+              FAKE_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
+    }
+
+    return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, photos));
+  }
+
+  private <T> T makeRequest(String url, Class<T> clazz, TokensAndUrlAuthData authData)
+      throws IOException {
+    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+    HttpRequest getRequest =
+        requestFactory.buildGetRequest(
+            new GenericUrl(url + "?access_token=" + authData.getAccessToken()));
+    HttpResponse response = getRequest.execute();
+    int statusCode = response.getStatusCode();
+    if (statusCode != 200) {
+      throw new IOException(
+          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    }
+    String result =
+        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    return objectMapper.readValue(result, clazz);
   }
 }
