@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -178,6 +179,22 @@ public class GooglePhotosExporterTest {
             .map(a -> ((IdOnlyContainerResource) a).getId())
             .collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
+  }
+
+  private void setUpMultipleAlbumResponse(int numAlbums, int numPhotosPerAlbum) {
+    List<AlbumEntry> albumList = new LinkedList<>();
+    for (int i = 0; i < numAlbums; i++) {
+      // Create album
+      AlbumEntry albumEntry = new AlbumEntry();
+      String albumId = ALBUM_ID + i;
+      albumEntry.setId(albumId);
+      albumEntry.setTitle(new PlainTextConstruct(ALBUM_TITLE + i));
+      albumEntry.setDescription(new PlainTextConstruct(ALBUM_DESCRIPTION + i));
+
+      // Create photos
+    }
+
+    when(usersAlbumsFeed.getAlbumEntries()).thenReturn(albumList);
   }
 
   /**
