@@ -47,18 +47,15 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerRe
 
 public class InstagramPhotoExporter implements
     Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final String MEDIA_URL = "https://api.instagram.com/v1/users/self/media/recent";
   private static final String FAKE_ALBUM_ID = "instagramAlbum";
 
+  private final ObjectMapper objectMapper;
   private final HttpTransport httpTransport;
 
-  public InstagramPhotoExporter() {
-    try {
-      this.httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    } catch (IOException | GeneralSecurityException e) {
-      throw new IllegalStateException("Problem initializing httpTransport", e);
-    }
+  public InstagramPhotoExporter(ObjectMapper objectMapper, HttpTransport httpTransport) {
+    this.objectMapper = objectMapper;
+    this.httpTransport = httpTransport;
   }
 
   @Override
@@ -77,8 +74,7 @@ public class InstagramPhotoExporter implements
     Preconditions.checkNotNull(authData);
     MediaResponse response;
     try {
-      response = makeRequest("https://api.instagram.com/v1/users/self/media/recent",
-          MediaResponse.class, authData);
+      response = makeRequest(MEDIA_URL, MediaResponse.class, authData);
     } catch (IOException e) {
       return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
@@ -119,6 +115,6 @@ public class InstagramPhotoExporter implements
     }
     String result =
         CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
-    return MAPPER.readValue(result, clazz);
+    return objectMapper.readValue(result, clazz);
   }
 }
