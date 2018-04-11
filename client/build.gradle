@@ -55,6 +55,7 @@ task installHostAngularCli(type: Exec) {
 task buildHostWebApp(type: Exec) {
     group = BasePlugin.BUILD_GROUP
     description = "Builds the client webapp using the host Angular CLI installation"
+    dependsOn npmInstall
     workingDir "$projectDir"
     inputs.dir "$projectDir"
     if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
