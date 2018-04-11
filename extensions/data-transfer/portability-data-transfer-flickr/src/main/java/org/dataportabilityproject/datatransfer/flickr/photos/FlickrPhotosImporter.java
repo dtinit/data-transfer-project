@@ -122,10 +122,13 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private void importSinglePhoto(UUID id, PhotoModel photo) throws FlickrException, IOException {
     String photoId = uploadPhoto(photo);
 
-    // TODO: what happens when the photo isn't associated with an album?
     String oldAlbumId = photo.getAlbumId();
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(oldAlbumId), "Photo is not associated with an AlbumId");
+
+    // If the photo wasn't associated with an album, we can just import it to Flickr without
+    // adding it to a photset. This will mean it lives in the users cameraroll.
+    if (Strings.isNullOrEmpty(oldAlbumId)) {
+      return;
+    }
 
     TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
     String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
@@ -133,7 +136,10 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     if (Strings.isNullOrEmpty(newAlbumId)) {
       // This means that we havent created the new album yet, create the photoset
       PhotoAlbum album = tempData.lookupTempAlbum(oldAlbumId);
-      // TODO: handle what happens if the album doesn't exit?
+
+      // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
+      // throw them into a default album or add a finalize() step in the Importer which can deal
+      // with these (in case the album exists later).
       Preconditions.checkArgument(album != null, "Album not found: {}", oldAlbumId);
 
       Photoset photoset =
