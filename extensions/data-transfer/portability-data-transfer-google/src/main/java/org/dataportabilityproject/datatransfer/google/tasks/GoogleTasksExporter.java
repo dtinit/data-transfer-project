@@ -21,6 +21,7 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
@@ -40,10 +41,13 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskContainerResource> {
   private static final long PAGE_SIZE = 50; // TODO: configure correct size in production
   private final GoogleCredentialFactory credentialFactory;
+  Logger logger = LoggerFactory.getLogger(GoogleTasksExporter.class);
   private volatile Tasks tasksClient;
 
   public GoogleTasksExporter(GoogleCredentialFactory credentialFactory) {
@@ -77,6 +81,10 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
         return getTasksList(tasksService, exportInformation.getPaginationData());
       }
     } catch (Exception e) {
+      logger.warn(
+          "Error occurred trying to retrieve task: {}, {}",
+          e.getMessage(),
+          Throwables.getStackTraceAsString(e));
       return new ExportResult<>(ResultType.ERROR, "Error retrieving tasks: " + e.getMessage());
     }
   }
@@ -111,8 +119,8 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     return new ExportResult<>(resultType, taskContainerResource, new ContinuationData(newPage));
   }
 
-  private ExportResult<TaskContainerResource> getTasksList(Tasks tasksSerivce, PaginationData paginationData)
-      throws IOException {
+  private ExportResult<TaskContainerResource> getTasksList(
+      Tasks tasksSerivce, PaginationData paginationData) throws IOException {
     Tasks.Tasklists.List query = tasksSerivce.tasklists().list().setMaxResults(PAGE_SIZE);
     if (paginationData != null) {
       query.setPageToken(((StringPaginationToken) paginationData).getToken());
@@ -141,9 +149,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
     TaskContainerResource taskContainerResource =
         new TaskContainerResource(newTaskListsBuilder.build(), null);
     ContinuationData continuationData = new ContinuationData(newPage);
-    newResourcesBuilder
-        .build()
-        .forEach(continuationData::addContainerResource);
+    newResourcesBuilder.build().forEach(continuationData::addContainerResource);
     return new ExportResult<>(resultType, taskContainerResource, continuationData);
   }
 

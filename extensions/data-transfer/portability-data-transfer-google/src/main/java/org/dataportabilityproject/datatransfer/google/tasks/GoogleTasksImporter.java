@@ -86,10 +86,12 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
     tempTasksData = jobStore.findData(TempTasksData.class, jobId);
 
     for (TaskModel oldTask : data.getTasks()) {
+      // TODO: The TaskModel doesn't contain information about completion, which means these all are
+      // new uncompleted tasks
       Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
-      String newTaskId = tempTasksData.lookupNewTaskListId(newTask.getId());
+      String newTaskListId = tempTasksData.lookupNewTaskListId(oldTask.getTaskListId());
       try {
-        tasksService.tasks().insert(newTaskId, newTask).execute();
+        tasksService.tasks().insert(newTaskListId, newTask).execute();
       } catch (IOException e) {
         return new ImportResult(ResultType.ERROR, "Error inserting task: " + e.getMessage());
       }
