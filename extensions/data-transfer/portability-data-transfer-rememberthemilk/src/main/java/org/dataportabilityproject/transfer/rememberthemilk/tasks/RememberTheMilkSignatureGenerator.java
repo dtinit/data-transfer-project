@@ -16,30 +16,22 @@
 package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.escape.Escaper;
 import com.google.common.io.BaseEncoding;
 import com.google.common.net.UrlEscapers;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map.Entry;
-import javax.xml.crypto.dsig.keyinfo.KeyValue;
-import org.dataportabilityproject.api.launcher.Logger;
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
-
-import javax.annotation.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.slf4j.LoggerFactory;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
 /**
  * Generates signatures hash based on the algorithm described:

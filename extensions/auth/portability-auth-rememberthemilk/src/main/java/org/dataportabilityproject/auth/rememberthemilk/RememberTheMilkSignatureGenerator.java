@@ -16,7 +16,6 @@
 package org.dataportabilityproject.auth.rememberthemilk;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.io.BaseEncoding;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -29,9 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
-import org.slf4j.LoggerFactory;
 
 /**
  * Generates signatures hash based on the algorithm described:

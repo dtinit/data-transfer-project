@@ -25,14 +25,9 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
-import com.google.api.client.util.IOUtils;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.escape.Escaper;
-import com.google.common.net.UrlEscapers;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Map;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListsResponse;
@@ -42,8 +37,6 @@ import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.RememberT
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskAddResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 class RememberTheMilkService {
   private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";
