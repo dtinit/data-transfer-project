@@ -189,7 +189,7 @@ public class ApiMain {
           "A cloud extension is not available. Exactly one is required.");
     } else if (cloudExtensions.size() > 1) {
       throw new IllegalStateException(
-          "Multiple cloud authServiceExtensions were found. Exactly one is required.");
+          "Multiple cloud extensions were found. Exactly one is required.");
     }
 
     return cloudExtensions.get(0);
