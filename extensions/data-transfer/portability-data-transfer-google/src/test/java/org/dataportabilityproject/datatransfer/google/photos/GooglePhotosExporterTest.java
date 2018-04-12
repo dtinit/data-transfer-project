@@ -36,6 +36,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
@@ -57,6 +58,8 @@ public class GooglePhotosExporterTest {
   private String IMG_URI = "image uri";
   private String JPEG_MEDIA_TYPE = "image/jpeg";
   private String ALBUM_ID = "Album id";
+
+  private UUID uuid = UUID.randomUUID();
 
   private int MAX_RESULTS = 1;
 
@@ -99,7 +102,7 @@ public class GooglePhotosExporterTest {
     int start = 1;
 
     // Run test
-    ExportResult<PhotosContainerResource> result = googlePhotosExporter.export(null, null);
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter.export(uuid, null);
 
     // Check results
     // Verify correct methods were called
@@ -144,7 +147,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .export(null, null, inputExportInformation);
+        .export(uuid, null, inputExportInformation);
 
     // Check results
     // Verify correct methods were called
@@ -170,7 +173,7 @@ public class GooglePhotosExporterTest {
     ExportInformation inputExportInformation = new ExportInformation(null, inputContainerResource);
 
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .export(null, null, inputExportInformation);
+        .export(uuid, null, inputExportInformation);
 
     // Check results
     // Verify correct methods were called
@@ -210,7 +213,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .export(null, null, inputExportInformation);
+        .export(uuid, null, inputExportInformation);
 
     // Check results
     // Verify correct methods were called
@@ -232,6 +235,8 @@ public class GooglePhotosExporterTest {
   private void setUpSingleAlbumResponse() {
     AlbumEntry albumEntry = new AlbumEntry();
     albumEntry.setId(ALBUM_ID);
+    albumEntry.setDescription(new PlainTextConstruct("Description"));
+    albumEntry.setTitle(new PlainTextConstruct("Title"));
 
     when(usersAlbumsFeed.getAlbumEntries()).thenReturn(Collections.singletonList(albumEntry));
 
@@ -245,6 +250,7 @@ public class GooglePhotosExporterTest {
     GphotoEntry photoEntry = new GphotoEntry();
     photoEntry.setTitle(new PlainTextConstruct(PHOTO_TITLE));
     photoEntry.setContent(mediaContent);
+    photoEntry.setDescription(new PlainTextConstruct("Description"));
 
     when(albumsPhotoFeed.getEntries()).thenReturn(Collections.singletonList(photoEntry));
   }
