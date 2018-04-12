@@ -29,8 +29,8 @@ import java.nio.charset.StandardCharsets;
 import org.dataportabilityproject.api.action.listservices.ListServicesAction;
 import org.dataportabilityproject.api.action.listservices.ListServicesActionRequest;
 import org.dataportabilityproject.api.action.listservices.ListServicesActionResponse;
-import org.dataportabilityproject.api.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.api.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.types.client.transfer.ListServicesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,9 +67,10 @@ final class ListServicesHandler implements HttpHandler {
       return;
     }
 
-    // TODO: Determine if export and import services should remain separate in the response
-    String[] services = actionResponse.getServices().toArray(new String[0]);
-    ListServicesResponse response = new ListServicesResponse(transferDataType, services, services);
+    String[] importServices = actionResponse.getImportServices().toArray(new String[0]);
+    String[] exportServices = actionResponse.getExportServices().toArray(new String[0]);
+    ListServicesResponse response =
+        new ListServicesResponse(transferDataType, exportServices, importServices);
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();
