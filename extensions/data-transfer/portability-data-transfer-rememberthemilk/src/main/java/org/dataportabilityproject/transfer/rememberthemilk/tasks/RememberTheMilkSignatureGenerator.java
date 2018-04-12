@@ -18,7 +18,13 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.escape.Escaper;
 import com.google.common.io.BaseEncoding;
+import com.google.common.net.UrlEscapers;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map.Entry;
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
@@ -43,6 +49,7 @@ final class RememberTheMilkSignatureGenerator {
 
   private final AppCredentials appCredentials;
   private final String authToken;
+  private Escaper escaper = UrlEscapers.urlFragmentEscaper();
 
   // Auth Token is required for the Signature Generator when created within the data transfer
   public RememberTheMilkSignatureGenerator(AppCredentials appCredentials, String authToken) {
@@ -51,34 +58,38 @@ final class RememberTheMilkSignatureGenerator {
     this.authToken = authToken;
   }
 
-  public URL getSignature(URL url) throws MalformedURLException {
-    String query = url.getQuery();
-    Map<String, String> map =
-        new HashMap<>(Splitter.on('&').trimResults().withKeyValueSeparator("=").split(query));
+  public URL getSignature(String base, Map<String, String> queryParams) {
+    // Add the RTM specific query params to the map for signing
+    Map<String, String> modifiedParams = new HashMap<>();
+    modifiedParams.putAll(queryParams);
+    modifiedParams.put("api_key", appCredentials.getKey());
+    modifiedParams.put("auth_token", authToken);
 
-    String apiKey = appCredentials.getKey();
-    String secret = appCredentials.getSecret();
-
-    map.put("api_key", apiKey);
-    map.put("auth_token", authToken);
-
-    List<String> orderedKeys = map.keySet().stream().collect(Collectors.toList());
+    List<String> orderedKeys = modifiedParams.keySet().stream().collect(Collectors.toList());
     Collections.sort(orderedKeys);
 
-    StringBuilder sb = new StringBuilder(query.length() + secret.length() + 20);
-    sb.append(secret);
+    List<String> queryParamStrings = new ArrayList<>();
+    StringBuilder resultBuilder = new StringBuilder();
+
+    resultBuilder.append(appCredentials.getSecret());
     for (String key : orderedKeys) {
-      sb.append(key).append(map.get(key));
+      // trim all keys and values from whitespace - We don't want to escape all whitespace values,
+      // because the RTM endpoint will generate the signature with the unescaped whitespace and
+      // compare that to the signature generated.
+      String k = key.trim();
+      String v = modifiedParams.get(key).trim();
+
+      resultBuilder.append(k).append(v);
+      queryParamStrings.add(k + "=" + v);
     }
 
-    LoggerFactory.getLogger(RememberTheMilkSignatureGenerator.class).debug("Generating MD5 for: {}", sb.toString());
+    String result = resultBuilder.toString();
 
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
-      byte[] thedigest = md.digest(sb.toString().getBytes(StandardCharsets.UTF_16));
+      byte[] thedigest = md.digest(result.getBytes(StandardCharsets.UTF_8));
       String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
-      return new URL(
-          url + "&api_key=" + apiKey + "&auth_token=" + authToken + "&api_sig=" + signature);
+      return new URL(base + "?" + String.join("&", queryParamStrings) + "&api_sig=" + signature);
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Couldn't find MD5 hash", e);
     } catch (MalformedURLException e) {

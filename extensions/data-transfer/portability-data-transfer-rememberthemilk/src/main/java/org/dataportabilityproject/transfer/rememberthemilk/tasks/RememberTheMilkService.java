@@ -46,10 +46,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class RememberTheMilkService {
+  private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private RememberTheMilkSignatureGenerator signatureGenerator;
   private XmlMapper xmlMapper = new XmlMapper();
-  private Escaper escaper = UrlEscapers.urlFragmentEscaper();
 
   RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
     this.signatureGenerator = signatureGenerator;
@@ -58,8 +58,7 @@ class RememberTheMilkService {
   public String createTimeline() throws IOException {
     TimelineCreateResponse timelineCreateResponse =
         makeRequest(
-            RememberTheMilkMethods.TIMELINES_CREATE,
-            ImmutableMap.of(),
+            ImmutableMap.of("method", RememberTheMilkMethods.TIMELINES_CREATE.getMethodName()),
             TimelineCreateResponse.class);
     checkState(!Strings.isNullOrEmpty(timelineCreateResponse.timeline));
     return timelineCreateResponse.timeline;
@@ -67,9 +66,14 @@ class RememberTheMilkService {
 
   public ListInfo createTaskList(String name, String timeline) throws IOException {
     Map<String, String> params =
-        ImmutableMap.of("timeline", timeline, "name", ("Copy of: " + name));
-    ListAddResponse response =
-        makeRequest(RememberTheMilkMethods.LISTS_ADD, params, ListAddResponse.class);
+        ImmutableMap.of(
+            "method",
+            RememberTheMilkMethods.LISTS_ADD.getMethodName(),
+            "timeline",
+            timeline,
+            "name",
+            ("Copy of: " + name));
+    ListAddResponse response = makeRequest(params, ListAddResponse.class);
     checkState(response.list != null, "Added list is null");
     checkState(response.list.id != 0, "Added list has id of zero");
     return response.list;
@@ -77,38 +81,36 @@ class RememberTheMilkService {
 
   public TaskSeries createTask(String name, String timeline, String listId) throws IOException {
     Map<String, String> params =
-        ImmutableMap.of("timeline", timeline, "name", name, "list_id", listId);
-    TaskAddResponse taskAddResponse =
-        makeRequest(RememberTheMilkMethods.TASKS_ADD, params, TaskAddResponse.class);
+        ImmutableMap.of(
+            "method",
+            RememberTheMilkMethods.TASKS_ADD.getMethodName(),
+            "timeline",
+            timeline,
+            "name",
+            name,
+            "list_id",
+            listId);
+    TaskAddResponse taskAddResponse = makeRequest(params, TaskAddResponse.class);
     return taskAddResponse.list.taskseries.get(0);
   }
 
   public GetListResponse getList(String listId) throws IOException {
-    Map<String, String> params = ImmutableMap.of("list_id", listId);
-    return makeRequest(RememberTheMilkMethods.TASKS_GET_LIST, params, GetListResponse.class);
+    Map<String, String> params =
+        ImmutableMap.of(
+            "method", RememberTheMilkMethods.TASKS_GET_LIST.getMethodName(), "list_id", listId);
+    return makeRequest(params, GetListResponse.class);
   }
 
   public GetListsResponse getLists() throws IOException {
     return makeRequest(
-        RememberTheMilkMethods.LISTS_GET_LIST, ImmutableMap.of(), GetListsResponse.class);
+        ImmutableMap.of("method", RememberTheMilkMethods.LISTS_GET_LIST.getMethodName()),
+        GetListsResponse.class);
   }
 
   private <T extends RememberTheMilkResponse> T makeRequest(
-      RememberTheMilkMethods method, Map<String, String> parameters, Class<T> dataClass)
-      throws IOException {
+      Map<String, String> parameters, Class<T> dataClass) throws IOException {
 
-    StringBuilder parameterString = new StringBuilder();
-    for (String key : parameters.keySet()) {
-      // Encode the query param value string as it could contain whitespace
-      parameterString
-          .append("&")
-          .append(escaper.escape(key))
-          .append("=")
-          .append(escaper.escape(parameters.get(key)));
-    }
-
-    URL url = new URL(method.getUrl() + parameterString);
-    URL signedUrl = signatureGenerator.getSignature(url);
+    URL signedUrl = signatureGenerator.getSignature(BASE_URL, parameters);
 
     HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
@@ -129,14 +131,13 @@ class RememberTheMilkService {
     return parsedResponse;
   }
 
-  public enum RememberTheMilkMethods {
+  private enum RememberTheMilkMethods {
     LISTS_GET_LIST("rtm.lists.getList"),
     LISTS_ADD("rtm.lists.add"),
     TASKS_GET_LIST("rtm.tasks.getList"),
     TASKS_ADD("rtm.tasks.add"),
     TIMELINES_CREATE("rtm.timelines.create");
 
-    private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";
     private final String methodName;
 
     RememberTheMilkMethods(String methodName) {
@@ -145,10 +146,6 @@ class RememberTheMilkService {
 
     String getMethodName() {
       return methodName;
-    }
-
-    String getUrl() {
-      return BASE_URL + "?method=" + getMethodName();
     }
   }
 }

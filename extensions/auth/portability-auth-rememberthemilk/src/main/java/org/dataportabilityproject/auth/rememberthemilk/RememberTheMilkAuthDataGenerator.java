@@ -25,6 +25,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.net.URL;
 import org.dataportabilityproject.auth.rememberthemilk.model.AuthElement;
@@ -40,16 +41,15 @@ import org.slf4j.LoggerFactory;
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
   private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-  private static final String GET_TOKEN_URL =
-      "https://api.rememberthemilk.com/services/rest/?method=rtm.auth.getToken";
+  private static final String GET_TOKEN_URL = "https://api.rememberthemilk.com/services/rest/";
+  private static final String GET_TOKEN_METHOD = "rtm.auth.getToken";
 
   private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
   private final RememberTheMilkSignatureGenerator signatureGenerator;
   private final String perms;
   private final XmlMapper xmlMapper;
 
-  public RememberTheMilkAuthDataGenerator(
-      AppCredentials appCredentials, AuthMode authMode) {
+  public RememberTheMilkAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
     signatureGenerator = new RememberTheMilkSignatureGenerator(appCredentials);
     perms = (authMode == AuthMode.IMPORT) ? "write" : "read";
     this.xmlMapper = new XmlMapper();
@@ -62,8 +62,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
     // https://www.rememberthemilk.com/help/contact/support/?ctx=api.update&report=1
     URL authUrlSigned;
     try {
-      URL authUrlUnsigned = new URL(AUTH_URL + "?perms=" + perms);
-      authUrlSigned = signatureGenerator.getSignature(authUrlUnsigned);
+      authUrlSigned = signatureGenerator.getSignature(AUTH_URL, ImmutableMap.of("perms", perms));
     } catch (Exception e) {
       logger.warn("Error generating Authentication URL: {}", e.getMessage());
       return null;
@@ -85,8 +84,9 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
   }
 
   private String getToken(String frob) throws IOException {
-    URL url = new URL(GET_TOKEN_URL + "&frob=" + frob);
-    URL signedUrl = signatureGenerator.getSignature(url);
+    URL signedUrl =
+        signatureGenerator.getSignature(
+            GET_TOKEN_URL, ImmutableMap.of("frob", frob, "method", GET_TOKEN_METHOD));
 
     HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
     HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
