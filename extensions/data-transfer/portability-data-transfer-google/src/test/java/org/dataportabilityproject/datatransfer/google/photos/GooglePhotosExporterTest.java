@@ -17,6 +17,7 @@ package org.dataportabilityproject.datatransfer.google.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosExporter.ALBUM_TOKEN_PREFIX;
+import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,7 +35,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -54,11 +54,8 @@ import org.mockito.Matchers;
 public class GooglePhotosExporterTest {
 
   private String PHOTO_TITLE = "Google photo title";
-  private String PHOTO_DESCRIPTION = "Google photo description";
   private String IMG_URI = "image uri";
   private String JPEG_MEDIA_TYPE = "image/jpeg";
-  private String ALBUM_TITLE = "Album title";
-  private String ALBUM_DESCRIPTION = "Album description";
   private String ALBUM_ID = "Album id";
 
   private int MAX_RESULTS = 1;
@@ -118,12 +115,12 @@ public class GooglePhotosExporterTest {
     assertThat(paginationToken.getToken())
         .isEqualTo(ALBUM_TOKEN_PREFIX + (start + MAX_RESULTS));
 
-    // Check albums
+    // Check albums field of container
     Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
     assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
 
-    // Check photos (should be empty, even though there is a photo in the original album)
+    // Check photos field of container (should be empty, even though there is a photo in the original album)
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos).isEmpty();
     // Should be one container in the resource list
@@ -143,7 +140,7 @@ public class GooglePhotosExporterTest {
     StringPaginationToken inputPaginationToken = new StringPaginationToken(
         ALBUM_TOKEN_PREFIX + start);
     ExportInformation inputExportInformation = new ExportInformation(inputPaginationToken,
-        null); // not testing container resource at this point
+        null);
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
@@ -162,39 +159,71 @@ public class GooglePhotosExporterTest {
         .getPaginationData();
     assertThat(paginationToken.getToken())
         .isEqualTo(ALBUM_TOKEN_PREFIX + (start + MAX_RESULTS));
+  }
 
-    // Check albums
+  @Test
+  public void exportPhotoFirstSet() throws IOException, ServiceException {
+    setUpSinglePhotoResponse();
+
+    int start = 1;
+    ContainerResource inputContainerResource = new IdOnlyContainerResource(ALBUM_ID);
+    ExportInformation inputExportInformation = new ExportInformation(null, inputContainerResource);
+
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter
+        .export(null, null, inputExportInformation);
+
+    // Check results
+    // Verify correct methods were called
+    URL photosURL = new URL(
+        String.format(GooglePhotosExporter.URL_PHOTO_FEED_FORMAT, ALBUM_ID, start, MAX_RESULTS));
+    verify(photoService).getFeed(photosURL, AlbumFeed.class);
+    verify(albumsPhotoFeed).getEntries();
+
+    // Check pagination
+    ContinuationData continuationData = (ContinuationData) result.getContinuationData();
+    StringPaginationToken paginationToken = (StringPaginationToken) continuationData
+        .getPaginationData();
+    assertThat(paginationToken.getToken()).isEqualTo(PHOTO_TOKEN_PREFIX + (start + MAX_RESULTS));
+
+    // Check albums field of container (should be empty)
     Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
-    assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList()))
-        .containsExactly(ALBUM_ID);
+    assertThat(actualAlbums).isEmpty();
 
-    // Check photos (should be empty, even though there is a photo in the original album)
+    // Check photos field of container
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
-    assertThat(actualPhotos).isEmpty();
-    // Should be one container in the resource list
-    List<ContainerResource> actualResources = continuationData.getContainerResources();
-    assertThat(
-        actualResources
-            .stream()
-            .map(a -> ((IdOnlyContainerResource) a).getId())
-            .collect(Collectors.toList()))
+    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
+        .containsExactly(PHOTO_TITLE);
+    assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
   }
 
-  private void setUpMultipleAlbumResponse(int numAlbums, int numPhotosPerAlbum) {
-    List<AlbumEntry> albumList = new LinkedList<>();
-    for (int i = 0; i < numAlbums; i++) {
-      // Create album
-      AlbumEntry albumEntry = new AlbumEntry();
-      String albumId = ALBUM_ID + i;
-      albumEntry.setId(albumId);
-      albumEntry.setTitle(new PlainTextConstruct(ALBUM_TITLE + i));
-      albumEntry.setDescription(new PlainTextConstruct(ALBUM_DESCRIPTION + i));
+  @Test
+  public void exportPhotoSubsequentSet() throws IOException, ServiceException {
+    setUpSinglePhotoResponse();
 
-      // Create photos
-    }
+    int start = 2;
+    StringPaginationToken inputPaginationToken = new StringPaginationToken(
+        PHOTO_TOKEN_PREFIX + start);
+    ContainerResource inputContainerResource = new IdOnlyContainerResource(ALBUM_ID);
+    ExportInformation inputExportInformation = new ExportInformation(inputPaginationToken,
+        inputContainerResource);
 
-    when(usersAlbumsFeed.getAlbumEntries()).thenReturn(albumList);
+    // Run test
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter
+        .export(null, null, inputExportInformation);
+
+    // Check results
+    // Verify correct methods were called
+    URL photoURL = new URL(
+        String.format(GooglePhotosExporter.URL_PHOTO_FEED_FORMAT, ALBUM_ID, start, MAX_RESULTS));
+    verify(photoService).getFeed(photoURL, AlbumFeed.class);
+    verify(albumsPhotoFeed).getEntries();
+
+    // Check pagination token
+    ContinuationData continuationData = (ContinuationData) result.getContinuationData();
+    StringPaginationToken paginationToken = (StringPaginationToken) continuationData
+        .getPaginationData();
+    assertThat(paginationToken.getToken()).isEqualTo(PHOTO_TOKEN_PREFIX + (start + MAX_RESULTS));
   }
 
   /**
@@ -202,8 +231,6 @@ public class GooglePhotosExporterTest {
    */
   private void setUpSingleAlbumResponse() {
     AlbumEntry albumEntry = new AlbumEntry();
-    albumEntry.setTitle(new PlainTextConstruct(ALBUM_TITLE));
-    albumEntry.setDescription(new PlainTextConstruct(ALBUM_DESCRIPTION));
     albumEntry.setId(ALBUM_ID);
 
     when(usersAlbumsFeed.getAlbumEntries()).thenReturn(Collections.singletonList(albumEntry));
@@ -217,7 +244,6 @@ public class GooglePhotosExporterTest {
   private void setUpSinglePhotoResponse() {
     GphotoEntry photoEntry = new GphotoEntry();
     photoEntry.setTitle(new PlainTextConstruct(PHOTO_TITLE));
-    photoEntry.setDescription(new PlainTextConstruct(PHOTO_DESCRIPTION));
     photoEntry.setContent(mediaContent);
 
     when(albumsPhotoFeed.getEntries()).thenReturn(Collections.singletonList(photoEntry));
