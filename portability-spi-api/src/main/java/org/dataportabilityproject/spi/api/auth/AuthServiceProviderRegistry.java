@@ -22,7 +22,8 @@ public interface AuthServiceProviderRegistry {
    *
    * @param transferDataType the transfer data type
    */
-  Set<String> getServices(String transferDataType);
+  Set<String> getImportServices(String transferDataType);
+  Set<String> getExportServices(String transferDataType);
 
   /** Returns the set of data types that support both import and export. */
   Set<String> getTransferDataTypes();

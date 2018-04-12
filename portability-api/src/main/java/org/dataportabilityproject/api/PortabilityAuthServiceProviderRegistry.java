@@ -21,14 +21,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
-import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
   private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
@@ -93,46 +92,34 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
     return provider.getAuthDataGenerator(transferDataType, mode);
   }
 
-  /**
-   * Returns the set of service ids that can transfered for the given {@code transferDataType}.
-   *
-   * @param transferDataType the transfer data type
-   */
   @Override
-  public Set<String> getServices(String transferDataType) {
-    Preconditions.checkArgument(
-        supportedExportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for export",
-        transferDataType);
+  public Set<String> getImportServices(String transferDataType) {
     Preconditions.checkArgument(
         supportedImportTypes.contains(transferDataType),
         "TransferDataType [%s] is not valid for import",
         transferDataType);
+    return authServiceProviderMap
+        .values()
+        .stream()
+        .filter(
+            sp -> sp.getImportTypes().stream().anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
+        .map(AuthServiceExtension::getServiceId)
+        .collect(Collectors.toSet());
+  }
 
-    Set<String> exportServices =
-        authServiceProviderMap
-            .values()
-            .stream()
-            .filter(
-                sp ->
-                    sp.getExportTypes()
-                        .stream()
-                        .anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
-            .map(AuthServiceExtension::getServiceId)
-            .collect(Collectors.toSet());
-
-    Set<String> importServices =
-        authServiceProviderMap
-            .values()
-            .stream()
-            .filter(
-                sp ->
-                    sp.getImportTypes()
-                        .stream()
-                        .anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
-            .map(AuthServiceExtension::getServiceId)
-            .collect(Collectors.toSet());
-    return Sets.union(exportServices, importServices);
+  @Override
+  public Set<String> getExportServices(String transferDataType) {
+    Preconditions.checkArgument(
+        supportedExportTypes.contains(transferDataType),
+        "TransferDataType [%s] is not valid for export",
+        transferDataType);
+    return authServiceProviderMap
+        .values()
+        .stream()
+        .filter(
+            sp -> sp.getExportTypes().stream().anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
+        .map(AuthServiceExtension::getServiceId)
+        .collect(Collectors.toSet());
   }
 
   /** Returns the set of data types that support both import and export. */
