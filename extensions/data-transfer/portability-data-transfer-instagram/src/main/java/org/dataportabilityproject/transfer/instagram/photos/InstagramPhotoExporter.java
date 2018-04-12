@@ -15,9 +15,7 @@
  */
 package org.dataportabilityproject.transfer.instagram.photos;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
@@ -28,7 +26,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +63,7 @@ public class InstagramPhotoExporter implements
   @Override
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       ExportInformation exportInformation) {
-    return exportPhotos(authData, Optional.of(exportInformation.getPaginationData()));
+    return exportPhotos(authData, Optional.ofNullable(exportInformation.getPaginationData()));
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,

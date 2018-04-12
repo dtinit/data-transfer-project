@@ -70,7 +70,7 @@ public class InstagramTransferExtension implements TransferExtension {
   @Override
   public void initialize(ExtensionContext context) {
     if (initialized) {
-      logger.warn("InstagramTransferExtension already initalized");
+      logger.warn("InstagramTransferExtension already initialized");
       return;
     }
 
