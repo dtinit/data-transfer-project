@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.serviceProviders.rememberTheMilk.model;
 
-import com.google.api.client.util.Key;
-import com.google.common.base.Joiner;
-import java.util.List;
+package org.dataportabilityproject.transfer.instagram.photos.model;
 
-/** A collection of notes that exist on a task/taskseries */
-public class Notes {
+/** DataModel for a single image object in the Instagram API. Instantiated by JSON mapping. */
+public final class ImageData {
 
-  @Key("note")
-  public List<String> notes;
+  private String url;
 
-  @Override
-  public String toString() {
-    return (notes == null || notes.isEmpty()) ? "" : Joiner.on("; ").join(notes);
+  private int height;
+
+  private int width;
+
+  public String getUrl() {
+    return url;
+  }
+
+  public int getHeight() {
+    return height;
+  }
+
+  public int getWidth() {
+    return width;
   }
 }

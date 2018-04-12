@@ -33,11 +33,9 @@ import org.dataportabilityproject.cloud.interfaces.CloudFactory;
 import org.dataportabilityproject.cloud.local.LocalCloudFactory;
 import org.dataportabilityproject.job.JWTTokenManager;
 import org.dataportabilityproject.job.TokenManager;
-import org.dataportabilityproject.serviceProviders.flickr.FlickrModule;
 import org.dataportabilityproject.serviceProviders.google.GoogleModule;
 import org.dataportabilityproject.serviceProviders.instagram.InstagramModule;
 import org.dataportabilityproject.serviceProviders.microsoft.MicrosoftModule;
-import org.dataportabilityproject.serviceProviders.rememberTheMilk.RememberTheMilkModule;
 import org.dataportabilityproject.serviceProviders.smugmug.SmugmugModule;
 import org.dataportabilityproject.shared.AppCredentialFactory;
 import org.dataportabilityproject.shared.settings.CommonSettings;
@@ -46,11 +44,9 @@ public final class PortabilityCoreModule extends AbstractModule {
   @Override
   protected void configure() {
     // TODO: selectively load these
-    install(new FlickrModule());
     install(new GoogleModule());
     install(new InstagramModule());
     install(new MicrosoftModule());
-    install(new RememberTheMilkModule());
     install(new SmugmugModule());
 
     install(new GoogleCloudModule());

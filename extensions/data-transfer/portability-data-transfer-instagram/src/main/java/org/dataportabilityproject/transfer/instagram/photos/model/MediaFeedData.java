@@ -13,19 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-dependencies {
-    compile project(':portability-spi-api')
-    compile project(':portability-spi-cloud')
 
-    // logging
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+package org.dataportabilityproject.transfer.instagram.photos.model;
 
-    compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
-    compile "com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}"
+/** DataModel for a media feed in the Instagram API. Instantiated by JSON mapping. */
+public final class MediaFeedData {
 
-    testCompile("com.google.truth:truth:${truthVersion}")
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.mockito:mockito-all:${mockitoVersion}")
+  private String id;
+
+  private String type;
+
+  private String created_time;
+
+  private ImageObject images;
+
+  private Caption caption;
+
+  public String getId() {
+    return id;
+  }
+
+  public Caption getCaption() {
+    return caption;
+  }
+
+  public ImageObject getImages() {
+    return images;
+  }
+
+  public String getCreatedTime() {
+    return created_time;
+  }
+
+  public String getType() {
+    return type;
+  }
 }
-

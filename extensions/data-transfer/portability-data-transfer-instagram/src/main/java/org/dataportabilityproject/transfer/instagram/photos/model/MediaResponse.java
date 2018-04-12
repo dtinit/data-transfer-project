@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.serviceProviders.rememberTheMilk.model;
 
-import com.google.api.client.util.Key;
-import com.google.common.base.Joiner;
+package org.dataportabilityproject.transfer.instagram.photos.model;
+
 import java.util.List;
 
-/** A set of task lists. */
-public class Tasks {
+/** DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping. */
+public final class MediaResponse {
 
-  @Key("@rev")
-  public String rev;
+  private Meta meta;
 
-  @Key("list")
-  public List<TaskList> list;
+  private List<MediaFeedData> data;
 
-  @Override
-  public String toString() {
-    return String.format(
-        "Tasks(rev=%s List=%s)",
-        rev, (null == list || list.isEmpty()) ? "" : Joiner.on("\n").join(list));
+  public Meta getMeta() {
+    return meta;
+  }
+
+  public List<MediaFeedData> getData() {
+    return data;
   }
 }
