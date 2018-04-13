@@ -17,9 +17,7 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.escape.Escaper;
 import com.google.common.io.BaseEncoding;
-import com.google.common.net.UrlEscapers;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +39,6 @@ final class RememberTheMilkSignatureGenerator {
 
   private final AppCredentials appCredentials;
   private final String authToken;
-  private Escaper escaper = UrlEscapers.urlFragmentEscaper();
 
   // Auth Token is required for the Signature Generator when created within the data transfer
   public RememberTheMilkSignatureGenerator(AppCredentials appCredentials, String authToken) {
@@ -75,11 +72,9 @@ final class RememberTheMilkSignatureGenerator {
       queryParamStrings.add(k + "=" + v);
     }
 
-    String result = resultBuilder.toString();
-
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
-      byte[] thedigest = md.digest(result.getBytes(StandardCharsets.UTF_8));
+      byte[] thedigest = md.digest(resultBuilder.toString().getBytes(StandardCharsets.UTF_8));
       String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
       return new URL(base + "?" + String.join("&", queryParamStrings) + "&api_sig=" + signature);
     } catch (NoSuchAlgorithmException e) {

@@ -66,11 +66,9 @@ public final class RememberTheMilkSignatureGenerator {
       queryParamStrings.add(k + "=" + v);
     }
 
-    String result = resultBuilder.toString();
-
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
-      byte[] thedigest = md.digest(result.getBytes(StandardCharsets.UTF_8));
+      byte[] thedigest = md.digest(resultBuilder.toString().getBytes(StandardCharsets.UTF_8));
       String signature = BaseEncoding.base16().encode(thedigest).toLowerCase();
       return new URL(base + "?" + String.join("&", queryParamStrings) + "&api_sig=" + signature);
     } catch (NoSuchAlgorithmException e) {
