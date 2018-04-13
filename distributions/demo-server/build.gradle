@@ -112,7 +112,7 @@ shadowJar {
 shadowJar.dependsOn(createSecretsFile)
 
 task createDemoServerDockerfile(type: Dockerfile) {
-    description = 'Builds the API Server Dockerfile'
+    description = 'Builds the Demo Server Dockerfile'
     group = 'docker'
     destFile project.file("${buildDir}/demoserver/Dockerfile")
     from "${javaDockerContainer}"
@@ -132,7 +132,6 @@ task createDemoServerDockerfile(type: Dockerfile) {
         secretsFile.withInputStream { props.load(it) }
         props.each { k, v -> environmentVariable(k, v) }
     }
-
 }
 
 task createClientDockerfile(type: Dockerfile) {
