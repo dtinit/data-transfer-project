@@ -18,8 +18,8 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import java.io.IOException;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
@@ -81,9 +81,12 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       jobstore.update(jobId, tempTasksData);
 
       for (TaskModel task : data.getTasks()) {
-        String newList = tempTasksData.lookupNewTaskListId(task.getTaskListId());
-        TaskSeries addedTask = service.createTask(task.getText(), timeline, newList);
-        // todo: add notes
+        // Empty or blank tasks aren't valid in RTM
+        if (!Strings.isNullOrEmpty(task.getText())) {
+          String newList = tempTasksData.lookupNewTaskListId(task.getTaskListId());
+          TaskSeries addedTask = service.createTask(task.getText(), timeline, newList);
+          // todo: add notes
+        }
       }
     } catch (Exception e) {
       logger.warn("Error importing item: " + Throwables.getStackTraceAsString(e));
