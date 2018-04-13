@@ -35,7 +35,6 @@ public class InstagramTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("photos");
 
   private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
-  private Importer<TokensAndUrlAuthData, PhotosContainerResource> importer;
 
   private boolean initialized = false;
 
@@ -49,7 +48,7 @@ public class InstagramTransferExtension implements TransferExtension {
     Preconditions.checkArgument(
         initialized, "InstagramTransferExtension not initialized. Unable to get Exporter");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return null;
+    return exporter;
   }
 
   @Override
