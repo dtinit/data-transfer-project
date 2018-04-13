@@ -18,7 +18,9 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableMap;
 import java.net.URL;
+import java.util.Map;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.junit.Test;
 
@@ -33,10 +35,23 @@ public class RememberTheMilkSignatureGeneratorTest {
 
   @Test
   public void signatureTest() throws Exception {
-    URL url = new URL("http://example.com?yxz=foo&feg=bar&abc=baz");
+    String base = "http://example.com";
+    Map<String, String> queryParams = ImmutableMap.of("yxz", "foo", "feg", "bar", "abc", "baz");
+
     URL expected =
         new URL(
-            "http://example.com?yxz=foo&feg=bar&abc=baz&api_key=BANANAS1&auth_token=BANANAS3&api_sig=b48f0dd1a18179b3068b16728e214561");
-    assertThat(SIGNATURE_GENERATOR.getSignature(url)).isEqualTo(expected);
+            base
+                + "?abc=baz&api_key=BANANAS1&auth_token=BANANAS3&feg=bar&yxz=foo&api_sig=b48f0dd1a18179b3068b16728e214561");
+    assertThat(SIGNATURE_GENERATOR.getSignature(base, queryParams)).isEqualTo(expected);
   }
+
+  @Test
+  public void signatureTestWhiteSpace() throws Exception{
+    String base = "http://example.com";
+    Map<String, String> queryParams = ImmutableMap.of("abc", "baz", "foo", "b a r ");
+    URL expected = new URL(base + "?abc=baz&api_key=BANANAS1&auth_token=BANANAS3&foo=b a r&api_sig=204b1dc1abbff7a5e8753d7102d966f4");
+    assertThat(SIGNATURE_GENERATOR.getSignature(base, queryParams)).isEqualTo(expected);
+  }
+
+
 }

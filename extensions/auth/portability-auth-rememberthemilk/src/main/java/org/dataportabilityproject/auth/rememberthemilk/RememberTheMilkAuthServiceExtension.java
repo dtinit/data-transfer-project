@@ -21,11 +21,10 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,10 +82,8 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
       return;
     }
 
-    importAuthDataGenerator =
-        new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.IMPORT);
-    exportAuthDataGenerator =
-        new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.EXPORT);
+    importAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.IMPORT);
+    exportAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.EXPORT);
     initialized = true;
   }
 }

@@ -18,11 +18,18 @@ public interface AuthServiceProviderRegistry {
   AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType, AuthMode mode);
 
   /**
-   * Returns the set of service ids that can transfered for the given {@code transferDataType}.
+   * Returns the set of service ids that can import the given {@code transferDataType}.
    *
    * @param transferDataType the transfer data type
    */
-  Set<String> getServices(String transferDataType);
+  Set<String> getImportServices(String transferDataType);
+
+  /**
+   * Returns the set of service ids that can export the given {@code transferDataType}.
+   *
+   * @param transferDataType the transfer data type
+   */
+  Set<String> getExportServices(String transferDataType);
 
   /** Returns the set of data types that support both import and export. */
   Set<String> getTransferDataTypes();
