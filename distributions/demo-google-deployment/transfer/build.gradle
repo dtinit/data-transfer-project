@@ -23,8 +23,10 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * connects to a GCP project which it pulls app secrets from, etc, to test functionality of the
  * Google cloud extension without needing to deploy it to GCP.
  *
- * <p>The next step will be to support deployed environments, and make sure the resulting images
- * work when deployed to GCP.
+ * <p>TODO(#202): The next step will be to support deployed environments, and make sure the
+ * resulting images work when deployed to GCP.
+ *
+ * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
  *
  * <ul>To run:
  *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> \
@@ -97,7 +99,8 @@ task createTransferServerDockerfile(type: Dockerfile) {
             "-jar",
             "/app/transfer.jar")
     copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
-    environmentVariable('GOOGLE_PROJECT_ID', gcpProject)
+    ext.gcpProject = hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
     environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
 
     // TODO: label with git commit
