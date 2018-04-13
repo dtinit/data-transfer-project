@@ -63,17 +63,27 @@ addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.api.ApiMain'
 
-shadowJar {
+task copyEnvResources(type: Copy) {
+    description = 'Copies environment-specific resources and configuration into the jar, ' +
+            'including index.html'
     ext.env = project.hasProperty('env') ? env : 'local'
+    into 'src/main/resources/config/env'
+    from "../resources/config/environments/" + ext.env
+}
+
+task copyResources(type: Copy) {
+    description = 'Copies resources and configuration into the jar'
+    dependsOn copyEnvResources
+    into 'src/main/resources'
+    from('../resources/') {
+        exclude { details -> details.file.name.contains('environments') }
+    }
+}
+
+shadowJar {
     mergeServiceFiles()
     exclude '**/pom.properties'
     exclude '**/pom.xml'
-    copy {
-        from '../resources/'
-        into 'src/main/resources'
-        exclude '../resources/config/environments/*'
-        include "../resources/config/environments/" + ext.env + "/*"
-    }
 }
 
 task createApiServerDockerfile(type: Dockerfile) {
@@ -94,7 +104,7 @@ task createApiServerDockerfile(type: Dockerfile) {
 task dockerize(type: DockerBuildImage) {
     description = 'Builds the API Server Docker image'
     group = 'docker'
-    dependsOn shadowJar, createApiServerDockerfile
+    dependsOn copyResources, shadowJar, createApiServerDockerfile
     dockerFile = project.file("${buildDir}/api/Dockerfile")
     inputDir = project.file(".")
     tag = 'dataportability/api:latest'
@@ -141,7 +151,7 @@ task createApiServerDockerfileLocal(type: Dockerfile) {
 task dockerizeLocal(type: DockerBuildImage) {
     description = 'Builds the API Server Docker image for local development'
     group = 'docker'
-    dependsOn shadowJar, createApiServerDockerfileLocal
+    dependsOn copyResources, shadowJar, createApiServerDockerfileLocal
     dockerFile = project.file("${buildDir}/api/Dockerfile")
     inputDir = project.file(".")
     tag = 'dataportability/api:latest'
