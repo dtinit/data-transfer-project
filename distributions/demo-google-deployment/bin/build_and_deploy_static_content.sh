@@ -20,14 +20,14 @@
 
 #!/bin/sh
 
-USAGE="Usage: ./deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
+USAGE="Usage: ./distributions/demo-google-deployment/bin/deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
 print_and_exec() {
   echo -e "\n${1}"
   ${1}
 }
 
-if [[ $(pwd) != */gcp ]]; then
-  echo -e "${USAGE}\nPlease run out of /gcp directory. Aborting."
+if [[ $(pwd) != */data-transfer-project ]]; then
+  echo -e "${USAGE}\nPlease run out of the root data-transfer-project/ directory. Aborting."
   exit 1
 fi
 
@@ -41,7 +41,7 @@ if [ -z $2 ]; then
   exit 1
 fi
 # script below sets env variables BASE_PROJECT_ID
-source ./init_project_vars.sh
+source ./distributions/demo-google-deployment/bin/init_project_vars.sh
 
 echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
@@ -55,32 +55,29 @@ gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >
 
 GCP_DIR=$(pwd)
 echo -e "\nCleaning up old resources"
-print_and_exec "cd ../../../"
-if [[ -e "resources/" ]]; then
-  rm -rf resources/
+if [[ -e "../../static/" ]]; then
+  rm -rf ../../static/
 fi
-if [[ -e "static/" ]]; then
-  rm -rf static/
-fi
-print_and_exec "cd data-portability/client/"
+print_and_exec "cd client/"
 print_and_exec "ng build --prod --env=${ENV}"
-print_and_exec "cd ../../resources/"
+print_and_exec "mkdir ../../static/"
 # Reorganize everything in a top level static/ directory. This is a hack to keep static assets
 # consistent between local and GCP environments"
-print_and_exec "cp -r static/* ."
-print_and_exec "rm -rf static/"
-print_and_exec "cd .."
-print_and_exec "mkdir static"
-print_and_exec "cp -r resources/* static/"
-print_and_exec "gsutil cp -r static ${GCS_BUCKET}"
+print_and_exec "cp -r build/resources/static/* ../../static"
+print_and_exec "rm -rf build/resources/static/"
+print_and_exec "cp -r build/resources/* ../../static/"
+print_and_exec "gsutil cp -r ../../static ${GCS_BUCKET}"
 echo -e "\nMaking folder public"
 print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
-print_and_exec "cd static/"
-print_and_exec "pwd"
-print_and_exec "cp ../data-portability/config/environments/$ENV/index.html index.html"
-echo -e "\nUpdating index.html to reflect new bundle versions...\n"
-echo -e "index.html before\n"
-cat index.html
+INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/api/src/main/resources/config/environments/$ENV/index.html"
+if [[ -e ${INDEX_HTML_LOCATION} ]]; then
+  print_and_exec "mkdir /tmp/${PROJECT_ID}/"
+  print_and_exec "cp ${INDEX_HTML_LOCATION} /tmp/${PROJECT_ID}/index.html"
+  echo -e "\nUpdating index.html to reflect new bundle versions...\n"
+  echo -e "index.html before\n"
+  cat index.html
+fi
+print_and_exec "cd ../../static"
 main_new=$(ls | grep main.*.bundle.js)
 styles_new=$(ls | grep styles.*.bundle.js)
 inline_new=$(ls | grep inline.*.bundle.js)
@@ -92,6 +89,6 @@ sed -i "s|styles.*.bundle.js|$styles_new|g" "index.html"
 sed -i "s|inline.*.bundle.js|$inline_new|g" "index.html"
 sed -i "s|vendor.*.bundle.js|$vendor_new|g" "index.html"
 sed -i "s|polyfills.*.bundle.js|$polyfills_new|g" "index.html"
-echo -e "index.html after\n"
+echo -e "\nupdated index.html:\n"
 cat index.html
-print_and_exec "mv index.html ../data-portability/config/environments/$ENV/index.html"
+print_and_exec "mv index.html ${INDEX_HTML_LOCATION}"
