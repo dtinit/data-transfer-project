@@ -17,28 +17,32 @@
 package org.dataportabilityproject.auth.smugmug.SmugMugAuth;
 
 import com.google.common.base.Strings;
-import java.io.IOException;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
-public class AuthInterface {
+import java.io.IOException;
 
+/* SmugMugOauthInterface used to obtain Oauth Tokens for the Smugmug API. */
+public class SmugMugOauthInterface {
+  // Used when services don't provide a callback method to allow Smugmug users to optionally
+  // copy the token they generate to the service.
+  private static final String OUT_OF_BOUNDS_CALLBACK = "oob";
   private final String apiKey;
   private final String apiSecret;
 
-  public AuthInterface(String apiKey, String apiSecret) {
+  public SmugMugOauthInterface(String apiKey, String apiSecret) {
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
   }
 
   public TokenSecretAuthData getRequestToken(String callbackUrl) throws IOException {
-    String callback = (Strings.isNullOrEmpty(callbackUrl)) ? "oob" : callbackUrl;
+    String callback = (Strings.isNullOrEmpty(callbackUrl)) ? OUT_OF_BOUNDS_CALLBACK : callbackUrl;
     OAuthService service =
         new ServiceBuilder()
-            .provider(SmugmugApi.class)
+            .provider(SmugMugOauthApi.class)
             .apiKey(apiKey)
             .apiSecret(apiSecret)
             .callback(callback)
@@ -49,22 +53,14 @@ public class AuthInterface {
 
   public String getAuthorizationUrl(TokenSecretAuthData token, String permission) {
     OAuthService service =
-        new ServiceBuilder()
-            .provider(SmugmugApi.class)
-            .apiKey(apiKey)
-            .apiSecret(apiSecret)
-            .build();
+        new ServiceBuilder().provider(SmugMugOauthApi.class).apiKey(apiKey).apiSecret(apiSecret).build();
     String authUrl = service.getAuthorizationUrl(new Token(token.getToken(), token.getSecret()));
     return String.format("%s&perms=%s", authUrl, permission);
   }
 
   public TokenSecretAuthData getAccessToken(TokenSecretAuthData requestToken, Verifier verifier) {
     OAuthService service =
-        new ServiceBuilder()
-            .provider(SmugmugApi.class)
-            .apiKey(apiKey)
-            .apiSecret(apiSecret)
-            .build();
+        new ServiceBuilder().provider(SmugMugOauthApi.class).apiKey(apiKey).apiSecret(apiSecret).build();
     Token accessToken =
         service.getAccessToken(
             new Token(requestToken.getToken(), requestToken.getSecret()), verifier);

@@ -23,7 +23,7 @@ import org.scribe.model.Token;
  * URLs provided from the Oauth1.0a flow described here:
  * https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
  */
-public class SmugmugApi extends DefaultApi10a {
+public class SmugMugOauthApi extends DefaultApi10a {
 
   @Override
   public String getRequestTokenEndpoint() {

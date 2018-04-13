@@ -30,9 +30,10 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/* SmugMugAuthServiceExtension - provides accessors to AuthDataGenerators. */
 public class SmugMugAuthServiceExtension implements AuthServiceExtension {
 
-  private static final String SMUGMUG_KEY = "SMUGMUG_KEY"; // TODO: Possibly SMUGMUG_API_KEY?
+  private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
   private static final String SERVICE_ID = "SmugMug";
 
@@ -87,12 +88,11 @@ public class SmugMugAuthServiceExtension implements AuthServiceExtension {
           SMUGMUG_SECRET);
       return;
     }
-    HttpTransport transport = context.getService(HttpTransport.class);
 
     importAuthDataGenerator =
-        new SmugMugAuthDataGenerator(appCredentials, AuthMode.IMPORT, transport);
+        new SmugMugAuthDataGenerator(appCredentials, AuthMode.IMPORT);
     exportAuthDataGenerator =
-        new SmugMugAuthDataGenerator(appCredentials, AuthMode.EXPORT, transport);
+        new SmugMugAuthDataGenerator(appCredentials, AuthMode.EXPORT);
     initialized = true;
   }
 }

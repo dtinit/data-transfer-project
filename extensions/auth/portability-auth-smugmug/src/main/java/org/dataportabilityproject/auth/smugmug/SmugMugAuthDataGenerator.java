@@ -16,11 +16,9 @@
 
 package org.dataportabilityproject.auth.smugmug;
 
-import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.IOException;
-import org.dataportabilityproject.auth.smugmug.SmugMugAuth.AuthInterface;
+import org.dataportabilityproject.auth.smugmug.SmugMugAuth.SmugMugOauthInterface;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
@@ -31,17 +29,18 @@ import org.scribe.model.Verifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
+/* SmugmugAuthDataGenerator used for obtaining auth credentials for the Smugmug API*/
 public class SmugMugAuthDataGenerator implements AuthDataGenerator {
   private final Logger logger = LoggerFactory.getLogger(SmugMugAuthDataGenerator.class);
-  private final AppCredentials appCredentials;
   private final String perms;
-  private final AuthInterface authInterface;
+  private final SmugMugOauthInterface smugMugOauthInterface;
 
-  public SmugMugAuthDataGenerator(
-      AppCredentials appCredentials, AuthMode authMode, HttpTransport httpTransport) {
-    this.appCredentials = appCredentials;
+  public SmugMugAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
     this.perms = authMode == AuthMode.IMPORT ? "Add" : "Read";
-    this.authInterface = new AuthInterface(appCredentials.getKey(), appCredentials.getSecret());
+    this.smugMugOauthInterface =
+        new SmugMugOauthInterface(appCredentials.getKey(), appCredentials.getSecret());
   }
 
   @Override
@@ -49,13 +48,13 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
     // Generate a request token and include that as initial auth data
     TokenSecretAuthData authData = null;
     try {
-      authData = authInterface.getRequestToken(callbackBaseUrl + "/callback1/smugmug");
+      authData = smugMugOauthInterface.getRequestToken(callbackBaseUrl + "/callback1/smugmug");
     } catch (IOException e) {
       logger.debug("Couldnt get authData {}", e.getMessage());
       return null;
     }
 
-    String url = authInterface.getAuthorizationUrl(authData, perms);
+    String url = smugMugOauthInterface.getAuthorizationUrl(authData, perms);
     return new AuthFlowConfiguration(url, authData);
   }
 
@@ -69,9 +68,12 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
         "Earlier auth data expected for Smugmug flow"); // Turn initial auth data into a Token
     // get an access token from the token in inital auth data, verified with the authcode
     TokenSecretAuthData requestToken =
-        authInterface.getAccessToken((TokenSecretAuthData) initialAuthData, new Verifier(authCode));
-    // Note: Some services also require you to validate the accessToken received so another call is made here, Smugmug
-    // doesn't look like needs this based on the documentation: https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
+        smugMugOauthInterface.getAccessToken(
+            (TokenSecretAuthData) initialAuthData, new Verifier(authCode));
+    // Note: Some services also require you to validate the accessToken received so another call is
+    // made here, Smugmug
+    // doesn't look like needs this based on the documentation:
+    // https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
     return requestToken;
   }
 }
