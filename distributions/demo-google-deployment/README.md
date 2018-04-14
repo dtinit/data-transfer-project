@@ -1,4 +1,7 @@
-# Data Portability on Google Cloud Platform
+# Demo Google deployment
+
+This distribution shows one way Data Transfer Project may be deployed on Google
+Cloud Platform.
 
 ## GKE
 We run Kubernetes on Google Cloud Platform using GKE. This is scripted
@@ -35,10 +38,11 @@ For more information on running locally see
 We store static content in a GCS bucket that integrates with GCP's
 CDN. We generate the content via `bin/build_and_deploy_static_content.sh`,
 which builds it using `ng build`. ng build versions its output files via
-the bundle filenames which are hashes. Our index.html references these
+the bundle filenames which are hashes. Our `index.html` references these
 versioned files and must be updated to include the new reference each
-time a bundle changes. index.html itself is served from our backend.
-This ensures that our app always fetches the newest static content.
+time a bundle changes. `index.html` itself is served from our backend 
+(the API server). This ensures that our app always fetches the newest
+static content.
 
 ## Docker
 We use a [script](bin/build_docker_image.sh) to build our Docker

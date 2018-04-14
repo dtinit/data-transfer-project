@@ -19,19 +19,20 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 /**
  * Script to build and dockerize an API server using the Google cloud extension.
  *
- * <p>For now, only supports the local environment. i.e., the container should be run locally and
- * connects to a GCP project which it pulls app secrets from, etc, to test functionality of the
- * Google cloud extension without needing to deploy it to GCP.
- *
- * <p>TODO(#202): The next step will be to support deployed environments, and make sure the
- * resulting images work when deployed to GCP.
+ * <p>TODO(#202): Test deploying a prod image to GCP
  *
  * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
  *
- * <ul>To run:
+ * <ul>To run locally:
  *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> \
- *      :distributions:demo-google-deployment:api:dockerize
+ *      :distributions:demo-google-deployment:api:dockerizeLocal
  *  <li>docker run --rm -p 8080:8080 -p 5005:5005 dataportability/api
+ * </ul>
+ *
+ * <ul>To run for prod environments:
+ *  <li>./gradlew -PcloudType=google -Penv=<environment> \
+ *      :distributions:demo-google-deployment:api:dockerize
+ *  <li>docker run --rm -p 8080:8080 dataportability/api
  * </ul>
  */
 
@@ -57,35 +58,74 @@ dependencies {
     compile project(':extensions:auth:portability-auth-instagram')
 }
 
-// TODO: Include index.html in jar
 
 addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.api.ApiMain'
 
+task copyEnvResources(type: Copy) {
+    description = 'Copies environment-specific resources and configuration into the jar, ' +
+            'including index.html'
+    ext.env = project.hasProperty('env') ? env : 'local'
+    into 'src/main/resources/config/env'
+    from "../resources/config/environments/" + ext.env
+}
+
+task copyResources(type: Copy) {
+    description = 'Copies resources and configuration into the jar'
+    dependsOn copyEnvResources
+    into 'src/main/resources'
+    from('../resources/') {
+        exclude { details -> details.file.name.contains('environments') }
+    }
+}
+
 shadowJar {
     mergeServiceFiles()
     exclude '**/pom.properties'
     exclude '**/pom.xml'
-    copy {
-        from '../resources/'
-        into 'src/main/resources'
-    }
 }
 
-// Note: This service acct creds file should be used for local testing only. In production, we use
-// GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret.
-task copyApiServerDeps {
+task createApiServerDockerfile(type: Dockerfile) {
+    description = 'Builds the API Server Dockerfile'
+    group = 'docker'
+    destFile project.file("${buildDir}/api/Dockerfile")
+    from "gcr.io/google-appengine/openjdk:8"
+    exposePort 8080 // Port the API server is accessed from
+    copyFile("build/libs/api-all.jar", "/app/api.jar")
+    // TODO: make debug flag driven
+    defaultCommand("java",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005",
+            "-jar",
+            "/app/api.jar")
+
+    // TODO: label with git commit
+}
+
+task dockerize(type: DockerBuildImage) {
+    description = 'Builds the API Server Docker image'
+    group = 'docker'
+    dependsOn copyResources, shadowJar, createApiServerDockerfile
+    dockerFile = project.file("${buildDir}/api/Dockerfile")
+    inputDir = project.file(".")
+    tag = 'dataportability/api:latest'
+}
+
+
+// Note: This service acct creds file should be used for local developmemt only. In production, we
+// use GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
+// called from createApiServerDockerfileLocal and NOT the production createApiServerDockerfile.
+task copyApiServerDepsLocal {
     copy {
         from '../bin/service_acct_creds.json'
         into 'build'
     }
 }
 
-task createApiServerDockerfile(type: Dockerfile) {
+task createApiServerDockerfileLocal(type: Dockerfile) {
     description = 'Builds the API Server Dockerfile'
     group = 'docker'
-    dependsOn copyApiServerDeps
+    dependsOn copyApiServerDepsLocal
     destFile project.file("${buildDir}/api/Dockerfile")
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the API server is accessed from
@@ -95,6 +135,7 @@ task createApiServerDockerfile(type: Dockerfile) {
     // only. This is not secure for an image deployed to production. In production,
     // GOOGLE_APPLICATION_CREDENTIALS is a Kubernetes secret, GOOGLE_PROJECT_ID is set in the
     // Kubernetes deployment (see distributions/common/k8s/api-deployment.yaml).
+    // TODO: make debug flag driven
     exposePort 5005 // Port to open up for the debugger
     defaultCommand("java",
             "-Xdebug",
@@ -102,17 +143,17 @@ task createApiServerDockerfile(type: Dockerfile) {
             "-jar",
             "/app/api.jar")
     copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
-    ext.gcpProject = hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
     environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
     environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
 
     // TODO: label with git commit
 }
 
-task dockerize(type: DockerBuildImage) {
-    description = 'Builds the API Server Docker image'
+task dockerizeLocal(type: DockerBuildImage) {
+    description = 'Builds the API Server Docker image for local development'
     group = 'docker'
-    dependsOn shadowJar, createApiServerDockerfile
+    dependsOn copyResources, shadowJar, createApiServerDockerfileLocal
     dockerFile = project.file("${buildDir}/api/Dockerfile")
     inputDir = project.file(".")
     tag = 'dataportability/api:latest'

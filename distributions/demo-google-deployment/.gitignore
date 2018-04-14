@@ -1,0 +1,3 @@
+api/src/main/resources/config/*
+transfer/src/main/resources/config/*
+resources/config/environments/*/*.yaml
