@@ -93,6 +93,7 @@ task createApiServerDockerfile(type: Dockerfile) {
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the API server is accessed from
     copyFile("build/libs/api-all.jar", "/app/api.jar")
+    // TODO: make debug flag driven
     defaultCommand("java",
             "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005",
             "-jar",
@@ -134,6 +135,7 @@ task createApiServerDockerfileLocal(type: Dockerfile) {
     // only. This is not secure for an image deployed to production. In production,
     // GOOGLE_APPLICATION_CREDENTIALS is a Kubernetes secret, GOOGLE_PROJECT_ID is set in the
     // Kubernetes deployment (see distributions/common/k8s/api-deployment.yaml).
+    // TODO: make debug flag driven
     exposePort 5005 // Port to open up for the debugger
     defaultCommand("java",
             "-Xdebug",
