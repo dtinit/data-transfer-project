@@ -95,7 +95,7 @@ task createApiServerDockerfile(type: Dockerfile) {
     copyFile("build/libs/api-all.jar", "/app/api.jar")
     // TODO: make debug flag driven
     defaultCommand("java",
-            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n",
             "-jar",
             "/app/api.jar")
 
@@ -111,7 +111,6 @@ task dockerize(type: DockerBuildImage) {
     tag = 'dataportability/api:latest'
 }
 
-
 // Note: This service acct creds file should be used for local developmemt only. In production, we
 // use GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
 // called from createApiServerDockerfileLocal and NOT the production createApiServerDockerfile.
@@ -123,7 +122,7 @@ task copyApiServerDepsLocal {
 }
 
 task createApiServerDockerfileLocal(type: Dockerfile) {
-    description = 'Builds the API Server Dockerfile'
+    description = 'Builds the API Server Dockerfile for local development'
     group = 'docker'
     dependsOn copyApiServerDepsLocal
     destFile project.file("${buildDir}/api/Dockerfile")
