@@ -25,7 +25,6 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -33,7 +32,6 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
-import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbum;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumImage;
@@ -41,17 +39,21 @@ import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumInfo
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class SmugMugPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
+public class SmugMugPhotosExporter
+    implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "photo:";
 
   static final String ALBUM_URL_FORMATTER = "/api/v2/album/%s!images";
+  private final Logger logger = LoggerFactory.getLogger(SmugMugPhotosExporter.class);
   private SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosExporter(HttpTransport transport) {
@@ -64,55 +66,47 @@ public class SmugMugPhotosExporter implements Exporter<AuthData, PhotosContainer
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, AuthData authData) {
-    try {
-      return exportAlbums(Optional.empty());
-    } catch (IOException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
-    }
+  public ExportResult<PhotosContainerResource> export(UUID jobId, TokenSecretAuthData authData) {
+    return export(jobId, authData, new ExportInformation(null, null));
   }
 
   @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, AuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokenSecretAuthData authData, ExportInformation exportInformation) {
+
     StringPaginationToken paginationToken =
         (StringPaginationToken) exportInformation.getPaginationData();
-    if (paginationToken != null && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
-      // Next thing to export is more albums
-      try {
-        return exportAlbums(Optional.of(paginationToken));
-      } catch (IOException e) {
-        return new ExportResult<>(ResultType.ERROR, e.getMessage());
-      }
+    IdOnlyContainerResource resource =
+        (IdOnlyContainerResource) exportInformation.getContainerResource();
+
+    if (resource != null) {
+      return exportPhotos(resource, paginationToken, authData);
     } else {
-      // Next thing to export is photos
-      IdOnlyContainerResource idOnlyContainerResource =
-          (IdOnlyContainerResource) exportInformation.getContainerResource();
-      Optional<PaginationData> pageData =
-          paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
-      try {
-        return exportPhotos(idOnlyContainerResource, pageData);
-      } catch (IOException e) {
-        return new ExportResult<>(ResultType.ERROR, e.getMessage());
-      }
+      return exportAlbums(paginationToken, authData);
     }
   }
 
   private ExportResult<PhotosContainerResource> exportAlbums(
-      Optional<PaginationData> paginationData) throws IOException {
-    // Make request to SmugMug
-    String albumInfoUri;
-    if (paginationData.isPresent()) {
-      String token = ((StringPaginationToken) paginationData.get()).getToken();
-      Preconditions.checkState(
-          token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
-      albumInfoUri = token.substring(ALBUM_TOKEN_PREFIX.length());
-    } else {
-      SmugMugResponse<SmugMugUserResponse> userResponse = smugMugInterface.makeUserRequest();
-      albumInfoUri = userResponse.getResponse().getUser().getUris().get(ALBUMS_KEY).getUri();
+      StringPaginationToken paginationData, TokenSecretAuthData authData) {
+
+    SmugMugResponse<SmugMugAlbumsResponse> albumsResponse;
+    try {
+      // Make request to SmugMug
+      String albumInfoUri;
+      if (paginationData != null) {
+        String token = paginationData.getToken();
+        Preconditions.checkState(
+            token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
+        albumInfoUri = token.substring(ALBUM_TOKEN_PREFIX.length());
+      } else {
+        SmugMugResponse<SmugMugUserResponse> userResponse = smugMugInterface.makeUserRequest();
+        albumInfoUri = userResponse.getResponse().getUser().getUris().get(ALBUMS_KEY).getUri();
+      }
+      albumsResponse = smugMugInterface.makeAlbumRequest(albumInfoUri);
+    } catch (IOException e) {
+      logger.warn("Unable to get AlbumsResponse: " + e.getMessage());
+      return new ExportResult(ResultType.ERROR, e.getMessage());
     }
-    SmugMugResponse<SmugMugAlbumsResponse> albumsResponse =
-        smugMugInterface.makeAlbumRequest(albumInfoUri);
 
     // Set up continuation data
     StringPaginationToken paginationToken = null;
@@ -142,14 +136,15 @@ public class SmugMugPhotosExporter implements Exporter<AuthData, PhotosContainer
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(
-      IdOnlyContainerResource containerResource, Optional<PaginationData> paginationData)
-      throws IOException {
+      IdOnlyContainerResource containerResource,
+      StringPaginationToken paginationData,
+      TokenSecretAuthData authData) {
     List<PhotoModel> photoList = new ArrayList<>();
 
     // Make request to SmugMug
     String photoInfoUri;
-    if (paginationData.isPresent()) {
-      String token = ((StringPaginationToken) paginationData.get()).getToken();
+    if (paginationData != null) {
+      String token = paginationData.getToken();
       Preconditions.checkState(
           token.startsWith(PHOTO_TOKEN_PREFIX), "Invalid pagination token " + token);
       photoInfoUri = token.substring(PHOTO_TOKEN_PREFIX.length());
@@ -157,8 +152,14 @@ public class SmugMugPhotosExporter implements Exporter<AuthData, PhotosContainer
       String id = containerResource.getId();
       photoInfoUri = String.format(ALBUM_URL_FORMATTER, id);
     }
-    SmugMugResponse<SmugMugAlbumInfoResponse> albumInfoResponse =
-        smugMugInterface.makeAlbumInfoRequest(photoInfoUri);
+
+    SmugMugResponse<SmugMugAlbumInfoResponse> albumInfoResponse = null;
+    try {
+      albumInfoResponse = smugMugInterface.makeAlbumInfoRequest(photoInfoUri);
+    } catch (IOException e) {
+      logger.warn("Unable to get SmugMugAlbumInfo");
+      return new ExportResult(ResultType.ERROR, e.getMessage());
+    }
 
     // Set up continuation data
     StringPaginationToken pageToken = null;

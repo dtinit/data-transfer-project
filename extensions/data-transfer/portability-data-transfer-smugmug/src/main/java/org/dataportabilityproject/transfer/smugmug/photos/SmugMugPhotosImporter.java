@@ -44,11 +44,12 @@ import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumResp
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
+public class SmugMugPhotosImporter implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
   private final JobStore jobStore;
   private SmugMugInterface smugMugInterface;
@@ -73,7 +74,7 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(UUID jobId, TokenSecretAuthData authData, PhotosContainerResource data) {
     try {
       String folder = null;
       if (!data.getAlbums().isEmpty()) {
@@ -87,7 +88,6 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
         importSinglePhoto(jobId, photo);
       }
     } catch (IOException e) {
-      // TODO(olsona): we should retry on individual errors
       return new ImportResult(ResultType.ERROR, e.getMessage());
     }
     return ImportResult.OK;
