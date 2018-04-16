@@ -30,10 +30,14 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * </ul>
  *
  * <ul>To run for prod environments:
- *  <li>./gradlew -PcloudType=google -Penv=<environment> \
- *      :distributions:demo-google-deployment:api:dockerize
+ *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
+ *  -PimageVersion=v0 :distributions:demo-google-deployment:api:dockerize
  *  <li>docker run --rm -p 8080:8080 dataportability/api
+ *  <li>To push to Google Container Registry:
+ *      <li>gcloud config set project <gcpProject>
+ *      <li>gcloud docker -- push gcr.io/<gcpProject>/portability-api:<imageVersion>
  * </ul>
+ *
  */
 
 plugins {
@@ -127,7 +131,9 @@ task dockerize(type: DockerBuildImage) {
     dependsOn copyResources, shadowJar, createApiServerDockerfile
     dockerFile = project.file("${buildDir}/api/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/api:latest'
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    ext.imageVersion = project.hasProperty('imageVersion') ? imageVersion : 'latest'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-api:" + ext.imageVersion
 }
 
 // Note: This service acct creds file should be used for local developmemt only. In production, we

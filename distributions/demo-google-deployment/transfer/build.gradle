@@ -34,9 +34,12 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * </ul>
  *
  * <ul>To run for prod environments:
- *  <li>./gradlew -PcloudType=google -Penv=<environment> \
- *      :distributions:demo-google-deployment:transfer:dockerize
+ *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
+ *  -PimageVersion=<version> :distributions:demo-google-deployment:transfer:dockerize
  *  <li>docker run --rm -p 8082:8082 dataportability/transfer
+ *  <li>To push to Google Container Registry:
+ *      <li>gcloud config set project <gcpProject>
+ *      <li>gcloud docker -- push gcr.io/<gcpProject>/portability-transfer:<imageVersion>
  * </ul>
  */
 plugins {
@@ -118,7 +121,9 @@ task dockerize(type: DockerBuildImage) {
     dependsOn copyResources, shadowJar, createTransferServerDockerfile
     dockerFile = project.file("${buildDir}/transfer/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/transfer:latest'
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    ext.imageVersion = project.hasProperty('imageVersion') ? imageVersion : 'latest'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:" + ext.imageVersion
 }
 
 // Note: This service acct creds file should be used for local testing only. In production, we use
@@ -166,5 +171,6 @@ task dockerizeLocal(type: DockerBuildImage) {
     dependsOn copyResources, shadowJar, createTransferServerDockerfileLocal
     dockerFile = project.file("${buildDir}/transfer/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/transfer:latest'
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:latest"
 }
