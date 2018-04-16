@@ -146,7 +146,7 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
             "-jar",
             "/app/transfer.jar")
     copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
-    ext.gcpProject = hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
     environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
     environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
 
