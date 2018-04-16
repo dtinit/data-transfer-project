@@ -69,7 +69,7 @@ print_and_exec "cp -r build/resources/* ../../static/"
 print_and_exec "gsutil cp -r ../../static ${GCS_BUCKET}"
 echo -e "\nMaking folder public"
 print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
-INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/api/src/main/resources/config/environments/$ENV/index.html"
+INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/resources/config/environments/$ENV/index.html"
 if [[ -e ${INDEX_HTML_LOCATION} ]]; then
   print_and_exec "mkdir /tmp/${PROJECT_ID}/"
   print_and_exec "cp ${INDEX_HTML_LOCATION} /tmp/${PROJECT_ID}/index.html"

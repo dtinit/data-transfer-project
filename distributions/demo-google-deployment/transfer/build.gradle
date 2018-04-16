@@ -104,7 +104,6 @@ task createTransferServerDockerfile(type: Dockerfile) {
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
-    // TODO: make debug flag driven
     defaultCommand("java",
             "-Xrunjdwp:transport=dt_socket,server=y,suspend=n",
             "-jar",
