@@ -50,7 +50,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
     try {
       authData = smugMugOauthInterface.getRequestToken(callbackBaseUrl + "/callback1/smugmug");
     } catch (IOException e) {
-      logger.debug("Couldnt get authData {}", e.getMessage());
+      logger.warn("Couldnt get authData {}", e.getMessage());
       return null;
     }
 

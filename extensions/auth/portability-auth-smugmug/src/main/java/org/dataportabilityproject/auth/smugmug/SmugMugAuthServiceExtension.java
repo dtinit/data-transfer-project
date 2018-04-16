@@ -72,6 +72,7 @@ public class SmugMugAuthServiceExtension implements AuthServiceExtension {
   @Override
   public void initialize(ExtensionContext context) {
     if (initialized) {
+      logger.warn("SmugmugAuthServiceExtension already initialized. Nothing to do.");
       return;
     }
 
