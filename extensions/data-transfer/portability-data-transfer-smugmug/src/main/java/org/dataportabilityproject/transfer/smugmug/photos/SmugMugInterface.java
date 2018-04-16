@@ -62,8 +62,8 @@ public class SmugMugInterface {
     return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {});
   }
 
-  SmugMugResponse<SmugMugUserResponse> makeUserRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
+  SmugMugResponse<SmugMugUserResponse> makeUserRequest() throws IOException {
+    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
   }
 
   <T> SmugMugResponse<T> makeRequest(
