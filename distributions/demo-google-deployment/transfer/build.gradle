@@ -69,8 +69,8 @@ task copyEnvResources(type: Copy) {
     description = 'Copies environment-specific resources and configuration into the jar'
     ext.env = project.hasProperty('env') ? env : 'local'
     into 'src/main/resources/config/env'
-    from ("../resources/config/environments/" + ext.env) {
-        exclude { details -> details.file.name.equals('index.html') }
+    from("../resources/config/environments/" + ext.env) {
+        include 'common.yaml'
     }
 }
 
@@ -78,8 +78,9 @@ task copyResources(type: Copy) {
     description = 'Copies resources and configuration into the jar'
     dependsOn copyEnvResources
     into 'src/main/resources'
-    from('../resources/') {
-        exclude { details -> details.file.name.contains('environments') }
+    from('../resources') {
+        include 'config/common.yaml'
+        include 'log4j.properties'
     }
 }
 
