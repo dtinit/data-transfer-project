@@ -43,26 +43,36 @@ import org.dataportabilityproject.transfer.smugmug.photos.model.ImageUploadRespo
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-public class SmugMugPhotosImporter implements Importer<TokenSecretAuthData, PhotosContainerResource> {
+public class SmugMugPhotosImporter
+    implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
   private final JobStore jobStore;
+  private final AppCredentials appCredentials;
+  private final HttpTransport transport;
+
   private SmugMugInterface smugMugInterface;
 
-  public SmugMugPhotosImporter(JobStore jobStore, HttpTransport transport){
-    this.jobStore = jobStore;
-    this.smugMugInterface = new SmugMugInterface(transport);
+  public SmugMugPhotosImporter(
+      JobStore jobStore, HttpTransport transport, AppCredentials appCredentials) {
+    this(null, jobStore, transport, appCredentials);
   }
 
   @VisibleForTesting
-  SmugMugPhotosImporter(SmugMugInterface smugMugInterface, JobStore jobStore) {
+  SmugMugPhotosImporter(
+      SmugMugInterface smugMugInterface,
+      JobStore jobStore,
+      HttpTransport transport,
+      AppCredentials appCredentials) {
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
+    this.transport = transport;
+    this.appCredentials = appCredentials;
   }
 
   // Should pull this out into separate library
@@ -74,7 +84,8 @@ public class SmugMugPhotosImporter implements Importer<TokenSecretAuthData, Phot
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokenSecretAuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(
+      UUID jobId, TokenSecretAuthData authData, PhotosContainerResource data) {
     try {
       String folder = null;
       if (!data.getAlbums().isEmpty()) {
@@ -150,5 +161,12 @@ public class SmugMugPhotosImporter implements Importer<TokenSecretAuthData, Phot
             "X-Smug-ResponseType", "json",
             "X-Smug-Version", "v2"),
         new TypeReference<ImageUploadResponse>() {});
+  }
+
+  // Returns the provided interface, or a new one specific to the authData provided.
+  private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData) {
+    return smugMugInterface == null
+        ? new SmugMugInterface(transport, appCredentials, authData)
+        : smugMugInterface;
   }
 }

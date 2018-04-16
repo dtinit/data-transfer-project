@@ -39,6 +39,7 @@ import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumInfo
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
@@ -51,17 +52,23 @@ public class SmugMugPhotosExporter
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "photo:";
-
   static final String ALBUM_URL_FORMATTER = "/api/v2/album/%s!images";
+
+  private final AppCredentials appCredentials;
+  private final HttpTransport transport;
   private final Logger logger = LoggerFactory.getLogger(SmugMugPhotosExporter.class);
+
   private SmugMugInterface smugMugInterface;
 
-  public SmugMugPhotosExporter(HttpTransport transport) {
-    this.smugMugInterface = new SmugMugInterface(transport);
+  public SmugMugPhotosExporter(HttpTransport transport, AppCredentials appCredentials) {
+    this(null, transport, appCredentials);
   }
 
   @VisibleForTesting
-  SmugMugPhotosExporter(SmugMugInterface smugMugInterface) {
+  SmugMugPhotosExporter(
+      SmugMugInterface smugMugInterface, HttpTransport transport, AppCredentials appCredentials) {
+    this.transport = transport;
+    this.appCredentials = appCredentials;
     this.smugMugInterface = smugMugInterface;
   }
 
@@ -80,14 +87,14 @@ public class SmugMugPhotosExporter
         (IdOnlyContainerResource) exportInformation.getContainerResource();
 
     if (resource != null) {
-      return exportPhotos(resource, paginationToken, authData);
+      return exportPhotos(resource, paginationToken, getOrCreateSmugMugInterface(authData));
     } else {
-      return exportAlbums(paginationToken, authData);
+      return exportAlbums(paginationToken, getOrCreateSmugMugInterface(authData));
     }
   }
 
   private ExportResult<PhotosContainerResource> exportAlbums(
-      StringPaginationToken paginationData, TokenSecretAuthData authData) {
+      StringPaginationToken paginationData, SmugMugInterface smugMugInterface) {
 
     SmugMugResponse<SmugMugAlbumsResponse> albumsResponse;
     try {
@@ -138,7 +145,7 @@ public class SmugMugPhotosExporter
   private ExportResult<PhotosContainerResource> exportPhotos(
       IdOnlyContainerResource containerResource,
       StringPaginationToken paginationData,
-      TokenSecretAuthData authData) {
+      SmugMugInterface smugMugInterface) {
     List<PhotoModel> photoList = new ArrayList<>();
 
     // Make request to SmugMug
@@ -177,13 +184,13 @@ public class SmugMugPhotosExporter
         title = image.getFileName();
       }
 
-      // TODO(olsona): this.authConsumer.sign(image.getArchivedUri()) ?
       photoList.add(
           new PhotoModel(
               title,
+              // TODO: sign the archived uri to get private photos to work.
               image.getArchivedUri(),
               image.getCaption(),
-              image.getFormat(),
+              getMimeType(image.getFormat()),
               containerResource.getId()));
     }
     PhotosContainerResource resource = new PhotosContainerResource(null, photoList);
@@ -195,5 +202,24 @@ public class SmugMugPhotosExporter
     }
 
     return new ExportResult<>(resultType, resource, continuationData);
+  }
+
+  // Returns the provided interface, or a new one specific to the authData provided.
+  private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData) {
+    return smugMugInterface == null
+        ? new SmugMugInterface(transport, appCredentials, authData)
+        : smugMugInterface;
+  }
+
+  private String getMimeType(String smugMugformat){
+    switch (smugMugformat) {
+      case "JPG":
+      case "JPEG":
+        return "image/jpeg";
+      case "PNG":
+        return "image/png";
+      default:
+        throw new IllegalArgumentException("Don't know how to map: " + smugMugformat);
+    }
   }
 }
