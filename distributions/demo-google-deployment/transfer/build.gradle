@@ -29,13 +29,13 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  *
  * <ul>To run locally:
  *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> \
- *      :distributions:demo-google-deployment:api:dockerizeLocal
+ *      :distributions:demo-google-deployment:transfer:dockerizeLocal
  *  <li>docker run --rm -p 8082:8082 -p 5006:5006 dataportability/transfer
  * </ul>
  *
  * <ul>To run for prod environments:
  *  <li>./gradlew -PcloudType=google -Penv=<environment> \
- *      :distributions:demo-google-deployment:api:dockerize
+ *      :distributions:demo-google-deployment:transfer:dockerize
  *  <li>docker run --rm -p 8082:8082 dataportability/transfer
  * </ul>
  */
@@ -65,8 +65,8 @@ addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
 
-task copyEnvResources(type: Copy) {
-    description = 'Copies environment-specific resources and configuration into the jar'
+task copyEnvConfig(type: Copy) {
+    description = 'Copies environment-specific configuration into the jar, and index.html'
     ext.env = project.hasProperty('env') ? env : 'local'
     into 'src/main/resources/config/env'
     from("../resources/config/environments/" + ext.env) {
@@ -74,13 +74,21 @@ task copyEnvResources(type: Copy) {
     }
 }
 
-task copyResources(type: Copy) {
-    description = 'Copies resources and configuration into the jar'
-    dependsOn copyEnvResources
+task copyConfig(type: Copy) {
+    description = 'Copies configuration into the jar'
+    dependsOn copyEnvConfig
     into 'src/main/resources'
     from('../resources') {
         include 'config/common.yaml'
-        include 'log4j.properties'
+    }
+}
+
+task copyResources(type: Copy) {
+    description = 'Copies resources and configuration into the jar'
+    dependsOn copyConfig
+    into 'src/main/resources'
+    from('../resources') {
+        exclude { details -> details.file.name.contains('config') }
     }
 }
 
@@ -95,7 +103,7 @@ task createTransferServerDockerfile(type: Dockerfile) {
     group = 'docker'
     destFile project.file("${buildDir}/transfer/Dockerfile")
     from "gcr.io/google-appengine/openjdk:8"
-    exposePort 8080 // Port the API server is accessed from
+    exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
     // TODO: make debug flag driven
     defaultCommand("java",
