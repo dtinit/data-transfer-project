@@ -63,20 +63,40 @@ addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.api.ApiMain'
 
-task copyEnvResources(type: Copy) {
-    description = 'Copies environment-specific resources and configuration into the jar, ' +
-            'including index.html'
+task copyIndexHtml(type: Copy) {
+    description = 'Copies index.html into the jar'
+    ext.env = project.hasProperty('env') ? env : 'local'
+    into 'src/main/resources/config'
+    from("../resources/config/environments/" + ext.env) {
+        include 'index.html'
+    }
+}
+
+task copyEnvConfig(type: Copy) {
+    description = 'Copies environment-specific configuration into the jar'
     ext.env = project.hasProperty('env') ? env : 'local'
     into 'src/main/resources/config/env'
-    from "../resources/config/environments/" + ext.env
+    from("../resources/config/environments/" + ext.env) {
+        include 'api.yaml'
+        include 'common.yaml'
+    }
+}
+
+task copyConfig(type: Copy) {
+    description = 'Copies configuration into the jar'
+    into 'src/main/resources'
+    from('../resources') {
+        include 'config/api.yaml'
+        include 'config/common.yaml'
+    }
 }
 
 task copyResources(type: Copy) {
     description = 'Copies resources and configuration into the jar'
-    dependsOn copyEnvResources
+    dependsOn copyConfig, copyEnvConfig, copyIndexHtml
     into 'src/main/resources'
-    from('../resources/') {
-        exclude { details -> details.file.name.contains('environments') }
+    from('../resources') {
+        exclude { details -> details.file.name.contains('config') }
     }
 }
 
@@ -93,9 +113,8 @@ task createApiServerDockerfile(type: Dockerfile) {
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the API server is accessed from
     copyFile("build/libs/api-all.jar", "/app/api.jar")
-    // TODO: make debug flag driven
     defaultCommand("java",
-            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n",
             "-jar",
             "/app/api.jar")
 
@@ -111,7 +130,6 @@ task dockerize(type: DockerBuildImage) {
     tag = 'dataportability/api:latest'
 }
 
-
 // Note: This service acct creds file should be used for local developmemt only. In production, we
 // use GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
 // called from createApiServerDockerfileLocal and NOT the production createApiServerDockerfile.
@@ -123,7 +141,7 @@ task copyApiServerDepsLocal {
 }
 
 task createApiServerDockerfileLocal(type: Dockerfile) {
-    description = 'Builds the API Server Dockerfile'
+    description = 'Builds the API Server Dockerfile for local development'
     group = 'docker'
     dependsOn copyApiServerDepsLocal
     destFile project.file("${buildDir}/api/Dockerfile")
