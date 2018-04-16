@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -51,6 +52,11 @@ public class SmugMugPhotosImporter implements Importer<AuthData, PhotosContainer
 
   private final JobStore jobStore;
   private SmugMugInterface smugMugInterface;
+
+  public SmugMugPhotosImporter(JobStore jobStore, HttpTransport transport){
+    this.jobStore = jobStore;
+    this.smugMugInterface = new SmugMugInterface(transport);
+  }
 
   @VisibleForTesting
   SmugMugPhotosImporter(SmugMugInterface smugMugInterface, JobStore jobStore) {

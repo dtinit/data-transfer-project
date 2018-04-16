@@ -49,8 +49,8 @@ public class SmugMugInterface {
 
   private final HttpTransport httpTransport;
 
-  SmugMugInterface() {
-    this.httpTransport = null;
+  SmugMugInterface(HttpTransport transport) {
+    this.httpTransport = transport;
   }
 
   SmugMugResponse<SmugMugAlbumInfoResponse> makeAlbumInfoRequest(String url)

@@ -18,6 +18,7 @@ package org.dataportabilityproject.transfer.smugmug.photos;
 
 import static org.dataportabilityproject.transfer.smugmug.photos.SmugMugInterface.ALBUMS_KEY;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -53,9 +54,8 @@ public class SmugMugPhotosExporter implements Exporter<AuthData, PhotosContainer
   static final String ALBUM_URL_FORMATTER = "/api/v2/album/%s!images";
   private SmugMugInterface smugMugInterface;
 
-  public SmugMugPhotosExporter() {
-    // TODO(olsona)
-    this.smugMugInterface = null;
+  public SmugMugPhotosExporter(HttpTransport transport) {
+    this.smugMugInterface = new SmugMugInterface(transport);
   }
 
   @VisibleForTesting
