@@ -18,6 +18,7 @@ package org.dataportabilityproject.transfer.smugmug.photos;
 
 import static org.dataportabilityproject.transfer.smugmug.photos.SmugMugInterface.ALBUMS_KEY;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -57,19 +58,25 @@ public class SmugMugPhotosExporter
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final Logger logger = LoggerFactory.getLogger(SmugMugPhotosExporter.class);
+  private final ObjectMapper mapper;
 
   private SmugMugInterface smugMugInterface;
 
-  public SmugMugPhotosExporter(HttpTransport transport, AppCredentials appCredentials) {
-    this(null, transport, appCredentials);
+  public SmugMugPhotosExporter(
+      HttpTransport transport, AppCredentials appCredentials, ObjectMapper mapper) {
+    this(null, transport, appCredentials, mapper);
   }
 
   @VisibleForTesting
   SmugMugPhotosExporter(
-      SmugMugInterface smugMugInterface, HttpTransport transport, AppCredentials appCredentials) {
+      SmugMugInterface smugMugInterface,
+      HttpTransport transport,
+      AppCredentials appCredentials,
+      ObjectMapper mapper) {
     this.transport = transport;
     this.appCredentials = appCredentials;
     this.smugMugInterface = smugMugInterface;
+    this.mapper = mapper;
   }
 
   @Override
@@ -207,11 +214,11 @@ public class SmugMugPhotosExporter
   // Returns the provided interface, or a new one specific to the authData provided.
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData) {
     return smugMugInterface == null
-        ? new SmugMugInterface(transport, appCredentials, authData)
+        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
         : smugMugInterface;
   }
 
-  private String getMimeType(String smugMugformat){
+  private String getMimeType(String smugMugformat) {
     switch (smugMugformat) {
       case "JPG":
       case "JPEG":

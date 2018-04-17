@@ -19,6 +19,7 @@ package org.dataportabilityproject.transfer.smugmug.photos;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
@@ -55,12 +56,13 @@ public class SmugMugPhotosImporter
   private final JobStore jobStore;
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
+  private final ObjectMapper mapper;
 
   private SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosImporter(
-      JobStore jobStore, HttpTransport transport, AppCredentials appCredentials) {
-    this(null, jobStore, transport, appCredentials);
+      JobStore jobStore, HttpTransport transport, AppCredentials appCredentials, ObjectMapper mapper) {
+    this(null, jobStore, transport, appCredentials, mapper);
   }
 
   @VisibleForTesting
@@ -68,11 +70,12 @@ public class SmugMugPhotosImporter
       SmugMugInterface smugMugInterface,
       JobStore jobStore,
       HttpTransport transport,
-      AppCredentials appCredentials) {
+      AppCredentials appCredentials, ObjectMapper mapper) {
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
     this.transport = transport;
     this.appCredentials = appCredentials;
+    this.mapper = mapper;
   }
 
   // Should pull this out into separate library
@@ -166,7 +169,7 @@ public class SmugMugPhotosImporter
   // Returns the provided interface, or a new one specific to the authData provided.
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData) {
     return smugMugInterface == null
-        ? new SmugMugInterface(transport, appCredentials, authData)
+        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
         : smugMugInterface;
   }
 }
