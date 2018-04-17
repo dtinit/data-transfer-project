@@ -41,7 +41,7 @@ include ':extensions:data-transfer:portability-data-transfer-microsoft'
 include ':extensions:auth:portability-auth-rememberthemilk'
 include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 
-// SmugMug
+// SmugMug Auth and Transfer Extensions
 include ':extensions:auth:portability-auth-smugmug'
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
 
