@@ -28,13 +28,13 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
  *
  * <ul>To run locally:
- *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> \
+ *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> \
  *      :distributions:demo-google-deployment:transfer:dockerizeLocal
  *  <li>docker run --rm -p 8082:8082 -p 5006:5006 dataportability/transfer
  * </ul>
  *
  * <ul>To run for prod environments:
- *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
+ *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
  *  -PimageVersion=<version> :distributions:demo-google-deployment:transfer:dockerize
  *  <li>docker run --rm -p 8082:8082 dataportability/transfer
  *  <li>To push to Google Container Registry:

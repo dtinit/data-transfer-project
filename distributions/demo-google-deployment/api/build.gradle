@@ -24,13 +24,13 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
  *
  * <ul>To run locally:
- *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> \
+ *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> \
  *      :distributions:demo-google-deployment:api:dockerizeLocal
  *  <li>docker run --rm -p 8080:8080 -p 5005:5005 dataportability/api
  * </ul>
  *
  * <ul>To run for prod environments:
- *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
+ *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
  *  -PimageVersion=v0 :distributions:demo-google-deployment:api:dockerize
  *  <li>docker run --rm -p 8080:8080 dataportability/api
  *  <li>To push to Google Container Registry:
@@ -70,7 +70,7 @@ mainClassName = 'org.dataportabilityproject.api.ApiMain'
 task copyIndexHtml(type: Copy) {
     description = 'Copies index.html into the jar'
     ext.env = project.hasProperty('env') ? env : 'local'
-    into 'src/main/resources/config'
+    into 'src/main/resources/static'
     from("../resources/config/environments/" + ext.env) {
         include 'index.html'
     }

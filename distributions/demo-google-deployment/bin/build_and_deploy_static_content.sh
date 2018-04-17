@@ -20,7 +20,7 @@
 
 #!/bin/sh
 
-USAGE="Usage: ./distributions/demo-google-deployment/bin/deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
+USAGE="Usage: ./distributions/demo-google-deployment/bin/build_and_deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
 print_and_exec() {
   echo -e "\n${1}"
   ${1}
@@ -54,11 +54,11 @@ gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 
 GCP_DIR=$(pwd)
+print_and_exec "cd client/"
 echo -e "\nCleaning up old resources"
 if [[ -e "../../static/" ]]; then
   rm -rf ../../static/
 fi
-print_and_exec "cd client/"
 print_and_exec "ng build --prod --env=${ENV}"
 print_and_exec "mkdir ../../static/"
 # Reorganize everything in a top level static/ directory. This is a hack to keep static assets
@@ -69,26 +69,31 @@ print_and_exec "cp -r build/resources/* ../../static/"
 print_and_exec "gsutil cp -r ../../static ${GCS_BUCKET}"
 echo -e "\nMaking folder public"
 print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
-INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/resources/config/environments/$ENV/index.html"
-if [[ -e ${INDEX_HTML_LOCATION} ]]; then
-  print_and_exec "mkdir /tmp/${PROJECT_ID}/"
-  print_and_exec "cp ${INDEX_HTML_LOCATION} /tmp/${PROJECT_ID}/index.html"
-  echo -e "\nUpdating index.html to reflect new bundle versions...\n"
-  echo -e "index.html before\n"
-  cat index.html
-fi
-print_and_exec "cd ../../static"
+cd ../../static
+
+echo -e "new index.html\n"
+cat index.html
 main_new=$(ls | grep main.*.bundle.js)
-styles_new=$(ls | grep styles.*.bundle.js)
+styles_new=$(ls | grep styles.*.bundle.css)
 inline_new=$(ls | grep inline.*.bundle.js)
 vendor_new=$(ls | grep vendor.*.bundle.js)
 polyfills_new=$(ls | grep polyfills.*.bundle.js)
 echo -e "\nnew bundles:\n$main_new\n$styles_new\n$inline_new\n$vendor_new\n$polyfills_new"
-sed -i "s|main.*.bundle.js|$main_new|g" "index.html"
-sed -i "s|styles.*.bundle.js|$styles_new|g" "index.html"
-sed -i "s|inline.*.bundle.js|$inline_new|g" "index.html"
-sed -i "s|vendor.*.bundle.js|$vendor_new|g" "index.html"
-sed -i "s|polyfills.*.bundle.js|$polyfills_new|g" "index.html"
-echo -e "\nupdated index.html:\n"
+# Prepend bundle references in index.html with static/.
+sed -i "s|$main_new|static/$main_new|g" "index.html"
+sed -i "s|$styles_new|static/$styles_new|g" "index.html"
+sed -i "s|$inline_new|static/$inline_new|g" "index.html"
+sed -i "s|$vendor_new|static/$vendor_new|g" "index.html"
+sed -i "s|$polyfills_new|static/$polyfills_new|g" "index.html"
+echo -e "\nindex.html after referencing bundles in static/\n"
 cat index.html
-print_and_exec "mv index.html ${INDEX_HTML_LOCATION}"
+
+INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/resources/config/environments/$ENV/index.html"
+if [[ -e ${INDEX_HTML_LOCATION} ]]; then
+  print_and_exec "mkdir -p /tmp/${PROJECT_ID}/"
+  print_and_exec "cp ${INDEX_HTML_LOCATION} /tmp/${PROJECT_ID}/index.html"
+  echo -e "\nSaving old index html at /tmp/${PROJECT_ID}/index.html. Was:\n"
+  cat /tmp/${PROJECT_ID}/index.html
+fi
+print_and_exec "cp index.html ${INDEX_HTML_LOCATION}"
+
