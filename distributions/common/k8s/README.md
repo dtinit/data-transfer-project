@@ -7,9 +7,15 @@ with Kubernetes using the Docker container format.
 
 Kubernetes' command line utility, kubectl, must be authenticated and configured to point to your cluster(s).
 
+### Setup for an existing Azure project
+
+To configure kubectl to connect to your Kubernetes cluster, run the `az acs kubernetes get-credentials` command. This downloads credentials and configures kubectl to use them.
+
+Detailed instructions are available in Azure [docs](https://docs.microsoft.com/en-us/azure/container-service/kubernetes/container-service-kubernetes-walkthrough#connect-to-the-cluster).
+
 ### Setup for an existing GKE (Google Container Engine) project
 
-To connect to a GKE cluster, you should download that cluster's credentials:
+To configure kubectl to connect to your Kubernetes cluster, run the `gcloud container clusters get-credentials` command. This downloads credentials and configures kubectl to use them.
 
 ```
 > gcloud container clusters list 
@@ -29,6 +35,8 @@ Your cluster will now be set to the most recent one you downloaded credentials f
 >kubectl config current-context
 gke_world-takeout-qa_us-central1-a_portability-worker-cluster
 ```
+
+Detailed instructions are available in GCP [docs](https://cloud.google.com/sdk/gcloud/reference/container/clusters/get-credentials).
 
 ## Tailing the container logs
 
