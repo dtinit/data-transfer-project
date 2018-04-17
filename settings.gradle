@@ -42,6 +42,7 @@ include ':extensions:auth:portability-auth-rememberthemilk'
 include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 
 // SmugMug
+include ':extensions:auth:portability-auth-smugmug'
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
 
 include ':client'

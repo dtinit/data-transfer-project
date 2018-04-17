@@ -23,15 +23,23 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * connects to a GCP project which it pulls app secrets from, etc, to test functionality of the
  * Google cloud extension without needing to deploy it to GCP.
  *
- * <p>TODO(#202): The next step will be to support deployed environments, and make sure the
- * resulting images work when deployed to GCP.
+ * <p>TODO(#202): Test deploying a prod image to GCP
  *
  * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
  *
- * <ul>To run:
+ * <ul>To run locally:
  *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> \
- *      :distributions:demo-google-deployment:transfer:dockerize
+ *      :distributions:demo-google-deployment:transfer:dockerizeLocal
  *  <li>docker run --rm -p 8082:8082 -p 5006:5006 dataportability/transfer
+ * </ul>
+ *
+ * <ul>To run for prod environments:
+ *  <li>./gradlew -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
+ *  -PimageVersion=<version> :distributions:demo-google-deployment:transfer:dockerize
+ *  <li>docker run --rm -p 8082:8082 dataportability/transfer
+ *  <li>To push to Google Container Registry:
+ *      <li>gcloud config set project <gcpProject>
+ *      <li>gcloud docker -- push gcr.io/<gcpProject>/portability-transfer:<imageVersion>
  * </ul>
  */
 plugins {
@@ -60,48 +68,49 @@ addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
 
+task copyEnvConfig(type: Copy) {
+    description = 'Copies environment-specific configuration into the jar'
+    ext.env = project.hasProperty('env') ? env : 'local'
+    into 'src/main/resources/config/env'
+    from("../resources/config/environments/" + ext.env) {
+        include 'common.yaml'
+    }
+}
+
+task copyConfig(type: Copy) {
+    description = 'Copies configuration into the jar'
+    into 'src/main/resources'
+    from('../resources') {
+        include 'config/common.yaml'
+    }
+}
+
+task copyResources(type: Copy) {
+    description = 'Copies resources and configuration into the jar'
+    dependsOn copyConfig, copyEnvConfig
+    into 'src/main/resources'
+    from('../resources') {
+        exclude { details -> details.file.name.contains('config') }
+    }
+}
+
 shadowJar {
     mergeServiceFiles()
     exclude '**/pom.properties'
     exclude '**/pom.xml'
-    copy {
-        from '../resources/'
-        into 'src/main/resources'
-    }
-}
-
-// Note: This service acct creds file should be used for local testing only. In production, we use
-// GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret.
-task copyTransferServerDeps {
-    copy {
-        from '../bin/service_acct_creds.json'
-        into 'build'
-    }
 }
 
 task createTransferServerDockerfile(type: Dockerfile) {
     description = 'Builds the Transfer Server Dockerfile'
     group = 'docker'
-    dependsOn copyTransferServerDeps
     destFile project.file("${buildDir}/transfer/Dockerfile")
     from "gcr.io/google-appengine/openjdk:8"
-    exposePort 8082 // Port the TRANSFER server is accessed from
+    exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
-
-    // Note: Debug port, project ID, and service_acct_creds.json set in the image are for local
-    // only. This is not secure for an image deployed to production. In production,
-    // GOOGLE_APPLICATION_CREDENTIALS is a Kubernetes secret, GOOGLE_PROJECT_ID is set in the
-    // Kubernetes deployment (see distributions/common/k8s/transfer-deployment.yaml).
-    exposePort 5006 // Port to open up for the debugger
     defaultCommand("java",
-            "-Xdebug",
-            "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n",
             "-jar",
             "/app/transfer.jar")
-    copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
-    ext.gcpProject = hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
-    environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
-    environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
 
     // TODO: label with git commit
 }
@@ -109,8 +118,59 @@ task createTransferServerDockerfile(type: Dockerfile) {
 task dockerize(type: DockerBuildImage) {
     description = 'Builds the Transfer Server Docker image'
     group = 'docker'
-    dependsOn shadowJar, createTransferServerDockerfile
+    dependsOn copyResources, shadowJar, createTransferServerDockerfile
     dockerFile = project.file("${buildDir}/transfer/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/transfer:latest'
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    ext.imageVersion = project.hasProperty('imageVersion') ? imageVersion : 'latest'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:" + ext.imageVersion
+}
+
+// Note: This service acct creds file should be used for local testing only. In production, we use
+// GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
+// called from createTransferServerDockerfileLocal and NOT the production
+// createTransferServerDockerfile.
+task copyTransferServerDepsLocal {
+    copy {
+        from '../bin/service_acct_creds.json'
+        into 'build'
+    }
+}
+
+task createTransferServerDockerfileLocal(type: Dockerfile) {
+    description = 'Builds the Transfer Server Dockerfile for local development'
+    group = 'docker'
+    dependsOn copyTransferServerDepsLocal
+    destFile project.file("${buildDir}/transfer/Dockerfile")
+    from "gcr.io/google-appengine/openjdk:8"
+    exposePort 8082 // Port the transfer server is accessed from
+    copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
+
+    // Note: Debug port, project ID, and service_acct_creds.json set in the image are for local
+    // only. This is not secure for an image deployed to production. In production,
+    // GOOGLE_APPLICATION_CREDENTIALS is a Kubernetes secret, GOOGLE_PROJECT_ID is set in the
+    // Kubernetes deployment (see distributions/common/k8s/transfer-deployment.yaml).
+    // TODO: make debug flag driven
+    exposePort 5006 // Port to open up for the debugger
+    defaultCommand("java",
+            "-Xdebug",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006",
+            "-jar",
+            "/app/transfer.jar")
+    copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
+    environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
+
+    // TODO: label with git commit
+}
+
+task dockerizeLocal(type: DockerBuildImage) {
+    description = 'Builds the Transfer Server Docker image for local development'
+    group = 'docker'
+    dependsOn copyResources, shadowJar, createTransferServerDockerfileLocal
+    dockerFile = project.file("${buildDir}/transfer/Dockerfile")
+    inputDir = project.file(".")
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:latest"
 }

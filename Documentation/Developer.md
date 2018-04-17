@@ -104,6 +104,9 @@ make sure you have started the demoserver locally (step above) on the docker net
 
 ## Deploying in production
 
-[See config/README.md](../config/README.md)
+A demo distribution for Google Cloud Platform is available at
+`distributions/demo-google-deployment`.
+
+A demo Azure distribution is also in development.
 
 ## This is not an official Google product
