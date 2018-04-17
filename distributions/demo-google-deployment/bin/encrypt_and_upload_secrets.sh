@@ -25,8 +25,8 @@
 #
 #!/bin/sh
 
-if [[ $(pwd) != */gcp ]]; then
-  echo "Please run out of /gcp directory. Aborting."
+if [[ $(pwd) != */demo-google-deployment/bin ]]; then
+  echo "Please run out of the /demo-google-deployment/bin directory. Aborting."
   exit 1
 fi
 
