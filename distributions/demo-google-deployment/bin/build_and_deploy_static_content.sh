@@ -20,14 +20,14 @@
 
 #!/bin/sh
 
-USAGE="Usage: ./deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
+USAGE="Usage: ./distributions/demo-google-deployment/bin/build_and_deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
 print_and_exec() {
   echo -e "\n${1}"
   ${1}
 }
 
-if [[ $(pwd) != */gcp ]]; then
-  echo -e "${USAGE}\nPlease run out of /gcp directory. Aborting."
+if [[ $(pwd) != */data-transfer-project ]]; then
+  echo -e "${USAGE}\nPlease run out of the root data-transfer-project/ directory. Aborting."
   exit 1
 fi
 
@@ -41,7 +41,7 @@ if [ -z $2 ]; then
   exit 1
 fi
 # script below sets env variables BASE_PROJECT_ID
-source ./init_project_vars.sh
+source ./distributions/demo-google-deployment/bin/init_project_vars.sh
 
 echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
@@ -54,44 +54,46 @@ gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 
 GCP_DIR=$(pwd)
+print_and_exec "cd client/"
 echo -e "\nCleaning up old resources"
-print_and_exec "cd ../../../"
-if [[ -e "resources/" ]]; then
-  rm -rf resources/
+if [[ -e "../../static/" ]]; then
+  rm -rf ../../static/
 fi
-if [[ -e "static/" ]]; then
-  rm -rf static/
-fi
-print_and_exec "cd data-portability/client/"
 print_and_exec "ng build --prod --env=${ENV}"
-print_and_exec "cd ../../resources/"
+print_and_exec "mkdir ../../static/"
 # Reorganize everything in a top level static/ directory. This is a hack to keep static assets
 # consistent between local and GCP environments"
-print_and_exec "cp -r static/* ."
-print_and_exec "rm -rf static/"
-print_and_exec "cd .."
-print_and_exec "mkdir static"
-print_and_exec "cp -r resources/* static/"
-print_and_exec "gsutil cp -r static ${GCS_BUCKET}"
+print_and_exec "cp -r build/resources/static/* ../../static"
+print_and_exec "rm -rf build/resources/static/"
+print_and_exec "cp -r build/resources/* ../../static/"
+print_and_exec "gsutil cp -r ../../static ${GCS_BUCKET}"
 echo -e "\nMaking folder public"
 print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
-print_and_exec "cd static/"
-print_and_exec "pwd"
-print_and_exec "cp ../data-portability/config/environments/$ENV/index.html index.html"
-echo -e "\nUpdating index.html to reflect new bundle versions...\n"
-echo -e "index.html before\n"
+cd ../../static
+
+echo -e "new index.html\n"
 cat index.html
 main_new=$(ls | grep main.*.bundle.js)
-styles_new=$(ls | grep styles.*.bundle.js)
+styles_new=$(ls | grep styles.*.bundle.css)
 inline_new=$(ls | grep inline.*.bundle.js)
 vendor_new=$(ls | grep vendor.*.bundle.js)
 polyfills_new=$(ls | grep polyfills.*.bundle.js)
 echo -e "\nnew bundles:\n$main_new\n$styles_new\n$inline_new\n$vendor_new\n$polyfills_new"
-sed -i "s|main.*.bundle.js|$main_new|g" "index.html"
-sed -i "s|styles.*.bundle.js|$styles_new|g" "index.html"
-sed -i "s|inline.*.bundle.js|$inline_new|g" "index.html"
-sed -i "s|vendor.*.bundle.js|$vendor_new|g" "index.html"
-sed -i "s|polyfills.*.bundle.js|$polyfills_new|g" "index.html"
-echo -e "index.html after\n"
+# Prepend bundle references in index.html with static/.
+sed -i "s|$main_new|static/$main_new|g" "index.html"
+sed -i "s|$styles_new|static/$styles_new|g" "index.html"
+sed -i "s|$inline_new|static/$inline_new|g" "index.html"
+sed -i "s|$vendor_new|static/$vendor_new|g" "index.html"
+sed -i "s|$polyfills_new|static/$polyfills_new|g" "index.html"
+echo -e "\nindex.html after referencing bundles in static/\n"
 cat index.html
-print_and_exec "mv index.html ../data-portability/config/environments/$ENV/index.html"
+
+INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/resources/config/environments/$ENV/index.html"
+if [[ -e ${INDEX_HTML_LOCATION} ]]; then
+  print_and_exec "mkdir -p /tmp/${PROJECT_ID}/"
+  print_and_exec "cp ${INDEX_HTML_LOCATION} /tmp/${PROJECT_ID}/index.html"
+  echo -e "\nSaving old index html at /tmp/${PROJECT_ID}/index.html. Was:\n"
+  cat /tmp/${PROJECT_ID}/index.html
+fi
+print_and_exec "cp index.html ${INDEX_HTML_LOCATION}"
+

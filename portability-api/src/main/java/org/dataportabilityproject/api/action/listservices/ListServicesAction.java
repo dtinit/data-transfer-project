@@ -17,7 +17,6 @@ package org.dataportabilityproject.api.action.listservices;
 
 import com.google.inject.Inject;
 import java.util.Set;
-
 import org.dataportabilityproject.api.action.Action;
 import org.dataportabilityproject.api.action.ActionUtils;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
@@ -30,8 +29,6 @@ import org.slf4j.LoggerFactory;
  */
 public final class ListServicesAction
     implements Action<ListServicesActionRequest, ListServicesActionResponse> {
-
-  private static final Logger logger = LoggerFactory.getLogger(ListServicesAction.class);
 
   private final AuthServiceProviderRegistry registry;
 
@@ -49,10 +46,14 @@ public final class ListServicesAction
       return ListServicesActionResponse.createWithError(
           "Invalid transferDataType: " + transferDataType);
     }
-    Set<String> services = registry.getServices(transferDataType);
-    if (services.isEmpty()) {
-      logger.warn("Empty service list found");
+
+    Set<String> importServices = registry.getImportServices(transferDataType);
+    Set<String> exportServices = registry.getExportServices(transferDataType);
+
+    if (importServices.isEmpty() || exportServices.isEmpty()) {
+      return ListServicesActionResponse.createWithError(
+          "[" + transferDataType + "] does not have an import and export service");
     }
-    return ListServicesActionResponse.create(services);
+    return ListServicesActionResponse.create(importServices, exportServices);
   }
 }

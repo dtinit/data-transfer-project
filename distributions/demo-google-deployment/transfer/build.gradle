@@ -1,3 +1,6 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
 /*
  * Copyright 2018 The Data Transfer Project Authors.
  *
@@ -13,9 +16,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/**
+ * Script to build and dockerize a transfer server using the Google cloud extension.
+ *
+ * <p>For now, only supports the local environment. i.e., the container should be run locally and
+ * connects to a GCP project which it pulls app secrets from, etc, to test functionality of the
+ * Google cloud extension without needing to deploy it to GCP.
+ *
+ * <p>TODO(#202): Test deploying a prod image to GCP
+ *
+ * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
+ *
+ * <ul>To run locally:
+ *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> \
+ *      :distributions:demo-google-deployment:transfer:dockerizeLocal
+ *  <li>docker run --rm -p 8082:8082 -p 5006:5006 dataportability/transfer
+ * </ul>
+ *
+ * <ul>To run for prod environments:
+ *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> -Penv=<environment> \
+ *  -PimageVersion=<version> :distributions:demo-google-deployment:transfer:dockerize
+ *  <li>docker run --rm -p 8082:8082 dataportability/transfer
+ *  <li>To push to Google Container Registry:
+ *      <li>gcloud config set project <gcpProject>
+ *      <li>gcloud docker -- push gcr.io/<gcpProject>/portability-transfer:<imageVersion>
+ * </ul>
+ */
 plugins {
     id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.bmuschko.docker-remote-api' version '3.2.6'
     id 'java'
     id 'application'
 }
@@ -26,19 +55,44 @@ repositories {
 
 dependencies {
     compile project(':portability-transfer')
-
-    compile project(':extensions:data-transfer:portability-data-transfer-flickr')
-    compile project(':extensions:data-transfer:portability-data-transfer-google')
-    compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
-    compile project(':extensions:cloud:portability-cloud-google')
     compile project(':extensions:config:portability-config-yaml')
+    // TODO: depend on these based on list in flag values.
+    compile project(':extensions:data-transfer:portability-data-transfer-google')
+    compile project(':extensions:data-transfer:portability-data-transfer-instagram')
+    compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
+    compile project(':extensions:data-transfer:portability-data-transfer-flickr')
+    compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
 }
 
 addCloudExtensionDependency(project)
 
 mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
 
-copyResources()
+task copyEnvConfig(type: Copy) {
+    description = 'Copies environment-specific configuration into the jar'
+    ext.env = project.hasProperty('env') ? env : 'local'
+    into 'src/main/resources/config/env'
+    from("../resources/config/environments/" + ext.env) {
+        include 'common.yaml'
+    }
+}
+
+task copyConfig(type: Copy) {
+    description = 'Copies configuration into the jar'
+    into 'src/main/resources'
+    from('../resources') {
+        include 'config/common.yaml'
+    }
+}
+
+task copyResources(type: Copy) {
+    description = 'Copies resources and configuration into the jar'
+    dependsOn copyConfig, copyEnvConfig
+    into 'src/main/resources'
+    from('../resources') {
+        exclude { details -> details.file.name.contains('config') }
+    }
+}
 
 shadowJar {
     mergeServiceFiles()
@@ -46,9 +100,77 @@ shadowJar {
     exclude '**/pom.xml'
 }
 
-def copyResources() {
+task createTransferServerDockerfile(type: Dockerfile) {
+    description = 'Builds the Transfer Server Dockerfile'
+    group = 'docker'
+    destFile project.file("${buildDir}/transfer/Dockerfile")
+    from "gcr.io/google-appengine/openjdk:8"
+    exposePort 8080 // Port the transfer server is accessed from
+    copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
+    defaultCommand("java",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n",
+            "-jar",
+            "/app/transfer.jar")
+
+    // TODO: label with git commit
+}
+
+task dockerize(type: DockerBuildImage) {
+    description = 'Builds the Transfer Server Docker image'
+    group = 'docker'
+    dependsOn copyResources, shadowJar, createTransferServerDockerfile
+    dockerFile = project.file("${buildDir}/transfer/Dockerfile")
+    inputDir = project.file(".")
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    ext.imageVersion = project.hasProperty('imageVersion') ? imageVersion : 'latest'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:" + ext.imageVersion
+}
+
+// Note: This service acct creds file should be used for local testing only. In production, we use
+// GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
+// called from createTransferServerDockerfileLocal and NOT the production
+// createTransferServerDockerfile.
+task copyTransferServerDepsLocal {
     copy {
-        from '../resources/'
-        into 'src/main/resources'
+        from '../bin/service_acct_creds.json'
+        into 'build'
     }
+}
+
+task createTransferServerDockerfileLocal(type: Dockerfile) {
+    description = 'Builds the Transfer Server Dockerfile for local development'
+    group = 'docker'
+    dependsOn copyTransferServerDepsLocal
+    destFile project.file("${buildDir}/transfer/Dockerfile")
+    from "gcr.io/google-appengine/openjdk:8"
+    exposePort 8082 // Port the transfer server is accessed from
+    copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
+
+    // Note: Debug port, project ID, and service_acct_creds.json set in the image are for local
+    // only. This is not secure for an image deployed to production. In production,
+    // GOOGLE_APPLICATION_CREDENTIALS is a Kubernetes secret, GOOGLE_PROJECT_ID is set in the
+    // Kubernetes deployment (see distributions/common/k8s/transfer-deployment.yaml).
+    // TODO: make debug flag driven
+    exposePort 5006 // Port to open up for the debugger
+    defaultCommand("java",
+            "-Xdebug",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006",
+            "-jar",
+            "/app/transfer.jar")
+    copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
+    environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
+
+    // TODO: label with git commit
+}
+
+task dockerizeLocal(type: DockerBuildImage) {
+    description = 'Builds the Transfer Server Docker image for local development'
+    group = 'docker'
+    dependsOn copyResources, shadowJar, createTransferServerDockerfileLocal
+    dockerFile = project.file("${buildDir}/transfer/Dockerfile")
+    inputDir = project.file(".")
+    ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
+    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:latest"
 }

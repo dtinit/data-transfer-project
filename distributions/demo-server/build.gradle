@@ -64,17 +64,19 @@ dependencies {
     compile project(':extensions:config:portability-config-yaml')
 
     // TODO: depend on these based on list in flag values.
-    compile project(':extensions:auth:portability-auth-microsoft')
-    compile project(':extensions:auth:portability-auth-google')
     compile project(':extensions:auth:portability-auth-flickr')
-    compile project(':extensions:auth:portability-auth-rememberthemilk')
+    compile project(':extensions:auth:portability-auth-google')
     compile project(':extensions:auth:portability-auth-instagram')
+    compile project(':extensions:auth:portability-auth-microsoft')
+    compile project(':extensions:auth:portability-auth-rememberthemilk')
+    compile project(':extensions:auth:portability-auth-smugmug')
 
+    compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-instagram')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
-    compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
+    compile project(':extensions:data-transfer:portability-data-transfer-smugmug')
 }
 
 addCloudExtensionDependency(project)
@@ -84,18 +86,16 @@ task createSecretsFile() {
     doLast {
         def propFile = file("$buildDir/resources/main/secrets.properties")
         propFile.delete()
-        project.rootProject.ext.properties.each { key, val ->
-            if (key.startsWith(CLIENT_ID_PREFIX) && key.length() > CLIENT_ID_PREFIX.length()) {
-                def keyPrefix = key.substring(CLIENT_ID_PREFIX.length()).toUpperCase();
-                propFile.append("${keyPrefix}_KEY=${val}\n");
-            } else if (key.startsWith(CLIENT_SECRET_PREFIX) && key.length() > CLIENT_SECRET_PREFIX.length()) {
-                def keyPrefix = key.substring(CLIENT_SECRET_PREFIX.length()).toUpperCase();
-                propFile.append("${keyPrefix}_SECRET=${val}\n");
-            } else if (JWT_KEY.equals(key)) {
-                propFile.append("JWT_KEY=${val}\n");
-            } else if (JWT_SECRET.equals(key)) {
-                propFile.append("JWT_SECRET=${val}\n");
+        def secretsFile = file(Paths.get(System.getProperty('user.home')).resolve('.gradle/dataportability.secrets.properties'))
+        if (secretsFile.exists()) {
+            copy {
+                from file(Paths.get(System.getProperty('user.home')).resolve('.gradle'))
+                include "dataportability.secrets.properties"
+                into file("$buildDir/resources/main")
+                rename  ("dataportability.secrets.properties", "secrets.properties")
             }
+        } else {
+            logger.info("Configuration .gradle/dataportability.secrets.properties not found - secretes will not be set for the demo server")
         }
     }
 }
@@ -112,7 +112,7 @@ shadowJar {
 shadowJar.dependsOn(createSecretsFile)
 
 task createDemoServerDockerfile(type: Dockerfile) {
-    description = 'Builds the API Server Dockerfile'
+    description = 'Builds the Demo Server Dockerfile'
     group = 'docker'
     destFile project.file("${buildDir}/demoserver/Dockerfile")
     from "${javaDockerContainer}"
@@ -132,7 +132,6 @@ task createDemoServerDockerfile(type: Dockerfile) {
         secretsFile.withInputStream { props.load(it) }
         props.each { k, v -> environmentVariable(k, v) }
     }
-
 }
 
 task createClientDockerfile(type: Dockerfile) {

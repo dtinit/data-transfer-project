@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.auth.rememberthemilk;
+package org.dataportabilityproject.auth.smugmug;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -29,15 +30,17 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension {
-  private static final String RTM_KEY = "RTM_KEY";
-  private static final String RTM_SECRET = "RTM_SECRET";
-  private static final String SERVICE_ID = "remember the milk";
+/* SmugMugAuthServiceExtension - provides accessors to AuthDataGenerators. */
+public class SmugMugAuthServiceExtension implements AuthServiceExtension {
 
-  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthServiceExtension.class);
-  private final List<String> supportedServices = ImmutableList.of("tasks");
-  private RememberTheMilkAuthDataGenerator importAuthDataGenerator;
-  private RememberTheMilkAuthDataGenerator exportAuthDataGenerator;
+  private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
+  private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
+  private static final String SERVICE_ID = "SmugMug";
+
+  private final Logger logger = LoggerFactory.getLogger(SmugMugAuthServiceExtension.class);
+  private final List<String> supportedServices = ImmutableList.of("photos");
+  private AuthDataGenerator importAuthDataGenerator;
+  private AuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;
 
   @Override
@@ -49,10 +52,10 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
     Preconditions.checkArgument(
         initialized,
-        "RememberTheMilkAuthServiceExtension is not initialized! Unable to retrieve AuthDataGenerator");
+        "SmugMugAuthServiceExtension is not initialized!  Unable to retrieve AuthDataGenerator.");
     Preconditions.checkArgument(
         supportedServices.contains(transferDataType),
-        "Transfer type [" + transferDataType + "] is not supported in RememberTheMilk");
+        "Transfer type [" + transferDataType + "] is not supported in SmugMug.");
     return (mode == AuthMode.IMPORT) ? importAuthDataGenerator : exportAuthDataGenerator;
   }
 
@@ -68,22 +71,29 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
 
   @Override
   public void initialize(ExtensionContext context) {
-    if (initialized) return;
+    if (initialized) {
+      logger.warn("SmugmugAuthServiceExtension already initialized. Nothing to do.");
+      return;
+    }
 
     AppCredentials appCredentials;
     try {
       appCredentials =
-          context.getService(AppCredentialStore.class).getAppCredentials(RTM_KEY, RTM_SECRET);
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials(SMUGMUG_KEY, SMUGMUG_SECRET);
     } catch (IOException e) {
       logger.warn(
-          "Error retrieving RememberTheMilk Credentials. Did you set {} and {}?",
-          RTM_KEY,
-          RTM_SECRET);
+          "Error retrieving SmugMug credentials.  Did you set {} and {}?",
+          SMUGMUG_KEY,
+          SMUGMUG_SECRET);
       return;
     }
 
-    importAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.IMPORT);
-    exportAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.EXPORT);
+    importAuthDataGenerator =
+        new SmugMugAuthDataGenerator(appCredentials, AuthMode.IMPORT);
+    exportAuthDataGenerator =
+        new SmugMugAuthDataGenerator(appCredentials, AuthMode.EXPORT);
     initialized = true;
   }
 }
