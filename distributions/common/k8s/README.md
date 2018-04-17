@@ -3,6 +3,33 @@
 This directory contains configuration for Data Transfer Project to run
 with Kubernetes using the Docker container format.
 
+## First-time kubectl setup 
+
+Kubernetes' command line utility, kubectl, must be authenticated and configured to point to your cluster(s).
+
+### Setup for an existing GKE (Google Container Engine) project
+
+To connect to a GKE cluster, you should download that cluster's credentials:
+
+```
+> gcloud container clusters list 
+NAME                        LOCATION       
+portability-api-cluster     us-central1-a  
+portability-worker-cluster  us-central1-a  
+> gcloud container clusters get-credentials portability-api-cluster --zone=us-central1-a
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for portability-api-cluster.
+>gcloud container clusters get-credentials portability-worker-cluster --zone=us-central1-a 
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for portability-worker-cluster.
+```
+Your cluster will now be set to the most recent one you downloaded credentials for, i.e. portability-worker-cluster
+
+```
+>kubectl config current-context
+gke_world-takeout-qa_us-central1-a_portability-worker-cluster
+```
+
 ## Tailing the container logs
 
 It is useful to view the logs of the API and/or worker instances when debugging. Depending on the log interface your cloud platform provides, and the number of replicas you have, it may be easier to view logs directly from Kubernetes.
