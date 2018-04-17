@@ -34,27 +34,45 @@ import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
+import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
+import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
+import org.scribe.builder.ServiceBuilder;
+import org.scribe.model.OAuthRequest;
+import org.scribe.model.Response;
+import org.scribe.model.Token;
+import org.scribe.model.Verb;
+import org.scribe.oauth.OAuthService;
 
 public class SmugMugInterface {
-
-  // TODO(olsona): is this the mapper we want to use?
-  static final ObjectMapper MAPPER =
-      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   static final String BASE_URL = "https://api.smugmug.com";
   static final String USER_URL = "/api/v2!authuser";
   static final String ALBUMS_KEY = "UserAlbums";
+  private final OAuthService oAuthService;
 
   private final HttpTransport httpTransport;
+  private final Token accessToken;
+  private final ObjectMapper mapper;
 
-  SmugMugInterface() {
-    this.httpTransport = null;
+  SmugMugInterface(
+      HttpTransport transport,
+      AppCredentials appCredentials,
+      TokenSecretAuthData authData,
+      ObjectMapper mapper) {
+    this.httpTransport = transport;
+    this.oAuthService =
+        new ServiceBuilder()
+            .apiKey(appCredentials.getKey())
+            .apiSecret(appCredentials.getSecret())
+            .provider(SmugMugOauthApi.class)
+            .build();
+    this.accessToken = new Token(authData.getToken(), authData.getSecret());
+    this.mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
-  SmugMugResponse<SmugMugAlbumInfoResponse> makeAlbumInfoRequest(String url)
-      throws IOException {
+  SmugMugResponse<SmugMugAlbumInfoResponse> makeAlbumInfoRequest(String url) throws IOException {
     return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {});
   }
 
@@ -62,26 +80,23 @@ public class SmugMugInterface {
     return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {});
   }
 
-  SmugMugResponse<SmugMugUserResponse> makeUserRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
+  SmugMugResponse<SmugMugUserResponse> makeUserRequest() throws IOException {
+    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
   }
 
-  <T> SmugMugResponse<T> makeRequest(
-      String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
-    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    String signedRequest = BASE_URL + url + "?_accept=application%2Fjson"; // TODO(sign request)
-    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedRequest));
-    HttpResponse response = getRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-    }
-    String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
-    return MAPPER.readValue(result, typeReference);
+  <T> SmugMugResponse<T> makeRequest(String url, TypeReference<SmugMugResponse<T>> typeReference)
+      throws IOException {
+    OAuthRequest request =
+        new OAuthRequest(Verb.GET, BASE_URL + url + "?_accept=application%2Fjson");
+    oAuthService.signRequest(accessToken, request);
+    final Response response = request.send();
+    String result = response.getBody();
+    // Note: there are no request params that need to go here, because smugmug fully specifies
+    // which resource to get in the URL of a request, without using query params.
+    return mapper.readValue(result, typeReference);
   }
 
+  // TODO: move this to use scribe oauth service for signing.
   <T> T postRequest(
       String url, HttpContent content, Map<String, String> headers, TypeReference<T> typeReference)
       throws IOException {
@@ -116,6 +131,6 @@ public class SmugMugInterface {
     String result =
         CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
 
-    return MAPPER.readValue(result, typeReference);
+    return mapper.readValue(result, typeReference);
   }
 }
