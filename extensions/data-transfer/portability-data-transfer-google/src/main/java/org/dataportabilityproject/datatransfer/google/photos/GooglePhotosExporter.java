@@ -122,7 +122,7 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    List<AlbumEntry> entries = albumFeed.getAlbumEntries();
+    List<AlbumEntry> entries = albumFeed.getEntries(AlbumEntry.class);
     if (entries.size() == maxResults) {
       int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);

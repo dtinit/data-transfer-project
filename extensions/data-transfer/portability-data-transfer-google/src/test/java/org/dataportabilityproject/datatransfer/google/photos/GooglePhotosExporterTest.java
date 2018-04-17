@@ -109,7 +109,7 @@ public class GooglePhotosExporterTest {
     URL albumURL = new URL(
         String.format(GooglePhotosExporter.URL_ALBUM_FEED_FORMAT, start, MAX_RESULTS));
     verify(photoService).getFeed(albumURL, UserFeed.class);
-    verify(usersAlbumsFeed).getAlbumEntries();
+    verify(usersAlbumsFeed).getEntries(AlbumEntry.class);
 
     // Check pagination token
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
@@ -154,7 +154,7 @@ public class GooglePhotosExporterTest {
     URL albumURL = new URL(
         String.format(GooglePhotosExporter.URL_ALBUM_FEED_FORMAT, start, MAX_RESULTS));
     verify(photoService).getFeed(albumURL, UserFeed.class);
-    verify(usersAlbumsFeed).getAlbumEntries();
+    verify(usersAlbumsFeed).getEntries(AlbumEntry.class);
 
     // Check pagination token
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
@@ -238,7 +238,8 @@ public class GooglePhotosExporterTest {
     albumEntry.setDescription(new PlainTextConstruct("Description"));
     albumEntry.setTitle(new PlainTextConstruct("Title"));
 
-    when(usersAlbumsFeed.getAlbumEntries()).thenReturn(Collections.singletonList(albumEntry));
+    when(usersAlbumsFeed.getEntries(AlbumEntry.class))
+        .thenReturn(Collections.singletonList(albumEntry));
 
     setUpSinglePhotoResponse();
   }
