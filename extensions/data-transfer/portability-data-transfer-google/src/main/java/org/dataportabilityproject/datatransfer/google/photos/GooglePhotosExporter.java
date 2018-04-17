@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.MediaContent;
+import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.AlbumFeed;
 import com.google.gdata.data.photos.GphotoEntry;
 import com.google.gdata.data.photos.UserFeed;
@@ -52,7 +53,7 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "photo:";
 
   // TODO(olsona): figure out optimal value here
-  static final int MAX_RESULTS = 100;
+  static final int MAX_RESULTS_DEFAULT = 100;
 
   static final String URL_ALBUM_FEED_FORMAT =
       "https://picasaweb.google.com/data/feed/api/user/default?kind=album&start-index=%d&max-results=%d";
@@ -62,16 +63,19 @@ public class GooglePhotosExporter
       "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s?imgmax=d&start-index=%s&max-results=%d";
 
   private final GoogleCredentialFactory credentialFactory;
+  private final int maxResults;
   private volatile PicasawebService photosService;
 
   public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
-    this(credentialFactory, null);
+    this(credentialFactory, null, MAX_RESULTS_DEFAULT);
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, PicasawebService photosService) {
+  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, PicasawebService photosService,
+      int maxResults) {
     this.credentialFactory = credentialFactory;
     this.photosService = photosService;
+    this.maxResults = maxResults;
   }
 
   @Override
@@ -111,31 +115,32 @@ public class GooglePhotosExporter
     UserFeed albumFeed;
 
     try {
-      albumUrl = new URL(String.format(URL_ALBUM_FEED_FORMAT, startItem, MAX_RESULTS));
+      albumUrl = new URL(String.format(URL_ALBUM_FEED_FORMAT, startItem, maxResults));
       albumFeed = getOrCreatePhotosService(authData).getFeed(albumUrl, UserFeed.class);
     } catch (ServiceException | IOException e) {
       return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     PaginationData nextPageData = null;
-    if (albumFeed.getEntries().size() == MAX_RESULTS) {
-      int nextPageStart = startItem + MAX_RESULTS;
+    List<AlbumEntry> entries = albumFeed.getEntries(AlbumEntry.class);
+    if (entries.size() == maxResults) {
+      int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    List<PhotoAlbum> albums = new ArrayList<>(albumFeed.getEntries().size());
+    List<PhotoAlbum> albums = new ArrayList<>(entries.size());
 
-    for (GphotoEntry googleAlbum : albumFeed.getEntries()) {
+    for (AlbumEntry googleAlbum : entries) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
-              googleAlbum.getGphotoId(),
+              googleAlbum.getId(),
               googleAlbum.getTitle().getPlainText(),
               googleAlbum.getDescription().getPlainText()));
 
       // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
     ResultType resultType = ResultType.CONTINUE;
@@ -161,7 +166,7 @@ public class GooglePhotosExporter
     AlbumFeed photoFeed;
 
     try {
-      photosUrl = new URL(String.format(URL_PHOTO_FEED_FORMAT, albumId, startItem, MAX_RESULTS));
+      photosUrl = new URL(String.format(URL_PHOTO_FEED_FORMAT, albumId, startItem, maxResults));
       photoFeed = getOrCreatePhotosService(authData).getFeed(photosUrl, AlbumFeed.class);
 
     } catch (ServiceException | IOException e) {
@@ -169,14 +174,15 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    if (photoFeed.getEntries().size() == MAX_RESULTS) {
-      int nextPageStart = startItem + MAX_RESULTS;
+    List<GphotoEntry> entries = photoFeed.getEntries();
+    if (entries.size() == maxResults) {
+      int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + nextPageStart);
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    List<PhotoModel> photos = new ArrayList<>(photoFeed.getEntries().size());
-    for (GphotoEntry photo : photoFeed.getEntries()) {
+    List<PhotoModel> photos = new ArrayList<>(entries.size());
+    for (GphotoEntry photo : entries) {
       MediaContent mediaContent = (MediaContent) photo.getContent();
       photos.add(
           new PhotoModel(
