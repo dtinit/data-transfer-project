@@ -89,7 +89,7 @@ public class GooglePhotosImporter
 
     try {
       for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(jobId, authData, photo);
+        importSinglePhoto(authData, photo);
       }
     } catch (IOException | ServiceException e) {
       // TODO(olsona): we shouldn't just error out if there's a single problem - should retry
@@ -100,7 +100,7 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  void importSinglePhoto(UUID jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
+  void importSinglePhoto(TokensAndUrlAuthData authData, PhotoModel inputPhoto)
       throws IOException, ServiceException {
 
     // Set up photo
