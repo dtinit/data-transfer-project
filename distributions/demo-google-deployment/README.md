@@ -24,11 +24,14 @@ encrypted with Cloud KMS and stored encrypted in an
 #### Local development
 When using the LOCAL environment, local instances point to a test GCP
 project. The project this points to, as well as credentials to access it,
-are configured in our Docker image build [script](bin/build_docker_image.sh).
-The project ID should be specified in LOCAL_GCP_PROJECT in `bin/init_common_vars.sh`.
-See `bin/init_common_vars_example.sh` for an example. Credentials
-for that project's service account should be accessed from API >
-Credentials > service account credentials in your GCP project and
+are configured in our Gradle build files ([api](api/build.gradle) and
+[transfer](transfer/build.gradle)).
+
+The project ID should be specified as the `gcpProject` arg to the 
+`./gradlew` command documented in each `build.gradle`.
+
+Credentials for that project's service account should be accessed from
+API > Credentials > service account credentials in your GCP project and
 copied into `service_account_creds.json` locally.
 
 For more information on running locally see
@@ -45,9 +48,13 @@ time a bundle changes. `index.html` itself is served from our backend
 static content.
 
 ## Docker
-We use a [script](bin/build_docker_image.sh) to build our Docker
-images. Given an environment name, the script copies the appropriate
-resources (index.html and settings yaml) and compiles a new jar. It then
-generates a Dockerfile which sets our jar as the ENTRYPOINT. The script
-can also optionally build a new Docker image and upload it to GCP Container
-Registry.
+We use a Gradle-docker plugin to generate Dockerfiles and build Docker images from `build.gradle`.
+
+There are instructions for building local or prod images in both Gradle build files: 
+[api](api/build.gradle) and [transfer](transfer/build.gradle)
+
+## Deploying to GCP
+Images can be manually uploaded to Google Container Registry via `gcloud`.
+
+There are instructions for uploading images to GCP in both Gradle build files: 
+[api](api/build.gradle) and [transfer](transfer/build.gradle)
