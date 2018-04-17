@@ -74,14 +74,14 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
 7. Create FooTransferExtension extending TransferExtension
 
-  * See class javadoc for TransferExtension for full documentation
+  * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/dataportabilityproject/spi/transfer/extension/TransferExtension.java) for full documentation
 
   * Best practices:
 
-    * Validate the TransferExtension isn’t validated more than once in a running binary
+    * Validate the TransferExtension isn’t initialized more than once in a running binary
     * Most providers will interact with their api via a ‘registered’ app providing a client id/key and secret. Those will be stored in a key management system and retrieved via an identifier for the key and one for the secret,
     * In initialize, retrieve the AppCredentialStore
-    * Return an AuthDataGenerator for a given transfer type and mode
+    * Return an Exporter and Importer for a given transfer type and mode
 
 8. Create FooTransferExtensionTest
   * TODO: add more
@@ -90,14 +90,24 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
 Auth Extensions are located in the [extensions/auth module](https://github.com/google/data-transfer-project/tree/master/extensions/auth), where they are organized by service provider
 
-1. Create an FooAuthDataGenerator implementing AuthDataGenerator
+1. See class javadoc for the [AuthServiceExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-api/src/main/java/org/dataportabilityproject/spi/api/auth/extension/AuthServiceExtension.java) for full documentation
+  * This class should... (TODO: add more content)
+  * Best practices:
+    * Validate the AuthServiceExtension isn’t initialized more than once in a running binary
+    * Most providers will interact with their api via a ‘registered’ app providing a client id/key and secret. Those will be stored in a key management system and retrieved via an identifier for the key and one for the secret,
+    * In initialize, retrieve the AppCredentialStore
+    * Return an FooAuthDataGenerator for a given transfer type and mode
+
+2. Create an FooAuthDataGenerator implementing AuthDataGenerator
   * This class should... (TODO: add more content)
 
-2. Create the test directory for the FooAuthDataGeneratorTest
+3. Create the test directory for the FooAuthDataGeneratorTest
 
   * `$mkdir -p extensions/auth/portability-auth-instagram/src/test/java/org/dataportabilityproject/auth/foo`
 
-3. Create FooAuthDataGeneratorTest with appropriate tests
+4. Create FooAuthDataGeneratorTest with appropriate tests
+
+
 
 ## Integrate a new Data Model
 
