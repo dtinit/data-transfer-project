@@ -57,7 +57,7 @@ import static java.lang.System.getenv;
  */
 public class MicrosoftCloudExtension implements CloudExtension {
   // Config for accessing the Azure Vault (sensitive)
-  static final String AZURE_VAULT_NAME = "AZURE_VAULT_NAME_KEY";
+  static final String AZURE_VAULT_NAME = "AZURE_VAULT_NAME";
 
   // Derived from the Active Directory tenant id
   static final String AZURE_VAULT_TENANT_ID = "AZURE_VAULT_TENANT_ID";
