@@ -15,7 +15,7 @@ A new service can be integrated into the Data Transfer Project by creating the f
 
 ### Transfer Extension
 
-Transfer Extensions are located in the extensions/data-transfer module, where they are organized by service provider and then by data type.
+Transfer Extensions are located in the [extensions/data-transfer module](https://github.com/google/data-transfer-project/tree/master/extensions/data-transfer), where they are organized by service provider and then by data type.
 
 1. Create a new directory for your provider under extensions/data-transfer
 
@@ -84,6 +84,8 @@ include ':extensions:data-transfer:portability-data-transfer-foo'// Foo auth ext
 
 
 ### Auth Extension
+
+Auth Extensions are located in the [extensions/auth module](https://github.com/google/data-transfer-project/tree/master/extensions/auth), where they are organized by service provider
 
 1. Create an FooAuthDataGenerator implementing AuthDataGenerator
   * This class should... (TODO: add more content)
