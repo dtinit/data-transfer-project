@@ -26,8 +26,8 @@
 #
 #!/bin/sh
 
-if [[ $(pwd) != */gcp ]]; then
-  echo "Please run out of /gcp directory. Aborting."
+if [[ $(pwd) != */demo-google-deployment/bin ]]; then
+  echo "Please run out of the /demo-google-deployment/bin directory. Aborting."
   exit 1
 fi
 
@@ -131,7 +131,7 @@ create_api_backend_service() {
   --instance-group-zone=${ZONE}
 
   print_step "Creating Kubernetes service portability.api"
-  kubectl create -f ../k8s/api-service.yaml
+  kubectl create -f ../../common/k8s/api-service.yaml
 }
 
 # Helper function to create an api or transfer worker pool
@@ -155,8 +155,8 @@ create_backend_pool() { # args: ${1}: backend name, "api" or "transfer"
   print_step "Creating a Kubernetes deployment"
   IMAGE="gcr.io/$PROJECT_ID/portability-${BACKEND}:v1"
   # Save a copy of the deployment file before we substitute in our vars
-  DEPLOYMENT_YAML_FILE_PATH="../k8s/${BACKEND}-deployment.yaml"
-  TEMP_DEPLOYMENT_YAML_FILE_PATH="../k8s/temp-${BACKEND}-deployment.yaml"
+  DEPLOYMENT_YAML_FILE_PATH="../../common/k8s/${BACKEND}-deployment.yaml"
+  TEMP_DEPLOYMENT_YAML_FILE_PATH="../../common/k8s/temp-${BACKEND}-deployment.yaml"
   cp ${DEPLOYMENT_YAML_FILE_PATH} ${TEMP_DEPLOYMENT_YAML_FILE_PATH}
   # Substitute in the current image to our deployment file
   sed -i "s|IMAGE # Replaced by script|$IMAGE|g" ${DEPLOYMENT_YAML_FILE_PATH}

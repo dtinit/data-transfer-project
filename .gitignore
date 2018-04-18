@@ -8,6 +8,10 @@ secrets.csv
 #!distributions/demo-server/src/main/resources/
 #!distributions/demo-server/src/main/resources/demo-selfsigned-keystore.jks
 
+# Configuration, which may contain sensitive info like domain names which should be hidden.
+# TODO: consider moving this to separate, private repo per distribution.
+distributions/*/resources/
+
 #**/src/main/resources/settings/*.yaml
 # Dockerfile is generated each time we run build.sh
 Dockerfile
