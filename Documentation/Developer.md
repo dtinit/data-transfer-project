@@ -33,7 +33,7 @@ The following instructions work for IntelliJ IDEA version 2017.2.6.
  * Production sources directory: `build/classes/java/`
 
 #### Setup formatting
-* File -> Settings -> General -> Ensure line feed at file end on Save
+* File -> Settings -> Editor -> General -> Ensure line feed at file end on Save
 * Install the 'google-java-format' plugin, and enable it in Settings
 
 #### Setup automatic license header
@@ -54,15 +54,11 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-Create a new temp file (e.g. Test.java) in Intellij.
-Inside the file, enter Alt-Insert -> Copyright
-It should prompt you to select the new Copyright profile
-Test out another new test file - the copyright should be imported automatically (note: it might be collapsed so not immediately obvious)
 ```
 * Create a new temp file (e.g. Test.java) in Intellij.
 * Inside the file, enter Alt-Insert -> Copyright
 * It should prompt you to select the new Copyright profile
-* The copyright should be added to all new files from now on
+* The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
 ## Environment-specific settings
 Environment-specific settings (values for PortabilityFlags) are stored

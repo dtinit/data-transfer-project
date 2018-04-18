@@ -70,7 +70,7 @@ mainClassName = 'org.dataportabilityproject.api.ApiMain'
 task copyIndexHtml(type: Copy) {
     description = 'Copies index.html into the jar'
     ext.env = project.hasProperty('env') ? env : 'local'
-    into 'src/main/resources/static'
+    into 'build/resources/main/static'
     from("../resources/config/environments/" + ext.env) {
         include 'index.html'
     }
@@ -79,7 +79,7 @@ task copyIndexHtml(type: Copy) {
 task copyEnvConfig(type: Copy) {
     description = 'Copies environment-specific configuration into the jar'
     ext.env = project.hasProperty('env') ? env : 'local'
-    into 'src/main/resources/config/env'
+    into 'build/resources/main/config/env'
     from("../resources/config/environments/" + ext.env) {
         include 'api.yaml'
         include 'common.yaml'
@@ -88,7 +88,7 @@ task copyEnvConfig(type: Copy) {
 
 task copyConfig(type: Copy) {
     description = 'Copies configuration into the jar'
-    into 'src/main/resources'
+    into 'build/resources/main'
     from('../resources') {
         include 'config/api.yaml'
         include 'config/common.yaml'
@@ -98,7 +98,7 @@ task copyConfig(type: Copy) {
 task copyResources(type: Copy) {
     description = 'Copies resources and configuration into the jar'
     dependsOn copyConfig, copyEnvConfig, copyIndexHtml
-    into 'src/main/resources'
+    into 'build/resources/main'
     from('../resources') {
         exclude { details -> details.file.name.contains('config') }
     }

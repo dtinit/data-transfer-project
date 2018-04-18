@@ -16,6 +16,8 @@
 
 package org.dataportabilityproject.transfer.smugmug.photos;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,15 +29,28 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.dataportabilityproject.transfer.smugmug.photos.model.ImageUploadResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
+import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
+import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUser;
 import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
@@ -47,20 +62,23 @@ import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
 
 public class SmugMugInterface {
-  static final String BASE_URL = "https://api.smugmug.com";
-  static final String USER_URL = "/api/v2!authuser";
-  static final String ALBUMS_KEY = "UserAlbums";
-  private final OAuthService oAuthService;
+  private static final String BASE_URL = "https://api.smugmug.com";
+  private static final String USER_URL = "/api/v2!authuser";
+  private static final String ALBUMS_KEY = "UserAlbums";
+  private static final String FOLDER_KEY = "Folder";
 
+  private final OAuthService oAuthService;
   private final HttpTransport httpTransport;
   private final Token accessToken;
   private final ObjectMapper mapper;
+  private final SmugMugUser user;
 
   SmugMugInterface(
       HttpTransport transport,
       AppCredentials appCredentials,
       TokenSecretAuthData authData,
-      ObjectMapper mapper) {
+      ObjectMapper mapper)
+      throws IOException {
     this.httpTransport = transport;
     this.oAuthService =
         new ServiceBuilder()
@@ -70,22 +88,88 @@ public class SmugMugInterface {
             .build();
     this.accessToken = new Token(authData.getToken(), authData.getSecret());
     this.mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    this.user = getUserInformation().getUser();
   }
 
-  SmugMugResponse<SmugMugAlbumInfoResponse> makeAlbumInfoRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {});
+  /* Returns the album information corresponding to the album URI provided. */
+  SmugMugAlbumInfoResponse getAlbumInfo(String url) throws IOException {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {})
+        .getResponse();
   }
 
-  SmugMugResponse<SmugMugAlbumsResponse> makeAlbumRequest(String url) throws IOException {
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {});
+  /* Returns the album corresponding to the url provided. If the url is null or empty, this
+   * returns the top level user albums. */
+  SmugMugAlbumsResponse getAlbums(String url) throws IOException {
+    if (Strings.isNullOrEmpty(url)) {
+      url = user.getUris().get(ALBUMS_KEY).getUri();
+    }
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {})
+        .getResponse();
   }
 
-  SmugMugResponse<SmugMugUserResponse> makeUserRequest() throws IOException {
-    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {});
+  /* Creates an album with albumName provided. */
+  SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
+    // Set up album
+    Map<String, String> json = new HashMap<>();
+    String niceName = "Copy-of-" + albumName.replace(' ', '-');
+    json.put("UrlName", niceName);
+    // Allow conflicting names to be changed
+    json.put("AutoRename", "true");
+    json.put("Name", "Copy of " + albumName);
+    // All imported content is private by default.
+    json.put("Privacy", "Private");
+    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
+
+    // Upload album
+    String folder = user.getUris().get(FOLDER_KEY).getUri();
+
+    SmugMugResponse<SmugMugAlbumResponse> response =
+        postRequest(
+            folder + "!albums",
+            content,
+            ImmutableMap.of(),
+            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {});
+
+    checkState(response.getResponse() != null, "Response is null");
+    checkState(response.getResponse().getAlbum() != null, "Album is null");
+
+    return response.getResponse();
   }
 
-  <T> SmugMugResponse<T> makeRequest(String url, TypeReference<SmugMugResponse<T>> typeReference)
-      throws IOException {
+  /* Uploads the resource at photoUrl to the albumId provided
+   * The albumId must exist before calling upload, else the request will fail */
+  ImageUploadResponse uploadImage(String photoUrl, String albumId) throws IOException {
+    // Set up photo
+    InputStreamContent content = new InputStreamContent(null, getImageAsStream(photoUrl));
+
+    // Upload photo
+    return postRequest(
+        "http://upload.smugmug.com/",
+        content,
+        // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
+        ImmutableMap.of(
+            "X-Smug-AlbumUri", "/api/v2/album/" + albumId,
+            "X-Smug-ResponseType", "json",
+            "X-Smug-Version", "v2"),
+        new TypeReference<ImageUploadResponse>() {});
+  }
+
+  private SmugMugUserResponse getUserInformation() throws IOException {
+    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {})
+        .getResponse();
+  }
+
+  private InputStream getImageAsStream(String urlStr) throws IOException {
+    URL url = new URL(urlStr);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.connect();
+    return conn.getInputStream();
+  }
+
+  private <T> SmugMugResponse<T> makeRequest(
+      String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
     OAuthRequest request =
         new OAuthRequest(Verb.GET, BASE_URL + url + "?_accept=application%2Fjson");
     oAuthService.signRequest(accessToken, request);
@@ -94,10 +178,12 @@ public class SmugMugInterface {
     // Note: there are no request params that need to go here, because smugmug fully specifies
     // which resource to get in the URL of a request, without using query params.
     return mapper.readValue(result, typeReference);
+    // TODO: might want to check the response type here and or throw a smugmug exception similar to
+    // what Flickr does
   }
 
-  // TODO: move this to use scribe oauth service for signing.
-  <T> T postRequest(
+  // TODO: move this to use scribe oauth service for signing, and make private.
+  private <T> T postRequest(
       String url, HttpContent content, Map<String, String> headers, TypeReference<T> typeReference)
       throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
