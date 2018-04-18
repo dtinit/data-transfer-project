@@ -35,6 +35,7 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempPhotosData;
+import org.dataportabilityproject.transfer.ImageStreamProvider;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
@@ -55,27 +56,22 @@ public class GooglePhotosImporter
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private volatile PicasawebService photosService;
+  private final ImageStreamProvider imageStreamProvider;
 
   public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory, jobStore, null);
+    this(credentialFactory, jobStore, null, new ImageStreamProvider());
   }
 
   @VisibleForTesting
   GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
-      PicasawebService photosService) {
+      PicasawebService photosService,
+      ImageStreamProvider imageStreamProvider) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.photosService = photosService;
-  }
-
-  // We should pull this out into a common library.
-  private static InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
+    this.imageStreamProvider = imageStreamProvider;
   }
 
   @Override
@@ -115,7 +111,7 @@ public class GooglePhotosImporter
     }
 
     MediaStreamSource streamSource =
-        new MediaStreamSource(getImageAsStream(inputPhoto.getFetchableUrl()), mediaType);
+        new MediaStreamSource(imageStreamProvider.get(inputPhoto.getFetchableUrl()), mediaType);
     outputPhoto.setMediaSource(streamSource);
 
     String albumId = DEFAULT_ALBUM_ID;
