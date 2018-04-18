@@ -16,42 +16,20 @@
 
 package org.dataportabilityproject.transfer.smugmug.photos;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharStreams;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import org.dataportabilityproject.transfer.smugmug.photos.model.ImageUploadResponse;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugResponse;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUser;
-import org.dataportabilityproject.transfer.smugmug.photos.model.SmugMugUserResponse;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.net.HttpHeaders;
+import org.dataportabilityproject.transfer.smugmug.photos.model.*;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.builder.ServiceBuilder;
@@ -60,6 +38,15 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class SmugMugInterface {
   private static final String BASE_URL = "https://api.smugmug.com";
@@ -114,10 +101,10 @@ public class SmugMugInterface {
     // Set up album
     Map<String, String> json = new HashMap<>();
     String niceName = "Copy-of-" + albumName.replace(' ', '-');
-    json.put("UrlName", niceName);
+    json.put("NiceName", niceName);
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
-    json.put("Name", "Copy of " + albumName);
+    json.put("Title", "Copy of " + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
     HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
@@ -128,12 +115,13 @@ public class SmugMugInterface {
     SmugMugResponse<SmugMugAlbumResponse> response =
         postRequest(
             folder + "!albums",
-            content,
-            ImmutableMap.of(),
+            json,
+            null, // No HttpContent for album creation
+            ImmutableMap.of(), // No special Smugmug headers are required
             new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {});
 
-    checkState(response.getResponse() != null, "Response is null");
-    checkState(response.getResponse().getAlbum() != null, "Album is null");
+    Preconditions.checkState(response.getResponse() != null, "Response is null");
+    Preconditions.checkState(response.getResponse().getAlbum() != null, "Album is null");
 
     return response.getResponse();
   }
@@ -147,6 +135,7 @@ public class SmugMugInterface {
     // Upload photo
     return postRequest(
         "http://upload.smugmug.com/",
+        ImmutableMap.of(), // No content params for photo upload
         content,
         // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
         ImmutableMap.of(
@@ -170,53 +159,65 @@ public class SmugMugInterface {
 
   private <T> SmugMugResponse<T> makeRequest(
       String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
+    // Note: there are no request params that need to go here, because smugmug fully specifies
+    // which resource to get in the URL of a request, without using query params.
     OAuthRequest request =
         new OAuthRequest(Verb.GET, BASE_URL + url + "?_accept=application%2Fjson");
     oAuthService.signRequest(accessToken, request);
     final Response response = request.send();
+
+    if (response.getCode() < 200 || response.getCode() >= 300) {
+      throw new IOException(
+          String.format("Error occurred in request for %s : %s", url, response.getMessage()));
+    }
+
     String result = response.getBody();
-    // Note: there are no request params that need to go here, because smugmug fully specifies
-    // which resource to get in the URL of a request, without using query params.
     return mapper.readValue(result, typeReference);
-    // TODO: might want to check the response type here and or throw a smugmug exception similar to
-    // what Flickr does
   }
 
-  // TODO: move this to use scribe oauth service for signing, and make private.
+  // Makes a post request with the content parameters provided as the body, or the httpcontent as
+  // the body
   private <T> T postRequest(
-      String url, HttpContent content, Map<String, String> headers, TypeReference<T> typeReference)
+      String url,
+      Map<String, String> contentParams,
+      HttpContent content,
+      Map<String, String> smugMugHeaders,
+      TypeReference<T> typeReference)
       throws IOException {
-    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
 
     String fullUrl = url;
     if (!fullUrl.contains("://")) {
       fullUrl = BASE_URL + url;
     }
 
-    HttpRequest postRequest = requestFactory.buildPostRequest(new GenericUrl(fullUrl), content);
-    HttpHeaders httpHeaders =
-        new HttpHeaders().setAccept("application/json").setContentType("application/json");
-    for (Entry<String, String> entry : headers.entrySet()) {
-      httpHeaders.put(entry.getKey(), entry.getValue());
-    }
-    postRequest.setHeaders(httpHeaders);
+    OAuthRequest request = new OAuthRequest(Verb.POST, fullUrl);
+    if (content != null) {
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      content.writeTo(outputStream);
 
-    // TODO(olsona): sign request
-
-    HttpResponse response;
-    try {
-      response = postRequest.execute();
-    } catch (HttpResponseException e) {
-      throw new IOException("Problem making request: " + postRequest.getUrl(), e);
+      request.addPayload(outputStream.toString("UTF-8"));
     }
-    int statusCode = response.getStatusCode();
-    if (statusCode < 200 || statusCode >= 300) {
+
+    for (Entry<String, String> param : contentParams.entrySet()) {
+      request.addBodyParameter(param.getKey(), param.getValue());
+    }
+
+    // sign request before adding any of the headers since those shouldn't be included in the
+    // signature
+    oAuthService.signRequest(accessToken, request);
+
+    for (Entry<String, String> header : smugMugHeaders.entrySet()) {
+      request.addHeader(header.getKey(), header.getValue());
+    }
+    // add accept and content type headers so the response comes back in json and not html
+    request.addHeader(HttpHeaders.ACCEPT, "application/json");
+
+    Response response = request.send();
+    if (response.getCode() < 200 || response.getCode() >= 300) {
       throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+          String.format("Error occurred in request for %s : %s", fullUrl, response.getMessage()));
     }
-    String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
 
-    return mapper.readValue(result, typeReference);
+    return mapper.readValue(response.getBody(), typeReference);
   }
 }
