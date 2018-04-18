@@ -19,28 +19,28 @@ To configure kubectl to connect to your Kubernetes cluster, run the `gcloud cont
 
 ```
 > gcloud container clusters list 
-NAME                        LOCATION       
-portability-api-cluster     us-central1-a  
-portability-worker-cluster  us-central1-a  
+NAME                          LOCATION       
+portability-api-cluster       us-central1-a  
+portability-transfer-cluster  us-central1-a  
 > gcloud container clusters get-credentials portability-api-cluster --zone=us-central1-a
 Fetching cluster endpoint and auth data.
 kubeconfig entry generated for portability-api-cluster.
->gcloud container clusters get-credentials portability-worker-cluster --zone=us-central1-a 
+>gcloud container clusters get-credentials portability-transfer-cluster --zone=us-central1-a 
 Fetching cluster endpoint and auth data.
-kubeconfig entry generated for portability-worker-cluster.
+kubeconfig entry generated for portability-transfer-cluster.
 ```
-Your cluster will now be set to the most recent one you downloaded credentials for, i.e. portability-worker-cluster
+Your cluster will now be set to the most recent one you downloaded credentials for, i.e. portability-transfer-cluster
 
 ```
 >kubectl config current-context
-gke_world-takeout-qa_us-central1-a_portability-worker-cluster
+gke_world-takeout-qa_us-central1-a_portability-transfer-cluster
 ```
 
 Detailed instructions are available in GCP [docs](https://cloud.google.com/sdk/gcloud/reference/container/clusters/get-credentials).
 
 ## Tailing the container logs
 
-It is useful to view the logs of the API and/or worker instances when debugging. Depending on the log interface your cloud platform provides, and the number of replicas you have, it may be easier to view logs directly from Kubernetes.
+It is useful to view the logs of the API and/or transfer worker instances when debugging. Depending on the log interface your cloud platform provides, and the number of replicas you have, it may be easier to view logs directly from Kubernetes.
 
 Below are instructions for tailing the **API** logs. In this example, we only have two replicas, so tailing the logs of just two containers is not unwieldy.
 
@@ -58,7 +58,7 @@ Below are instructions for tailing the **API** logs. In this example, we only ha
     ```
       > kubectl config use-context gke_acme-corp-qa_us-central1-a_portability-api-cluster
     ```
-    For **worker** logs, do the exact same thing but set your kubectl context to the worker cluster rather than API.
+    For **transfer** logs, do the exact same thing but set your kubectl context to the transfer cluster rather than API.
 
 1. Find the pods
     ```
