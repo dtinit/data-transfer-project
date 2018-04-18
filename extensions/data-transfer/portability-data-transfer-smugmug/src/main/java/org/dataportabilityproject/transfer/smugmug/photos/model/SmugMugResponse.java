@@ -23,9 +23,6 @@ public class SmugMugResponse<T> {
   @JsonProperty("Response")
   private T response;
 
-  // @JsonProperty("Response")
-  // private HashMap<String, Object> fakeObject;
-
   @JsonProperty("Code")
   private int code;
 
