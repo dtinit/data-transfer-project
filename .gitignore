@@ -10,7 +10,8 @@ secrets.csv
 
 # Configuration, which may contain sensitive info like domain names which should be hidden.
 # TODO: consider moving this to separate, private repo per distribution.
-distributions/*/resources/
+distributions/demo-google-deployment/resources/config/environments/*
+!distributions/demo-google-deployment/resources/config/environments/local/
 
 #**/src/main/resources/settings/*.yaml
 # Dockerfile is generated each time we run build.sh

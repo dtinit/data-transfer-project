@@ -14,6 +14,5 @@
 # limitations under the License.
 #
 
-# API settings for Google cloud common to all environments
-baseUrl: http://localhost:3000 # default to local
-baseApiUrl: http://localhost:8080 # default to local
+# Common settings for Google cloud specific to the LOCAL environment
+environment: LOCAL
