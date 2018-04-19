@@ -27,7 +27,6 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.graph.ImmutableGraph;
 import com.google.common.net.HttpHeaders;
 import org.dataportabilityproject.transfer.smugmug.photos.model.*;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
@@ -134,7 +133,7 @@ public class SmugMugInterface {
 
     // Upload photo
     return postRequest(
-        "http://upload.smugmug.com/",
+        "https://upload.smugmug.com/",
         ImmutableMap.of(), // No content params for photo upload
         content,
         // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
@@ -195,7 +194,7 @@ public class SmugMugInterface {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       content.writeTo(outputStream);
 
-      request.addPayload(outputStream.toString("UTF-8"));
+      request.addPayload(outputStream.toByteArray());
     }
 
     for (Entry<String, String> param : contentParams.entrySet()) {
