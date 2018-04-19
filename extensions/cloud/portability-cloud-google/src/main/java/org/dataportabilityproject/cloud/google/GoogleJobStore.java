@@ -317,7 +317,7 @@ public final class GoogleJobStore implements JobStore {
       transaction.commit();
     } catch (IOException t) {
       transaction.rollback();
-      throw new RuntimeException("Failed atomic update of jobId: " + jobId, t);
+      throw new RuntimeException("Failed atomic update of key: " + key, t);
     }
   }
 
@@ -329,7 +329,7 @@ public final class GoogleJobStore implements JobStore {
       return null;
     }
     try {
-      return  objectMapper.readValue(entity.getBlob(type.getName()).toByteArray(), type);
+      return objectMapper.readValue(entity.getBlob(type.getName()).toByteArray(), type);
     } catch (IOException t) {
       throw new RuntimeException("Failed to deserialized key: " + key, t);
     }
