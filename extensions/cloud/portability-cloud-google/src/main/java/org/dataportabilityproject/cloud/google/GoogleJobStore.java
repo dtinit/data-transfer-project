@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.cloud.google;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
@@ -30,6 +31,7 @@ import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -44,6 +46,7 @@ import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
 @Singleton
@@ -52,10 +55,12 @@ public final class GoogleJobStore implements JobStore {
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
+  private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore) {
+  public GoogleJobStore(Datastore datastore, ObjectMapper objectMapper) {
     this.datastore = datastore;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -215,6 +220,15 @@ public final class GoogleJobStore implements JobStore {
     return datastore.newKeyFactory().setKind(KIND).newKey(jobId.toString());
   }
 
+  @VisibleForTesting
+  static String getDataKeyName(UUID jobId, Class type) {
+    return String.format("%s-%s-data", jobId, type.getName());
+  }
+
+  private Key getDataKey(UUID jobId, Class type) {
+    return datastore.newKeyFactory().setKind(KIND).newKey(getDataKeyName(jobId, type));
+  }
+
   private static Map<String, Object> getProperties(Entity entity) {
     if (entity == null) return null;
     ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
@@ -250,5 +264,74 @@ public final class GoogleJobStore implements JobStore {
     }
 
     return builder.build();
+  }
+
+  @Override
+  public <T extends DataModel> void create(UUID jobId, T model) throws IOException {
+    Preconditions.checkNotNull(jobId);
+    Transaction transaction = datastore.newTransaction();
+    Key key = getDataKey(jobId, model.getClass());
+    Entity shouldNotExist = transaction.get(key);
+    if (shouldNotExist != null) {
+      transaction.rollback();
+      throw new IOException(
+          "Record already exists for data key: " + key.getName() + ". Record: " + shouldNotExist);
+    }
+
+    String serialized = objectMapper.writeValueAsString(model);
+    Entity entity = Entity.newBuilder(key)
+        .set(CREATED_FIELD, Timestamp.now())
+        .set(model.getClass().getName(), serialized)
+        .build();
+
+    try {
+      transaction.put(entity);
+    } catch (DatastoreException e) {
+      transaction.rollback();
+      throw new IOException(
+          "Could not create initial record for jobID: " + jobId + ". Record: " + entity, e);
+    }
+    transaction.commit();
+  }
+
+  @Override
+  public <T extends DataModel> void update(UUID jobId, T model) {
+    Preconditions.checkNotNull(jobId);
+    Transaction transaction = datastore.newTransaction();
+    Key key = getDataKey(jobId, model.getClass());
+
+    try {
+      Entity previousEntity = transaction.get(key);
+      if (previousEntity == null) {
+        throw new IOException("Could not find record for data key: " + key.getName());
+      }
+
+      String serialized = objectMapper.writeValueAsString(model);
+      Entity entity = Entity.newBuilder(key)
+          .set(CREATED_FIELD, Timestamp.now())
+          .set(model.getClass().getName(), serialized)
+          .build();
+
+
+      transaction.put(entity);
+      transaction.commit();
+    } catch (IOException t) {
+      transaction.rollback();
+      throw new RuntimeException("Failed atomic update of jobId: " + jobId, t);
+    }
+  }
+
+  @Override
+  public <T extends DataModel> T findData(Class<T> type, UUID jobId) {
+    Key key = getDataKey(jobId, type);
+    Entity entity = datastore.get(key);
+    if (entity == null) {
+      return null;
+    }
+    try {
+      return  objectMapper.readValue(entity.getBlob(type.getName()).toByteArray(), type);
+    } catch (IOException t) {
+      throw new RuntimeException("Failed to deserialized key: " + key, t);
+    }
   }
 }
