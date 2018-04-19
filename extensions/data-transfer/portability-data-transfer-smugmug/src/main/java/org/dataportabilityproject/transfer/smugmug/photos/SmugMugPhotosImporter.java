@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
+
+import com.google.common.base.Throwables;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
@@ -38,9 +40,13 @@ import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SmugMugPhotosImporter.class);
 
   private final JobStore jobStore;
   private final AppCredentials appCredentials;
@@ -83,6 +89,7 @@ public class SmugMugPhotosImporter
         importSinglePhoto(jobId, photo, smugMugInterface);
       }
     } catch (IOException e) {
+      LOGGER.warn("Error happened while importing: {}", Throwables.getStackTraceAsString(e));
       return new ImportResult(ResultType.ERROR, e.getMessage());
     }
     return ImportResult.OK;
