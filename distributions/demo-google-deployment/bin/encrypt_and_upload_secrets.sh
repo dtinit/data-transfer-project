@@ -98,7 +98,7 @@ else
   exit 0
 fi
 
-ENCRYPTED_SECRETS_DIR="~/.dtp/encrypted_secrets/"
+ENCRYPTED_SECRETS_DIR="$SECRETS_DIR/encrypted_secrets/"
 if [[ ! -e $ENCRYPTED_SECRETS_DIR ]]; then
   echo -e "Directory $ENCRYPTED_SECRETS_DIR does not already exist... creating it"
   mkdir $ENCRYPTED_SECRETS_DIR
