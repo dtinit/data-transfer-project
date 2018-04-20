@@ -103,14 +103,15 @@ if [[ ! -e $ENCRYPTED_SECRETS_DIR ]]; then
   echo -e "Directory $ENCRYPTED_SECRETS_DIR does not already exist... creating it"
   mkdir $ENCRYPTED_SECRETS_DIR
   echo -e "Encrypting secrets..."
+  # TODO: Make this list configurable
   encrypt_secret "FLICKR"
   encrypt_secret "GOOGLE"
-  #encrypt_secret "INSTAGRAM"
-  #encrypt_secret "MICROSOFT"
-  #encrypt_secret "RTM"
-  #encrypt_secret "SHUTTERSTOCK"
-  #encrypt_secret "SMUGMUG"
-  #encrypt_secret "JWT"
+  encrypt_secret "INSTAGRAM"
+  encrypt_secret "MICROSOFT"
+  encrypt_secret "RTM"
+  encrypt_secret "SHUTTERSTOCK"
+  encrypt_secret "SMUGMUG"
+  encrypt_secret "JWT"
 fi
 
 
