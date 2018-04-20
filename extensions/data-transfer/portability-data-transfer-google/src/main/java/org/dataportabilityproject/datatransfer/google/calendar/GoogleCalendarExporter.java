@@ -4,6 +4,8 @@ import static org.dataportabilityproject.datatransfer.google.common.GoogleStatic
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
 import com.google.api.services.calendar.model.CalendarListEntry;
@@ -14,6 +16,7 @@ import com.google.api.services.calendar.model.Events;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -37,14 +40,17 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttende
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarExporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;
 
   public GoogleCalendarExporter(GoogleCredentialFactory credentialFactory) {
-    this(credentialFactory, null);
+    this(credentialFactory, null); // Lazily initialized later on
   }
 
   @VisibleForTesting
@@ -119,7 +125,9 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
           (IdOnlyContainerResource) exportInformation.getContainerResource();
       Optional<PaginationData> pageData =
           paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
-      return getCalendarEvents(authData, idOnlyContainerResource.getId(), pageData);
+      return getCalendarEvents(authData,
+          idOnlyContainerResource.getId(),
+          pageData);
     }
   }
 
@@ -145,7 +153,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
 
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<CalendarContainerResource>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     // Set up continuation data
@@ -166,14 +174,15 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
     CalendarContainerResource calendarContainerResource =
         new CalendarContainerResource(calendarModels, null);
 
+    logger.debug("Container resources in continuationData: " + continuationData.getContainerResources());
+
     // Get result type
     ExportResult.ResultType resultType = ResultType.CONTINUE;
     if (calendarModels.isEmpty()) {
       resultType = ResultType.END;
     }
 
-    return new ExportResult<CalendarContainerResource>(
-        resultType, calendarContainerResource, continuationData);
+    return new ExportResult<>(resultType, calendarContainerResource, continuationData);
   }
 
   private ExportResult<CalendarContainerResource> getCalendarEvents(
@@ -199,7 +208,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
       }
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<CalendarContainerResource>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     // Set up continuation data
@@ -224,8 +233,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
       resultType = ResultType.END;
     }
 
-    return new ExportResult<CalendarContainerResource>(
-        resultType, calendarContainerResource, continuationData);
+    return new ExportResult<>(resultType, calendarContainerResource, continuationData);
   }
 
   private Calendar getOrCreateCalendarInterface(TokensAndUrlAuthData authData) {

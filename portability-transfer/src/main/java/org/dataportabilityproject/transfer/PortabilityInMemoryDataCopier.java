@@ -16,6 +16,10 @@
 package org.dataportabilityproject.transfer;
 
 import com.google.inject.Provider;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -29,13 +33,11 @@ import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
-/** Implementation of {@link InMemoryDataCopier}. */
+/**
+ * Implementation of {@link InMemoryDataCopier}.
+ */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
+
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
@@ -53,7 +55,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     this.importer = importer;
   }
 
-  /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
+  /**
+   * Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}.
+   */
   @Override
   public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId)
       throws IOException {
@@ -86,7 +90,13 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export");
-    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    ExportResult<?> exportResult;
+    if (exportInformation.getContainerResource() == null
+        && exportInformation.getPaginationData() == null) {
+      exportResult = exporter.get().export(jobId, exportAuthData);
+    } else {
+      exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    }
     logger.debug("Finished export");
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
@@ -95,7 +105,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     }
 
     logger.debug("Starting import");
-    ImportResult importResult = importer.get().importItem(jobId, importAuthData, exportResult.getExportedData());
+    ImportResult importResult = importer.get()
+        .importItem(jobId, importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
     if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
       logger.warn("Error happened during import: {}", importResult.getMessage());
