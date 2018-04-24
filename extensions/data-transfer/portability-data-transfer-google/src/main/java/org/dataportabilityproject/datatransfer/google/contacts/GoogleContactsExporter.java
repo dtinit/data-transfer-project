@@ -84,7 +84,7 @@ public class GoogleContactsExporter
     if (exportInformation.isPresent()) {
       StringPaginationToken stringPaginationToken =
           (StringPaginationToken) exportInformation.get().getPaginationData();
-      Optional<PaginationData> paginationData = Optional.ofNullable(stringPaginationToken);
+      Optional<PaginationData> paginationData = Optional.of(stringPaginationToken);
       return exportContacts(authData, paginationData);
     } else {
       return exportContacts(authData, Optional.empty());
