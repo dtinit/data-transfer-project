@@ -122,25 +122,25 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    List<AlbumEntry> entries = albumFeed.getEntries(AlbumEntry.class);
+    List<GphotoEntry> entries = albumFeed.getEntries();
     if (entries.size() == maxResults) {
       int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);
     }
-    ContinuationData continuationData = new ContinuationData(nextPageData);
 
+    ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>(entries.size());
 
-    for (AlbumEntry googleAlbum : entries) {
+    for (GphotoEntry googleAlbum : entries) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
-              googleAlbum.getId(),
+              googleAlbum.getGphotoId(),
               googleAlbum.getTitle().getPlainText(),
               googleAlbum.getDescription().getPlainText()));
 
       // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId() ));
     }
 
     ResultType resultType = ResultType.CONTINUE;

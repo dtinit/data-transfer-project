@@ -21,10 +21,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import com.google.common.collect.ImmutableList;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -43,6 +40,11 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class SmugMugPhotosExporter
     implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
@@ -186,8 +188,11 @@ public class SmugMugPhotosExporter
     }
     ContinuationData continuationData = new ContinuationData(pageToken);
 
-    // Make list of photos
-    for (SmugMugAlbumImage image : albumInfoResponse.getImages()) {
+    // Make list of photos - images may be empty if the album provided is empty
+    List<SmugMugAlbumImage> images =
+        albumInfoResponse.getImages() == null ? ImmutableList.of() : albumInfoResponse.getImages();
+
+    for (SmugMugAlbumImage image : images) {
       String title = image.getTitle();
       if (Strings.isNullOrEmpty(title)) {
         title = image.getFileName();
@@ -202,6 +207,7 @@ public class SmugMugPhotosExporter
               getMimeType(image.getFormat()),
               containerResource.getId()));
     }
+
     PhotosContainerResource resource = new PhotosContainerResource(null, photoList);
 
     // Get result type

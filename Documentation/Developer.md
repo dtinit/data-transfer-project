@@ -60,17 +60,8 @@ limitations under the License.
 * It should prompt you to select the new Copyright profile
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
-## Environment-specific settings
-Environment-specific settings (values for PortabilityFlags) are stored
-per environment in the `environments/` directory. There is a subdirectory
-for each environment: `local/`, `qa/`, `test/`, and `prod/`. Each environment
-subdirectory contains a `settings.yaml` and `common.yaml` for PortabilityFlags values.
-
-For local development and testing, a `secrets.csv` file should be included in `config/environments/local`.
-This should contain all your API keys, see `secrets_template.csv` (TODO: add sample) for an example.
-
 ## Creating the Docker Network
-
+* `sudo service docker start`
 * `docker network create dataportability`
 
 ## Building/Running the API server and worker locally
