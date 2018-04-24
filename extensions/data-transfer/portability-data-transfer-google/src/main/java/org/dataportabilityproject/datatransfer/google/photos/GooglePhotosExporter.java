@@ -138,7 +138,7 @@ public class GooglePhotosExporter
               googleAlbum.getDescription().getPlainText()));
 
       // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId() ));
+      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
     }
 
     ResultType resultType = ResultType.CONTINUE;

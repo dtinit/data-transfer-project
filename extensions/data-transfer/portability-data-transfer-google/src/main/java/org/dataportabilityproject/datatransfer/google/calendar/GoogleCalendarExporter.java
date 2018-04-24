@@ -116,8 +116,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
         // Next thing to export is events
         IdOnlyContainerResource idOnlyContainerResource =
             (IdOnlyContainerResource) exportInformation.get().getContainerResource();
-        Optional<PaginationData> pageData =
-            paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
+        Optional<PaginationData> pageData = Optional.ofNullable(paginationToken);
         return getCalendarEvents(authData,
             idOnlyContainerResource.getId(),
             pageData);

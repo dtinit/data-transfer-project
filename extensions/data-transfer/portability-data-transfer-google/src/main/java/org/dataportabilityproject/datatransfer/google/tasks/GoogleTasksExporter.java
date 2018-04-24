@@ -72,12 +72,15 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
         exportInformation.isPresent() ? (IdOnlyContainerResource) exportInformation.get()
             .getContainerResource() : null;
 
+    PaginationData paginationData = exportInformation.isPresent()
+        ? exportInformation.get().getPaginationData()
+        : null;
+
     try {
       if (resource != null) {
-        return getTasks(tasksService, resource,
-            Optional.of(exportInformation.get().getPaginationData()));
+        return getTasks(tasksService, resource, Optional.ofNullable(paginationData));
       } else {
-        return getTasksList(tasksService, Optional.of(exportInformation.get().getPaginationData()));
+        return getTasksList(tasksService, Optional.ofNullable(paginationData));
       }
     } catch (Exception e) {
       logger.warn(

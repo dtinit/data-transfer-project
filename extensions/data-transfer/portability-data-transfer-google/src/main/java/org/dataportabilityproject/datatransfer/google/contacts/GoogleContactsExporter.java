@@ -78,74 +78,6 @@ public class GoogleContactsExporter
     this.peopleService = peopleService;
   }
 
-  @Override
-  public ExportResult<ContactsModelWrapper> export(
-      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
-    if (exportInformation.isPresent()) {
-      StringPaginationToken stringPaginationToken =
-          (StringPaginationToken) exportInformation.get().getPaginationData();
-      Optional<PaginationData> paginationData = Optional.of(stringPaginationToken);
-      return exportContacts(authData, paginationData);
-    } else {
-      return exportContacts(authData, Optional.empty());
-    }
-  }
-
-  private ExportResult<ContactsModelWrapper> exportContacts(
-      TokensAndUrlAuthData authData, Optional<PaginationData> pageData) {
-    try {
-      // Set up connection
-      Connections.List connectionsListRequest =
-          getOrCreatePeopleService(authData).people().connections().list(SELF_RESOURCE);
-
-      // Get next page, if we have a page token
-      if (pageData.isPresent()) {
-        StringPaginationToken paginationToken = (StringPaginationToken) pageData.get();
-        connectionsListRequest.setPageToken(paginationToken.getToken());
-      }
-
-      // Get list of connections (nb: not a list containing full info of each Person)
-      ListConnectionsResponse response =
-          connectionsListRequest.setPersonFields(PERSON_FIELDS).execute();
-      List<Person> peopleList = response.getConnections();
-
-      // Get list of resource names, then get list of Persons
-      List<String> resourceNames =
-          peopleList.stream().map(Person::getResourceName).collect(Collectors.toList());
-      GetPeopleResponse batchResponse =
-          getOrCreatePeopleService(authData)
-              .people()
-              .getBatchGet()
-              .setResourceNames(resourceNames)
-              .setPersonFields(PERSON_FIELDS)
-              .execute();
-      List<PersonResponse> personResponseList = batchResponse.getResponses();
-
-      // Convert Persons to VCards
-      List<VCard> vCards =
-          personResponseList.stream().map(a -> convert(a.getPerson())).collect(Collectors.toList());
-
-      // Determine if there's a next page
-      StringPaginationToken nextPageData = null;
-      if (response.getNextPageToken() != null) {
-        nextPageData = new StringPaginationToken(response.getNextPageToken());
-      }
-      ContinuationData continuationData = new ContinuationData(nextPageData);
-
-      ContactsModelWrapper wrapper = new ContactsModelWrapper(makeVCardString(vCards));
-
-      // Get result type
-      ResultType resultType = ResultType.CONTINUE;
-      if (nextPageData == null) {
-        resultType = ResultType.END;
-      }
-
-      return new ExportResult<ContactsModelWrapper>(resultType, wrapper, continuationData);
-    } catch (IOException e) {
-      return new ExportResult<ContactsModelWrapper>(ResultType.ERROR, e.getMessage());
-    }
-  }
-
   @VisibleForTesting
   static VCard convert(Person person) {
     VCard vCard = new VCard();
@@ -253,18 +185,6 @@ public class GoogleContactsExporter
     return personNames.size() >= 1 && !personNames.get(0).isEmpty();
   }
 
-  private PeopleService getOrCreatePeopleService(TokensAndUrlAuthData authData) {
-    return peopleService == null ? makePeopleService(authData) : peopleService;
-  }
-
-  private synchronized PeopleService makePeopleService(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    return new PeopleService.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
-  }
-
   @VisibleForTesting
   static String makeVCardString(List<VCard> vCardList) throws IOException {
     StringWriter stringWriter = new StringWriter();
@@ -274,5 +194,84 @@ public class GoogleContactsExporter
     }
     jCardWriter.flush();
     return stringWriter.toString();
+  }
+
+  @Override
+  public ExportResult<ContactsModelWrapper> export(
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+    if (exportInformation.isPresent()) {
+      StringPaginationToken stringPaginationToken = (StringPaginationToken)
+          exportInformation.get().getPaginationData();
+      return exportContacts(authData, Optional.ofNullable(stringPaginationToken));
+    } else {
+      return exportContacts(authData, Optional.empty());
+    }
+  }
+
+  private ExportResult<ContactsModelWrapper> exportContacts(
+      TokensAndUrlAuthData authData, Optional<PaginationData> pageData) {
+    try {
+      // Set up connection
+      Connections.List connectionsListRequest =
+          getOrCreatePeopleService(authData).people().connections().list(SELF_RESOURCE);
+
+      // Get next page, if we have a page token
+      if (pageData.isPresent()) {
+        StringPaginationToken paginationToken = (StringPaginationToken) pageData.get();
+        connectionsListRequest.setPageToken(paginationToken.getToken());
+      }
+
+      // Get list of connections (nb: not a list containing full info of each Person)
+      ListConnectionsResponse response =
+          connectionsListRequest.setPersonFields(PERSON_FIELDS).execute();
+      List<Person> peopleList = response.getConnections();
+
+      // Get list of resource names, then get list of Persons
+      List<String> resourceNames =
+          peopleList.stream().map(Person::getResourceName).collect(Collectors.toList());
+      GetPeopleResponse batchResponse =
+          getOrCreatePeopleService(authData)
+              .people()
+              .getBatchGet()
+              .setResourceNames(resourceNames)
+              .setPersonFields(PERSON_FIELDS)
+              .execute();
+      List<PersonResponse> personResponseList = batchResponse.getResponses();
+
+      // Convert Persons to VCards
+      List<VCard> vCards =
+          personResponseList.stream().map(a -> convert(a.getPerson())).collect(Collectors.toList());
+
+      // Determine if there's a next page
+      StringPaginationToken nextPageData = null;
+      if (response.getNextPageToken() != null) {
+        nextPageData = new StringPaginationToken(response.getNextPageToken());
+      }
+      ContinuationData continuationData = new ContinuationData(nextPageData);
+
+      ContactsModelWrapper wrapper = new ContactsModelWrapper(makeVCardString(vCards));
+
+      // Get result type
+      ResultType resultType = ResultType.CONTINUE;
+      if (nextPageData == null) {
+        resultType = ResultType.END;
+      }
+
+      return new ExportResult<ContactsModelWrapper>(resultType, wrapper, continuationData);
+    } catch (IOException e) {
+      return new ExportResult<ContactsModelWrapper>(ResultType.ERROR, e.getMessage());
+    }
+  }
+
+  private PeopleService getOrCreatePeopleService(TokensAndUrlAuthData authData) {
+    return peopleService == null ? makePeopleService(authData) : peopleService;
+  }
+
+  private synchronized PeopleService makePeopleService(TokensAndUrlAuthData authData) {
+    Credential credential = credentialFactory.createCredential(authData);
+    return new PeopleService.Builder(
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        .setApplicationName(GoogleStaticObjects.APP_NAME)
+        .build();
   }
 }

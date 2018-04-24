@@ -118,11 +118,12 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
 
     RequestContext.getRequestContext().setAuth(auth);
 
-    PaginationData paginationData =
-        exportInformation.isPresent() ? exportInformation.get().getPaginationData() : null;
-    IdOnlyContainerResource resource =
-        exportInformation.isPresent() ? (IdOnlyContainerResource) exportInformation.get()
-            .getContainerResource() : null;
+    PaginationData paginationData = exportInformation.isPresent()
+        ? exportInformation.get().getPaginationData()
+        : null;
+    IdOnlyContainerResource resource = exportInformation.isPresent()
+        ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+        : null;
     if (resource != null) {
       return getPhotos(resource, paginationData);
     } else {

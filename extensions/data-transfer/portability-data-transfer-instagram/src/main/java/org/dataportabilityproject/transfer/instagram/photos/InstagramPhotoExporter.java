@@ -59,10 +59,11 @@ public class InstagramPhotoExporter implements
   @Override
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) {
-    Optional<PaginationData> paginationData =
-        exportInformation.isPresent() ? Optional.of(exportInformation.get().getPaginationData())
-            : Optional.empty();
-    return exportPhotos(authData, paginationData);
+    if (exportInformation.isPresent()) {
+      return exportPhotos(authData, Optional.ofNullable(exportInformation.get().getPaginationData()));
+    } else {
+      return exportPhotos(authData, Optional.empty());
+    }
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
