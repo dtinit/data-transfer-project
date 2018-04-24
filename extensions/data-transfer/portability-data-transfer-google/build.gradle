@@ -17,6 +17,7 @@
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
+    compile project(':libraries:transfer')
 
     compile("com.google.gdata:core:${gdataVersion}") {
         exclude(module: 'jetty-util')
@@ -28,7 +29,7 @@ dependencies {
     compile("com.google.apis:google-api-services-gmail:${googleGmailVersion}")
     compile "com.google.apis:google-api-services-people:${googlePeopleVersion}"
     compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
-    compile "com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}"
+    compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
 
     compile "org.slf4j:slf4j-api:${slf4jVersion}"
     compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
