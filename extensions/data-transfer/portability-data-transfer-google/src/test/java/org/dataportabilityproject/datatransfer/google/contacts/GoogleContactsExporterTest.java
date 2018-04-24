@@ -29,6 +29,7 @@ import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.Source;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
+import java.util.Optional;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -97,7 +98,7 @@ public class GoogleContactsExporterTest {
     // Looking at first page, with at least one page after it
     listConnectionsResponse.setNextPageToken(NEXT_PAGE_TOKEN);
 
-    ExportResult<ContactsModelWrapper> result = contactsService.export(UUID.randomUUID(), null);
+    ExportResult<ContactsModelWrapper> result = contactsService.export(UUID.randomUUID(), null, Optional.empty());
 
     // Check that correct methods were called
     verify(connections).list(SELF_RESOURCE);
@@ -133,7 +134,7 @@ public class GoogleContactsExporterTest {
 
     // Run test
     ExportResult<ContactsModelWrapper> result =
-        contactsService.export(UUID.randomUUID(), null, exportInformation);
+        contactsService.export(UUID.randomUUID(), null, Optional.of(exportInformation));
 
     // Verify correct calls were made - i.e., token was added before execution
     InOrder inOrder = Mockito.inOrder(listConnectionsRequest);

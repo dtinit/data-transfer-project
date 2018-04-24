@@ -4,8 +4,6 @@ import static org.dataportabilityproject.datatransfer.google.common.GoogleStatic
 import static org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
 import com.google.api.services.calendar.model.CalendarListEntry;
@@ -16,7 +14,6 @@ import com.google.api.services.calendar.model.Events;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -107,27 +104,27 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
-    return exportCalendars(authData, Optional.empty());
-  }
-
-  @Override
   public ExportResult<CalendarContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.getPaginationData();
-    if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
-      // Next thing to export is more calendars
-      return exportCalendars(authData, Optional.of(paginationToken));
-    } else {
-      // Next thing to export is events
-      IdOnlyContainerResource idOnlyContainerResource =
-          (IdOnlyContainerResource) exportInformation.getContainerResource();
-      Optional<PaginationData> pageData =
-          paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
-      return getCalendarEvents(authData,
-          idOnlyContainerResource.getId(),
-          pageData);
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+    if (exportInformation.isPresent()) {
+      StringPaginationToken paginationToken =
+          (StringPaginationToken) exportInformation.get().getPaginationData();
+      if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
+        // Next thing to export is more calendars
+        return exportCalendars(authData, Optional.of(paginationToken));
+      } else {
+        // Next thing to export is events
+        IdOnlyContainerResource idOnlyContainerResource =
+            (IdOnlyContainerResource) exportInformation.get().getContainerResource();
+        Optional<PaginationData> pageData =
+            paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
+        return getCalendarEvents(authData,
+            idOnlyContainerResource.getId(),
+            pageData);
+      }
+    }
+    else {
+      return exportCalendars(authData, Optional.empty());
     }
   }
 

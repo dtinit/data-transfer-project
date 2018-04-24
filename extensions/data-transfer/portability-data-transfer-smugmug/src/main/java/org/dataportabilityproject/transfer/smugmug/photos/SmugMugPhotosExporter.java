@@ -22,6 +22,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -40,11 +45,6 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 public class SmugMugPhotosExporter
     implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
@@ -78,18 +78,15 @@ public class SmugMugPhotosExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokenSecretAuthData authData) {
-    return export(jobId, authData, new ExportInformation(null, null));
-  }
-
-  @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, TokenSecretAuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation) {
 
     StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.getPaginationData();
+        exportInformation.isPresent() ? (StringPaginationToken) exportInformation.get()
+            .getPaginationData() : null;
     IdOnlyContainerResource resource =
-        (IdOnlyContainerResource) exportInformation.getContainerResource();
+        exportInformation.isPresent() ? (IdOnlyContainerResource) exportInformation.get()
+            .getContainerResource() : null;
 
     SmugMugInterface smugMugInterface;
 

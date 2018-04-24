@@ -17,6 +17,7 @@ package org.dataportabilityproject.transfer;
 
 import com.google.inject.Provider;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
@@ -63,7 +64,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       throws IOException {
     // Initial copy, starts off the process with no previous paginationData or containerResource
     // information
-    ExportInformation emptyExportInfo = new ExportInformation(null, null);
+    Optional<ExportInformation> emptyExportInfo = Optional.empty();
     copyHelper(jobId, exportAuthData, importAuthData, emptyExportInfo);
   }
 
@@ -81,7 +82,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      ExportInformation exportInformation)
+      Optional<ExportInformation> exportInformation)
       throws IOException {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
@@ -91,12 +92,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // processed.
     logger.debug("Starting export");
     ExportResult<?> exportResult;
-    if (exportInformation.getContainerResource() == null
-        && exportInformation.getPaginationData() == null) {
-      exportResult = exporter.get().export(jobId, exportAuthData);
-    } else {
-      exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    }
+    exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
     logger.debug("Finished export");
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
@@ -124,15 +120,15 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             jobId,
             exportAuthData,
             importAuthData,
-            new ExportInformation(
-                continuationData.getPaginationData(), exportInformation.getContainerResource()));
+            Optional.of(new ExportInformation(
+                continuationData.getPaginationData(), exportInformation.get().getContainerResource())));
       }
 
       // Start processing sub-resources
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copyHelper(jobId, exportAuthData, importAuthData, new ExportInformation(null, resource));
+          copyHelper(jobId, exportAuthData, importAuthData, Optional.of(new ExportInformation(null, resource)));
         }
       }
     }

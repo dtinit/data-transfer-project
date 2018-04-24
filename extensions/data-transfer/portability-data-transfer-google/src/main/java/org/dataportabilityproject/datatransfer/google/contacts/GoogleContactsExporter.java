@@ -79,17 +79,16 @@ public class GoogleContactsExporter
   }
 
   @Override
-  public ExportResult<ContactsModelWrapper> export(UUID jobId, TokensAndUrlAuthData authData) {
-    return exportContacts(authData, Optional.empty());
-  }
-
-  @Override
   public ExportResult<ContactsModelWrapper> export(
-      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
-    StringPaginationToken stringPaginationToken =
-        (StringPaginationToken) exportInformation.getPaginationData();
-    Optional<PaginationData> paginationData = Optional.ofNullable(stringPaginationToken);
-    return exportContacts(authData, paginationData);
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+    if (exportInformation.isPresent()) {
+      StringPaginationToken stringPaginationToken =
+          (StringPaginationToken) exportInformation.get().getPaginationData();
+      Optional<PaginationData> paginationData = Optional.ofNullable(stringPaginationToken);
+      return exportContacts(authData, paginationData);
+    } else {
+      return exportContacts(authData, Optional.empty());
+    }
   }
 
   private ExportResult<ContactsModelWrapper> exportContacts(
