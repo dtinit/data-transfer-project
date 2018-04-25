@@ -106,7 +106,9 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
   @Override
   public ExportResult<CalendarContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
-    if (exportInformation.isPresent()) {
+    if (!exportInformation.isPresent()) {
+      return exportCalendars(authData, Optional.empty());
+    } else {
       StringPaginationToken paginationToken =
           (StringPaginationToken) exportInformation.get().getPaginationData();
       if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
@@ -121,9 +123,6 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
             idOnlyContainerResource.getId(),
             pageData);
       }
-    }
-    else {
-      return exportCalendars(authData, Optional.empty());
     }
   }
 
@@ -169,8 +168,6 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
     }
     CalendarContainerResource calendarContainerResource =
         new CalendarContainerResource(calendarModels, null);
-
-    logger.debug("Container resources in continuationData: " + continuationData.getContainerResources());
 
     // Get result type
     ExportResult.ResultType resultType = ResultType.CONTINUE;

@@ -80,7 +80,9 @@ public class GooglePhotosExporter
   @Override
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
-    if (exportInformation.isPresent()) {
+    if (!exportInformation.isPresent()) {
+      return exportAlbums(authData, Optional.empty());
+    } else {
       StringPaginationToken paginationToken =
           (StringPaginationToken) exportInformation.get().getPaginationData();
       IdOnlyContainerResource idOnlyContainerResource =
@@ -94,8 +96,6 @@ public class GooglePhotosExporter
         // export more albums if there are no more photos
         return exportAlbums(authData, Optional.ofNullable(paginationToken));
       }
-    } else {
-      return exportAlbums(authData, Optional.empty());
     }
   }
 
