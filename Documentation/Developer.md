@@ -62,7 +62,7 @@ limitations under the License.
 
 ## Creating the Docker Network
 * `sudo service docker start`
-* `docker network create dataportability`
+* `docker network create dataportability` - note you only need to do this once
 
 ## Building/Running the API server and worker locally
 The following builds and optionally runs the demo server (containing the API and Transfer Worker)
