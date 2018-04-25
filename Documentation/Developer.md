@@ -61,8 +61,9 @@ limitations under the License.
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
 ## Creating the Docker Network
+You only need to do this once.  The network will remain created even if you stop Docker.
 * `sudo service docker start`
-* `docker network create dataportability` - note you only need to do this once
+* `docker network create dataportability`
 
 ## Building/Running the API server and worker locally
 The following builds and optionally runs the demo server (containing the API and Transfer Worker)
