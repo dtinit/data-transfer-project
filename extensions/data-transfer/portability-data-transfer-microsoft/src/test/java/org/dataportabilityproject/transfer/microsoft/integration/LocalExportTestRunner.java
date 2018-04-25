@@ -1,5 +1,6 @@
 package org.dataportabilityproject.transfer.microsoft.integration;
 
+import java.util.Optional;
 import org.dataportabilityproject.auth.microsoft.harness.AuthTestDriver;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -22,6 +23,7 @@ public class LocalExportTestRunner {
 
     Exporter<TokenAuthData, ContactsModelWrapper> contacts =
         (Exporter<TokenAuthData, ContactsModelWrapper>) serviceProvider.getExporter("contacts");
-    ExportResult<ContactsModelWrapper> wrapper = contacts.export(UUID.randomUUID(), token);
+    ExportResult<ContactsModelWrapper> wrapper = contacts.export(UUID.randomUUID(), token,
+        Optional.empty());
   }
 }
