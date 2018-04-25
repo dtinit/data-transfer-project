@@ -121,7 +121,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
