@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -107,7 +108,8 @@ public class GoogleCalendarExporterTest {
     calendarListResponse.setNextPageToken(NEXT_TOKEN);
 
     // Run test
-    ExportResult<CalendarContainerResource> result = googleCalendarExporter.export(JOB_ID, null);
+    ExportResult<CalendarContainerResource> result = googleCalendarExporter.export(JOB_ID, null,
+        Optional.empty());
 
     // Check results
     // Verify correct methods were called
@@ -150,7 +152,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        googleCalendarExporter.export(UUID.randomUUID(), null, exportInformation);
+        googleCalendarExporter.export(UUID.randomUUID(), null, Optional.of(exportInformation));
 
     // Check results
     // Verify correct calls were made
@@ -176,7 +178,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        googleCalendarExporter.export(UUID.randomUUID(), null, exportInformation);
+        googleCalendarExporter.export(UUID.randomUUID(), null, Optional.of(exportInformation));
 
     // Check results
     // Verify correct methods were called
@@ -214,7 +216,7 @@ public class GoogleCalendarExporterTest {
 
     // Run test
     ExportResult<CalendarContainerResource> result =
-        googleCalendarExporter.export(UUID.randomUUID(), null, exportInformation);
+        googleCalendarExporter.export(UUID.randomUUID(), null, Optional.of(exportInformation));
 
     // Check results
     // Verify correct methods were called in order

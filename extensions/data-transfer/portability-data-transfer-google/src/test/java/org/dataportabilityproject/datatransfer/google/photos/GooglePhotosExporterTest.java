@@ -24,6 +24,7 @@ import com.google.gdata.data.photos.GphotoEntry;
 import com.google.gdata.data.photos.UserFeed;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
+import java.util.Optional;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
@@ -101,7 +102,7 @@ public class GooglePhotosExporterTest {
     int start = 1;
 
     // Run test
-    ExportResult<PhotosContainerResource> result = googlePhotosExporter.export(uuid, null);
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter.export(uuid, null, Optional.empty());
 
     // Check results
     // Verify correct methods were called
@@ -145,7 +146,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.export(uuid, null, inputExportInformation);
+        googlePhotosExporter.export(uuid, null, Optional.of(inputExportInformation));
 
     // Check results
     // Verify correct methods were called
@@ -170,7 +171,7 @@ public class GooglePhotosExporterTest {
     ExportInformation inputExportInformation = new ExportInformation(null, inputContainerResource);
 
     ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.export(uuid, null, inputExportInformation);
+        googlePhotosExporter.export(uuid, null, Optional.of(inputExportInformation));
 
     // Check results
     // Verify correct methods were called
@@ -212,7 +213,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.export(uuid, null, inputExportInformation);
+        googlePhotosExporter.export(uuid, null, Optional.of(inputExportInformation));
 
     // Check results
     // Verify correct methods were called

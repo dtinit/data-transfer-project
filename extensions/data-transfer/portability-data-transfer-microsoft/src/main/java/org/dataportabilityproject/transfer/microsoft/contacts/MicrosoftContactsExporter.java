@@ -18,6 +18,12 @@ package org.dataportabilityproject.transfer.microsoft.contacts;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardWriter;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -32,14 +38,11 @@ import org.dataportabilityproject.transfer.microsoft.types.GraphPagination;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.contacts.ContactsModelWrapper;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-/** Exports Microsoft contacts using the Graph API. */
+/**
+ * Exports Microsoft contacts using the Graph API.
+ */
 public class MicrosoftContactsExporter implements Exporter<TokenAuthData, ContactsModelWrapper> {
+
   private static final String CONTACTS_SUBPATH = "/v1.0/me/contacts";
   private static final String ODATA_NEXT = "@odata.nextLink";
 
@@ -60,14 +63,11 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
   }
 
   @Override
-  public ExportResult<ContactsModelWrapper> export(UUID jobId, TokenAuthData authData) {
-    return doExport(authData, contactsUrl);
-  }
-
-  @Override
   public ExportResult<ContactsModelWrapper> export(
-      UUID jobId, TokenAuthData authData, ExportInformation continuationData) {
-    GraphPagination graphPagination = (GraphPagination) continuationData.getPaginationData();
+      UUID jobId, TokenAuthData authData, Optional<ExportInformation> exportInformation) {
+    GraphPagination graphPagination =
+        exportInformation.isPresent() ? (GraphPagination) exportInformation.get()
+            .getPaginationData() : null;
     if (graphPagination != null && graphPagination.getNextLink() != null) {
       return doExport(authData, graphPagination.getNextLink());
     } else {

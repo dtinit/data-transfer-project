@@ -15,8 +15,17 @@
  */
 package org.dataportabilityproject.transfer.microsoft.calendar;
 
+import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -31,18 +40,12 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarContain
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.dataportabilityproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
-
-/** Exports Outlook calendar information using the Microsoft Graph API. */
+/**
+ * Exports Outlook calendar information using the Microsoft Graph API.
+ */
 public class MicrosoftCalendarExporter
     implements Exporter<TokenAuthData, CalendarContainerResource> {
+
   private static final String CALENDARS_SUBPATH = "/v1.0/me/calendars";
   private static final String EVENTS_URL = "/v1.0/me/calendars/%s/events";
   private static final String ODATA_NEXT = "@odata.nextLink";
@@ -66,7 +69,12 @@ public class MicrosoftCalendarExporter
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(UUID jobId, TokenAuthData authData) {
+  public ExportResult<CalendarContainerResource> export(UUID jobId, TokenAuthData authData,
+      Optional<ExportInformation> exportInformation) {
+    if (exportInformation.isPresent()) {
+      // TODO support pagination
+      throw new UnsupportedOperationException();
+    }
     Request.Builder calendarsBuilder = getBuilder(baseUrl + CALENDARS_SUBPATH, authData);
 
     List<CalendarModel> calendarModels = new ArrayList<>();
@@ -158,13 +166,6 @@ public class MicrosoftCalendarExporter
 
   private String calculateEventsUrl(String eventId) {
     return baseUrl + String.format(EVENTS_URL, eventId);
-  }
-
-  @Override
-  public ExportResult<CalendarContainerResource> export(
-      UUID jobId, TokenAuthData authData, ExportInformation exportInformation) {
-    // TODO support pagination
-    throw new UnsupportedOperationException();
   }
 
   private Request.Builder getBuilder(String url, TokenAuthData authData) {

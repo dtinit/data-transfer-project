@@ -16,8 +16,6 @@
 
 package org.dataportabilityproject.datatransfer.google.mail;
 
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users.Messages;
@@ -27,6 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
@@ -35,10 +34,8 @@ import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.spi.transfer.types.IdOnlyContainerResource;
 import org.dataportabilityproject.spi.transfer.types.PaginationData;
 import org.dataportabilityproject.spi.transfer.types.StringPaginationToken;
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerResource;
@@ -64,13 +61,8 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
   }
 
   @Override
-  public ExportResult<DataModel> export(UUID id, TokensAndUrlAuthData authData) {
-    return export(id, authData, new ExportInformation(null, null));
-  }
-
-  @Override
   public ExportResult<DataModel> export(UUID id,
-      TokensAndUrlAuthData authData, ExportInformation exportInformation) {
+      TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     // Create a new gmail service for the authorized user
     Gmail gmail = getOrCreateGmail(authData);
 
@@ -82,9 +74,9 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
           ExportResult.ResultType.ERROR, "Error creating request: " + e.getMessage());
     }
 
-    if (exportInformation.getPaginationData() != null) {
+    if (exportInformation.isPresent() && exportInformation.get().getPaginationData() != null) {
       request.setPageToken(
-          ((StringPaginationToken) exportInformation.getPaginationData()).getToken());
+          ((StringPaginationToken) exportInformation.get().getPaginationData()).getToken());
     }
 
     ListMessagesResponse response = null;

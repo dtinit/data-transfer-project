@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -44,6 +45,7 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
  * Exporter for Tasks data type from Remember The Milk Service.
  */
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
+
   private final AppCredentials appCredentials;
   private RememberTheMilkService service;
 
@@ -60,18 +62,14 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
   }
 
   @Override
-  public ExportResult<TaskContainerResource> export(UUID jobId, AuthData authData) {
-    return export(jobId, authData, new ExportInformation(null, null));
-  }
-
-  @Override
   public ExportResult<TaskContainerResource> export(
-      UUID jobId, AuthData authData, ExportInformation exportInformation) {
+      UUID jobId, AuthData authData, Optional<ExportInformation> exportInformation) {
     // Create new service for the authorized user
     RememberTheMilkService service = getOrCreateService(authData);
 
     IdOnlyContainerResource resource =
-        (IdOnlyContainerResource) exportInformation.getContainerResource();
+        exportInformation.isPresent() ? (IdOnlyContainerResource) exportInformation.get()
+            .getContainerResource() : null;
     if (resource != null) {
       return exportTask(service, resource);
     } else {

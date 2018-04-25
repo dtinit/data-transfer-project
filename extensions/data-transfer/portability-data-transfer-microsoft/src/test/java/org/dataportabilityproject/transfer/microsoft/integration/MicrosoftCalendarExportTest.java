@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import java.util.Optional;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
@@ -233,7 +234,7 @@ public class MicrosoftCalendarExportTest {
     MicrosoftCalendarExporter exporter =
         new MicrosoftCalendarExporter(baseUrl.toString(), client, mapper, transformerService);
 
-    ExportResult<CalendarContainerResource> resource = exporter.export(UUID.randomUUID(), token);
+    ExportResult<CalendarContainerResource> resource = exporter.export(UUID.randomUUID(), token, Optional.empty());
 
     CalendarContainerResource calendarResource = resource.getExportedData();
 

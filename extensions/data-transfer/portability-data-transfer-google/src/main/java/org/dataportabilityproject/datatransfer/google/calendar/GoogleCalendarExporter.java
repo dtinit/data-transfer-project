@@ -37,14 +37,17 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttende
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+  private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarExporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;
 
   public GoogleCalendarExporter(GoogleCredentialFactory credentialFactory) {
-    this(credentialFactory, null);
+    this(credentialFactory, null); // Lazily initialized later on
   }
 
   @VisibleForTesting
@@ -101,25 +104,25 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
-    return exportCalendars(authData, Optional.empty());
-  }
-
-  @Override
   public ExportResult<CalendarContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.getPaginationData();
-    if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
-      // Next thing to export is more calendars
-      return exportCalendars(authData, Optional.of(paginationToken));
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+    if (!exportInformation.isPresent()) {
+      return exportCalendars(authData, Optional.empty());
     } else {
-      // Next thing to export is events
-      IdOnlyContainerResource idOnlyContainerResource =
-          (IdOnlyContainerResource) exportInformation.getContainerResource();
-      Optional<PaginationData> pageData =
-          paginationToken != null ? Optional.of(paginationToken) : Optional.empty();
-      return getCalendarEvents(authData, idOnlyContainerResource.getId(), pageData);
+      StringPaginationToken paginationToken =
+          (StringPaginationToken) exportInformation.get().getPaginationData();
+      if (paginationToken != null && paginationToken.getToken().startsWith(CALENDAR_TOKEN_PREFIX)) {
+        // Next thing to export is more calendars
+        return exportCalendars(authData, Optional.of(paginationToken));
+      } else {
+        // Next thing to export is events
+        IdOnlyContainerResource idOnlyContainerResource =
+            (IdOnlyContainerResource) exportInformation.get().getContainerResource();
+        Optional<PaginationData> pageData = Optional.ofNullable(paginationToken);
+        return getCalendarEvents(authData,
+            idOnlyContainerResource.getId(),
+            pageData);
+      }
     }
   }
 
@@ -145,7 +148,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
 
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<CalendarContainerResource>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     // Set up continuation data
@@ -172,8 +175,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
       resultType = ResultType.END;
     }
 
-    return new ExportResult<CalendarContainerResource>(
-        resultType, calendarContainerResource, continuationData);
+    return new ExportResult<>(resultType, calendarContainerResource, continuationData);
   }
 
   private ExportResult<CalendarContainerResource> getCalendarEvents(
@@ -199,7 +201,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
       }
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<CalendarContainerResource>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     // Set up continuation data
@@ -224,8 +226,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
       resultType = ResultType.END;
     }
 
-    return new ExportResult<CalendarContainerResource>(
-        resultType, calendarContainerResource, continuationData);
+    return new ExportResult<>(resultType, calendarContainerResource, continuationData);
   }
 
   private Calendar getOrCreateCalendarInterface(TokensAndUrlAuthData authData) {

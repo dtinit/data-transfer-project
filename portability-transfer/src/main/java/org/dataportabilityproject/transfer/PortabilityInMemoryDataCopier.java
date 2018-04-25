@@ -16,6 +16,11 @@
 package org.dataportabilityproject.transfer;
 
 import com.google.inject.Provider;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 import org.dataportabilityproject.spi.transfer.InMemoryDataCopier;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
@@ -29,13 +34,11 @@ import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
-/** Implementation of {@link InMemoryDataCopier}. */
+/**
+ * Implementation of {@link InMemoryDataCopier}.
+ */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
+
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
@@ -53,13 +56,15 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     this.importer = importer;
   }
 
-  /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
+  /**
+   * Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}.
+   */
   @Override
   public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId)
       throws IOException {
     // Initial copy, starts off the process with no previous paginationData or containerResource
     // information
-    ExportInformation emptyExportInfo = new ExportInformation(null, null);
+    Optional<ExportInformation> emptyExportInfo = Optional.empty();
     copyHelper(jobId, exportAuthData, importAuthData, emptyExportInfo);
   }
 
@@ -77,7 +82,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      ExportInformation exportInformation)
+      Optional<ExportInformation> exportInformation)
       throws IOException {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
@@ -86,7 +91,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export");
-    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    ExportResult<?> exportResult;
+    exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
     logger.debug("Finished export");
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
@@ -95,7 +101,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     }
 
     logger.debug("Starting import");
-    ImportResult importResult = importer.get().importItem(jobId, importAuthData, exportResult.getExportedData());
+    ImportResult importResult = importer.get()
+        .importItem(jobId, importAuthData, exportResult.getExportedData());
     logger.debug("Finished import");
     if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
       logger.warn("Error happened during import: {}", importResult.getMessage());
@@ -113,15 +120,15 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             jobId,
             exportAuthData,
             importAuthData,
-            new ExportInformation(
-                continuationData.getPaginationData(), exportInformation.getContainerResource()));
+            Optional.of(new ExportInformation(
+                continuationData.getPaginationData(), exportInformation.get().getContainerResource())));
       }
 
       // Start processing sub-resources
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copyHelper(jobId, exportAuthData, importAuthData, new ExportInformation(null, resource));
+          copyHelper(jobId, exportAuthData, importAuthData, Optional.of(new ExportInformation(null, resource)));
         }
       }
     }

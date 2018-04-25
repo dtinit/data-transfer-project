@@ -28,6 +28,7 @@ import com.flickr4java.flickr.photos.PhotosInterface;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
+import java.util.Optional;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
@@ -113,7 +114,7 @@ public class FlickrPhotosExporterTest {
     // run test
     FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
     AuthData authData = new TokenSecretAuthData("token", "secret");
-    ExportResult<PhotosContainerResource> result = exporter.export(UUID.randomUUID(), authData);
+    ExportResult<PhotosContainerResource> result = exporter.export(UUID.randomUUID(), authData, Optional.empty());
 
     // make sure album and photo information is correct
     assertThat(result.getExportedData().getPhotos()).isEmpty();
@@ -164,7 +165,7 @@ public class FlickrPhotosExporterTest {
     FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
     ExportResult<PhotosContainerResource> result =
         exporter.export(
-            UUID.randomUUID(), new TokenSecretAuthData("token", "secret"), exportInformation);
+            UUID.randomUUID(), new TokenSecretAuthData("token", "secret"), Optional.of(exportInformation));
     assertThat(result.getExportedData().getPhotos().size()).isEqualTo(numPhotos);
     assertThat(result.getExportedData().getAlbums()).isEmpty();
 

@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -78,18 +79,15 @@ public class SmugMugPhotosExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokenSecretAuthData authData) {
-    return export(jobId, authData, new ExportInformation(null, null));
-  }
-
-  @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, TokenSecretAuthData authData, ExportInformation exportInformation) {
+      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation) {
 
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.getPaginationData();
-    IdOnlyContainerResource resource =
-        (IdOnlyContainerResource) exportInformation.getContainerResource();
+    StringPaginationToken paginationToken = exportInformation.isPresent()
+        ? (StringPaginationToken) exportInformation.get().getPaginationData()
+        : null;
+    IdOnlyContainerResource resource = exportInformation.isPresent()
+        ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+        : null;
 
     SmugMugInterface smugMugInterface;
 
