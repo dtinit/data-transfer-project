@@ -16,13 +16,17 @@
 
 package org.dataportabilityproject.datatransfer.google.mail;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users;
 import com.google.api.services.gmail.Gmail.Users.Labels;
+import com.google.api.services.gmail.Gmail.Users.Labels.Create;
 import com.google.api.services.gmail.Gmail.Users.Messages;
 import com.google.api.services.gmail.Gmail.Users.Messages.Insert;
 import com.google.api.services.gmail.model.Label;
@@ -41,7 +45,10 @@ import org.dataportabilityproject.types.transfer.models.mail.MailContainerResour
 import org.dataportabilityproject.types.transfer.models.mail.MailMessageModel;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Matchers;
+import org.mockito.Mockito;
 
 public class GoogleMailImporterTest {
 
@@ -62,6 +69,7 @@ public class GoogleMailImporterTest {
   private Labels labels;
   private Labels.List labelsList;
   private ListLabelsResponse labelsListResponse;
+  private Labels.Create labelsCreate;
 
   private GoogleMailImporter googleMailImporter;
 
@@ -73,9 +81,11 @@ public class GoogleMailImporterTest {
     insert = mock(Insert.class);
     labels = mock(Labels.class);
     labelsList = mock(Labels.List.class);
+    labelsCreate = mock(Labels.Create.class);
 
     Label label = new Label();
     label.setId(LABEL1);
+    label.setName(LABEL1);
     labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
 
     GoogleCredentialFactory googleCredentialFactory = mock(GoogleCredentialFactory.class);
@@ -88,15 +98,25 @@ public class GoogleMailImporterTest {
     when(users.labels()).thenReturn(labels);
     when(labels.list(Matchers.anyString())).thenReturn(labelsList);
     when(labelsList.execute()).thenReturn(labelsListResponse);
+    when(labels.create(Matchers.anyString(), Matchers.any(Label.class))).thenReturn(labelsCreate);
+    when(labelsCreate.execute()).thenReturn(label);
 
     verifyZeroInteractions(googleCredentialFactory);
   }
 
   @Test
-  public void importMessage() {
+  public void importMessage() throws IOException {
     MailContainerResource resource = new MailContainerResource(null,
         Collections.singletonList(MESSAGE_MODEL));
 
     ImportResult result = googleMailImporter.importItem(JOB_ID, null, resource);
+
+    // Getting list of labels from Google
+    verify(labelsList).execute();
+    // Importing message
+    ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
+    verify(messages).insert(eq(GoogleMailImporter.USER), messageArgumentCaptor.capture());
+    assertThat(messageArgumentCaptor.getValue().getRaw()).isEqualTo(MESSAGE_RAW);
+    System.out.println("Labels: " + messageArgumentCaptor.getValue().getLabelIds());
   }
 }
