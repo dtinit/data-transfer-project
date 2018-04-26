@@ -117,6 +117,6 @@ public class GoogleMailImporterTest {
     ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
     verify(messages).insert(eq(GoogleMailImporter.USER), messageArgumentCaptor.capture());
     assertThat(messageArgumentCaptor.getValue().getRaw()).isEqualTo(MESSAGE_RAW);
-    System.out.println("Labels: " + messageArgumentCaptor.getValue().getLabelIds());
+    // TODO(olsona): test labels
   }
 }
