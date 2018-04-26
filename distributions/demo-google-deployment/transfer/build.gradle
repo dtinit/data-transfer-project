@@ -103,7 +103,7 @@ shadowJar {
 task createTransferServerDockerfile(type: Dockerfile) {
     description = 'Builds the Transfer Server Dockerfile'
     group = 'docker'
-    destFile project.file("${buildDir}/transfer/</imageVersion>")
+    destFile project.file("${buildDir}/transfer/Dockerfile")
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
