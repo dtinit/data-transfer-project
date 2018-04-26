@@ -103,7 +103,7 @@ shadowJar {
 task createTransferServerDockerfile(type: Dockerfile) {
     description = 'Builds the Transfer Server Dockerfile'
     group = 'docker'
-    destFile project.file("${buildDir}/transfer/Dockerfile")
+    destFile project.file("${buildDir}/transfer/</imageVersion>")
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
@@ -130,11 +130,11 @@ task dockerize(type: DockerBuildImage) {
 // GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
 // called from createTransferServerDockerfileLocal and NOT the production
 // createTransferServerDockerfile.
-task copyTransferServerDepsLocal {
-    copy {
-        from '../bin/service_acct_creds.json'
-        into 'build'
-    }
+task copyTransferServerDepsLocal(type: Copy) {
+    assert file("/tmp/service_acct_creds.json").exists()
+    from '/tmp/service_acct_creds.json'
+    into 'build/libs/'
+    assert file("build/libs/service_acct_creds.json").exists()
 }
 
 task createTransferServerDockerfileLocal(type: Dockerfile) {
@@ -145,6 +145,7 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8082 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
+    copyFile("build/libs/service_acct_creds.json", '/service_acct_creds.json')
 
     // Note: Debug port, project ID, and service_acct_creds.json set in the image are for local
     // only. This is not secure for an image deployed to production. In production,
@@ -157,7 +158,6 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
             "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006",
             "-jar",
             "/app/transfer.jar")
-    copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
     ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
     environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
     environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
