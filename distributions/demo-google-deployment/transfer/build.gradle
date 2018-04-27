@@ -131,10 +131,8 @@ task dockerize(type: DockerBuildImage) {
 // called from createTransferServerDockerfileLocal and NOT the production
 // createTransferServerDockerfile.
 task copyTransferServerDepsLocal(type: Copy) {
-    assert file("/tmp/service_acct_creds.json").exists()
     from '/tmp/service_acct_creds.json'
     into 'build/libs/'
-    assert file("build/libs/service_acct_creds.json").exists()
 }
 
 task createTransferServerDockerfileLocal(type: Dockerfile) {
