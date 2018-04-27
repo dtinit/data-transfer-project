@@ -69,7 +69,6 @@ addCloudExtensionDependency(project)
 mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
 
 task copyEnvConfig(type: Copy) {
-    println("Call copyEnvConfig")
     description = 'Copies environment-specific configuration into the jar'
     ext.env = project.hasProperty('env') ? env : 'local'
     into 'build/resources/main/config/env'
