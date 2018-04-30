@@ -61,6 +61,7 @@ limitations under the License.
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
 ## Creating the Docker Network
+You only need to do this once.  The network will remain created even if you stop Docker.
 * `sudo service docker start`
 * `docker network create dataportability`
 

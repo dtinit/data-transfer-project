@@ -55,7 +55,8 @@ public class SmugMugOauthInterface {
     OAuthService service =
         new ServiceBuilder().provider(SmugMugOauthApi.class).apiKey(apiKey).apiSecret(apiSecret).build();
     String authUrl = service.getAuthorizationUrl(new Token(token.getToken(), token.getSecret()));
-    return String.format("%s&perms=%s", authUrl, permission);
+    // Request for permissions and for Full access (private and public content)
+    return String.format("%s&Permissions=%s&Access=%s", authUrl, permission, "Full");
   }
 
   public TokenSecretAuthData getAccessToken(TokenSecretAuthData requestToken, Verifier verifier) {

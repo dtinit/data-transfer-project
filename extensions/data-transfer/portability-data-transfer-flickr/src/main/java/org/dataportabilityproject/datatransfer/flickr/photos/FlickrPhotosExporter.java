@@ -32,6 +32,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -48,13 +54,8 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerRe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
+
   private static final int PHOTO_PER_PAGE = 50;
   private static final List<String> EXTRAS = ImmutableList.of("url_o", "o_dims", "original_format");
   private static final int PHOTO_SETS_PER_PAGE = 500;
@@ -106,13 +107,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, AuthData authData) {
-    return export(jobId, authData, new ExportInformation(null, null));
-  }
-
-  @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, AuthData authData, ExportInformation exportInformation) {
+      UUID jobId, AuthData authData, Optional<ExportInformation> exportInformation) {
     Auth auth;
     try {
       auth = FlickrUtils.getAuth(authData, flickr);
@@ -121,10 +117,13 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     }
 
     RequestContext.getRequestContext().setAuth(auth);
-    PaginationData paginationData = exportInformation.getPaginationData();
 
-    IdOnlyContainerResource resource =
-        (IdOnlyContainerResource) exportInformation.getContainerResource();
+    PaginationData paginationData = exportInformation.isPresent()
+        ? exportInformation.get().getPaginationData()
+        : null;
+    IdOnlyContainerResource resource = exportInformation.isPresent()
+        ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+        : null;
     if (resource != null) {
       return getPhotos(resource, paginationData);
     } else {
@@ -201,7 +200,9 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     PaginationData newPage = null;
     boolean hasMore =
         photoSetList.getPage() != photoSetList.getPages() && !photoSetList.getPhotosets().isEmpty();
-    if (hasMore) newPage = new IntPaginationToken(page + 1);
+    if (hasMore) {
+      newPage = new IntPaginationToken(page + 1);
+    }
 
     PhotosContainerResource photosContainerResource =
         new PhotosContainerResource(albumBuilder.build(), null);

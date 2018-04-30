@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.MediaContent;
-import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.AlbumFeed;
 import com.google.gdata.data.photos.GphotoEntry;
 import com.google.gdata.data.photos.UserFeed;
@@ -79,25 +78,24 @@ public class GooglePhotosExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
-    return exportAlbums(authData, Optional.empty());
-  }
-
-  @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, ExportInformation exportInformation) {
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.getPaginationData();
-    IdOnlyContainerResource idOnlyContainerResource =
-        (IdOnlyContainerResource) exportInformation.getContainerResource();
-
-    if (idOnlyContainerResource != null) {
-      // export more photos
-      return exportPhotos(
-          authData, idOnlyContainerResource.getId(), Optional.ofNullable(paginationToken));
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+    if (!exportInformation.isPresent()) {
+      return exportAlbums(authData, Optional.empty());
     } else {
-      // export more albums if there are no more photos
-      return exportAlbums(authData, Optional.ofNullable(paginationToken));
+      StringPaginationToken paginationToken =
+          (StringPaginationToken) exportInformation.get().getPaginationData();
+      IdOnlyContainerResource idOnlyContainerResource =
+          (IdOnlyContainerResource) exportInformation.get().getContainerResource();
+
+      if (idOnlyContainerResource != null) {
+        // export more photos
+        return exportPhotos(
+            authData, idOnlyContainerResource.getId(), Optional.ofNullable(paginationToken));
+      } else {
+        // export more albums if there are no more photos
+        return exportAlbums(authData, Optional.ofNullable(paginationToken));
+      }
     }
   }
 
@@ -122,25 +120,25 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    List<AlbumEntry> entries = albumFeed.getEntries(AlbumEntry.class);
+    List<GphotoEntry> entries = albumFeed.getEntries();
     if (entries.size() == maxResults) {
       int nextPageStart = startItem + maxResults;
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);
     }
-    ContinuationData continuationData = new ContinuationData(nextPageData);
 
+    ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>(entries.size());
 
-    for (AlbumEntry googleAlbum : entries) {
+    for (GphotoEntry googleAlbum : entries) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
-              googleAlbum.getId(),
+              googleAlbum.getGphotoId(),
               googleAlbum.getTitle().getPlainText(),
               googleAlbum.getDescription().getPlainText()));
 
       // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
     }
 
     ResultType resultType = ResultType.CONTINUE;

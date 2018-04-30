@@ -44,6 +44,7 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerRe
 
 public class InstagramPhotoExporter implements
     Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+
   private static final String MEDIA_URL = "https://api.instagram.com/v1/users/self/media/recent";
   private static final String FAKE_ALBUM_ID = "instagramAlbum";
 
@@ -56,14 +57,13 @@ public class InstagramPhotoExporter implements
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData) {
-    return exportPhotos(authData, Optional.empty());
-  }
-
-  @Override
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      ExportInformation exportInformation) {
-    return exportPhotos(authData, Optional.ofNullable(exportInformation.getPaginationData()));
+      Optional<ExportInformation> exportInformation) {
+    if (exportInformation.isPresent()) {
+      return exportPhotos(authData, Optional.ofNullable(exportInformation.get().getPaginationData()));
+    } else {
+      return exportPhotos(authData, Optional.empty());
+    }
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
