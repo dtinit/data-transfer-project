@@ -62,14 +62,14 @@ class JobPollingService extends AbstractScheduledService {
 
   @Override
   protected Scheduler scheduler() {
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
+    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 2, TimeUnit.SECONDS);
   }
 
   /**
    * Polls for an unassigned job, and once found, initializes the global singleton job metadata
    * object for this running instance of the transfer worker.
    */
-  private void pollForUnassignedJob() throws IOException {
+  private void pollForUnassignedJob() {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
     logger.debug("Polling for a job in state CREDS_AVAILABLE");
     if (jobId == null) {
@@ -83,22 +83,26 @@ class JobPollingService extends AbstractScheduledService {
     // so we don't have to make the user start from scratch. Some options are to manage this key
     // pair within our hosting platform's key management system rather than generating here, or to
     // encrypt and store the private key on the client.
-    // Note: claimJob may fail if another transfer worker beat us to it. That's ok -- this transfer
+    // Note: tryToClaimJob may fail if another transfer worker beat us to it. That's ok -- this transfer
     // worker will keep polling until it can claim a job.
-    claimJob(jobId, keyPair);
-    logger.debug(
-        "Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
-        jobId,
-        publicKey.getEncoded().length);
+    boolean claim = tryToClaimJob(jobId, keyPair);
+    logger.debug("Claim: " + claim);
+    if (claim) {
+      logger.debug(
+          "Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
+          jobId,
+          publicKey.getEncoded().length);
+    }
   }
 
   /** Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage. */
-  private void claimJob(UUID jobId, KeyPair keyPair) throws IOException {
+  private boolean tryToClaimJob(UUID jobId, KeyPair keyPair) {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
     // Verify no transfer worker key
     if (existingJob.jobAuthorization().authPublicKey() != null) {
-      throw new IOException("public key cannot be persisted again");
+      logger.debug("public key cannot be persisted again");
+      return false;
     }
     // Populate job with public key to persist
     String encodedPublicKey = BaseEncoding.base64Url().encode(keyPair.getPublic().getEncoded());
@@ -125,12 +129,12 @@ class JobPollingService extends AbstractScheduledService {
           (previous, updated) ->
               Preconditions.checkState(
                   previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
-    } catch (IllegalStateException e) {
-      throw new IOException(
+    } catch (IllegalStateException | IOException e) {
+      logger.debug(
           "Could not 'claim' job "
               + jobId
-              + ". It was probably already claimed by another transfer worker",
-          e);
+              + ". It was probably already claimed by another transfer worker");
+      return false;
     }
     JobMetadata.init(
         jobId,
@@ -138,6 +142,7 @@ class JobPollingService extends AbstractScheduledService {
         existingJob.transferDataType(),
         existingJob.exportService(),
         existingJob.importService());
+    return true;
   }
 
   /** Polls for job with populated auth data and stops this service when found. */
