@@ -86,9 +86,8 @@ class JobPollingService extends AbstractScheduledService {
     // encrypt and store the private key on the client.
     // Note: tryToClaimJob may fail if another transfer worker beat us to it. That's ok -- this transfer
     // worker will keep polling until it can claim a job.
-    boolean claim = tryToClaimJob(jobId, keyPair);
-    logger.debug("Claim: " + claim);
-    if (claim) {
+    boolean claimed = tryToClaimJob(jobId, keyPair);
+    if (claimed) {
       logger.debug(
           "Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
           jobId,
@@ -96,7 +95,8 @@ class JobPollingService extends AbstractScheduledService {
     }
   }
 
-  /** Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage. */
+  /** Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
+   * Returns true if the claim was successful; otherwise it returns false. */
   private boolean tryToClaimJob(UUID jobId, KeyPair keyPair) {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
