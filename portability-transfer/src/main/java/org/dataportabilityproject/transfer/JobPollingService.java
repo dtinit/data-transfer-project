@@ -61,6 +61,7 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   // TODO: the delay should be more easily configurable
+  // https://github.com/google/data-transfer-project/issues/400
   @Override
   protected Scheduler scheduler() {
     return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
