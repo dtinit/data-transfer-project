@@ -60,9 +60,10 @@ class JobPollingService extends AbstractScheduledService {
     }
   }
 
+  // TODO: the delay should be more easily configurable
   @Override
   protected Scheduler scheduler() {
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 2, TimeUnit.SECONDS);
+    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
   }
 
   /**
