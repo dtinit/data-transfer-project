@@ -63,7 +63,11 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
     TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, jobId);
     if (tempTasksData == null) {
       tempTasksData = new TempTasksData(jobId.toString());
-      jobStore.create(jobId, tempTasksData);
+      try {
+        jobStore.create(jobId, tempTasksData);
+      } catch (IOException e) {
+        return new ImportResult(ResultType.ERROR, e.getMessage());
+      }
     }
 
     for (TaskListModel oldTasksList : data.getLists()) {
