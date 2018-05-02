@@ -125,7 +125,11 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
 
   private byte[] getRawBytes(String blobName) {
     Bucket bucket = storage.get(bucketName);
-    return bucket.get(blobName).getContent();
+    System.out.println("Blob name: " + blobName);
+    System.out.println("Bucket: " + bucketName);
+    return bucket
+        .get(blobName)
+        .getContent();
   }
 
   private String lookupKey(String keyName) {
@@ -133,7 +137,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
     logger.debug("Getting app key for {} (blob {}) from bucket", keyName, keyLocation);
     byte[] rawKeyBytes = getRawBytes(keyLocation);
     checkState(rawKeyBytes != null, "Couldn't look up: " + keyName);
-    String key = new String(rawKeyBytes);
+    String key = new String(rawKeyBytes).trim();
     return key;
   }
 
@@ -142,7 +146,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
     logger.debug("Getting app secret for {} (blob {})", secretName, secretLocation);
     byte[] encryptedSecret = getRawBytes(secretLocation);
     checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
-    String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret));
+    String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret)).trim();
     checkState(!Strings.isNullOrEmpty(secret), "Couldn't decrypt: " + secretName);
     return secret;
   }
