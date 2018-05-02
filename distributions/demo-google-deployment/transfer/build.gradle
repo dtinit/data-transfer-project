@@ -30,7 +30,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * <ul>To run locally:
  *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> \
  *      :distributions:demo-google-deployment:transfer:dockerizeLocal
- *  <li>docker run --rm -p 8082:8082 -p 5006:5006 dataportability/transfer
+ *  <li>docker run --rm -p 8082:8082 -p 5006:5006 gcr.io/world-takeout-test/portability-transfer
  * </ul>
  *
  * <ul>To run for prod environments:
@@ -130,11 +130,9 @@ task dockerize(type: DockerBuildImage) {
 // GOOGLE_APPLICATION_CREDENTIALS which is stored as a Kubernetes secret. Hence this is only
 // called from createTransferServerDockerfileLocal and NOT the production
 // createTransferServerDockerfile.
-task copyTransferServerDepsLocal {
-    copy {
-        from '../bin/service_acct_creds.json'
-        into 'build'
-    }
+task copyTransferServerDepsLocal(type: Copy) {
+    from '/tmp/service_acct_creds.json'
+    into 'build/libs/'
 }
 
 task createTransferServerDockerfileLocal(type: Dockerfile) {
@@ -145,6 +143,7 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8082 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
+    copyFile("build/libs/service_acct_creds.json", '/service_acct_creds.json')
 
     // Note: Debug port, project ID, and service_acct_creds.json set in the image are for local
     // only. This is not secure for an image deployed to production. In production,
@@ -154,10 +153,9 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
     exposePort 5006 // Port to open up for the debugger
     defaultCommand("java",
             "-Xdebug",
-            "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5006",
             "-jar",
             "/app/transfer.jar")
-    copyFile("build/service_acct_creds.json", '/service_acct_creds.json')
     ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
     environmentVariable('GOOGLE_PROJECT_ID', ext.gcpProject)
     environmentVariable('GOOGLE_APPLICATION_CREDENTIALS', '/service_acct_creds.json')
