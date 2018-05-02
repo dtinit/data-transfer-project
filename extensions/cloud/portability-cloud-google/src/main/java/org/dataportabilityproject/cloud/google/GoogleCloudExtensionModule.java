@@ -21,6 +21,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -56,16 +57,19 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
 
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
+  private final ObjectMapper objectMapper;
   private final String cloud;
   private final Environment environment;
 
   GoogleCloudExtensionModule(
       HttpTransport httpTransport,
       JsonFactory jsonFactory,
+      ObjectMapper objectMapper,
       String cloud,
       Environment environment) {
     this.httpTransport = httpTransport;
     this.jsonFactory = jsonFactory;
+    this.objectMapper = objectMapper;
     this.cloud = cloud;
     this.environment = environment;
   }
@@ -184,6 +188,12 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Singleton
   JsonFactory getJsonFactory() {
     return jsonFactory;
+  }
+
+  @Provides
+  @Singleton
+  ObjectMapper getObjectMapper() {
+    return objectMapper;
   }
 
   /**

@@ -20,9 +20,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import java.io.IOException;
 import java.util.UUID;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempTasksData;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
@@ -66,7 +68,11 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
     TempTasksData tempTasksData = jobstore.findData(TempTasksData.class, jobId);
     if (tempTasksData == null) {
       tempTasksData = new TempTasksData(jobId.toString());
-      jobstore.create(jobId, tempTasksData);
+      try {
+        jobstore.create(jobId, tempTasksData);
+      } catch (IOException e) {
+        return new ImportResult(ResultType.ERROR, e.getMessage());
+      }
     }
 
     try {
