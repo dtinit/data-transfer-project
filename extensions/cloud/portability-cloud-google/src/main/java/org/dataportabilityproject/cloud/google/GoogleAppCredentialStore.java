@@ -125,8 +125,6 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
 
   private byte[] getRawBytes(String blobName) {
     Bucket bucket = storage.get(bucketName);
-    System.out.println("Blob name: " + blobName);
-    System.out.println("Bucket: " + bucketName);
     return bucket
         .get(blobName)
         .getContent();
