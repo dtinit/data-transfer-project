@@ -329,7 +329,7 @@ public final class GoogleJobStore implements JobStore {
       return null;
     }
     try {
-      return objectMapper.readValue(entity.getBlob(type.getName()).toByteArray(), type);
+      return objectMapper.readValue(entity.getString(type.getName()), type);
     } catch (IOException t) {
       throw new RuntimeException("Failed to deserialized key: " + key, t);
     }
