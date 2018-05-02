@@ -16,9 +16,11 @@
 package org.dataportabilityproject.transfer.microsoft.calendar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
+import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempCalendarData;
 import org.dataportabilityproject.transfer.microsoft.common.RequestHelper;
@@ -73,7 +75,11 @@ public class MicrosoftCalendarImporter
     TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
     if (calendarMappings == null) {
       calendarMappings = new TempCalendarData(jobId);
-      jobStore.create(jobId, calendarMappings);
+      try {
+        jobStore.create(jobId, calendarMappings);
+      } catch (IOException e) {
+        return new ImportResult(ResultType.ERROR, e.getMessage());
+      }
     }
 
     Map<String, String> requestIdToExportedId = new HashMap<>();

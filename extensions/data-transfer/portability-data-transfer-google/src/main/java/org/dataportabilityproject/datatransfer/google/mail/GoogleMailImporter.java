@@ -77,7 +77,12 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       UUID id, TokensAndUrlAuthData authData, MailContainerResource data) {
 
     // Initialize the temp storage of import folder/label mappings associated with this job
-    TempMailData tempMailData = getOrCreateMailData(id);
+    TempMailData tempMailData;
+    try {
+      tempMailData = getOrCreateMailData(id);
+    } catch (IOException e) {
+      return new ImportResult(ResultType.ERROR, e.getMessage());
+    }
 
     // Lazy init the request for all labels in the destination account, since it may not be needed
     // Mapping of labelName -> destination label id
@@ -270,7 +275,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     return new ImportResult(ResultType.OK);
   }
 
-  private TempMailData getOrCreateMailData(UUID id) {
+  private TempMailData getOrCreateMailData(UUID id) throws IOException {
     TempMailData tempMailData = jobStore.findData(TempMailData.class, id);
     if (tempMailData == null) {
       tempMailData = new TempMailData(id.toString());

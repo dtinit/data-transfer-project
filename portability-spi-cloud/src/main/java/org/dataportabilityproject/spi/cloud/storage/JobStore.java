@@ -72,7 +72,7 @@ public interface JobStore {
    */
   UUID findFirst(JobAuthorization.State jobState);
 
-  default <T extends DataModel> void create(UUID jobId, T model) {
+  default <T extends DataModel> void create(UUID jobId, T model) throws IOException {
     throw new UnsupportedOperationException();
   }
 
