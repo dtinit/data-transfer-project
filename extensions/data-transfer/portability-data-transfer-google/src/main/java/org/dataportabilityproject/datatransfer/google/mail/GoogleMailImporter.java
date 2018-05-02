@@ -49,10 +49,13 @@ import org.slf4j.LoggerFactory;
 public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailContainerResource> {
   private final Logger logger = LoggerFactory.getLogger(GoogleMailImporter.class);
 
-  private static final long MAX_RESULTS_PER_REQUEST = 10L;
+  @VisibleForTesting
+  static final long MAX_RESULTS_PER_REQUEST = 10L;
+  @VisibleForTesting
   // The special value me can be used to indicate the authenticated user to the gmail api
-  private static final String USER = "me";
-  private static final String LABEL = "DTP-migrated";
+  static final String USER = "me";
+  @VisibleForTesting
+  static final String LABEL = "DTP-migrated";
 
   private GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -63,7 +66,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   @VisibleForTesting
-  public GoogleMailImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Gmail gmail) {
+  GoogleMailImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Gmail gmail) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.gmail = gmail;
@@ -322,7 +325,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

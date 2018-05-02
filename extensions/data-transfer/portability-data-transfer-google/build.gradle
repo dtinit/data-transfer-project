@@ -24,15 +24,15 @@ dependencies {
         exclude(module: 'servlet-api')
     }
 
-    compile "com.google.api-client:google-api-client:${googleApiClient}"
-    compile "com.google.apis:google-api-services-calendar:${googleCalendarVersion}"
+    compile("com.google.api-client:google-api-client:${googleApiClient}")
+    compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
     compile("com.google.apis:google-api-services-gmail:${googleGmailVersion}")
-    compile "com.google.apis:google-api-services-people:${googlePeopleVersion}"
+    compile("com.google.apis:google-api-services-people:${googlePeopleVersion}")
     compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
     compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
 
-    compile "org.slf4j:slf4j-api:${slf4jVersion}"
-    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')

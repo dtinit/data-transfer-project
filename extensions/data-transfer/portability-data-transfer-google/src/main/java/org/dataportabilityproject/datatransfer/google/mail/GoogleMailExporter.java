@@ -41,10 +41,12 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 import org.dataportabilityproject.types.transfer.models.mail.MailContainerResource;
 import org.dataportabilityproject.types.transfer.models.mail.MailMessageModel;
 
-public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataModel> {
-  private static final long PAGE_SIZE = 50; // TODO configure this in production
+public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailContainerResource> {
+  @VisibleForTesting
+  static final long PAGE_SIZE = 50; // TODO configure this in production
+  @VisibleForTesting
   // The special value me can be used to indicate the authenticated user to the gmail api
-  private static final String USER = "me";
+  static final String USER = "me";
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile Gmail gmail;
@@ -61,7 +63,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
   }
 
   @Override
-  public ExportResult<DataModel> export(UUID id,
+  public ExportResult<MailContainerResource> export(UUID id,
       TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     // Create a new gmail service for the authorized user
     Gmail gmail = getOrCreateGmail(authData);
@@ -89,7 +91,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
 
     List<MailMessageModel> results = new ArrayList<>(response.getMessages().size());
     // TODO: this is a good indication we need to swap the interface
-    // as we can't store all the mail messagess in memory at once.
+    // as we can't store all the mail messages in memory at once.
     for (Message listMessage : response.getMessages()) {
       Message getResponse = null;
       try {
@@ -121,7 +123,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData,DataMod
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
