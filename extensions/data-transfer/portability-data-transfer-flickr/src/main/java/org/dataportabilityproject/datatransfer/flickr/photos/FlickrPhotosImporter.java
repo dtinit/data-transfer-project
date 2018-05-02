@@ -86,7 +86,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
-      jobStore.create(jobId, tempPhotosData);
+      try {
+        jobStore.create(jobId, tempPhotosData);
+      } catch (IOException e) {
+        return new ImportResult(ResultType.ERROR, "Error create temp photo data " + e.getMessage());
+      }
     }
 
     Preconditions.checkArgument(

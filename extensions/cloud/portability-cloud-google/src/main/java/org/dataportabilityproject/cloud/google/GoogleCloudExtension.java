@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.cloud.google;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Preconditions;
@@ -44,8 +45,9 @@ public class GoogleCloudExtension implements CloudExtension {
         !initialized, "Attempting to initialize GoogleCloudExtension more than once");
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
+    ObjectMapper objectMapper = context.getService(ObjectMapper.class);
     injector = Guice.createInjector(new GoogleCloudExtensionModule(httpTransport, jsonFactory,
-        context.cloud(), context.environment()));
+        objectMapper, context.cloud(), context.environment()));
     initialized = true;
   }
 
