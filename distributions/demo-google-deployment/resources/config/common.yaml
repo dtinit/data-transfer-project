@@ -15,4 +15,5 @@
 #
 
 # Google cloud settings common to all environments
+environment: LOCAL
 cloud: GOOGLE

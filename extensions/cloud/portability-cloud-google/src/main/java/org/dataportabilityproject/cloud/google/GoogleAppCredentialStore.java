@@ -19,9 +19,11 @@ package org.dataportabilityproject.cloud.google;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -83,6 +85,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
     // Google Cloud Platform requires bucket names be unique across projects, so we include project
     // ID in the bucket name.
     this.bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
+    logger.debug("GoogleAppCredentialStore bucketName: {}", bucketName);
     this.keys =
         CacheBuilder.newBuilder()
             .expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES)
@@ -125,7 +128,10 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
 
   private byte[] getRawBytes(String blobName) {
     Bucket bucket = storage.get(bucketName);
-    return bucket.get(blobName).getContent();
+    Preconditions.checkNotNull(bucket, "Bucket [%s] not found", bucketName);
+    Blob blob = bucket.get(blobName);
+    Preconditions.checkNotNull(blob, "blob [%s] not found", blobName);
+    return blob.getContent();
   }
 
   private String lookupKey(String keyName) {
