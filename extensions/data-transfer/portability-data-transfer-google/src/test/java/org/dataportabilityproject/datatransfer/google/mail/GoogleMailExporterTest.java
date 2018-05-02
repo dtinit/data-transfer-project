@@ -17,9 +17,7 @@
 package org.dataportabilityproject.datatransfer.google.mail;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -48,10 +46,14 @@ import org.dataportabilityproject.types.transfer.models.mail.MailContainerResour
 import org.dataportabilityproject.types.transfer.models.mail.MailMessageModel;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Matchers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class GoogleMailExporterTest {
 
   private static final UUID JOB_ID = UUID.randomUUID();
@@ -65,25 +67,25 @@ public class GoogleMailExporterTest {
   private static final Message FULL_MESSAGE = new Message().setId(MESSAGE_ID).setRaw(MESSAGE_RAW)
       .setLabelIds(MESSAGE_LABELS);
 
+  @Mock
   private Users users;
+  @Mock
   private Messages messages;
+  @Mock
   private Messages.List messageListRequest;
-  private ListMessagesResponse messageListResponse;
+  @Mock
   private Get get;
-
+  @Mock
   private Gmail gmail;
+  @Mock
+  private GoogleCredentialFactory googleCredentialFactory;
+
+  private ListMessagesResponse messageListResponse;
 
   private GoogleMailExporter googleMailExporter;
 
   @Before
   public void setup() throws IOException {
-    users = mock(Users.class);
-    messages = mock(Messages.class);
-    messageListRequest = mock(Messages.List.class);
-    get = mock(Get.class);
-    gmail = mock(Gmail.class);
-
-    GoogleCredentialFactory googleCredentialFactory = mock(GoogleCredentialFactory.class);
     googleMailExporter = new GoogleMailExporter(googleCredentialFactory, gmail);
 
     when(gmail.users()).thenReturn(users);

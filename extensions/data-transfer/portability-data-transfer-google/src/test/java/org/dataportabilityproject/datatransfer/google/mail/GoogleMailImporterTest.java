@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users;
 import com.google.api.services.gmail.Gmail.Users.Labels;
-import com.google.api.services.gmail.Gmail.Users.Labels.Create;
 import com.google.api.services.gmail.Gmail.Users.Messages;
 import com.google.api.services.gmail.Gmail.Users.Messages.Insert;
 import com.google.api.services.gmail.model.Label;
@@ -45,11 +44,13 @@ import org.dataportabilityproject.types.transfer.models.mail.MailContainerResour
 import org.dataportabilityproject.types.transfer.models.mail.MailMessageModel;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Matchers;
-import org.mockito.Mockito;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class GoogleMailImporterTest {
 
   private static final UUID JOB_ID = UUID.randomUUID();
@@ -61,34 +62,35 @@ public class GoogleMailImporterTest {
   private static final MailMessageModel MESSAGE_MODEL = new MailMessageModel(MESSAGE_RAW,
       MESSAGE_LABELS);
 
-  private JobStore jobStore;
+  @Mock
   private Gmail gmail;
+  @Mock
   private Users users;
+  @Mock
   private Messages messages;
+  @Mock
   private Insert insert;
+  @Mock
   private Labels labels;
+  @Mock
   private Labels.List labelsList;
-  private ListLabelsResponse labelsListResponse;
+  @Mock
   private Labels.Create labelsCreate;
+  @Mock
+  private GoogleCredentialFactory googleCredentialFactory;
 
+  private JobStore jobStore;
+  private ListLabelsResponse labelsListResponse;
   private GoogleMailImporter googleMailImporter;
+
 
   @Before
   public void setUp() throws IOException {
-    gmail = mock(Gmail.class);
-    users = mock(Users.class);
-    messages = mock(Messages.class);
-    insert = mock(Insert.class);
-    labels = mock(Labels.class);
-    labelsList = mock(Labels.List.class);
-    labelsCreate = mock(Labels.Create.class);
-
     Label label = new Label();
     label.setId(LABEL1);
     label.setName(LABEL1);
     labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
 
-    GoogleCredentialFactory googleCredentialFactory = mock(GoogleCredentialFactory.class);
     jobStore = new LocalJobStore();
     googleMailImporter = new GoogleMailImporter(googleCredentialFactory, jobStore, gmail);
 
