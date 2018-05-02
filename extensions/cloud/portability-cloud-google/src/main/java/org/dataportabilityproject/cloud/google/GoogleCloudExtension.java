@@ -45,7 +45,7 @@ public class GoogleCloudExtension implements CloudExtension {
         !initialized, "Attempting to initialize GoogleCloudExtension more than once");
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
-    ObjectMapper objectMapper = context.getService(ObjectMapper.class);
+    ObjectMapper objectMapper = context.getTypeManager().getMapper();
     injector = Guice.createInjector(new GoogleCloudExtensionModule(httpTransport, jsonFactory,
         objectMapper, context.cloud(), context.environment()));
     initialized = true;
