@@ -109,17 +109,12 @@ public class GoogleMailExporterTest {
 
     // Check results
     // Verify correct methods were called
-    InOrder inOrder = Mockito.inOrder(gmail, users, messages, messageListRequest, get);
+    InOrder inOrder = Mockito.inOrder(messages, messageListRequest, get);
     // First request
-    inOrder.verify(gmail).users();
-    inOrder.verify(users).messages();
     inOrder.verify(messages).list(GoogleMailExporter.USER);
     inOrder.verify(messageListRequest).setMaxResults(GoogleMailExporter.PAGE_SIZE);
-    inOrder.verify(messageListRequest).execute();
     verify(messageListRequest, never()).setPageToken(Matchers.anyString());
     // Second request
-    inOrder.verify(gmail).users();
-    inOrder.verify(users).messages();
     inOrder.verify(messages).get(GoogleMailExporter.USER, MESSAGE_ID);
     inOrder.verify(get).setFormat("raw");
     inOrder.verify(get).execute();
