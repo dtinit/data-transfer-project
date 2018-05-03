@@ -6,6 +6,10 @@ import java.util.Map;
 
 public class RecurrenceRule {
 
+  public static final String RRULE = "RRULE";
+  public static final String RDATE = "RDATE";
+  public static final String EXDATE = "EXDATE";
+
   private RRule rRule;
   private RDate rDate;
   private ExDate exDate;
@@ -64,6 +68,18 @@ public class RecurrenceRule {
     public String toString() {
       return title;
     }
+  }
+
+  public static RRule parseRRuleString(String rRuleString) {
+    return null;
+  }
+
+  public static RDate parseRDateString(String rDateString) {
+    return null;
+  }
+
+  public static ExDate parseExDateString(String exDateString) {
+    return null;
   }
 
   public static class RRule {
