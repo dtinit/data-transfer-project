@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
@@ -37,11 +38,21 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttende
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
+import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule;
+import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule.ExDate;
+import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule.RDate;
+import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule.RRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+public class GoogleCalendarExporter implements
+    Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+
   private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarExporter.class);
+
+  private static final String RRULE = "RRULE";
+  private static final String RDATE = "RDATE";
+  private static final String EXDATE = "EXDATE";
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;
@@ -81,6 +92,36 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
     return new CalendarEventModel.CalendarEventTime(offsetDateTime, dateTime.getDate() != null);
   }
 
+  private static RRule parseRRuleString(String rRuleString) {
+    return null;
+  }
+
+  private static RDate parseRDateString(String rDateString) {
+    return null;
+  }
+
+  private static ExDate parseExDateString(String exDateString) {
+    return null;
+  }
+
+  private static RecurrenceRule getRecurrenceRule(List<String> rulesStrings) {
+    RecurrenceRule.Builder ruleBuilder = new RecurrenceRule.Builder();
+    for (String st : rulesStrings) {
+      if (st.startsWith(RRULE)) {
+        ruleBuilder.setRRule(parseRRuleString(st));
+      } else if (st.startsWith(RDATE)) {
+        ruleBuilder.setRDate(parseRDateString(st));
+      } else if (st.startsWith(EXDATE)) {
+        ruleBuilder.setExDate(parseExDateString(st));
+      } else {
+        // This shouldn't happen
+        throw new IllegalArgumentException(
+            "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
+      }
+    }
+    return ruleBuilder.build();
+  }
+
   private static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
     return new CalendarModel(
         calendarData.getId(), calendarData.getSummary(), calendarData.getDescription());
@@ -88,6 +129,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
 
   private static CalendarEventModel convertToCalendarEventModel(String id, Event eventData) {
     List<EventAttendee> attendees = eventData.getAttendees();
+    List<String> recurrenceRulesStrings = eventData.getRecurrence();
     return new CalendarEventModel(
         id,
         eventData.getDescription(),
@@ -100,7 +142,10 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
                 .collect(Collectors.toList()),
         eventData.getLocation(),
         getEventTime(eventData.getStart()),
-        getEventTime(eventData.getEnd()));
+        getEventTime(eventData.getEnd()),
+        recurrenceRulesStrings == null
+            ? null
+            : getRecurrenceRule(recurrenceRulesStrings));
   }
 
   @Override
@@ -236,7 +281,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
   private synchronized Calendar makeCalendarInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Calendar.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
