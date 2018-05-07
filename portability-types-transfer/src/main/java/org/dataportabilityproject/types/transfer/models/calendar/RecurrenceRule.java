@@ -1,9 +1,24 @@
 package org.dataportabilityproject.types.transfer.models.calendar;
 
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 
-public class RecurringEvent {
+public class RecurrenceRule {
+
+  public static final String RRULE = "RRULE";
+  public static final String RDATE = "RDATE";
+  public static final String EXDATE = "EXDATE";
+
+  private RRule rRule;
+  private RDate rDate;
+  private ExDate exDate;
+
+  private RecurrenceRule(RRule rRule, RDate rDate, ExDate exDate) {
+    this.rRule = rRule;
+    this.rDate = rDate;
+    this.exDate = exDate;
+  }
 
   enum Freq {
     SECONDLY,
@@ -55,7 +70,19 @@ public class RecurringEvent {
     }
   }
 
-  public class RRule {
+  public static RRule parseRRuleString(String rRuleString) {
+    return null;
+  }
+
+  public static RDate parseRDateString(String rDateString) {
+    return null;
+  }
+
+  public static ExDate parseExDateString(String exDateString) {
+    return null;
+  }
+
+  public static class RRule {
     final Freq freq;
     // The "until" field could also just be a string, based on what's returned by the APIs
     final CalendarEventModel.CalendarEventTime until;
@@ -105,6 +132,33 @@ public class RecurringEvent {
 
     public ExDate(List<CalendarEventModel.CalendarEventTime> exDateList) {
       this.exDateList = exDateList;
+    }
+  }
+
+  public static class Builder {
+    private RRule rRule;
+    private RDate rDate;
+    private ExDate exDate;
+
+    public Builder() {}
+
+    public Builder setRRule(RRule rRule) {
+      this.rRule = rRule;
+      return this;
+    }
+
+    public Builder setRDate(RDate rDate) {
+      this.rDate = rDate;
+      return this;
+    }
+
+    public Builder setExDate(ExDate exDate) {
+      this.exDate = exDate;
+      return this;
+    }
+
+    public RecurrenceRule build() {
+      return new RecurrenceRule(rRule, rDate, exDate);
     }
   }
 }

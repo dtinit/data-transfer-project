@@ -6,15 +6,15 @@ interface Property<T> {
   T getValue();
 }
 
-final class RuleDay implements Property<RecurringEvent.Day> {
-  private final RecurringEvent.Day day;
+final class RuleDay implements Property<RecurrenceRule.Day> {
+  private final RecurrenceRule.Day day;
 
-  RuleDay(RecurringEvent.Day day) {
+  RuleDay(RecurrenceRule.Day day) {
     this.day = day;
   }
 
   @Override
-  public RecurringEvent.Day getValue() {
+  public RecurrenceRule.Day getValue() {
     return day;
   }
 }
