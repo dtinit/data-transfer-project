@@ -24,12 +24,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -41,6 +35,13 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class InstagramPhotoExporter implements
     Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -84,7 +85,7 @@ public class InstagramPhotoExporter implements
       String photoId = photo.getId();
       String url = photo.getImages().getStandardResolution().getUrl();
       String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
-      photos.add(new PhotoModel("Instagram photo: " + photoId, url, text, null, FAKE_ALBUM_ID));
+      photos.add(new PhotoModel("Instagram photo: " + photoId, url, text, null, null, FAKE_ALBUM_ID));
     }
 
     List<PhotoAlbum> albums = new ArrayList<>();

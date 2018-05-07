@@ -23,6 +23,7 @@ public class PhotoModel {
   private final String fetchableUrl;
   private final String description;
   private final String mediaType;
+  private String dataId;
   private final String albumId;
 
   @JsonCreator
@@ -31,11 +32,13 @@ public class PhotoModel {
       @JsonProperty("fetchableUrl") String fetchableUrl,
       @JsonProperty("description") String description,
       @JsonProperty("mediaType") String mediaType,
+      @JsonProperty("dataId") String dataId,
       @JsonProperty("albumId") String albumId) {
     this.title = title;
     this.fetchableUrl = fetchableUrl;
     this.description = description;
     this.mediaType = mediaType;
+    this.dataId = dataId;
     this.albumId = albumId;
   }
 
@@ -57,5 +60,9 @@ public class PhotoModel {
 
   public String getAlbumId() {
     return albumId;
+  }
+
+  public String getDataId() {
+    return dataId;
   }
 }
