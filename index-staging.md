@@ -54,7 +54,7 @@ The Data Transfer Project has developed minimal UI for testing, validation, and 
 ## **How To Participate**
 There are many ways to participate in this open source project:
 
-### Become a Provider by Integrating A Service  
+### Become a Provider by Integrating a Service  
 If you just want to enable your service to share files using the Data Transfer Project toolset, check out the [Provider Integration Guide](https://github.com/google/data-transfer-project/blob/master/Documentation/Integration.md) on Github and download the code. 
 
 Providers who incorporates this code into their current platform give individuals the ability to transfer their data to or from their service. For example, with this tool fully implemented, anyone could seamlessly transfer their photos from one photos service provider to another.
@@ -62,7 +62,7 @@ Providers who incorporates this code into their current platform give individual
 ### Contribute To The Core Framework  
 If you would like to write an API to a new data type and/or extend the DTP framework see [Developer Guide](https://github.com/google/data-transfer-project/blob/master/Documentation/Developer.md) on the [Data Transfer Project Github site](https://github.com/google/data-transfer-project).
 
-### Hosting Options For A Data Transfer Project Service  
+### Hosting Options For a DTP Instance  
 Partners may host an instance of Data Transfer Project configured to their needs on any docker-based platform.  Google Cloud Platform and Microsoft Azure already have pre-built tools for hosting Data Transfer Project. 
 
 ## **Docs & Reference**
