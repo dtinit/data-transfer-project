@@ -65,12 +65,6 @@ If you would like to write an API to a new data type and/or extend the DTP frame
 ### Hosting Options For a DTP Instance  
 Partners may host an instance of Data Transfer Project configured to their needs on any docker-based platform.  Google Cloud Platform and Microsoft Azure already have pre-built tools for hosting Data Transfer Project. 
 
-## **Docs & Reference**
-
-+  [Data Transfer Project Whitepaper](Temp_Whitepaper.pdf)
-   +  ADD ABSTRACT when written
-+  Walk-through Video/Screencast (TBD)
-
 ## **About Us**
 
 The Data Transfer Project was formed in 2017 to create an open-source, service-to-service portability platform so that all individuals across the web could easily move their data between online service providers.
