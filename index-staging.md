@@ -38,7 +38,7 @@ Data Transfer Project APIs have been built for the following service providers a
 
 
 ### Demo User Interface (UI)
-The Data Transfer Project has developed minimal UI for testing, validation, and demo purposes, which is not intended to be used in production. DTP functionality is expected be embedded in the service providers UI, which will create a more embedded experience for individuals.
+The Data Transfer Project has developed minimal UI for testing, validation, and demo purposes, which is not intended to be used in production. DTP functionality is expected be incorporated into the service providers UI, which will create a more embedded experience for individuals.
 
 <img src="./dtp-demo-ui.png" width="548">
 
