@@ -12,7 +12,7 @@ We want all individuals across the web to be in control of their data.
 
 <img src="./HowItWorks.png" width="548">
 
-An individual who wants to move their photos data from Service C, for example, to Service E, doesn’t have to worry about file types since both Service C and Service E are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  The Service Providers use their authenticate on both ends using their primary authentication infrastructure.
+An individual who wants to move their photos data from Serivce Provider C, for example, to Service Provider E, doesn’t have to worry about file types since both Service Provider C and Service Provider E are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  Each Service Provider uses their own primary authentication infrastructure to ensure authentication on both sides of the transfer.
 
 ### Initial Data Portability Enabled
 The initial set of file types which can be moved directly between online service providers via Data Transfer Project include:   
