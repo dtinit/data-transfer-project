@@ -1,21 +1,23 @@
 ---
 title: Data Transfer Project
 tagline:  a platform for transfering data
-description: Data Transfer Project is a collaboration of industry partners committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between two platforms.
+description: Data Transfer Project is a collaboration of organizations committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
 ---
 ## **Who We Are**
-Data Transfer Project (DTP) is a collaboration of industry partners committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
+Data Transfer Project (DTP) is a collaboration of organizations committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
 
 We want all individuals across the web to be in control of their data.
 
 ## **How It Works**
 
+Data Transfer Project envisions an ecosystem of adapters that convert proprietary data formats into a small number of canonical formats (Data Models) useful for transferring data. This allows data transfer between any two service providers using the service provider's existing authorization mechanism, and allows each service provider to maintain control over the security of their service. 
+
 <img src="./HowItWorks.png" width="548">
 
-An individual who wants to move their photos data from Serivce Provider C, for example, to Service Provider E, doesn’t have to worry about file types since both Service Provider C and Service Provider E are part of the Data Transfer Project.  Data Transfer Project APIs handle the file conversions on both ends, as well as manage the transaction between services.  Each Service Provider uses their own primary authentication infrastructure to ensure authentication on both sides of the transfer.
+An individual who wants to move their photos data from Serivce Provider C, for example, to Service Provider E, doesn’t have to worry about data format types since both Service Provider C and Service Provider E are part of the Data Transfer Project.  Data Transfer Project APIs handle the format conversions on both ends, as well as manage the transaction between Service Providers.  Each Service Provider uses their own primary authentication infrastructure to ensure authentication on both sides of the transfer.
 
 ### Initial Data Portability Enabled
-The initial set of file types which can be moved directly between online service providers via Data Transfer Project include:   
+The initial set of data format types which can be moved directly between online service providers via Data Transfer Project include:   
 
 +  calendar
 +  contacts
@@ -38,7 +40,7 @@ Data Transfer Project APIs have been built for the following service providers a
 
 
 ### Demo User Interface (UI)
-The Data Transfer Project has developed minimal UI for testing, validation, and demo purposes, which is not intended to be used in production. DTP functionality is expected be incorporated into the service providers UI, which will create a more embedded experience for individuals.
+The Data Transfer Project has developed minimal UI for testing, validation, and demo purposes, which is not intended to be used in production. DTP functionality is expected be incorporated into the service providers UI, and to include authentication by service providers on both sides of the transaction.  The vision is to have data import and export functionality built into the service providers core product, which is seen as an advantage of choosing one service provider over another.
 
 <img src="./dtp-demo-ui.png" width="548">
 
