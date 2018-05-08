@@ -57,9 +57,9 @@ If you would like to write an API to a new data type and/or extend the DTP frame
 Partners may host an instance of Data Transfer Project configured to their needs on any docker-based platform.  Google Cloud Platform and Microsoft Azure already have pre-built tools for hosting Data Transfer Project. 
 
 ### **Contact Us**  
-### +  General questions and discussion: portability-discuss@googlegroups.com
-### +  Slack channel, email portability-maintainers@googlegroups.com for invitation
-### +  Weekly Skype call, email portability-maintainers@googlegroups.com for invitation 
++  General questions and discussion: portability-discuss@googlegroups.com
++  Slack channel, email portability-maintainers@googlegroups.com for invitation
++  Weekly Skype call, email portability-maintainers@googlegroups.com for invitation 
 
 ## **About Us**
 
