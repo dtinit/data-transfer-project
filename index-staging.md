@@ -30,20 +30,11 @@ We hope to eventually include all file types across all services.
 ### Initial Set of Integration  
 Data Transfer Project APIs have been built for the following service providers and file types:
 
-+  Google
-    +  Photos, calendar, mail, contacts, tasks
-
-+  Microsoft
-    +  Calendar, contacts
-
-+  Flickr
-    +  Photos
-
-+  Instagram
-    +  Photos
-
-+  Rememberthemilk
-    +  Tasks
++  Google: Photos, calendar, mail, contacts, tasks
++  Microsoft: Calendar, contacts
++  Flickr: Photos
++  Instagram: Photos
++  Rememberthemilk: Tasks
 
 
 ### Demo UI
@@ -64,6 +55,11 @@ If you would like to write an API to a new data type and/or extend the DTP frame
 
 ### Hosting Options For a DTP Instance  
 Partners may host an instance of Data Transfer Project configured to their needs on any docker-based platform.  Google Cloud Platform and Microsoft Azure already have pre-built tools for hosting Data Transfer Project. 
+
+### **Contact Us**  
+### +  General questions and discussion: portability-discuss@googlegroups.com
+### +  Slack channel, email portability-maintainers@googlegroups.com for invitation
+### +  Weekly Skype call, email portability-maintainers@googlegroups.com for invitation 
 
 ## **About Us**
 
