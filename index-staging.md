@@ -1,4 +1,3 @@
-<link rel="shortcut icon" type="image/png" href="/favicon.ico">
 ---
 title: Data Transfer Project
 tagline:  a platform for transfering data
