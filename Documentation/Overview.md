@@ -5,7 +5,7 @@
 
 Users should be able to easily transfer their data directly between online service providers.
 
-Data Transfer Project envisionss an ecosystem of adapters that convert a range of proprietary formats into a small number of canonical formats useful for transferring data. This allows data transfer between any two service providers using the service provider’s existing authorization mechanism, and allows each service provider to maintain control over the security of their service. This also adds to the sustainability of the ecosystem, since companies can attract new customers, or build a user base for new products, by supporting and maintaining the ability to easily import and export an individual’s data.
+Data Transfer Project envisions an ecosystem of adapters that convert a range of proprietary formats into a small number of canonical formats useful for transferring data. This allows data transfer between any two service providers using the service provider’s existing authorization mechanism, and allows each service provider to maintain control over the security of their service. This also adds to the sustainability of the ecosystem, since companies can attract new customers, or build a user base for new products, by supporting and maintaining the ability to easily import and export an individual’s data.
 
 ## Guiding Principles
 
@@ -227,17 +227,36 @@ The goal of V1 is to create a healthy ecosystem with multiple participants to pr
 ## Glossary of Terms
 
 ### Adapters 
-- Adapters exist outside of a Provider’s core infrastructure and provide the translation between a Provider’s core infrastructure and the DTP environment. 
-##### Data Adapters translate a Provider’s APIs into Data Models, and vice versa
-##### Authentication Adapters translate from a Provider’s Authentication to the DTP Authentication
-#### Data Model - Data Model is used to describe the file type and associated metadata to describe elements in a Vertical. For example, in the Photos Vertical, a Data Model would include a file type (.jpg, .tiff) and the associated metadata needed to fully describe the .jpg as a photo, such as title, description and album, if applicable. 
-#### DTP - Data Transfer Project
-#### Hosting Entity - a Hosting Entity is the entity that runs a Host Platform of DTP. In most cases it will be the Provider sending or receiving the data, but could be a trusted third party that wants to enable data transfer among a specific group of organizations.
-#### Host Platform - a Host Platform is the technical environment where a DTP instance can be hosted. This can be a cloud environment, enterprise infrastructure, or local. As of March 2018, the supported cloud host platforms include Google Cloud Platform and Microsoft Azure.
-#### Individual - Individuals are any person who interacts with a Provider. Individuals are interested in being able to manage and move the data they have stored in a Provider’s infrastructure.
-#### Contributors - Contributors are official members of the Data Transfer Project. The are most likely Providers, but may also be organizations who are interested in enabling data transfer among their members. Contributors contribute in may ways to the Data Transfer Project Open Source project, including contributing code, tools, advice and insights.
-#### Provider - Providers are any company or entity that holds user data. Providers may or may not be contributors.
-#### Task Management Library - The Task Management Library is a set of system components designed to coordinate and manage tasks that export and import data including retrieving data, pagination when applicable, handling exceptions utilizing retry strategies, re-creation of folder/container structures, and importing of data.
-#### Vertical - Verticals represent a collection of Data Models that make up a generic category of data. Some Verticals initially supported in DTP include Photos, Calendar, Tasks, and so on.
+Adapters exist outside of a Provider’s core infrastructure and provide the translation between a Provider’s core infrastructure and the DTP environment. 
+
+- __Data Adapters__ translate a Provider’s APIs into Data Models, and vice versa
+- __Authentication Adapters__ translate from a Provider’s Authentication to the DTP Authentication
+
+### Data Model 
+Data Model is used to describe the file type and associated metadata to describe elements in a Vertical. For example, in the Photos Vertical, a Data Model would include a file type (.jpg, .tiff) and the associated metadata needed to fully describe the .jpg as a photo, such as title, description and album, if applicable. 
+
+### DTP
+Data Transfer Project
+
+### Hosting Entity
+A Hosting Entity is the entity that runs a Host Platform of DTP. In most cases it will be the Provider sending or receiving the data, but could be a trusted third party that wants to enable data transfer among a specific group of organizations.
+
+### Host Platform
+A Host Platform is the technical environment where a DTP instance can be hosted. This can be a cloud environment, enterprise infrastructure, or local. As of March 2018, the supported cloud host platforms include Google Cloud Platform and Microsoft Azure.
+
+### Individual
+Individuals are any person who interacts with a Provider. Individuals are interested in being able to manage and move the data they have stored in a Provider’s infrastructure.
+
+### Contributors 
+Contributors are official members of the Data Transfer Project. The are most likely Providers, but may also be organizations who are interested in enabling data transfer among their members. Contributors contribute in may ways to the Data Transfer Project Open Source project, including contributing code, tools, advice and insights.
+
+### Provider
+Providers are any company or entity that holds user data. Providers may or may not be contributors.
+
+### Task Management Library
+The Task Management Library is a set of system components designed to coordinate and manage tasks that export and import data including retrieving data, pagination when applicable, handling exceptions utilizing retry strategies, re-creation of folder/container structures, and importing of data.
+
+### Vertical
+Verticals represent a collection of Data Models that make up a generic category of data. Some Verticals initially supported in DTP include Photos, Calendar, Tasks, and so on.
 
 # This is not an official Google product
