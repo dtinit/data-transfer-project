@@ -79,7 +79,9 @@ public class CalendarEventModel {
     return calendarId;
   }
 
-  public RecurrenceRule getRecurrenceRule() { return recurrenceRule; }
+  public RecurrenceRule getRecurrenceRule() {
+    return recurrenceRule;
+  }
 
   public static class CalendarEventTime {
     private final OffsetDateTime dateTime;
