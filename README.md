@@ -18,7 +18,7 @@ We want all individuals across the web to be in control of their data.
 * [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Current State
-Data Transfer Project is in its early stages, and we are actively looking for partner organizations and individuals to contribute to the project. We are continuing to define the architecture and implementation.  Since the code is in active development, please do thorough testing and verification before implementing. It has not been
+Data Transfer Project is in its early stages, and we are actively looking for partner organizations and individuals to contribute to the project. We are continuing to define the architecture and implementation.  Since the code is in active development, please do thorough testing and verification before implementing.
 
 ## Contact Info
 Please contact [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com)
