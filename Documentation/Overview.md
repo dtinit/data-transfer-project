@@ -259,4 +259,4 @@ The Task Management Library is a set of system components designed to coordinate
 ### Vertical
 Verticals represent a collection of Data Models that make up a generic category of data. Some Verticals initially supported in DTP include Photos, Calendar, Tasks, and so on.
 
-# This is not an official Google product
+### This is not an official Google product
