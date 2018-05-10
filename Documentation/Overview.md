@@ -1,85 +1,102 @@
 # Data Portability Project Overview
-2017-Oct-31
+2018-May
 
 ## Vision
 
 Users should be able to easily transfer their data directly between online service providers.
 
-The project aims to achieve this by providing a common framework and ecosystem to allow service provides to contribute and allow seamless transfer of data into and out of their service.
+Data Transfer Project envisions an ecosystem of adapters that convert a range of proprietary formats into a small number of canonical formats useful for transferring data. This allows data transfer between any two service providers using the service provider’s existing authorization mechanism, and allows each service provider to maintain control over the security of their service. This also adds to the sustainability of the ecosystem, since companies can attract new customers, or build a user base for new products, by supporting and maintaining the ability to easily import and export an individual’s data.
 
 ## Guiding Principles
 
-### User Driven  
-Data portability tools should be easy to find, intuitive to use, and readily available to consumers.
+### Build for Individuals  
+Data portability tools should be easy to find, intuitive to use, and readily available for individuals. They should also be open and interoperable with standard industry formats, where applicable, so that individuals can easily transfer data between services or download it for their own purposes.
 
-### Privacy and Security  
-Providers on each side of the portability transaction should have strong privacy and security measures---such as encryption in transit---to guard against unauthorized access, diversion of data, or other types of fraud.
+### Privacy and security   
+Providers on each side of the portability transaction should have strong privacy and security measures---such as encryption in transit---to guard against unauthorized access, diversion of data, or other types of fraud. It is important to apply privacy principles such as data minimization and transparency when transferring data between Providers. Individuals should be told in a clear and concise manner about the types and scope of data being transferred as well as how the data will be used at the destination service. Individuals should also be advised about the privacy and security practices of the destination service. These measures will help to educate an individual about the data being transferred and how the data will be used at the destination service.
 
 ### Reciprocity  
-While portability offers more choice and flexibility for users, it will be important to guard against incentives that are misaligned with user interests. A user's decision to move data to another service should not result in any loss of transparency or control over that data. Users will expect that data ported into a provider can likewise be exported again, if they so choose.  
+While portability offers more choice and flexibility for individuals, it will be important to guard against incentives that are misaligned with the individual's interests. An individual’s decision to move data to another service should not result in any loss of transparency or control over that data. Individuals should have assurance that data imported to a Provider can likewise be exported again, if they so choose. 
 
-### Focus On Users' Data, Not Company Data  
-Data portability is not, and should not be, without reasonable limits. Portability efforts should be limited to data that has utility for a user, e.g. the content a user creates, imports, approves for collection, or has control over.
+### Focus On individual's Data, Not Company Data  
+Data portability is not, and should not be, without reasonable limits. Portability efforts should be limited to data that has utility for an individual: specifically, content an individual creates, imports, approves for collection, or has control over. This reduces the friction for individual who want to switch among products or services because the data they export is meaningful to them. Portability should not extend to data collected to make a service operate, including data generated to improve system performance or train models that may be commercially sensitive or proprietary. This approach also encourages companies to continue to support data portability, knowing that their proprietary technologies are not threatened by data portability requirements.
+
+### Respect Everyone
+We live in a collaborative world: people connect and share on social media, they edit docs together, and they comment on videos, pictures and more. Data portability tools should focus only on providing data that is directly tied to the person requesting the transfer. We think this strikes the right balance between portability, privacy and benefits of trying a new service.
 
 ## Benefits of Portability
 
 ### Prevent lock-in  
-Users should be able to choose the service that best meets their needs, not be stuck with the first service they used just because it holds all their data and they are afraid of losing it.
+Individuals should be able to choose the service that best meets their needs, and not be stuck with the first service they used just because it holds all their data and they are afraid of losing it.
 
 ### Foster Innovation  
 If new products can easily have access to existing user data, it should lower the bar for entry into a market.
 
 ### Promote competition  
-Services won't be able to rest on past successes if users can easily transfer data to new services. This should hopefully increase competition in the marketplace, both from existing services and from new services.
+Services won't be able to rest on past successes if individuals can easily transfer data to new services. This should hopefully increase competition in the marketplace, both from existing services and new services.
 
 ## Example/Targeted Use Cases
 
 ### Switching to a new service  
-Users should be able to move completely from one service to another.  For example, if Alice wants to move from Google Drive to Office 365 she should be able to easily move all of her documents over and then delete all of her old data in Google Drive.
+Individuals should be able to move completely from one service to another.  For example, if an individual wants to move from Google Drive to Office 365, they should be able to easily copy all of their documents to Office 365, and then delete all of their old documents in Google Drive.
 
 ### Trying out a new service  
-Users should be able to try out new services.  For example, Bob hears about a new email service with an amazing new UI, but it's hard to try it out without significant amounts of real data in it.  Bob should be able to easily make a copy of all his old email in the new service and try it out.  Then he can decide to delete the data in either of providers or keep using them both.
+Individuals should be able to try out new services.  For example, an individual hears about a new email service with an amazing new UI, but it's hard to try it out without significant amounts of real data in it.  The individual should be able to easily make a copy of all their old email, import it into the new service and try it out.  Then they can decide whether to keep their email in one or both of the services.
 
 ### Moving selected data  
-Users should be able to move selected parts of their data to new companies.  For example, Charlie keeps all of her Photos in Google Photos, but really wants to make a photobook service to print a photo book.  She should be able to move just the pictures from the last year over to the photobook service to create the photo book without affecting her Google Drive usage at all.
+Individuals should be able to move selected parts of their data to new companies.  For example, an individual may keep all of their Photos in Google Photos, but really wants to make a photo book.  They should be able to move just the desired pictures to the photobook service without having to use significant bandwith to first download, then upload, the photos.
+
+## Architecture
+
+The DTP solution was designed so that it is easy for a service provider to adopt and enable the standards, and took into consideration the following constraints:
+
+### Use existing standards; don’t create new ones
+By supporting existing standards where possible (like OAuth and REST), we aim to minimize the foundational work required before DTP can be built and put into action. Widespread adoption and understanding of existing standards makes this possible. As new standards are developed and adopted, they will be reviewed and, where applicable, incorporated into DTP (see the alternatives section). 
+
+### Minimize the work required to add a service
+We designed DTP to allow Providers to participate without impacting their own core infrastructure. Providers can build Adapters and enable import and export functionality that works with their existing APIs and Authorization mechanisms. 
+
+### Support standard deployment infrastructure
+DTP infrastructure was designed with the flexibility to be hosted by anyone, anywhere.
 
 ## Top Level Components
 
-The project is broken out into five main pieces: Data Specifications, Adapters, Task Management, Cloud Interface and UI.
+The project is broken out into five main pieces: Data Models, Adapters, Task Management Library, Host Platform and User Interface.
 
-It is important that all ecosystem partners work off of the same Data Specifications and Adapters.  However the system is designed so that the Task Management, Cloud Interface, and UI can all be swapped out as needed.
+It is important that all ecosystem partners work off of the same Data Models and Adapters.  However the system is designed so that the Task Management, Cloud Interface, and UI can all be swapped out as needed.
 
+### Data Models
 
-### Data Specifications
-
-One or more shared interchange formats for the various data types (e.g. tasks, docs, photos, playlists) following commonly used industry formats.
+Data Model is used to describe the file type and associated metadata to describe elements in a particular vertical sector. For example, in the Photos vertical, a Data Model would include a file type (.jpg, .tiff) and the associated metadata needed to fully describe the .jpg as a photo, such as title, description and album, if applicable.
 
 ### Adapters  
 
-Vendor-specific plugins that convert from proprietary APIs and formats into one or more common data specifications.
+Adapters exist outside of a Provider’s core infrastructure and provide the translation between a Provider’s core infrastructure and the DTP environment. 
+-  Data Adapters translate a Provider’s APIs into Data Models, and vice versa
+-  Authentication Adapters translate from a Provider’s Authentication to the DTP Authentication
 
-### Task Management  
+### Task Management Library  
 
-A system to manage jobs and tasks. It calls the two relevant adapters, and manages paging, rate limiting, and retry logic.
+The Task Management Library is a set of system components designed to coordinate and manage tasks that export and import data including retrieving data, pagination when applicable, handling exceptions utilizing retry strategies, re-creation of folder/container structures, and importing of data.
 
-### Cloud Interface  
+### Host Platform  
 
-A platform specific implementation of needed infrastructure services, e.g. storage, docker image execution, etc.
+The technical environment where a DTP instance can be hosted. This can be a cloud environment, enterprise infrastructure, or local. As of March 2018, the supported cloud host platforms include Google Cloud Platform and Microsoft Azure.
 
-### UI  
+### User Interface  
 
 The UI layer that talks to the task management layer to manage migration jobs.
 
 ## Deployment & Use
 
-All the code for the project lives in a centralized open source repository.  Ideally the common code meets most use cases.  However, other entities are free to fork and extend the project to meet their specific needs.
+DTP code resides in a centralized, open source repository, and is intended to work for most use cases.  However, contributors are encouraged to fork and extend the project to meet their specific needs.
 
-Each organization interested in porting data runs an instance of the service (optionally with custom UI, Cloud Interface, and Task Management components).
+Service providers interested in enabling data import/export with DTP will want to set up and run a copy of the host platform service (optionally with custom UI, Cloud Interface, and Task Management library components).
 
-From a cost and security standpoint, the ideal scenario is that the system works as a pull model: if a user is trying to move their data from service A to service B, they would initiate the transfer via service B. However it seems likely that in the case where a user wants to move from LargeCorp to TinyStartup, TinyStartup might not have yet set up a full instance to power the move, and in that case we would suggest that LargeCorp allow the transfer to be started from their service.
+The preferred scenario is that the system works as a pull model: if an individual is trying to move their data from service A to service B, the individual would initiate the transfer via service B. However it seems likely that in the case where an individual wants to move from LargeCorp to TinyStartup, TinyStartup might not have yet set up a full Host Platform to power the move, and in that case LargeCorp would allow the transfer to be started from their service.
 
 ### Possible Alternative  
-A (not mutually exclusive) option is to have a centralized common instance/UI running that allows transfers between any two vendors in the system.  Pros: easy to brand/market with a central solution, good user experience, easy to enforce reciprocity (see below), easier to manage API keys.  Cons: requires lots of coordination, cost sharing is hard, is a security concern.
+Another option is for an entity to run a centralized, common instance/UI that allows transfers between any two service providers in the system.  The benefit is that it would be easy to brand/market with a central solution, have a good user experience, be easy to enforce reciprocity, and be easier to manage API keys.  The disadvantage is that it requires lots of coordination between the service providers, could be difficult to establish a cost sharing model, and would require validation to the integrity of the hosting entity.
 
 ## Detailed Component Design
 
@@ -133,49 +150,48 @@ This component handles starting, and managing individual data migrations.  This 
 Individual deployments are free to use any task management implementation they choose, however the reference implementation is abstracted away from the cloud layer so that providers can provide the cloud implementation of their choice (Azure, AWS, GCP, etc.) to make this as reusable as possible.
 
 
-### Cloud Interface
+### Host Platform
 
-Because all the major tech companies will likely want to run this on their own cloud the entire system is designed to abstract away the specific cloud implementation and only rely on features available in all the major platforms.
+Because service providers will likely want to run DTP in a cloud environment, DTP is designed to abstract out the specific cloud implementation and only rely on features available in all the major platforms.
 
-Currently the only requirements are:
+Currently the only requirements needed for running a host platform are:
 
 -  PersistentKeyValueStore - a persistent key value store
 -  JobDataCache - Similar to a PersistentKeyValueStore but able to delete all data related to a job at once.
 -  Ability to run docker images
 
-### UI
+### User Interface
 
-This component is expected to be highly customized by each implementation.  It is likely that each implementation might have multiple UIs, e.g. a portal that allows users to migrate data from all a provider's verticals and also an in product UI that allows users to migrate data for just one vertical.
+The User Interface (UI) is expected to be highly customized by each implementation, so that it is embedded in the service providers look-and-feel.
 
 ## Reference Implementation
 
 A reference implementation running as a docker image using open source and general cloud apis which allows for deployment to any cloud environment with minimal customization.
 
-### Architecture
+## Security & Privacy
 
-TBD
+The security and privacy of user data is a foundational principle of the Data Transfer Project. Because there are multiple parties involved in the data transfer (the user, Hosting Entity, Providers, and Contributors) no one person or entity can fully ensure the security and privacy of the entire system. Instead, responsibility is shared among all the participants. Here are some of responsibilities and leading practices that contribute to the security and privacy of the DTP system.
 
-## Security
+### Data minimization
+When transferring data between Providers, data minimization should be practiced. Practically this means that the receiving Provider should only process and retain the minimum set of data needed to provide their service. The sending Provider should provide all needed information, but no more. Note: DTP won’t delete data from the sending Provider as part of the transfer. However, participating providers should allow users to delete their data after a successful transfer has been verified.
 
-Because of the sensitive nature of the data in the system (user credentials and content) security is of the utmost importance.
+### User notification
+The Hosting Entity should configure their Hosting Platform to notify the user that a data transfer is occurring. Ideally, the user of the source and destination account are the same. However, user notification is designed to help protect against situations where that is not the case, and so notifications alerting the user of the transfer request should be sent to both the source account and the destination account. Depending on the sensitivity of the data being transferred, the Hosting Entity should consider delaying the start of the transfer so that the user has the opportunity to cancel the transfer after receiving the notification.
 
-The security properties of a given instance are going to be largely dependent on the Task Management implementation, UI, and cloud deployment of an individual instance.
+### Rate Limiting
 
-Our reference implementation aims to be as secure as possible.  And includes the following features:
+Hosting Entities, as well as Providers, should consider rate limiting the number and frequency of transfers for a given user. This approach can help limit the impact of an account compromise. The trade off between ease of use and security with this method means there is not a one size fits all answer as to what rate limit should be set. Instead, Providers and Hosting Entities should evaluate the sensitivity of the data, as well as known and possible attacks, when determining the appropriate rate limiting. 
 
--  Ephemeral keys that are never persisted, not accessible to administrators without forensic means.
--  All persisted data is encrypted with an ephemeral key
--  Role and Privilege separation
--  Tight internal and external firewalls
--  Ephemeral VM instances to ensure exploits don't persist from job to job
--  Jobs run on dedicated VMs, so exploits can't cross jobs
--  Dynamic code loading, only code from 2 providers is loaded
+### Token Revocation
+When a transfer is completed, DTP will attempt to revoke the authorization tokens used for the transfer. Providers should ensure their API supports token revocation. This approach is a Defense in Depth approach to ensure that if a token is leaked, its effectiveness will be limited to the duration of the transfer.
+Minimal Scopes for Auth Tokens
+Providers should offer granular scopes for their authentication tokens. This provides two benefits: first, providing transparency into exactly what data will be moved; second, as a defense in depth mechanism so that if tokens are somehow leaked they have the minimal possible privilege. At a minimum there should be read only versions of all the scopes so no write/modify/delete access is granted on the sending Provider.
 
-By its nature, the system must be able to run third-party adapter code to a variety of systems, thus, all code should be treated as potentially malicious.
+### Data retention
+DTP only stores data for the duration of the transfer job. Also, all data passing through the system is encrypted both at rest and in transit. Specifically, all data stored at rest is encrypted with a per-user session key that is created and stored in memory of the ephemeral virtual machine that is used to process a single user’s job. The Hosting Entity and Provider are responsible for ensuring that any stored aggregated statistics maintain user privacy.
 
-Some mitigation steps are code and network isolation for each configured service.
-
-In addition, the reference implementation will provide for security around user credentials and job data. For example, a public/private key pair will exist between the client and worker instance processing the migration of data, isolating the potential leak of information from any single point in the system. User creds and other sensitive data that is retrieved from the authentication flows will be encrypted at rest.
+### Abuse
+Providers and the Hosting Entity (if separate from the Provider) should have strong abuse protections built into their APIs. Due to the fact that DTP retains no user data beyond the life of a single transfer, and that there might be multiple Hosting Entities utilized in an attack, the Providers have the best tools to be able to detect and respond to abusive behavior. Providers should carefully control which Hosting Entities are able to obtain API keys. Providers are also encouraged to have strong security around granting auth tokens. Examples of this include requiring a reauthentication or asking security challenge questions before granting access.
 
 ## API Key Management
 
@@ -185,16 +201,20 @@ The plan is that each instance of this service will be required to obtain the AP
 
 ## Reciprocity
 
-Reciprocity is key to this project.  Allowing import of data is very clearly a priority for companies, but ensuring that their export solutions function just as well is rarely a priority.
+A healthy data portability ecosystem requires providers that allow equivalent import and export functionality. Providers that import data but don’t allow a similar level of export pose a risk to users by trapping their data into a service. There are several possible ways to promote reciprocity in the DTP ecosystem. We have identified several methods, which we list below, and will work with Partners to further explore these and other options.
 
-In order to ensure that the ecosystem stays healthy it is important to ensure providers' export and import functionalities function equally well.
+### In source code
+Contributions into the main Source Code Repository must contain an importer coupled with each exporter. This is to ensure at least an attempt at reciprocity.
 
-This can be accomplished in a number of ways, and there are subtle pros and cons to each method:
+### Transparency
+Each hosting provider should provide aggregated statistics about problems users encountered when importing and exporting data to service providers. This aims to ensure that providers are maintain their exporting functionality to a similar level of reliability as their importing functionality.
 
--  No import-only integrations will be allowed.  For any data specification you want to import data from you must also include export functionality.
--  Error metric-based reporting.  Each instance should publish (method TBD) error rates for import and export success ratios per service.  This allows for transparency of companies practices.
--  Error metric-based enforcement.  Same as above, but instead of just shaming companies a blacklist is published and automatically disabled import into services with broken exports.
--  Round trip based tests to ensure comparable fidelity of import/export with known test accounts.
+### Automated fidelity test
+Hosting Providers can establish testing accounts with various service providers and do periodic imports and exports of data to each service to ensure that data is exported with the appropriate fidelity. This information can again be provided in a transparent way to users at import time to ensure users can make an informed decision when choosing which providers to entrust their data with. 
+
+### Data Portability Provider Pledge
+Providers can work together to create a data portability pledge that requires them to follow best practices on portability. Hosting platforms can seek to support providers that commit to the pledge, user interfaces can display providers that commit to the pledge to users, and reports can be published on the state of the ecosystem with regards to reciprocity.
+
 
 ## V2 Features
 
@@ -204,8 +224,39 @@ The goal of V1 is to create a healthy ecosystem with multiple participants to pr
 -  Enterprise level features
 -  Scheduled/recurring migrations
 
-## Definitions
+## Glossary of Terms
 
-Vertical - One type of data e.g. photos, Docs, or Location history.
+### Adapters 
+Adapters exist outside of a Provider’s core infrastructure and provide the translation between a Provider’s core infrastructure and the DTP environment. 
 
-## This is not an official Google product
+- __Data Adapters__ translate a Provider’s APIs into Data Models, and vice versa
+- __Authentication Adapters__ translate from a Provider’s Authentication to the DTP Authentication
+
+### Data Model 
+Data Model is used to describe the file type and associated metadata to describe elements in a Vertical. For example, in the Photos Vertical, a Data Model would include a file type (.jpg, .tiff) and the associated metadata needed to fully describe the .jpg as a photo, such as title, description and album, if applicable. 
+
+### DTP
+Data Transfer Project
+
+### Hosting Entity
+A Hosting Entity is the entity that runs a Host Platform of DTP. In most cases it will be the Provider sending or receiving the data, but could be a trusted third party that wants to enable data transfer among a specific group of organizations.
+
+### Host Platform
+A Host Platform is the technical environment where a DTP instance can be hosted. This can be a cloud environment, enterprise infrastructure, or local. As of March 2018, the supported cloud host platforms include Google Cloud Platform and Microsoft Azure.
+
+### Individual
+Individuals are any person who interacts with a Provider. Individuals are interested in being able to manage and move the data they have stored in a Provider’s infrastructure.
+
+### Contributors 
+Contributors are official members of the Data Transfer Project. The are most likely Providers, but may also be organizations who are interested in enabling data transfer among their members. Contributors contribute in may ways to the Data Transfer Project Open Source project, including contributing code, tools, advice and insights.
+
+### Provider
+Providers are any company or entity that holds user data. Providers may or may not be contributors.
+
+### Task Management Library
+The Task Management Library is a set of system components designed to coordinate and manage tasks that export and import data including retrieving data, pagination when applicable, handling exceptions utilizing retry strategies, re-creation of folder/container structures, and importing of data.
+
+### Vertical
+Verticals represent a collection of Data Models that make up a generic category of data. Some Verticals initially supported in DTP include Photos, Calendar, Tasks, and so on.
+
+# This is not an official Google product
