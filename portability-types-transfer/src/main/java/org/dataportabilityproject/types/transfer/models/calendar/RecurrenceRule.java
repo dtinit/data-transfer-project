@@ -1,6 +1,8 @@
 package org.dataportabilityproject.types.transfer.models.calendar;
 
 
+import java.util.LinkedList;
+import java.util.List;
 import net.fortuna.ical4j.model.property.ExDate;
 import net.fortuna.ical4j.model.property.RDate;
 import net.fortuna.ical4j.model.property.RRule;
@@ -15,6 +17,30 @@ public class RecurrenceRule {
   private RDate rDate;
   private ExDate exDate;
 
+  public RRule getrRule() {
+    return rRule;
+  }
+
+  public RDate getrDate() {
+    return rDate;
+  }
+
+  public ExDate getExDate() {
+    return exDate;
+  }
+
+  public List<String> getStringList() {
+    List<String> stringList = new LinkedList<>();
+    if (rRule != null) {
+      stringList.add(rRule.toString());
+    }
+    if (rDate != null) {
+      stringList.add(rDate.toString());
+    }
+    if (exDate != null) {
+      stringList.add(exDate.toString());
+    }
+  }
 
   private RecurrenceRule(RRule rRule, RDate rDate, ExDate exDate) {
     this.rRule = rRule;
