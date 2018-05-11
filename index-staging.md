@@ -70,6 +70,3 @@ The Data Transfer Project was formed in 2017 to create an open-source, service-t
 The partners in the Data Transfer Project believe portability and interoperability are central to innovation. Making it easier for individuals to choose among services facilitates competition, empowers individuals to try new services and enables them to choose the offering that best suits their needs. 
 
 We anticipate the Data Transfer Project solution will make a particularly big impact in global markets where downloading or uploading data is expensive and/or slow. The Data Transfer Project eliminates the need to download data at all. Instead, files are transferred directly between service providers.
-
-## **Founding Partners**
-<img src="./Google.Microsoft.Logo2.png" width="300">  
