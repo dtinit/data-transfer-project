@@ -17,6 +17,7 @@
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
  * Install Node: `nvm install node`
  * Install Angular: `npm install -g @angular/cli`
+ * [Install Docker](https://docs.docker.com/install/)
  
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
