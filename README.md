@@ -32,4 +32,4 @@ The partners in the Data Transfer Project believe portability and interoperabili
 We anticipate the Data Transfer Project solution will make a particularly big impact in global markets where downloading or uploading data is expensive and/or slow. The Data Transfer Project eliminates the need to download data at all. Instead, files are transferred directly between service providers.
 
 
-#### This is not an official Google product
+#### DTP is early-stage open source code that is built and maintained entirely by DTP community members.
