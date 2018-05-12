@@ -71,8 +71,13 @@ You only need to do this once.  The network will remain created even if you stop
 The following builds and optionally runs the demo server (containing the API and Transfer Worker)
 on `port:8080`
 
+ * The first time you run you need to configure your credentials by copying
+   distributions/common/dataportability.secrets.example.properties to 
+   .gradle/properties.gradle and inserting the API keys and secrets for
+   the services you with to interact with.
+
  * `./gradlew :distributions:demo-server:dockerize`
-   * This copies over LOCAL secrets and settings (configured in ~/.gradle/properties.gradle) using
+   * This copies over LOCAL secrets and settings (configured in .gradle/properties.gradle) using
    the LocalCloud implementation
    * This will also build the docker image.
 
