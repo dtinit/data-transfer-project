@@ -18,7 +18,7 @@ matrix:
     # language: java causes Travis to automatically run Gradle tests based on the
     # presence of the appropriate build files.
     - language: java # Gradle (used automatically)
-      before_script:
+      install:
         # Copy the required secrets file
         - mkdir .gradle
         - cp distributions/common/dataportability.secrets.example.properties .gradle/dataportability.secrets.properties
