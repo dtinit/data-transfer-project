@@ -20,6 +20,7 @@ matrix:
     - language: java # Gradle (used automatically)
       before_script:
         # Copy the required secrets file
+        - mkdir .gradle
         - cp distributions/common/dataportability.secrets.example.properties .gradle/dataportability.secrets.properties
     # The angularjs flow below is more customized. There is some nodejs setup to do as well as
     # configuration to use the version of Chrome that is installed in Travis images.
