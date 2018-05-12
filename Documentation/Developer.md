@@ -17,6 +17,8 @@
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
  * Install Node: `nvm install node`
  * Install Angular: `npm install -g @angular/cli`
+ * [Install Docker](https://docs.docker.com/install/)
+ * Install the Angular CLI `./gradlew client:installLocalAngularCli`
  
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
@@ -96,5 +98,10 @@ A demo distribution for Google Cloud Platform is available at
 `distributions/demo-google-deployment`.
 
 A demo Azure distribution is also in development.
+
+## Build Problem F.A.Q
+
+### AutoValue errors
+If you get an error `error: duplicate class... final class AutoValue_...` it is indecitive of your IDE and gradle clashing.  To fix it you want to delete the refrenced build/classes directory.
 
 ## This is not an official Google product
