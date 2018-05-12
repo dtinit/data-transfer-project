@@ -28,6 +28,7 @@ matrix:
           - ./client/node_modules
       before_script:
         - cd client
+        - cp distributions/common/dataportability.secrets.example.properties .gradle/dataportability.secrets.properties
         - npm install
         - npm install -g karma
         - npm install -g @angular/cli
