@@ -84,16 +84,18 @@ task createSecretsFile() {
     doLast {
         def propFile = file("$buildDir/resources/main/secrets.properties")
         propFile.delete()
-        def secretsFile = file(Paths.get(System.getProperty('user.home')).resolve('.gradle/dataportability.secrets.properties'))
+        def secretsDirectory = Paths.get("$projectDir/../../.gradle/")
+        def secretsFileName = 'dataportability.secrets.properties'
+        def secretsFile = file(secretsDirectory.resolve(secretsFileName))
         if (secretsFile.exists()) {
             copy {
-                from file(Paths.get(System.getProperty('user.home')).resolve('.gradle'))
-                include "dataportability.secrets.properties"
+                from file(secretsDirectory)
+                include secretsFileName
                 into file("$buildDir/resources/main")
-                rename  ("dataportability.secrets.properties", "secrets.properties")
+                rename  (secretsFileName, "secrets.properties")
             }
         } else {
-            logger.info("Configuration .gradle/dataportability.secrets.properties not found - secretes will not be set for the demo server")
+            throw new GradleException("Configuration " + secretsFile + "/dataportability.secrets.properties not found")
         }
     }
 }

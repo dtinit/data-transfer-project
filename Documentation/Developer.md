@@ -3,7 +3,7 @@
 
 ## Communication
 
- * General questions and discussion: [portability-discuss@googlegroups.com](mailto:portability-discuss@googlegroups.com)
+ * General questions and discussion: [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com)
  * [Slack channel](https://portability.slack.com), email
    [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com) for invitation
  * Weekly Skype call, email [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
@@ -17,6 +17,8 @@
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
  * Install Node: `nvm install node`
  * Install Angular: `npm install -g @angular/cli`
+ * [Install Docker](https://docs.docker.com/install/)
+ * Install the Angular CLI `./gradlew client:installLocalAngularCli`
  
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
@@ -69,8 +71,13 @@ You only need to do this once.  The network will remain created even if you stop
 The following builds and optionally runs the demo server (containing the API and Transfer Worker)
 on `port:8080`
 
+ * The first time you run you need to configure your credentials by copying
+   distributions/common/dataportability.secrets.example.properties to 
+   .gradle/properties.gradle and inserting the API keys and secrets for
+   the services you with to interact with.
+
  * `./gradlew :distributions:demo-server:dockerize`
-   * This copies over LOCAL secrets and settings (configured in ~/.gradle/properties.gradle) using
+   * This copies over LOCAL secrets and settings (configured in .gradle/properties.gradle) using
    the LocalCloud implementation
    * This will also build the docker image.
 
@@ -96,5 +103,10 @@ A demo distribution for Google Cloud Platform is available at
 `distributions/demo-google-deployment`.
 
 A demo Azure distribution is also in development.
+
+## Build Problem F.A.Q
+
+### AutoValue errors
+If you get an error `error: duplicate class... final class AutoValue_...` it is indecitive of your IDE and gradle clashing.  To fix it you want to delete the refrenced build/classes directory.
 
 ## This is not an official Google product

@@ -112,6 +112,8 @@ if [[ ! -e $ENCRYPTED_SECRETS_DIR ]]; then
   encrypt_secret "SHUTTERSTOCK"
   encrypt_secret "SMUGMUG"
   encrypt_secret "JWT"
+else
+  echo -e "Directory $ENCRYPTED_SECRETS_DIR should be deleted before running this command"
 fi
 
 

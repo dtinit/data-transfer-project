@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.spi.transfer;
+package org.dataportabilityproject.transfer;
+
+import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 import java.io.IOException;
 import java.util.UUID;
-import org.dataportabilityproject.spi.transfer.provider.Exporter;
-import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
 
 /** In-memory Copier interface */
 public interface InMemoryDataCopier {

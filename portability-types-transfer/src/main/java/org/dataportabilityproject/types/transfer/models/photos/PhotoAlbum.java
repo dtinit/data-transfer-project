@@ -17,6 +17,9 @@ package org.dataportabilityproject.types.transfer.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
+
+import java.util.Objects;
 
 public class PhotoAlbum {
   private final String id;
@@ -29,6 +32,7 @@ public class PhotoAlbum {
       @JsonProperty("id") String id,
       @JsonProperty("name") String name,
       @JsonProperty("description") String description) {
+    Preconditions.checkNotNull(id);
     this.id = id;
     this.name = name;
     this.description = description;
@@ -47,16 +51,16 @@ public class PhotoAlbum {
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (object == null) {
-      return false;
-    }
-    if (!PhotoAlbum.class.isAssignableFrom(object.getClass())) {
-      return false;
-    }
-    PhotoAlbum album = (PhotoAlbum) object;
-    return this.description.equals(album.getDescription())
-        && this.id.equals(album.getId())
-        && this.name.equals(album.getName());
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PhotoAlbum that = (PhotoAlbum) o;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+
+    return Objects.hash(id);
   }
 }
