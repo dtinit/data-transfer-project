@@ -6,6 +6,7 @@ interface Property<T> {
   T getValue();
 }
 
+/*
 final class RuleDay implements Property<RecurrenceRule.Day> {
   private final RecurrenceRule.Day day;
 
@@ -68,3 +69,4 @@ final class ByDay {
     return day;
   }
 }
+*/

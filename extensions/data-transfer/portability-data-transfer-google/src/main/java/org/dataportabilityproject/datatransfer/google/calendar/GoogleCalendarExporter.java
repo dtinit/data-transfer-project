@@ -14,6 +14,7 @@ import com.google.api.services.calendar.model.Events;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import net.fortuna.ical4j.model.Recur;
+import net.fortuna.ical4j.model.property.RRule;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
@@ -88,16 +91,33 @@ public class GoogleCalendarExporter implements
     logger.debug("Rule strings: " + ruleStrings);
     RecurrenceRule.Builder ruleBuilder = new RecurrenceRule.Builder();
     for (String st : ruleStrings) {
-      if (st.startsWith(RecurrenceRule.RRULE)) {
-        ruleBuilder.setRRule(RecurrenceRule.parseRRuleString(st));
-      } else if (st.startsWith(RecurrenceRule.RDATE)) {
-        ruleBuilder.setRDate(RecurrenceRule.parseRDateString(st));
-      } else if (st.startsWith(RecurrenceRule.EXDATE)) {
-        ruleBuilder.setExDate(RecurrenceRule.parseExDateString(st));
-      } else {
-        // This shouldn't happen
+      try {
+        String[] split = st.split(":");
+        String type = split[0];
+        String rule = split[1];
+        switch (type) {
+          case RecurrenceRule.RRULE:
+            logger.debug("RRule input: " + st);
+            Recur recur = new Recur(rule);
+            logger.debug("Recur parsed: " + recur);
+            RRule rRule = new RRule(recur);
+            ruleBuilder.setRRule(rRule);
+            logger.debug("RRule parsed: " + rRule);
+            break;
+          case RecurrenceRule.RDATE:
+            //
+            break;
+          case RecurrenceRule.EXDATE:
+            //
+            break;
+          default:
+            // This shouldn't happen
+            throw new IllegalArgumentException(
+                "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
+        }
+      } catch (ParseException e) {
         throw new IllegalArgumentException(
-            "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
+            "Recurrence entry " + st + " cannot be parsed", e);
       }
     }
     return ruleBuilder.build();

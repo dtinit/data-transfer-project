@@ -17,6 +17,9 @@
 dependencies {
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
 
+    //compile(group: 'org.mnode.ical4j', name: 'ical4j', version: {iCal4JVersion})
+    compile("org.mnode.ical4j:ical4j:${iCal4JVersion}")
+
     testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
 }
 
