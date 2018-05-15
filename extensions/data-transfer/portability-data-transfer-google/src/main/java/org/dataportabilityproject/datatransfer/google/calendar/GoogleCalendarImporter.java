@@ -89,9 +89,6 @@ public class GoogleCalendarImporter implements Importer<TokensAndUrlAuthData, Ca
           .map(GoogleCalendarImporter::transformToEventAttendee)
           .collect(Collectors.toList()));
     }
-    if (eventModel.getRecurrenceRule() != null) {
-      event.setRecurrence(eventModel.getRecurrenceRule().getStringList());
-    }
     return event;
   }
 

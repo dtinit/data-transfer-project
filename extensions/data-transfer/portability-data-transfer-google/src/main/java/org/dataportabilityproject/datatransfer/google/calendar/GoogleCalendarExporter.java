@@ -38,7 +38,6 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarContain
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule;
-import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule.RRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +87,8 @@ public class GoogleCalendarExporter implements
   private static RecurrenceRule getRecurrenceRule(List<String> ruleStrings) {
     RecurrenceRule.Builder ruleBuilder = new RecurrenceRule.Builder();
     for (String st : ruleStrings) {
+      Preconditions.checkArgument(st.contains(":"),
+          "Recurrence entry " + st + " cannot be parsed as an RRULE, RDATE, or EXDATE");
       String[] split = st.split(":");
       String type = split[0];
       String value = split[1];
@@ -107,7 +108,11 @@ public class GoogleCalendarExporter implements
               "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
       }
     }
-    return ruleBuilder.build();
+    RecurrenceRule rule = ruleBuilder.build();
+    logger.debug("RRule: " + rule.getRRule());
+    logger.debug("RDate: " + rule.getRDate());
+    logger.debug("ExDate: " + rule.getExDate());
+    return rule;
   }
 
   private static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
@@ -131,9 +136,7 @@ public class GoogleCalendarExporter implements
         eventData.getLocation(),
         getEventTime(eventData.getStart()),
         getEventTime(eventData.getEnd()),
-        recurrenceRulesStrings == null
-            ? null
-            : getRecurrenceRule(recurrenceRulesStrings));
+        recurrenceRulesStrings == null ? null : getRecurrenceRule(recurrenceRulesStrings));
   }
 
   @Override

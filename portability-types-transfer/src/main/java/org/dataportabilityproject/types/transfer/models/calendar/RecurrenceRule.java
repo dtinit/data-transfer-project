@@ -1,6 +1,7 @@
 package org.dataportabilityproject.types.transfer.models.calendar;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,15 +11,20 @@ import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+/**
+ * Class that stores and contains utilities for calendar recurrence information.
+ * All terminology and vocabulary comes from RFC 5545.
+ * See https://tools.ietf.org/html/rfc5545 for further information.
+ */
 public class RecurrenceRule {
 
   public static final String RRULE = "RRULE";
   public static final String RDATE = "RDATE";
   public static final String EXDATE = "EXDATE";
 
-  private RRule rRule;
-  private RDate rDate;
-  private ExDate exDate;
+  private final RRule rRule;
+  private final RDate rDate;
+  private final ExDate exDate;
 
   public RRule getRRule() {
     return rRule;
@@ -119,6 +125,7 @@ public class RecurrenceRule {
     List<String> components = Arrays.asList(rRuleString.split(";"));
     Map<ByRule, String> byRuleMapInput = new HashMap<>();
     for (String property : components) {
+      Preconditions.checkArgument(property.contains("="), "Cannot parse " + property);
       String[] split = property.split("=");
       String key = split[0];
       String value = split[1];
@@ -151,9 +158,11 @@ public class RecurrenceRule {
    */
   public static RDate parseRDateString(String rDateString) {
     RDate.Builder builder = RDate.builder();
+    Preconditions.checkArgument(rDateString != null, "Input is null");
     StringTokenizer stringTokenizer = new StringTokenizer(rDateString, ":");
     String token = stringTokenizer.nextToken();
     while (stringTokenizer.hasMoreTokens()) {
+      Preconditions.checkArgument(token.contains("="), "Cannot parse " + token);
       String[] split = token.split("=");
       String key = split[0];
       String value = split[1];
@@ -171,9 +180,11 @@ public class RecurrenceRule {
 
   public static ExDate parseExDateString(String exDateString) {
     ExDate.Builder builder = ExDate.builder();
+    Preconditions.checkArgument(exDateString != null, "Input is null");
     StringTokenizer stringTokenizer = new StringTokenizer(exDateString, ":");
     String token = stringTokenizer.nextToken();
     while (stringTokenizer.hasMoreTokens()) {
+      Preconditions.checkArgument(token.contains("="), "Cannot parse " + token);
       String[] split = token.split("=");
       String key = split[0];
       String value = split[1];
