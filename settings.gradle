@@ -21,6 +21,9 @@ include ':portability-api', ':portability-transfer', ':portability-bootstrap-vm'
 // Cloud Extensions
 include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'
 
+// Transport Extensions
+include ':extensions:transport:portability-transport-jettyrest'
+
 // Flickr Auth and Transfer Extensions
 include ':extensions:auth:portability-auth-flickr'
 include ':extensions:data-transfer:portability-data-transfer-flickr'

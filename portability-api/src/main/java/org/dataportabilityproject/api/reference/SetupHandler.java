@@ -15,8 +15,6 @@
  */
 package org.dataportabilityproject.api.reference;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -25,26 +23,29 @@ import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.net.HttpCookie;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import javax.crypto.SecretKey;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.api.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.net.HttpCookie;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 /**
  * Common logic for job setup handlers. This handler is meant to retrieve the current status via a
@@ -111,7 +112,7 @@ abstract class SetupHandler implements HttpHandler {
       if (mode == Mode.IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobId);
       } else {
-        response = handleCopySetup(exchange.getRequestHeaders(), job, jobId);
+        response = handleCopySetup(exchange.getRequestHeaders(), job);
         // Valid job is present, generate an XSRF token to pass back via cookie
         String tokenStr = tokenManager.createNewToken(jobId);
         HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN, tokenStr);
@@ -196,7 +197,7 @@ abstract class SetupHandler implements HttpHandler {
   }
 
   private DataTransferResponse handleCopySetup(
-      Headers requestHeaders, PortabilityJob job, UUID jobId) {
+      Headers requestHeaders, PortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
       String exportAuthCookie =
           ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
