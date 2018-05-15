@@ -1,10 +1,11 @@
 package org.dataportabilityproject.types.transfer.models.calendar;
 
+import com.google.auto.value.AutoValue;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import com.google.auto.value.AutoValue;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -57,6 +58,7 @@ public class RecurrenceRule {
   static final String COUNT = "COUNT";
   static final String INTERVAL = "INTERVAL";
   static final String WKST = "WKST";
+  static final String VALUE = "VALUE";
   static final String TZID = "TZID";
 
   enum Freq {
@@ -80,7 +82,9 @@ public class RecurrenceRule {
     BYMONTH,
     BYSETPOS
   }
-  static List<String> byRuleList = Arrays.stream(ByRule.values()).map(a -> a.toString()).collect(Collectors.toList());
+
+  static List<String> byRuleList = Arrays.stream(ByRule.values()).map(a -> a.toString())
+      .collect(Collectors.toList());
 
   enum Day {
     SU,
@@ -91,7 +95,9 @@ public class RecurrenceRule {
     FR,
     SA
   }
-  static List<String> dayList = Arrays.stream(Day.values()).map(a -> a.toString()).collect(Collectors.toList());
+
+  static List<String> dayList = Arrays.stream(Day.values()).map(a -> a.toString())
+      .collect(Collectors.toList());
 
   enum TimeType {
     DATETIME,
@@ -102,13 +108,16 @@ public class RecurrenceRule {
 
   /**
    * A method for turning an RRule string into an {@link RRule}.
-   * @param rRuleString a string containing RRule information, excluding any prefixes (e.g., RRULE:)
+   *
+   * @param rRuleString a string containing RRule information, excluding any prefixes (e.g.,
+   * RRULE:)
    * @return an {@link RRule}
    */
   public static RRule parseRRuleString(String rRuleString) {
     RRule.Builder builder = RRule.builder();
 
     List<String> components = Arrays.asList(rRuleString.split(";"));
+    Map<ByRule, String> byRuleMapInput = new HashMap<>();
     for (String property : components) {
       String[] split = property.split("=");
       String key = split[0];
@@ -122,18 +131,22 @@ public class RecurrenceRule {
       } else if (key.equals(INTERVAL)) {
         builder.interval(Integer.parseInt(value));
       } else if (byRuleList.contains(key)) {
-        // ???
-        // Not sure how to add entries one by one using the builder
+        byRuleMapInput.put(ByRule.valueOf(key), value);
       } else if (key.equals(WKST)) {
         builder.wkst(Day.valueOf(value));
       }
+    }
+    if (!byRuleMapInput.isEmpty()) {
+      builder.byRuleMap(byRuleMapInput);
     }
     return builder.build();
   }
 
   /**
    * A method for parsing an RDate string into an {@link RDate}
-   * @param rDateString a string containing RDate information, excluding any prefixes (e.g., RDATE:)
+   *
+   * @param rDateString a string containing RDate information, excluding any prefixes (e.g.,
+   * RDATE:)
    * @return an {@link RDate}
    */
   public static RDate parseRDateString(String rDateString) {
@@ -144,9 +157,9 @@ public class RecurrenceRule {
       String[] split = token.split("=");
       String key = split[0];
       String value = split[1];
-      if (key.equals("VALUE")) {
+      if (key.equals(VALUE)) {
         builder.value(TimeType.valueOf(value));
-      } else if (key.equals("TZID")) {
+      } else if (key.equals(TZID)) {
         builder.tzidparam(value);
       }
       token = stringTokenizer.nextToken();
@@ -164,9 +177,9 @@ public class RecurrenceRule {
       String[] split = token.split("=");
       String key = split[0];
       String value = split[1];
-      if (key.equals("VALUE")) {
+      if (key.equals(VALUE)) {
         builder.value(TimeType.valueOf(value));
-      } else if (key.equals("TZID")) {
+      } else if (key.equals(TZID)) {
         builder.tzidparam(value);
       }
       token = stringTokenizer.nextToken();
@@ -178,12 +191,18 @@ public class RecurrenceRule {
 
   @AutoValue
   public abstract static class RRule {
+
     abstract Freq freq();
-    abstract String until();  // represents a date/time
-    abstract int count();
-    abstract int interval();
-    abstract Map<ByRule, String> byRuleMap(); // TODO(olsona); parse properties further
-    abstract Day wkst();
+
+    @Nullable abstract String until();  // represents a date/time
+
+    @Nullable abstract Integer count();
+
+    @Nullable abstract Integer interval();
+
+    @Nullable abstract Map<ByRule, String> byRuleMap(); // TODO(olsona); parse properties further
+
+    @Nullable abstract Day wkst();
 
     static RRule create(Freq freq, String until, int count, int interval,
         Map<ByRule, String> byRuleMap, Day wkst) {
@@ -208,9 +227,9 @@ public class RecurrenceRule {
 
       public abstract Builder until(String until);
 
-      public abstract Builder count(int count);
+      public abstract Builder count(Integer count);
 
-      public abstract Builder interval(int interval);
+      public abstract Builder interval(Integer interval);
 
       public abstract Builder byRuleMap(Map<ByRule, String> byRuleMap);
 
@@ -222,8 +241,11 @@ public class RecurrenceRule {
 
   @AutoValue
   public abstract static class RDate {
-    abstract TimeType value();
-    abstract String tzidparam();
+
+    @Nullable abstract TimeType value();
+
+    @Nullable abstract String tzidparam();
+
     abstract List<String> rdtval();
 
     static RDate create(@Nullable TimeType value, @Nullable String tzidparam, List<String> rdtval) {
@@ -253,8 +275,11 @@ public class RecurrenceRule {
 
   @AutoValue
   public abstract static class ExDate {
-    abstract TimeType value();
-    abstract String tzidparam();
+
+    @Nullable abstract TimeType value();
+
+    @Nullable abstract String tzidparam();
+
     abstract List<String> exdtval();
 
     public static ExDate create(TimeType value, String tzidparam, List<String> exdtval) {
@@ -283,11 +308,13 @@ public class RecurrenceRule {
   }
 
   public static class Builder {
+
     private RRule rRule;
     private RDate rDate;
     private ExDate exDate;
 
-    public Builder() {}
+    public Builder() {
+    }
 
     public Builder setRRule(RRule rRule) {
       this.rRule = rRule;
