@@ -25,6 +25,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.api.reference.ReferenceApiUtils.HttpMethods;
+import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;

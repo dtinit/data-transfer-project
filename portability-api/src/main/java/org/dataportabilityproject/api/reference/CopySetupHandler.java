@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.api.launcher.TypeManager;
+import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;

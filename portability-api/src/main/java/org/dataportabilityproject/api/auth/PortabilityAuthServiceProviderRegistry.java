@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.api;
+package org.dataportabilityproject.api.auth;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
-import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
-import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
   private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;

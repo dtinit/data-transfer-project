@@ -32,10 +32,12 @@ import java.util.List;
 import java.util.ServiceLoader;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+
+import org.dataportabilityproject.api.auth.PortabilityAuthServiceProviderRegistry;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.api.reference.TokenManager;
+import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.config.extension.SettingsExtension;
-import org.dataportabilityproject.api.reference.JWTTokenManager;
+import org.dataportabilityproject.api.token.JWTTokenManager;
 import org.dataportabilityproject.api.reference.ReferenceApiModule;
 import org.dataportabilityproject.api.reference.ReferenceApiServer;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;

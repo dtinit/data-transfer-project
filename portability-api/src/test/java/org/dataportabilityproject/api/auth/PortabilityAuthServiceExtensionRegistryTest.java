@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.spi.api.auth;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+package org.dataportabilityproject.api.auth;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.List;
-import org.dataportabilityproject.api.PortabilityAuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import java.util.List;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PortabilityAuthServiceExtensionRegistryTest {
 

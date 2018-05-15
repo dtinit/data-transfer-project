@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.reference;
+package org.dataportabilityproject.api.token;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
@@ -23,11 +23,13 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.inject.Inject;
+import org.dataportabilityproject.spi.api.token.TokenManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Utility methods for token creation and verification. */
 public class JWTTokenManager implements TokenManager {
