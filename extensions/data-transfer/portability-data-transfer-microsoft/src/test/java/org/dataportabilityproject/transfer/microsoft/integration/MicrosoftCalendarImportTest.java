@@ -214,7 +214,8 @@ public class MicrosoftCalendarImportTest {
             singletonList(attendeeModel),
             "Location1",
             start,
-            end);
+            end,
+            null);
     CalendarContainerResource resource =
         new CalendarContainerResource(singleton(calendarModel), singleton(eventModel));
 
