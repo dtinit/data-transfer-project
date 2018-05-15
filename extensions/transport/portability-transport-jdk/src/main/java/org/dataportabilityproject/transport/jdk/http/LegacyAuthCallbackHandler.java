@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.api.reference;
+package org.dataportabilityproject.transport.jdk.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,23 +27,24 @@ import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
-import javax.crypto.SecretKey;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.api.reference.ReferenceApiUtils.FrontendConstantUrls;
-import org.dataportabilityproject.api.reference.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.FrontendConstantUrls;
+import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
 
 /* Auth Callback Handler for legacy "frob" auth methods - for an example see RememberTheMilk */
 final class LegacyAuthCallbackHandler implements HttpHandler {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.reference;
+package org.dataportabilityproject.transport.jdk.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -21,9 +21,6 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 import org.apache.http.HttpHeaders;
 import org.dataportabilityproject.api.action.startjob.StartJobAction;
 import org.dataportabilityproject.api.action.startjob.StartJobActionRequest;
@@ -32,6 +29,10 @@ import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 final class StartCopyHandler implements HttpHandler {
   public static final String PATH = "/_/startCopy";

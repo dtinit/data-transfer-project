@@ -25,29 +25,19 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
-import java.io.IOException;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ServiceLoader;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-
 import org.dataportabilityproject.api.auth.PortabilityAuthServiceProviderRegistry;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.spi.api.token.TokenManager;
-import org.dataportabilityproject.config.extension.SettingsExtension;
 import org.dataportabilityproject.api.token.JWTTokenManager;
-import org.dataportabilityproject.api.reference.ReferenceApiModule;
-import org.dataportabilityproject.api.reference.ReferenceApiServer;
+import org.dataportabilityproject.config.extension.SettingsExtension;
 import org.dataportabilityproject.launcher.impl.TypeManagerImpl;
 import org.dataportabilityproject.security.AesSymmetricKeyGenerator;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.spi.cloud.extension.CloudExtension;
 import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
-import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
 import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
@@ -55,11 +45,20 @@ import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
+
 /** Starts the api server. */
 public class ApiMain {
   private static final Logger logger = LoggerFactory.getLogger(ApiMain.class);
 
-  private ReferenceApiServer server;
+  private List<ServiceExtension> serviceExtensions = Collections.emptyList();
 
   /** Starts the api server, currently the reference implementation. */
   public static void main(String[] args) throws Exception {
@@ -98,9 +97,12 @@ public class ApiMain {
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.
+    serviceExtensions = new ArrayList<>();
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
-        .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
+        .forEachRemaining(serviceExtensions::add);
+
+    serviceExtensions.forEach((se)-> se.initialize(extensionContext));
 
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
@@ -150,32 +152,24 @@ public class ApiMain {
                 trustManagerFactory,
                 keyManagerFactory,
                 authServiceExtensions,
-                tokenManager),
-            new ReferenceApiModule(extensionContext));
+                tokenManager));
 
-    // Launch the application
-    // TODO: Support other server implementations, e.g. Jetty, Tomcat
-    server = injector.getInstance(ReferenceApiServer.class);
+    extensionContext.registerService(Injector.class, injector);
+
+
   }
 
-  public void start() throws Exception {
-    server.start();
+  public void start() {
+    serviceExtensions.forEach(ServiceExtension::start);
   }
 
   public void stop() {
-    if (server != null) {
-      server.stop();
-    }
-  }
-
-  public void shutdown() {
-    // not currently used but in the future it may be to allow HTTP servers to be temporarily paused
+    serviceExtensions.forEach(ServiceExtension::shutdown);
   }
 
   private SettingsExtension getSettingsExtension() {
     ImmutableList.Builder<SettingsExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(SettingsExtension.class).iterator()
-        .forEachRemaining(extensionsBuilder::add);
+    ServiceLoader.load(SettingsExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
     ImmutableList<SettingsExtension> extensions = extensionsBuilder.build();
     Preconditions.checkState(
         extensions.size() == 1,

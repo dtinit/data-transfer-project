@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.reference;
+package org.dataportabilityproject.transport.jdk.http;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import javax.inject.Named;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.config.FlagBindingModule;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
 import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Bindings for the reference api server, a sample implementation using Sun's http library to serve
@@ -97,11 +98,8 @@ public class ReferenceApiModule extends FlagBindingModule {
 
   @Provides
   public UncaughtExceptionHandler uncaughtExceptionHandler() {
-    return new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread thread, Throwable t) {
-        logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
-      }
-    };
+    return (thread, t) -> logger.warn("Uncaught exception in thread: {}", thread.getName(), t);
   }
+
+
 }

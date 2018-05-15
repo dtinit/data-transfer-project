@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.reference;
-
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
+package org.dataportabilityproject.transport.jdk.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -26,28 +24,31 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.net.HttpCookie;
-import java.nio.charset.StandardCharsets;
-import javax.crypto.SecretKey;
-import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.api.action.createjob.CreateJobAction;
 import org.dataportabilityproject.api.action.createjob.CreateJobActionRequest;
 import org.dataportabilityproject.api.action.createjob.CreateJobActionResponse;
+import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferRequest;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.net.HttpCookie;
+import java.nio.charset.StandardCharsets;
+
+import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 /**
  * HttpHandler for the {@link CreateJobAction}. TODO: rename to CreateJobHandler as well as client

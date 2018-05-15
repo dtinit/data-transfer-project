@@ -14,9 +14,22 @@
  * limitations under the License.
  */
 
-
 dependencies {
-    compile project(':portability-api')
-    compile project(':extensions:transport:portability-transport-jdk')
-    compile project(':portability-transfer')
+    compile project(':portability-spi-cloud')  // TODO remove
+    compile project(':portability-api')  // TODO remove
+
+    compile("com.google.inject:guice:${guiceVersion}")
+    compile("com.google.inject.extensions:guice-multibindings:${guiceVersion}")
+
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+
+    compile project(':portability-types-transfer')
+
+    compile project(':libraries:security')
+    compile project(':libraries:config')
+
+    compile project(':portability-spi-api')
+    compile project(':portability-spi-service')
+    
 }

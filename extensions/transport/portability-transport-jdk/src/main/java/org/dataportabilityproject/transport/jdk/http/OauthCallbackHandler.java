@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.reference;
+package org.dataportabilityproject.transport.jdk.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.auth.oauth2.AuthorizationCodeResponseUrl;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
@@ -26,35 +25,34 @@ import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.net.HttpCookie;
-import java.util.Map;
-import java.util.UUID;
-import javax.crypto.SecretKey;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+
 /**
- * HttpHandler for callbacks from Oauth2 authorization flow. Redirects client request to: - the next
+ * HttpHandler for callbacks from Oauth1 authorization flow. Redirects client request to: - the next
  * authorization (if this is after the source service auth) or - the copy page (if this is after the
  * destination service auth)
  */
-final class Oauth2CallbackHandler implements HttpHandler {
-
-  public static final String PATH = "/callback/";
+final class OauthCallbackHandler implements HttpHandler {
+  public static final String PATH = "/callback1/";
   // TODO: obtain from flags
   private static final boolean IS_LOCAL = true;
-  private final Logger logger = LoggerFactory.getLogger(Oauth2CallbackHandler.class);
+  private final Logger logger = LoggerFactory.getLogger(OauthCallbackHandler.class);
   private final AuthServiceProviderRegistry registry;
   private final JobStore store;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -63,7 +61,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
   private final String baseApiUrl;
 
   @Inject
-  Oauth2CallbackHandler(
+  OauthCallbackHandler(
       JobStore store,
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
@@ -80,7 +78,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
 
   @Override
   public void handle(HttpExchange exchange) throws IOException {
-    // Add .* to resource path as this path will be of the form /callback/SERVICEPROVIDER
+    // Add .* to resource path as this path will be of the form /callback1/SERVICEPROVIDER
     Preconditions.checkArgument(
         ReferenceApiUtils.validateRequest(exchange, ReferenceApiUtils.HttpMethods.GET, PATH + ".*"));
     logger.debug("received request: {}", exchange.getRequestURI());
@@ -97,40 +95,33 @@ final class Oauth2CallbackHandler implements HttpHandler {
     try {
       Headers requestHeaders = exchange.getRequestHeaders();
 
+      // Get the URL for the request - needed for the authorization.
+
       String requestURL =
           ReferenceApiUtils.createURL(
               requestHeaders.getFirst(HttpHeaders.HOST),
               exchange.getRequestURI().toString(),
               IS_LOCAL);
 
-      AuthorizationCodeResponseUrl authResponse = new AuthorizationCodeResponseUrl(requestURL);
+      Map<String, String> requestParams = ReferenceApiUtils.getRequestParams(exchange);
 
-      // check for user-denied error
-      if (authResponse.getError() != null) {
-        logger.warn("Authorization DENIED: {} Redirecting to /error", authResponse.getError());
-        return redirect;
-      }
-
-      // retrieve cookie from exchange
-      Map<String, HttpCookie> httpCookies = ReferenceApiUtils.getCookies(requestHeaders);
-      HttpCookie encodedIdCookie = httpCookies.get(JsonKeys.ID_COOKIE_KEY);
+      String encodedIdCookie = ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
       Preconditions.checkArgument(
-          encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
-          "Encoded Id cookie required");
+          !Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
 
-      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie.getValue());
+      String oauthToken = requestParams.get("oauth_token");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthToken), "Missing oauth_token");
 
-      // TODO(#258): Check job ID in state token, was broken during local demo
-      // UUID jobIdFromState = ReferenceApiUtils.decodeJobId(authResponse.getState());
+      String oauthVerifier = requestParams.get("oauth_verifier");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(oauthVerifier), "Missing oauth_verifier");
 
-      // // TODO: Remove sanity check
-      // Preconditions.checkState(
-      //     jobIdFromState.equals(jobId),
-      //     "Job id in cookie [%s] and request [%s] should match",
-      //     jobId,
-      //     jobIdFromState);
+      // Valid job must be present
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
+      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
 
       PortabilityJob job = store.findJob(jobId);
+
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?
@@ -169,15 +160,14 @@ final class Oauth2CallbackHandler implements HttpHandler {
         initialAuthData = objectMapper.readValue(serialized, AuthData.class);
       }
 
+      Preconditions.checkNotNull(
+          initialAuthData, "Initial AuthData expected during Oauth 1.0 flow");
+
       // TODO: Use UUID instead of UUID.toString()
       // Generate auth data
       AuthData authData =
           generator.generateAuthData(
-              baseApiUrl,
-              authResponse.getCode(),
-              jobId.toString(),
-              initialAuthData,
-              null);
+              baseApiUrl, oauthVerifier, jobId.toString(), initialAuthData, null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Serialize and encrypt the auth data
@@ -186,12 +176,13 @@ final class Oauth2CallbackHandler implements HttpHandler {
       // Set new cookie
       ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
-      redirect = baseUrl
+      redirect =
+          baseUrl
               + ((authMode == AuthMode.EXPORT)
                   ? ReferenceApiUtils.FrontendConstantUrls.URL_NEXT_PAGE
                   : ReferenceApiUtils.FrontendConstantUrls.URL_COPY_PAGE);
     } catch (Exception e) {
-      logger.error("Error handling request: {}", e);
+      logger.error("Error handling request", e);
       throw e;
     }
 

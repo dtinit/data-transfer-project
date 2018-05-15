@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.reference;
+package org.dataportabilityproject.transport.jdk.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -24,7 +24,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.api.reference.ReferenceApiUtils.HttpMethods;
+import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
