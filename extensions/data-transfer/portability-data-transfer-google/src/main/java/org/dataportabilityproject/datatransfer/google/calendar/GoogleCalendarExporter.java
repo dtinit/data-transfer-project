@@ -88,8 +88,8 @@ public class GoogleCalendarExporter implements
     RecurrenceRule.Builder ruleBuilder = new RecurrenceRule.Builder();
     for (String st : ruleStrings) {
       Preconditions.checkArgument(st.contains(":"),
-          "Recurrence entry " + st + " cannot be parsed as an RRULE, RDATE, or EXDATE");
-      String[] split = st.split(":");
+          "Recurrence entry " + st + " cannot be parsed");
+      String[] split = st.split("[:;]", 2);
       String type = split[0];
       String value = split[1];
       switch (type) {
@@ -103,7 +103,6 @@ public class GoogleCalendarExporter implements
           ruleBuilder.setExDate(RecurrenceRule.parseExDateString(value));
           break;
         default:
-          // This shouldn't happen
           throw new IllegalArgumentException(
               "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
       }
