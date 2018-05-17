@@ -23,7 +23,8 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarContain
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
 
-public class GoogleCalendarImporter implements Importer<TokensAndUrlAuthData, CalendarContainerResource> {
+public class GoogleCalendarImporter implements
+    Importer<TokensAndUrlAuthData, CalendarContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -31,11 +32,12 @@ public class GoogleCalendarImporter implements Importer<TokensAndUrlAuthData, Ca
 
   public GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
     // calendarInterface lazily initialized for each request
-    this(credentialFactory,jobStore, null);
+    this(credentialFactory, jobStore, null);
   }
 
   @VisibleForTesting
-  GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Calendar calendarInterface) {
+  GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
+      Calendar calendarInterface) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.calendarInterface = calendarInterface;
@@ -93,7 +95,8 @@ public class GoogleCalendarImporter implements Importer<TokensAndUrlAuthData, Ca
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData, CalendarContainerResource data) {
+  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
+      CalendarContainerResource data) {
     try {
       for (CalendarModel calendarModel : data.getCalendars()) {
         importSingleCalendar(jobId, authData, calendarModel);
@@ -145,7 +148,7 @@ public class GoogleCalendarImporter implements Importer<TokensAndUrlAuthData, Ca
   private synchronized Calendar makeCalendarInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Calendar.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
