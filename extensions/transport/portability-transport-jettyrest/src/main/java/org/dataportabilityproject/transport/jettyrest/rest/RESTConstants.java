@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action;
+package org.dataportabilityproject.transport.jettyrest.rest;
 
-/** Handles an action in the API server. */
-public interface Action<REQUEST, RESPONSE> {
-
-  /**
-   * Returns the type this action handles.
-   *
-   * @return the type this action handles
-   */
-  Class<REQUEST> getRequestType();
-
-  /** Handles the given {@code REQUEST} and returns a {@code RESPONSE}. */
-  RESPONSE handle(REQUEST request);
+/** */
+public interface RESTConstants {
+  String EXPORT_AUTH_DATA_KEY = "ead_id";
+  String IMPORT_AUTH_DATA_KEY = "iad_id";
 }

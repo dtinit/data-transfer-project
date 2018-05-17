@@ -23,14 +23,14 @@ import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.HttpMethods;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
-import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
@@ -47,6 +47,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
+import static org.dataportabilityproject.api.action.ActionUtils.encodeJobId;
 
 /**
  * Common logic for job setup handlers. This handler is meant to retrieve the current status via a
@@ -89,15 +91,15 @@ abstract class SetupHandler implements HttpHandler {
     try {
       logger.debug("Entering setup handler, exchange: {}", exchange);
       Preconditions.checkArgument(
-          ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, handlerUrlPath));
+          HandlerUtils.validateRequest(exchange, HttpMethods.GET, handlerUrlPath));
 
       String encodedIdCookie =
-          ReferenceApiUtils.getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
+          HandlerUtils.getCookie(exchange.getRequestHeaders(), JsonKeys.ID_COOKIE_KEY);
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
 
       // Valid job must be present
-      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
+      UUID jobId = decodeJobId(encodedIdCookie);
       PortabilityJob job = store.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -117,7 +119,9 @@ abstract class SetupHandler implements HttpHandler {
         // Valid job is present, generate an XSRF token to pass back via cookie
         String tokenStr = tokenManager.createNewToken(jobId);
         HttpCookie token = new HttpCookie(JsonKeys.XSRF_TOKEN, tokenStr);
-        exchange.getResponseHeaders().add(HttpHeaders.SET_COOKIE, token.toString() + ReferenceApiUtils.COOKIE_ATTRIBUTES);
+        exchange
+            .getResponseHeaders()
+            .add(HttpHeaders.SET_COOKIE, token.toString() + HandlerUtils.COOKIE_ATTRIBUTES);
       }
 
       // Mark the response as type Json and send
@@ -133,24 +137,22 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(
-      Headers headers, PortabilityJob job, UUID jobId) throws IOException {
-    String exportAuthCookie =
-        ReferenceApiUtils.getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-      Preconditions.checkArgument(
-          !Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+  private DataTransferResponse handleImportSetup(Headers headers, PortabilityJob job, UUID jobId)
+      throws IOException {
+    String exportAuthCookie = HandlerUtils.getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
 
     // Initial auth flow url
     AuthDataGenerator generator =
-        registry.getAuthDataGenerator(
-            job.importService(), job.transferDataType(), AuthMode.IMPORT);
+        registry.getAuthDataGenerator(job.importService(), job.transferDataType(), AuthMode.IMPORT);
     Preconditions.checkNotNull(
         generator,
         "Generator not found for type: %s, service: %s",
         job.transferDataType(),
         job.importService());
 
-    String encodedJobId = ReferenceApiUtils.encodeJobId(jobId);
+    String encodedJobId = encodeJobId(jobId);
     AuthFlowConfiguration authFlowConfiguration =
         generator.generateConfiguration(baseApiUrl, encodedJobId);
     Preconditions.checkNotNull(
@@ -197,19 +199,17 @@ abstract class SetupHandler implements HttpHandler {
         authFlowConfiguration.getUrl()); // Redirect to auth page of import service
   }
 
-  private DataTransferResponse handleCopySetup(
-      Headers requestHeaders, PortabilityJob job) {
+  private DataTransferResponse handleCopySetup(Headers requestHeaders, PortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
-      String exportAuthCookie =
-          ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
-      Preconditions.checkArgument(
-          !Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
+    String exportAuthCookie =
+        HandlerUtils.getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(exportAuthCookie), "Export auth cookie required");
 
-      String importAuthCookie =
-          ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
-      Preconditions.checkArgument(
-          !Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
-
+    String importAuthCookie =
+        HandlerUtils.getCookie(requestHeaders, JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
 
     return new DataTransferResponse(
         job.exportService(),

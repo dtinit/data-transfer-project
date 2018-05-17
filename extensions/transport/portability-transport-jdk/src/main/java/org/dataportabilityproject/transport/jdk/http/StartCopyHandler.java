@@ -52,19 +52,19 @@ final class StartCopyHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, ReferenceApiUtils.HttpMethods.POST, PATH));
+        HandlerUtils.validateRequest(exchange, HandlerUtils.HttpMethods.POST, PATH));
 
-    UUID jobId = ReferenceApiUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
+    UUID jobId = HandlerUtils.validateJobId(exchange.getRequestHeaders(), tokenManager);
 
     //  Validate auth data is present in cookies
     String exportAuthCookieValue =
-        ReferenceApiUtils.getCookie(
+        HandlerUtils.getCookie(
             exchange.getRequestHeaders(), JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(exportAuthCookieValue), "Export auth cookie required");
 
     String importAuthCookieValue =
-        ReferenceApiUtils.getCookie(
+        HandlerUtils.getCookie(
             exchange.getRequestHeaders(), JsonKeys.IMPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(importAuthCookieValue), "Import auth cookie required");

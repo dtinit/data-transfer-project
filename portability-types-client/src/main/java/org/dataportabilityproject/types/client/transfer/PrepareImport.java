@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action;
+package org.dataportabilityproject.types.client.transfer;
 
-/** Handles an action in the API server. */
-public interface Action<REQUEST, RESPONSE> {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-  /**
-   * Returns the type this action handles.
-   *
-   * @return the type this action handles
-   */
-  Class<REQUEST> getRequestType();
+/** Request to prepare the import auth data flow */
+public class PrepareImport {
+  private final String id;
 
-  /** Handles the given {@code REQUEST} and returns a {@code RESPONSE}. */
-  RESPONSE handle(REQUEST request);
+  @JsonCreator
+  public PrepareImport(@JsonProperty(value = "id", required = true) String id) {
+    this.id = id;
+  }
+
+  public String getId() {
+    return id;
+  }
 }

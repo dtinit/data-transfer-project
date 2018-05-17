@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action.listservices;
+package org.dataportabilityproject.api.action.datatype;
 
 import com.google.inject.AbstractModule;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 
-/** Dependencies for the {@link ListServicesAction} and related classes. */
-public final class ListServicesActionModule extends AbstractModule {
+/** Dependencies for the {@link DataTypesAction} and related classes. */
+public final class DataTypesActionModule extends AbstractModule {
 
   @Override
   protected void configure() {

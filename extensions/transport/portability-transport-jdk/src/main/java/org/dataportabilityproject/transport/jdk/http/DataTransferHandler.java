@@ -49,6 +49,7 @@ import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
+import static org.dataportabilityproject.api.action.ActionUtils.encodeJobId;
 
 /**
  * HttpHandler for the {@link CreateJobAction}. TODO: rename to CreateJobHandler as well as client
@@ -87,7 +88,7 @@ final class DataTransferHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, ReferenceApiUtils.HttpMethods.POST, PATH),
+        HandlerUtils.validateRequest(exchange, HandlerUtils.HttpMethods.POST, PATH),
         PATH + " only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
     DataTransferRequest request =
@@ -105,11 +106,11 @@ final class DataTransferHandler implements HttpHandler {
     }
 
     // Set new cookie
-    String encodedJobId = ReferenceApiUtils.encodeJobId(actionResponse.getId());
+    String encodedJobId = encodeJobId(actionResponse.getId());
     HttpCookie cookie = new HttpCookie(JsonKeys.ID_COOKIE_KEY, encodedJobId);
     exchange
         .getResponseHeaders()
-        .add(HttpHeaders.SET_COOKIE, cookie.toString() + ReferenceApiUtils.COOKIE_ATTRIBUTES);
+        .add(HttpHeaders.SET_COOKIE, cookie.toString() + HandlerUtils.COOKIE_ATTRIBUTES);
 
     // Initial auth flow url
     AuthDataGenerator generator =

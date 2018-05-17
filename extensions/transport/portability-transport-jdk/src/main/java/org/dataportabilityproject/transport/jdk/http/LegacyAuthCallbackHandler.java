@@ -27,6 +27,8 @@ import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.FrontendConstantUrls;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.HttpMethods;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
@@ -35,8 +37,6 @@ import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.FrontendConstantUrls;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +45,8 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
 
 /* Auth Callback Handler for legacy "frob" auth methods - for an example see RememberTheMilk */
 final class LegacyAuthCallbackHandler implements HttpHandler {
@@ -77,8 +79,7 @@ final class LegacyAuthCallbackHandler implements HttpHandler {
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     // Add .* to resource path as this path will be of the form /authcallback/SERVICEPROVIDER
-    Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, PATH + ".*"));
+    Preconditions.checkArgument(HandlerUtils.validateRequest(exchange, HttpMethods.GET, PATH + ".*"));
     logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = baseUrl + "/error";
@@ -96,12 +97,12 @@ final class LegacyAuthCallbackHandler implements HttpHandler {
 
   private String handleExchange(HttpExchange exchange) throws JsonProcessingException {
     Headers requestHeaders = exchange.getRequestHeaders();
-    Map<String, String> requestParams = ReferenceApiUtils.getRequestParams(exchange);
+    Map<String, String> requestParams = HandlerUtils.getRequestParams(exchange);
 
     // Verify request corresponds to a valid job
-    String encodedIdCookie = ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+    String encodedIdCookie = HandlerUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
-    UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
+    UUID jobId = decodeJobId(encodedIdCookie);
     PortabilityJob job = jobStore.findJob(jobId);
     Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
@@ -110,7 +111,7 @@ final class LegacyAuthCallbackHandler implements HttpHandler {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(frob), "Missing frob");
 
     // TODO: Determine service from job or from authUrl path?
-    AuthMode authMode = ReferenceApiUtils.getAuthMode(exchange.getRequestHeaders());
+    AuthMode authMode = HandlerUtils.getAuthMode(exchange.getRequestHeaders());
     String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
     Preconditions.checkState(
         !Strings.isNullOrEmpty(service),
@@ -139,7 +140,7 @@ final class LegacyAuthCallbackHandler implements HttpHandler {
     String serialized = objectMapper.writeValueAsString(authData);
     String encryptedAuthData = EncrypterFactory.create(key).encrypt(serialized);
     // Set new cookie
-    ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
+    HandlerUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
     return baseUrl
         + ((authMode == AuthMode.EXPORT)

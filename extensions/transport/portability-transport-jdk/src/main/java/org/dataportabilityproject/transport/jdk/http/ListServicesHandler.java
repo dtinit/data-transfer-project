@@ -15,8 +15,6 @@
  */
 package org.dataportabilityproject.transport.jdk.http;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -24,67 +22,64 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import org.dataportabilityproject.api.action.listservices.ListServicesAction;
-import org.dataportabilityproject.api.action.listservices.ListServicesActionRequest;
-import org.dataportabilityproject.api.action.listservices.ListServicesActionResponse;
+import org.dataportabilityproject.api.action.transfer.GetTransferServicesAction;
+import org.dataportabilityproject.types.client.transfer.GetTransferServices;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
-import org.dataportabilityproject.types.client.transfer.ListServicesResponse;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.HttpMethods;
+import org.dataportabilityproject.types.client.transfer.TransferServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** HttpHandler for the {@link ListServicesAction}. */
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+
+import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
+
+/** HttpHandler for the {@link GetTransferServicesAction}. */
 final class ListServicesHandler implements HttpHandler {
 
   public static final String PATH = "/_/listServices";
   private static final Logger logger = LoggerFactory.getLogger(ListServicesHandler.class);
-  private final ListServicesAction listServicesAction;
+  private final GetTransferServicesAction transferServicesAction;
   private final ObjectMapper objectMapper;
 
   @Inject
-  ListServicesHandler(ListServicesAction listServicesAction, TypeManager typeManager) {
-    this.listServicesAction = listServicesAction;
+  ListServicesHandler(GetTransferServicesAction transferServicesAction, TypeManager typeManager) {
+    this.transferServicesAction = transferServicesAction;
     this.objectMapper = typeManager.getMapper();
   }
 
-  /** Services the {@link ListServicesAction} via the {@link HttpExchange}. */
+  /** Services the {@link GetTransferServicesAction} via the {@link HttpExchange}. */
   @Override
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, PATH));
+    Preconditions.checkArgument(HandlerUtils.validateRequest(exchange, HttpMethods.GET, PATH));
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    String transferDataType = ReferenceApiUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
+    String transferDataType = HandlerUtils.getRequestParams(exchange).get(JsonKeys.DATA_TYPE);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(transferDataType), "Missing data type");
 
-    ListServicesActionRequest actionRequest = new ListServicesActionRequest(transferDataType);
-    ListServicesActionResponse actionResponse = listServicesAction.handle(actionRequest);
+    try {
+      GetTransferServices actionRequest = new GetTransferServices(transferDataType);
+      TransferServices actionResponse = transferServicesAction.handle(actionRequest);
 
-    if (actionResponse.getErrorMsg() != null) {
-      logger.warn("Error during action: {}", actionResponse.getErrorMsg());
+      // Set response as type json
+      Headers headers = exchange.getResponseHeaders();
+      headers.set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
+
+      // Send response
+      exchange.sendResponseHeaders(200, 0);
+      objectMapper.writeValue(exchange.getResponseBody(), actionResponse);
+    } catch (Exception e) {
+      logger.warn("Error during action", e);
       handleError(exchange, transferDataType);
-      return;
     }
-
-    String[] importServices = actionResponse.getImportServices().toArray(new String[0]);
-    String[] exportServices = actionResponse.getExportServices().toArray(new String[0]);
-    ListServicesResponse response =
-        new ListServicesResponse(transferDataType, exportServices, importServices);
-
-    // Set response as type json
-    Headers headers = exchange.getResponseHeaders();
-    headers.set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
-
-    // Send response
-    exchange.sendResponseHeaders(200, 0);
-    objectMapper.writeValue(exchange.getResponseBody(), response);
   }
 
   /** Handles error response. TODO: Determine whether to return user facing error message here. */
   public void handleError(HttpExchange exchange, String transferDataType) throws IOException {
-    String[] empty = new String[] {};
-    ListServicesResponse response = new ListServicesResponse(transferDataType, empty, empty);
+    TransferServices response =
+        new TransferServices(transferDataType, Collections.emptySet(), Collections.emptySet());
     // Mark the response as type Json and send
     exchange
         .getResponseHeaders()

@@ -15,17 +15,15 @@
  */
 package org.dataportabilityproject.transport.jdk.http;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.io.BaseEncoding;
 import com.google.common.net.HttpHeaders;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
-import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.token.TokenManager;
 import org.simpleframework.http.Cookie;
 import org.simpleframework.http.parse.CookieParser;
 
@@ -39,8 +37,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
+
 /** Contains utility functions for use by the ReferenceApiServer HttpHandlers */
-public final class ReferenceApiUtils {
+public final class HandlerUtils {
 
   /**
    * Attributes to attach to all cookies set by the API - Since HttpCookie doesnt support adding
@@ -58,7 +58,7 @@ public final class ReferenceApiUtils {
   public static String createURL(String host, String URI, boolean useHttps) {
     // http is only allowed if this is running a local instance, enforce https instead.
     // TODO: this should be configurable based on what the api base url is.
-    String scheme ="https://";
+    String scheme = "https://";
     return scheme + host + URI;
   }
 
@@ -79,8 +79,9 @@ public final class ReferenceApiUtils {
     Map<String, HttpCookie> cookieMap = new HashMap<>();
 
     for (String cookieStr : cookies) {
-      // TODO This strips out a null cookie setting in the local demo server setup; figure out what is causing this
-      cookieStr = cookieStr.replace("null;","");
+      // TODO This strips out a null cookie setting in the local demo server setup; figure out what
+      // is causing this
+      cookieStr = cookieStr.replace("null;", "");
       CookieParser parser = new CookieParser(cookieStr);
       for (Cookie c : parser) {
         HttpCookie httpCookie = new HttpCookie(c.getName(), c.getValue());
@@ -100,17 +101,6 @@ public final class ReferenceApiUtils {
       params.put(pair.getName(), pair.getValue());
     }
     return params;
-  }
-
-  public static String encodeJobId(UUID jobId) {
-    Preconditions.checkNotNull(jobId);
-    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
-  }
-
-  public static UUID decodeJobId(String encodedJobId) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
-    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),
-        Charsets.UTF_8));
   }
 
   /**
@@ -135,6 +125,7 @@ public final class ReferenceApiUtils {
     }
     return true;
   }
+
   /**
    * Validates that the job id in the request matches the job id in the xsrf header and contains
    * Does not validate that the job id itself is valid. Returns UUID.

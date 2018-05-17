@@ -26,23 +26,26 @@ import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.net.HttpCookie;
-import java.util.Map;
-import java.util.UUID;
-import javax.crypto.SecretKey;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.security.DecrypterFactory;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.net.HttpCookie;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
 
 /**
  * HttpHandler for callbacks from Oauth2 authorization flow. Redirects client request to: - the next
@@ -82,7 +85,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
   public void handle(HttpExchange exchange) throws IOException {
     // Add .* to resource path as this path will be of the form /callback/SERVICEPROVIDER
     Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, ReferenceApiUtils.HttpMethods.GET, PATH + ".*"));
+        HandlerUtils.validateRequest(exchange, HandlerUtils.HttpMethods.GET, PATH + ".*"));
     logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
@@ -98,7 +101,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       Headers requestHeaders = exchange.getRequestHeaders();
 
       String requestURL =
-          ReferenceApiUtils.createURL(
+          HandlerUtils.createURL(
               requestHeaders.getFirst(HttpHeaders.HOST),
               exchange.getRequestURI().toString(),
               IS_LOCAL);
@@ -112,13 +115,13 @@ final class Oauth2CallbackHandler implements HttpHandler {
       }
 
       // retrieve cookie from exchange
-      Map<String, HttpCookie> httpCookies = ReferenceApiUtils.getCookies(requestHeaders);
+      Map<String, HttpCookie> httpCookies = HandlerUtils.getCookies(requestHeaders);
       HttpCookie encodedIdCookie = httpCookies.get(JsonKeys.ID_COOKIE_KEY);
       Preconditions.checkArgument(
           encodedIdCookie != null && !Strings.isNullOrEmpty(encodedIdCookie.getValue()),
           "Encoded Id cookie required");
 
-      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie.getValue());
+      UUID jobId = decodeJobId(encodedIdCookie.getValue());
 
       // TODO(#258): Check job ID in state token, was broken during local demo
       // UUID jobIdFromState = ReferenceApiUtils.decodeJobId(authResponse.getState());
@@ -134,7 +137,7 @@ final class Oauth2CallbackHandler implements HttpHandler {
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?
-      AuthMode authMode = ReferenceApiUtils.getAuthMode(exchange.getRequestHeaders());
+      AuthMode authMode = HandlerUtils.getAuthMode(exchange.getRequestHeaders());
       String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
       Preconditions.checkState(
           !Strings.isNullOrEmpty(service),
@@ -184,12 +187,12 @@ final class Oauth2CallbackHandler implements HttpHandler {
       String serialized = objectMapper.writeValueAsString(authData);
       String encryptedAuthData = EncrypterFactory.create(key).encrypt(serialized);
       // Set new cookie
-      ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
+      HandlerUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
       redirect = baseUrl
               + ((authMode == AuthMode.EXPORT)
-                  ? ReferenceApiUtils.FrontendConstantUrls.URL_NEXT_PAGE
-                  : ReferenceApiUtils.FrontendConstantUrls.URL_COPY_PAGE);
+                  ? HandlerUtils.FrontendConstantUrls.URL_NEXT_PAGE
+                  : HandlerUtils.FrontendConstantUrls.URL_COPY_PAGE);
     } catch (Exception e) {
       logger.error("Error handling request: {}", e);
       throw e;

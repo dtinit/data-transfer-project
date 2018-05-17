@@ -18,8 +18,19 @@ package org.dataportabilityproject.transport.jettyrest.rest;
 import org.dataportabilityproject.api.action.Action;
 import org.dataportabilityproject.spi.api.transport.TransportBinder;
 import org.dataportabilityproject.transport.jettyrest.http.JettyTransport;
+import org.dataportabilityproject.types.client.datatype.GetDataTypes;
+import org.dataportabilityproject.types.client.transfer.CreateTransfer;
+import org.dataportabilityproject.types.client.transfer.GenerateServiceAuthData;
+import org.dataportabilityproject.types.client.transfer.GetTransfer;
+import org.dataportabilityproject.types.client.transfer.GetTransferServices;
+import org.dataportabilityproject.types.client.transfer.StartTransfer;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Binds {@link Action}s to REST over HTTP
@@ -28,22 +39,40 @@ import org.glassfish.jersey.servlet.ServletContainer;
  * application.
  */
 public class JerseyTransportBinder implements TransportBinder {
-  private JettyTransport jettyTransport;
+  private final JettyTransport jettyTransport;
+  private final String baseUrl;
+  private final Map<Class<?>, Action> actions;
 
-  public JerseyTransportBinder(JettyTransport jettyTransport) {
+  public JerseyTransportBinder(JettyTransport jettyTransport, String baseUrl) {
     this.jettyTransport = jettyTransport;
+    this.baseUrl = baseUrl;
+    actions = new HashMap<>();
   }
 
   @Override
-  public void bind(Action action) {}
+  @SuppressWarnings("unchecked")
+  public <T> void bind(Action<T, ?> action) {
+    actions.put(action.getRequestType(), action);
+  }
 
+  @SuppressWarnings("unchecked")
   public void start() {
+    Set<Object> controllers = new HashSet<>();
+    controllers.add(new DataTypesController(actions.get(GetDataTypes.class)));
+    controllers.add(new TransferServicesController(actions.get(GetTransferServices.class)));
+    controllers.add(
+        new TransferController(
+            actions.get(CreateTransfer.class),
+            actions.get(StartTransfer.class),
+            actions.get(GetTransfer.class)));
+    controllers.add(new OAuth2Controller(baseUrl, actions.get(GenerateServiceAuthData.class)));
+
     // Create a Jersey JAX-RS Application (resourceConfig), add the actions, and register it with
     // the Jetty transport.
     ResourceConfig resourceConfig = new ResourceConfig();
 
     // resourceConfig.register(JacksonFeature.class)
-    // resourceConfig.registerInstances();
+    resourceConfig.registerInstances(controllers);
 
     ServletContainer servletContainer = new ServletContainer(resourceConfig);
     jettyTransport.registerServlet("/api/*", servletContainer);

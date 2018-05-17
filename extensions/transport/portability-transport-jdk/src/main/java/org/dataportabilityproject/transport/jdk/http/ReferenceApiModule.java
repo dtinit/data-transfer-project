@@ -19,10 +19,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.sun.net.httpserver.HttpHandler;
-import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.config.FlagBindingModule;
-import org.dataportabilityproject.security.AsymmetricKeyGenerator;
-import org.dataportabilityproject.security.RsaSymmetricKeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,16 +36,9 @@ import java.util.concurrent.ThreadFactory;
 public class ReferenceApiModule extends FlagBindingModule {
   private static final Logger logger = LoggerFactory.getLogger(ReferenceApiModule.class);
 
-  private final ExtensionContext context;
-
-  public ReferenceApiModule(ExtensionContext context) {
-    this.context = context;
-  }
-
   @Override
   protected void configure() {
     // binds flags from ExtensionContext to @Named annotations
-    bindFlags(context);
     // TODO: requireBinding for Strings annotated with @Named("baseUrl") and @Named("baseApiUrl")
 
     // TODO: Bind actions in single or multiple modules
@@ -70,7 +60,7 @@ public class ReferenceApiModule extends FlagBindingModule {
     mapbinder.addBinding(ImportSetupHandler.PATH).to(ImportSetupHandler.class);
     mapbinder.addBinding(StartCopyHandler.PATH).to(StartCopyHandler.class);
 
-    bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
+
   }
 
   @Provides

@@ -20,29 +20,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
-public class ListServicesResponse {
+import java.util.Set;
+
+/** Export and import services that support the provided data type. */
+public class TransferServices {
 
   private final String transferDataType;
-  private final String[] exportServices;
-  private final String[] importServices;
+  private final Set<String> exportServices;
+  private final Set<String> importServices;
 
   @JsonCreator
-  public ListServicesResponse(
+  public TransferServices(
       @JsonProperty(value = "transferDataType", required = true) String transferDataType,
-      @JsonProperty(value = "exportServices", required = true) String[] exportServices,
-      @JsonProperty(value = "importServices", required = true) String[] importServices) {
+      @JsonProperty(value = "exportServices", required = true) Set<String> exportServices,
+      @JsonProperty(value = "importServices", required = true) Set<String> importServices) {
     this.transferDataType = transferDataType;
     this.importServices = importServices;
     this.exportServices = exportServices;
   }
 
   @ApiModelProperty
-  public String[] getImportServices() {
+  public Set<String> getImportServices() {
     return this.importServices;
   }
 
   @ApiModelProperty
-  public String[] getExportServices() {
+  public Set<String> getExportServices() {
     return this.exportServices;
   }
 

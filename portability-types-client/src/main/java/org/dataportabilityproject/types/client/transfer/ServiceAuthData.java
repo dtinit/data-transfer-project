@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action.listservices;
+package org.dataportabilityproject.types.client.transfer;
 
-/**
- * A request to list services available for export and import for the given {@code
- * transferDataType}.
- */
-public class ListServicesActionRequest {
-  private final String transferDataType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-  public ListServicesActionRequest(String transferDataType) {
-    this.transferDataType = transferDataType;
+/** Auth data for an export or import service */
+public class ServiceAuthData {
+  private String authData;
+
+  public ServiceAuthData(@JsonProperty(value = "authData", required = true) String authData) {
+    this.authData = authData;
   }
 
-  public String getTransferDataType() {
-    return transferDataType;
+  /**
+   * Returns the encrypted auth data.
+   *
+   * @return the auth data
+   */
+  public String getAuthData() {
+    return authData;
   }
 }

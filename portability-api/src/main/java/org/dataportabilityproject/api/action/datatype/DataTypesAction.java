@@ -13,37 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action.listdatatypes;
+package org.dataportabilityproject.api.action.datatype;
 
 import com.google.inject.Inject;
-import java.util.Set;
-
 import org.dataportabilityproject.api.action.Action;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.dataportabilityproject.types.client.datatype.GetDataTypes;
+import org.dataportabilityproject.types.client.datatype.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Set;
 
 /**
  * An {@link Action} that handles listing data types available for export and import for a given
  * data type.
  */
-public final class ListDataTypesAction
-    implements Action<ListDataTypesActionRequest, ListDataTypesActionResponse> {
-  private static final Logger logger = LoggerFactory.getLogger(ListDataTypesAction.class);
+public final class DataTypesAction
+    implements Action<GetDataTypes, DataTypes> {
+  private static final Logger logger = LoggerFactory.getLogger(DataTypesAction.class);
   private final AuthServiceProviderRegistry registry;
 
   @Inject
-  ListDataTypesAction(AuthServiceProviderRegistry registry) {
+  DataTypesAction(AuthServiceProviderRegistry registry) {
     this.registry = registry;
+  }
+
+  @Override
+  public Class<GetDataTypes> getRequestType() {
+    return GetDataTypes.class;
   }
 
   /** Lists the set of data types that support both import and export. */
   @Override
-  public ListDataTypesActionResponse handle(ListDataTypesActionRequest request) {
+  public DataTypes handle(GetDataTypes request) {
     Set<String> transferDataTypes = registry.getTransferDataTypes();
     if (transferDataTypes.isEmpty()) {
       logger.warn("Empty data type list found");
     }
-    return ListDataTypesActionResponse.create(transferDataTypes);
+    return new DataTypes(transferDataTypes);
   }
 }

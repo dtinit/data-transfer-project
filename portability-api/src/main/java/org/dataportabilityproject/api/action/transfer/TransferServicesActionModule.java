@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action;
+package org.dataportabilityproject.api.action.transfer;
 
-/** Handles an action in the API server. */
-public interface Action<REQUEST, RESPONSE> {
+import com.google.inject.AbstractModule;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 
-  /**
-   * Returns the type this action handles.
-   *
-   * @return the type this action handles
-   */
-  Class<REQUEST> getRequestType();
+/** Dependencies for the {@link GetTransferServicesAction} and related classes. */
+public final class TransferServicesActionModule extends AbstractModule {
 
-  /** Handles the given {@code REQUEST} and returns a {@code RESPONSE}. */
-  RESPONSE handle(REQUEST request);
+  @Override
+  protected void configure() {
+    requireBinding(AuthServiceProviderRegistry.class);
+  }
 }

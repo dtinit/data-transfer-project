@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action;
+package org.dataportabilityproject.types.client.transfer;
 
-/** Handles an action in the API server. */
-public interface Action<REQUEST, RESPONSE> {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModel;
 
-  /**
-   * Returns the type this action handles.
-   *
-   * @return the type this action handles
-   */
-  Class<REQUEST> getRequestType();
+/** Request to return data transfer operation. */
+@ApiModel(description = "Returns a data transfer operation")
+public class GetTransfer {
+  private final String id;
 
-  /** Handles the given {@code REQUEST} and returns a {@code RESPONSE}. */
-  RESPONSE handle(REQUEST request);
+  @JsonCreator
+  public GetTransfer(@JsonProperty(value = "id", required = true) String id) {
+    this.id = id;
+  }
+
+  public String getId() {
+    return id;
+  }
 }

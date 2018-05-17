@@ -34,7 +34,8 @@ public class JettyRestExtension implements ServiceExtension {
   @Override
   public void initialize(ExtensionContext context) {
     transport = new JettyTransport();
-    binder = new JerseyTransportBinder(transport);
+    String baseUrl = context.getSetting("baseUrl", null);
+    binder = new JerseyTransportBinder(transport, baseUrl);
     context.registerService(TransportBinder.class, binder);
   }
 

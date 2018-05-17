@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action.listdatatypes;
+package org.dataportabilityproject.types.client.transfer;
 
-import com.google.inject.AbstractModule;
-import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
+import java.util.Objects;
 
-/** Dependencies for the {@link ListDataTypesAction} and related classes. */
-public final class ListDataTypesActionModule extends AbstractModule {
+/** A request to list services available for export and import for the given type. */
+public class GetTransferServices {
+  private final String transferDataType;
 
-  @Override
-  protected void configure() {
-    requireBinding(AuthServiceProviderRegistry.class);
+  public GetTransferServices(String transferDataType) {
+    Objects.requireNonNull(transferDataType);
+    this.transferDataType = transferDataType;
+  }
+
+  public String getTransferDataType() {
+    return transferDataType;
   }
 }

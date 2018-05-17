@@ -22,7 +22,7 @@ public class JdkTransportExtension implements ServiceExtension {
   public void start() {
     try {
       Injector injector =
-          context.getService(Injector.class).createChildInjector(new ReferenceApiModule(context));
+          context.getService(Injector.class).createChildInjector(new ReferenceApiModule());
       apiServer = injector.getInstance(ReferenceApiServer.class);
       apiServer.start();
     } catch (Exception e) {

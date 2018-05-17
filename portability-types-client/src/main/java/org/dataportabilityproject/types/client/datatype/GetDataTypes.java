@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.api.action.listdatatypes;
+package org.dataportabilityproject.types.client.datatype;
 
 /** A request to list data types available for export and import. */
-public class ListDataTypesActionRequest {}
+public class GetDataTypes {}

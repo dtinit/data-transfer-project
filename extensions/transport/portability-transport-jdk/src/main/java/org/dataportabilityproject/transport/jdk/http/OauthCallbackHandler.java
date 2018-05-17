@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
+
 /**
  * HttpHandler for callbacks from Oauth1 authorization flow. Redirects client request to: - the next
  * authorization (if this is after the source service auth) or - the copy page (if this is after the
@@ -80,7 +82,7 @@ final class OauthCallbackHandler implements HttpHandler {
   public void handle(HttpExchange exchange) throws IOException {
     // Add .* to resource path as this path will be of the form /callback1/SERVICEPROVIDER
     Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, ReferenceApiUtils.HttpMethods.GET, PATH + ".*"));
+        HandlerUtils.validateRequest(exchange, HandlerUtils.HttpMethods.GET, PATH + ".*"));
     logger.debug("received request: {}", exchange.getRequestURI());
 
     String redirect = handleExchange(exchange);
@@ -98,14 +100,14 @@ final class OauthCallbackHandler implements HttpHandler {
       // Get the URL for the request - needed for the authorization.
 
       String requestURL =
-          ReferenceApiUtils.createURL(
+          HandlerUtils.createURL(
               requestHeaders.getFirst(HttpHeaders.HOST),
               exchange.getRequestURI().toString(),
               IS_LOCAL);
 
-      Map<String, String> requestParams = ReferenceApiUtils.getRequestParams(exchange);
+      Map<String, String> requestParams = HandlerUtils.getRequestParams(exchange);
 
-      String encodedIdCookie = ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+      String encodedIdCookie = HandlerUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
 
@@ -118,14 +120,14 @@ final class OauthCallbackHandler implements HttpHandler {
       // Valid job must be present
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
-      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
+      UUID jobId = decodeJobId(encodedIdCookie);
 
       PortabilityJob job = store.findJob(jobId);
 
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?
-      AuthMode authMode = ReferenceApiUtils.getAuthMode(exchange.getRequestHeaders());
+      AuthMode authMode = HandlerUtils.getAuthMode(exchange.getRequestHeaders());
       String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
       Preconditions.checkState(
           !Strings.isNullOrEmpty(service),
@@ -174,13 +176,13 @@ final class OauthCallbackHandler implements HttpHandler {
       String serialized = objectMapper.writeValueAsString(authData);
       String encryptedAuthData = EncrypterFactory.create(key).encrypt(serialized);
       // Set new cookie
-      ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
+      HandlerUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
       redirect =
           baseUrl
               + ((authMode == AuthMode.EXPORT)
-                  ? ReferenceApiUtils.FrontendConstantUrls.URL_NEXT_PAGE
-                  : ReferenceApiUtils.FrontendConstantUrls.URL_COPY_PAGE);
+                  ? HandlerUtils.FrontendConstantUrls.URL_NEXT_PAGE
+                  : HandlerUtils.FrontendConstantUrls.URL_COPY_PAGE);
     } catch (Exception e) {
       logger.error("Error handling request", e);
       throw e;

@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /* Test for DataTransferRequest */
-public class DataTransferRequestTest {
+public class DataGetTransferTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {

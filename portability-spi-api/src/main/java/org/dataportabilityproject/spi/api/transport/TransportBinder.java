@@ -25,5 +25,5 @@ public interface TransportBinder {
    *
    * @param action the action
    */
-  void bind(Action action);
+  <T> void bind(Action<T, ?> action);
 }

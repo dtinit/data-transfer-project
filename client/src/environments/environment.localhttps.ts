@@ -20,6 +20,7 @@
 
 export const environment = {
     production: false,
-    apiUrl: 'https://dataportabilitydemo2.westeurope.cloudapp.azure.com:3000/_/',
-    apiPostUrl: 'https://dataportabilitydemo2.westeurope.cloudapp.azure.com:8080'
+    apiUrl: 'https://localhost:3000/_/',
+    apiPostUrl: 'https://localhost:8080'
+
 };

@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.dataportabilityproject.types.client.transfer;
+package org.dataportabilityproject.types.client.datatype;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
 
-public class ListDataTypesResponse {
+import java.util.Set;
 
-  private final String[] dataTypes;
+/** The result of a request to list data types available for export and import. */
+public class DataTypes {
+
+  private final Set<String> dataTypes;
 
   @JsonCreator
-  public ListDataTypesResponse(
-      @JsonProperty(value = "dataTypes", required = true) String[] dataTypes) {
+  public DataTypes(@JsonProperty("transferDataTypes") Set<String> dataTypes) {
     this.dataTypes = dataTypes;
   }
 
-  @ApiModelProperty
-  public String[] getDataTypes() {
-    return this.dataTypes;
+  public Set<String> getDataTypes() {
+    return dataTypes;
   }
 }

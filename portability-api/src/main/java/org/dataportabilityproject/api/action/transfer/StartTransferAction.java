@@ -1,19 +1,4 @@
-/*
- * Copyright 2018 The Data Transfer Project Authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.dataportabilityproject.api.action.startjob;
+package org.dataportabilityproject.api.action.transfer;
 
 import com.google.api.client.util.Sleeper;
 import com.google.common.base.Preconditions;
@@ -28,8 +13,9 @@ import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.types.client.transfer.StartTransfer;
+import org.dataportabilityproject.types.client.transfer.Transfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,40 +24,40 @@ import java.io.IOException;
 import java.security.PublicKey;
 import java.util.UUID;
 
-/** An {@link Action} that starts a transfer job. */
-public final class StartJobAction implements Action<StartJobActionRequest, StartJobActionResponse> {
-  private static final Logger logger = LoggerFactory.getLogger(StartJobAction.class);
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
+import static org.dataportabilityproject.spi.cloud.types.JobAuthorization.State.CREDS_AVAILABLE;
+import static org.dataportabilityproject.spi.cloud.types.JobAuthorization.State.CREDS_ENCRYPTED;
+import static org.dataportabilityproject.spi.cloud.types.JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED;
 
-  private final JobStore store;
+/** Starts a transfer process */
+public class StartTransferAction implements Action<StartTransfer, Transfer> {
+
+  private static final Logger logger = LoggerFactory.getLogger(StartTransferAction.class);
+
+  private final JobStore jobStore;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
   @Inject
-  StartJobAction(
-      JobStore store,
+  StartTransferAction(
+      JobStore jobStore,
       SymmetricKeyGenerator symmetricKeyGenerator,
       AsymmetricKeyGenerator asymmetricKeyGenerator) {
-    this.store = store;
+    this.jobStore = jobStore;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
   @Override
-  public Class<StartJobActionRequest> getRequestType() {
-    return StartJobActionRequest.class;
+  public Class<StartTransfer> getRequestType() {
+    return StartTransfer.class;
   }
 
-  /**
-   * Starts a job using the following flow:
-   * <li>Validate auth data is present in cookies
-   * <li>Set Job to state CREDS_AVAILABLE
-   * <li>Wait for a transfer worker to be assigned
-   * <li>Once transfer worker assigned, grab transfer key to encrypt auth data from cookies
-   * <li>Update job with auth data
-   */
   @Override
-  public StartJobActionResponse handle(StartJobActionRequest request) {
-    UUID jobId = request.getJobId();
+  public Transfer handle(StartTransfer startTransfer) {
+    String id = startTransfer.getId();
+    UUID jobId = decodeJobId(id);
+
     // Update the job to indicate to transfer worker processes that creds are available for
     // encryption
     updateStateToCredsAvailable(jobId);
@@ -85,12 +71,9 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
     // worker
     // instance
     encryptAndUpdateJobWithCredentials(
-        jobId,
-        job,
-        request.getEncryptedExportAuthCredential(),
-        request.getEncryptedImportAuthCredential());
+        jobId, job, startTransfer.getExportAuthData(), startTransfer.getImportAuthData());
 
-    return StartJobActionResponse.create(jobId);
+    return null;
   }
 
   /**
@@ -98,16 +81,16 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
    * pool of workers that this job is available for processing.
    */
   private void updateStateToCredsAvailable(UUID jobId) {
-    PortabilityJob job = store.findJob(jobId);
+    PortabilityJob job = jobStore.findJob(jobId);
     validateJob(job);
 
     // Set update job auth data
     JobAuthorization jobAuthorization =
-        job.jobAuthorization().toBuilder().setState(State.CREDS_AVAILABLE).build();
+        job.jobAuthorization().toBuilder().setState(CREDS_AVAILABLE).build();
 
     job = job.toBuilder().setAndValidateJobAuthorization(jobAuthorization).build();
     try {
-      store.updateJob(jobId, job);
+      jobStore.updateJob(jobId, job);
       logger.debug("Updated job {} to CREDS_AVAILABLE", jobId);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
@@ -124,17 +107,15 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
     // TODO: start new thread
     // TODO: implement timeout condition
     // TODO: Handle case where API dies while waiting
-    PortabilityJob job = store.findJob(jobId);
-    while (job == null
-        || job.jobAuthorization().state()
-            != JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED) {
+    PortabilityJob job = jobStore.findJob(jobId);
+    while (job == null || job.jobAuthorization().state() != CREDS_ENCRYPTION_KEY_GENERATED) {
       logger.debug("Waiting for job {} to enter state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
       try {
         Sleeper.DEFAULT.sleep(10000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-      job = store.findJob(jobId);
+      job = jobStore.findJob(jobId);
     }
 
     logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED", jobId);
@@ -219,12 +200,12 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
             .setEncryptedExportAuthData(doublyEncryptedExportAuthData)
             .setEncryptedImportAuthData(doublyEncryptedImportAuthData)
             .setAuthSecretKey(encryptedAuthSecretKey)
-            .setState(JobAuthorization.State.CREDS_ENCRYPTED)
+            .setState(CREDS_ENCRYPTED)
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
     logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_ENCRYPTED", jobId);
     try {
-      store.updateJob(jobId, job);
+      jobStore.updateJob(jobId, job);
       logger.debug("Updated job {} to CREDS_ENCRYPTED", jobId);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);

@@ -16,6 +16,7 @@
 
 dependencies {
 
+    compile project(':portability-types-client')
     compile project(':portability-spi-api')
     compile project(':portability-spi-service')
 

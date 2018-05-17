@@ -21,51 +21,42 @@ import com.google.inject.Inject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.dataportabilityproject.api.action.datatype.DataTypesAction;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.api.action.listdatatypes.ListDataTypesAction;
-import org.dataportabilityproject.api.action.listdatatypes.ListDataTypesActionRequest;
-import org.dataportabilityproject.api.action.listdatatypes.ListDataTypesActionResponse;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
-import org.dataportabilityproject.types.client.transfer.ListDataTypesResponse;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.HttpMethods;
+import org.dataportabilityproject.types.client.datatype.DataTypes;
+import org.dataportabilityproject.types.client.datatype.GetDataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
-/** HttpHandler for the {@link ListDataTypesAction}. */
+/** HttpHandler for the {@link DataTypesAction}. */
 final class ListDataTypesHandler implements HttpHandler {
 
   public static final String PATH = "/_/listDataTypes";
   private static final Logger logger = LoggerFactory.getLogger(ListDataTypesHandler.class);
-  private final ListDataTypesAction listDataTypesAction;
+  private final DataTypesAction dataTypesAction;
   private final ObjectMapper objectMapper;
 
   @Inject
-  ListDataTypesHandler(ListDataTypesAction listServicesAction, TypeManager typeManager) {
-    this.listDataTypesAction = listServicesAction;
+  ListDataTypesHandler(DataTypesAction listServicesAction, TypeManager typeManager) {
+    this.dataTypesAction = listServicesAction;
     this.objectMapper = typeManager.getMapper();
   }
 
-  /** Services the {@link ListDataTypesAction} via the {@link HttpExchange}. */
+  /** Services the {@link DataTypesAction} via the {@link HttpExchange}. */
   @Override
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(ReferenceApiUtils.validateRequest(exchange, HttpMethods.GET, PATH));
+    Preconditions.checkArgument(HandlerUtils.validateRequest(exchange, HttpMethods.GET, PATH));
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    ListDataTypesActionResponse actionResponse =
-        listDataTypesAction.handle(new ListDataTypesActionRequest());
-
-    if (actionResponse.getErrorMsg() != null) {
-      logger.warn("Error during action: {}", actionResponse.getErrorMsg());
-      handleError(exchange);
-      return;
-    }
-
-    String[] dataTypes = actionResponse.getTransferDataTypes().toArray(new String[0]);
-    ListDataTypesResponse response = new ListDataTypesResponse(dataTypes);
+    DataTypes actionResponse =
+        dataTypesAction.handle(new GetDataTypes());
 
     // Set response as type json
     Headers headers = exchange.getResponseHeaders();
@@ -73,13 +64,12 @@ final class ListDataTypesHandler implements HttpHandler {
 
     // Send response
     exchange.sendResponseHeaders(200, 0);
-    objectMapper.writeValue(exchange.getResponseBody(), response);
+    objectMapper.writeValue(exchange.getResponseBody(), actionResponse);
   }
 
   /** Handles error response. TODO: Determine whether to return user facing error message here. */
   public void handleError(HttpExchange exchange) throws IOException {
-    String[] empty = new String[] {};
-    ListDataTypesResponse response = new ListDataTypesResponse(empty);
+    DataTypes response = new DataTypes(Collections.emptySet());
     // Mark the response as type Json and send
     exchange
         .getResponseHeaders()

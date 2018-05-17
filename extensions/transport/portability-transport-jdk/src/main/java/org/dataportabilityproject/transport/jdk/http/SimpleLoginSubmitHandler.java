@@ -24,27 +24,30 @@ import com.google.inject.name.Named;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import javax.crypto.SecretKey;
 import org.apache.http.HttpHeaders;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.FrontendConstantUrls;
+import org.dataportabilityproject.transport.jdk.http.HandlerUtils.HttpMethods;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.FrontendConstantUrls;
-import org.dataportabilityproject.transport.jdk.http.ReferenceApiUtils.HttpMethods;
 import org.dataportabilityproject.security.EncrypterFactory;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
 import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
 import org.dataportabilityproject.types.client.transfer.SimpleLoginRequest;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+import static org.dataportabilityproject.api.action.ActionUtils.decodeJobId;
 
 /**
  * HttpHandler for SimpleLoginSubmit authorization flow. Redirects client request to: - the next
@@ -80,8 +83,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
   }
 
   public void handle(HttpExchange exchange) throws IOException {
-    Preconditions.checkArgument(
-        ReferenceApiUtils.validateRequest(exchange, HttpMethods.POST, PATH));
+    Preconditions.checkArgument(HandlerUtils.validateRequest(exchange, HttpMethods.POST, PATH));
     logger.debug("received request: {}", exchange.getRequestURI());
 
     DataTransferResponse response = handleExchange(exchange);
@@ -104,19 +106,19 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       SimpleLoginRequest request =
           objectMapper.readValue(exchange.getRequestBody(), SimpleLoginRequest.class);
 
-      String encodedIdCookie = ReferenceApiUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
+      String encodedIdCookie = HandlerUtils.getCookie(requestHeaders, JsonKeys.ID_COOKIE_KEY);
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(encodedIdCookie), "Missing encodedIdCookie");
       // Valid job must be present
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(encodedIdCookie), "Encoded Id cookie required");
-      UUID jobId = ReferenceApiUtils.decodeJobId(encodedIdCookie);
+      UUID jobId = decodeJobId(encodedIdCookie);
 
       PortabilityJob job = store.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?
-      AuthMode authMode = ReferenceApiUtils.getAuthMode(exchange.getRequestHeaders());
+      AuthMode authMode = HandlerUtils.getAuthMode(exchange.getRequestHeaders());
 
       // TODO: Determine service from job or from authUrl path?
       String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
@@ -145,11 +147,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       // Generate and store auth data
       AuthData authData =
           generator.generateAuthData(
-              baseApiUrl,
-              request.getUsername(),
-              jobId.toString(),
-              null,
-              request.getPassword());
+              baseApiUrl, request.getUsername(), jobId.toString(), null, request.getPassword());
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Obtain the session key for this job
@@ -160,7 +158,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       String serialized = objectMapper.writeValueAsString(authData);
       String encryptedAuthData = EncrypterFactory.create(key).encrypt(serialized);
       // Set new cookie
-      ReferenceApiUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
+      HandlerUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
       return new DataTransferResponse(
           job.exportService(),
