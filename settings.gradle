@@ -45,4 +45,8 @@ include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 include ':extensions:auth:portability-auth-smugmug'
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
 
+//Twitter Auth and Transfer Extensions
+include ':extensions:auth:portability-auth-twitter'
+include ':extensions:data-transfer:portability-data-transfer-twitter'
+
 include ':client'

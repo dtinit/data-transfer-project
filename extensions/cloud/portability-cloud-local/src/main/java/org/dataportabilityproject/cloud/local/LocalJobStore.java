@@ -18,6 +18,7 @@ package org.dataportabilityproject.cloud.local;
 import com.google.common.base.Preconditions;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -26,12 +27,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<UUID, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
 
+  private final Logger logger = LoggerFactory.getLogger(LocalJobStore.class);
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
    *
@@ -43,6 +47,7 @@ public final class LocalJobStore implements JobStore {
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
+    logger.debug("creating job {} in local storage", jobId);
     if (JOB_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
@@ -95,6 +100,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
+    logger.debug("removing job {} from local storage", jobId);
     Map<String, Object> previous = JOB_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
@@ -123,9 +129,12 @@ public final class LocalJobStore implements JobStore {
     // Mimic an index lookup
     for (Entry<UUID, Map<String, Object>> job : JOB_MAP.entrySet()) {
       Map<String, Object> properties = job.getValue();
-      if (JobAuthorization.State.valueOf(
-              properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
-          == jobState) {
+      State state = State.valueOf(
+          properties.get(PortabilityJob.AUTHORIZATION_STATE).toString());
+
+      logger.debug("checking job {} in state {} to see if it matches {}",
+          job.getKey(), state, jobState);
+      if (state == jobState) {
         UUID jobId = job.getKey();
         return jobId;
       }

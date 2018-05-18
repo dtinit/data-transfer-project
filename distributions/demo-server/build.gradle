@@ -69,12 +69,14 @@ dependencies {
     compile project(':extensions:auth:portability-auth-instagram')
     compile project(':extensions:auth:portability-auth-microsoft')
     compile project(':extensions:auth:portability-auth-rememberthemilk')
+    compile project(':extensions:auth:portability-auth-twitter')
 
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-instagram')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
+    compile project(':extensions:data-transfer:portability-data-transfer-twitter')
 }
 
 addCloudExtensionDependency(project)
