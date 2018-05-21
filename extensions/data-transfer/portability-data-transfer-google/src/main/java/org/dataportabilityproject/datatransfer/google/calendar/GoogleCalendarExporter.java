@@ -37,10 +37,13 @@ import org.dataportabilityproject.types.transfer.models.calendar.CalendarAttende
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarEventModel;
 import org.dataportabilityproject.types.transfer.models.calendar.CalendarModel;
+import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+public class GoogleCalendarExporter implements
+    Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+
   private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarExporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
@@ -81,6 +84,36 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
     return new CalendarEventModel.CalendarEventTime(offsetDateTime, dateTime.getDate() != null);
   }
 
+  private static RecurrenceRule getRecurrenceRule(List<String> ruleStrings) {
+    RecurrenceRule.Builder ruleBuilder = new RecurrenceRule.Builder();
+    for (String st : ruleStrings) {
+      Preconditions.checkArgument(st.contains(":"),
+          "Recurrence entry " + st + " cannot be parsed");
+      String[] split = st.split("[:;]", 2);
+      String type = split[0];
+      String value = split[1];
+      switch (type) {
+        case RecurrenceRule.RRULE:
+          ruleBuilder.setRRule(RecurrenceRule.parseRRuleString(value));
+          break;
+        case RecurrenceRule.RDATE:
+          ruleBuilder.setRDate(RecurrenceRule.parseRDateString(value));
+          break;
+        case RecurrenceRule.EXDATE:
+          ruleBuilder.setExDate(RecurrenceRule.parseExDateString(value));
+          break;
+        default:
+          throw new IllegalArgumentException(
+              "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
+      }
+    }
+    RecurrenceRule rule = ruleBuilder.build();
+    logger.debug("RRule: " + rule.getRRule());
+    logger.debug("RDate: " + rule.getRDate());
+    logger.debug("ExDate: " + rule.getExDate());
+    return rule;
+  }
+
   private static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
     return new CalendarModel(
         calendarData.getId(), calendarData.getSummary(), calendarData.getDescription());
@@ -88,6 +121,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
 
   private static CalendarEventModel convertToCalendarEventModel(String id, Event eventData) {
     List<EventAttendee> attendees = eventData.getAttendees();
+    List<String> recurrenceRulesStrings = eventData.getRecurrence();
     return new CalendarEventModel(
         id,
         eventData.getDescription(),
@@ -100,7 +134,8 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
                 .collect(Collectors.toList()),
         eventData.getLocation(),
         getEventTime(eventData.getStart()),
-        getEventTime(eventData.getEnd()));
+        getEventTime(eventData.getEnd()),
+        recurrenceRulesStrings == null ? null : getRecurrenceRule(recurrenceRulesStrings));
   }
 
   @Override
@@ -236,7 +271,7 @@ public class GoogleCalendarExporter implements Exporter<TokensAndUrlAuthData, Ca
   private synchronized Calendar makeCalendarInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Calendar.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

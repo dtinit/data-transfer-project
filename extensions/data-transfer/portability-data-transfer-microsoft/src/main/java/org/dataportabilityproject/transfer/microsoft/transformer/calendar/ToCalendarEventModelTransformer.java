@@ -74,6 +74,6 @@ public class ToCalendarEventModelTransformer
     }
 
     return new CalendarEventModel(
-        calendarId, title, notes, attendees, location, startTime, endTime);
+        calendarId, title, notes, attendees, location, startTime, endTime, null);
   }
 }

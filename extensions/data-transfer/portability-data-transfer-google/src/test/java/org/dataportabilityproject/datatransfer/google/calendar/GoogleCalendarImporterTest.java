@@ -88,7 +88,7 @@ public class GoogleCalendarImporterTest {
         new com.google.api.services.calendar.model.Calendar().setId(googleCalendarId);
 
     CalendarEventModel eventModel =
-        new CalendarEventModel(modelCalendarId, null, null, null, null, null, null);
+        new CalendarEventModel(modelCalendarId, null, null, null, null, null, null, null);
     Event eventToInsert = GoogleCalendarImporter.convertToGoogleCalendarEvent(eventModel);
     Event responseEvent = new Event();
 

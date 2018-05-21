@@ -107,6 +107,6 @@ A demo Azure distribution is also in development.
 ## Build Problem F.A.Q
 
 ### AutoValue errors
-If you get an error `error: duplicate class... final class AutoValue_...` it is indecitive of your IDE and gradle clashing.  To fix it you want to delete the refrenced build/classes directory.
+If you get an error `error: duplicate class... final class AutoValue_...` it is indicative of your IDE and gradle clashing.  To fix it you want to delete the referenced build/classes directory.
 
 ## This is not an official Google product

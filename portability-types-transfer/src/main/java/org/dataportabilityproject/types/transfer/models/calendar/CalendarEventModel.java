@@ -29,6 +29,7 @@ public class CalendarEventModel {
   private final String location;
   private final CalendarEventTime startTime;
   private final CalendarEventTime endTime;
+  private final RecurrenceRule recurrenceRule;
 
   @JsonCreator
   public CalendarEventModel(
@@ -38,7 +39,8 @@ public class CalendarEventModel {
       @JsonProperty("attendees") List<CalendarAttendeeModel> attendees,
       @JsonProperty("location") String location,
       @JsonProperty("startTime") CalendarEventTime startTime,
-      @JsonProperty("endTime") CalendarEventTime endTime) {
+      @JsonProperty("endTime") CalendarEventTime endTime,
+      @JsonProperty("recurrenceRule") RecurrenceRule recurrenceRule) {
     this.calendarId = calendarId;
     this.title = title;
     this.notes = notes;
@@ -46,6 +48,7 @@ public class CalendarEventModel {
     this.location = location;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.recurrenceRule = recurrenceRule;
   }
 
   public String getTitle() {
@@ -74,6 +77,10 @@ public class CalendarEventModel {
 
   public String getCalendarId() {
     return calendarId;
+  }
+
+  public RecurrenceRule getRecurrenceRule() {
+    return recurrenceRule;
   }
 
   public static class CalendarEventTime {
