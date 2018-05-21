@@ -39,7 +39,7 @@ import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
-public class TwitterPhotosExporter implements
+final class TwitterPhotosExporter implements
     Exporter<TokenSecretAuthData, PhotosContainerResource> {
   private static final int PAGE_SIZE = 5;
   private final Logger logger = LoggerFactory.getLogger(TwitterPhotosExporter.class);
@@ -68,7 +68,7 @@ public class TwitterPhotosExporter implements
       List<PhotoModel> photos = new ArrayList<>();
       for (Status status : statuses) {
         boolean hasMedia = status.getMediaEntities().length > 0;
-        if (hasMedia & !status.isRetweet()) {
+        if (hasMedia && !status.isRetweet()) {
           for (MediaEntity mediaEntity : status.getMediaEntities()) {
             photos.add(new PhotoModel(
                 "Twitter Photo " + mediaEntity.getId(),

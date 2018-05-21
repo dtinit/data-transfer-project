@@ -132,8 +132,8 @@ public final class LocalJobStore implements JobStore {
       State state = State.valueOf(
           properties.get(PortabilityJob.AUTHORIZATION_STATE).toString());
 
-      logger.debug("checking job {} in state {} to see if it matches {}",
-          job.getKey(), state, jobState);
+      logger.debug("looking up first job in state {}: found job {} (state {})",
+          jobState, job.getKey(), state);
       if (state == jobState) {
         UUID jobId = job.getKey();
         return jobId;

@@ -29,8 +29,8 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TwitterAuthServiceExtension implements AuthServiceExtension {
-
+/** Twitter specific implementation of {@link AuthServiceExtension}. **/
+public final class TwitterAuthServiceExtension implements AuthServiceExtension {
   private static final String TWITTER_KEY = "TWITTER_KEY";
   private static final String TWITTER_SECRET = "TWITTER_SECRET";
   private static final String SERVICE_ID = "Twitter";

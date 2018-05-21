@@ -34,7 +34,7 @@ import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
 /* TwitterAuthDataGenerator used for obtaining auth credentials for the Twitter API*/
-public class TwitterAuthDataGenerator implements AuthDataGenerator {
+final class TwitterAuthDataGenerator implements AuthDataGenerator {
   private final Logger logger = LoggerFactory.getLogger(TwitterAuthDataGenerator.class);
   private final String perms;
   private final Twitter twitterApi;
@@ -69,7 +69,6 @@ public class TwitterAuthDataGenerator implements AuthDataGenerator {
   @Override
   public AuthData generateAuthData(
       String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
-
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions.checkNotNull(
         initialAuthData,

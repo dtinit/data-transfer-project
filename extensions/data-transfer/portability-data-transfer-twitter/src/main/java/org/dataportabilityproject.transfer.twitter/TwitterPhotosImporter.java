@@ -35,7 +35,7 @@ import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
-public class TwitterPhotosImporter
+final class TwitterPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
   private final Logger logger = LoggerFactory.getLogger(TwitterPhotosImporter.class);
   private final AppCredentials appCredentials;
@@ -48,7 +48,7 @@ public class TwitterPhotosImporter
   public ImportResult importItem(UUID jobId, TokenSecretAuthData authData,
       PhotosContainerResource data) {
     Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
-    // Don't know what to do with albums :(.
+    // Twitter doesn't support an 'Albums' concept, so that information is just lost.
 
     for (PhotoModel image : data.getPhotos()) {
       try {

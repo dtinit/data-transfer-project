@@ -29,6 +29,13 @@ import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Extension to allow Twitter content to be transferred.
+ *
+ * <p>Currently only photos content to be exported/imported.
+ *
+ * <p>In the future if a social vertical gets defined support should be added for that.
+ */
 public class TwitterTransferExtension implements TransferExtension {
   private static final List<String> SUPPORTED_TYPES = ImmutableList.of("photos");
   private static final Logger LOGGER = LoggerFactory.getLogger(TwitterTransferExtension.class);
