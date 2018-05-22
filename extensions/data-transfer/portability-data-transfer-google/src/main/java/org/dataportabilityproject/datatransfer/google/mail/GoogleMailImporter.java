@@ -156,7 +156,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
     // Persist temp data in case we added mappings along the way
     if (newMappingsCreated) {
-      jobStore.update(id, tempMailData);
+      jobStore.update(id, "", tempMailData);
     }
     return ImportResult.OK;
   }
@@ -191,7 +191,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
     // Persist temp data in case we added mappings along the way
     if (newMappingsCreated) {
-      jobStore.update(id, tempMailData);
+      jobStore.update(id, "tempMailData", tempMailData);
     }
     return ImportResult.OK;
   }
@@ -232,7 +232,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
     // Persist temp data in case we added mappings along the way
     if (newMappingsCreated) {
-      jobStore.update(id, tempMailData);
+      jobStore.update(id, "tempMailData", tempMailData);
     }
     return ImportResult.OK;
   }
@@ -276,10 +276,10 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   }
 
   private TempMailData getOrCreateMailData(UUID id) throws IOException {
-    TempMailData tempMailData = jobStore.findData(TempMailData.class, id);
+    TempMailData tempMailData = jobStore.findData(id, createCacheKey(), TempMailData.class);
     if (tempMailData == null) {
       tempMailData = new TempMailData(id.toString());
-      jobStore.create(id, tempMailData);
+      jobStore.create(id, createCacheKey(), tempMailData);
     }
     return tempMailData;
   }
@@ -328,5 +328,13 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
+  }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempMailData";
   }
 }

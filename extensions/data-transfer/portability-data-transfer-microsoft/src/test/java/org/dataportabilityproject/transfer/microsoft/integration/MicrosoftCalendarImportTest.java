@@ -246,7 +246,7 @@ public class MicrosoftCalendarImportTest {
 
     // verify the calendar id mapping from old id to new id was saved
     Assert.assertEquals(
-        "NewId1", jobStore.findData(TempCalendarData.class, JOB_ID).getImportedId("OldId1"));
+        "NewId1", jobStore.findData(JOB_ID, "tempCalendarData", TempCalendarData.class).getImportedId("OldId1"));
 
     // verify the batch event request
     RecordedRequest eventBatch = server.takeRequest();

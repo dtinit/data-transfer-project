@@ -33,10 +33,10 @@ public class GoogleJobStoreTest {
   @Test
   public void getDataKeyName() throws Exception {
     assertEquals(
-        JOB_ID + "-org.dataportabilityproject.spi.transfer.types.TempTasksData-data",
-        GoogleJobStore.getDataKeyName(JOB_ID, TempTasksData.class));
+        JOB_ID + "-tempTaskData",
+        GoogleJobStore.getDataKeyName(JOB_ID, "tempTaskData"));
     assertEquals(
-        JOB_ID + "-org.dataportabilityproject.spi.transfer.types.TempCalendarData-data",
-        GoogleJobStore.getDataKeyName(JOB_ID, TempCalendarData.class));
+        JOB_ID + "-tempCalendarData",
+        GoogleJobStore.getDataKeyName(JOB_ID, "tempCalendarData"));
   }
 }

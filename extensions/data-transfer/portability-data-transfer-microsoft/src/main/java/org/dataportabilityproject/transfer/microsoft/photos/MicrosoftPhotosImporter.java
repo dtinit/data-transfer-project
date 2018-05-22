@@ -74,11 +74,11 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
   @Override
   public ImportResult importItem(
       UUID jobId, TokenAuthData authData, PhotosContainerResource resource) {
-    TempPhotoData photoData = jobStore.findData(TempPhotoData.class, jobId);
+    TempPhotoData photoData = jobStore.findData(jobId, createCacheKey(), TempPhotoData.class);
     if (photoData == null) {
       photoData = new TempPhotoData(jobId.toString());
       try {
-        jobStore.create(jobId, photoData);
+        jobStore.create(jobId, createCacheKey(), photoData);
       } catch (IOException e) {
         return new ImportResult(ImportResult.ResultType.ERROR, "Error create temp photo data " + e.getMessage());
       }
@@ -126,7 +126,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
             return;
           }
           photoData.addIdMapping(album.getId(), folderId);
-          jobStore.update(jobId, photoData);
+          jobStore.update(jobId, createCacheKey(), photoData);
         }
         // FIXME evaluate HTTP response and return whether to retry
       }
@@ -207,5 +207,13 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
         Util.closeQuietly(source);
       }
     }
+  }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempPhotosData";
   }
 }

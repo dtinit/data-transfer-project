@@ -111,7 +111,7 @@ public class GoogleCalendarImporterTest {
     verify(eventInsertRequest).execute();
 
     // Check jobStore contents
-    assertThat(jobStore.findData(TempCalendarData.class, jobId).getImportedId(modelCalendarId))
+    assertThat(jobStore.findData(jobId, "tempCalendarData", TempCalendarData.class).getImportedId(modelCalendarId))
         .isEqualTo(googleCalendarId);
   }
 }
