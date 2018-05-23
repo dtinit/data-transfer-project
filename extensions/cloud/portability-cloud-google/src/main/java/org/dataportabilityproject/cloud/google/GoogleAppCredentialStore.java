@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 final class GoogleAppCredentialStore implements AppCredentialStore {
-  static final Logger logger = LoggerFactory.getLogger(AppCredentialStore.class);
+  private static final Logger logger = LoggerFactory.getLogger(AppCredentialStore.class);
   private static final Integer CACHE_EXPIRATION_MINUTES = 10;
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
   private static final String KEYS_DIR = "keys/";
@@ -85,7 +85,6 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
     // Google Cloud Platform requires bucket names be unique across projects, so we include project
     // ID in the bucket name.
     this.bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
-    logger.debug("GoogleAppCredentialStore bucketName: {}", bucketName);
     this.keys =
         CacheBuilder.newBuilder()
             .expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES)
