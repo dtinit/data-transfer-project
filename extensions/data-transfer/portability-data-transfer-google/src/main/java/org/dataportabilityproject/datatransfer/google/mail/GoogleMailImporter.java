@@ -156,7 +156,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
     // Persist temp data in case we added mappings along the way
     if (newMappingsCreated) {
-      jobStore.update(id, "", tempMailData);
+      jobStore.update(id, createCacheKey(), tempMailData);
     }
     return ImportResult.OK;
   }
@@ -191,7 +191,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
     // Persist temp data in case we added mappings along the way
     if (newMappingsCreated) {
-      jobStore.update(id, "tempMailData", tempMailData);
+      jobStore.update(id, createCacheKey(), tempMailData);
     }
     return ImportResult.OK;
   }
@@ -232,7 +232,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
 
     // Persist temp data in case we added mappings along the way
     if (newMappingsCreated) {
-      jobStore.update(id, "tempMailData", tempMailData);
+      jobStore.update(id, createCacheKey(), tempMailData);
     }
     return ImportResult.OK;
   }
