@@ -35,7 +35,7 @@ import java.util.Map;
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final String REDIRECT_PATH = "/callback/microsoft";
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.<String>builder().add("calendar", "contacts", "photos").build();
+      ImmutableList.<String>builder().add("calendar", "contacts").build();
 
   private AppCredentials appCredentials;
   private boolean initialized = false;

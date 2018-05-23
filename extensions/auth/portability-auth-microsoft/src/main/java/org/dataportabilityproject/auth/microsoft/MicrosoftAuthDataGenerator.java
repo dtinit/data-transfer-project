@@ -42,7 +42,6 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
           .put("mail", ImmutableList.of("user.read", "Mail.ReadWrite"))
           .put("contacts", ImmutableList.of("user.read", "Contacts.ReadWrite"))
           .put("calendar", ImmutableList.of("user.read", "Calendars.ReadWrite"))
-          .put("photos", ImmutableList.of("user.read", "Photos.ReadWrite"))
           .build();
 
   // The scopes necessary to export each supported data type.
@@ -52,7 +51,6 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
           .put("mail", ImmutableList.of("user.read", "Mail.Read"))
           .put("contacts", ImmutableList.of("user.read", "Contacts.Read"))
           .put("calendar", ImmutableList.of("user.read", "Calendars.Read"))
-          .put("photos", ImmutableList.of("user.read", "Photos.Read"))
           .build();
 
   private final String redirectPath;
