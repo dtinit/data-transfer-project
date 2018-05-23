@@ -83,11 +83,12 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
     RequestContext.getRequestContext().setAuth(auth);
 
-    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       try {
-        jobStore.create(jobId, tempPhotosData);
+        jobStore.create(jobId, createCacheKey(), tempPhotosData);
       } catch (IOException e) {
         return new ImportResult(ResultType.ERROR, "Error create temp photo data " + e.getMessage());
       }
@@ -95,11 +96,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getPhotos() != null,
-        "" + "Error: There is no data to import");
+         "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
       importAlbums(data.getAlbums(), tempPhotosData);
-      jobStore.update(jobId, tempPhotosData);
+      jobStore.update(jobId, createCacheKey(), tempPhotosData);
     }
 
     if (data.getPhotos() != null) {
@@ -136,7 +137,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       return;
     }
 
-    TempPhotosData tempData = jobStore.findData(TempPhotosData.class, id);
+    TempPhotosData tempData = jobStore.findData(id, createCacheKey(), TempPhotosData.class);
     String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
 
     if (Strings.isNullOrEmpty(newAlbumId)) {
@@ -159,7 +160,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       photosetsInterface.addPhoto(newAlbumId, photoId);
     }
 
-    jobStore.update(id, tempData);
+    jobStore.update(id, createCacheKey(), tempData);
   }
 
   private String uploadPhoto(PhotoModel photo) throws IOException, FlickrException {
@@ -173,6 +174,14 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setTitle(COPY_PREFIX + photo.getTitle())
             .setDescription(photo.getDescription());
     return uploader.upload(inStream, uploadMetaData);
+  }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempPhotosData";
   }
 
   @VisibleForTesting

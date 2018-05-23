@@ -72,11 +72,11 @@ public class MicrosoftCalendarImporter
   @Override
   public ImportResult importItem(
           UUID jobId, TokenAuthData authData, CalendarContainerResource data) {
-    TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
+    TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
     if (calendarMappings == null) {
       calendarMappings = new TempCalendarData(jobId);
       try {
-        jobStore.create(jobId, calendarMappings);
+        jobStore.create(jobId, createCacheKey(), calendarMappings);
       } catch (IOException e) {
         return new ImportResult(ResultType.ERROR, e.getMessage());
       }
@@ -128,7 +128,7 @@ public class MicrosoftCalendarImporter
       calendarMappings.addIdMapping(
           requestIdToExportedId.get(batchRequestId), (String) body.get("id"));
     }
-    jobStore.update(jobId, calendarMappings);
+    jobStore.update(jobId, createCacheKey(), calendarMappings);
 
     List<Map<String, Object>> eventRequests = new ArrayList<>();
     requestId = 1;
@@ -164,5 +164,13 @@ public class MicrosoftCalendarImporter
     problems.addAll(result.getProblems());
     LinkedHashMap contact = result.getTransformed();
     return createRequest(id, url, contact);
+  }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempCalendarData";
   }
 }

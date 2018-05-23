@@ -60,11 +60,11 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
 
     Tasks tasksService = getOrCreateTasksService(authData);
-    TempTasksData tempTasksData = jobStore.findData(TempTasksData.class, jobId);
+    TempTasksData tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
     if (tempTasksData == null) {
       tempTasksData = new TempTasksData(jobId.toString());
       try {
-        jobStore.create(jobId, tempTasksData);
+        jobStore.create(jobId, createCacheKey(), tempTasksData);
       } catch (IOException e) {
         return new ImportResult(ResultType.ERROR, e.getMessage());
       }
@@ -72,7 +72,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
 
     for (TaskListModel oldTasksList : data.getLists()) {
       // TempTasksData shouldn't be null since we added it.
-      tempTasksData = jobStore.findData(TempTasksData.class, jobId);
+      tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
       TaskList insertedTaskList;
 
@@ -84,10 +84,10 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
 
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
 
-      jobStore.update(jobId, tempTasksData);
+      jobStore.update(jobId, createCacheKey(), tempTasksData);
     }
 
-    tempTasksData = jobStore.findData(TempTasksData.class, jobId);
+    tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
 
     for (TaskModel oldTask : data.getTasks()) {
       // TODO: The TaskModel doesn't contain information about completion, which means these all are
@@ -114,5 +114,13 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
             credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
+  }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempTaskData";
   }
 }

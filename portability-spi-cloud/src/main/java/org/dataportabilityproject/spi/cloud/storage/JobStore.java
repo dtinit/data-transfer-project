@@ -72,22 +72,22 @@ public interface JobStore {
    */
   UUID findFirst(JobAuthorization.State jobState);
 
-  default <T extends DataModel> void create(UUID jobId, T model) throws IOException {
+  default <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   /** Updates the given model instance associated with a job. */
-  default <T extends DataModel> void update(UUID jobId, T model) {
+  default <T extends DataModel> void update(UUID jobId, String key, T model) {
     throw new UnsupportedOperationException();
   }
 
   /** Returns a model instance for the id of the given type or null if not found. */
-  default <T extends DataModel> T findData(Class<T> type, UUID id) {
+  default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
     throw new UnsupportedOperationException();
   }
 
   /** Removes the data model instance. */
-  default void removeData(UUID id) {
+  default void removeData(UUID JobId, String key) {
     throw new UnsupportedOperationException();
   }
 

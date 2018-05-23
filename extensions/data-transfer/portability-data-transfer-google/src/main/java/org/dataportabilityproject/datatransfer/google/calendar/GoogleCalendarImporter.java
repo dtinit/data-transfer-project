@@ -119,13 +119,13 @@ public class GoogleCalendarImporter implements
     com.google.api.services.calendar.model.Calendar calendarResult =
         getOrCreateCalendarInterface(authData).calendars().insert(toInsert).execute();
 
-    TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
+    TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
     if (calendarMappings == null) {
       calendarMappings = new TempCalendarData(jobId);
-      jobStore.create(jobId, calendarMappings);
+      jobStore.create(jobId, createCacheKey(), calendarMappings);
     }
     calendarMappings.addIdMapping(calendarModel.getId(), calendarResult.getId());
-    jobStore.update(jobId, calendarMappings);
+    jobStore.update(jobId, createCacheKey(), calendarMappings);
   }
 
   @VisibleForTesting
@@ -133,7 +133,7 @@ public class GoogleCalendarImporter implements
       throws IOException {
     Event event = convertToGoogleCalendarEvent(eventModel);
     // calendarMappings better not be null!
-    TempCalendarData calendarMappings = jobStore.findData(TempCalendarData.class, jobId);
+    TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
     String newCalendarId = calendarMappings.getImportedId(eventModel.getCalendarId());
     getOrCreateCalendarInterface(authData)
         .events()
@@ -152,4 +152,13 @@ public class GoogleCalendarImporter implements
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempCalendarData";
+  }
+
 }

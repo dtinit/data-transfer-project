@@ -1,7 +1,10 @@
 package org.dataportabilityproject.cloud.microsoft.cosmos;
 
+import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
@@ -12,19 +15,16 @@ import com.microsoft.azure.storage.table.CloudTableClient;
 import com.microsoft.azure.storage.table.TableOperation;
 import com.microsoft.azure.storage.table.TableQuery;
 import com.microsoft.azure.storage.table.TableResult;
-import org.dataportabilityproject.spi.cloud.storage.JobStore;
-import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
-import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
-import org.dataportabilityproject.types.transfer.models.DataModel;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.Iterator;
 import java.util.UUID;
-
-import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
+import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /** Uses the Azure Cosmos DB Table Storage API to persist job data. */
 public class AzureTableStore implements JobStore {
@@ -90,7 +90,7 @@ public class AzureTableStore implements JobStore {
 
     try {
 
-      create(jobId, JOB_TABLE, job.jobAuthorization().state().name(), job);
+      create(jobId.toString(), JOB_TABLE, job.jobAuthorization().state().name(), job);
 
     } catch (JsonProcessingException e) {
       throw new IOException("Error creating job: " + jobId, e);
@@ -164,24 +164,27 @@ public class AzureTableStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, T model) {
+  public <T extends DataModel> void create(UUID jobId, String key, T model) {
     try {
-      create(jobId, JOB_DATA_TABLE, null, model);
+      create(createRowKey(jobId, key), JOB_DATA_TABLE, null, model);
     } catch (IOException e) {
       throw new MicrosoftStorageException("Error creating job: " + jobId, e);
     }
   }
 
   @Override
-  public <T extends DataModel> void update(UUID jobId, T model) {}
-
-  @Override
-  public <T extends DataModel> T findData(Class<T> type, UUID jobId) {
-    return find(type, jobId, JOB_DATA_TABLE);
+  public <T extends DataModel> void update(UUID jobId, String key, T model) {
+    // TODO: implement update functionality
+    throw new UnsupportedOperationException("Implement update functionality. ");
   }
 
   @Override
-  public void removeData(UUID jobId) {
+  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+    return find(type, createRowKey(jobId, key), JOB_DATA_TABLE);
+  }
+
+  @Override
+  public void removeData(UUID jobId, String key) {
     try {
       remove(jobId, JOB_DATA_TABLE);
     } catch (IOException e) {
@@ -193,7 +196,7 @@ public class AzureTableStore implements JobStore {
   public void create(UUID jobId, String key, InputStream stream) {
     try {
       CloudBlobContainer reference = blobClient.getContainerReference(BLOB_CONTAINER);
-      CloudBlockBlob blob = reference.getBlockBlobReference(jobId.toString() + "-" + key);
+      CloudBlockBlob blob = reference.getBlockBlobReference(createRowKey(jobId, key));
       blob.upload(stream, UNKNOWN_LENGTH);
     } catch (StorageException | URISyntaxException | IOException e) {
       throw new MicrosoftStorageException("Error creating stream for job: " + jobId, e);
@@ -204,7 +207,7 @@ public class AzureTableStore implements JobStore {
   public InputStream getStream(UUID jobId, String key) {
     try {
       CloudBlobContainer reference = blobClient.getContainerReference(BLOB_CONTAINER);
-      CloudBlockBlob blob = reference.getBlockBlobReference(jobId.toString() + "-" + key);
+      CloudBlockBlob blob = reference.getBlockBlobReference(createRowKey(jobId, key));
       return blob.openInputStream();
     } catch (StorageException | URISyntaxException e) {
       throw new MicrosoftStorageException("Error returning stream for job: " + jobId, e);
@@ -240,7 +243,7 @@ public class AzureTableStore implements JobStore {
     }
   }
 
-  private void create(UUID jobId, String tableName, String state, Object type) throws IOException {
+  private void create(String rowKey, String tableName, String state, Object type) throws IOException {
     try {
 
       CloudTable table = tableClient.getTableReference(tableName);
@@ -249,13 +252,13 @@ public class AzureTableStore implements JobStore {
       DataWrapper wrapper =
           new DataWrapper(
               configuration.getPartitionKey(),
-              jobId.toString(),
+              rowKey,
               state,
               serializedJob); // job id used as key
       TableOperation insert = TableOperation.insert(wrapper);
       table.execute(insert);
     } catch (JsonProcessingException | StorageException | URISyntaxException e) {
-      throw new IOException("Error creating data for job: " + jobId, e);
+      throw new IOException("Error creating data for rowKey: " + rowKey, e);
     }
   }
 
@@ -277,18 +280,23 @@ public class AzureTableStore implements JobStore {
     }
   }
 
-  private <T> T find(Class<T> type, UUID jobId, String tableName) {
+  private <T> T find(Class<T> type, String rowKey, String tableName) {
     try {
 
       CloudTable table = tableClient.getTableReference(tableName);
       TableOperation retrieve =
           TableOperation.retrieve(
-              configuration.getPartitionKey(), jobId.toString(), DataWrapper.class);
+              configuration.getPartitionKey(), rowKey, DataWrapper.class);
       TableResult result = table.execute(retrieve);
       DataWrapper wrapper = result.getResultAsType();
       return configuration.getMapper().readValue(wrapper.getSerialized(), type);
     } catch (StorageException | IOException | URISyntaxException e) {
-      throw new MicrosoftStorageException("Error finding data for job: " + jobId, e);
+      throw new MicrosoftStorageException("Error finding data for rowKey: " + rowKey, e);
     }
+  }
+
+  private static String createRowKey(UUID jobId, String key) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
+    return String.format("%s-%s", jobId.toString(), key);
   }
 }
