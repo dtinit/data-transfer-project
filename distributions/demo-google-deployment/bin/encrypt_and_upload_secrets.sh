@@ -106,8 +106,8 @@ if [[ ! -e $ENCRYPTED_SECRETS_DIR ]]; then
   # TODO: Make this list configurable
   encrypt_secret "FLICKR"
   encrypt_secret "GOOGLE"
-  encrypt_secret "MICROSOFT"
   encrypt_secret "INSTAGRAM"
+  encrypt_secret "MICROSOFT"
   encrypt_secret "RTM"
   encrypt_secret "SHUTTERSTOCK"
   encrypt_secret "SMUGMUG"
