@@ -15,83 +15,104 @@
  */
 package org.dataportabilityproject.transport.jettyrest.http;
 
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.Source;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.Writer;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Provides HTTP(s) communication to the system via Jetty. */
+/**
+ * Provides HTTP(s) communication to the system via Jetty.
+ */
 public class JettyTransport {
-  private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
+    private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
+    private static final String LOG_CLASS = "org.eclipse.jetty.util.log.class";
 
-  private int httpPort = 8080; // TODO configure
+    private final KeyStore keyStore;
 
-  private Server server;
-  private List<Handler> handlers = new ArrayList<>();
+    private int httpPort = 8080; // TODO configure
 
-  public JettyTransport() {
-    System.setProperty(ANNOUNCE, "false");
-  }
+    private Server server;
+    private List<Handler> handlers = new ArrayList<>();
 
-  public void initialize() {
-    server = new Server(httpPort);
-  }
-
-  public void start() {
-
-    server.setErrorHandler(new JettyErrorHandler());
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
-    contexts.setHandlers(handlers.toArray(new Handler[0]));
-    server.setHandler(contexts);
-    try {
-      server.start();
-    } catch (Exception e) {
-      throw new RuntimeException("Error starting Jetty transport", e);
+    public JettyTransport(KeyStore keyStore) {
+        this.keyStore = keyStore;
+        System.setProperty(LOG_CLASS, JettyMonitor.class.getName());
+        System.setProperty(ANNOUNCE, "false");
     }
-    // "Listening on HTTP " + httpPort;
-  }
 
-  public void shutdown() {
-    if (server == null) {
-      return;
+    public void start() {
+        server = new Server();
+
+        HttpConfiguration https = new HttpConfiguration();
+        https.addCustomizer(new SecureRequestCustomizer());
+        SslContextFactory sslContextFactory = new SslContextFactory();
+        sslContextFactory.setKeyStore(keyStore);
+        sslContextFactory.setKeyStorePassword("password");
+        sslContextFactory.setKeyManagerPassword("password");
+        ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
+        sslConnector.setPort(httpPort);
+        server.setConnectors(new Connector[]{sslConnector});
+
+        server.setErrorHandler(new JettyErrorHandler());
+        ContextHandlerCollection contexts = new ContextHandlerCollection();
+        contexts.setHandlers(handlers.toArray(new Handler[0]));
+        server.setHandler(contexts);
+        try {
+            server.start();
+        } catch (Exception e) {
+            throw new RuntimeException("Error starting Jetty transport", e);
+        }
     }
-    try {
-      server.stop();
-    } catch (Exception e) {
-      throw new RuntimeException("Error stopping Jetty transport", e);
+
+    public void shutdown() {
+        if (server == null) {
+            return;
+        }
+        try {
+            server.stop();
+        } catch (Exception e) {
+            throw new RuntimeException("Error stopping Jetty transport", e);
+        }
     }
-  }
 
-  public void registerServlet(String path, Servlet servletContainer) {
-    ServletHolder servletHolder = new ServletHolder(Source.EMBEDDED);
-    servletHolder.setName("Data Portability");
-    servletHolder.setServlet(servletContainer);
-    servletHolder.setInitOrder(1);
+    public void registerServlet(String path, Servlet servletContainer) {
+        ServletHolder servletHolder = new ServletHolder(Source.EMBEDDED);
+        servletHolder.setName("Data Portability");
+        servletHolder.setServlet(servletContainer);
+        servletHolder.setInitOrder(1);
 
-    ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-    handler.setContextPath("/");
+        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        handler.setContextPath("/");
 
-    handlers.add(handler);
+        handlers.add(handler);
 
-    handler.getServletHandler().addServletWithMapping(servletHolder, path);
-  }
-
-  private class JettyErrorHandler extends ErrorHandler {
-
-    protected void writeErrorPage(
-        HttpServletRequest request, Writer writer, int code, String message, boolean showStacks)
-        throws IOException {
-      writer.write("{ error: '" + code + "'}");
+        handler.getServletHandler().addServletWithMapping(servletHolder, path);
     }
-  }
+
+    private class JettyErrorHandler extends ErrorHandler {
+
+        protected void writeErrorPage(
+                HttpServletRequest request, Writer writer, int code, String message, boolean showStacks)
+                throws IOException {
+            writer.write("{ error: '" + code + "'}");
+        }
+    }
 }

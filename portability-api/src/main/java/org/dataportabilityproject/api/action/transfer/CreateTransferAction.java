@@ -76,7 +76,7 @@ public class CreateTransferAction implements Action<CreateTransfer, Transfer> {
               AuthServiceProviderRegistry.AuthMode.EXPORT);
 
       AuthFlowConfiguration authFlowConfiguration =
-          generator.generateConfiguration(baseApiUrl, encodedJobId);
+          generator.generateConfiguration(baseApiUrl, newId.toString());
 
       // If present, store initial auth data for export services, e.g. used for oauth1
       if (authFlowConfiguration.getInitialAuthData() != null) {

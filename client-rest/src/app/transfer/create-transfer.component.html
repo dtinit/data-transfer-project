@@ -1,0 +1,40 @@
+<form [formGroup]="servicesForm" (submit)="next()">
+    <div class="grid-y grid-margin-y" style="padding-top: 2em">
+        <div class="cell shrink align-self-middle"><h3>Data Portability Demo</h3></div>
+        <div class="cell align-self-middle">
+            <progress-component></progress-component>
+        </div>
+        <div class="cell shrink">
+            <div class="grid-x grid-margin-x" style="padding-top: 2em">
+                <div class="cell small-4 small-offset-4 text-center">
+                    <h5 style="padding-bottom: 1em">Transfer {{dataType | titlecase}}</h5>
+                </div>
+            </div>
+            <div class="grid-x grid-margin-x">
+                <div class="cell shrink small-offset-2">
+                    <label class="middle" for="exportService">From</label>
+                </div>
+                <div class="cell small-3">
+                    <select id="exportService" tabindex="1" [formControlName]="'exportService'">
+                        <option [value]="undefined">Choose a service...</option>
+                        <option *ngFor="let service of exportServices" [value]="service">{{ service | titlecase }}</option>
+                    </select>
+                </div>
+                <div class="cell shrink">
+                    <label class="middle" for="importService">to</label>
+                </div>
+                <div class="cell small-3">
+                    <select id="importService" tabindex="2" [formControlName]="'importService'">
+                        <option [value]="undefined">Choose a service...</option>
+                        <option *ngFor="let service of importServices" [value]="service">{{ service | titlecase }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="cell align-self-middle" style="padding-top: 1em;">      
+            <input type="submit" class="button" value="Next: Authenticate" tabindex="3" [disabled]="!servicesForm.valid">
+        </div>
+    </div>
+</form>
+
+

@@ -29,8 +29,8 @@ public class GenerateServiceAuthData {
     IMPORT
   }
 
-  private String id;
-  private String authToken;
+  private final String id;
+  private final String authToken;
   private final Mode mode;
 
   public GenerateServiceAuthData(

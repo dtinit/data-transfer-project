@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,11 +74,11 @@ public class ApiMain {
   }
 
   public void initializeHttp() {
-    initializeHttps(null, null);
+    initializeHttps(null, null, null);
   }
 
   public void initializeHttps(
-      TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory) {
+          TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory, KeyStore keyStore) {
     // TODO init with types
     TypeManager typeManager = new TypeManagerImpl();
     typeManager.registerTypes(
@@ -87,6 +88,18 @@ public class ApiMain {
 
     settingsExtension.initialize(null);
     ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension);
+
+    if (trustManagerFactory != null) {
+      extensionContext.registerService(TrustManagerFactory.class, trustManagerFactory);
+    }
+
+    if (keyManagerFactory != null) {
+      extensionContext.registerService(KeyManagerFactory.class, keyManagerFactory);
+    }
+
+    if (keyStore != null) {
+      extensionContext.registerService(KeyStore.class, keyStore);
+    }
 
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
     extensionContext.registerService(JsonFactory.class, new JacksonFactory());

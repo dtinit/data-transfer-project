@@ -17,6 +17,5 @@
 
 dependencies {
     compile project(':portability-api')
-    compile project(':extensions:transport:portability-transport-jdk')
     compile project(':portability-transfer')
 }

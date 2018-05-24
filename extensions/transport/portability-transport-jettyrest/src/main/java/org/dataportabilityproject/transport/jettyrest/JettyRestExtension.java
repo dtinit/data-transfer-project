@@ -21,6 +21,8 @@ import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.dataportabilityproject.transport.jettyrest.http.JettyTransport;
 import org.dataportabilityproject.transport.jettyrest.rest.JerseyTransportBinder;
 
+import java.security.KeyStore;
+
 /**
  * Bootstraps the Jetty REST extension.
  *
@@ -33,9 +35,11 @@ public class JettyRestExtension implements ServiceExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    transport = new JettyTransport();
-    String baseUrl = context.getSetting("baseUrl", null);
-    binder = new JerseyTransportBinder(transport, baseUrl);
+
+    KeyStore keyStore = context.getService(KeyStore.class);
+
+    transport = new JettyTransport(keyStore);
+    binder = new JerseyTransportBinder(transport);
     context.registerService(TransportBinder.class, binder);
   }
 

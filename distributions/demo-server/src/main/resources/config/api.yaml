@@ -1,2 +1,3 @@
 baseUrl: https://localhost:3000
-baseApiUrl: https://localhost:8080
+#JDK transport: baseApiUrl: https://localhost:8080/api
+baseApiUrl: https://localhost:3000  # Jetty transport

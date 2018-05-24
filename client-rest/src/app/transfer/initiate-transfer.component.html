@@ -1,0 +1,17 @@
+<div class="grid-y grid-margin-y" style="padding-top: 2em">
+    <div class="cell shrink align-self-middle"><h3>Data Portability Demo</h3></div>
+    <div class="cell align-self-middle">
+        <progress-component></progress-component>
+    </div>
+    <div *ngIf="!initiated" class="cell small-12 text-center" style="padding-top: 3em">
+        <h5 style="padding-bottom: 1em">Transfer {{dataType | titlecase}} from {{exportService | titlecase}} to {{importService | titlecase}}</h5>
+        <p style="padding-top: 3em"><a (click)="initiate()" class="button" tabindex="1">Start Transfer</a></p>
+    </div>
+    <div *ngIf="initiated" class="cell small-12 text-center" style="padding-top: 3em">
+        <h5 style="padding-bottom: 1em">Transfering {{dataType | titlecase}} from {{exportService | titlecase}} to {{importService | titlecase}}</h5>
+        <p>Your transfer has started. It may take a few minutes to complete.</p>
+        <p style="padding-top: 3em"><a (click)="reset()" class="button" tabindex="1">Reset Demo</a></p>
+    </div>
+</div>
+
+

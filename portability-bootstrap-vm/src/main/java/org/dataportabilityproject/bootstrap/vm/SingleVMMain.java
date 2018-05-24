@@ -56,7 +56,7 @@ public class SingleVMMain {
       TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
       trustManagerFactory.init(keyStore);
 
-      apiMain.initializeHttps(trustManagerFactory, keyManagerFactory);
+      apiMain.initializeHttps(trustManagerFactory, keyManagerFactory, keyStore);
 
       apiMain.start();
 

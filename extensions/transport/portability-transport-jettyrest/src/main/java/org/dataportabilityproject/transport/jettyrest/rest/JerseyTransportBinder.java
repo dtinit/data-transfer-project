@@ -23,6 +23,7 @@ import org.dataportabilityproject.types.client.transfer.CreateTransfer;
 import org.dataportabilityproject.types.client.transfer.GenerateServiceAuthData;
 import org.dataportabilityproject.types.client.transfer.GetTransfer;
 import org.dataportabilityproject.types.client.transfer.GetTransferServices;
+import org.dataportabilityproject.types.client.transfer.PrepareImport;
 import org.dataportabilityproject.types.client.transfer.StartTransfer;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -40,12 +41,10 @@ import java.util.Set;
  */
 public class JerseyTransportBinder implements TransportBinder {
   private final JettyTransport jettyTransport;
-  private final String baseUrl;
   private final Map<Class<?>, Action> actions;
 
-  public JerseyTransportBinder(JettyTransport jettyTransport, String baseUrl) {
+  public JerseyTransportBinder(JettyTransport jettyTransport) {
     this.jettyTransport = jettyTransport;
-    this.baseUrl = baseUrl;
     actions = new HashMap<>();
   }
 
@@ -63,9 +62,10 @@ public class JerseyTransportBinder implements TransportBinder {
     controllers.add(
         new TransferController(
             actions.get(CreateTransfer.class),
+            actions.get(PrepareImport.class),
+            actions.get(GenerateServiceAuthData.class),
             actions.get(StartTransfer.class),
             actions.get(GetTransfer.class)));
-    controllers.add(new OAuth2Controller(baseUrl, actions.get(GenerateServiceAuthData.class)));
 
     // Create a Jersey JAX-RS Application (resourceConfig), add the actions, and register it with
     // the Jetty transport.

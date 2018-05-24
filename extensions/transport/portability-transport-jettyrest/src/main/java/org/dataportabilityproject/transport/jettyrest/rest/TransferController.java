@@ -17,7 +17,10 @@ package org.dataportabilityproject.transport.jettyrest.rest;
 
 import org.dataportabilityproject.api.action.Action;
 import org.dataportabilityproject.types.client.transfer.CreateTransfer;
+import org.dataportabilityproject.types.client.transfer.GenerateServiceAuthData;
 import org.dataportabilityproject.types.client.transfer.GetTransfer;
+import org.dataportabilityproject.types.client.transfer.PrepareImport;
+import org.dataportabilityproject.types.client.transfer.ServiceAuthData;
 import org.dataportabilityproject.types.client.transfer.StartTransfer;
 import org.dataportabilityproject.types.client.transfer.Transfer;
 
@@ -34,33 +37,51 @@ import javax.ws.rs.core.MediaType;
 @Produces({MediaType.APPLICATION_JSON})
 @Path("/transfer")
 public class TransferController {
-  private final Action<CreateTransfer, Transfer> createAction;
-  private final Action<StartTransfer, Transfer> startAction;
-  private final Action<GetTransfer, Transfer> getAction;
+    private final Action<CreateTransfer, Transfer> createAction;
+    private final Action<PrepareImport, Transfer> importAction;
+    private final Action<GenerateServiceAuthData, ServiceAuthData> generateAction;
+    private final Action<StartTransfer, Transfer> startAction;
+    private final Action<GetTransfer, Transfer> getAction;
 
-  public TransferController(
-      Action<CreateTransfer, Transfer> createAction,
-      Action<StartTransfer, Transfer> startAction,
-      Action<GetTransfer, Transfer> getAction) {
-    this.createAction = createAction;
-    this.startAction = startAction;
-    this.getAction = getAction;
-  }
+    public TransferController(
+            Action<CreateTransfer, Transfer> createAction,
+            Action<PrepareImport, Transfer> importAction,
+            Action<GenerateServiceAuthData, ServiceAuthData> generateAction,
+            Action<StartTransfer, Transfer> startAction,
+            Action<GetTransfer, Transfer> getAction) {
+        this.createAction = createAction;
+        this.importAction = importAction;
+        this.generateAction = generateAction;
+        this.startAction = startAction;
+        this.getAction = getAction;
+    }
 
-  @GET
-  @Path("{id}")
-  public Transfer find(@PathParam("id") String id) {
-    return getAction.handle((new GetTransfer(id)));
-  }
+    @GET
+    @Path("{id}")
+    public Transfer find(@PathParam("id") String id) {
+        return getAction.handle((new GetTransfer(id)));
+    }
 
-  @POST
-  public Transfer transferServices(CreateTransfer request) {
-    return createAction.handle(request);
-  }
+    @POST
+    public Transfer transferServices(CreateTransfer request) {
+        return createAction.handle(request);
+    }
 
-  @POST
-  @Path("{id}/start")
-  public Transfer startTransfer(StartTransfer request) {
-    return startAction.handle(request);
-  }
+    @POST
+    @Path("{id}/import")
+    public Transfer prepareImport(@PathParam("id") String id) {
+        return importAction.handle(new PrepareImport(id));
+    }
+
+    @POST
+    @Path("{id}/generate")
+    public ServiceAuthData generate(GenerateServiceAuthData generate) {
+        return generateAction.handle(generate);
+    }
+
+    @POST
+    @Path("{id}/start")
+    public Transfer startTransfer(StartTransfer request) {
+        return startAction.handle(request);
+    }
 }
