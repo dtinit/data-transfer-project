@@ -63,7 +63,7 @@ public class TransferController {
     }
 
     @POST
-    public Transfer transferServices(CreateTransfer request) {
+    public Transfer create(CreateTransfer request) {
         return createAction.handle(request);
     }
 
