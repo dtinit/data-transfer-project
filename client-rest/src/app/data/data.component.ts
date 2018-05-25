@@ -24,7 +24,7 @@ export class DataComponent implements OnInit {
 
     ngOnInit() {
         this.dataTypesService.getDataTypes().subscribe((dataTypes) => {
-            this.dataTypes = dataTypes.dataTypes; //FIXME sort .sort((a, b) => b - a);
+            this.dataTypes = dataTypes.dataTypes.sort();
             this.dataForm.get("dataType").setValue(this.dataTypes[0]);
             this.dataTypeRef.nativeElement.focus();
         }, (error) => {

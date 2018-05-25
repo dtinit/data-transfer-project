@@ -36,8 +36,8 @@ export class CreateTransferComponent implements OnInit {
         this.servicesForm.get("importService").setValue(undefined);
 
         this.transferService.getServices(this.dataType).subscribe((services) => {
-            this.exportServices = services.exportServices; //FIXME sort .sort((a, b) => b - a);
-            this.importServices = services.importServices; //FIXME sort .sort((a, b) => b - a);
+            this.exportServices = services.exportServices.sort();
+            this.importServices = services.importServices.sort();
         }, (error) => {
             console.error(error);
             alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);
