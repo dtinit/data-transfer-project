@@ -36,4 +36,9 @@ export class DataComponent implements OnInit {
         this.router.navigate(["create"]);
     }
 
+    reset() {
+        this.progressService.reset();
+        this.router.navigate([""]);
+    }
+
 }

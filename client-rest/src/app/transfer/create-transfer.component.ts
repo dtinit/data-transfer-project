@@ -55,4 +55,9 @@ export class CreateTransferComponent implements OnInit {
         }, transportError);
     }
 
+
+    reset() {
+        this.progressService.reset();
+        this.router.navigate([""]);
+    }
 }

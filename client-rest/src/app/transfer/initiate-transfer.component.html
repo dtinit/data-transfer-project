@@ -6,6 +6,8 @@
     <div *ngIf="!initiated" class="cell small-12 text-center" style="padding-top: 3em">
         <h5 style="padding-bottom: 1em">Transfer {{dataType | titlecase}} from {{exportService | titlecase}} to {{importService | titlecase}}</h5>
         <p style="padding-top: 3em"><a (click)="initiate()" class="button" tabindex="1">Start Transfer</a></p>
+        <p> <a (click)="reset()" tabindex="2">Reset Demo</a> </p>
+
     </div>
     <div *ngIf="initiated" class="cell small-12 text-center" style="padding-top: 3em">
         <h5 style="padding-bottom: 1em">Transfering {{dataType | titlecase}} from {{exportService | titlecase}} to {{importService | titlecase}}</h5>
