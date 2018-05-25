@@ -45,10 +45,10 @@ export class AuthCallbackComponent implements OnInit {
             }));
         } else {
             // import auth step: received the import auth callback, generate the import auth data from the import token and continue the transfer process
-            this.transferService.generateAuthData({id: transferId, authToken: code, mode: "IMPORT"}).subscribe((data => {
+            this.transferService.generateAuthData({id: transferId, authToken: code, mode: "IMPORT"}).subscribe(data => {
                 this.progressService.authImportComplete(data.authData);
                 this.router.navigate(["initiate"]);
-            }, transportError));
+            }, transportError);
         }
     }
 }

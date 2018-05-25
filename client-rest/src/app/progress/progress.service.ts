@@ -1,6 +1,4 @@
 import {Injectable} from "@angular/core";
-import {EventService} from "../event";
-import {ActivatedRoute} from "@angular/router";
 
 /**
  * Provides stateful management of application data and progress.
@@ -9,8 +7,8 @@ import {ActivatedRoute} from "@angular/router";
 export class ProgressService {
     private appState: AppState;
 
-    constructor(private eventService: EventService, activatedRoute: ActivatedRoute) {
-        let serialized = localStorage.getItem("appstate");
+    constructor() {
+        let serialized = sessionStorage.getItem("appstate");
         if (serialized != null) {
             this.appState = JSON.parse(serialized);
         } else {
@@ -56,7 +54,7 @@ export class ProgressService {
     }
 
     private save(): void {
-        localStorage.setItem("appstate", JSON.stringify(this.appState));
+        sessionStorage.setItem("appstate", JSON.stringify(this.appState));
     }
 
     begin() {
@@ -102,12 +100,12 @@ export class ProgressService {
 
     initiated() {
         this.appState.step = Step.RUNNING;
-        localStorage.removeItem("appstate");
+        sessionStorage.removeItem("appstate");
     }
 
     reset() {
         this.appState.step = Step.BEGIN;
-        localStorage.removeItem("appstate");
+        sessionStorage.removeItem("appstate");
     }
 
 }
