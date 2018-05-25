@@ -3,6 +3,7 @@ import {Router} from "@angular/router";
 import {DataTypesService} from "./data-types.service";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {ProgressService} from "../progress";
+import {transportError} from "../transport";
 
 /**
  * Allows a user to select the type of data to transfer, e.g. contacts, photos, etc., from a list of available types.
@@ -27,10 +28,7 @@ export class DataComponent implements OnInit {
             this.dataTypes = dataTypes.dataTypes.sort();
             this.dataForm.get("dataType").setValue(this.dataTypes[0]);
             this.dataTypeRef.nativeElement.focus();
-        }, (error) => {
-            console.error(error);
-            alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);
-        });
+        }, transportError);
     }
 
     next() {

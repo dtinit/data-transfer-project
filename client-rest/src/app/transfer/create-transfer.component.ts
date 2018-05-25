@@ -4,6 +4,7 @@ import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {EventService} from "../event";
 import {ProgressService} from "../progress";
 import {TransferService} from "./transfer.service";
+import {transportError} from "../transport";
 
 /**
  * Creates a transfer request on the API server.
@@ -38,10 +39,7 @@ export class CreateTransferComponent implements OnInit {
         this.transferService.getServices(this.dataType).subscribe((services) => {
             this.exportServices = services.exportServices.sort();
             this.importServices = services.importServices.sort();
-        }, (error) => {
-            console.error(error);
-            alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);
-        });
+        }, transportError);
     }
 
 
@@ -54,10 +52,7 @@ export class CreateTransferComponent implements OnInit {
         }).subscribe(transfer => {
             this.progressService.createComplete(transfer.id);
             window.location.href = transfer.link;
-        }, (error) => {
-            console.error(error);
-            alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);
-        });
+        }, transportError);
     }
 
 }

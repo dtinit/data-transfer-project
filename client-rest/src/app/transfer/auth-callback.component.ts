@@ -2,6 +2,7 @@ import {Component, OnInit} from "@angular/core";
 import {TransferService} from "./transfer.service";
 import {ProgressService, Step} from "../progress";
 import {ActivatedRoute, Router} from "@angular/router";
+import {transportError} from "../transport";
 
 /**
  * Receives callbacks from external OAuth export and import services. Updates the application state with corresponding OAuth tokens.
@@ -40,17 +41,14 @@ export class AuthCallbackComponent implements OnInit {
                 this.transferService.prepareImport(transferId).subscribe(transfer => {
                     // redirect to the import OAuth service. When authentication is complete, the browser will be redirected back to this component
                     window.location.href = transfer.link;
-                }, (error) => {
-                    console.error(error);
-                    alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);
-                });
+                }, transportError);
             }));
         } else {
             // import auth step: received the import auth callback, generate the import auth data from the import token and continue the transfer process
             this.transferService.generateAuthData({id: transferId, authToken: code, mode: "IMPORT"}).subscribe((data => {
                 this.progressService.authImportComplete(data.authData);
                 this.router.navigate(["initiate"]);
-            }));
+            }, transportError));
         }
     }
 }

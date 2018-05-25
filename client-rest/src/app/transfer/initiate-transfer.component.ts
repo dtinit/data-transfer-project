@@ -4,6 +4,7 @@ import {EventService} from "../event";
 import {ProgressService} from "../progress";
 import {TransferService} from "./transfer.service";
 import {StartTransfer} from "../types";
+import {transportError} from "../transport";
 
 /**
  * Initiates a transfer operation. Previosuly generated authentication data is posted to the API server.
@@ -41,10 +42,7 @@ export class InitiateTransferComponent implements OnInit {
         this.progressService.initiated();
         this.initiated = true;
         this.transferService.initiateTransfer(start).subscribe(transfer => {
-        }, (error) => {
-            console.error(error);
-            alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);
-        });
+        }, transportError);
     }
 
     reset() {
