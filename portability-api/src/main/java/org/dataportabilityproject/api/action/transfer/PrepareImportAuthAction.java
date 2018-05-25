@@ -30,7 +30,7 @@ import static org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistr
 /** Prepares a transfer request for the import service authentication flow */
 public class PrepareImportAuthAction implements Action<PrepareImport, Transfer> {
 
-  private final String baseApiUrl;
+  private final String baseUrl;
   private final JobStore jobStore;
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -38,12 +38,12 @@ public class PrepareImportAuthAction implements Action<PrepareImport, Transfer> 
 
   @Inject
   PrepareImportAuthAction(
-      @Named("baseApiUrl") String baseApiUrl,
+      @Named("baseUrl") String baseUrl,
       JobStore jobStore,
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
       TypeManager typeManager) {
-    this.baseApiUrl = baseApiUrl;
+    this.baseUrl = baseUrl;
     this.jobStore = jobStore;
     this.registry = registry;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
@@ -76,7 +76,7 @@ public class PrepareImportAuthAction implements Action<PrepareImport, Transfer> 
 
       String encodedJobId = encodeJobId(jobId);
       AuthFlowConfiguration configuration =
-          generator.generateConfiguration(baseApiUrl, encodedJobId);
+          generator.generateConfiguration(baseUrl, encodedJobId);
 
       // If present, store initial auth data for export services, e.g. used for oauth1
       if (configuration.getInitialAuthData() != null) {

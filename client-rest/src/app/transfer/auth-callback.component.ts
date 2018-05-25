@@ -39,7 +39,7 @@ export class AuthCallbackComponent implements OnInit {
                 // retrieve the configuration for the import OAuth service
                 this.transferService.prepareImport(transferId).subscribe(transfer => {
                     // redirect to the import OAuth service. When authentication is complete, the browser will be redirected back to this component
-                    window.location.href = transfer.link.replace(":8080/api/", ":3000/").replace("8080%2Fapi%2F", "3000%2F");   // FIXME
+                    window.location.href = transfer.link;
                 }, (error) => {
                     console.error(error);
                     alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);

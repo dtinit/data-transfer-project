@@ -53,7 +53,7 @@ export class CreateTransferComponent implements OnInit {
             transferDataType: this.progressService.dataType()
         }).subscribe(transfer => {
             this.progressService.createComplete(transfer.id);
-            window.location.href = transfer.link.replace(":8080/api/", ":3000/").replace("8080%2Fapi%2F", "3000%2F");   // FIXME
+            window.location.href = transfer.link;
         }, (error) => {
             console.error(error);
             alert(`Sorry, something is not right.\n\nCode: ${error.status}\nMessage: ${error.message}`);

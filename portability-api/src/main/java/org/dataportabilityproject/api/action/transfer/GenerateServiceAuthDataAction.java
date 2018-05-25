@@ -32,7 +32,7 @@ public class GenerateServiceAuthDataAction
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
-  private final String baseApiUrl;
+  private final String baseUrl;
 
   @Inject
   public GenerateServiceAuthDataAction(
@@ -40,11 +40,11 @@ public class GenerateServiceAuthDataAction
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
       TypeManager typeManager,
-      @Named("baseApiUrl") String baseApiUrl) {
+      @Named("baseUrl") String baseUrl) {
     this.jobStore = jobStore;
     this.registry = registry;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
-    this.baseApiUrl = baseApiUrl;
+    this.baseUrl = baseUrl;
     this.objectMapper = typeManager.getMapper();
   }
 
@@ -92,7 +92,7 @@ public class GenerateServiceAuthDataAction
       // Generate auth data
       AuthData authData =
           generator.generateAuthData(
-              baseApiUrl, request.getAuthToken(), jobId.toString(), initialAuthData, null);
+                  baseUrl, request.getAuthToken(), jobId.toString(), initialAuthData, null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Serialize and encrypt the auth data

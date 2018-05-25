@@ -26,7 +26,7 @@ import static org.dataportabilityproject.api.action.ActionUtils.encodeJobId;
 /** Creates a transfer request and prepares it for the export service authentication flow. */
 public class CreateTransferAction implements Action<CreateTransfer, Transfer> {
 
-  private final String baseApiUrl;
+  private final String baseUrl;
   private final JobStore jobStore;
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -34,12 +34,12 @@ public class CreateTransferAction implements Action<CreateTransfer, Transfer> {
 
   @Inject
   CreateTransferAction(
-      @Named("baseApiUrl") String baseApiUrl,
+      @Named("baseUrl") String baseUrl,
       JobStore jobStore,
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
       TypeManager typeManager) {
-    this.baseApiUrl = baseApiUrl;
+    this.baseUrl = baseUrl;
     this.jobStore = jobStore;
     this.registry = registry;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
@@ -76,7 +76,7 @@ public class CreateTransferAction implements Action<CreateTransfer, Transfer> {
               AuthServiceProviderRegistry.AuthMode.EXPORT);
 
       AuthFlowConfiguration authFlowConfiguration =
-          generator.generateConfiguration(baseApiUrl, newId.toString());
+          generator.generateConfiguration(baseUrl, newId.toString());
 
       // If present, store initial auth data for export services, e.g. used for oauth1
       if (authFlowConfiguration.getInitialAuthData() != null) {
