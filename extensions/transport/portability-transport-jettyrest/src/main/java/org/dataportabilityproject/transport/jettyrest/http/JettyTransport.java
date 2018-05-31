@@ -29,6 +29,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.Source;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +44,8 @@ import java.util.List;
  * Provides HTTP(s) communication to the system via Jetty.
  */
 public class JettyTransport {
+    private static final Logger logger = LoggerFactory.getLogger(JettyTransport.class);
+    
     private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
     private static final String LOG_CLASS = "org.eclipse.jetty.util.log.class";
 
@@ -77,6 +81,7 @@ public class JettyTransport {
         server.setHandler(contexts);
         try {
             server.start();
+            logger.info("Using Jetty transport");
         } catch (Exception e) {
             throw new RuntimeException("Error starting Jetty transport", e);
         }
