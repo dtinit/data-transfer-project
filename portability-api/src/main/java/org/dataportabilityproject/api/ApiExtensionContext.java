@@ -16,7 +16,6 @@
 package org.dataportabilityproject.api;
 
 import com.google.common.base.Preconditions;
-import com.google.inject.Injector;
 import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.api.launcher.Flag;
@@ -36,7 +35,6 @@ public class ApiExtensionContext implements ExtensionContext {
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final TypeManager typeManager;
   private final SettingsExtension settingsExtension;
-  private Injector injector;
 
   // Required settings
   private final String cloud;

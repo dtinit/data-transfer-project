@@ -1,6 +1,5 @@
 import {Component, OnInit} from "@angular/core";
 import {Router} from "@angular/router";
-import {EventService} from "../event";
 import {ProgressService} from "../progress";
 import {TransferService} from "./transfer.service";
 import {StartTransfer} from "../types";
@@ -19,7 +18,7 @@ export class InitiateTransferComponent implements OnInit {
 
     initiated = false;
 
-    constructor(private transferService: TransferService, private progressService: ProgressService, private eventService: EventService, private router: Router) {
+    constructor(private transferService: TransferService, private progressService: ProgressService, private router: Router) {
     }
 
     ngOnInit() {

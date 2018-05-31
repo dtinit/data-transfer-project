@@ -8,7 +8,6 @@ import {routing} from "./app.routing";
 import {StartComponent} from "./start";
 import {DataComponent, DataTypesService} from "./data";
 import {ProgressComponent, ProgressGuard, ProgressService} from "./progress";
-import {EventService} from "./event";
 import {CommonModule, TitleCasePipe} from "@angular/common";
 import {AuthCallbackComponent, CreateTransferComponent, TransferService} from "./transfer";
 import {InitiateTransferComponent} from "./transfer/initiate-transfer.component";
@@ -20,7 +19,7 @@ import {InitiateTransferComponent} from "./transfer/initiate-transfer.component"
     imports: [
         BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, CommonModule, routing
     ],
-    providers: [ProgressService, DataTypesService, TransferService, ProgressGuard, EventService, TitleCasePipe],
+    providers: [ProgressService, DataTypesService, TransferService, ProgressGuard, TitleCasePipe],
     bootstrap: [AppComponent]
 })
 export class AppModule {

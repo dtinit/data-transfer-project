@@ -34,6 +34,7 @@ export class AuthCallbackComponent implements OnInit {
 
         if (Step.AUTHENTICATE_EXPORT === this.progressService.currentStep()) {
             // export auth step: generate the export auth data from the export token
+            // Use SSL as the token is sent cleartext 
             this.transferService.generateAuthData({id: transferId, authToken: code, mode: "EXPORT"}).subscribe((data => {
                 this.progressService.authExportComplete(data.authData);
 

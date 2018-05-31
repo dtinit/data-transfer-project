@@ -1,7 +1,6 @@
 import {Component, OnInit} from "@angular/core";
 import {Router} from "@angular/router";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {EventService} from "../event";
 import {ProgressService} from "../progress";
 import {TransferService} from "./transfer.service";
 import {transportError} from "../transport";
@@ -19,7 +18,7 @@ export class CreateTransferComponent implements OnInit {
     exportServices: Array<string>;
     importServices: Array<string>;
 
-    constructor(private transferService: TransferService, private progressService: ProgressService, private formBuilder: FormBuilder, private eventService: EventService, private router: Router) {
+    constructor(private transferService: TransferService, private progressService: ProgressService, private formBuilder: FormBuilder, private router: Router) {
         this.servicesForm = this.formBuilder.group({
             exportService: [undefined, Validators.required],
             importService: [undefined, Validators.required]

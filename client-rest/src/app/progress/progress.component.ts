@@ -15,7 +15,7 @@ export class ProgressComponent {
     }
 
     beginCurrent(): boolean {
-        return this.route.snapshot.url.length === 0;
+        return this.route.snapshot.url.length === 0; // default url
     }
 
     beginComplete(): boolean {

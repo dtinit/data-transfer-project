@@ -78,7 +78,9 @@ public class ApiMain {
   }
 
   public void initializeHttps(
-          TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory, KeyStore keyStore) {
+      TrustManagerFactory trustManagerFactory,
+      KeyManagerFactory keyManagerFactory,
+      KeyStore keyStore) {
     // TODO init with types
     TypeManager typeManager = new TypeManagerImpl();
     typeManager.registerTypes(
@@ -211,7 +213,7 @@ public class ApiMain {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+  public static final <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
     return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
   }
 }
