@@ -16,8 +16,10 @@
 package org.dataportabilityproject.cloud.local;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
+import org.dataportabilityproject.spi.cloud.types.JobAuthorization.State;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -26,16 +28,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
-  private static ConcurrentHashMap<UUID, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
 
+  private final Logger logger = LoggerFactory.getLogger(LocalJobStore.class);
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
    *
-   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link JobStore#update}.
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
    *     problem inserting the job.
@@ -43,6 +48,7 @@ public final class LocalJobStore implements JobStore {
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
+    logger.debug("creating job {} in local storage", jobId);
     if (JOB_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
@@ -95,6 +101,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
+    logger.debug("removing job {} from local storage", jobId);
     Map<String, Object> previous = JOB_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
@@ -123,9 +130,12 @@ public final class LocalJobStore implements JobStore {
     // Mimic an index lookup
     for (Entry<UUID, Map<String, Object>> job : JOB_MAP.entrySet()) {
       Map<String, Object> properties = job.getValue();
-      if (JobAuthorization.State.valueOf(
-              properties.get(PortabilityJob.AUTHORIZATION_STATE).toString())
-          == jobState) {
+      State state = State.valueOf(
+          properties.get(PortabilityJob.AUTHORIZATION_STATE).toString());
+
+      logger.debug("looking up first job in state {}: found job {} (state {})",
+          jobState, job.getKey(), state);
+      if (state == jobState) {
         UUID jobId = job.getKey();
         return jobId;
       }
@@ -134,29 +144,34 @@ public final class LocalJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, T model) {
-    if (!DATA_MAP.containsKey(jobId)) {
-      DATA_MAP.put(jobId, new ConcurrentHashMap<>());
+  public <T extends DataModel> void create(UUID jobId, String key, T model) {
+    if (!DATA_MAP.containsKey(createFullKey(jobId, key))) {
+      DATA_MAP.put(createFullKey(jobId, key), new ConcurrentHashMap<>());
     }
-    DATA_MAP.get(jobId).put(model.getClass(), model);
+    DATA_MAP.get(createFullKey(jobId, key)).put(model.getClass(), model);
   }
 
   /** Updates the given model instance associated with a job. */
   @Override
-  public <T extends DataModel> void update(UUID jobId, T model) {
+  public <T extends DataModel> void update(UUID jobId, String key, T model) {
     // TODO: do we want to do any checking here to make sure there's something to update?
-    create(jobId, model);
+    create(jobId, key, model);
   }
 
   /** Returns a model instance for the id of the given type or null if not found. */
   @Override
-  public <T extends DataModel> T findData(Class<T> type, UUID id) {
-    if (!DATA_MAP.containsKey(id)) {
+  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+    if (!DATA_MAP.containsKey(createFullKey(jobId, key))) {
       return null;
     }
-    if (!DATA_MAP.get(id).containsKey(type)) {
+    if (!DATA_MAP.get(createFullKey(jobId, key)).containsKey(type)) {
       return null;
     }
-    return (T) DATA_MAP.get(id).get(type);
+    return (T) DATA_MAP.get(createFullKey(jobId, key)).get(type);
+  }
+
+  private static String createFullKey(UUID jobId, String key) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
+    return String.format("%s-%s", jobId.toString(), key);
   }
 }

@@ -19,7 +19,7 @@
  * Install Angular: `npm install -g @angular/cli`
  * [Install Docker](https://docs.docker.com/install/)
  * Install the Angular CLI `./gradlew client:installLocalAngularCli`
- 
+
 ## IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
 
@@ -27,7 +27,7 @@ The following instructions work for IntelliJ IDEA version 2017.2.6.
  * Open IntelliJ -> Import Project
  * Navigate to the 'data-transfer-project' directory where you have git cloned the repo
  * Import project from external model (Gradle) -> uncheck 'Create separate module per source set' -> Finish
- 
+
 #### Enable annotation processing
  * Go to File -> Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
  * Check 'Enable annotation processing'
@@ -71,9 +71,9 @@ You only need to do this once.  The network will remain created even if you stop
 The following builds and optionally runs the demo server (containing the API and Transfer Worker)
 on `port:8080`
 
- * The first time you run you need to configure your credentials by copying
-   distributions/common/dataportability.secrets.example.properties to 
-   .gradle/properties.gradle and inserting the API keys and secrets for
+ * NOTE: The first time you run you need to configure your credentials by copying
+   distributions/common/dataportability.secrets.example.properties to
+   .gradle/dataportability.secrets.properties and inserting the API keys and secrets for
    the services you with to interact with.
 
  * `./gradlew :distributions:demo-server:dockerize`

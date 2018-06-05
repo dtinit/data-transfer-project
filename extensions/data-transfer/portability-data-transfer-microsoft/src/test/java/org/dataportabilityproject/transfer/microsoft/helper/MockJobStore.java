@@ -15,6 +15,8 @@
  */
 package org.dataportabilityproject.transfer.microsoft.helper;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
@@ -28,12 +30,12 @@ import java.util.UUID;
 
 /** An implementation for testing. */
 public class MockJobStore implements JobStore {
-  private final Map<UUID, DataModel> testData = new HashMap<>();
+  private final Map<String, DataModel> testData = new HashMap<>();
   private final Map<String, InputStream> keyedData = new HashMap<>();
 
   @Override
-  public <T extends DataModel> T findData(Class<T> type, UUID id) {
-    return type.cast(testData.get(id));
+  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+    return type.cast(testData.get(createFullKey(jobId, key)));
   }
 
   @Override
@@ -60,25 +62,30 @@ public class MockJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, T model) {
-    testData.put(jobId, model);
+  public <T extends DataModel> void create(UUID jobId, String key, T model) {
+    testData.put(createFullKey(jobId, key), model);
   }
 
   @Override
-  public <T extends DataModel> void update(UUID jobId, T model) {
-    if (!testData.containsKey(jobId)) {
+  public <T extends DataModel> void update(UUID jobId, String key, T model) {
+    if (!testData.containsKey(createFullKey(jobId, key))) {
       throw new AssertionError("Data does not exist: " + jobId);
     }
-    testData.put(jobId, model);
+    testData.put(createFullKey(jobId, key), model);
   }
 
   @Override
   public void create(UUID jobId, String key, InputStream stream) {
-     keyedData.put(jobId.toString()+":"+ key, stream);
+     keyedData.put(createFullKey(jobId, key), stream);
   }
 
   @Override
   public InputStream getStream(UUID jobId, String key) {
-    return keyedData.get(jobId.toString()+":"+ key);
+    return keyedData.get(createFullKey(jobId, key));
+  }
+
+  private static String createFullKey(UUID jobId, String key) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
+    return String.format("%s-%s", jobId.toString(), key);
   }
 }

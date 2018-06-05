@@ -23,7 +23,7 @@ import java.nio.file.Paths
  * This sub-project creates a single process runtime for demonstration purposes.
  *
  * <p>
- * To enable OAuth secrets for testing, edit your gradle.settings file in the user home/.gradle directory (NOT the one in the source directory). Add the appropriate entries, e.g.:
+ * To enable OAuth secrets for testing, edit your gradle.settings file in the data-transfer-project/.gradle directory (NOT the one in the source directory). Add the appropriate entries, e.g.:
  *
  * data.portability.key.microsoft=keyms
  * data.portability.secret.microsoft=secretms
@@ -69,12 +69,14 @@ dependencies {
     compile project(':extensions:auth:portability-auth-instagram')
     compile project(':extensions:auth:portability-auth-microsoft')
     compile project(':extensions:auth:portability-auth-rememberthemilk')
+    compile project(':extensions:auth:portability-auth-twitter')
 
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-instagram')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
+    compile project(':extensions:data-transfer:portability-data-transfer-twitter')
 }
 
 addCloudExtensionDependency(project)
@@ -85,6 +87,7 @@ task createSecretsFile() {
         def propFile = file("$buildDir/resources/main/secrets.properties")
         propFile.delete()
         def secretsDirectory = Paths.get("$projectDir/../../.gradle/")
+        println "secretsDirectory = [$secretsDirectory]"
         def secretsFileName = 'dataportability.secrets.properties'
         def secretsFile = file(secretsDirectory.resolve(secretsFileName))
         if (secretsFile.exists()) {
@@ -95,7 +98,7 @@ task createSecretsFile() {
                 rename  (secretsFileName, "secrets.properties")
             }
         } else {
-            throw new GradleException("Configuration " + secretsFile + "/dataportability.secrets.properties not found")
+            throw new GradleException("Configuration " + secretsFile + " not found")
         }
     }
 }
@@ -193,5 +196,3 @@ task installToolsAndDockerize {
     group = 'docker'
     dependsOn ":client:installTools", buildDemoServerImage, buildClientImage
 }
-
-

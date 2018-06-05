@@ -19,9 +19,11 @@ package org.dataportabilityproject.cloud.google;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -46,7 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 final class GoogleAppCredentialStore implements AppCredentialStore {
-  static final Logger logger = LoggerFactory.getLogger(AppCredentialStore.class);
+  private static final Logger logger = LoggerFactory.getLogger(AppCredentialStore.class);
   private static final Integer CACHE_EXPIRATION_MINUTES = 10;
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
   private static final String KEYS_DIR = "keys/";
@@ -125,7 +127,10 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
 
   private byte[] getRawBytes(String blobName) {
     Bucket bucket = storage.get(bucketName);
-    return bucket.get(blobName).getContent();
+    Preconditions.checkNotNull(bucket, "Bucket [%s] not found", bucketName);
+    Blob blob = bucket.get(blobName);
+    Preconditions.checkNotNull(blob, "blob [%s] not found", blobName);
+    return blob.getContent();
   }
 
   private String lookupKey(String keyName) {

@@ -121,7 +121,7 @@ public class FlickrPhotosImporterTest {
     verify(photosetsInterface).create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID);
 
     // Check contents of JobStore
-    TempPhotosData tempPhotosData = jobStore.findData(TempPhotosData.class, jobId);
+    TempPhotosData tempPhotosData = jobStore.findData(jobId,"tempPhotosData", TempPhotosData.class);
     assertThat(tempPhotosData).isNotNull();
 
     String expectedAlbumKey = ALBUM_ID;

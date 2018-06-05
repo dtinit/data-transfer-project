@@ -65,11 +65,11 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data) {
     String timeline;
 
-    TempTasksData tempTasksData = jobstore.findData(TempTasksData.class, jobId);
+    TempTasksData tempTasksData = jobstore.findData(jobId, createCacheKey(), TempTasksData.class);
     if (tempTasksData == null) {
       tempTasksData = new TempTasksData(jobId.toString());
       try {
-        jobstore.create(jobId, tempTasksData);
+        jobstore.create(jobId, createCacheKey(), tempTasksData);
       } catch (IOException e) {
         return new ImportResult(ResultType.ERROR, e.getMessage());
       }
@@ -84,7 +84,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
         ListInfo listInfo = service.createTaskList(taskList.getName(), timeline);
         tempTasksData.addTaskListId(taskList.getId(), Long.toString(listInfo.id));
       }
-      jobstore.update(jobId, tempTasksData);
+      jobstore.update(jobId, createCacheKey(), tempTasksData);
 
       for (TaskModel task : data.getTasks()) {
         // Empty or blank tasks aren't valid in RTM
@@ -109,5 +109,15 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   private RememberTheMilkService createService(TokenAuthData authData) {
     return new RememberTheMilkService(
         new RememberTheMilkSignatureGenerator(appCredentials, authData.getToken()));
+  }
+
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all
+    // mappings
+    return "tempPhotosData";
   }
 }

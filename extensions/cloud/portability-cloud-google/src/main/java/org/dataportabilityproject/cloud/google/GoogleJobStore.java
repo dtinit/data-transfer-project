@@ -66,7 +66,7 @@ public final class GoogleJobStore implements JobStore {
   /**
    * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in Datastore.
    *
-   * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
+   * <p>To update an existing {@link PortabilityJob} instead, use {@link JobStore#update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
    *     problem inserting the job.
@@ -221,12 +221,12 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @VisibleForTesting
-  static String getDataKeyName(UUID jobId, Class type) {
-    return String.format("%s-%s-data", jobId, type.getName());
+  static String getDataKeyName(UUID jobId, String key) {
+    return String.format("%s-%s", jobId, key);
   }
 
-  private Key getDataKey(UUID jobId, Class type) {
-    return datastore.newKeyFactory().setKind(KIND).newKey(getDataKeyName(jobId, type));
+  private Key getDataKey(UUID jobId, String key) {
+    return datastore.newKeyFactory().setKind(KIND).newKey(getDataKeyName(jobId, key));
   }
 
   private static Map<String, Object> getProperties(Entity entity) {
@@ -267,19 +267,19 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, T model) throws IOException {
+  public <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
-    Key key = getDataKey(jobId, model.getClass());
-    Entity shouldNotExist = transaction.get(key);
+    Key fullKey = getDataKey(jobId, key);
+    Entity shouldNotExist = transaction.get(fullKey);
     if (shouldNotExist != null) {
       transaction.rollback();
       throw new IOException(
-          "Record already exists for data key: " + key.getName() + ". Record: " + shouldNotExist);
+          "Record already exists for key: " + fullKey.getName() + ". Record: " + shouldNotExist);
     }
 
     String serialized = objectMapper.writeValueAsString(model);
-    Entity entity = Entity.newBuilder(key)
+    Entity entity = Entity.newBuilder(fullKey)
         .set(CREATED_FIELD, Timestamp.now())
         .set(model.getClass().getName(), serialized)
         .build();
@@ -295,19 +295,18 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void update(UUID jobId, T model) {
-    Preconditions.checkNotNull(jobId);
+  public <T extends DataModel> void update(UUID jobId, String key, T model) {
     Transaction transaction = datastore.newTransaction();
-    Key key = getDataKey(jobId, model.getClass());
+    Key entityKey = getDataKey(jobId, key);
 
     try {
-      Entity previousEntity = transaction.get(key);
+      Entity previousEntity = transaction.get(entityKey);
       if (previousEntity == null) {
-        throw new IOException("Could not find record for data key: " + key.getName());
+        throw new IOException("Could not find record for data key: " + entityKey.getName());
       }
 
       String serialized = objectMapper.writeValueAsString(model);
-      Entity entity = Entity.newBuilder(key)
+      Entity entity = Entity.newBuilder(entityKey)
           .set(CREATED_FIELD, Timestamp.now())
           .set(model.getClass().getName(), serialized)
           .build();
@@ -322,16 +321,16 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> T findData(Class<T> type, UUID jobId) {
-    Key key = getDataKey(jobId, type);
-    Entity entity = datastore.get(key);
+  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+    Key entityKey = getDataKey(jobId, key);
+    Entity entity = datastore.get(entityKey);
     if (entity == null) {
       return null;
     }
     try {
       return objectMapper.readValue(entity.getString(type.getName()), type);
     } catch (IOException t) {
-      throw new RuntimeException("Failed to deserialized key: " + key, t);
+      throw new RuntimeException("Failed to deserialized entityKey: " + entityKey, t);
     }
   }
 }
