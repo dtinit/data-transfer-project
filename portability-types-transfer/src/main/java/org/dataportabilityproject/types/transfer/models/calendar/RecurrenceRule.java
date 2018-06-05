@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -27,9 +28,9 @@ public class RecurrenceRule {
   static final String WKST = "WKST";
   static final String VALUE = "VALUE";
   static final String TZID = "TZID";
-  static List<String> byRuleList = Arrays.stream(ByRule.values()).map(Object::toString)
+  static final List<String> byRuleList = Arrays.stream(ByRule.values()).map(Object::toString)
       .collect(Collectors.toList());
-  static List<String> dayList = Arrays.stream(Day.values()).map(Object::toString)
+  static final List<String> dayList = Arrays.stream(Day.values()).map(Object::toString)
       .collect(Collectors.toList());
   private final RRule rRule;
   private final RDate rDate;
@@ -236,30 +237,27 @@ public class RecurrenceRule {
 
     @Override
     public String toString() {
-      StringBuilder builder = new StringBuilder();
-      builder.append(RRULE + ":");
+      StringJoiner joiner = new StringJoiner(";", RRULE + ":", "");
 
-      List<String> properties = new LinkedList<>();
-      properties.add(FREQ + "=" + freq());
+      joiner.add(FREQ + "=" + freq());
       if (until() != null) {
-        properties.add(UNTIL + "=" + until());
+        joiner.add(UNTIL + "=" + until());
       }
       if (count() != null) {
-        properties.add(COUNT + "=" + count());
+        joiner.add(COUNT + "=" + count());
       }
       if (interval() != null) {
-        properties.add(INTERVAL + "=" + interval());
+        joiner.add(INTERVAL + "=" + interval());
       }
       if (wkst() != null) {
-        properties.add(WKST + "=" + wkst());
+        joiner.add(WKST + "=" + wkst());
       }
       if (byRuleMap() != null) {
         for (ByRule rule : byRuleMap().keySet()) {
-          properties.add(rule.toString() + "=" + byRuleMap().get(rule));
+          joiner.add(rule.toString() + "=" + byRuleMap().get(rule));
         }
       }
-      builder.append(String.join(";", properties));
-      return builder.toString();
+      return joiner.toString();
     }
 
     @AutoValue.Builder
