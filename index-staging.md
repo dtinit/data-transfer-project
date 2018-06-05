@@ -38,12 +38,6 @@ Data Transfer Project APIs have been built for the following service providers a
 +  Instagram: Photos
 +  Rememberthemilk: Tasks
 
-
-### Demo User Interface (UI)
-The Data Transfer Project has developed minimal UI for testing, validation, and demo purposes, which is not intended to be used in production. DTP functionality is expected be incorporated into the service providers UI, and to include authentication by service providers on both sides of the transaction.  The vision is to have data import and export functionality built into the service providers core product, which is seen as an advantage of choosing one service provider over another.
-
-<img src="./dtp-demo-ui.png" width="548">
-
 ## **How To Participate**
 There are many ways to participate in this open source project:
 
