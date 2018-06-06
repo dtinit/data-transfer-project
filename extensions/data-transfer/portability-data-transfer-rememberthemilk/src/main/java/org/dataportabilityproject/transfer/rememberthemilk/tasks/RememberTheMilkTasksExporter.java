@@ -41,6 +41,8 @@ import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Exporter for Tasks data type from Remember The Milk Service.
@@ -49,6 +51,8 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
 
   private final AppCredentials appCredentials;
   private RememberTheMilkService service;
+
+  Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksExporter.class);
 
   public RememberTheMilkTasksExporter(AppCredentials appCredentials) {
     this.appCredentials = appCredentials;
@@ -105,6 +109,7 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
             // project, provided that there aren't too many individual tasks!
             tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr, task.completed != null,
                 Instant.parse(task.completed)));
+            logger.debug("Uploaded info from task " + task.toString());
           }
         }
       }

@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.common.base.MoreObjects;
 
