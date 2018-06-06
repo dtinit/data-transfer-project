@@ -18,7 +18,7 @@ package org.dataportabilityproject.transfer.rememberthemilk.model.tasks;
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.common.base.MoreObjects;
 
-public class TaskAddResponse extends RememberTheMilkResponse {
+public class TaskUpdateResponse extends RememberTheMilkResponse {
   // The transaction id associated with the task addition
   @JacksonXmlProperty(localName = "transaction")
   public Transaction transaction;
