@@ -1,24 +1,29 @@
 package org.dataportabilityproject.types.transfer.models.tasks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
+import java.time.Instant;
 import java.util.List;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.junit.Test;
 
 public class TasksModelWrapperTest {
+
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
     objectMapper.registerSubtypes(TaskContainerResource.class);
 
     List<TaskListModel> taskLists = ImmutableList.of(new TaskListModel("id1", "List 1"));
 
     List<TaskModel> tasks =
         ImmutableList.of(
-            new TaskModel("id1", "Write Better tests", "Do this soon"),
-            new TaskModel("id1", "Liberate all the data", "do this in stages"));
+            new TaskModel("id1", "Write Better tests", "Do this soon", false, null),
+            new TaskModel("id1", "Liberate all the data", "do this in stages", true,
+                Instant.parse("2018-05-25T10:26:21Z")));
 
     ContainerResource data = new TaskContainerResource(taskLists, tasks);
 

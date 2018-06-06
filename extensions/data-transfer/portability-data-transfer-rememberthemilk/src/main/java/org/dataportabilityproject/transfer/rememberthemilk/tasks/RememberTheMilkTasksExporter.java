@@ -19,6 +19,7 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -95,9 +96,15 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
         for (TaskSeries taskSeries : taskList.taskseries) {
           // TODO: figure out what to do with notes
           String notesStr = taskSeries.notes == null ? "" : taskSeries.notes.toString();
-          tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr));
+          tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr, false, null));
           for (Task task : taskSeries.tasks) {
-            // TODO: handle completion date, but its odd there can be more than one.
+            // TODO: handle completion date
+            // Since a task series is a container for an individual task or a recurring task, we can
+            // either export each individual task or just make a new model that supports recurring
+            // tasks.  Exporting individual tasks seems more reasonable at this point in the
+            // project, provided that there aren't too many individual tasks!
+            tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr, task.completed != null,
+                Instant.parse(task.completed)));
           }
         }
       }

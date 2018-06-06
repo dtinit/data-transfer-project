@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -106,7 +107,9 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
         result
             .getItems()
             .stream()
-            .map(t -> new TaskModel(resource.getId(), t.getTitle(), t.getNotes()))
+            .map(t -> new TaskModel(resource.getId(), t.getTitle(), t.getNotes(),
+                t.getCompleted() != null,
+                Instant.ofEpochMilli(t.getCompleted().getValue())))
             .collect(Collectors.toList());
 
     PaginationData newPage = null;
