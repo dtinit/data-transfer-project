@@ -17,7 +17,6 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.xml.XmlMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;

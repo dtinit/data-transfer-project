@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
 
   private final AppCredentials appCredentials;
-  Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksExporter.class);
+  private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksExporter.class);
   private RememberTheMilkService service;
 
   public RememberTheMilkTasksExporter(AppCredentials appCredentials) {
@@ -102,13 +102,13 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
           // TODO: figure out what to do with notes
           String notesStr = taskSeries.notes == null ? "" : taskSeries.notes.toString();
           for (Task task : taskSeries.tasks) {
-            // TODO: What do we actually want to do with this?
+            // TODO: How to handle case with multiple tasks in a series?  Is this good enough?
             Instant completedTime = null;
             Instant dueTime = null;
-            if (!Strings.isNullOrEmpty(task.completed)) {
+            if (task.completed != null && !Strings.isNullOrEmpty(task.completed)) {
               completedTime = Instant.parse(task.completed);
             }
-            if (!Strings.isNullOrEmpty(task.due)) {
+            if (task.due != null && !Strings.isNullOrEmpty(task.due)) {
               dueTime = Instant.parse(task.due);
             }
             tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr, completedTime, dueTime));
