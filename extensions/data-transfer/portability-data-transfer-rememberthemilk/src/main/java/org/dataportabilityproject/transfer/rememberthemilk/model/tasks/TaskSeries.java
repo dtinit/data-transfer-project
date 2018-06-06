@@ -20,6 +20,7 @@ import com.google.common.base.MoreObjects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /** A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm */
 public class TaskSeries {
@@ -54,6 +55,9 @@ public class TaskSeries {
   @JacksonXmlProperty(localName = "notes")
   public Notes notes;
 
+  @JacksonXmlProperty(localName = "rrule")
+  public Map<String, String> rrule;
+
   @JacksonXmlProperty(localName = "tasks")
   public List<Task> tasks = new ArrayList<>();
 
@@ -74,6 +78,7 @@ public class TaskSeries {
         .add("tags", tags)
         .add("participants", participants)
         .add("notes", notes)
+        .add("rrule", rrule)
         .add("tasks", tasks)
         .toString();
   }

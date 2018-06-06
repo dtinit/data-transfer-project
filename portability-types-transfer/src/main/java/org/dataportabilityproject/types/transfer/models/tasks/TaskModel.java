@@ -24,21 +24,21 @@ public class TaskModel {
   private final String taskListId;
   private final String text;
   private final String notes;
-  private final boolean completed;
-  private final Instant completedTime;
+  private final Instant completedTime;  // null if incomplete
+  private final Instant dueTime;  // null if not due
 
   @JsonCreator
   public TaskModel(
       @JsonProperty("taskListId") String taskListId,
       @JsonProperty("text") String text,
       @JsonProperty("notes") String notes,
-      @JsonProperty("completed") boolean completed,
-      @JsonProperty("completedTime") Instant completedTime) {
+      @JsonProperty("completedTime") Instant completedTime,
+      @JsonProperty("dueTime") Instant dueTime) {
     this.taskListId = taskListId;
     this.text = text;
     this.notes = notes;
-    this.completed = completed;
     this.completedTime = completedTime;
+    this.dueTime = dueTime;
   }
 
   public String getText() {
@@ -53,7 +53,7 @@ public class TaskModel {
     return taskListId;
   }
 
-  public boolean getCompleted() { return completed; }
-
   public Instant getCompletedTime() { return completedTime; }
+
+  public Instant getDueTime() { return dueTime; }
 }

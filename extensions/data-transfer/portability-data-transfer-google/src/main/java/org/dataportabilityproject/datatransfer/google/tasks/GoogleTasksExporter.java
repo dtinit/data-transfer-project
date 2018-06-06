@@ -108,8 +108,8 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
             .getItems()
             .stream()
             .map(t -> new TaskModel(resource.getId(), t.getTitle(), t.getNotes(),
-                t.getCompleted() != null,
-                Instant.ofEpochMilli(t.getCompleted().getValue())))
+                Instant.ofEpochMilli(t.getCompleted().getValue()),
+                Instant.ofEpochMilli(t.getDue().getValue())))
             .collect(Collectors.toList());
 
     PaginationData newPage = null;
