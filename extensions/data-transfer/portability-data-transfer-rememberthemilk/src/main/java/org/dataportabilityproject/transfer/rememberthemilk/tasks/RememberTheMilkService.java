@@ -34,7 +34,7 @@ import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListsR
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListAddResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.RememberTheMilkResponse;
-import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskAddResponse;
+import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskUpdateResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
 
@@ -83,8 +83,28 @@ class RememberTheMilkService {
             name,
             "list_id",
             listId);
-    TaskAddResponse taskAddResponse = makeRequest(params, TaskAddResponse.class);
-    return taskAddResponse.list.taskseries.get(0);
+    TaskUpdateResponse taskUpdateResponse = makeRequest(params, TaskUpdateResponse.class);
+    return taskUpdateResponse.list.taskseries.get(0);
+  }
+
+  public void completeTask(String timeline, String listId, int seriesId, int taskId)
+      throws IOException {
+    // NB: The RTM API does not support setting an arbitrary completion time, so this method can
+    // only mark a task as having been completed.
+    Map<String, String> params =
+        ImmutableMap.of(
+            "method",
+            RememberTheMilkMethods.TASKS_COMPLETE.getMethodName(),
+            "timeline",
+            timeline,
+            "list_id",
+            listId,
+            "taskseries_id",
+            String.valueOf(seriesId),
+            "task_id",
+            String.valueOf(taskId)
+        );
+    makeRequest(params, TaskUpdateResponse.class);
   }
 
   public GetListResponse getList(String listId) throws IOException {
@@ -127,8 +147,9 @@ class RememberTheMilkService {
   private enum RememberTheMilkMethods {
     LISTS_GET_LIST("rtm.lists.getList"),
     LISTS_ADD("rtm.lists.add"),
-    TASKS_GET_LIST("rtm.tasks.getList"),
     TASKS_ADD("rtm.tasks.add"),
+    TASKS_COMPLETE("rtm.tasks.complete"),
+    TASKS_GET_LIST("rtm.tasks.getList"),
     TIMELINES_CREATE("rtm.timelines.create");
 
     private final String methodName;

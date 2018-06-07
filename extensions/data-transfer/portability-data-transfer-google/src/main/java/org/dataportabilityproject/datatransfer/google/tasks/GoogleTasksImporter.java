@@ -17,6 +17,7 @@
 package org.dataportabilityproject.datatransfer.google.tasks;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
@@ -90,9 +91,13 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
     tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
 
     for (TaskModel oldTask : data.getTasks()) {
-      // TODO: The TaskModel doesn't contain information about completion, which means these all are
-      // new uncompleted tasks
       Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
+      if (oldTask.getCompletedTime() != null) {
+        newTask.setCompleted(new DateTime(oldTask.getCompletedTime().toEpochMilli()));
+      }
+      if (oldTask.getDueTime() != null) {
+        newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
+      }
       String newTaskListId = tempTasksData.lookupNewTaskListId(oldTask.getTaskListId());
       try {
         tasksService.tasks().insert(newTaskListId, newTask).execute();
