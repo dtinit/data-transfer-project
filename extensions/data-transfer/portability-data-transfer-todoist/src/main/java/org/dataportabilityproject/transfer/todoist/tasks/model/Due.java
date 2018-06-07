@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.todoist.model.tasks;
+package org.dataportabilityproject.transfer.todoist.tasks.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

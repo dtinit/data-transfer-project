@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.todoist.model.tasks;
+package org.dataportabilityproject.transfer.todoist.tasks.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Label {
-
+public class Project {
   @JsonProperty("id")
   private int id;
 
@@ -28,4 +27,10 @@ public class Label {
 
   @JsonProperty("order")
   private int order;
+
+  @JsonProperty("indent")
+  private int index;
+
+  @JsonProperty("comment_count")
+  private int commentCount;
 }

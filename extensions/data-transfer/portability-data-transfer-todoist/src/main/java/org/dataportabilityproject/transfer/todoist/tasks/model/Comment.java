@@ -14,41 +14,26 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.todoist.model.tasks;
+package org.dataportabilityproject.transfer.todoist.tasks.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Task {
+public class Comment {
   @JsonProperty("id")
   private int id;
+
+  @JsonProperty("task_id")
+  private int taskId;
 
   @JsonProperty("project_id")
   private int projectId;
 
+  @JsonProperty("posted")
+  private String posted;
+
   @JsonProperty("content")
   private String content;
 
-  @JsonProperty("completed")
-  private boolean completed;
-
-  @JsonProperty("label_ids")
-  private int[] labelIds;
-
-  @JsonProperty("order")
-  private int order;
-
-  @JsonProperty("indent")
-  private int indent;
-
-  @JsonProperty("priority")
-  private int priority;
-
-  @JsonProperty("due")
-  private Due due;
-
-  @JsonProperty("url")
-  private String url;
-
-  @JsonProperty("comment_count")
-  private int commentCount;
+  @JsonProperty("attachment")
+  private Object attachment;
 }

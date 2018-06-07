@@ -14,26 +14,8 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.todoist.model.tasks;
+package org.dataportabilityproject.transfer.todoist.tasks;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+public class TodoistTasksExporter {
 
-public class Comment {
-  @JsonProperty("id")
-  private int id;
-
-  @JsonProperty("task_id")
-  private int taskId;
-
-  @JsonProperty("project_id")
-  private int projectId;
-
-  @JsonProperty("posted")
-  private String posted;
-
-  @JsonProperty("content")
-  private String content;
-
-  @JsonProperty("attachment")
-  private Object attachment;
 }
