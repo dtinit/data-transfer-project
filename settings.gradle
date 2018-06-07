@@ -49,4 +49,7 @@ include ':extensions:data-transfer:portability-data-transfer-smugmug'
 include ':extensions:auth:portability-auth-twitter'
 include ':extensions:data-transfer:portability-data-transfer-twitter'
 
+//Todoist Transfer Extensions
+include ":extensions:data-transfer:portability-data-transfer-todoist"
+
 include ':client'
