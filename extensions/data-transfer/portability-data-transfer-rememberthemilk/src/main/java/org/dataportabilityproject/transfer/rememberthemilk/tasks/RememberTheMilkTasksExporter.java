@@ -18,9 +18,12 @@ package org.dataportabilityproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
@@ -40,6 +43,8 @@ import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskListModel;
 import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Exporter for Tasks data type from Remember The Milk Service.
@@ -47,6 +52,7 @@ import org.dataportabilityproject.types.transfer.models.tasks.TaskModel;
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
 
   private final AppCredentials appCredentials;
+  private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksExporter.class);
   private RememberTheMilkService service;
 
   public RememberTheMilkTasksExporter(AppCredentials appCredentials) {
@@ -95,9 +101,17 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
         for (TaskSeries taskSeries : taskList.taskseries) {
           // TODO: figure out what to do with notes
           String notesStr = taskSeries.notes == null ? "" : taskSeries.notes.toString();
-          tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr));
           for (Task task : taskSeries.tasks) {
-            // TODO: handle completion date, but its odd there can be more than one.
+            // TODO: How to handle case with multiple tasks in a series?  Is this good enough?
+            Instant completedTime = null;
+            Instant dueTime = null;
+            if (task.completed != null && !Strings.isNullOrEmpty(task.completed)) {
+              completedTime = Instant.parse(task.completed);
+            }
+            if (task.due != null && !Strings.isNullOrEmpty(task.due)) {
+              dueTime = Instant.parse(task.due);
+            }
+            tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr, completedTime, dueTime));
           }
         }
       }

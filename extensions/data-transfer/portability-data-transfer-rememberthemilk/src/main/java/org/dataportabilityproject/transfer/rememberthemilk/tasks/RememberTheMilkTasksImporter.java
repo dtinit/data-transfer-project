@@ -92,6 +92,12 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
           String newList = tempTasksData.lookupNewTaskListId(task.getTaskListId());
           TaskSeries addedTask = service.createTask(task.getText(), timeline, newList);
           // todo: add notes
+          if (task.getCompletedTime() != null) {
+            // NB: this assumes that only one task was added above, and that the task series
+            // in the response contains only one task.
+            // TODO: Address recurring events where some are completed and some are not
+            service.completeTask(timeline, newList, addedTask.id, addedTask.tasks.get(0).id);
+          }
         }
       }
     } catch (Exception e) {

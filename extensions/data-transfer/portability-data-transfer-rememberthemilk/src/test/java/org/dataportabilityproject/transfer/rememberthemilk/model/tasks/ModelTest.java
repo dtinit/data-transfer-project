@@ -52,16 +52,16 @@ public class ModelTest {
             + "      <tags/>\n"
             + "      <participants/>\n"
             + "      <notes/>\n"
-            // The taskSeries in a TaskAddResponse only contains one task, not a list of Tasks
+            // The taskSeries in a TaskUpdateResponse only contains one task, not a list of Tasks
             + "      <task id=\"123456789\" due=\"\" has_due_time=\"0\" added=\"2015-05-07T10:19:54Z\"\n"
             + "        completed=\"\" deleted=\"\" priority=\"N\" postponed=\"0\" estimate=\"\"/>\n"
             + "    </taskseries>\n"
             + "  </list>"
             + "</rsp>\n";
 
-    TaskAddResponse taskAddResponse = mapper.readValue(content, TaskAddResponse.class);
+    TaskUpdateResponse taskUpdateResponse = mapper.readValue(content, TaskUpdateResponse.class);
 
-    assertThat(taskAddResponse.stat).isEqualTo("ok");
+    assertThat(taskUpdateResponse.stat).isEqualTo("ok");
   }
 
   @Test

@@ -17,20 +17,28 @@ package org.dataportabilityproject.types.transfer.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
+import java.util.List;
 
 public class TaskModel {
   private final String taskListId;
   private final String text;
   private final String notes;
+  private final Instant completedTime;  // null if incomplete
+  private final Instant dueTime;  // null if not due
 
   @JsonCreator
   public TaskModel(
       @JsonProperty("taskListId") String taskListId,
       @JsonProperty("text") String text,
-      @JsonProperty("notes") String notes) {
+      @JsonProperty("notes") String notes,
+      @JsonProperty("completedTime") Instant completedTime,
+      @JsonProperty("dueTime") Instant dueTime) {
     this.taskListId = taskListId;
     this.text = text;
     this.notes = notes;
+    this.completedTime = completedTime;
+    this.dueTime = dueTime;
   }
 
   public String getText() {
@@ -44,4 +52,8 @@ public class TaskModel {
   public String getTaskListId() {
     return taskListId;
   }
+
+  public Instant getCompletedTime() { return completedTime; }
+
+  public Instant getDueTime() { return dueTime; }
 }
