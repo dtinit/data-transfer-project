@@ -89,9 +89,8 @@ class RememberTheMilkService {
 
   public void completeTask(String timeline, String listId, int seriesId, int taskId)
       throws IOException {
-    // NB: This does not transfer the complete time!  There's no method for that.  It just sets a
-    // task as being complete, and I believe that the completion time is the time that the request
-    // is executed.
+    // NB: The RTM API does not support setting an arbitrary completion time, so this method can
+    // only mark a task as having been completed.
     Map<String, String> params =
         ImmutableMap.of(
             "method",
