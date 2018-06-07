@@ -98,6 +98,10 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
             // TODO: Address recurring events where some are completed and some are not
             service.completeTask(timeline, newList, addedTask.id, addedTask.tasks.get(0).id);
           }
+          if (task.getDueTime() != null) {
+            // TODO: Address recurring events with different due dates/times
+            service.setDueDate(timeline, newList, addedTask.id, addedTask.tasks.get(0).id, task.getDueTime());
+          }
         }
       }
     } catch (Exception e) {
