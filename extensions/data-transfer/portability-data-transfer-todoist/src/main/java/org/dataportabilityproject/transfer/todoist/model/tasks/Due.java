@@ -18,35 +18,16 @@ package org.dataportabilityproject.transfer.todoist.model.tasks;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// TODO: Notes are only available for premium users, how to handle this?
-public class Note {
-  @JsonProperty("id")
-  private int id;
+public class Due {
+  @JsonProperty("string")
+  private String string;
 
-  @JsonProperty("posted_uid")
-  private int postedUid;
+  @JsonProperty("date")
+  private String date;
 
-  @JsonProperty("item_id")
-  private int itemId;
+  @JsonProperty("datetime")
+  private String dateTime;
 
-  @JsonProperty("project_id")
-  private int projectId;
-
-  @JsonProperty("content")
-  private String content;
-
-  @JsonProperty("file_attachment")
-  private Object fileAttachment;
-
-  @JsonProperty("uids_to_notify")
-  private int[] uidsToNotify;
-
-  @JsonProperty("is_deleted")
-  private int isDeleted;
-
-  @JsonProperty("is_archived")
-  private int isArchived;
-
-  @JsonProperty("posted")
-  private String posted;
+  @JsonProperty("timezone")
+  private String timezone;
 }

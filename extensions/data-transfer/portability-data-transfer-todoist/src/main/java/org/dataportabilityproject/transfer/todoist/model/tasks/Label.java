@@ -26,15 +26,6 @@ public class Label {
   @JsonProperty("name")
   private String name;
 
-  @JsonProperty("color")
-  private int color;
-
-  @JsonProperty("item_order")
-  private int itemOrder;
-
-  @JsonProperty("is_deleted")
-  private int isDeleted;
-
-  @JsonProperty("is_favorite")
-  private int isFavorite;
+  @JsonProperty("order")
+  private int order;
 }

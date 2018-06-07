@@ -18,19 +18,22 @@ package org.dataportabilityproject.transfer.todoist.model.tasks;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Project {
+public class Comment {
   @JsonProperty("id")
   private int id;
 
-  @JsonProperty("name")
-  private String name;
+  @JsonProperty("task_id")
+  private int taskId;
 
-  @JsonProperty("order")
-  private int order;
+  @JsonProperty("project_id")
+  private int projectId;
 
-  @JsonProperty("indent")
-  private int index;
+  @JsonProperty("posted")
+  private String posted;
 
-  @JsonProperty("comment_count")
-  private int commentCount;
+  @JsonProperty("content")
+  private String content;
+
+  @JsonProperty("attachment")
+  private Object attachment;
 }
