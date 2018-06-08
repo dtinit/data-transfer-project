@@ -16,6 +16,65 @@
 
 package org.dataportabilityproject.transfer.todoist;
 
-public class TodoistTransferExtension {
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.http.HttpTransport;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
+import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.transfer.todoist.tasks.TodoistTasksExporter;
+import org.dataportabilityproject.transfer.todoist.tasks.TodoistTasksImporter;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class TodoistTransferExtension implements TransferExtension {
+  private final Logger logger = LoggerFactory.getLogger(TodoistTransferExtension.class);
+  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("tasks");
+
+  private Exporter<TokensAndUrlAuthData, TaskContainerResource> exporter;
+  private Importer<TokensAndUrlAuthData, TaskContainerResource> importer;
+
+  private boolean initialized = false;
+
+  @Override
+  public String getServiceId() {
+    return "todoist";
+  }
+
+  @Override
+  public Exporter<?, ?> getExporter(String transferDataType) {
+    Preconditions.checkArgument(
+        initialized, "TodoistTransferExtension not initialized. Unable to get Exporter");
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+    return exporter;
+  }
+
+  @Override
+  public Importer<?, ?> getImporter(String transferDataType) {
+    Preconditions.checkArgument(
+        initialized, "TodoistTransferExtension not initialized. Unable to get Importer");
+    Preconditions.checkArgument(false, "Instagram does not support import");
+    return null;
+  }
+
+  @Override
+  public void initialize(ExtensionContext context) {
+    if (initialized) {
+      logger.warn("TodoistTransferExtension already initialized");
+      return;
+    }
+
+    ObjectMapper mapper =
+        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    HttpTransport httpTransport = context.getService(HttpTransport.class);
+    exporter = new TodoistTasksExporter(mapper, httpTransport);
+    importer = new TodoistTasksImporter(mapper, httpTransport);
+    initialized = true;
+  }
 }

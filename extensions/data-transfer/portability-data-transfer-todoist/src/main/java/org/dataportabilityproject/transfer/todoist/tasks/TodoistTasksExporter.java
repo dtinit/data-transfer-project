@@ -16,6 +16,29 @@
 
 package org.dataportabilityproject.transfer.todoist.tasks;
 
-public class TodoistTasksExporter {
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.http.HttpTransport;
+import java.util.Optional;
+import java.util.UUID;
+import org.dataportabilityproject.spi.transfer.provider.ExportResult;
+import org.dataportabilityproject.spi.transfer.provider.Exporter;
+import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.dataportabilityproject.types.transfer.models.tasks.TaskContainerResource;
 
+public class TodoistTasksExporter implements Exporter<TokensAndUrlAuthData, TaskContainerResource> {
+
+  private final ObjectMapper objectMapper;
+  private final HttpTransport httpTransport;
+
+  public TodoistTasksExporter(ObjectMapper objectMapper, HttpTransport httpTransport) {
+    this.objectMapper = objectMapper;
+    this.httpTransport = httpTransport;
+  }
+
+  @Override
+  public ExportResult<TaskContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
+      Optional<ExportInformation> exportInformation) {
+    return null;
+  }
 }

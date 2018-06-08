@@ -16,6 +16,85 @@
 
 package org.dataportabilityproject.auth.todoist;
 
-public class TodoistAuthServiceExtension {
+import com.google.api.client.http.HttpTransport;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
+import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
+import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
+import org.dataportabilityproject.types.transfer.auth.AppCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class TodoistAuthServiceExtension implements AuthServiceExtension {
+
+  private static final String TODOIST_KEY = "TODOIST_KEY";
+  private static final String TODOIST_SECRET = "TODOIST_SECRET";
+  private static final String TODOIST_SERVICE_ID = "todoist";
+  private final Logger logger = LoggerFactory.getLogger(TodoistAuthServiceExtension.class);
+  private final List<String> SUPPORTED_SERVICES = ImmutableList.of("tasks");
+
+  private TodoistAuthDataGenerator exportAuthDataGenerator;
+  private TodoistAuthDataGenerator importAuthDataGenerator;
+  private boolean initialized = false;
+
+  @Override
+  public String getServiceId() {
+    return TODOIST_SERVICE_ID;
+  }
+
+  @Override
+  public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
+    Preconditions.checkArgument(
+        initialized,
+        "TodoistAuthServiceExtension is not initialized! Unable to retrieve AuthDataGenerator");
+    Preconditions.checkArgument(
+        SUPPORTED_SERVICES.contains(transferDataType),
+        "Transfer type [" + transferDataType + "] is not supported in Todoist");
+    return mode == AuthMode.EXPORT ? exportAuthDataGenerator : importAuthDataGenerator;
+  }
+
+  @Override
+  public List<String> getImportTypes() {
+    return SUPPORTED_SERVICES;
+  }
+
+  @Override
+  public List<String> getExportTypes() {
+    return SUPPORTED_SERVICES;
+  }
+
+  @Override
+  public void initialize(ExtensionContext context) {
+    if (initialized) {
+      logger.warn("TodoistAuthServiceExtension already initialized");
+      return;
+    }
+
+    AppCredentials appCredentials;
+    try {
+      appCredentials =
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials(TODOIST_KEY, TODOIST_SECRET);
+    } catch (IOException e) {
+      logger.warn(
+          "Error retrieving Todoist credentials. Did you set {} and {}?",
+          TODOIST_KEY,
+          TODOIST_SECRET);
+      return;
+    }
+
+    exportAuthDataGenerator =
+        new TodoistAuthDataGenerator(appCredentials, context.getService(HttpTransport.class),
+            AuthMode.EXPORT);
+    importAuthDataGenerator = new TodoistAuthDataGenerator(appCredentials,
+        context.getService(HttpTransport.class), AuthMode.IMPORT);
+
+    initialized = true;
+  }
 }
