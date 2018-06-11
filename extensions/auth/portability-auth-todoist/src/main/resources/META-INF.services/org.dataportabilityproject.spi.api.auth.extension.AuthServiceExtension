@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-org.dataportabilityproject.auth.twitter.TodoistAuthServiceExtension
+org.dataportabilityproject.auth.todoist.TodoistAuthServiceExtension

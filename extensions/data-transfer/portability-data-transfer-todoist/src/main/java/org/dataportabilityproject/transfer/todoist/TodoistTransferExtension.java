@@ -58,8 +58,8 @@ public class TodoistTransferExtension implements TransferExtension {
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(
         initialized, "TodoistTransferExtension not initialized. Unable to get Importer");
-    Preconditions.checkArgument(false, "Instagram does not support import");
-    return null;
+    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+    return importer;
   }
 
   @Override

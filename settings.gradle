@@ -51,6 +51,6 @@ include ':extensions:data-transfer:portability-data-transfer-twitter'
 
 //Todoist Auth and Transfer Extensions
 include ':extensions:auth:portability-auth-todoist'
-include ":extensions:data-transfer:portability-data-transfer-todoist"
+include ':extensions:data-transfer:portability-data-transfer-todoist'
 
 include ':client'

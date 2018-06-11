@@ -60,6 +60,8 @@ dependencies {
     compile project(':extensions:auth:portability-auth-flickr')
     compile project(':extensions:auth:portability-auth-rememberthemilk')
     compile project(':extensions:auth:portability-auth-instagram')
+    compile project(':extensions:auth:portability-auth-twitter')
+    compile project(':extensions:auth:portability-auth-todoist')
 }
 
 
