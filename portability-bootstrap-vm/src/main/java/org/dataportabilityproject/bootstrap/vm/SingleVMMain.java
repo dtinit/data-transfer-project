@@ -2,7 +2,6 @@ package org.dataportabilityproject.bootstrap.vm;
 
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import org.dataportabilityproject.api.ApiMain;
-import org.dataportabilityproject.api.reference.ReferenceApiServer;
 import org.dataportabilityproject.transfer.WorkerMain;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -42,9 +41,7 @@ public class SingleVMMain {
     ApiMain apiMain = new ApiMain();
 
     try (InputStream stream =
-        ReferenceApiServer.class
-            .getClassLoader()
-            .getResourceAsStream("demo-selfsigned-keystore.jks")) {
+        ApiMain.class.getClassLoader().getResourceAsStream("demo-selfsigned-keystore.jks")) {
       if (stream == null) {
         throw new IllegalArgumentException("Demo keystore was not found");
       }
@@ -59,7 +56,7 @@ public class SingleVMMain {
       TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
       trustManagerFactory.init(keyStore);
 
-      apiMain.initializeHttps(trustManagerFactory, keyManagerFactory);
+      apiMain.initializeHttps(trustManagerFactory, keyManagerFactory, keyStore);
 
       apiMain.start();
 

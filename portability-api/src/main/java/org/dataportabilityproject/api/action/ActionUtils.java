@@ -15,35 +15,39 @@
  */
 package org.dataportabilityproject.api.action;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.BaseEncoding;
+
+import java.util.UUID;
 
 /** Helper functions for validating action related data. */
 public final class ActionUtils {
 
+  public static String encodeJobId(UUID jobId) {
+    Preconditions.checkNotNull(jobId);
+    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
+  }
+
+  public static UUID decodeJobId(String encodedJobId) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
+    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),
+        Charsets.UTF_8));
+  }
+
   /** Determines whether the current service is a valid service for export. */
   public static boolean isValidExportService(String serviceName) {
-    if (!Strings.isNullOrEmpty(serviceName)) {
-      // TODO: Use service registry to validate the service is valid for import or export
-      return true;
-    }
-    return false;
+    return !Strings.isNullOrEmpty(serviceName);
   }
 
   /** Determines whether the current service is a valid service for import. */
   public static boolean isValidImportService(String serviceName) {
-    if (!Strings.isNullOrEmpty(serviceName)) {
-      // TODO: Use service registry to validate the service is valid for import or export
-      return true;
-    }
-    return false;
+    return !Strings.isNullOrEmpty(serviceName);
   }
 
   /** Determines whether the current service is a valid service for import. */
   public static boolean isValidTransferDataType(String transferDataType) {
-    if (!Strings.isNullOrEmpty(transferDataType)) {
-      // TODO: Use service registry to validate the transferDataType is valid
-      return true;
-    }
-    return false;
+    return !Strings.isNullOrEmpty(transferDataType);
   }
 }

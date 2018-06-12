@@ -19,10 +19,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.util.UUID;
-import javax.crypto.SecretKey;
-
 import org.dataportabilityproject.api.action.Action;
 import org.dataportabilityproject.api.action.ActionUtils;
 import org.dataportabilityproject.security.SymmetricKeyGenerator;
@@ -31,6 +27,10 @@ import org.dataportabilityproject.spi.cloud.types.JobAuthorization;
 import org.dataportabilityproject.spi.cloud.types.PortabilityJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.util.UUID;
 
 /** An {@link Action} that handles the initial creation of a job. */
 public final class CreateJobAction
@@ -68,6 +68,11 @@ public final class CreateJobAction
         .setImportService(importService)
         .setAndValidateJobAuthorization(jobAuthorization)
         .build();
+  }
+
+  @Override
+  public Class<CreateJobActionRequest> getRequestType() {
+    return CreateJobActionRequest.class;
   }
 
   /**

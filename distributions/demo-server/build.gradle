@@ -49,16 +49,18 @@ repositories {
     jcenter()
 }
 
-def CLIENT_ID_PREFIX = 'data.portability.key.'
-def CLIENT_SECRET_PREFIX = 'data.portability.secret.'
-def JWT_KEY = 'data.portability.jwt.key'
-def JWT_SECRET = 'data.portability.jwt.secret'
+def transportType = project.hasProperty('transportType') ? transportType : "jdk"
+def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
+def appPort = project.hasProperty('appPort') ? appPort : "3000"
+def apiPort = project.hasProperty('apiPort') ? apiPort : "8080"
+
 
 dependencies {
 
     compile project(':portability-bootstrap-vm')
 
     compile project(':portability-api')
+    compile project(":extensions:transport:portability-transport-${transportType}")
     compile project(':portability-transfer')
 
     compile project(':extensions:config:portability-config-yaml')
@@ -81,6 +83,16 @@ dependencies {
 
 addCloudExtensionDependency(project)
 
+task createApiFile() {
+
+    doLast {
+        def apiFile = file("$buildDir/resources/main/config/api.yaml")
+        apiFile.delete()
+        apiFile.append("baseUrl: https://${demoDomain}:${appPort}\n")
+        apiFile.append("baseApiUrl: https://${demoDomain}:${apiPort}")
+    }
+}
+
 task createSecretsFile() {
 
     doLast {
@@ -95,7 +107,7 @@ task createSecretsFile() {
                 from file(secretsDirectory)
                 include secretsFileName
                 into file("$buildDir/resources/main")
-                rename  (secretsFileName, "secrets.properties")
+                rename(secretsFileName, "secrets.properties")
             }
         } else {
             throw new GradleException("Configuration " + secretsFile + " not found")
@@ -112,7 +124,7 @@ shadowJar {
     exclude '**/pom.xml'
 }
 
-shadowJar.dependsOn(createSecretsFile)
+shadowJar.dependsOn(createSecretsFile, createApiFile)
 
 task createDemoServerDockerfile(type: Dockerfile) {
     description = 'Builds the Demo Server Dockerfile'

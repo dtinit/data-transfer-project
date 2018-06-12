@@ -1,0 +1,96 @@
+$progress-indicator-complete: $primary-color;
+$progress-indicator-current: lighten($primary-color, 20%);
+$progress-indicator-incomplete: $light-gray;
+$progress-indicator-step-size: 1.5em;
+$progress-indicator-width: 100%;
+
+.progress-indicator {
+  list-style: none;
+  width: $progress-indicator-width;
+  margin: 0 auto;
+  padding: 0;
+  display: table;
+  table-layout: fixed;
+
+  > li {
+    position: relative;
+    display: table-cell;
+    text-align: center;
+    font-size: 1.5em;
+
+    span {
+      position: absolute;
+      color: $light-gray;
+      transform: translateX(-50%);
+      font-weight: 600;
+      font-size: rem-calc(14);
+      letter-spacing: 0.05px;
+      text-transform: uppercase;
+    }
+
+    &::before {
+      content: attr(data-step);
+      display: block;
+      margin: 0 auto;
+      background: $progress-indicator-incomplete;
+      width: $progress-indicator-step-size;
+      height: $progress-indicator-step-size;
+      text-align: center;
+      margin-bottom: 0.25em;
+      line-height: $progress-indicator-step-size;
+      border-radius: 100%;
+      position: relative;
+      z-index: 1000;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      display: block;
+      background: $progress-indicator-incomplete;
+      width: 100%;
+      height: $progress-indicator-step-size/10;
+      top: 50%; // height of bar
+      transform: translateY(-100%);
+      left: 50%;
+      margin-left: 1.5em \9
+    ;
+      z-index: 0;
+    }
+
+    &:last-child:after {
+      display: none;
+    }
+
+    &.is-complete {
+      color: $progress-indicator-complete;
+
+      &::before,
+      &::after {
+        color: $white;
+        background: $progress-indicator-complete;
+      }
+
+      span {
+        color: $progress-indicator-complete;
+      }
+    }
+
+    &.is-current {
+      color: $progress-indicator-current;
+
+      &::before {
+        color: $white;
+        background: $progress-indicator-current;
+      }
+
+      span {
+        color: $progress-indicator-current;
+      }
+    }
+  }
+}
+
+
+
+
