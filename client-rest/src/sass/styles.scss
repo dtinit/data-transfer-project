@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400|Roboto:300,400');
+
+$header-font-family: 'Open Sans', Helvetica, Roboto, Arial, sans-serif;
+$body-font-family: 'Open Sans', Helvetica, Roboto, Arial, sans-serif;
+$header-font-weight: 300;
+
+@import '~foundation-sites/scss/foundation';
+@include foundation-everything(true);
+@import "progress-indicator";

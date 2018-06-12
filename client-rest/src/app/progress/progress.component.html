@@ -1,0 +1,19 @@
+<ol class="progress-indicator">
+    <li [class.is-complete]="beginComplete()" [class.is-current]="beginCurrent()" data-step="">
+        <span>Start</span>
+    </li>
+    <li [class.is-complete]="dataComplete()" [class.is-current]="dataCurrent()" data-step="">
+        <span>Choose Data</span>
+    </li>
+    <li [class.is-complete]="createComplete()" [class.is-current]="createCurrent()" data-step="">
+        <span>Select Services</span>
+    </li>
+    <li [class.is-complete]="authComplete()" data-step="">
+        <span>Authentication</span>
+    </li>
+    <li [class.is-complete]="initiateComplete()" [class.is-current]="initiateCurrent()" data-step="">
+        <span>Transfer</span>
+    </li>
+</ol>
+
+

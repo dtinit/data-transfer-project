@@ -16,8 +16,15 @@
 package org.dataportabilityproject.api.action;
 
 /** Handles an action in the API server. */
-public interface Action<Request, Response> {
+public interface Action<REQUEST, RESPONSE> {
 
-  /** Handles the given {@code Request} and returns a {@code Response}. */
-  Response handle(Request request);
+  /**
+   * Returns the type this action handles.
+   *
+   * @return the type this action handles
+   */
+  Class<REQUEST> getRequestType();
+
+  /** Handles the given {@code REQUEST} and returns a {@code RESPONSE}. */
+  RESPONSE handle(REQUEST request);
 }

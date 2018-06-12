@@ -56,6 +56,11 @@ public final class StartJobAction implements Action<StartJobActionRequest, Start
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
+  @Override
+  public Class<StartJobActionRequest> getRequestType() {
+    return StartJobActionRequest.class;
+  }
+
   /**
    * Starts a job using the following flow:
    * <li>Validate auth data is present in cookies

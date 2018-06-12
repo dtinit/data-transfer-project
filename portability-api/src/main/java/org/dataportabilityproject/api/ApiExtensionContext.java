@@ -16,14 +16,15 @@
 package org.dataportabilityproject.api;
 
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
-import java.util.Map;
 import org.dataportabilityproject.api.launcher.Constants.Environment;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.api.launcher.Flag;
 import org.dataportabilityproject.api.launcher.Logger;
 import org.dataportabilityproject.api.launcher.TypeManager;
-import org.dataportabilityproject.api.launcher.Flag;
 import org.dataportabilityproject.config.extension.SettingsExtension;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Provides a context for initializing extensions.
