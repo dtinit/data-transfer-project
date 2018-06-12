@@ -50,6 +50,7 @@ repositories {
 }
 
 def transportType = project.hasProperty('transportType') ? transportType : "jdk"
+def derivedData = project.hasProperty('derivedData') ? derivedData : "false"
 def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
 def appPort = project.hasProperty('appPort') ? appPort : "3000"
 def apiPort = project.hasProperty('apiPort') ? apiPort : "8080"
@@ -78,7 +79,14 @@ dependencies {
     compile project(':extensions:data-transfer:portability-data-transfer-instagram')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
+
     compile project(':extensions:data-transfer:portability-data-transfer-twitter')
+
+    if (derivedData == 'true') {
+        compile project(':extensions:auth:portability-auth-derived-demo')
+        compile project(':extensions:data-transfer:portability-data-transfer-derived-demo')
+    }
+
 }
 
 addCloudExtensionDependency(project)
@@ -208,3 +216,5 @@ task installToolsAndDockerize {
     group = 'docker'
     dependsOn ":client:installTools", buildDemoServerImage, buildClientImage
 }
+
+

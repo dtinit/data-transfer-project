@@ -52,4 +52,7 @@ include ':extensions:data-transfer:portability-data-transfer-smugmug'
 include ':extensions:auth:portability-auth-twitter'
 include ':extensions:data-transfer:portability-data-transfer-twitter'
 
+include ':extensions:auth:portability-auth-derived-demo'
+include ':extensions:data-transfer:portability-data-transfer-derived-demo'
+
 include ':client'

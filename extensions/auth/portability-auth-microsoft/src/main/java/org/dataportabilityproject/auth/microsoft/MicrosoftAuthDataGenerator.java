@@ -5,10 +5,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -20,6 +16,11 @@ import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthM
 import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Provides configuration for conducting an OAuth flow against the Microsoft AD API. Returned tokens
@@ -51,6 +52,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
           .put("mail", ImmutableList.of("user.read", "Mail.Read"))
           .put("contacts", ImmutableList.of("user.read", "Contacts.Read"))
           .put("calendar", ImmutableList.of("user.read", "Calendars.Read"))
+          .put("derived-data", ImmutableList.of("user.read", "Files.Read.All"))
           .build();
 
   private final String redirectPath;
