@@ -28,7 +28,11 @@ import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.net.URL;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.print.DocFlavor.STRING;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.GetListsResponse;
 import org.dataportabilityproject.transfer.rememberthemilk.model.tasks.ListAddResponse;
@@ -107,6 +111,20 @@ class RememberTheMilkService {
     makeRequest(params, TaskUpdateResponse.class);
   }
 
+  public void setDueDate(String timeline, String listId, int seriesId, int taskId, Instant dueDate)
+      throws IOException {
+    // NB: does not set due time, merely due date
+    // TODO: address due times
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("method", RememberTheMilkMethods.TASKS_DUE_DATE.getMethodName());
+    params.put("timeline", timeline);
+    params.put("list_id", listId);
+    params.put("taskseries_id", String.valueOf(seriesId));
+    params.put("task_id", String.valueOf(taskId));
+    params.put("due", dueDate.toString());
+    makeRequest(params, TaskUpdateResponse.class);
+  }
+
   public GetListResponse getList(String listId) throws IOException {
     Map<String, String> params =
         ImmutableMap.of(
@@ -149,6 +167,7 @@ class RememberTheMilkService {
     LISTS_ADD("rtm.lists.add"),
     TASKS_ADD("rtm.tasks.add"),
     TASKS_COMPLETE("rtm.tasks.complete"),
+    TASKS_DUE_DATE("rtm.tasks.setDueDate"),
     TASKS_GET_LIST("rtm.tasks.getList"),
     TIMELINES_CREATE("rtm.timelines.create");
 
