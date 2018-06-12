@@ -7,6 +7,7 @@ import {transportError} from "../transport";
 
 /**
  * Creates a transfer request on the API server.
+ * TODO: Add form validation
  */
 @Component({
     templateUrl: "./create-transfer.component.html"
@@ -49,6 +50,7 @@ export class CreateTransferComponent implements OnInit {
             destination: this.progressService.importService(),
             transferDataType: this.progressService.dataType()
         }).subscribe(transfer => {
+            // redirect to OAuth service
             this.progressService.createComplete(transfer.id);
             window.location.href = transfer.link;
         }, transportError);

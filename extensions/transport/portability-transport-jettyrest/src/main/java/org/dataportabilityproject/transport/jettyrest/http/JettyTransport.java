@@ -40,84 +40,86 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Provides HTTP(s) communication to the system via Jetty.
- */
+/** Provides HTTP(s) communication to the system via Jetty. */
 public class JettyTransport {
-    private static final Logger logger = LoggerFactory.getLogger(JettyTransport.class);
-    
-    private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
-    private static final String LOG_CLASS = "org.eclipse.jetty.util.log.class";
+  private static final Logger logger = LoggerFactory.getLogger(JettyTransport.class);
 
-    private final KeyStore keyStore;
+  private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
+  private static final String LOG_CLASS = "org.eclipse.jetty.util.log.class";
 
-    private int httpPort = 8080; // TODO configure
+  private final KeyStore keyStore;
 
-    private Server server;
-    private List<Handler> handlers = new ArrayList<>();
+  private int httpPort = 8080; // TODO configure
 
-    public JettyTransport(KeyStore keyStore) {
-        this.keyStore = keyStore;
-        System.setProperty(LOG_CLASS, JettyMonitor.class.getName());
-        System.setProperty(ANNOUNCE, "false");
+  private Server server;
+  private List<Handler> handlers = new ArrayList<>();
+
+  public JettyTransport(KeyStore keyStore) {
+    this.keyStore = keyStore;
+    System.setProperty(LOG_CLASS, JettyMonitor.class.getName()); // required by Jetty
+    System.setProperty(ANNOUNCE, "false");
+  }
+
+  public void start() {
+    server = new Server();
+
+    HttpConfiguration https = new HttpConfiguration();
+    https.addCustomizer(new SecureRequestCustomizer());
+    SslContextFactory sslContextFactory = new SslContextFactory();
+    sslContextFactory.setKeyStore(keyStore);
+    sslContextFactory.setKeyStorePassword("password");
+    sslContextFactory.setKeyManagerPassword("password");
+    ServerConnector sslConnector =
+        new ServerConnector(
+            server,
+            new SslConnectionFactory(sslContextFactory, "http/1.1"),
+            new HttpConnectionFactory(https));
+    sslConnector.setPort(httpPort);
+    server.setConnectors(new Connector[] {sslConnector});
+
+    server.setErrorHandler(new JettyErrorHandler());
+    ContextHandlerCollection contexts = new ContextHandlerCollection();
+    contexts.setHandlers(handlers.toArray(new Handler[0]));
+    server.setHandler(contexts);
+    try {
+      server.start();
+      logger.info("Using Jetty transport");
+    } catch (Exception e) {
+      throw new RuntimeException("Error starting Jetty transport", e);
     }
+  }
 
-    public void start() {
-        server = new Server();
-
-        HttpConfiguration https = new HttpConfiguration();
-        https.addCustomizer(new SecureRequestCustomizer());
-        SslContextFactory sslContextFactory = new SslContextFactory();
-        sslContextFactory.setKeyStore(keyStore);
-        sslContextFactory.setKeyStorePassword("password");
-        sslContextFactory.setKeyManagerPassword("password");
-        ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
-        sslConnector.setPort(httpPort);
-        server.setConnectors(new Connector[]{sslConnector});
-
-        server.setErrorHandler(new JettyErrorHandler());
-        ContextHandlerCollection contexts = new ContextHandlerCollection();
-        contexts.setHandlers(handlers.toArray(new Handler[0]));
-        server.setHandler(contexts);
-        try {
-            server.start();
-            logger.info("Using Jetty transport");
-        } catch (Exception e) {
-            throw new RuntimeException("Error starting Jetty transport", e);
-        }
+  public void shutdown() {
+    if (server == null) {
+      return;
     }
-
-    public void shutdown() {
-        if (server == null) {
-            return;
-        }
-        try {
-            server.stop();
-        } catch (Exception e) {
-            throw new RuntimeException("Error stopping Jetty transport", e);
-        }
+    try {
+      server.stop();
+    } catch (Exception e) {
+      throw new RuntimeException("Error stopping Jetty transport", e);
     }
+  }
 
-    public void registerServlet(String path, Servlet servletContainer) {
-        ServletHolder servletHolder = new ServletHolder(Source.EMBEDDED);
-        servletHolder.setName("Data Portability");
-        servletHolder.setServlet(servletContainer);
-        servletHolder.setInitOrder(1);
+  public void registerServlet(String path, Servlet servletContainer) {
+    ServletHolder servletHolder = new ServletHolder(Source.EMBEDDED);
+    servletHolder.setName("Data Portability");
+    servletHolder.setServlet(servletContainer);
+    servletHolder.setInitOrder(1);
 
-        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-        handler.setContextPath("/");
+    ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+    handler.setContextPath("/");
 
-        handlers.add(handler);
+    handlers.add(handler);
 
-        handler.getServletHandler().addServletWithMapping(servletHolder, path);
+    handler.getServletHandler().addServletWithMapping(servletHolder, path);
+  }
+
+  private class JettyErrorHandler extends ErrorHandler {
+
+    protected void writeErrorPage(
+        HttpServletRequest request, Writer writer, int code, String message, boolean showStacks)
+        throws IOException {
+      writer.write("{ error: '" + code + "'}");
     }
-
-    private class JettyErrorHandler extends ErrorHandler {
-
-        protected void writeErrorPage(
-                HttpServletRequest request, Writer writer, int code, String message, boolean showStacks)
-                throws IOException {
-            writer.write("{ error: '" + code + "'}");
-        }
-    }
+  }
 }

@@ -31,8 +31,6 @@ dependencies {
     compile "org.glassfish.jersey.core:jersey-server:${jerseyVersion}"
     compile "org.glassfish.jersey.media:jersey-media-json-jackson:${jerseyVersion}"
 
-//    compile "org.glassfish.jersey.core:jersey-json:${jerseyVersion}"
-
     compile "org.glassfish.jersey.core:jersey-common:${jerseyVersion}"
     compile "org.glassfish.jersey.inject:jersey-hk2:${jerseyVersion}"
     

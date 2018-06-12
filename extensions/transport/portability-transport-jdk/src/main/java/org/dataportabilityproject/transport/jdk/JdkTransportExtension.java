@@ -6,7 +6,7 @@ import org.dataportabilityproject.spi.service.extension.ServiceExtension;
 import org.dataportabilityproject.transport.jdk.http.ReferenceApiModule;
 import org.dataportabilityproject.transport.jdk.http.ReferenceApiServer;
 
-/** */
+/** A transport implementation based on the default JDK http library. */
 public class JdkTransportExtension implements ServiceExtension {
 
   private ReferenceApiServer apiServer;
@@ -14,7 +14,6 @@ public class JdkTransportExtension implements ServiceExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    // context.registerService(TransportBinder.class, binder);
     this.context = context;
   }
 
