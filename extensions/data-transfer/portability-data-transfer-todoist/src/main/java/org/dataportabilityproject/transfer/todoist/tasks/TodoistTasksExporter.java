@@ -52,7 +52,7 @@ public class TodoistTasksExporter implements Exporter<TokensAndUrlAuthData, Task
   private final Logger logger = LoggerFactory.getLogger(TodoistTasksExporter.class);
   private HttpTransport httpTransport;
   private ObjectMapper objectMapper;
-  private TodoistTasksService service;
+  private volatile TodoistTasksService service;
 
   public TodoistTasksExporter(ObjectMapper objectMapper, HttpTransport httpTransport) {
     this.objectMapper = objectMapper;

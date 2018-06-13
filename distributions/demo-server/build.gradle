@@ -139,7 +139,7 @@ task createDemoServerDockerfile(type: Dockerfile) {
     exposePort 5005
     copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
 
-    defaultCommand("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005", "-jar", "/app/demo-server-all.jar")
+    defaultCommand("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005", "-jar", "/app/demo-server-all.jar")
 
     // Read in secrets and set them as environment variables.
     // NB: This is for demo purposes only. Production systems should manage and set secrets in a secure way.
