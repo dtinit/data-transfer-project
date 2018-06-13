@@ -16,52 +16,74 @@
 
 package org.dataportabilityproject.transfer.todoist.tasks.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
 public class Task {
-  @JsonProperty("id")
+
   private String id;
-
-  @JsonProperty("project_id")
   private String projectId;
-
-  @JsonProperty("content")
   private String content;
-
-  @JsonProperty("completed")
   private boolean completed;
-
-  @JsonProperty("label_ids")
   private String[] labelIds;
-
-  @JsonProperty("order")
   private int order;
-
-  @JsonProperty("indent")
   private int indent;
-
-  @JsonProperty("priority")
   private int priority;
-
-  @JsonProperty("due")
   private Due due;
-
-  @JsonProperty("url")
   private String url;
-
-  @JsonProperty("comment_count")
   private int commentCount;
 
-  public String getId() { return id; }
+  @JsonCreator
+  public Task(
+      @JsonProperty("id") String id,
+      @JsonProperty("project_id") String projectId,
+      @JsonProperty("content") String content,
+      @JsonProperty("completed") Boolean completed,
+      @JsonProperty("label_ids") String[] labelIds,
+      @JsonProperty("order") Integer order,
+      @JsonProperty("indent") Integer indent,
+      @JsonProperty("priority") Integer priority,
+      @JsonProperty("due") Due due,
+      @JsonProperty("url") String url,
+      @JsonProperty("comment_count") Integer commentCount
+  ) {
+    this.id = id;
+    this.projectId = projectId;
+    this.content = content;
+    this.completed = completed;
+    this.labelIds = labelIds;
+    this.order = order;
+    this.indent = indent;
+    this.priority = priority;
+    this.due = due;
+    this.url = url;
+    this.commentCount = commentCount;
+  }
 
-  public String getProjectId() { return projectId; }
+  public String getId() {
+    return id;
+  }
 
-  public String getContent() { return content; }
+  public String getProjectId() {
+    return projectId;
+  }
 
-  public boolean getCompleted() { return completed; }
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
+  }
 
-  public Due getDue() { return due; }
+  public String getContent() {
+    return content;
+  }
+
+  public boolean getCompleted() {
+    return completed;
+  }
+
+  public Due getDue() {
+    return due;
+  }
 
   @Override
   public String toString() {

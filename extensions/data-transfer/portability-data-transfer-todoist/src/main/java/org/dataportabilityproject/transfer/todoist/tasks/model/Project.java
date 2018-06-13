@@ -16,25 +16,36 @@
 
 package org.dataportabilityproject.transfer.todoist.tasks.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Project {
-  @JsonProperty("id")
+
   private String id;
-
-  @JsonProperty("name")
   private String name;
-
-  @JsonProperty("order")
   private int order;
-
-  @JsonProperty("indent")
   private int index;
-
-  @JsonProperty("comment_count")
   private int commentCount;
 
-  public String getId() { return id; }
+  @JsonCreator
+  public Project(
+      @JsonProperty("id") String id,
+      @JsonProperty("name") String name,
+      @JsonProperty("order") Integer order,
+      @JsonProperty("indent") Integer index,
+      @JsonProperty("comment_count") Integer commentCount) {
+    this.id = id;
+    this.name = name;
+    this.order = order;
+    this.index = index;
+    this.commentCount = commentCount;
+  }
 
-  public String getName() { return name; }
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

@@ -20,18 +20,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 @JsonTypeName("org.dataportability:TempTasksData")
 public class TempTasksData extends DataModel {
 
   @JsonProperty("jobId")
-  private final String jobId;
+  private final UUID jobId;
 
   @JsonProperty("newTaskListIds")
   private final Map<String, String> newTaskListIds;
 
-  public TempTasksData(@JsonProperty("jobId") String jobId) {
+  public TempTasksData(@JsonProperty("jobId") UUID jobId) {
     this.jobId = jobId;
     this.newTaskListIds = new HashMap<>();
   }

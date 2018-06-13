@@ -22,9 +22,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.UUID;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
+import org.dataportabilityproject.spi.transfer.types.TempTasksData;
+import org.dataportabilityproject.transfer.todoist.tasks.model.Due;
 import org.dataportabilityproject.transfer.todoist.tasks.model.Project;
 import org.dataportabilityproject.transfer.todoist.tasks.model.Task;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
@@ -38,19 +41,35 @@ import org.slf4j.LoggerFactory;
 public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
 
   private final Logger logger = LoggerFactory.getLogger(TodoistTasksImporter.class);
+  private final JobStore jobStore;
   private ObjectMapper objectMapper;
   private HttpTransport httpTransport;
   private volatile TodoistTasksService service;
 
-  public TodoistTasksImporter(ObjectMapper objectMapper, HttpTransport httpTransport) {
+  public TodoistTasksImporter(ObjectMapper objectMapper, HttpTransport httpTransport,
+      JobStore jobStore) {
     this.objectMapper = objectMapper;
     this.httpTransport = httpTransport;
+    this.jobStore = jobStore;
     this.service = null;
   }
 
   @VisibleForTesting
-  TodoistTasksImporter(TodoistTasksService service) {
+  TodoistTasksImporter(TodoistTasksService service, JobStore jobStore) {
     this.service = service;
+    this.jobStore = jobStore;
+  }
+
+  private static Project convertToTodoistProject(TaskListModel taskListModel) {
+    return new Project(taskListModel.getId(), taskListModel.getName(), null, null, null);
+  }
+
+  private static Task convertToTodoistTask(TaskModel taskModel) {
+    // TODO: make this better
+    Due due = new Due(null, null,
+        taskModel.getDueTime() != null ? taskModel.getDueTime().toString() : null, null);
+    return new Task(null, taskModel.getTaskListId(), taskModel.getText(), taskModel.isCompleted(),
+        null, null, null, null, due, null, null);
   }
 
   @Override
@@ -72,20 +91,29 @@ public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, Task
   @VisibleForTesting
   void importSingleProject(UUID jobId, TokensAndUrlAuthData authData, TaskListModel taskListModel)
       throws IOException {
+    Project toInsert = convertToTodoistProject(taskListModel);
+    Project result = getOrCreateService(authData).addProject(toInsert);
 
+    TempTasksData taskMappings = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
+    if (taskMappings == null) {
+      taskMappings = new TempTasksData(jobId);
+      jobStore.create(jobId, createCacheKey(), taskMappings);
+    }
+    taskMappings.addTaskListId(taskListModel.getId(), result.getId());
+    jobStore.update(jobId, createCacheKey(), taskMappings);
   }
 
   @VisibleForTesting
-  void importSingleTask(UUID jobId, TokensAndUrlAuthData authData, TaskModel taskModel) throws IOException {
+  void importSingleTask(UUID jobId, TokensAndUrlAuthData authData, TaskModel taskModel)
+      throws IOException {
+    Task toInsert = convertToTodoistTask(taskModel);
 
-  }
+    // taskMappings better not be null!
+    TempTasksData tasksMapping = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
+    String newProjectId = tasksMapping.lookupNewTaskListId(taskModel.getTaskListId());
 
-  private static Project convertToTodoistProject(TaskListModel taskListModel) {
-    return null;
-  }
-
-  private static Task convertToTodoistTask(TaskModel taskModel) {
-    return null;
+    toInsert.setProjectId(newProjectId);
+    getOrCreateService(authData).addTask(toInsert);
   }
 
   private TodoistTasksService getOrCreateService(AuthData authData) {
@@ -95,5 +123,14 @@ public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, Task
 
   private TodoistTasksService createService(TokensAndUrlAuthData authData) {
     return new TodoistTasksService(httpTransport, objectMapper, authData);
+  }
+
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempTaskData";
   }
 }

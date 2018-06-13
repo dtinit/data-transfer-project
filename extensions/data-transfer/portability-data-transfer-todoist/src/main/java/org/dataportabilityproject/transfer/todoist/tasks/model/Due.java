@@ -16,26 +16,39 @@
 
 package org.dataportabilityproject.transfer.todoist.tasks.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Due {
-  @JsonProperty("string")
   private String string;
-
-  @JsonProperty("date")
   private String date;
-
-  @JsonProperty("datetime")
   private String dateTime;
-
-  @JsonProperty("timezone")
   private String timezone;
 
-  public String getString() { return string; }
+  @JsonCreator
+  public Due(@JsonProperty("string") String string,
+      @JsonProperty("date") String date,
+      @JsonProperty("datetime") String dateTime,
+      @JsonProperty("timezone") String timezone) {
+    this.string = string;
+    this.date = date;
+    this.dateTime = dateTime;
+    this.timezone = timezone;
+  }
 
-  public String getDate() { return date; }
+  public String getString() {
+    return string;
+  }
 
-  public String getDateTime() { return dateTime; }
+  public String getDate() {
+    return date;
+  }
 
-  public String getTimezone() { return timezone; }
+  public String getDateTime() {
+    return dateTime;
+  }
+
+  public String getTimezone() {
+    return timezone;
+  }
 }
