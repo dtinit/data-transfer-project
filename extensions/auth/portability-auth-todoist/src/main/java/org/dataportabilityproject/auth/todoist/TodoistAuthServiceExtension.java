@@ -75,6 +75,8 @@ public class TodoistAuthServiceExtension implements AuthServiceExtension {
       return;
     }
 
+    System.out.println("Getting to todoist auth service extension");
+
     AppCredentials appCredentials;
     try {
       appCredentials =

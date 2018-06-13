@@ -30,4 +30,12 @@ public class Due {
 
   @JsonProperty("timezone")
   private String timezone;
+
+  public String getString() { return string; }
+
+  public String getDate() { return date; }
+
+  public String getDateTime() { return dateTime; }
+
+  public String getTimezone() { return timezone; }
 }

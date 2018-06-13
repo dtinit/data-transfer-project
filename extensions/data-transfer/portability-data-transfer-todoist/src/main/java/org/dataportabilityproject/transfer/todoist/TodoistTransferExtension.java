@@ -69,8 +69,6 @@ public class TodoistTransferExtension implements TransferExtension {
       return;
     }
 
-    logger.debug("Started Todoist transfer extension");
-
     ObjectMapper mapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

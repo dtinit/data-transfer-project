@@ -21,9 +21,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
@@ -51,8 +51,8 @@ import org.slf4j.LoggerFactory;
  */
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
 
-  private final AppCredentials appCredentials;
   private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksExporter.class);
+  private final AppCredentials appCredentials;
   private RememberTheMilkService service;
 
   public RememberTheMilkTasksExporter(AppCredentials appCredentials) {
@@ -111,7 +111,9 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
             if (task.due != null && !Strings.isNullOrEmpty(task.due)) {
               dueTime = Instant.parse(task.due);
             }
-            tasks.add(new TaskModel(oldListId, taskSeries.name, notesStr, completedTime, dueTime));
+            tasks.add(
+                new TaskModel(oldListId, taskSeries.name, notesStr, task.completed != null,
+                    completedTime, dueTime));
           }
         }
       }

@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Project {
   @JsonProperty("id")
-  private int id;
+  private String id;
 
   @JsonProperty("name")
   private String name;
@@ -33,4 +33,8 @@ public class Project {
 
   @JsonProperty("comment_count")
   private int commentCount;
+
+  public String getId() { return id; }
+
+  public String getName() { return name; }
 }

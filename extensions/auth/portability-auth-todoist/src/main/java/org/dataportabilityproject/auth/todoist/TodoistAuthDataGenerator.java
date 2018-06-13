@@ -19,17 +19,23 @@ package org.dataportabilityproject.auth.todoist;
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
+import java.io.IOException;
 import java.util.Collections;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.api.types.AuthFlowConfiguration;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class TodoistAuthDataGenerator implements AuthDataGenerator {
   private static final String CALLBACK_PATH = "/callback/todoist";
@@ -61,7 +67,31 @@ public class TodoistAuthDataGenerator implements AuthDataGenerator {
   @Override
   public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
       AuthData initialAuthData, String extra) {
-    return null;
+    Preconditions.checkArgument(
+        Strings.isNullOrEmpty(extra), "Extra data not expected for Todoist OAuth flow");
+    AuthorizationCodeFlow flow = createFlow();
+    TokenResponse response = null;
+    try {
+      response =
+          flow.newTokenRequest(authCode)
+              .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) // TODO(chuy): Parameterize
+              .execute();
+    } catch (IOException e) {
+      throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);
+    }
+
+    // Figure out storage
+    Credential credential = null;
+    try {
+      credential = flow.createAndStoreCredential(response, id);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Error calling AuthorizationCodeFlow.createAndStoreCredential ", e);
+    }
+    return new TokensAndUrlAuthData(
+        credential.getAccessToken(),
+        credential.getRefreshToken(),
+        credential.getTokenServerEncodedUrl());
   }
 
   private AuthorizationCodeFlow createFlow() {

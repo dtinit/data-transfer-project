@@ -21,8 +21,8 @@ public class TasksModelWrapperTest {
 
     List<TaskModel> tasks =
         ImmutableList.of(
-            new TaskModel("id1", "Write Better tests", "Do this soon", null, null),
-            new TaskModel("id1", "Liberate all the data", "do this in stages", null, null));
+            new TaskModel("id1", "Write Better tests", "Do this soon",false, null, null),
+            new TaskModel("id1", "Liberate all the data", "do this in stages", true,null, null));
 
     ContainerResource data = new TaskContainerResource(taskLists, tasks);
 

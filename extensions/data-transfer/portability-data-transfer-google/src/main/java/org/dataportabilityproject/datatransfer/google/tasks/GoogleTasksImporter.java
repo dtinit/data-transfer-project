@@ -93,10 +93,10 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
     for (TaskModel oldTask : data.getTasks()) {
       Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
       if (oldTask.getCompletedTime() != null) {
-        newTask.setCompleted(new DateTime(oldTask.getCompletedTime().toEpochMilli()));
+        newTask.setCompleted(new DateTime(oldTask.getCompletedTime().toString()));
       }
       if (oldTask.getDueTime() != null) {
-        newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
+        newTask.setDue(new DateTime(oldTask.getDueTime().toString()));
       }
       String newTaskListId = tempTasksData.lookupNewTaskListId(oldTask.getTaskListId());
       try {
