@@ -68,7 +68,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
 
     TempTasksData tempTasksData = jobstore.findData(jobId, createCacheKey(), TempTasksData.class);
     if (tempTasksData == null) {
-      tempTasksData = new TempTasksData(jobId.toString());
+      tempTasksData = new TempTasksData(jobId);
       try {
         jobstore.create(jobId, createCacheKey(), tempTasksData);
       } catch (IOException e) {

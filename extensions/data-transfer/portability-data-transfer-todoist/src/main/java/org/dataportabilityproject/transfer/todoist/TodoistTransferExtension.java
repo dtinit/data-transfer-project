@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
+import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
@@ -71,10 +72,11 @@ public class TodoistTransferExtension implements TransferExtension {
 
     ObjectMapper mapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     HttpTransport httpTransport = context.getService(HttpTransport.class);
+    JobStore jobStore = context.getService(JobStore.class);
+
     exporter = new TodoistTasksExporter(mapper, httpTransport);
-    importer = new TodoistTasksImporter(mapper, httpTransport);
+    importer = new TodoistTasksImporter(mapper, httpTransport, jobStore);
     initialized = true;
   }
 }

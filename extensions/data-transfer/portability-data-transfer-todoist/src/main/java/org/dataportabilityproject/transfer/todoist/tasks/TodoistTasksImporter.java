@@ -60,7 +60,7 @@ public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, Task
   }
 
   private static Project convertToTodoistProject(TaskListModel taskListModel) {
-    return new Project(taskListModel.getId(), taskListModel.getName(), null, null, null);
+    return new Project(taskListModel.getId(), taskListModel.getName());
   }
 
   private static Task convertToTodoistTask(String projectId, TaskModel taskModel) {
@@ -105,7 +105,7 @@ public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, Task
     // taskMappings better not be null!
     TempTasksData tasksMapping = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
     String newProjectId = tasksMapping.lookupNewTaskListId(taskModel.getTaskListId());
-    
+
     Task toInsert = convertToTodoistTask(newProjectId, taskModel);
 
     getOrCreateService(authData).addTask(toInsert);

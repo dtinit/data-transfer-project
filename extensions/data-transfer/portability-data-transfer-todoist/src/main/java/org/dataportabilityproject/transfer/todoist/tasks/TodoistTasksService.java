@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import org.dataportabilityproject.transfer.todoist.tasks.model.Project;
 import org.dataportabilityproject.transfer.todoist.tasks.model.Task;
 import org.dataportabilityproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -94,7 +95,8 @@ public class TodoistTasksService {
     HttpHeaders headers = new HttpHeaders();
     headers.setAuthorization("Bearer " + authData.getAccessToken());
     headers.setContentType("application/json");
-    //headers.set("X-Request-Id", UUID.randomUUID()); // TODO: this feels wrong
+    headers.set("X-Request-Id", UUID.randomUUID()); // TODO: this feels wrong
+    postRequest.setHeaders(headers);
 
     HttpResponse response = postRequest.execute();
     int statusCode = response.getStatusCode();
