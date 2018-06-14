@@ -27,7 +27,6 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.TempTasksData;
-import org.dataportabilityproject.transfer.todoist.tasks.model.Due;
 import org.dataportabilityproject.transfer.todoist.tasks.model.Project;
 import org.dataportabilityproject.transfer.todoist.tasks.model.Task;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
@@ -64,12 +63,9 @@ public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, Task
     return new Project(taskListModel.getId(), taskListModel.getName(), null, null, null);
   }
 
-  private static Task convertToTodoistTask(TaskModel taskModel) {
-    // TODO: make this better
-    Due due = new Due(null, null,
-        taskModel.getDueTime() != null ? taskModel.getDueTime().toString() : null, null);
-    return new Task(null, taskModel.getTaskListId(), taskModel.getText(), taskModel.isCompleted(),
-        null, null, null, null, due, null, null);
+  private static Task convertToTodoistTask(String projectId, TaskModel taskModel) {
+    return new Task(projectId, taskModel.getText(), taskModel.isCompleted(),
+        taskModel.getDueTime());
   }
 
   @Override
@@ -106,13 +102,12 @@ public class TodoistTasksImporter implements Importer<TokensAndUrlAuthData, Task
   @VisibleForTesting
   void importSingleTask(UUID jobId, TokensAndUrlAuthData authData, TaskModel taskModel)
       throws IOException {
-    Task toInsert = convertToTodoistTask(taskModel);
-
     // taskMappings better not be null!
     TempTasksData tasksMapping = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
     String newProjectId = tasksMapping.lookupNewTaskListId(taskModel.getTaskListId());
+    
+    Task toInsert = convertToTodoistTask(newProjectId, taskModel);
 
-    toInsert.setProjectId(newProjectId);
     getOrCreateService(authData).addTask(toInsert);
   }
 

@@ -19,6 +19,8 @@ package org.dataportabilityproject.transfer.todoist.tasks.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import java.time.Instant;
+import javax.annotation.Nullable;
 
 public class Task {
 
@@ -59,6 +61,16 @@ public class Task {
     this.due = due;
     this.url = url;
     this.commentCount = commentCount;
+  }
+
+  public Task(String projectId, String content, boolean completed, @Nullable Instant dueTime) {
+    this.projectId = projectId;
+    this.content = content;
+    this.completed = completed;
+    if (dueTime != null) {
+      Due due = new Due(null, null, dueTime.toString(), null);
+      this.due = due;
+    }
   }
 
   public String getId() {
