@@ -15,7 +15,9 @@
  */
 package org.dataportabilityproject.transfer;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
+import java.util.List;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -133,4 +135,30 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       }
     }
   }
+
+  private ExceptionResponse checkRetry(String exceptionMessage) {
+    List<String> fatalRegexes = ImmutableList.of();
+    for (String fatalRegex : fatalRegexes) {
+      if (exceptionMessage.matches(fatalRegex)) {
+        return ExceptionResponse.FATAL;
+      }
+    }
+    return ExceptionResponse.RETRYABLE;
+  }
+
+  private enum ExceptionResponse {
+    FATAL(false),
+    RETRYABLE(true);
+
+    private boolean canRetry;
+
+    boolean getCanRetry() {
+      return canRetry;
+    }
+
+    private ExceptionResponse(boolean canRetry) {
+      this.canRetry = canRetry;
+    }
+  }
+
 }
