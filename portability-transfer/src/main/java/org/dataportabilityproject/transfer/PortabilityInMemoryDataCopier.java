@@ -27,6 +27,7 @@ import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
+import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule.ExDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
+
+  private static final List<String> fatalRegexes = ImmutableList.of();
+  private static final int maxRetries = 5;
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -92,10 +96,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    logger.debug("Starting export");
-    ExportResult<?> exportResult;
-    exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    logger.debug("Finished export");
+    ExportResult<?> exportResult = exportSuccess(jobId, exportAuthData, exportInformation, 0);
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
       logger.warn("Error happened during export: {}", exportResult.getMessage());
@@ -136,8 +137,29 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     }
   }
 
+  private ExportResult exportSuccess(UUID jobId, AuthData exportAuthData, Optional<ExportInformation> exportInformation, int numRetries) {
+    if (numRetries >= maxRetries) {
+      return new ExportResult(ResultType.ERROR);
+    }
+
+    logger.debug("Starting export");
+    ExportResult<?> exportResult;
+    exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    logger.debug("Finished export");
+
+    if (exportResult.getType() == ResultType.ERROR) {
+      ExceptionResponse response = checkRetry(exportResult.getMessage());
+      if (response.getCanRetry()) {
+        return exportSuccess(jobId, exportAuthData, exportInformation, numRetries + 1);
+      }
+      else {
+        return new ExportResult(ResultType.ERROR);
+      }
+    }
+    return exportResult;
+  }
+
   private ExceptionResponse checkRetry(String exceptionMessage) {
-    List<String> fatalRegexes = ImmutableList.of();
     for (String fatalRegex : fatalRegexes) {
       if (exceptionMessage.matches(fatalRegex)) {
         return ExceptionResponse.FATAL;
