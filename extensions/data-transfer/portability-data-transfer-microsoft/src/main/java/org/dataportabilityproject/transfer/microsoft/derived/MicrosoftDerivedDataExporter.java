@@ -37,6 +37,8 @@ import java.util.UUID;
  *
  * <p>This implementation expects the derived data to be a file named {@link #DERIVED_DATA} placed
  * in the user's OneDrive in the folder [root]/deriveddata.
+ *
+ * <p>Note the format of the exported contents are opaque; they may change without notice.
  */
 public class MicrosoftDerivedDataExporter implements Exporter<TokenAuthData, MicrosoftDerivedData> {
   private static final String DERIVED_DATA = "deriveddata.json";

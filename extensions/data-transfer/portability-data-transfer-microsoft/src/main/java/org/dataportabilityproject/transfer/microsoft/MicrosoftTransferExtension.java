@@ -17,10 +17,7 @@ import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosImpor
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
 
-/**
- * Bootstraps the Microsoft data transfer services. Note the format of the exported contents are
- * opaque; they may change without notice.
- */
+/** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
   // TODO: centralized place, or enum type for these?
@@ -66,6 +63,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     }
 
     if (derivedData && transferDataType.equals(DERIVED_DATA)) {
+      // only enable if derivded data explicitly set as a configuration value
       return new MicrosoftDerivedDataExporter(BASE_GRAPH_URL, client, mapper);
     }
 
