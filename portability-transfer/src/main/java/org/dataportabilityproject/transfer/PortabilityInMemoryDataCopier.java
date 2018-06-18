@@ -44,7 +44,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
   private static final List<String> fatalRegexes = ImmutableList.of("*fatal*");
-  private static final int maxRetriesInit = 5;
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -143,21 +142,18 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     if (exportResult.getType() == ResultType.ERROR) {
       ExceptionResponse response = checkRetry(exportResult.getMessage());
       if (response.canRetry) {
-        int retries = 0;
+        int attempts = 1;
         // TODO: what if different kinds of errors have different max retries, and we start with one
         // kind of error and then start seeing another?
-        while (retries < response.maxRetries && response.canRetry) {
+        while (attempts < response.maxRetries && response.canRetry) {
           exportResult = exportHelper(jobId, exportAuthData, exportInformation);
           if (exportResult.getType() != ResultType.ERROR) {
             return exportResult;
           } else {
-            retries += 1;
+            attempts += 1;
             response = checkRetry(exportResult.getMessage());
           }
         }
-        return exportResult;
-      } else {
-        return exportResult;
       }
     }
     return exportResult;
@@ -177,7 +173,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         return new ExceptionResponse(false, 0);
       }
     }
-    return new ExceptionResponse(true, maxRetriesInit);
+    return new ExceptionResponse(true, 5);
   }
 
   private class ExceptionResponse {
