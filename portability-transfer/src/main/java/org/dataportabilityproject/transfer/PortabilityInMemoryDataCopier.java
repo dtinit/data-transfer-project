@@ -144,6 +144,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       ExceptionResponse response = checkRetry(exportResult.getMessage());
       if (response.canRetry) {
         int retries = 0;
+        // TODO: what if different kinds of errors have different max retries, and we start with one
+        // kind of error and then start seeing another?
         while (retries < response.maxRetries && response.canRetry) {
           exportResult = exportHelper(jobId, exportAuthData, exportInformation);
           if (exportResult.getType() != ResultType.ERROR) {
