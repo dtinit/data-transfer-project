@@ -17,7 +17,12 @@ package org.dataportabilityproject.transfer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -27,15 +32,8 @@ import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
-import org.dataportabilityproject.types.transfer.models.calendar.RecurrenceRule.ExDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementation of {@link InMemoryDataCopier}.
@@ -46,7 +44,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
   private static final List<String> fatalRegexes = ImmutableList.of("*fatal*");
-  private static final int maxRetries = 5;
+  private static final int maxRetriesInit = 5;
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -96,7 +94,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    ExportResult<?> exportResult = exportSuccess(jobId, exportAuthData, exportInformation, 0);
+    ExportResult<?> exportResult = runExportLogic(jobId, exportAuthData, exportInformation);
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
       logger.warn("Error happened during export: {}", exportResult.getMessage());
@@ -124,62 +122,69 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             exportAuthData,
             importAuthData,
             Optional.of(new ExportInformation(
-                continuationData.getPaginationData(), exportInformation.get().getContainerResource())));
+                continuationData.getPaginationData(),
+                exportInformation.get().getContainerResource())));
       }
 
       // Start processing sub-resources
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copyHelper(jobId, exportAuthData, importAuthData, Optional.of(new ExportInformation(null, resource)));
+          copyHelper(jobId, exportAuthData, importAuthData,
+              Optional.of(new ExportInformation(null, resource)));
         }
       }
     }
   }
 
-  private ExportResult exportSuccess(UUID jobId, AuthData exportAuthData, Optional<ExportInformation> exportInformation, int numRetries) {
-    if (numRetries >= maxRetries) {
-      return new ExportResult(ResultType.ERROR);
-    }
-
-    logger.debug("Starting export");
-    ExportResult<?> exportResult;
-    exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    logger.debug("Finished export");
-
+  private ExportResult runExportLogic(UUID jobId, AuthData exportAuthData,
+      Optional<ExportInformation> exportInformation) {
+    ExportResult<?> exportResult = exportHelper(jobId, exportAuthData, exportInformation);
     if (exportResult.getType() == ResultType.ERROR) {
       ExceptionResponse response = checkRetry(exportResult.getMessage());
-      if (response.getCanRetry()) {
-        return exportSuccess(jobId, exportAuthData, exportInformation, numRetries + 1);
-      }
-      else {
-        return new ExportResult(ResultType.ERROR);
+      if (response.canRetry) {
+        int retries = 0;
+        while (retries < response.maxRetries && response.canRetry) {
+          exportResult = exportHelper(jobId, exportAuthData, exportInformation);
+          if (exportResult.getType() != ResultType.ERROR) {
+            return exportResult;
+          } else {
+            retries += 1;
+            response = checkRetry(exportResult.getMessage());
+          }
+        }
+        return exportResult;
+      } else {
+        return exportResult;
       }
     }
+    return exportResult;
+  }
+
+  private ExportResult exportHelper(UUID jobId, AuthData exportAuthData,
+      Optional<ExportInformation> exportInformation) {
+    logger.debug("Starting export");
+    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    logger.debug("Finishing export");
     return exportResult;
   }
 
   private ExceptionResponse checkRetry(String exceptionMessage) {
     for (String fatalRegex : fatalRegexes) {
       if (exceptionMessage.matches(fatalRegex)) {
-        return ExceptionResponse.FATAL;
+        return new ExceptionResponse(false, 0);
       }
     }
-    return ExceptionResponse.RETRYABLE;
+    return new ExceptionResponse(true, maxRetriesInit);
   }
 
-  private enum ExceptionResponse {
-    FATAL(false),
-    RETRYABLE(true);
-
+  private class ExceptionResponse {
     private boolean canRetry;
+    private int maxRetries;
 
-    boolean getCanRetry() {
-      return canRetry;
-    }
-
-    private ExceptionResponse(boolean canRetry) {
+    private ExceptionResponse(boolean canRetry, int maxRetries) {
       this.canRetry = canRetry;
+      this.maxRetries = maxRetries;
     }
   }
 
