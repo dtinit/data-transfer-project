@@ -20,10 +20,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
-import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
 import org.dataportabilityproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.dataportabilityproject.spi.api.auth.extension.AuthServiceExtension;
+import org.dataportabilityproject.spi.cloud.storage.AppCredentialStore;
 import org.dataportabilityproject.types.transfer.auth.AppCredentials;
 
 import java.io.IOException;
@@ -31,11 +31,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Bootstraps the Mirosoft authentication extension. */
+/**
+ * Bootstraps the Microsoft authentication extension.
+ *
+ * <p>This extension provides support for demonstrating derived data export. To enable, launch the
+ * runtime with a system property: -DderivedData=true
+ */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final String REDIRECT_PATH = "/callback/microsoft";
-  private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.<String>builder().add("calendar", "contacts").build();
+  private static final ImmutableList<String> SUPPORTED_SERVICES;
+
+  static {
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    builder.add("calendar", "contacts");
+    if (Boolean.parseBoolean(System.getProperty("derivedData"))) {
+      builder.add("derived-data");
+    }
+    SUPPORTED_SERVICES = builder.build();
+  }
 
   private AppCredentials appCredentials;
   private boolean initialized = false;

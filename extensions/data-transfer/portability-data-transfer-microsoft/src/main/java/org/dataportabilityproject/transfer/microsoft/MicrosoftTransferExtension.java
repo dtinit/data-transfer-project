@@ -11,25 +11,32 @@ import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarE
 import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
+import org.dataportabilityproject.transfer.microsoft.derived.MicrosoftDerivedDataExporter;
 import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosExporter;
 import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosImporter;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerServiceImpl;
 
+/** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
   // TODO: centralized place, or enum type for these?
   private static final String CONTACTS = "contacts";
   private static final String CALENDAR = "calendar";
   private static final String PHOTOS = "photos";
+  private static final String DERIVED_DATA = "derived-data";
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
+
+  private final boolean derivedData;
 
   private boolean initialized = false;
 
   private JobStore jobStore;
 
   // Needed for ServiceLoader to load this class.
-  public MicrosoftTransferExtension() {}
+  public MicrosoftTransferExtension() {
+    derivedData = Boolean.parseBoolean(System.getProperty("derivedData"));
+  }
 
   @Override
   public String getServiceId() {
@@ -53,6 +60,12 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
     if (transferDataType.equals(PHOTOS)) {
       return new MicrosoftPhotosExporter(BASE_GRAPH_URL, client, mapper, jobStore);
+    }
+
+    if (derivedData && transferDataType.equals(DERIVED_DATA)) {
+      // only enable if derivded data explicitly set as a configuration value
+      // TODO we may want to provide a config option that allows deployers to disable transfer of certain data types
+      return new MicrosoftDerivedDataExporter(BASE_GRAPH_URL, client, mapper);
     }
 
     return null;
