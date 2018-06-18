@@ -22,7 +22,11 @@ import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
 import java.util.UUID;
 
-/** Simulates importing derived data. For demo purposes only! */
+/**
+ * Simulates importing derived data. For demo purposes only!
+ *
+ * <p>Microsoft derived data is used since that is the only form currently supported.
+ */
 public class DerivedDemoImporter implements Importer<TokenAuthData, MicrosoftDerivedData> {
 
   @Override

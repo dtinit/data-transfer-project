@@ -64,6 +64,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
     if (derivedData && transferDataType.equals(DERIVED_DATA)) {
       // only enable if derivded data explicitly set as a configuration value
+      // TODO we may want to provide a config option that allows deployers to disable transfer of certain data types
       return new MicrosoftDerivedDataExporter(BASE_GRAPH_URL, client, mapper);
     }
 
