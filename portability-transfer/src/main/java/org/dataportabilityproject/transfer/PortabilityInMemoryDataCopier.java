@@ -43,7 +43,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
-  private static final List<String> fatalRegexes = ImmutableList.of("*fatal*");
+  private static final List<String> fatalErrorRegexes = ImmutableList.of("*fatal*");
+  private static final int maxAttempts = 5;
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -93,7 +94,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    ExportResult<?> exportResult = runExportLogic(jobId, exportAuthData, exportInformation);
+    ExportResult<?> exportResult = export(jobId, exportAuthData, exportInformation);
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
       logger.warn("Error happened during export: {}", exportResult.getMessage());
@@ -136,23 +137,15 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     }
   }
 
-  private ExportResult runExportLogic(UUID jobId, AuthData exportAuthData,
+  private ExportResult export(UUID jobId, AuthData exportAuthData,
       Optional<ExportInformation> exportInformation) {
     ExportResult<?> exportResult = exportHelper(jobId, exportAuthData, exportInformation);
-    if (exportResult.getType() == ResultType.ERROR) {
-      ExceptionResponse response = checkRetry(exportResult.getMessage());
+    for (int attempts = 0; exportResult.getType() == ResultType.ERROR; attempts++) {
+      ExceptionResponse response = checkRetry(exportResult.getMessage(), attempts);
       if (response.canRetry) {
-        int attempts = 1;
-        // TODO: what if different kinds of errors have different max retries, and we start with one
-        // kind of error and then start seeing another?
-        while (attempts < response.maxRetries && response.canRetry) {
-          exportResult = exportHelper(jobId, exportAuthData, exportInformation);
-          if (exportResult.getType() != ResultType.ERROR) {
-            return exportResult;
-          } else {
-            attempts += 1;
-            response = checkRetry(exportResult.getMessage());
-          }
+        exportResult = exportHelper(jobId, exportAuthData, exportInformation);
+        if (exportResult.getType() != ResultType.ERROR) {
+          return exportResult;
         }
       }
     }
@@ -167,22 +160,26 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     return exportResult;
   }
 
-  private ExceptionResponse checkRetry(String exceptionMessage) {
-    for (String fatalRegex : fatalRegexes) {
+  private ExceptionResponse checkRetry(String exceptionMessage, int attempts) {
+    if (attempts >= maxAttempts) {
+      return ExceptionResponse.FATAL;
+    }
+    for (String fatalRegex : fatalErrorRegexes) {
       if (exceptionMessage.matches(fatalRegex)) {
-        return new ExceptionResponse(false, 0);
+        return ExceptionResponse.FATAL;
       }
     }
-    return new ExceptionResponse(true, 5);
+    return ExceptionResponse.RETRYABLE;
   }
 
-  private class ExceptionResponse {
-    private boolean canRetry;
-    private int maxRetries;
+  private enum  ExceptionResponse {
+    FATAL(false),
+    RETRYABLE(true);
 
-    private ExceptionResponse(boolean canRetry, int maxRetries) {
+    private boolean canRetry;
+
+    private ExceptionResponse(boolean canRetry) {
       this.canRetry = canRetry;
-      this.maxRetries = maxRetries;
     }
   }
 
