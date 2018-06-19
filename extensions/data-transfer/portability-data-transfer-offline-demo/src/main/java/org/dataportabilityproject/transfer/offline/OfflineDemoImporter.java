@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.derived;
+package org.dataportabilityproject.transfer.offline;
 
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.transfer.microsoft.spi.types.MicrosoftDerivedData;
+import org.dataportabilityproject.transfer.microsoft.spi.types.MicrosoftOfflineData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
 import java.util.UUID;
 
 /**
- * Simulates importing derived data. For demo purposes only!
+ * Simulates importing offline data. For demo purposes only!
  *
- * <p>Microsoft derived data is used since that is the only form currently supported.
+ * <p>Microsoft offline data is used since that is the only form currently supported.
  */
-public class DerivedDemoImporter implements Importer<TokenAuthData, MicrosoftDerivedData> {
+public class OfflineDemoImporter implements Importer<TokenAuthData, MicrosoftOfflineData> {
 
   @Override
-  public ImportResult importItem(UUID jobId, TokenAuthData authData, MicrosoftDerivedData data) {
+  public ImportResult importItem(UUID jobId, TokenAuthData authData, MicrosoftOfflineData data) {
     // Print to the console to simulate an import
-    System.out.println("Received derived data:\n" + data.getContents());
+    System.out.println("Received offline data:\n" + data.getContents());
     return ImportResult.OK;
   }
 }
