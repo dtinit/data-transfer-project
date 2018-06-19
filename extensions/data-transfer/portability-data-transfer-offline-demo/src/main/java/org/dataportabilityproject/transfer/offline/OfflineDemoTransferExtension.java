@@ -1,4 +1,4 @@
-package org.dataportabilityproject.transfer.derived;
+package org.dataportabilityproject.transfer.offline;
 
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
@@ -6,12 +6,12 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 
 /**
- * Simulates importing derived data. For demo purposes only!
+ * Simulates importing offline data. For demo purposes only!
  *
- * <p>Microsoft derived data is used since that is the only form currently supported.
+ * <p>Microsoft offline data is used since that is the only form currently supported.
  */
-public class DerivedDemoTransferExtension implements TransferExtension {
-  private static final String SERVICE_ID = "derived-demo";
+public class OfflineDemoTransferExtension implements TransferExtension {
+  private static final String SERVICE_ID = "offline-demo";
 
   @Override
   public String getServiceId() {
@@ -25,7 +25,7 @@ public class DerivedDemoTransferExtension implements TransferExtension {
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
-    return new DerivedDemoImporter();
+    return new OfflineDemoImporter();
   }
 
   @Override
