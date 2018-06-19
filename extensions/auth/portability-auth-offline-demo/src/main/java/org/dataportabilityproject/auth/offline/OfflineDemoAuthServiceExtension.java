@@ -29,7 +29,7 @@ import java.util.List;
  * <p>The extension receives demo offline data and simulates importing it by printing the data to
  * the console.
  */
-public class DerivedDemoAuthServiceExtension implements AuthServiceExtension {
+public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
   private static final String SERVICE_ID = "offline-demo";
 
   private static final List<String> SUPPORTED_SERVICES = Collections.singletonList("offline-data");

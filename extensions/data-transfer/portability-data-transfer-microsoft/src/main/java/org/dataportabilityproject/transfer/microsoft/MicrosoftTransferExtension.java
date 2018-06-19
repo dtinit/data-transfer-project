@@ -24,7 +24,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private static final String CONTACTS = "contacts";
   private static final String CALENDAR = "calendar";
   private static final String PHOTOS = "photos";
-  private static final String DERIVED_DATA = "offline-data";
+  private static final String OFFLINE_DATA = "offline-data";
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
 
   private final boolean offlineData;
@@ -62,7 +62,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
       return new MicrosoftPhotosExporter(BASE_GRAPH_URL, client, mapper, jobStore);
     }
 
-    if (offlineData && transferDataType.equals(DERIVED_DATA)) {
+    if (offlineData && transferDataType.equals(OFFLINE_DATA)) {
       // only enable if derivded data explicitly set as a configuration value
       // TODO we may want to provide a config option that allows deployers to disable transfer of certain data types
       return new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper);

@@ -86,7 +86,7 @@ public class MicrosoftOfflineDataExporter implements Exporter<TokenAuthData, Mic
 
       Map filesMap = objectMapper.reader().forType(Map.class).readValue(folderContent);
 
-      String id = parseDerivedDataId(filesMap);
+      String id = parseOfflineDataId(filesMap);
       if (id == null) {
         return "";
       }
@@ -111,7 +111,7 @@ public class MicrosoftOfflineDataExporter implements Exporter<TokenAuthData, Mic
   }
 
   @SuppressWarnings("unchecked")
-  private String parseDerivedDataId(Map filesMap) {
+  private String parseOfflineDataId(Map filesMap) {
     List<Map<String, Object>> items = (List<Map<String, Object>>) filesMap.get("value");
     if (items != null) {
       for (Map<String, Object> item : items) {
