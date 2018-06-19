@@ -11,7 +11,7 @@ import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarE
 import org.dataportabilityproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.dataportabilityproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
-import org.dataportabilityproject.transfer.microsoft.derived.MicrosoftDerivedDataExporter;
+import org.dataportabilityproject.transfer.microsoft.offline.MicrosoftOfflineDataExporter;
 import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosExporter;
 import org.dataportabilityproject.transfer.microsoft.photos.MicrosoftPhotosImporter;
 import org.dataportabilityproject.transfer.microsoft.transformer.TransformerService;
@@ -24,10 +24,10 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private static final String CONTACTS = "contacts";
   private static final String CALENDAR = "calendar";
   private static final String PHOTOS = "photos";
-  private static final String DERIVED_DATA = "derived-data";
+  private static final String OFFLINE_DATA = "offline-data";
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
 
-  private final boolean derivedData;
+  private final boolean offlineData;
 
   private boolean initialized = false;
 
@@ -35,7 +35,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
   // Needed for ServiceLoader to load this class.
   public MicrosoftTransferExtension() {
-    derivedData = Boolean.parseBoolean(System.getProperty("derivedData"));
+    offlineData = Boolean.parseBoolean(System.getProperty("offlineData"));
   }
 
   @Override
@@ -62,10 +62,10 @@ public class MicrosoftTransferExtension implements TransferExtension {
       return new MicrosoftPhotosExporter(BASE_GRAPH_URL, client, mapper, jobStore);
     }
 
-    if (derivedData && transferDataType.equals(DERIVED_DATA)) {
+    if (offlineData && transferDataType.equals(OFFLINE_DATA)) {
       // only enable if derivded data explicitly set as a configuration value
       // TODO we may want to provide a config option that allows deployers to disable transfer of certain data types
-      return new MicrosoftDerivedDataExporter(BASE_GRAPH_URL, client, mapper);
+      return new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper);
     }
 
     return null;

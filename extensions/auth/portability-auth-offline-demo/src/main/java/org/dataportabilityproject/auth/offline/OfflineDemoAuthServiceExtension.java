@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.auth.derived;
+package org.dataportabilityproject.auth.offline;
 
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.spi.api.auth.AuthDataGenerator;
@@ -24,15 +24,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Provides an extension that demonstrates how import of derived data can be implemented.
+ * Provides an extension that demonstrates how import of offline data can be implemented.
  *
- * <p>The extension receives demo derived data and simulates importing it by printing the data to
+ * <p>The extension receives demo offline data and simulates importing it by printing the data to
  * the console.
  */
-public class DerivedDemoAuthServiceExtension implements AuthServiceExtension {
-  private static final String SERVICE_ID = "derived-demo";
+public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
+  private static final String SERVICE_ID = "offline-demo";
 
-  private static final List<String> SUPPORTED_SERVICES = Collections.singletonList("derived-data");
+  private static final List<String> SUPPORTED_SERVICES = Collections.singletonList("offline-data");
 
   @Override
   public String getServiceId() {
@@ -42,7 +42,7 @@ public class DerivedDemoAuthServiceExtension implements AuthServiceExtension {
   @Override
   public AuthDataGenerator getAuthDataGenerator(
       String type, AuthServiceProviderRegistry.AuthMode mode) {
-    return new DerivedDemoAuthDataGenerator();
+    return new OfflineDemoAuthDataGenerator();
   }
 
   @Override

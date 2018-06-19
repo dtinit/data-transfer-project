@@ -34,8 +34,8 @@ import java.util.Map;
 /**
  * Bootstraps the Microsoft authentication extension.
  *
- * <p>This extension provides support for demonstrating derived data export. To enable, launch the
- * runtime with a system property: -DderivedData=true
+ * <p>This extension provides support for demonstrating offline data export. To enable, launch the
+ * runtime with a system property: -DofflineData=true
  */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final String REDIRECT_PATH = "/callback/microsoft";
@@ -44,8 +44,8 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   static {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     builder.add("calendar", "contacts");
-    if (Boolean.parseBoolean(System.getProperty("derivedData"))) {
-      builder.add("derived-data");
+    if (Boolean.parseBoolean(System.getProperty("offlineData"))) {
+      builder.add("offline-data");
     }
     SUPPORTED_SERVICES = builder.build();
   }

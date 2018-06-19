@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dataportabilityproject.transfer.microsoft.derived;
+package org.dataportabilityproject.transfer.microsoft.offline;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -23,7 +23,7 @@ import okhttp3.ResponseBody;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.transfer.microsoft.spi.types.MicrosoftDerivedData;
+import org.dataportabilityproject.transfer.microsoft.spi.types.MicrosoftOfflineData;
 import org.dataportabilityproject.types.transfer.auth.TokenAuthData;
 
 import java.io.IOException;
@@ -33,37 +33,37 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Exports a derived data file.
+ * Exports a offline data file.
  *
- * <p>This implementation expects the derived data to be a file named {@link #DERIVED_DATA} placed
- * in the user's OneDrive in the folder [root]/deriveddata.
+ * <p>This implementation expects the offline data to be a file named {@link #OFFLINE_DATA} placed
+ * in the user's OneDrive in the folder [root]/offlinedata.
  *
  * <p>Note the format of the exported contents are opaque; they may change without notice.
  */
-public class MicrosoftDerivedDataExporter implements Exporter<TokenAuthData, MicrosoftDerivedData> {
-  private static final String DERIVED_DATA = "deriveddata.json";
+public class MicrosoftOfflineDataExporter implements Exporter<TokenAuthData, MicrosoftOfflineData> {
+  private static final String OFFLINE_DATA = "offlinedata.json";
 
-  private final String derivedDataUrl;
+  private final String offlineDataUrl;
   private final String contentTemplate;
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
 
-  public MicrosoftDerivedDataExporter(
+  public MicrosoftOfflineDataExporter(
       String baseUrl, OkHttpClient client, ObjectMapper objectMapper) {
-    derivedDataUrl = baseUrl + "/v1.0/me/drive/root:/deriveddata:/children";
+    offlineDataUrl = baseUrl + "/v1.0/me/drive/root:/offlinedata:/children";
     contentTemplate = baseUrl + "/v1.0/me/drive/items/%s/content";
     this.client = client;
     this.objectMapper = objectMapper;
   }
 
   @Override
-  public ExportResult<MicrosoftDerivedData> export(
+  public ExportResult<MicrosoftOfflineData> export(
       UUID jobId, TokenAuthData authData, Optional<ExportInformation> exportInformation) {
 
     try {
-      String data = getDataFile(jobId, derivedDataUrl, authData);
-      MicrosoftDerivedData derivedData = new MicrosoftDerivedData(data);
-      return new ExportResult<>(ExportResult.ResultType.END, derivedData);
+      String data = getDataFile(jobId, offlineDataUrl, authData);
+      MicrosoftOfflineData offlineData = new MicrosoftOfflineData(data);
+      return new ExportResult<>(ExportResult.ResultType.END, offlineData);
     } catch (IOException e) {
       e.printStackTrace(); // FIXME log error
       return new ExportResult<>(
@@ -86,7 +86,7 @@ public class MicrosoftDerivedDataExporter implements Exporter<TokenAuthData, Mic
 
       Map filesMap = objectMapper.reader().forType(Map.class).readValue(folderContent);
 
-      String id = parseDerivedDataId(filesMap);
+      String id = parseOfflineDataId(filesMap);
       if (id == null) {
         return "";
       }
@@ -103,7 +103,7 @@ public class MicrosoftDerivedDataExporter implements Exporter<TokenAuthData, Mic
         return contentBody.string();
 
       } catch (IOException e) {
-        // skip the derived data
+        // skip the offline data
         e.printStackTrace(); // FIXME log error
         return "";
       }
@@ -111,12 +111,12 @@ public class MicrosoftDerivedDataExporter implements Exporter<TokenAuthData, Mic
   }
 
   @SuppressWarnings("unchecked")
-  private String parseDerivedDataId(Map filesMap) {
+  private String parseOfflineDataId(Map filesMap) {
     List<Map<String, Object>> items = (List<Map<String, Object>>) filesMap.get("value");
     if (items != null) {
       for (Map<String, Object> item : items) {
         String name = (String) item.get("name");
-        if (DERIVED_DATA.equals(name)) {
+        if (OFFLINE_DATA.equals(name)) {
           return (String) item.get("id");
         }
       }

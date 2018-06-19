@@ -18,14 +18,14 @@ package org.dataportabilityproject.transfer.microsoft.spi.types;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * Encapsulates exported derived data. Note the format of the exported contents are opaque; they may
+ * Encapsulates exported offline data. Note the format of the exported contents are opaque; they may
  * change without notice.
  */
-public class MicrosoftDerivedData extends DataModel {
+public class MicrosoftOfflineData extends DataModel {
 
   private final String contents;
 
-  public MicrosoftDerivedData(String contents) {
+  public MicrosoftOfflineData(String contents) {
     this.contents = contents;
   }
 
