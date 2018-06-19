@@ -100,7 +100,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("calendar", new GoogleCalendarExporter(credentialFactory));
     exporterBuilder.put("mail", new GoogleMailExporter(credentialFactory));
     exporterBuilder.put("tasks", new GoogleTasksExporter(credentialFactory));
-    exporterBuilder.put("photos", new GooglePhotosExporter(credentialFactory));
+    exporterBuilder.put("photos", new GooglePhotosExporter());
 
     exporterMap = exporterBuilder.build();
 
