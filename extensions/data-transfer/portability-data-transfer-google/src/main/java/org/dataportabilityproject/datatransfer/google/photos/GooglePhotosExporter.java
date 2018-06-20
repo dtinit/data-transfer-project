@@ -15,6 +15,7 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.dataportabilityproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.dataportabilityproject.datatransfer.google.photos.model.GoogleMediaItem;
@@ -46,14 +48,16 @@ public class GooglePhotosExporter
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
+  private final GoogleCredentialFactory credentialFactory;
   private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosExporter() {
-    this(null);
+  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
+    this.credentialFactory = credentialFactory;
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(GooglePhotosInterface photosInterface) {
+  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, GooglePhotosInterface photosInterface) {
+    this.credentialFactory = credentialFactory;
     this.photosInterface = photosInterface;
   }
 
@@ -181,7 +185,8 @@ public class GooglePhotosExporter
   }
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
-    GooglePhotosInterface photosInterface = new GooglePhotosInterface(authData);
+    Credential credential = credentialFactory.createCredential(authData);
+    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
     return photosInterface;
   }
 }

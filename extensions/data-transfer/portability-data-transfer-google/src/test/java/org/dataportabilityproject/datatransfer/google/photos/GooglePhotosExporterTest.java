@@ -20,6 +20,7 @@ import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotos
 import static org.dataportabilityproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.gdata.util.ServiceException;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.dataportabilityproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.dataportabilityproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.dataportabilityproject.datatransfer.google.photos.model.GoogleMediaItem;
@@ -61,6 +63,7 @@ public class GooglePhotosExporterTest {
 
   private GooglePhotosExporter googlePhotosExporter;
 
+  private GoogleCredentialFactory credentialFactory;
   private GooglePhotosInterface photosInterface;
 
   private AlbumListResponse albumListResponse;
@@ -68,18 +71,21 @@ public class GooglePhotosExporterTest {
 
   @Before
   public void setup() throws IOException, ServiceException {
+    credentialFactory = mock(GoogleCredentialFactory.class);
     photosInterface = mock(GooglePhotosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
     googlePhotosExporter =
-        new GooglePhotosExporter(photosInterface);
+        new GooglePhotosExporter(credentialFactory, photosInterface);
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
         .thenReturn(albumListResponse);
     when(photosInterface.listAlbumContents(Matchers.anyString(), Matchers.any(Optional.class)))
         .thenReturn(mediaItemSearchResponse);
+
+    verifyZeroInteractions(credentialFactory);
   }
 
   @Test
@@ -170,8 +176,8 @@ public class GooglePhotosExporterTest {
 
     // Check photos field of container
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
-    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
-        .containsExactly(PHOTO_TITLE);
+    assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
+        .containsExactly(IMG_URI);
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
   }

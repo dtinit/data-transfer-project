@@ -17,6 +17,7 @@
 package org.dataportabilityproject.datatransfer.google.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
@@ -50,10 +51,10 @@ public class GooglePhotosInterface {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final HttpTransport httpTransport = new NetHttpTransport();
-  private final TokensAndUrlAuthData authData;
+  private final Credential credential;
 
-  public GooglePhotosInterface(TokensAndUrlAuthData authData) {
-    this.authData = authData;
+  public GooglePhotosInterface(Credential credential) {
+    this.credential = credential;
   }
 
   public AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
@@ -119,7 +120,7 @@ public class GooglePhotosInterface {
       updatedParams.putAll(params.get());
     }
     if (!updatedParams.containsKey("access_token")) {
-      updatedParams.put("access_token", authData.getAccessToken());
+      updatedParams.put("access_token", credential.getAccessToken());
     }
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
