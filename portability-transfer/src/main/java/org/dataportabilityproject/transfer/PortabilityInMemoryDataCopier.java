@@ -94,7 +94,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
+    logger.debug("Starting export");
     ExportResult<?> exportResult = export(jobId, exportAuthData, exportInformation);
+    logger.debug("Finished export");
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
       logger.warn("Error happened during export: {}", exportResult.getMessage());
@@ -139,24 +141,16 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private ExportResult export(UUID jobId, AuthData exportAuthData,
       Optional<ExportInformation> exportInformation) {
-    ExportResult<?> exportResult = exportHelper(jobId, exportAuthData, exportInformation);
+    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
     for (int attempts = 0; exportResult.getType() == ResultType.ERROR; attempts++) {
       ExceptionResponse response = checkRetry(exportResult.getMessage(), attempts);
       if (response.canRetry) {
-        exportResult = exportHelper(jobId, exportAuthData, exportInformation);
+        exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
         if (exportResult.getType() != ResultType.ERROR) {
           return exportResult;
         }
       }
     }
-    return exportResult;
-  }
-
-  private ExportResult exportHelper(UUID jobId, AuthData exportAuthData,
-      Optional<ExportInformation> exportInformation) {
-    logger.debug("Starting export");
-    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    logger.debug("Finishing export");
     return exportResult;
   }
 
