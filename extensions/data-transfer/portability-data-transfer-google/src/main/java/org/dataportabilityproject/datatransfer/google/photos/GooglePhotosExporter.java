@@ -18,14 +18,17 @@ package org.dataportabilityproject.datatransfer.google.photos;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.gdata.client.photos.PicasawebService;
-import com.google.gdata.data.MediaContent;
-import com.google.gdata.data.photos.AlbumFeed;
-import com.google.gdata.data.photos.GphotoEntry;
-import com.google.gdata.data.photos.UserFeed;
-import com.google.gdata.util.ServiceException;
+import com.google.common.base.Strings;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
+import org.dataportabilityproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.dataportabilityproject.datatransfer.google.photos.model.GoogleAlbum;
+import org.dataportabilityproject.datatransfer.google.photos.model.GoogleMediaItem;
+import org.dataportabilityproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -39,43 +42,23 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 public class GooglePhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
-  static final String PHOTO_TOKEN_PREFIX = "photo:";
-
-  // TODO(olsona): figure out optimal value here
-  static final int MAX_RESULTS_DEFAULT = 100;
-
-  static final String URL_ALBUM_FEED_FORMAT =
-      "https://picasaweb.google.com/data/feed/api/user/default?kind=album&start-index=%d&max-results=%d";
-  // imgmax=d gets the original image as per
-  // https://developers.google.com/picasa-web/docs/3.0/reference
-  static final String URL_PHOTO_FEED_FORMAT =
-      "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s?imgmax=d&start-index=%s&max-results=%d";
+  static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final int maxResults;
-  private volatile PicasawebService photosService;
+  private volatile GooglePhotosInterface photosInterface;
 
   public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
-    this(credentialFactory, null, MAX_RESULTS_DEFAULT);
+    this.credentialFactory = credentialFactory;
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, PicasawebService photosService,
-      int maxResults) {
+  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, GooglePhotosInterface photosInterface) {
     this.credentialFactory = credentialFactory;
-    this.photosService = photosService;
-    this.maxResults = maxResults;
+    this.photosInterface = photosInterface;
   }
 
   @Override
@@ -102,44 +85,41 @@ public class GooglePhotosExporter
 
   private ExportResult<PhotosContainerResource> exportAlbums(
       TokensAndUrlAuthData authData, Optional<PaginationData> paginationData) {
-    int startItem = 1;
+    Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
       Preconditions.checkArgument(
           token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
-      startItem = Integer.parseInt(token.substring(ALBUM_TOKEN_PREFIX.length()));
+      paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
     }
 
-    URL albumUrl;
-    UserFeed albumFeed;
+    AlbumListResponse albumListResponse;
 
     try {
-      albumUrl = new URL(String.format(URL_ALBUM_FEED_FORMAT, startItem, maxResults));
-      albumFeed = getOrCreatePhotosService(authData).getFeed(albumUrl, UserFeed.class);
-    } catch (ServiceException | IOException e) {
+      albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
+    } catch (IOException e) {
       return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     PaginationData nextPageData = null;
-    List<GphotoEntry> entries = albumFeed.getEntries();
-    if (entries.size() == maxResults) {
-      int nextPageStart = startItem + maxResults;
-      nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + nextPageStart);
+    if (!Strings.isNullOrEmpty(albumListResponse.getNextPageToken())) {
+      nextPageData = new StringPaginationToken(
+          ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
-    List<PhotoAlbum> albums = new ArrayList<>(entries.size());
+    List<PhotoAlbum> albums = new ArrayList<>();
 
-    for (GphotoEntry googleAlbum : entries) {
+    for (GoogleAlbum googleAlbum : albumListResponse.getAlbums()) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
-              googleAlbum.getGphotoId(),
-              googleAlbum.getTitle().getPlainText(),
-              googleAlbum.getDescription().getPlainText()));
+              googleAlbum.getId(),
+              googleAlbum.getTitle(),
+              null));
 
       // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getGphotoId()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
     ResultType resultType = ResultType.CONTINUE;
@@ -152,45 +132,43 @@ public class GooglePhotosExporter
 
   private ExportResult<PhotosContainerResource> exportPhotos(
       TokensAndUrlAuthData authData, String albumId, Optional<PaginationData> paginationData) {
-
-    int startItem = 1;
+    Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
       Preconditions.checkArgument(
           token.startsWith(PHOTO_TOKEN_PREFIX), "Invalid pagination token " + token);
-      startItem = Integer.parseInt(token.substring(PHOTO_TOKEN_PREFIX.length()));
+      paginationToken = Optional.of(token.substring(PHOTO_TOKEN_PREFIX.length()));
     }
 
-    URL photosUrl;
-    AlbumFeed photoFeed;
+    MediaItemSearchResponse mediaItemSearchResponse;
 
     try {
-      photosUrl = new URL(String.format(URL_PHOTO_FEED_FORMAT, albumId, startItem, maxResults));
-      photoFeed = getOrCreatePhotosService(authData).getFeed(photosUrl, AlbumFeed.class);
-
-    } catch (ServiceException | IOException e) {
+      mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
+          .listAlbumContents(albumId, paginationToken);
+    } catch (IOException e) {
       return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
 
     PaginationData nextPageData = null;
-    List<GphotoEntry> entries = photoFeed.getEntries();
-    if (entries.size() == maxResults) {
-      int nextPageStart = startItem + maxResults;
-      nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + nextPageStart);
+    if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
+      nextPageData = new StringPaginationToken(
+          PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    List<PhotoModel> photos = new ArrayList<>(entries.size());
-    for (GphotoEntry photo : entries) {
-      MediaContent mediaContent = (MediaContent) photo.getContent();
-      photos.add(
-          new PhotoModel(
-              photo.getTitle().getPlainText(),
-              mediaContent.getUri(),
-              photo.getDescription().getPlainText(),
-              mediaContent.getMimeType().getMediaType(),
-              null,
-              albumId));
+    List<PhotoModel> photos = new ArrayList<>();
+    for (GoogleMediaItem mediaItem : mediaItemSearchResponse.getMediaItems()) {
+      if (mediaItem.getMediaMetadata().getPhoto() != null) {
+        // TODO: address videos later on
+        photos.add(
+            new PhotoModel(
+                "", // TODO: no title?
+                mediaItem.getProductUrl(),  // TODO: check this
+                mediaItem.getDescription(),
+                mediaItem.getMimeType(),
+                mediaItem.getId(),
+                albumId));
+      }
     }
 
     PhotosContainerResource containerResource = new PhotosContainerResource(null, photos);
@@ -202,14 +180,13 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  private PicasawebService getOrCreatePhotosService(TokensAndUrlAuthData authData) {
-    return photosService == null ? makePhotosService(authData) : photosService;
+  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(TokensAndUrlAuthData authData) {
+    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
   }
 
-  private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
+  private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
-    service.setOAuth2Credentials(credential);
-    return service;
+    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
+    return photosInterface;
   }
 }

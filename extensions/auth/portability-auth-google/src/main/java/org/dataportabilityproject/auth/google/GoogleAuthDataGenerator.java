@@ -66,8 +66,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
       ImmutableMap.<String, List<String>>builder()
           .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR_READONLY))
           .put("mail", ImmutableList.of(GmailScopes.GMAIL_READONLY))
-          // picasaweb does not have a READONLY scope
-          .put("photos", ImmutableList.of("https://picasaweb.google.com/data/"))
+          .put("photos", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
           .put("tasks", ImmutableList.of(TasksScopes.TASKS_READONLY))
           .put("contacts", ImmutableList.of(PeopleServiceScopes.CONTACTS_READONLY))
           .build();
