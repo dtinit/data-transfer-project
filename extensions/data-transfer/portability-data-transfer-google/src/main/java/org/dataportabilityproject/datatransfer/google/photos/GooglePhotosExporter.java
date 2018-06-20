@@ -98,16 +98,15 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
     if (!Strings.isNullOrEmpty(albumListResponse.getNextPageToken())) {
       nextPageData = new StringPaginationToken(
           ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
-    List<PhotoAlbum> albums = new ArrayList<>(googleAlbums.length);
+    List<PhotoAlbum> albums = new ArrayList<>();
 
-    for (GoogleAlbum googleAlbum : googleAlbums) {
+    for (GoogleAlbum googleAlbum : albumListResponse.getAlbums()) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
@@ -147,15 +146,14 @@ public class GooglePhotosExporter
     }
 
     PaginationData nextPageData = null;
-    GoogleMediaItem[] googleMediaItems = mediaItemSearchResponse.getMediaItems();
     if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
       nextPageData = new StringPaginationToken(
           PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    List<PhotoModel> photos = new ArrayList<>(googleMediaItems.length);
-    for (GoogleMediaItem mediaItem : googleMediaItems) {
+    List<PhotoModel> photos = new ArrayList<>();
+    for (GoogleMediaItem mediaItem : mediaItemSearchResponse.getMediaItems()) {
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         // TODO: address videos later on
         photos.add(
@@ -178,7 +176,7 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  private GooglePhotosInterface getOrCreatePhotosInterface(TokensAndUrlAuthData authData) {
+  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(TokensAndUrlAuthData authData) {
     return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
   }
 
