@@ -123,9 +123,8 @@ public class GooglePhotosExporterTest {
   @Test
   public void exportAlbumSubsequentSet() throws IOException, ServiceException {
     setUpSingleAlbumResponse();
-    int start = 2;
     StringPaginationToken inputPaginationToken =
-        new StringPaginationToken(ALBUM_TOKEN_PREFIX + start);
+        new StringPaginationToken(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
     ExportInformation inputExportInformation = new ExportInformation(inputPaginationToken, null);
 
     // Run test
@@ -134,7 +133,7 @@ public class GooglePhotosExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listAlbums(Optional.of(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN));
+    verify(photosInterface).listAlbums(Optional.of(ALBUM_TOKEN));
     verify(albumListResponse).getAlbums();
 
     // Check pagination token
@@ -181,9 +180,8 @@ public class GooglePhotosExporterTest {
   public void exportPhotoSubsequentSet() throws IOException, ServiceException {
     setUpSinglePhotoResponse();
 
-    int start = 2;
     StringPaginationToken inputPaginationToken =
-        new StringPaginationToken(PHOTO_TOKEN_PREFIX + start);
+        new StringPaginationToken(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
     ContainerResource inputContainerResource = new IdOnlyContainerResource(ALBUM_ID);
     ExportInformation inputExportInformation =
         new ExportInformation(inputPaginationToken, inputContainerResource);
@@ -194,7 +192,7 @@ public class GooglePhotosExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listAlbumContents(ALBUM_ID, Optional.of(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN));
+    verify(photosInterface).listAlbumContents(ALBUM_ID, Optional.of(PHOTO_TOKEN));
     verify(mediaItemSearchResponse).getMediaItems();
 
     // Check pagination token
