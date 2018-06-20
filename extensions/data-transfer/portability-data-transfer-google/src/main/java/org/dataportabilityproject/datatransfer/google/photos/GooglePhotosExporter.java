@@ -15,21 +15,14 @@
  */
 package org.dataportabilityproject.datatransfer.google.photos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.gdata.client.photos.PicasawebService;
-import com.google.gdata.data.MediaContent;
-import com.google.gdata.data.photos.AlbumFeed;
-import com.google.gdata.data.photos.GphotoEntry;
-import com.google.gdata.data.photos.UserFeed;
-import com.google.gdata.util.ServiceException;
-import org.dataportabilityproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.dataportabilityproject.datatransfer.google.common.GoogleStaticObjects;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.dataportabilityproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.dataportabilityproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.dataportabilityproject.datatransfer.google.photos.model.GoogleMediaItem;
@@ -47,20 +40,13 @@ import org.dataportabilityproject.types.transfer.models.photos.PhotoAlbum;
 import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
 import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 public class GooglePhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
-  private GooglePhotosInterface photosInterface;
+  private volatile GooglePhotosInterface photosInterface;
 
   public GooglePhotosExporter() {
     this(null);
@@ -114,14 +100,14 @@ public class GooglePhotosExporter
     PaginationData nextPageData = null;
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
     if (!Strings.isNullOrEmpty(albumListResponse.getNextPageToken())) {
-      nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
+      nextPageData = new StringPaginationToken(
+          ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>(googleAlbums.length);
 
-    for (int i = 0; i < googleAlbums.length; i++) {
-      GoogleAlbum googleAlbum = googleAlbums[i];
+    for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
@@ -154,7 +140,8 @@ public class GooglePhotosExporter
     MediaItemSearchResponse mediaItemSearchResponse;
 
     try {
-      mediaItemSearchResponse = getOrCreatePhotosInterface(authData).listAlbumContents(albumId, paginationToken);
+      mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
+          .listAlbumContents(albumId, paginationToken);
     } catch (IOException e) {
       return new ExportResult<>(ResultType.ERROR, e.getMessage());
     }
@@ -162,13 +149,13 @@ public class GooglePhotosExporter
     PaginationData nextPageData = null;
     GoogleMediaItem[] googleMediaItems = mediaItemSearchResponse.getMediaItems();
     if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
-      nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
+      nextPageData = new StringPaginationToken(
+          PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
     List<PhotoModel> photos = new ArrayList<>(googleMediaItems.length);
-    for (int i = 0; i < googleMediaItems.length; i++) {
-      GoogleMediaItem mediaItem = googleMediaItems[i];
+    for (GoogleMediaItem mediaItem : googleMediaItems) {
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         // TODO: address videos later on
         photos.add(
