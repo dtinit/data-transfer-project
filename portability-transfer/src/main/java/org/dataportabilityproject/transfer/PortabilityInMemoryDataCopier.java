@@ -43,8 +43,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
-  private static final List<String> fatalErrorRegexes = ImmutableList.of("*fatal*");
-  private static final int maxAttempts = 5;
+  private static final List<String> fatalErrorRegexes = ImmutableList.of("*fatal*"); // TODO: make configurable
+  private static final int maxAttempts = 5; // TODO: make configurable
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
