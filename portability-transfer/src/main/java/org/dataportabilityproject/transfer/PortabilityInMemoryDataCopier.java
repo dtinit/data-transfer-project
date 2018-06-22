@@ -15,7 +15,14 @@
  */
 package org.dataportabilityproject.transfer;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
@@ -28,12 +35,6 @@ import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Implementation of {@link InMemoryDataCopier}.
  */
@@ -41,6 +42,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
+
+  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList.of("*fatal*"); // TODO: make configurable
+  private static final int MAX_ATTEMPTS = 5; // TODO: make configurable
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -91,8 +95,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export");
-    ExportResult<?> exportResult;
-    exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    ExportResult<?> exportResult = export(jobId, exportAuthData, exportInformation);
     logger.debug("Finished export");
 
     if (exportResult.getType().equals(ResultType.ERROR)) {
@@ -121,16 +124,44 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             exportAuthData,
             importAuthData,
             Optional.of(new ExportInformation(
-                continuationData.getPaginationData(), exportInformation.get().getContainerResource())));
+                continuationData.getPaginationData(),
+                exportInformation.get().getContainerResource())));
       }
 
       // Start processing sub-resources
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copyHelper(jobId, exportAuthData, importAuthData, Optional.of(new ExportInformation(null, resource)));
+          copyHelper(jobId, exportAuthData, importAuthData,
+              Optional.of(new ExportInformation(null, resource)));
         }
       }
     }
   }
+
+  private ExportResult export(UUID jobId, AuthData exportAuthData,
+      Optional<ExportInformation> exportInformation) {
+    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+    for (int attempts = 0; exportResult.getType() == ResultType.ERROR; attempts++) {
+      if (checkCanRetry(exportResult.getMessage(), attempts)) {
+        exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
+      }
+    }
+    return exportResult;
+  }
+
+  private boolean checkCanRetry(String exceptionMessage, int attempts) {
+    // First check to see if we're over the limit of allowed attempts
+    if (attempts >= MAX_ATTEMPTS) {
+      return false;
+    }
+    // Then check the error message to see if the error is retryable or not
+    for (String fatalRegex : FATAL_ERROR_REGEXES) {
+      if (exceptionMessage.matches(fatalRegex)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
