@@ -43,8 +43,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
-  private static final List<String> fatalErrorRegexes = ImmutableList.of("*fatal*"); // TODO: make configurable
-  private static final int maxAttempts = 5; // TODO: make configurable
+  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList.of("*fatal*"); // TODO: make configurable
+  private static final int MAX_ATTEMPTS = 5; // TODO: make configurable
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -151,10 +151,12 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   }
 
   private boolean checkCanRetry(String exceptionMessage, int attempts) {
-    if (attempts >= maxAttempts) {
+    // First check to see if we're over the limit of allowed attempts
+    if (attempts >= MAX_ATTEMPTS) {
       return false;
     }
-    for (String fatalRegex : fatalErrorRegexes) {
+    // Then check the error message to see if the error is retryable or not
+    for (String fatalRegex : FATAL_ERROR_REGEXES) {
       if (exceptionMessage.matches(fatalRegex)) {
         return false;
       }
