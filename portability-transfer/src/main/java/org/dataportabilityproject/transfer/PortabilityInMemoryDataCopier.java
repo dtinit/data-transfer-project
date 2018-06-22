@@ -143,38 +143,23 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       Optional<ExportInformation> exportInformation) {
     ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
     for (int attempts = 0; exportResult.getType() == ResultType.ERROR; attempts++) {
-      ExceptionType response = checkRetry(exportResult.getMessage(), attempts);
-      if (response.canRetry) {
+      if (checkCanRetry(exportResult.getMessage(), attempts)) {
         exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-        if (exportResult.getType() != ResultType.ERROR) {
-          return exportResult;
-        }
       }
     }
     return exportResult;
   }
 
-  private ExceptionType checkRetry(String exceptionMessage, int attempts) {
+  private boolean checkCanRetry(String exceptionMessage, int attempts) {
     if (attempts >= maxAttempts) {
-      return ExceptionType.FATAL;
+      return false;
     }
     for (String fatalRegex : fatalErrorRegexes) {
       if (exceptionMessage.matches(fatalRegex)) {
-        return ExceptionType.FATAL;
+        return false;
       }
     }
-    return ExceptionType.RETRYABLE;
-  }
-
-  private enum ExceptionType {
-    FATAL(false),
-    RETRYABLE(true);
-
-    private boolean canRetry;
-
-    private ExceptionType(boolean canRetry) {
-      this.canRetry = canRetry;
-    }
+    return true;
   }
 
 }
