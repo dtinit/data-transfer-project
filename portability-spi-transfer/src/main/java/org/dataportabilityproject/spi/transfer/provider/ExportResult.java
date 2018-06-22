@@ -11,6 +11,8 @@ public class ExportResult<T extends DataModel> {
   private String message;
   private T exportedData;
   private ContinuationData continuationData;
+  private Throwable throwable;
+
   /**
    * Ctor used to return error or retry results.
    *
@@ -55,6 +57,21 @@ public class ExportResult<T extends DataModel> {
     this.continuationData = continuationData;
   }
 
+  /**
+   * Ctor.
+   *
+   * @param type the result type
+   * @param exportedData the exported data
+   * @param continuationData continuation information
+   * @param throwable the throwable from execution
+   */
+  public ExportResult(ResultType type, T exportedData, ContinuationData continuationData, Throwable throwable) {
+    this.type = type;
+    this.exportedData = exportedData;
+    this.continuationData = continuationData;
+    this.throwable = throwable;
+  }
+
   /** Returns the type of result. */
   public ResultType getType() {
     return type;
@@ -74,6 +91,8 @@ public class ExportResult<T extends DataModel> {
     return continuationData;
   }
 
+  public Throwable getThrowable() { return throwable; }
+
   /** Result types. */
   public enum ResultType {
     /**
@@ -84,9 +103,6 @@ public class ExportResult<T extends DataModel> {
     /** Indicates the operation was successful and no more items are available. */
     END,
     /** Indicates an unrecoverable error was raised. */
-    ERROR,
-
-    /** Indicates a recoverable error was raised. */
-    RETRY
+    ERROR
   }
 }

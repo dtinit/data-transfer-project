@@ -5,6 +5,8 @@ public class ImportResult {
   public static final ImportResult OK = new ImportResult(ResultType.OK);
   private ResultType type;
   private String message;
+  private Throwable throwable;
+
   /**
    * Ctor used to return error or retry results.
    *
@@ -14,6 +16,19 @@ public class ImportResult {
   public ImportResult(ResultType type, String message) {
     this.type = type;
     this.message = message;
+  }
+
+  /**
+   * Ctor used to return error or retry results.
+   *
+   * @param type the result type
+   * @param message the result message, if any
+   * @param throwable the exception thrown
+   */
+  public ImportResult(ResultType type, String message, Throwable throwable) {
+    this.type = type;
+    this.message = message;
+    this.throwable = throwable;
   }
 
   /**
@@ -35,15 +50,15 @@ public class ImportResult {
     return message;
   }
 
+  /** Returns the throwable or null if no throwable is present. */
+  public Throwable getThrowable() { return throwable; }
+
   /** Result types. */
   public enum ResultType {
     /** Indicates a successful import. */
     OK,
 
     /** Indicates an unrecoverable error was raised. */
-    ERROR,
-
-    /** Indicates a recoverable error was raised. */
-    RETRY
+    ERROR
   }
 }
