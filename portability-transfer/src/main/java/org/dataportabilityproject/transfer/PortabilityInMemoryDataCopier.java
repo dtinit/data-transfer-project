@@ -18,6 +18,7 @@ package org.dataportabilityproject.transfer;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.transfer.RetryStrategy.ExponentialBackoffRetryStrategy;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
@@ -43,7 +45,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
-  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList.of("*fatal*"); // TODO: make configurable
+  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList
+      .of("*fatal*"); // TODO: make configurable
   private static final int MAX_ATTEMPTS = 5; // TODO: make configurable
 
   /**
@@ -91,26 +94,39 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
+    RetryStrategy expBackoffStrategy = new ExponentialBackoffRetryStrategy(5, 10, 2);
+
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug("Starting export");
-    ExportResult<?> exportResult = export(jobId, exportAuthData, exportInformation);
+    CallableExporter callableExporter = new CallableExporter(exporter, jobId, exportAuthData,
+        exportInformation);
+    RetryingCallable<ExportResult> exportRetryingCallable = new RetryingCallable<>(callableExporter,
+        expBackoffStrategy,
+        Clock.systemUTC());
+    ExportResult<?> exportResult;
+    try {
+      exportResult = exportRetryingCallable.call();
+    } catch (RetryException e) {
+      logger.warn("Error happened during export: {}", e);
+      return;
+    }
     logger.debug("Finished export");
 
-    if (exportResult.getType().equals(ResultType.ERROR)) {
-      logger.warn("Error happened during export: {}", exportResult.getMessage());
-      return;
-    }
-
     logger.debug("Starting import");
-    ImportResult importResult = importer.get()
-        .importItem(jobId, importAuthData, exportResult.getExportedData());
-    logger.debug("Finished import");
-    if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
-      logger.warn("Error happened during import: {}", importResult.getMessage());
+
+    CallableImporter callableImporter = new CallableImporter(importer, jobId, importAuthData, exportResult.getExportedData());
+    RetryingCallable<ImportResult> importRetryingCallable = new RetryingCallable<>(callableImporter,
+        expBackoffStrategy,
+        Clock.systemUTC());
+    try {
+      importRetryingCallable.call();
+    } catch (RetryException e) {
+      logger.warn("Error happened during import: {}", e);
       return;
     }
+    logger.debug("Finished import");
 
     // Import and Export were successful, determine what to do next
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
@@ -138,30 +154,4 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       }
     }
   }
-
-  private ExportResult export(UUID jobId, AuthData exportAuthData,
-      Optional<ExportInformation> exportInformation) {
-    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    for (int attempts = 0; exportResult.getType() == ResultType.ERROR; attempts++) {
-      if (checkCanRetry(exportResult.getMessage(), attempts)) {
-        exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-      }
-    }
-    return exportResult;
-  }
-
-  private boolean checkCanRetry(String exceptionMessage, int attempts) {
-    // First check to see if we're over the limit of allowed attempts
-    if (attempts >= MAX_ATTEMPTS) {
-      return false;
-    }
-    // Then check the error message to see if the error is retryable or not
-    for (String fatalRegex : FATAL_ERROR_REGEXES) {
-      if (exceptionMessage.matches(fatalRegex)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
 }

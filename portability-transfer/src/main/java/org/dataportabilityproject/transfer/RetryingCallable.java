@@ -16,12 +16,57 @@
 
 package org.dataportabilityproject.transfer;
 
+import static java.lang.Thread.currentThread;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.Callable;
 
 public class RetryingCallable<T> implements Callable<T> {
 
+  private final Callable<T> callable;
+  private final RetryStrategy retryStrategy;
+  private final Clock clock;
+
+  private volatile int attempts;
+  private volatile Exception mostRecentException;
+
+  public RetryingCallable(Callable<T> callable,
+      RetryStrategy retryStrategy,
+      Clock clock) {
+    this.callable = callable;
+    this.retryStrategy = retryStrategy;
+    this.clock = clock;
+    this.attempts = 0;
+  }
+
   @Override
-  public T call() throws Exception {
-    return null;
+  public T call() throws RetryException {
+    Instant start = clock.instant();
+    while (true) {
+      attempts++;
+      try {
+        return callable.call();
+      } catch (InterruptedException e) {
+        currentThread().interrupt();
+        throw new RetryException(attempts, mostRecentException != null ? mostRecentException : e);
+      } catch (Exception e) {
+        mostRecentException = e;
+        long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
+        long nextAttemptIntervalMillis = retryStrategy
+            .getRemainingIntervalMillis(e, attempts, elapsedMillis);
+        if (nextAttemptIntervalMillis >= 0) {
+          try {
+            Thread.sleep(nextAttemptIntervalMillis);
+          } catch (InterruptedException ie) {
+            currentThread().interrupt();
+            throw new RetryException(attempts, mostRecentException);
+          }
+        } else {
+          throw new RetryException(attempts, mostRecentException);
+        }
+      }
+    }
   }
 }

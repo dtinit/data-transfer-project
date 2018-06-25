@@ -16,6 +16,57 @@
 
 package org.dataportabilityproject.transfer;
 
-public abstract class RetryStrategy implements Iterable<Integer> {
+public abstract class RetryStrategy {
 
+  public boolean canTryAgain(Exception e, int tries) {
+    return getNextIntervalMillis(e, tries) >= 0;
+  }
+
+  public abstract long getNextIntervalMillis(Exception e, int tries);
+
+  public long getRemainingIntervalMillis(Exception e, int tries, long elapsedMillis) {
+    return getNextIntervalMillis(e, tries) - elapsedMillis;
+  }
+
+  public static class SimpleRetryStrategy extends RetryStrategy {
+    private int maxAttempts;
+    private long intervalMillis;
+
+    public SimpleRetryStrategy(int maxAttempts, long intervalMillis) {
+      this.maxAttempts = maxAttempts;
+      this.intervalMillis = intervalMillis;
+    }
+
+    @Override
+    public long getNextIntervalMillis(Exception e, int tries) {
+      // Same strategy for every exception, not a good idea in prod
+      if (tries < maxAttempts) {
+        return intervalMillis;
+      } else {
+        return -1L;
+      }
+    }
+  }
+
+  public static class ExponentialBackoffRetryStrategy extends RetryStrategy {
+    private int maxAttempts;
+    private long initialIntervalMillis;
+    private long multiplier;
+
+    public ExponentialBackoffRetryStrategy(int maxAttempts, long initialIntervalMillis, long multiplier) {
+      this.maxAttempts = maxAttempts;
+      this.initialIntervalMillis = initialIntervalMillis;
+      this.multiplier = multiplier;
+    }
+
+    @Override
+    public long getNextIntervalMillis(Exception e, int tries) {
+      // Same strategy for every exception, not a good idea in prod
+      if (tries < maxAttempts) {
+        return (long) (initialIntervalMillis * Math.pow(multiplier, tries-1));
+      } else {
+        return -1L;
+      }
+    }
+  }
 }
