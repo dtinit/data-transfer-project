@@ -1,6 +1,7 @@
 package org.dataportabilityproject.spi.transfer.provider;
 
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
@@ -13,10 +14,9 @@ public class ExportResult<T extends DataModel> {
   public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
 
   private ResultType type;
-  private String message;
   private T exportedData;
   private ContinuationData continuationData;
-  private Throwable throwable; // Should be null unless an error was thrown during export
+  private Optional<Throwable> throwable; // Should be absent unless an error was thrown during export
 
   /**
    * Ctor.
@@ -61,7 +61,7 @@ public class ExportResult<T extends DataModel> {
    */
   public ExportResult(Throwable throwable) {
     this.type = ResultType.ERROR;
-    this.throwable = throwable;
+    this.throwable = Optional.of(throwable);
   }
 
   /**
@@ -72,24 +72,17 @@ public class ExportResult<T extends DataModel> {
   }
 
   /**
-   * Returns the result message or null if no message is present.
-   */
-  public String getMessage() {
-    return message;
-  }
-
-  /**
    * Returns the exported data.
    */
   public T getExportedData() {
     return exportedData;
   }
 
-  public Object getContinuationData() {
+  public ContinuationData getContinuationData() {
     return continuationData;
   }
 
-  public Throwable getThrowable() {
+  public Optional<Throwable> getThrowable() {
     return throwable;
   }
 

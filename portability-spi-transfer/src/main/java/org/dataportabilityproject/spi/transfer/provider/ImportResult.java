@@ -1,6 +1,7 @@
 package org.dataportabilityproject.spi.transfer.provider;
 
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 
 /**
  * The result of an item import operation, after retries.
@@ -10,7 +11,7 @@ public class ImportResult {
   public static final ImportResult OK = new ImportResult(ResultType.OK);
 
   private ResultType type;
-  private Throwable throwable; // Should be null unless an error was thrown during export
+  private Optional<Throwable> throwable; // Should be absent unless an error was thrown during export
 
   /**
    * Ctor used to return error or retry results.
@@ -19,7 +20,7 @@ public class ImportResult {
    */
   public ImportResult(Throwable throwable) {
     this.type = ResultType.ERROR;
-    this.throwable = throwable;
+    this.throwable = Optional.of(throwable);
   }
 
   /**
@@ -41,13 +42,8 @@ public class ImportResult {
   /**
    * Returns the throwable or null if no throwable is present.
    */
-  public Throwable getThrowable() {
+  public Optional<Throwable> getThrowable() {
     return throwable;
-  }
-
-  private void verifyNonErrorResultType(ResultType type) {
-    String mustHaveThrowable = "ImportResult with ResultType = ERROR must hold a throwable";
-    Preconditions.checkArgument(!type.equals(ResultType.ERROR), mustHaveThrowable);
   }
 
   /**
