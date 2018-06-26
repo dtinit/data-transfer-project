@@ -11,7 +11,8 @@ public class ImportResult {
   public static final ImportResult OK = new ImportResult(ResultType.OK);
 
   private ResultType type;
-  private Optional<Throwable> throwable; // Should be absent unless an error was thrown during export
+  // Throwable should be absent unless an error was thrown during export
+  private Optional<Throwable> throwable = Optional.empty();
 
   /**
    * Ctor used to return error or retry results.

@@ -16,7 +16,8 @@ public class ExportResult<T extends DataModel> {
   private ResultType type;
   private T exportedData;
   private ContinuationData continuationData;
-  private Optional<Throwable> throwable; // Should be absent unless an error was thrown during export
+  // Throwable should be absent unless an error was thrown during export
+  private Optional<Throwable> throwable = Optional.empty();
 
   /**
    * Ctor.
