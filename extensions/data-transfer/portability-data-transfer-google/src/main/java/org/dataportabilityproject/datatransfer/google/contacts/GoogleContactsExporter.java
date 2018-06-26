@@ -259,7 +259,7 @@ public class GoogleContactsExporter
 
       return new ExportResult<ContactsModelWrapper>(resultType, wrapper, continuationData);
     } catch (IOException e) {
-      return new ExportResult<ContactsModelWrapper>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<ContactsModelWrapper>(e);
     }
   }
 

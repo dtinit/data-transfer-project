@@ -88,7 +88,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
           "Error occurred trying to retrieve task: {}, {}",
           e.getMessage(),
           Throwables.getStackTraceAsString(e));
-      return new ExportResult<>(ResultType.ERROR, "Error retrieving tasks: " + e.getMessage());
+      return new ExportResult<>(e);
     }
   }
 

@@ -81,7 +81,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     try {
       tempMailData = getOrCreateMailData(id);
     } catch (IOException e) {
-      return new ImportResult(ResultType.ERROR, e.getMessage());
+      return new ImportResult(e);
     }
 
     // Lazy init the request for all labels in the destination account, since it may not be needed
@@ -145,8 +145,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
           try {
             importerLabelId = createImportedLabelId(authData, mailContainerModel.getName());
           } catch (IOException e) {
-            return new ImportResult(
-                ResultType.ERROR, "Unable to create imported label for user: " + e.getMessage());
+            return new ImportResult(e);
           }
         }
         tempMailData.addFolderIdMapping(exportedLabelName, importerLabelId);
@@ -181,8 +180,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         try {
           migratedLabelId = createImportedLabelId(authData, LABEL);
         } catch (IOException e) {
-          return new ImportResult(
-              ResultType.ERROR, "Unable to create imported label for user: " + e.getMessage());
+          return new ImportResult(e);
         }
         tempMailData.addFolderIdMapping(LABEL, migratedLabelId);
         newMappingsCreated = true;
@@ -220,8 +218,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
             try {
               importerLabelId = createImportedLabelId(authData, exportedLabelName);
             } catch (IOException e) {
-              return new ImportResult(
-                  ResultType.ERROR, "Unable to create imported label for user: " + e.getMessage());
+              return new ImportResult(e);
             }
           }
           tempMailData.addFolderIdMapping(exportedLabelName, importerLabelId);
@@ -269,7 +266,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       try {
         getOrCreateGmail(authData).users().messages().insert(USER, newMessage).execute();
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, "Error importing message: " + e.getMessage());
+        return new ImportResult(e);
       }
     }
     return new ImportResult(ResultType.OK);

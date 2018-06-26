@@ -100,9 +100,7 @@ public class RequestHelper {
     } catch (IOException e) {
       // TODO log
       e.printStackTrace();
-      return new BatchResponse(
-          new ImportResult(
-              ImportResult.ResultType.ERROR, "Error batching request: " + e.getMessage()));
+      return new BatchResponse(new ImportResult(e));
     }
   }
 

@@ -213,7 +213,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
       }
       return ImportResult.OK;
     } catch (IOException e) {
-      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
+      return new ImportResult(e);
     }
   }
 

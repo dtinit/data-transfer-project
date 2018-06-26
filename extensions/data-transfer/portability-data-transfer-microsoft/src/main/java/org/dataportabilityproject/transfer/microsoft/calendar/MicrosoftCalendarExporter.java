@@ -82,7 +82,7 @@ public class MicrosoftCalendarExporter
       ResponseBody body = graphResponse.body();
       if (body == null) {
         return new ExportResult<>(
-            ExportResult.ResultType.ERROR, "Error retrieving contacts: response body was null");
+            new Exception("Error retrieving contacts: response body was null"));
       }
       String graphBody = new String(body.bytes());
       Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
@@ -110,8 +110,7 @@ public class MicrosoftCalendarExporter
       }
     } catch (IOException e) {
       e.printStackTrace(); // FIXME log error
-      return new ExportResult<>(
-          ExportResult.ResultType.ERROR, "Error retrieving calendar: " + e.getMessage());
+      return new ExportResult<>(e);
     }
 
     List<CalendarEventModel> calendarEventModels = new ArrayList<>();
@@ -124,7 +123,7 @@ public class MicrosoftCalendarExporter
         ResponseBody body = graphResponse.body();
         if (body == null) {
           return new ExportResult<>(
-              ExportResult.ResultType.ERROR, "Error retrieving calendar: response body was null");
+              new Exception("Error retrieving calendar: response body was null"));
         }
         String graphBody = new String(body.bytes());
         Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
@@ -154,8 +153,7 @@ public class MicrosoftCalendarExporter
 
       } catch (IOException e) {
         e.printStackTrace(); // FIXME log error
-        return new ExportResult<>(
-            ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+        return new ExportResult<>(e);
       }
     }
 

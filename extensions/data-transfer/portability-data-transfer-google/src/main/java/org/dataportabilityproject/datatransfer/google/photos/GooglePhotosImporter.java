@@ -88,8 +88,7 @@ public class GooglePhotosImporter
         importSinglePhoto(authData, photo);
       }
     } catch (IOException | ServiceException e) {
-      // TODO(olsona): we shouldn't just error out if there's a single problem - should retry
-      return new ImportResult(ResultType.ERROR, e.getMessage());
+      return new ImportResult(e);
     }
 
     return ImportResult.OK;

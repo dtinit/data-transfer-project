@@ -10,20 +10,7 @@ public class ImportResult {
   public static final ImportResult OK = new ImportResult(ResultType.OK);
 
   private ResultType type;
-  private String message;
   private Throwable throwable; // Should be null unless an error was thrown during export
-
-  /**
-   * Ctor used to return error or retry results.
-   *
-   * @param type the result type
-   * @param message the result message, if any
-   */
-  public ImportResult(ResultType type, String message) {
-    verifyNonErrorResultType(type);
-    this.type = type;
-    this.message = message;
-  }
 
   /**
    * Ctor used to return error or retry results.
@@ -49,13 +36,6 @@ public class ImportResult {
    */
   public ResultType getType() {
     return type;
-  }
-
-  /**
-   * Returns the result message or null if no message is present.
-   */
-  public String getMessage() {
-    return message;
   }
 
   /**

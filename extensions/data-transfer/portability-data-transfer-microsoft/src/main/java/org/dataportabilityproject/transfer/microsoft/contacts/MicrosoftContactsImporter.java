@@ -93,8 +93,7 @@ public class MicrosoftContactsImporter implements Importer<TokenAuthData, Contac
     } catch (IOException e) {
       // TODO log
       e.printStackTrace();
-      return new ImportResult(
-          ImportResult.ResultType.ERROR, "Error deserializing contacts: " + e.getMessage());
+      return new ImportResult(e);
     }
   }
 }

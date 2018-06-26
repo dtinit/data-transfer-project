@@ -71,7 +71,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       try {
         jobstore.create(jobId, createCacheKey(), tempTasksData);
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, e.getMessage());
+        return new ImportResult(e);
       }
     }
 
@@ -106,7 +106,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       }
     } catch (Exception e) {
       logger.warn("Error importing item: " + Throwables.getStackTraceAsString(e));
-      return new ImportResult(ImportResult.ResultType.ERROR, e.getMessage());
+      return new ImportResult(e);
     }
     return new ImportResult(ImportResult.ResultType.OK);
   }

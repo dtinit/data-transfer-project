@@ -80,8 +80,7 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
 
     } catch (IOException e) {
       e.printStackTrace(); // FIXME log error
-      return new ExportResult<>(
-          ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+      return new ExportResult<>(e);
     }
   }
 

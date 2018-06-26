@@ -98,7 +98,7 @@ public class GooglePhotosExporter
     try {
       albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
     } catch (IOException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(e);
     }
 
     PaginationData nextPageData = null;
@@ -146,7 +146,7 @@ public class GooglePhotosExporter
       mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
           .listAlbumContents(albumId, paginationToken);
     } catch (IOException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(e);
     }
 
     PaginationData nextPageData = null;

@@ -83,8 +83,7 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
     try (Response graphResponse = client.newCall(graphReqBuilder.build()).execute()) {
       ResponseBody body = graphResponse.body();
       if (body == null) {
-        return new ExportResult<>(
-            ExportResult.ResultType.ERROR, "Error retrieving contacts: response body was null");
+        return new ExportResult<>(new Exception( "Error retrieving contacts: response body was null"));
       }
       String graphBody = new String(body.bytes());
       Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
@@ -102,8 +101,7 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
       return new ExportResult<>(ExportResult.ResultType.CONTINUE, wrapper, continuationData);
     } catch (IOException e) {
       e.printStackTrace(); // FIXME log error
-      return new ExportResult<>(
-          ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+      return new ExportResult<>(e);
     }
   }
 

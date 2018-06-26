@@ -19,18 +19,6 @@ public class ExportResult<T extends DataModel> {
   private Throwable throwable; // Should be null unless an error was thrown during export
 
   /**
-   * Ctor used to return error or retry results.
-   *
-   * @param type the result type
-   * @param message the result message, if any
-   */
-  public ExportResult(ResultType type, String message) {
-    verifyNonErrorResultType(type);
-    this.type = type;
-    this.message = message;
-  }
-
-  /**
    * Ctor.
    *
    * @param type the result type

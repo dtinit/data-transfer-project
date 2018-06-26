@@ -67,7 +67,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       try {
         jobStore.create(jobId, createCacheKey(), tempTasksData);
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, e.getMessage());
+        return new ImportResult(e);
       }
     }
 
@@ -80,7 +80,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       try {
         insertedTaskList = tasksService.tasklists().insert(newTaskList).execute();
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, "Error inserting taskList: " + e.getMessage());
+        return new ImportResult(e);
       }
 
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
@@ -102,7 +102,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       try {
         tasksService.tasks().insert(newTaskListId, newTask).execute();
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, "Error inserting task: " + e.getMessage());
+        return new ImportResult(e);
       }
     }
 
