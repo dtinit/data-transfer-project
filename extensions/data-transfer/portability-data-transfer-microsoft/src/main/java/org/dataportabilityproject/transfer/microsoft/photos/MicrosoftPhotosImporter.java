@@ -80,7 +80,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
       try {
         jobStore.create(jobId, createCacheKey(), photoData);
       } catch (IOException e) {
-        return new ImportResult(ImportResult.ResultType.ERROR, "Error create temp photo data " + e.getMessage());
+        return new ImportResult(e);
       }
 
     }

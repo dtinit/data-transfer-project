@@ -183,7 +183,7 @@ public class GoogleCalendarExporter implements
 
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(e);
     }
 
     // Set up continuation data
@@ -236,7 +236,7 @@ public class GoogleCalendarExporter implements
       }
       listResult = listRequest.execute();
     } catch (IOException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(e);
     }
 
     // Set up continuation data

@@ -74,7 +74,7 @@ public class InstagramPhotoExporter implements
     try {
       response = makeRequest(MEDIA_URL, MediaResponse.class, authData);
     } catch (IOException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(e);
     }
 
     List<PhotoModel> photos = new ArrayList<>();

@@ -106,7 +106,7 @@ public class GoogleCalendarImporter implements
       }
     } catch (IOException e) {
       // TODO(olsona): should consider retrying individual failures
-      return new ImportResult(ResultType.ERROR, e.getMessage());
+      return new ImportResult(e);
     }
     return ImportResult.OK;
   }

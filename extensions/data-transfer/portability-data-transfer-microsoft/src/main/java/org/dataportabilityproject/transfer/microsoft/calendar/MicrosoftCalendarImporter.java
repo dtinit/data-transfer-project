@@ -78,7 +78,7 @@ public class MicrosoftCalendarImporter
       try {
         jobStore.create(jobId, createCacheKey(), calendarMappings);
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, e.getMessage());
+        return new ImportResult(e);
       }
     }
 

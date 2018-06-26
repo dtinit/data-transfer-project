@@ -91,7 +91,7 @@ final class TwitterPhotosExporter implements
           moreData ? new ContinuationData(new IntPaginationToken(pageNumber + 1)) : null);
     }
     catch (TwitterException e) {
-      return new ExportResult<>(ResultType.ERROR, e.getMessage());
+      return new ExportResult<>(e);
     }
   }
 }

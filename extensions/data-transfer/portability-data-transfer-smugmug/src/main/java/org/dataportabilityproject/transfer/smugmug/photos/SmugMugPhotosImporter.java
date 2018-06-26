@@ -87,7 +87,7 @@ public class SmugMugPhotosImporter
       }
     } catch (IOException e) {
       LOGGER.warn("Error happened while importing: {}", Throwables.getStackTraceAsString(e));
-      return new ImportResult(ResultType.ERROR, e.getMessage());
+      return new ImportResult(e);
     }
     return ImportResult.OK;
   }

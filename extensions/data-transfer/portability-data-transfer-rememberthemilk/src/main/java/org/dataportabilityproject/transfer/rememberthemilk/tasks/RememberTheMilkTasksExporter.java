@@ -90,7 +90,7 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     try {
       oldList = service.getList(oldListId);
     } catch (IOException e) {
-      return new ExportResult(ResultType.ERROR, "Error getting old list: " + e.getMessage());
+      return new ExportResult(e);
     }
 
     List<TaskList> taskLists = oldList.tasks.list;
@@ -130,7 +130,7 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     try {
       listInfoList = service.getLists().lists;
     } catch (IOException e) {
-      return new ExportResult(ResultType.ERROR, "Error retrieving lists: " + e.getMessage());
+      return new ExportResult(e);
     }
 
     for (ListInfo oldListInfo : listInfoList) {

@@ -60,7 +60,7 @@ final class TwitterPhotosImporter
         twitterApi.tweets().updateStatus(update);
       } catch (IOException | TwitterException e) {
         logger.warn("problem importing twitter photo", e);
-        return new ImportResult(ResultType.ERROR, e.getMessage());
+        return new ImportResult(e);
       }
     }
     return new ImportResult(ResultType.OK);

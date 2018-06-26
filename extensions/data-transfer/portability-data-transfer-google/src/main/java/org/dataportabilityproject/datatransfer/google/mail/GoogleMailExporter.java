@@ -72,8 +72,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailCo
     try {
       request = gmail.users().messages().list(USER).setMaxResults(PAGE_SIZE);
     } catch (IOException e) {
-      return new ExportResult<>(
-          ExportResult.ResultType.ERROR, "Error creating request: " + e.getMessage());
+      return new ExportResult<>(e);
     }
 
     if (exportInformation.isPresent() && exportInformation.get().getPaginationData() != null) {
@@ -85,8 +84,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailCo
     try {
       response = request.execute();
     } catch (IOException e) {
-      return new ExportResult<>(
-          ExportResult.ResultType.ERROR, "Error exporting messages: " + e.getMessage());
+      return new ExportResult<>(e);
     }
 
     List<MailMessageModel> results = new ArrayList<>(response.getMessages().size());
@@ -98,8 +96,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailCo
         getResponse =
             gmail.users().messages().get(USER, listMessage.getId()).setFormat("raw").execute();
       } catch (IOException e) {
-        return new ExportResult<>(
-            ExportResult.ResultType.ERROR, "Error exporting single message: " + e.getMessage());
+        return new ExportResult<>(e);
       }
       // TODO: note this doesn't transfer things like labels
       results.add(new MailMessageModel(getResponse.getRaw(), getResponse.getLabelIds()));

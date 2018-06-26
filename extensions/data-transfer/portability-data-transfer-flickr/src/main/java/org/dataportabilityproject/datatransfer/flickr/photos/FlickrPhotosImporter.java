@@ -78,8 +78,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     try {
       auth = FlickrUtils.getAuth(authData, flickr);
     } catch (FlickrException e) {
-      return new ImportResult(
-          ImportResult.ResultType.ERROR, "Error authorizing Flickr Auth: " + e.getErrorMessage());
+      return new ImportResult(e);
     }
     RequestContext.getRequestContext().setAuth(auth);
 
@@ -90,7 +89,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       try {
         jobStore.create(jobId, createCacheKey(), tempPhotosData);
       } catch (IOException e) {
-        return new ImportResult(ResultType.ERROR, "Error create temp photo data " + e.getMessage());
+        return new ImportResult(e);
       }
     }
 
@@ -108,7 +107,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         try {
           importSinglePhoto(jobId, photo);
         } catch (FlickrException | IOException e) {
-          return new ImportResult(ResultType.ERROR, "Error importing photo " + e.getMessage());
+          return new ImportResult(e);
         }
       }
     }

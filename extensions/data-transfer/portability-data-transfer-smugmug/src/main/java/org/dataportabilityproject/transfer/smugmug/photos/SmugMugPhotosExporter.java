@@ -95,7 +95,7 @@ public class SmugMugPhotosExporter
       smugMugInterface = getOrCreateSmugMugInterface(authData);
     } catch (IOException e) {
       logger.warn("Unable to create smugmug service for user: {}", e.getMessage());
-      return new ExportResult(ResultType.ERROR, e.getMessage());
+      return new ExportResult(e);
     }
 
     if (resource != null) {
@@ -121,7 +121,7 @@ public class SmugMugPhotosExporter
       albumsResponse = smugMugInterface.getAlbums(albumInfoUri);
     } catch (IOException e) {
       logger.warn("Unable to get AlbumsResponse: " + e.getMessage());
-      return new ExportResult(ResultType.ERROR, e.getMessage());
+      return new ExportResult(e);
     }
 
     // Set up continuation data
@@ -174,7 +174,7 @@ public class SmugMugPhotosExporter
       albumInfoResponse = smugMugInterface.getAlbumInfo(photoInfoUri);
     } catch (IOException e) {
       logger.warn("Unable to get SmugMugAlbumInfo");
-      return new ExportResult(ResultType.ERROR, e.getMessage());
+      return new ExportResult(e);
     }
 
     // Set up continuation data

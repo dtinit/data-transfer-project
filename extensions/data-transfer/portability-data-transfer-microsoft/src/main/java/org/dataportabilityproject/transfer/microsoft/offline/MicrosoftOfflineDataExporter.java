@@ -66,8 +66,7 @@ public class MicrosoftOfflineDataExporter implements Exporter<TokenAuthData, Mic
       return new ExportResult<>(ExportResult.ResultType.END, offlineData);
     } catch (IOException e) {
       e.printStackTrace(); // FIXME log error
-      return new ExportResult<>(
-          ExportResult.ResultType.ERROR, "Error retrieving contacts: " + e.getMessage());
+      return new ExportResult<>(e);
     }
   }
 
