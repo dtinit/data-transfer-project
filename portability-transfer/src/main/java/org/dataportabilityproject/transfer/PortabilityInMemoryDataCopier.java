@@ -18,18 +18,24 @@ package org.dataportabilityproject.transfer;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import java.io.IOException;
+import java.time.Clock;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
-import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
+import org.dataportabilityproject.transfer.retry.ExponentialBackoffRetryStrategy;
+import org.dataportabilityproject.transfer.retry.RetryException;
+import org.dataportabilityproject.transfer.retry.RetryStrategy;
+import org.dataportabilityproject.transfer.retry.RetryStrategyLibrary;
+import org.dataportabilityproject.transfer.retry.RetryingCallable;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
@@ -43,7 +49,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
-  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList.of("*fatal*"); // TODO: make configurable
+  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList
+      .of("*fatal*"); // TODO: make configurable
   private static final int MAX_ATTEMPTS = 5; // TODO: make configurable
 
   /**
@@ -86,31 +93,44 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      Optional<ExportInformation> exportInformation)
-      throws IOException {
+      Optional<ExportInformation> exportInformation) {
 
-    logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
+    String jobIdPrefix = "Job " + jobId + ": ";
+    logger.debug(jobIdPrefix + "copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
+
+    // TODO: read in retry strategies from a config, but that's for later in v1
+    RetryStrategy expBackoffStrategy = new ExponentialBackoffRetryStrategy(5, 10, 2);
+    RetryStrategyLibrary library = new RetryStrategyLibrary(new LinkedList<>(), expBackoffStrategy);
 
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    logger.debug("Starting export");
-    ExportResult<?> exportResult = export(jobId, exportAuthData, exportInformation);
-    logger.debug("Finished export");
-
-    if (exportResult.getType().equals(ResultType.ERROR)) {
-      logger.warn("Error happened during export: {}", exportResult.getMessage());
+    logger.debug(jobIdPrefix + "Starting export");
+    CallableExporter callableExporter = new CallableExporter(exporter, jobId, exportAuthData,
+        exportInformation);
+    RetryingCallable<ExportResult> retryingExporter = new RetryingCallable(callableExporter,
+        library, Clock.systemUTC());
+    ExportResult<?> exportResult;
+    try {
+      exportResult = retryingExporter.call();
+    } catch (RetryException e) {
+      logger.warn(jobIdPrefix + "Error happened during export: {}", e);
       return;
     }
+    logger.debug(jobIdPrefix + "Finished export");
 
-    logger.debug("Starting import");
-    ImportResult importResult = importer.get()
-        .importItem(jobId, importAuthData, exportResult.getExportedData());
-    logger.debug("Finished import");
-    if (importResult.getType().equals(ImportResult.ResultType.ERROR)) {
-      logger.warn("Error happened during import: {}", importResult.getMessage());
+    logger.debug(jobIdPrefix + "Starting import");
+    CallableImporter callableImporter = new CallableImporter(importer, jobId, importAuthData,
+        exportResult.getExportedData());
+    RetryingCallable<ImportResult> retryingImporter = new RetryingCallable<>(callableImporter,
+        library, Clock.systemUTC());
+    try {
+      retryingImporter.call();
+    } catch (RetryException e) {
+      logger.warn(jobIdPrefix + "Error happened during import: {}", e);
       return;
     }
+    logger.debug(jobIdPrefix + "Finished import");
 
     // Import and Export were successful, determine what to do next
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
@@ -118,7 +138,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     if (null != continuationData) {
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
-        logger.debug("starting off a new copy iteration with pagination info");
+        logger.debug(jobIdPrefix + "Starting off a new copy iteration with pagination info");
         copyHelper(
             jobId,
             exportAuthData,
@@ -138,30 +158,4 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       }
     }
   }
-
-  private ExportResult export(UUID jobId, AuthData exportAuthData,
-      Optional<ExportInformation> exportInformation) {
-    ExportResult<?> exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-    for (int attempts = 0; exportResult.getType() == ResultType.ERROR; attempts++) {
-      if (checkCanRetry(exportResult.getMessage(), attempts)) {
-        exportResult = exporter.get().export(jobId, exportAuthData, exportInformation);
-      }
-    }
-    return exportResult;
-  }
-
-  private boolean checkCanRetry(String exceptionMessage, int attempts) {
-    // First check to see if we're over the limit of allowed attempts
-    if (attempts >= MAX_ATTEMPTS) {
-      return false;
-    }
-    // Then check the error message to see if the error is retryable or not
-    for (String fatalRegex : FATAL_ERROR_REGEXES) {
-      if (exceptionMessage.matches(fatalRegex)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
 }
