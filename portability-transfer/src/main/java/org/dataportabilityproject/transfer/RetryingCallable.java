@@ -55,7 +55,7 @@ public class RetryingCallable<T> implements Callable<T> {
         mostRecentException = e;
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
         // TODO: do we want to reset anything (eg, number of retries) if we see a different RetryStrategy?
-        long nextAttemptIntervalMillis = retryStrategyLibrary.checkoutRetryStrategy(e.getMessage())
+        long nextAttemptIntervalMillis = retryStrategyLibrary.checkoutRetryStrategy(e)
             .getRemainingIntervalMillis(attempts, elapsedMillis);
         if (nextAttemptIntervalMillis >= 0) {
           try {

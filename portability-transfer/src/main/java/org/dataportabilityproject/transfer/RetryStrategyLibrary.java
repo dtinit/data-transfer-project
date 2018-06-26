@@ -29,7 +29,8 @@ public class RetryStrategyLibrary {
     this.defaultRetryStrategy = defaultRetryStrategy;
   }
 
-  public RetryStrategy checkoutRetryStrategy(String exceptionMessage) {
+  public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
+    String exceptionMessage = throwable.getMessage();
     for (Pair<String, RetryStrategy> entry : strategyMapping) {
       String regex = entry.first;
       if (exceptionMessage.matches(regex)) {

@@ -12,7 +12,6 @@ public class ExportResult<T extends DataModel> {
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
   public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
   private static final String MUST_HAVE_THROWABLE = "ExportResult with ResultType = ERROR must hold a throwable";
-  private static final String CANT_HAVE_THROWABLE = "ExportResult with ResultType != ERROR cannot hold a Throwable";
 
   private ResultType type;
   private String message;
@@ -71,12 +70,10 @@ public class ExportResult<T extends DataModel> {
   /**
    * Ctor.
    *
-   * @param type the result type
    * @param throwable the throwable from execution
    */
-  public ExportResult(ResultType type, Throwable throwable) {
-    Preconditions.checkArgument(type.equals(ResultType.ERROR), CANT_HAVE_THROWABLE);
-    this.type = type;
+  public ExportResult(Throwable throwable) {
+    this.type = ResultType.ERROR;
     this.throwable = throwable;
   }
 

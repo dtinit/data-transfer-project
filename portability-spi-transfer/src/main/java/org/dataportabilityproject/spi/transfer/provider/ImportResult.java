@@ -6,7 +6,6 @@ import com.google.common.base.Preconditions;
 public class ImportResult {
   public static final ImportResult OK = new ImportResult(ResultType.OK);
   private static final String MUST_HAVE_THROWABLE = "ImportResult with ResultType = ERROR must hold a throwable";
-  private static final String CANT_HAVE_THROWABLE = "ImportResult with ResultType != ERROR cannot hold a Throwable";
 
   private ResultType type;
   private String message;
@@ -27,12 +26,10 @@ public class ImportResult {
   /**
    * Ctor used to return error or retry results.
    *
-   * @param type the result type
    * @param throwable the exception thrown
    */
-  public ImportResult(ResultType type, Throwable throwable) {
-    Preconditions.checkArgument(type.equals(ResultType.ERROR), CANT_HAVE_THROWABLE);
-    this.type = type;
+  public ImportResult(Throwable throwable) {
+    this.type = ResultType.ERROR;
     this.throwable = throwable;
   }
 
