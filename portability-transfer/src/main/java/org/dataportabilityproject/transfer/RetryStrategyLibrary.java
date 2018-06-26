@@ -30,6 +30,7 @@ public class RetryStrategyLibrary {
   }
 
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
+    // TODO: determine retry strategy based on full information in Throwable
     String exceptionMessage = throwable.getMessage();
     for (Pair<String, RetryStrategy> entry : strategyMapping) {
       String regex = entry.first;
