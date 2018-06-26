@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer;
+package org.dataportabilityproject.transfer.retry;
 
 import static java.lang.Thread.currentThread;
 
@@ -23,6 +23,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
 
+/**
+ * Class for retrying a {@link Callable} given a {@link RetryStrategyLibrary}.
+ *
+ * @param <T> The type that the inner {@link Callable} returns.
+ */
 public class RetryingCallable<T> implements Callable<T> {
 
   private final Callable<T> callable;
@@ -41,6 +46,11 @@ public class RetryingCallable<T> implements Callable<T> {
     this.attempts = 0;
   }
 
+  /**
+   * Tries to call the {@link Callable} given the class's {@link RetryStrategyLibrary}.
+   *
+   * @return Whatever is returned by the {@link Callable}.
+   */
   @Override
   public T call() throws RetryException {
     Instant start = clock.instant();
@@ -48,9 +58,6 @@ public class RetryingCallable<T> implements Callable<T> {
       attempts++;
       try {
         return callable.call();
-      } catch (InterruptedException e) {
-        currentThread().interrupt();
-        throw new RetryException(attempts, mostRecentException != null ? mostRecentException : e);
       } catch (Exception e) {
         mostRecentException = e;
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();

@@ -25,10 +25,12 @@ import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 
+/**
+ * Callable around an {@link Exporter}.
+ */
 public class CallableExporter implements Callable<ExportResult> {
 
   private Provider<Exporter> exporterProvider;
-
   private UUID jobId;
   private AuthData authData;
   private Optional<ExportInformation> exportInformation;

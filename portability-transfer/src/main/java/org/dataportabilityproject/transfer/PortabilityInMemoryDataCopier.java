@@ -26,13 +26,16 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import org.dataportabilityproject.spi.transfer.provider.ExportResult;
-import org.dataportabilityproject.spi.transfer.provider.ExportResult.ResultType;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.transfer.RetryStrategy.ExponentialBackoffRetryStrategy;
+import org.dataportabilityproject.transfer.retry.ExponentialBackoffRetryStrategy;
+import org.dataportabilityproject.transfer.retry.RetryException;
+import org.dataportabilityproject.transfer.retry.RetryStrategy;
+import org.dataportabilityproject.transfer.retry.RetryStrategyLibrary;
+import org.dataportabilityproject.transfer.retry.RetryingCallable;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
@@ -92,7 +95,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       AuthData importAuthData,
       Optional<ExportInformation> exportInformation) {
 
-    logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
+    String jobIdPrefix = "Job " + jobId + ": ";
+    logger.debug(jobIdPrefix + "copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
     // TODO: read in retry strategies from a config, but that's for later in v1
     RetryStrategy expBackoffStrategy = new ExponentialBackoffRetryStrategy(5, 10, 2);
@@ -101,34 +105,32 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    logger.debug("Starting export");
+    logger.debug(jobIdPrefix + "Starting export");
     CallableExporter callableExporter = new CallableExporter(exporter, jobId, exportAuthData,
         exportInformation);
-    RetryingCallable<ExportResult> exportRetryingCallable = new RetryingCallable<>(callableExporter,
-        library,
-        Clock.systemUTC());
+    RetryingCallable<ExportResult> retryingExporter = new RetryingCallable(callableExporter,
+        library, Clock.systemUTC());
     ExportResult<?> exportResult;
     try {
-      exportResult = exportRetryingCallable.call();
+      exportResult = retryingExporter.call();
     } catch (RetryException e) {
-      logger.warn("Error happened during export: {}", e);
+      logger.warn(jobIdPrefix + "Error happened during export: {}", e);
       return;
     }
-    logger.debug("Finished export");
+    logger.debug(jobIdPrefix + "Finished export");
 
-    logger.debug("Starting import");
-
-    CallableImporter callableImporter = new CallableImporter(importer, jobId, importAuthData, exportResult.getExportedData());
-    RetryingCallable<ImportResult> importRetryingCallable = new RetryingCallable<>(callableImporter,
-        library,
-        Clock.systemUTC());
+    logger.debug(jobIdPrefix + "Starting import");
+    CallableImporter callableImporter = new CallableImporter(importer, jobId, importAuthData,
+        exportResult.getExportedData());
+    RetryingCallable<ImportResult> retryingImporter = new RetryingCallable<>(callableImporter,
+        library, Clock.systemUTC());
     try {
-      importRetryingCallable.call();
+      retryingImporter.call();
     } catch (RetryException e) {
-      logger.warn("Error happened during import: {}", e);
+      logger.warn(jobIdPrefix + "Error happened during import: {}", e);
       return;
     }
-    logger.debug("Finished import");
+    logger.debug(jobIdPrefix + "Finished import");
 
     // Import and Export were successful, determine what to do next
     ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
@@ -136,7 +138,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     if (null != continuationData) {
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
-        logger.debug("starting off a new copy iteration with pagination info");
+        logger.debug(jobIdPrefix + "Starting off a new copy iteration with pagination info");
         copyHelper(
             jobId,
             exportAuthData,

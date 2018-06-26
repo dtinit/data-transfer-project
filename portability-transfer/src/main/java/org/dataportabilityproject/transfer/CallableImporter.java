@@ -24,15 +24,18 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
+/**
+ * Callable wrapper around an {@link Importer}.
+ */
 public class CallableImporter implements Callable<ImportResult> {
 
   private Provider<Importer> importerProvider;
-
   private UUID jobId;
   private AuthData authData;
   private DataModel data;
 
-  public CallableImporter(Provider<Importer> importerProvider, UUID jobId, AuthData authData, DataModel data) {
+  public CallableImporter(Provider<Importer> importerProvider, UUID jobId, AuthData authData,
+      DataModel data) {
     this.importerProvider = importerProvider;
 
     this.jobId = jobId;

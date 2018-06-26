@@ -5,19 +5,18 @@ import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.types.transfer.models.DataModel;
 
 /**
- * The result of an item export operation.
+ * The result of an item export operation, after retries.
  */
 public class ExportResult<T extends DataModel> {
 
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
   public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
-  private static final String MUST_HAVE_THROWABLE = "ExportResult with ResultType = ERROR must hold a throwable";
 
   private ResultType type;
   private String message;
   private T exportedData;
   private ContinuationData continuationData;
-  private Throwable throwable;
+  private Throwable throwable; // Should be null unless an error was thrown during export
 
   /**
    * Ctor used to return error or retry results.
@@ -26,7 +25,7 @@ public class ExportResult<T extends DataModel> {
    * @param message the result message, if any
    */
   public ExportResult(ResultType type, String message) {
-    Preconditions.checkArgument(!type.equals(ResultType.ERROR), MUST_HAVE_THROWABLE);
+    verifyNonErrorResultType(type);
     this.type = type;
     this.message = message;
   }
@@ -37,7 +36,7 @@ public class ExportResult<T extends DataModel> {
    * @param type the result type
    */
   public ExportResult(ResultType type) {
-    Preconditions.checkArgument(!type.equals(ResultType.ERROR), MUST_HAVE_THROWABLE);
+    verifyNonErrorResultType(type);
     this.type = type;
   }
 
@@ -48,7 +47,7 @@ public class ExportResult<T extends DataModel> {
    * @param exportedData the exported data
    */
   public ExportResult(ResultType type, T exportedData) {
-    Preconditions.checkArgument(!type.equals(ResultType.ERROR), MUST_HAVE_THROWABLE);
+    verifyNonErrorResultType(type);
     this.type = type;
     this.exportedData = exportedData;
   }
@@ -61,7 +60,7 @@ public class ExportResult<T extends DataModel> {
    * @param continuationData continuation information
    */
   public ExportResult(ResultType type, T exportedData, ContinuationData continuationData) {
-    Preconditions.checkArgument(!type.equals(ResultType.ERROR), MUST_HAVE_THROWABLE);
+    verifyNonErrorResultType(type);
     this.type = type;
     this.exportedData = exportedData;
     this.continuationData = continuationData;
@@ -104,6 +103,11 @@ public class ExportResult<T extends DataModel> {
 
   public Throwable getThrowable() {
     return throwable;
+  }
+
+  private void verifyNonErrorResultType(ResultType type) {
+    String mustHaveThrowable = "ExportResult with ResultType = ERROR must hold a throwable";
+    Preconditions.checkArgument(!type.equals(ResultType.ERROR), mustHaveThrowable);
   }
 
   /**

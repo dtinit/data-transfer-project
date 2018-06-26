@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer;
+package org.dataportabilityproject.transfer.retry;
 
+/**
+ * Exception class designed to hold information about why retried calls ultimately failed.
+ */
 public class RetryException extends Exception {
-  private final int attempts;
 
-  RetryException(int attempts, Exception exception) {
+  private final int triesSoFar;
+
+  RetryException(int triesSoFar, Exception exception) {
     super(exception);
-    this.attempts = attempts;
+    this.triesSoFar = triesSoFar;
   }
 
   @Override
@@ -29,7 +33,7 @@ public class RetryException extends Exception {
     return (Exception) super.getCause();
   }
 
-  public int getAttempts() {
-    return attempts;
+  public int getTriesSoFar() {
+    return triesSoFar;
   }
 }

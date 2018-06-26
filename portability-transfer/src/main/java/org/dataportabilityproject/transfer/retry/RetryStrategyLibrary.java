@@ -14,21 +14,32 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer;
+package org.dataportabilityproject.transfer.retry;
 
 import com.google.gdata.util.common.base.Pair;
 import java.util.List;
 
+/**
+ * Class used by {@link RetryingCallable} to determine which {@link RetryStrategy} to use given a
+ * particular error.
+ */
 public class RetryStrategyLibrary {
   private final List<Pair<String, RetryStrategy>> strategyMapping;
   private final RetryStrategy defaultRetryStrategy;
 
-  RetryStrategyLibrary(List<Pair<String, RetryStrategy>> strategyMapping,
+  public RetryStrategyLibrary(List<Pair<String, RetryStrategy>> strategyMapping,
       RetryStrategy defaultRetryStrategy) {
     this.strategyMapping = strategyMapping;
     this.defaultRetryStrategy = defaultRetryStrategy;
   }
 
+  /**
+   * Returns the best {@link RetryStrategy} for a given Throwable.  If there are no matches, returns
+   * the default RetryStrategy.
+   *
+   * Right now it just looks at the message in the Throwable and tries to find a matching regex in
+   * its internal library.  Later on it will use more and more of the Throwable to make a decision.
+   */
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
     // TODO: determine retry strategy based on full information in Throwable
     String exceptionMessage = throwable.getMessage();
