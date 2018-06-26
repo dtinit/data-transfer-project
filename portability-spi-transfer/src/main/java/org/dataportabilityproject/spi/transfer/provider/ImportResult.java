@@ -1,8 +1,13 @@
 package org.dataportabilityproject.spi.transfer.provider;
 
+import com.google.common.base.Preconditions;
+
 /** The result of an item import operation. */
 public class ImportResult {
   public static final ImportResult OK = new ImportResult(ResultType.OK);
+  private static final String MUST_HAVE_THROWABLE = "ImportResult with ResultType = ERROR must hold a throwable";
+  private static final String CANT_HAVE_THROWABLE = "ImportResult with ResultType != ERROR cannot hold a Throwable";
+
   private ResultType type;
   private String message;
   private Throwable throwable;
@@ -14,6 +19,7 @@ public class ImportResult {
    * @param message the result message, if any
    */
   public ImportResult(ResultType type, String message) {
+    Preconditions.checkArgument(!type.equals(ResultType.ERROR), MUST_HAVE_THROWABLE);
     this.type = type;
     this.message = message;
   }
@@ -22,12 +28,11 @@ public class ImportResult {
    * Ctor used to return error or retry results.
    *
    * @param type the result type
-   * @param message the result message, if any
    * @param throwable the exception thrown
    */
-  public ImportResult(ResultType type, String message, Throwable throwable) {
+  public ImportResult(ResultType type, Throwable throwable) {
+    Preconditions.checkArgument(type.equals(ResultType.ERROR), CANT_HAVE_THROWABLE);
     this.type = type;
-    this.message = message;
     this.throwable = throwable;
   }
 

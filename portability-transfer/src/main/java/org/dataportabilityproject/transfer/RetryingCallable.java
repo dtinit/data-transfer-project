@@ -26,17 +26,17 @@ import java.util.concurrent.Callable;
 public class RetryingCallable<T> implements Callable<T> {
 
   private final Callable<T> callable;
-  private final RetryStrategy retryStrategy;
+  private final RetryStrategyLibrary retryStrategyLibrary;
   private final Clock clock;
 
   private volatile int attempts;
   private volatile Exception mostRecentException;
 
   public RetryingCallable(Callable<T> callable,
-      RetryStrategy retryStrategy,
+      RetryStrategyLibrary retryStrategyLibrary,
       Clock clock) {
     this.callable = callable;
-    this.retryStrategy = retryStrategy;
+    this.retryStrategyLibrary = retryStrategyLibrary;
     this.clock = clock;
     this.attempts = 0;
   }
@@ -54,8 +54,9 @@ public class RetryingCallable<T> implements Callable<T> {
       } catch (Exception e) {
         mostRecentException = e;
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
-        long nextAttemptIntervalMillis = retryStrategy
-            .getRemainingIntervalMillis(e, attempts, elapsedMillis);
+        // TODO: do we want to reset anything (eg, number of retries) if we see a different RetryStrategy?
+        long nextAttemptIntervalMillis = retryStrategyLibrary.checkoutRetryStrategy(e.getMessage())
+            .getRemainingIntervalMillis(attempts, elapsedMillis);
         if (nextAttemptIntervalMillis >= 0) {
           try {
             Thread.sleep(nextAttemptIntervalMillis);

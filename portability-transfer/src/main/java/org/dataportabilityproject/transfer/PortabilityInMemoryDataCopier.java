@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import java.io.IOException;
 import java.time.Clock;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -89,12 +90,13 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      Optional<ExportInformation> exportInformation)
-      throws IOException {
+      Optional<ExportInformation> exportInformation) {
 
     logger.debug("copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
+    // TODO: read in retry strategies from a config, but that's for later in v1
     RetryStrategy expBackoffStrategy = new ExponentialBackoffRetryStrategy(5, 10, 2);
+    RetryStrategyLibrary library = new RetryStrategyLibrary(new LinkedList<>(), expBackoffStrategy);
 
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
@@ -103,7 +105,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     CallableExporter callableExporter = new CallableExporter(exporter, jobId, exportAuthData,
         exportInformation);
     RetryingCallable<ExportResult> exportRetryingCallable = new RetryingCallable<>(callableExporter,
-        expBackoffStrategy,
+        library,
         Clock.systemUTC());
     ExportResult<?> exportResult;
     try {
@@ -118,7 +120,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
     CallableImporter callableImporter = new CallableImporter(importer, jobId, importAuthData, exportResult.getExportedData());
     RetryingCallable<ImportResult> importRetryingCallable = new RetryingCallable<>(callableImporter,
-        expBackoffStrategy,
+        library,
         Clock.systemUTC());
     try {
       importRetryingCallable.call();

@@ -16,18 +16,38 @@
 
 package org.dataportabilityproject.transfer;
 
+import com.google.common.base.Preconditions;
+
+/**
+ * Defines a retry strategy - i.e., how many retry attempts should be made, and at what intervals.
+ */
 public abstract class RetryStrategy {
 
-  public boolean canTryAgain(Exception e, int tries) {
-    return getNextIntervalMillis(e, tries) >= 0;
+  /**
+   * Shows whether another retry is possible or not, given the number of tries so far
+   */
+  public boolean canTryAgain(int tries) {
+    return getNextIntervalMillis(tries) >= 0;
   }
 
-  public abstract long getNextIntervalMillis(Exception e, int tries);
+  /**
+   * Amount of time (in milliseconds) until next retry.  Should return a negative number if
+   * no more retries are left.
+   */
+  public abstract long getNextIntervalMillis(int tries);
 
-  public long getRemainingIntervalMillis(Exception e, int tries, long elapsedMillis) {
-    return getNextIntervalMillis(e, tries) - elapsedMillis;
+  /**
+   * Gets milliseconds until the next retry, given elapsed time so far
+   */
+  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
+    long intervalMillis = getNextIntervalMillis(tries);
+    Preconditions.checkArgument(intervalMillis >= 0, "No retries left");
+    return intervalMillis - elapsedMillis;
   }
 
+  /**
+   * {@link RetryStrategy} that allows retries on regular intervals
+   */
   public static class SimpleRetryStrategy extends RetryStrategy {
     private int maxAttempts;
     private long intervalMillis;
@@ -38,8 +58,7 @@ public abstract class RetryStrategy {
     }
 
     @Override
-    public long getNextIntervalMillis(Exception e, int tries) {
-      // Same strategy for every exception, not a good idea in prod
+    public long getNextIntervalMillis(int tries) {
       if (tries < maxAttempts) {
         return intervalMillis;
       } else {
@@ -48,6 +67,9 @@ public abstract class RetryStrategy {
     }
   }
 
+  /**
+   * {@link RetryStrategy} that follows an exponential backoff strategy
+   */
   public static class ExponentialBackoffRetryStrategy extends RetryStrategy {
     private int maxAttempts;
     private long initialIntervalMillis;
@@ -60,8 +82,7 @@ public abstract class RetryStrategy {
     }
 
     @Override
-    public long getNextIntervalMillis(Exception e, int tries) {
-      // Same strategy for every exception, not a good idea in prod
+    public long getNextIntervalMillis(int tries) {
       if (tries < maxAttempts) {
         return (long) (initialIntervalMillis * Math.pow(multiplier, tries-1));
       } else {
