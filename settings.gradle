@@ -55,4 +55,4 @@ include ':extensions:data-transfer:portability-data-transfer-twitter'
 include ':extensions:auth:portability-auth-offline-demo'
 include ':extensions:data-transfer:portability-data-transfer-offline-demo'
 
-include ':client'
+include ':client-rest'
