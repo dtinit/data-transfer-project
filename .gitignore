@@ -60,3 +60,5 @@ testem.log
 Thumbs.db
 
 app_data/
+
+client-rest/dist/

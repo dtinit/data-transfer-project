@@ -29,14 +29,15 @@ task buildLocalWebApp(type: NodeTask) {
     group = BasePlugin.BUILD_GROUP
     description = "Builds the client webapp using the local Angular CLI installation"
     script = file("node_modules/.bin/ng")
-    args = ["build", "--env", "localhttps"]
+    args = ["build"]
 }
 
 
 task runLocalWebApp(type: NodeTask) {
+    group = BasePlugin.BUILD_GROUP
     description = "Runs the client webapp in development mode using the local Angular CLI installation"
     script = file("node_modules/.bin/ng")
-    args = ["serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"]
+    args = ["serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.conf.json"]
 }
 
 
@@ -59,9 +60,9 @@ task buildHostWebApp(type: Exec) {
     workingDir "$projectDir"
     inputs.dir "$projectDir"
     if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
-        commandLine "ng.cmd", "build", "--env", "localhttps"
+        commandLine "ng.cmd", "build"
     } else {
-        commandLine "ng", "build", "--env", "localhttps"
+        commandLine "ng", "build"
     }
 }
 
@@ -71,9 +72,9 @@ task runHostWebApp(type: Exec) {
     workingDir "$projectDir"
     inputs.dir "$projectDir"
     if (System.getProperty("os.name").toUpperCase().contains("WINDOWS")) {
-        commandLine "ng.cmd", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+        commandLine "ng.cmd", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.conf.json"
     } else {
-        commandLine "ng", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.https.conf.json", "--env", "localhttps"
+        commandLine "ng", "serve", "--ssl", "--port", "3000", "--proxy-config", "proxy.conf.json"
     }
 }
 

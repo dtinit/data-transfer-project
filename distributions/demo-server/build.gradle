@@ -178,20 +178,20 @@ task buildDemoServerImage(type: DockerBuildImage) {
 }
 
 task copyWebApp {
-    dependsOn ":client:buildWebApp"
+    dependsOn ":client-rest:buildWebApp"
     doLast {
         group = 'docker'
         // The static webapp must be copied since Docker requires included files to be in a subdirectory relative to where Docker is executed
         copy {
-            from '../../client/build/resources'
+            from '../../client-rest/dist/portability-demo'
             into 'build/webapp/html'
         }
         copy {
-            from '../../client/src/test-keys/server.crt'
+            from '../../client-rest/src/test-keys/server.crt'
             into 'build/webapp/test-keys'
         }
         copy {
-            from '../../client/src/test-keys/server.key'
+            from '../../client-rest/src/test-keys/server.key'
             into 'build/webapp/test-keys'
         }
     }
@@ -214,7 +214,7 @@ task dockerize {
 task installToolsAndDockerize {
     description = 'Installs required build tools and builds the Client and API Server Docker images'
     group = 'docker'
-    dependsOn ":client:installTools", buildDemoServerImage, buildClientImage
+    dependsOn ":client-rest:installTools", buildDemoServerImage, buildClientImage
 }
 
 
