@@ -29,13 +29,13 @@ import org.dataportabilityproject.spi.transfer.provider.ImportResult;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
-import org.dataportabilityproject.transfer.retry.ExponentialBackoffRetryStrategy;
+import org.dataportabilityproject.types.transfer.retry.SimpleRetryStrategy;
+import org.dataportabilityproject.types.transfer.auth.AuthData;
+import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.dataportabilityproject.types.transfer.retry.RetryException;
 import org.dataportabilityproject.types.transfer.retry.RetryStrategy;
 import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
 import org.dataportabilityproject.types.transfer.retry.RetryingCallable;
-import org.dataportabilityproject.types.transfer.auth.AuthData;
-import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug(jobIdPrefix + "copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
     // TODO: read in retry strategies from a config, but that's for later in v1
-    RetryStrategy expBackoffStrategy = new ExponentialBackoffRetryStrategy(5, 10, 2);
+    RetryStrategy expBackoffStrategy = new SimpleRetryStrategy(5,100);
     RetryStrategyLibrary library = new RetryStrategyLibrary(new LinkedList<>(), expBackoffStrategy);
 
     // NOTE: order is important below, do the import of all the items, then do continuation

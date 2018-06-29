@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile("com.google.auto.value:auto-value:${autoValueVersion}")
-    compile("com.google.gdata:core:${gdataVersion}") {
-        exclude(module: 'jetty-util')
-        exclude(module: 'servlet-api')
-    }
-    compile("com.google.guava:guava:${guavaVersion}")
+package org.dataportabilityproject.types.transfer.retry;
 
-    testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+public class NoRetryStrategy implements RetryStrategy {
+
+  public NoRetryStrategy() {}
+
+  @Override
+  public boolean canTryAgain(int tries) {
+    return false;
+  }
+
+  @Override
+  public long getNextIntervalMillis(int tries) {
+    return -1L;
+  }
+
+  @Override
+  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
+    return -1L;
+  }
 }
-
-

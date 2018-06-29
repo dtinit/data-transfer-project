@@ -14,16 +14,27 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile("com.google.auto.value:auto-value:${autoValueVersion}")
-    compile("com.google.gdata:core:${gdataVersion}") {
-        exclude(module: 'jetty-util')
-        exclude(module: 'servlet-api')
-    }
-    compile("com.google.guava:guava:${guavaVersion}")
+package org.dataportabilityproject.types.transfer.retry;
 
-    testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class RetryMapping {
+  @JsonProperty("regexes")
+  private String[] regexes;
+  @JsonProperty("strategy")
+  private RetryStrategy strategy;
+
+  public RetryMapping(@JsonProperty("regexes") String[] regexes,
+      @JsonProperty("strategy") RetryStrategy strategy) {
+    this.regexes = regexes;
+    this.strategy = strategy;
+  }
+
+  public String[] getRegexes() {
+    return regexes;
+  }
+
+  public RetryStrategy getStrategy() {
+    return strategy;
+  }
 }
-
-

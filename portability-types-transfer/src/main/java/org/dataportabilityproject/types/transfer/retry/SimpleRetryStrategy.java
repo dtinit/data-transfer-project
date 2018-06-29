@@ -14,18 +14,26 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
-import org.dataportabilityproject.types.transfer.retry.RetryStrategy;
 
 /**
  * {@link RetryStrategy} that follows a regular retry strategy
  */
 public class SimpleRetryStrategy implements RetryStrategy {
 
+  @JsonProperty("maxAttempts")
   private int maxAttempts;
+  @JsonProperty("intervalMillis")
   private long intervalMillis;
+
+  public SimpleRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+      @JsonProperty("intervalMillis") long intervalMillis) {
+    this.maxAttempts = maxAttempts;
+    this.intervalMillis = intervalMillis;
+  }
 
   @Override
   public boolean canTryAgain(int tries) {
