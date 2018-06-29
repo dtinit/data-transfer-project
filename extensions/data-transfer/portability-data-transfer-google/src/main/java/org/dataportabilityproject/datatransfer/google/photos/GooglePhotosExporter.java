@@ -56,7 +56,8 @@ public class GooglePhotosExporter
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, GooglePhotosInterface photosInterface) {
+  GooglePhotosExporter(GoogleCredentialFactory credentialFactory,
+      GooglePhotosInterface photosInterface) {
     this.credentialFactory = credentialFactory;
     this.photosInterface = photosInterface;
   }
@@ -64,6 +65,7 @@ public class GooglePhotosExporter
   @Override
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+    // TODO: export all photos that aren't in albums
     if (!exportInformation.isPresent()) {
       return exportAlbums(authData, Optional.empty());
     } else {
@@ -83,6 +85,10 @@ public class GooglePhotosExporter
     }
   }
 
+  /**
+   * Note: not all accounts have albums to return.  In that case, we just return an empty list of
+   * albums instead of trying to iterate through a null list.
+   */
   private ExportResult<PhotosContainerResource> exportAlbums(
       TokensAndUrlAuthData authData, Optional<PaginationData> paginationData) {
     Optional<String> paginationToken = Optional.empty();
@@ -109,8 +115,14 @@ public class GooglePhotosExporter
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>();
+    GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
-    for (GoogleAlbum googleAlbum : albumListResponse.getAlbums()) {
+    if (googleAlbums == null) {
+      return new ExportResult<>(ResultType.END, new PhotosContainerResource(null, null),
+          continuationData);
+    }
+
+    for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
       albums.add(
           new PhotoAlbum(
@@ -180,7 +192,8 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(TokensAndUrlAuthData authData) {
+  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
+      TokensAndUrlAuthData authData) {
     return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
   }
 
