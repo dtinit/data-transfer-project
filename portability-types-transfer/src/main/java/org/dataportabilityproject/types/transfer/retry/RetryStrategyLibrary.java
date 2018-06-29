@@ -16,7 +16,7 @@
 
 package org.dataportabilityproject.types.transfer.retry;
 
-import com.google.gdata.util.common.base.Pair;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
@@ -24,12 +24,14 @@ import java.util.List;
  * particular error.
  */
 public class RetryStrategyLibrary {
-  private final List<Pair<String, RetryStrategy>> strategyMapping;
+  @JsonProperty("strategyMappings")
+  private final List<RetryMapping> retryMappings;
+  @JsonProperty("defaultRetryStrategy")
   private final RetryStrategy defaultRetryStrategy;
 
-  public RetryStrategyLibrary(List<Pair<String, RetryStrategy>> strategyMapping,
-      RetryStrategy defaultRetryStrategy) {
-    this.strategyMapping = strategyMapping;
+  public RetryStrategyLibrary(@JsonProperty("strategyMappings") List<RetryMapping> retryMappings,
+      @JsonProperty("defaultRetryStrategy") RetryStrategy defaultRetryStrategy) {
+    this.retryMappings = retryMappings;
     this.defaultRetryStrategy = defaultRetryStrategy;
   }
 
@@ -43,10 +45,11 @@ public class RetryStrategyLibrary {
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
     // TODO: determine retry strategy based on full information in Throwable
     String exceptionMessage = throwable.getMessage();
-    for (Pair<String, RetryStrategy> entry : strategyMapping) {
-      String regex = entry.first;
-      if (exceptionMessage.matches(regex)) {
-        return entry.second;
+    for (RetryMapping mapping : retryMappings) {
+      for (String regex : mapping.getRegexes()) {
+        if (exceptionMessage.matches(regex)) {
+          return mapping.getStrategy();
+        }
       }
     }
     return defaultRetryStrategy;
