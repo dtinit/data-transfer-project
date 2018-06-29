@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
 /**
  * Defines a retry strategy - i.e., how many retry attempts should be made, and at what intervals.
