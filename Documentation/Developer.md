@@ -109,4 +109,18 @@ A demo Azure distribution is also in development.
 ### AutoValue errors
 If you get an error `error: duplicate class... final class AutoValue_...` it is indicative of your IDE and gradle clashing.  To fix it you want to delete the referenced build/classes directory.
 
+## Misc Updates
+There is a rest version of the client and demo-server in progress. While it is not complete yet and lacks some of the
+features in the http based client, it is still runable and works for all services that implement oauth2.
+
+The following runs the client-rest api
+  * `cd client-rest`
+  * `ng serve --ssl --port 3000 --proxy-config proxy.conf.json`
+
+The following builds and runs the demo-server (which contains the worker and the api) with the jettyrest transport to be
+used with the client-rest UI. This assumes you've already created the dataportability network from above.
+  * `./gradlew -PtransportType=jettyrest -PapiPort=3000  -PcloudType=local clean check :distributions:demo-server:dockerize`
+  * `docker run --rm -p 8080:8080 -p 5005:5005 --name demoserver --network dataportability dataportability/demoserver`
+
+
 ## This is not an official Google product
