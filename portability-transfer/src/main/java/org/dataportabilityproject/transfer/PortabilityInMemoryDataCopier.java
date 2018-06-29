@@ -15,12 +15,10 @@
  */
 package org.dataportabilityproject.transfer;
 
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,10 +30,10 @@ import org.dataportabilityproject.spi.transfer.provider.Importer;
 import org.dataportabilityproject.spi.transfer.types.ContinuationData;
 import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.transfer.retry.ExponentialBackoffRetryStrategy;
-import org.dataportabilityproject.transfer.retry.RetryException;
-import org.dataportabilityproject.transfer.retry.RetryStrategy;
-import org.dataportabilityproject.transfer.retry.RetryStrategyLibrary;
-import org.dataportabilityproject.transfer.retry.RetryingCallable;
+import org.dataportabilityproject.types.transfer.retry.RetryException;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategy;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
+import org.dataportabilityproject.types.transfer.retry.RetryingCallable;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.slf4j.Logger;
@@ -48,10 +46,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
   private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
-
-  private static final List<String> FATAL_ERROR_REGEXES = ImmutableList
-      .of("*fatal*"); // TODO: make configurable
-  private static final int MAX_ATTEMPTS = 5; // TODO: make configurable
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -133,7 +127,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug(jobIdPrefix + "Finished import");
 
     // Import and Export were successful, determine what to do next
-    ContinuationData continuationData = (ContinuationData) exportResult.getContinuationData();
+    ContinuationData continuationData = exportResult.getContinuationData();
 
     if (null != continuationData) {
       // Process the next page of items for the resource

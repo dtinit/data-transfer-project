@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
 import static java.lang.Thread.currentThread;
 

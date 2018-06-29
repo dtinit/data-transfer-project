@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
 /**
  * Exception class designed to hold information about why retried calls ultimately failed.

@@ -17,6 +17,7 @@
 package org.dataportabilityproject.transfer.retry;
 
 import com.google.common.base.Preconditions;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategy;
 
 /**
  * {@link RetryStrategy} that follows an exponential backoff strategy
