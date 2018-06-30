@@ -134,19 +134,37 @@ shadowJar {
 
 shadowJar.dependsOn(createSecretsFile, createApiFile)
 
-task createDemoServerDockerfile(type: Dockerfile) {
-    description = 'Builds the Demo Server Dockerfile'
+task createDemoDockerfile(type: Dockerfile) {
+    description = 'Builds the Demo Dockerfile, which supports both the API and nginx'
     group = 'docker'
-    destFile project.file("${buildDir}/demoserver/Dockerfile")
+    destFile project.file("${buildDir}/demo/Dockerfile")
     from "${javaDockerContainer}"
-    // Port the API server is accessed from
-    exposePort 8080
     // Port to open up for the debugger
     exposePort 5005
+
+    // API server binary
     copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
 
-    defaultCommand("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005", "-jar", "/app/demo-server-all.jar")
+    // nginx configuration
+    runCommand("apt-get update")
+    runCommand("apt-get -y install nginx")
+    exposePort 3000
+    // create the user nginx runs as, matches user in nginx.config
+    runCommand("adduser --disabled-password nginx")
 
+    copyFile("src/config/client/nginx.conf", "/etc/nginx")
+    copyFile("build/webapp/html", "/usr/share/nginx/html")
+    copyFile("build/webapp/test-keys/server.crt", "/etc/ssl/certs")
+    copyFile("build/webapp/test-keys/server.key", "/etc/ssl")
+
+    // Install supervisor to allow mutliple processes to run
+    runCommand("apt-get install -y supervisor")
+    runCommand("mkdir -p /var/log/supervisor")
+
+    //defaultCommand("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005", "-jar", "/app/demo-server-all.jar")
+    copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
+
+    defaultCommand("/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf")
     // Read in secrets and set them as environment variables.
     // NB: This is for demo purposes only. Production systems should manage and set secrets in a secure way.
     def secretsFile = file(Paths.get(System.getProperty('user.home')).resolve('.gradle/dataportability.secrets.properties'))
@@ -155,26 +173,6 @@ task createDemoServerDockerfile(type: Dockerfile) {
         secretsFile.withInputStream { props.load(it) }
         props.each { k, v -> environmentVariable(k, v) }
     }
-}
-
-task createClientDockerfile(type: Dockerfile) {
-    description = 'Builds the Client Dockerfile'
-    group = 'docker'
-    destFile project.file("${buildDir}/client/Dockerfile")
-    from "nginx"
-    exposePort 3000
-    copyFile("src/config/client/nginx.conf", "/etc/nginx")
-    copyFile("build/webapp/html", "/usr/share/nginx/html")
-    copyFile("build/webapp/test-keys/server.crt", "/etc/ssl/certs")
-    copyFile("build/webapp/test-keys/server.key", "/etc/ssl")
-}
-
-task buildDemoServerImage(type: DockerBuildImage) {
-    description = 'Builds the API Server Docker image'
-    dependsOn shadowJar, createDemoServerDockerfile
-    dockerFile = project.file("${buildDir}/demoserver/Dockerfile")
-    inputDir = project.file(".")
-    tag = 'dataportability/demoserver:latest'
 }
 
 task copyWebApp {
@@ -197,24 +195,24 @@ task copyWebApp {
     }
 }
 
-task buildClientImage(type: DockerBuildImage) {
-    description = 'Builds the Client Docker image'
-    dependsOn shadowJar, createClientDockerfile, copyWebApp
-    dockerFile = project.file("${buildDir}/client/Dockerfile")
+task buildDemoImage(type: DockerBuildImage) {
+    description = 'Builds the Demo Docker image including API server and nginx'
+    dependsOn shadowJar, createDemoDockerfile, copyWebApp
+    dockerFile = project.file("${buildDir}/demo/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/client:latest'
+    tag = 'datatransferproject/demo:latest'
 }
 
-task dockerize {
-    description = 'Builds the Client and API Server Docker images'
+task demoserver {
+    description = 'Builds the Client and API Server Docker image'
     group = 'docker'
-    dependsOn buildDemoServerImage, buildClientImage
+    dependsOn buildDemoImage
 }
 
 task installToolsAndDockerize {
     description = 'Installs required build tools and builds the Client and API Server Docker images'
     group = 'docker'
-    dependsOn ":client:installTools", buildDemoServerImage, buildClientImage
+    dependsOn ":client:installTools", buildDemoImage
 }
 
 

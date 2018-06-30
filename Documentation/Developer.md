@@ -63,39 +63,30 @@ limitations under the License.
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
 ## Creating the Docker Network
-You only need to do this once.  The network will remain created even if you stop Docker.
+You only need to do this once.
 * `sudo service docker start`
-* `docker network create dataportability`
 
-## Building/Running the API server and worker locally
-The following builds and optionally runs the demo server (containing the API and Transfer Worker)
-on `port:8080`
+## Building/Running locally
+The following builds and optionally runs the demo server locally
 
  * NOTE: The first time you run you need to configure your credentials by copying
    distributions/common/dataportability.secrets.example.properties to
    .gradle/dataportability.secrets.properties and inserting the API keys and secrets for
    the services you with to interact with.
 
- * `./gradlew :distributions:demo-server:dockerize`
+ * `./gradlew -PcloudType=local :distributions:demo-server:demo`
    * This copies over LOCAL secrets and settings (configured in .gradle/properties.gradle) using
    the LocalCloud implementation
    * This will also build the docker image.
 
- * ` docker run --rm -p 8080:8080 -p 5005:5005 --name demoserver --network dataportability dataportability/demoserver`
+ * `docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --name dtp-demo datatransferproject/demo`
    * This will run the demo server image that was just created on localhost:8080
-   * To test that this works as expected, visit https://localhost:8080/_/listDataTypes
+   
 
-## Building/Running the Web Application locally
-The following builds and optionally runs the web application. Before running the web application,
-make sure you have started the demoserver locally (step above) on the docker network that you created.
-
- * `./gradlew -PcloudType=local :distributions:demo-server:dockerize`
-   <!-- TODO: the docker image creation for the webapp should be split out into the :client module -->
-   * In addition to creating the Docker image for the Demoserver, this also creates the web
-   application docker image
- * `docker run --rm -p 3000:443 --name client --network dataportability dataportability/client`
-   * This will run the web application locally on the dataportability docker network.
-   * You should now be able to access the web application at https://localhost:3000
+ * You should now be able to access the web application at https://localhost:3000
+ * The API is accessable via https://localhost:8080/_/listDataTypes
+ * A java debugger can be connected via port 8080
+ * You can interact with the docker image via `docker exec -it dtp-demo <command>`
 
 ## Deploying in production
 
@@ -108,5 +99,3 @@ A demo Azure distribution is also in development.
 
 ### AutoValue errors
 If you get an error `error: duplicate class... final class AutoValue_...` it is indicative of your IDE and gradle clashing.  To fix it you want to delete the referenced build/classes directory.
-
-## This is not an official Google product
