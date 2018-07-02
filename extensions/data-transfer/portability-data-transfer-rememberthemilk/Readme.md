@@ -1,10 +1,10 @@
-# Instagram
+# Remember the Milk
 This folder contains the extension implementation for the
-[Instagram](https://www.instagram.com) service.
+[Remember the Milk](https://www.rememberthemilk.com) service.
 
 ## Data Supported
 
- - [Photos](src/main/java/org/dataportabilityproject/datatransfer/instagram/photos) Export only, no import.
+ - Tasks import and export.
 
 ## Current State
 No known issues, however like much of DTP still needs some in depth testing to ensure corner
@@ -12,10 +12,10 @@ cases are working.
 
 ## Keys
 
-Apply for a key at [www.instagram.com/developer/](https://www.instagram.com/developer/)
+Apply for a key at [www.rememberthemilk.com/services/api/keys.rtm](https://www.rememberthemilk.com/services/api/keys.rtm)
 
 ## Maintained By
 
 The Instagram extention was created by the
 [DTP maintainers](mailto:portability-maintainers@googlegroups.com)
-and is not an official product of Instagram/Facebook.
+and is not an official product of Remember the Milk.

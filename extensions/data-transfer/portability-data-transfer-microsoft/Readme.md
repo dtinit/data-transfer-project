@@ -1,14 +1,12 @@
-# Google
+# Microsoft
 This folder contains the extension implementation for the
-[Google](https://www.google.com).
+[Microsoft](https://www.microsoft.com).
 
 ## Data Supported
 
  - Calendar Import & Export
  - Contacts Import & Export
- - Mail Import & Export
  - Photos Import & Export
- - Tasks Import & Export
 
 ## Current State
 
@@ -17,11 +15,10 @@ This folder contains the extension implementation for the
 
 ## Keys
 
-Sign up for a [Google Cloud developer account](https://console.developers.google.com/start)
-and then enable the appropriate apis in the console.
+Sign up through Microsoft's [Application Registration Portal](https://apps.dev.microsoft.com/).
 
 ## Maintained By
 
 The Google extension was created and maintained by the
 [DTP maintainers](mailto:portability-maintainers@googlegroups.com)
-(this includes developers from Google).
+(this includes developers from Microsoft).

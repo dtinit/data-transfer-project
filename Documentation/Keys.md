@@ -16,10 +16,10 @@ But this does mean that to run an instance of DTP you need to do some leg work
 to aquire and mange keys.  We encourage all provideres to keep uptodate instructions
 about how aquire keys in each provider's directory.
 
- - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr/Readme#keys)
- - [Google](../extensions/data-transfer/portability-data-transfer-google/Readme#keys)
- - Instagram
- - Microsoft
- - Remember The Milk
- - SmugMug
- - Twitter
+ - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys)
+ - [Google](../extensions/data-transfer/portability-data-transfer-google#keys)
+ - [Instagram](../extensions/data-transfer/portability-data-transfer-instagram#keys)
+ - [Microsoft](../extensions/data-transfer/portability-data-transfer-micrsoft#keys)
+ - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys)
+ - [SmugMug](../extensions/data-transfer/portability-data-transfer-sumgmug#keys)
+ - [Twitter](../extensions/data-transfer/portability-data-transfer-twitter#keys)
