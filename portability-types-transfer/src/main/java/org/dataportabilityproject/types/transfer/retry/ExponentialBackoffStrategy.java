@@ -38,6 +38,7 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
 
   @Override
   public boolean canTryAgain(int tries) {
+    System.out.println("Tries: " + tries);
     return tries <= maxAttempts;
   }
 

@@ -139,7 +139,7 @@ final class DataTransferHandler implements HttpHandler {
       String sessionKey = job.jobAuthorization().sessionSecretKey();
       SecretKey key = symmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(sessionKey));
 
-      // Ensure intial auth data for export has not already been set
+      // Ensure initial auth data for export has not already been set
       Preconditions.checkState(
           Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
 

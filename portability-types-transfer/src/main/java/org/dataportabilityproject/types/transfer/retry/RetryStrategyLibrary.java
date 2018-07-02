@@ -24,6 +24,7 @@ import java.util.List;
  * particular error.
  */
 public class RetryStrategyLibrary {
+
   @JsonProperty("strategyMappings")
   private final List<RetryMapping> retryMappings;
   @JsonProperty("defaultRetryStrategy")
@@ -44,14 +45,22 @@ public class RetryStrategyLibrary {
    */
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
     // TODO: determine retry strategy based on full information in Throwable
-    String exceptionMessage = throwable.getMessage();
+    // TODO: better logic (v2)
+    return getMatchingRetryStrategy(throwable.toString());
+  }
+
+  private RetryStrategy getMatchingRetryStrategy(String input) {
     for (RetryMapping mapping : retryMappings) {
       for (String regex : mapping.getRegexes()) {
-        if (exceptionMessage.matches(regex)) {
+        if (input.matches(regex)) {
           return mapping.getStrategy();
         }
       }
     }
+    return defaultRetryStrategy;
+  }
+
+  public RetryStrategy getDefaultRetryStrategy() {
     return defaultRetryStrategy;
   }
 }

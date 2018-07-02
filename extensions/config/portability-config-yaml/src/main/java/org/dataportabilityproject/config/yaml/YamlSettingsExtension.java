@@ -22,11 +22,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.config.ConfigUtils;
 import org.dataportabilityproject.config.extension.SettingsExtension;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** {@link SettingsExtension} that reads configuration from YAML files on the classpath. */
 public class YamlSettingsExtension implements SettingsExtension {
@@ -42,6 +44,8 @@ public class YamlSettingsExtension implements SettingsExtension {
   // to override base configuration with environment-specific values.
   private static final String API_SETTINGS_PATH = "config/api.yaml";
   private static final String ENV_API_SETTINGS_PATH = "config/env/api.yaml";
+
+  private static final String RETRY_LIBRARY_PATH = "config/default_retry.yaml";
 
   private Map<String, Object> settings;
 
@@ -63,17 +67,31 @@ public class YamlSettingsExtension implements SettingsExtension {
         .add(EXTENSION_SETTINGS_PATH)
         .build();
     InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    parse(in);
+    parseSimple(in);
+    in = ConfigUtils.getCombinedInputStream(ImmutableList.of(RETRY_LIBRARY_PATH));
+    parseRetryLibrary(in);
   }
 
   @VisibleForTesting
-  void parse(InputStream in) {
+  void parseSimple(InputStream in) {
     if (in == null) {
       settings = new HashMap<>();
     } else {
       ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
       try {
         settings = mapper.readValue(in, Map.class);
+      } catch (IOException e) {
+        throw new RuntimeException("Could not parse extension settings", e);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void parseRetryLibrary(InputStream in) {
+    if (in != null) {
+      ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+      try {
+        settings.put("retryLibrary", mapper.readValue(in, RetryStrategyLibrary.class));
       } catch (IOException e) {
         throw new RuntimeException("Could not parse extension settings", e);
       }

@@ -53,8 +53,8 @@ public class RetryingCallable<T> implements Callable<T> {
    */
   @Override
   public T call() throws RetryException {
-    Instant start = clock.instant();
     while (true) {
+      Instant start = clock.instant();
       attempts++;
       try {
         return callable.call();
@@ -62,14 +62,16 @@ public class RetryingCallable<T> implements Callable<T> {
         mostRecentException = e;
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
         // TODO: do we want to reset anything (eg, number of retries) if we see a different RetryStrategy?
-        long nextAttemptIntervalMillis = retryStrategyLibrary.checkoutRetryStrategy(e)
-            .getRemainingIntervalMillis(attempts, elapsedMillis);
-        if (nextAttemptIntervalMillis >= 0) {
-          try {
-            Thread.sleep(nextAttemptIntervalMillis);
-          } catch (InterruptedException ie) {
-            currentThread().interrupt();
-            throw new RetryException(attempts, mostRecentException);
+        RetryStrategy strategy = retryStrategyLibrary.checkoutRetryStrategy(e);
+        if (strategy.canTryAgain(attempts)) {
+          long nextAttemptIntervalMillis = strategy.getRemainingIntervalMillis(attempts, elapsedMillis);
+          if (nextAttemptIntervalMillis > 0L) {
+            try {
+              Thread.sleep(nextAttemptIntervalMillis);
+            } catch (InterruptedException ie) {
+              currentThread().interrupt();
+              throw new RetryException(attempts, mostRecentException);
+            }
           }
         } else {
           throw new RetryException(attempts, mostRecentException);
