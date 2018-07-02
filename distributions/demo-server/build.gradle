@@ -134,7 +134,7 @@ shadowJar {
 
 shadowJar.dependsOn(createSecretsFile, createApiFile)
 
-task createDemoDockerfile(type: Dockerfile) {
+task createDockerfile(type: Dockerfile) {
     description = 'Builds the Demo Dockerfile, which supports both the API and nginx'
     group = 'docker'
     destFile project.file("${buildDir}/demo/Dockerfile")
@@ -161,12 +161,12 @@ task createDemoDockerfile(type: Dockerfile) {
     runCommand("apt-get install -y supervisor")
     runCommand("mkdir -p /var/log/supervisor")
 
-    //defaultCommand("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005", "-jar", "/app/demo-server-all.jar")
     copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
 
     defaultCommand("/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf")
     // Read in secrets and set them as environment variables.
     // NB: This is for demo purposes only. Production systems should manage and set secrets in a secure way.
+    // TODO: remove, see https://github.com/google/data-transfer-project/issues/449
     def secretsFile = file(Paths.get(System.getProperty('user.home')).resolve('.gradle/dataportability.secrets.properties'))
     if (secretsFile.exists()) {
         def props = new Properties()
@@ -195,24 +195,18 @@ task copyWebApp {
     }
 }
 
-task buildDemoImage(type: DockerBuildImage) {
+task dockerize(type: DockerBuildImage) {
     description = 'Builds the Demo Docker image including API server and nginx'
-    dependsOn shadowJar, createDemoDockerfile, copyWebApp
+    dependsOn shadowJar, createDockerfile, copyWebApp
     dockerFile = project.file("${buildDir}/demo/Dockerfile")
     inputDir = project.file(".")
     tag = 'datatransferproject/demo:latest'
 }
 
-task demoserver {
-    description = 'Builds the Client and API Server Docker image'
-    group = 'docker'
-    dependsOn buildDemoImage
-}
-
 task installToolsAndDockerize {
-    description = 'Installs required build tools and builds the Client and API Server Docker images'
+    description = 'Installs required build tools and builds the Client and API Server Docker image'
     group = 'docker'
-    dependsOn ":client:installTools", buildDemoImage
+    dependsOn ":client:installTools", dockerize
 }
 
 

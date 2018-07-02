@@ -74,7 +74,7 @@ The following builds and optionally runs the demo server locally
    .gradle/dataportability.secrets.properties and inserting the API keys and secrets for
    the services you with to interact with.
 
- * `./gradlew -PcloudType=local :distributions:demo-server:demo`
+ * `./gradlew -PcloudType=local :distributions:demo-server:dockerize`
    * This copies over LOCAL secrets and settings (configured in .gradle/properties.gradle) using
    the LocalCloud implementation
    * This will also build the docker image.
