@@ -19,7 +19,7 @@ each provider's directory.
 
 API keys usually are just the OAuth App Key and Secret for your app.  But DTP supports
 arbitrary authorization mechanism, and so the exact form the key is dependent on the
-autorizatin technology each providers uses.
+authorization technology each providers uses.
 
  - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys)
  - [Google](../extensions/data-transfer/portability-data-transfer-google#keys)
