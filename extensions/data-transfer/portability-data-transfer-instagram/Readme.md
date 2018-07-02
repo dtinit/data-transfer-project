@@ -12,7 +12,7 @@ cases are working.
 
 ## Keys
 
-Apply for a key at [www.instagram.com/developer/](https://www.instagram.com/developer/)
+Apply for a key at [www.instagram.com/developer](https://www.instagram.com/developer/)
 
 ## Maintained By
 

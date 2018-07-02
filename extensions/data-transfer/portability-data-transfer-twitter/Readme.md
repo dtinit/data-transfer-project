@@ -12,7 +12,7 @@ cases are working.
 
 ## Keys
 
-Apply for a key at [apps.twitter.com/](https://apps.twitter.com/)
+Apply for a key at [apps.twitter.com](https://apps.twitter.com/)
 
 ## Maintained By
 
