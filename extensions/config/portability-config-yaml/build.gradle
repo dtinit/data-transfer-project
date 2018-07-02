@@ -18,6 +18,7 @@ dependencies {
     compile project(':portability-api-launcher')
     compile project(':libraries:config')
     compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+    compile project(':portability-types-transfer')
 
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")

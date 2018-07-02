@@ -1,0 +1,14 @@
+
+  strategyMappings:
+  - regexes:
+    - "status code: 4\\d\\d"
+    strategy: !<Fatal> {}
+  - regexes:
+    - "simple"
+    strategy: !<Regular>
+      maxAttempts: 5
+      intervalMillis: 100
+  defaultRetryStrategy: !<Exponential>
+    maxAttempts: 5
+    initialIntervalMillis: 50
+    multiplier: 1.5
