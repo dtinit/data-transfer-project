@@ -13,9 +13,11 @@ This folder contains the extension implementation for the
  - Calendar doesn't support recuring events yet
  - All services still need some final testing
 
-## Keys
+## Keys & Auth
 
 Sign up through Microsoft's [Application Registration Portal](https://apps.dev.microsoft.com/).
+
+Microsoft uses OAuth 2 for authorization.
 
 ## Maintained By
 

@@ -12,9 +12,11 @@ The implementation is based off of [Flickr4Java](https://github.com/boncey/Flick
 No known issues, however like much of DTP still needs some in depth testing to ensure corner
 cases are working.
 
-## Keys
+## Keys & Auth
 
 Apply for a key at [www.flickr.com/services/apps/create/apply](https://www.flickr.com/services/apps/create/apply)
+
+Flickr uses OAth 1.0 for authorization.
 
 ## Maintained By
 

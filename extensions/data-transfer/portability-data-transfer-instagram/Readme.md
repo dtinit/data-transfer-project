@@ -14,6 +14,8 @@ cases are working.
 
 Apply for a key at [www.instagram.com/developer](https://www.instagram.com/developer/)
 
+Google uses OAuth 2 for authorization.
+
 ## Maintained By
 
 The Instagram extention was created by the

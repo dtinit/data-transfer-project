@@ -12,7 +12,9 @@ cases are working.
 
 ## Keys
 
-Apply for a key at [api.smugmug.com/api/developer/apply](https://api.smugmug.com/api/developer/apply)
+Apply for a key at [api.smugmug.com/api/developer/apply](https://api.smugmug.com/api/developer/apply).
+
+SumgMug uses OAuth 1 for authorization.
 
 ## Maintained By
 

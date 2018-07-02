@@ -10,9 +10,11 @@ This folder contains the extension implementation for the
 No known issues, however like much of DTP still needs some in depth testing to ensure corner
 cases are working.
 
-## Keys
+## Keys & Auth
 
-Apply for a key at [apps.twitter.com](https://apps.twitter.com/)
+Apply for a key at [apps.twitter.com](https://apps.twitter.com/).
+
+Twitter uses OAuth 2 for authorization.
 
 ## Maintained By
 

@@ -1,6 +1,6 @@
 # API Keys
 To use the Data Transfer Project each instance needs to get its own set of API keys
-for each service they want to interact with. This has many reasons and benifits:
+for each service they want to interact with. This has many reasons and benefits:
 
  - **Isolation** Each instance of DTP having its own API keys means that each
    instance is isloated from the others.  So quota and abuse issues in one
@@ -13,8 +13,13 @@ for each service they want to interact with. This has many reasons and benifits:
  - **Security** Sharing keys is bad for security.
 
 But this does mean that to run an instance of DTP you need to do some leg work
-to aquire and mange keys.  We encourage all provideres to keep up to date instructions
-about how aquire keys in each provider's directory.
+to acquire and manage application credentials.  We encourage all providers to
+keep up to date instructions about how acquire application credentials in
+each provider's directory.
+
+API keys usually are just the OAuth App Key and Secret for your app.  But DTP supports
+arbitrary authorization mechanism, and so the exact form the key is dependent on the
+autorizatin technology each providers uses.
 
  - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys)
  - [Google](../extensions/data-transfer/portability-data-transfer-google#keys)
