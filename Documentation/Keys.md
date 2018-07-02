@@ -1,5 +1,5 @@
 # API Keys
-To use the Data Transfer Project each instance needs to get their own set of API keys
+To use the Data Transfer Project each instance needs to get its own set of API keys
 for each service they want to interact with. This has many reasons and benifits:
 
  - **Isolation** Each instance of DTP having its own API keys means that each
@@ -13,7 +13,7 @@ for each service they want to interact with. This has many reasons and benifits:
  - **Security** Sharing keys is bad for security.
 
 But this does mean that to run an instance of DTP you need to do some leg work
-to aquire and mange keys.  We encourage all provideres to keep uptodate instructions
+to aquire and mange keys.  We encourage all provideres to keep up to date instructions
 about how aquire keys in each provider's directory.
 
  - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys)

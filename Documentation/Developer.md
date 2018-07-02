@@ -62,6 +62,10 @@ limitations under the License.
 * It should prompt you to select the new Copyright profile
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
+## Aquire Keys
+To run an instance of DTP you need to have API keys from the services you wish to interact with.
+Please see the [aquire keys](Keys.md) document for points on how to do this.
+
 ## Creating the Docker Network
 You only need to do this once.  The network will remain created even if you stop Docker.
 * `sudo service docker start`
