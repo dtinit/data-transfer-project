@@ -21,10 +21,10 @@ API keys usually are just the OAuth App Key and Secret for your app.  But DTP su
 arbitrary authorization mechanism, and so the exact form the key is dependent on the
 authorization technology each providers uses.
 
- - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys)
- - [Google](../extensions/data-transfer/portability-data-transfer-google#keys)
- - [Instagram](../extensions/data-transfer/portability-data-transfer-instagram#keys)
- - [Microsoft](../extensions/data-transfer/portability-data-transfer-microsoft#keys)
- - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys)
- - [SmugMug](../extensions/data-transfer/portability-data-transfer-smugmug#keys)
- - [Twitter](../extensions/data-transfer/portability-data-transfer-twitter#keys)
+ - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys--auth)
+ - [Google](../extensions/data-transfer/portability-data-transfer-google#keys--auth)
+ - [Instagram](../extensions/data-transfer/portability-data-transfer-instagram#keys--auth)
+ - [Microsoft](../extensions/data-transfer/portability-data-transfer-microsoft#keys--auth)
+ - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys--auth)
+ - [SmugMug](../extensions/data-transfer/portability-data-transfer-smugmug#keys--auth)
+ - [Twitter](../extensions/data-transfer/portability-data-transfer-twitter#keys--auth)

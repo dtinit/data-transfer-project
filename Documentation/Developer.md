@@ -64,7 +64,7 @@ limitations under the License.
 
 ## Acquire Keys
 To run an instance of DTP you need to have API keys from the services you wish to interact with.
-Please see the [aquire keys](Keys.md) document for points on how to do this.
+Please see the [acquire keys](Keys.md) document for points on how to do this.
 
 ## Creating the Docker Network
 You only need to do this once.  The network will remain created even if you stop Docker.
