@@ -104,8 +104,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug(jobIdPrefix + "Starting export");
     CallableExporter callableExporter = new CallableExporter(exporter, jobId, exportAuthData,
         exportInformation);
-    RetryingCallable<ExportResult> retryingExporter = new RetryingCallable<ExportResult>(
-        callableExporter, library, Clock.systemUTC());
+    RetryingCallable<ExportResult> retryingExporter = new RetryingCallable<>(callableExporter,
+        library, Clock.systemUTC());
     ExportResult<?> exportResult;
     try {
       exportResult = retryingExporter.call();

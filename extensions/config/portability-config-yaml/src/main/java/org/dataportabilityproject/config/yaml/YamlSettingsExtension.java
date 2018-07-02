@@ -22,7 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
@@ -30,8 +29,11 @@ import org.dataportabilityproject.config.ConfigUtils;
 import org.dataportabilityproject.config.extension.SettingsExtension;
 import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
 
-/** {@link SettingsExtension} that reads configuration from YAML files on the classpath. */
+/**
+ * {@link SettingsExtension} that reads configuration from YAML files on the classpath.
+ */
 public class YamlSettingsExtension implements SettingsExtension {
+
   // YAML file where custom extension settings may be configured.
   private static final String EXTENSION_SETTINGS_PATH = "config/extension.yaml";
 
