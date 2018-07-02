@@ -19,6 +19,7 @@ package org.dataportabilityproject.types.transfer.retry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RetryMapping {
+
   @JsonProperty("regexes")
   private String[] regexes;
   @JsonProperty("strategy")

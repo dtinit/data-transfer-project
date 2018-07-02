@@ -117,12 +117,10 @@ public class GooglePhotosExporter
     List<PhotoAlbum> albums = new ArrayList<>();
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
-    /*
     if (googleAlbums == null) {
       return new ExportResult<>(ResultType.END, new PhotosContainerResource(null, null),
           continuationData);
     }
-    */
 
     for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
