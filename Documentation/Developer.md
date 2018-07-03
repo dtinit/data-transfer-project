@@ -62,7 +62,7 @@ limitations under the License.
 * It should prompt you to select the new Copyright profile
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
-## Creating the Docker Network
+## Starting Docker
 You only need to do this once.
 * `sudo service docker start`
 
