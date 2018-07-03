@@ -19,6 +19,9 @@ package org.dataportabilityproject.types.transfer.retry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
+/**
+ * {@link RetryStrategy} that uses an exponential backoff approach.
+ */
 public class ExponentialBackoffStrategy implements RetryStrategy {
 
   @JsonProperty("maxAttempts")
@@ -38,7 +41,6 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
 
   @Override
   public boolean canTryAgain(int tries) {
-    System.out.println("Tries: " + tries);
     return tries <= maxAttempts;
   }
 

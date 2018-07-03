@@ -69,6 +69,7 @@ public class RetryingCallable<T> implements Callable<T> {
           if (nextAttemptIntervalMillis > 0L) {
             try {
               Thread.sleep(nextAttemptIntervalMillis);
+              // wait is now complete, retry
             } catch (InterruptedException ie) {
               currentThread().interrupt();
               throw new RetryException(attempts, mostRecentException);

@@ -18,7 +18,6 @@ package org.dataportabilityproject.transfer;
 import com.google.inject.Provider;
 import java.io.IOException;
 import java.time.Clock;
-import java.util.LinkedList;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,10 +31,8 @@ import org.dataportabilityproject.spi.transfer.types.ExportInformation;
 import org.dataportabilityproject.types.transfer.auth.AuthData;
 import org.dataportabilityproject.types.transfer.models.ContainerResource;
 import org.dataportabilityproject.types.transfer.retry.RetryException;
-import org.dataportabilityproject.types.transfer.retry.RetryStrategy;
 import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
 import org.dataportabilityproject.types.transfer.retry.RetryingCallable;
-import org.dataportabilityproject.types.transfer.retry.SimpleRetryStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,18 +48,19 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
    * PortabilityJob} which is not available at startup.
    */
-  private final Provider<Exporter> exporter;
+  private final Provider<Exporter> exporterProvider;
 
-  private final Provider<Importer> importer;
+  private final Provider<Importer> importerProvider;
 
-  private final Provider<RetryStrategyLibrary> retryStrategyLibrary;
+  private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
 
   @Inject
-  public PortabilityInMemoryDataCopier(Provider<Exporter> exporter, Provider<Importer> importer,
-      Provider<RetryStrategyLibrary> retryStrategyLibrary) {
-    this.exporter = exporter;
-    this.importer = importer;
-    this.retryStrategyLibrary = retryStrategyLibrary;
+  public PortabilityInMemoryDataCopier(Provider<Exporter> exporterProvider,
+      Provider<Importer> importerProvider,
+      Provider<RetryStrategyLibrary> retryStrategyLibraryProvider) {
+    this.exporterProvider = exporterProvider;
+    this.importerProvider = importerProvider;
+    this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
   }
 
   /**
@@ -96,16 +94,17 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     String jobIdPrefix = "Job " + jobId + ": ";
     logger.debug(jobIdPrefix + "copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
 
-    RetryStrategyLibrary library = retryStrategyLibrary.get();
+    RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
 
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
     logger.debug(jobIdPrefix + "Starting export");
-    CallableExporter callableExporter = new CallableExporter(exporter, jobId, exportAuthData,
+    CallableExporter callableExporter = new CallableExporter(exporterProvider, jobId,
+        exportAuthData,
         exportInformation);
     RetryingCallable<ExportResult> retryingExporter = new RetryingCallable<>(callableExporter,
-        library, Clock.systemUTC());
+        retryStrategyLibrary, Clock.systemUTC());
     ExportResult<?> exportResult;
     try {
       exportResult = retryingExporter.call();
@@ -116,10 +115,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     logger.debug(jobIdPrefix + "Finished export");
 
     logger.debug(jobIdPrefix + "Starting import");
-    CallableImporter callableImporter = new CallableImporter(importer, jobId, importAuthData,
+    CallableImporter callableImporter = new CallableImporter(importerProvider, jobId,
+        importAuthData,
         exportResult.getExportedData());
     RetryingCallable<ImportResult> retryingImporter = new RetryingCallable<>(callableImporter,
-        library, Clock.systemUTC());
+        retryStrategyLibrary, Clock.systemUTC());
     try {
       retryingImporter.call();
     } catch (RetryException e) {

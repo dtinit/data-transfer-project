@@ -16,6 +16,9 @@
 
 package org.dataportabilityproject.types.transfer.retry;
 
+/**
+ * {@link RetryStrategy} that doesn't allow for any more retries.  Useful for fatal errors.
+ */
 public class NoRetryStrategy implements RetryStrategy {
 
   public NoRetryStrategy() {}

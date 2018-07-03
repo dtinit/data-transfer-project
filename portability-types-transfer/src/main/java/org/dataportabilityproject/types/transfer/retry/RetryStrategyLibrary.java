@@ -22,6 +22,16 @@ import java.util.List;
 /**
  * Class used by {@link RetryingCallable} to determine which {@link RetryStrategy} to use given a
  * particular error.
+ *
+ * Internally, compares the input {@link Throwable} to every {@link RetryMapping} in its ordered
+ * List until it finds the appropriate RetryStrategy.  The list of mappings should be ordered such
+ * that specific cases come first, followed by general cases.
+ *
+ * If the Throwable does not match any RetryStrategy, then a default RetryStrategy is returned.
+ *
+ * NOTE: Our core library only supports reading RetryStrategyLibraries from JSON or YAML format.
+ * You are welcome to write your own parser for any other config languages you like, as long as it
+ * can be ultimately parsed by Jackson.
  */
 public class RetryStrategyLibrary {
 
@@ -45,16 +55,9 @@ public class RetryStrategyLibrary {
    */
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
     // TODO: determine retry strategy based on full information in Throwable
-    // TODO: better logic (v2)
-    return getMatchingRetryStrategy(throwable.toString());
-  }
-
-  private RetryStrategy getMatchingRetryStrategy(String input) {
     for (RetryMapping mapping : retryMappings) {
-      for (String regex : mapping.getRegexes()) {
-        if (input.matches(regex)) {
-          return mapping.getStrategy();
-        }
+      if (mapping.matchesThrowable(throwable)) {
+        return mapping.getStrategy();
       }
     }
     return defaultRetryStrategy;

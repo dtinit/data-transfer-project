@@ -22,14 +22,14 @@ import com.google.common.base.Preconditions;
 /**
  * {@link RetryStrategy} that follows a regular retry strategy
  */
-public class SimpleRetryStrategy implements RetryStrategy {
+public class UniformRetryStrategy implements RetryStrategy {
 
   @JsonProperty("maxAttempts")
   private int maxAttempts;
   @JsonProperty("intervalMillis")
   private long intervalMillis;
 
-  public SimpleRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+  public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
       @JsonProperty("intervalMillis") long intervalMillis) {
     this.maxAttempts = maxAttempts;
     this.intervalMillis = intervalMillis;
