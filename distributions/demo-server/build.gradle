@@ -135,14 +135,14 @@ shadowJar {
 shadowJar.dependsOn(createSecretsFile, createApiFile)
 
 task createDockerfile(type: Dockerfile) {
-    description = 'Builds the Demo Dockerfile, which supports both the API and nginx'
+    description = 'Builds the Demo Dockerfile, which includes both the frontend served by nginx, and a combined API + transfer worker backend'
     group = 'docker'
     destFile project.file("${buildDir}/demo/Dockerfile")
     from "${javaDockerContainer}"
     // Port to open up for the debugger
     exposePort 5005
 
-    // API server binary
+    // API & Worker combined binary
     copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
 
     // nginx configuration
@@ -196,7 +196,7 @@ task copyWebApp {
 }
 
 task dockerize(type: DockerBuildImage) {
-    description = 'Builds the Demo Docker image including API server and nginx'
+    description = 'Builds the Demo Docker image which includes both the frontend served by nginx, and a combined API + transfer worker backend'
     dependsOn shadowJar, createDockerfile, copyWebApp
     dockerFile = project.file("${buildDir}/demo/Dockerfile")
     inputDir = project.file(".")
@@ -204,7 +204,7 @@ task dockerize(type: DockerBuildImage) {
 }
 
 task installToolsAndDockerize {
-    description = 'Installs required build tools and builds the Client and API Server Docker image'
+    description = 'Installs required build tools and builds the demo Docker image'
     group = 'docker'
     dependsOn ":client:installTools", dockerize
 }

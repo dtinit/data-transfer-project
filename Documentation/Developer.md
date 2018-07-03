@@ -67,7 +67,7 @@ You only need to do this once.
 * `sudo service docker start`
 
 ## Building/Running locally
-The following builds and optionally runs the demo server locally
+The following builds and optionally runs the demo server (including Worker, API and UI) locally
 
  * NOTE: The first time you run you need to configure your credentials by copying
    distributions/common/dataportability.secrets.example.properties to
@@ -111,6 +111,6 @@ The following runs the client-rest api
 The following builds and runs the demo-server (which contains the worker and the api) with the jettyrest transport to be
 used with the client-rest UI.
   * `docker network create dataportability`
-  * `./gradlew -PtransportType=jettyrest -PapiPort=3000  -PcloudType=local clean check :distributions:demo-server:demo`
+  * `./gradlew -PtransportType=jettyrest -PapiPort=3000  -PcloudType=local clean check :distributions:demo-server:dockerize`
   * `docker run --rm -p 8080:8080 -p 5005:5005 --name demoserver --network dataportability dataportability/demo`
 
