@@ -18,6 +18,13 @@ package org.dataportabilityproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Class that determines whether a given {@link Throwable} is a match for its {@link RetryStrategy}.
+ * At the moment, this class only examines the string of the Throwable and determines whether it
+ * matches any of its string regular expressions.
+ *
+ * NOTE: Our core library only supports reading RetryMappings from JSON or YAML format.
+ */
 public class RetryMapping {
 
   @JsonProperty("regexes")
@@ -37,5 +44,16 @@ public class RetryMapping {
 
   public RetryStrategy getStrategy() {
     return strategy;
+  }
+
+  public boolean matchesThrowable(Throwable throwable) {
+    // TODO: examine entire throwable, not just toString
+    String input = throwable.toString();
+    for (String regex : regexes) {
+      if (input.matches(regex)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
