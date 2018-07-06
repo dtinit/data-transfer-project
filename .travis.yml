@@ -18,10 +18,6 @@ matrix:
     # language: java causes Travis to automatically run Gradle tests based on the
     # presence of the appropriate build files.
     - language: java # Gradle (used automatically)
-      install:
-        # Copy the required secrets file
-        - mkdir .gradle
-        - cp distributions/common/dataportability.secrets.example.properties .gradle/dataportability.secrets.properties
     # The angularjs flow below is more customized. There is some nodejs setup to do as well as
     # configuration to use the version of Chrome that is installed in Travis images.
     - language: node_js

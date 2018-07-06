@@ -10,42 +10,28 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Implements an {@link AppCredentialStore} that sources secrets from a properties file visible from
- * this class' classloader.
+ * Implements an {@link AppCredentialStore} that sources secrets from environment variables.
  */
 final class LocalAppCredentialStore implements AppCredentialStore {
-  private static final String SECRETS_FILENAME = "secrets.properties";
+  // Why use environment variables and not docker secrets? Because developers run
+  // DTP locally both inside of Docker and as a raw JAR.  By just relying on environment
+  // variables it makes it easier to run DTP from the Jar locally.
 
-  private Map<String, String> secrets = new HashMap<>();
-
-  @SuppressWarnings("unchecked")
   public LocalAppCredentialStore() {
     // TODO Should there be a security check? For prod, we should read secrets from the cloud.
-    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(SECRETS_FILENAME)) {
-      if (stream == null) {
-        return;
-      }
-
-      Properties properties = new Properties();
-      properties.load(stream);
-
-      secrets.putAll((Map) properties);
-    } catch (IOException e) {
-      throw new IllegalStateException("Error loading local secrets", e);
-    }
   }
 
   @Override
   public AppCredentials getAppCredentials(String keyName, String secretName) throws IOException {
-    String keyValue = secrets.get(keyName);
+    String keyValue = System.getenv(keyName);
     if (keyValue == null) {
       // TODO this should be a runtime exception
-      throw new IOException("Key value not found for " + keyName);
+      throw new IOException("Key value " + keyName + " not set as environment variable");
     }
-    String secretValue = secrets.get(secretName);
+    String secretValue = System.getenv(secretName);
     if (secretValue == null) {
       // TODO this should be a runtime exception
-      throw new IOException("Secret value not found for " + secretName);
+      throw new IOException("Key value " + secretName + " not set as environment variable");
     }
 
     return new AppCredentials(keyValue, secretValue);
