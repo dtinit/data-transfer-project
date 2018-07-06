@@ -9,9 +9,13 @@ We welcome contributors to add configuration for additional platforms.
 
 ## Local development
 
-For local development (only), secrets may be stored in gradle properties.
-Add any test secrets to your local `.gradle/dataportability.secrets.properties` file. A
-sample is provided in `distributions/common/dataportability.secrets.example.properties`.
+For local development (only), secrets may be stored in environment variables.
 
-This is supported in the local distributions -- `demo-server`, `gateway-default`, and
-`worker-default`.
+### For running from a jar file
+
+Set environment variables directly in your OS (e.g. `.bashrc` file, or 
+`System > Control Panel > Advanced system settings > Environment Variables` on Windows).
+
+### For running via docker
+Add any secrets to your local `distributions/demo-server/env.secrets` file. A
+sample is provided in `distributions/demo-server/env.secrets.template`.
