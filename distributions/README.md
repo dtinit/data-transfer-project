@@ -13,7 +13,8 @@ For local development (only), secrets may be stored in environment variables.
 
 ### For running from a jar file
 
-Set environment variables directly in your OS (e.g. .bashrc file).
+Set environment variables directly in your OS (e.g. `.bashrc` file, or 
+`System > Control Panel > Advanced system settings > Environment Variables` on Windows).
 
 ### For running via docker
 Add any secrets to your local `distributions/demo-server/env.secrets` file. A
