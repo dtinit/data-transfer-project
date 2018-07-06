@@ -14,22 +14,35 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
-import com.google.gdata.util.common.base.Pair;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
  * Class used by {@link RetryingCallable} to determine which {@link RetryStrategy} to use given a
  * particular error.
+ *
+ * Internally, compares the input {@link Throwable} to every {@link RetryMapping} in its ordered
+ * List until it finds the appropriate RetryStrategy.  The list of mappings should be ordered such
+ * that specific cases come first, followed by general cases.
+ *
+ * If the Throwable does not match any RetryStrategy, then a default RetryStrategy is returned.
+ *
+ * NOTE: Our core library only supports reading RetryStrategyLibraries from JSON or YAML format.
+ * You are welcome to write your own parser for any other config languages you like, as long as it
+ * can be ultimately parsed by Jackson.
  */
 public class RetryStrategyLibrary {
-  private final List<Pair<String, RetryStrategy>> strategyMapping;
+
+  @JsonProperty("strategyMappings")
+  private final List<RetryMapping> retryMappings;
+  @JsonProperty("defaultRetryStrategy")
   private final RetryStrategy defaultRetryStrategy;
 
-  public RetryStrategyLibrary(List<Pair<String, RetryStrategy>> strategyMapping,
-      RetryStrategy defaultRetryStrategy) {
-    this.strategyMapping = strategyMapping;
+  public RetryStrategyLibrary(@JsonProperty("strategyMappings") List<RetryMapping> retryMappings,
+      @JsonProperty("defaultRetryStrategy") RetryStrategy defaultRetryStrategy) {
+    this.retryMappings = retryMappings;
     this.defaultRetryStrategy = defaultRetryStrategy;
   }
 
@@ -42,13 +55,15 @@ public class RetryStrategyLibrary {
    */
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
     // TODO: determine retry strategy based on full information in Throwable
-    String exceptionMessage = throwable.getMessage();
-    for (Pair<String, RetryStrategy> entry : strategyMapping) {
-      String regex = entry.first;
-      if (exceptionMessage.matches(regex)) {
-        return entry.second;
+    for (RetryMapping mapping : retryMappings) {
+      if (mapping.matchesThrowable(throwable)) {
+        return mapping.getStrategy();
       }
     }
+    return defaultRetryStrategy;
+  }
+
+  public RetryStrategy getDefaultRetryStrategy() {
     return defaultRetryStrategy;
   }
 }

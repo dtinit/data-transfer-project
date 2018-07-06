@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
-
-import com.google.common.base.Preconditions;
+package org.dataportabilityproject.types.transfer.retry;
 
 /**
- * {@link RetryStrategy} that follows a regular retry strategy
+ * Exception class designed to hold information about why retried calls ultimately failed.
  */
-public class SimpleRetryStrategy implements RetryStrategy {
+public class RetryException extends Exception {
 
-  private int maxAttempts;
-  private long intervalMillis;
+  private final int triesSoFar;
 
-  @Override
-  public boolean canTryAgain(int tries) {
-    return tries >= maxAttempts;
+  RetryException(int triesSoFar, Exception exception) {
+    super(exception);
+    this.triesSoFar = triesSoFar;
   }
 
   @Override
-  public long getNextIntervalMillis(int tries) {
-    return intervalMillis;
+  public Exception getCause() {
+    return (Exception) super.getCause();
   }
 
-  @Override
-  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
-    Preconditions.checkArgument(tries <= maxAttempts, "No retries left");
-    return intervalMillis - elapsedMillis;
+  public int getTriesSoFar() {
+    return triesSoFar;
   }
 }

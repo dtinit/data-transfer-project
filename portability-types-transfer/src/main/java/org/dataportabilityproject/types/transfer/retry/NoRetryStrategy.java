@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
 /**
- * Exception class designed to hold information about why retried calls ultimately failed.
+ * {@link RetryStrategy} that doesn't allow for any more retries.  Useful for fatal errors.
  */
-public class RetryException extends Exception {
+public class NoRetryStrategy implements RetryStrategy {
 
-  private final int triesSoFar;
+  public NoRetryStrategy() {}
 
-  RetryException(int triesSoFar, Exception exception) {
-    super(exception);
-    this.triesSoFar = triesSoFar;
+  @Override
+  public boolean canTryAgain(int tries) {
+    return false;
   }
 
   @Override
-  public Exception getCause() {
-    return (Exception) super.getCause();
+  public long getNextIntervalMillis(int tries) {
+    return -1L;
   }
 
-  public int getTriesSoFar() {
-    return triesSoFar;
+  @Override
+  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
+    return -1L;
   }
 }

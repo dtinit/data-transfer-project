@@ -41,7 +41,7 @@ public class YamlSettingsExtensionTest {
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1);
     InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
     YamlSettingsExtension settingsExtension = new YamlSettingsExtension();
-    settingsExtension.parse(in);
+    settingsExtension.parseSimple(in);
     assertThat((String) settingsExtension.getSetting("baseUrl", null))
         .isEqualTo("https://localhost:3000");
     assertThat((String) settingsExtension.getSetting("baseApiUrl", null))
@@ -54,14 +54,14 @@ public class YamlSettingsExtensionTest {
     ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1, API_SETTINGS_2);
     YamlSettingsExtension settingsExtension = new YamlSettingsExtension();
     InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    settingsExtension.parse(in);
+    settingsExtension.parseSimple(in);
     assertThat((String) settingsExtension.getSetting("baseUrl", null))
         .isEqualTo("www.aBaseUrl.com");
 
     // reorder settings files - now https://localhost:3000 should override www.aBaseUrl.com
     settingsFiles = ImmutableList.of(API_SETTINGS_2, API_SETTINGS_1);
     in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    settingsExtension.parse(in);
+    settingsExtension.parseSimple(in);
     assertThat((String) settingsExtension.getSetting("baseUrl", null))
         .isEqualTo("https://localhost:3000");
   }

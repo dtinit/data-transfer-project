@@ -27,9 +27,13 @@ import java.util.Map;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.config.ConfigUtils;
 import org.dataportabilityproject.config.extension.SettingsExtension;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
 
-/** {@link SettingsExtension} that reads configuration from YAML files on the classpath. */
+/**
+ * {@link SettingsExtension} that reads configuration from YAML files on the classpath.
+ */
 public class YamlSettingsExtension implements SettingsExtension {
+
   // YAML file where custom extension settings may be configured.
   private static final String EXTENSION_SETTINGS_PATH = "config/extension.yaml";
 
@@ -43,6 +47,10 @@ public class YamlSettingsExtension implements SettingsExtension {
   private static final String API_SETTINGS_PATH = "config/api.yaml";
   private static final String ENV_API_SETTINGS_PATH = "config/env/api.yaml";
 
+  // YAML files where retry settings must be configured.
+  // TODO: support wildcard expansion of file names
+  private static final String RETRY_LIBRARY_PATH = "config/retry/default.yaml";
+
   private Map<String, Object> settings;
 
   @Override
@@ -55,19 +63,12 @@ public class YamlSettingsExtension implements SettingsExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
-        .add(COMMON_SETTINGS_PATH)
-        .add(ENV_COMMON_SETTINGS_PATH)
-        .add(API_SETTINGS_PATH)
-        .add(ENV_API_SETTINGS_PATH)
-        .add(EXTENSION_SETTINGS_PATH)
-        .build();
-    InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    parse(in);
+    parseSimple(getSimpleInputStream());
+    parseRetryLibrary(getRetryLibraryStream());
   }
 
   @VisibleForTesting
-  void parse(InputStream in) {
+  void parseSimple(InputStream in) {
     if (in == null) {
       settings = new HashMap<>();
     } else {
@@ -78,5 +79,33 @@ public class YamlSettingsExtension implements SettingsExtension {
         throw new RuntimeException("Could not parse extension settings", e);
       }
     }
+  }
+
+  @VisibleForTesting
+  void parseRetryLibrary(InputStream in) {
+    if (in != null) {
+      ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+      try {
+        settings.put("retryLibrary", mapper.readValue(in, RetryStrategyLibrary.class));
+      } catch (IOException e) {
+        throw new RuntimeException("Could not parse extension settings", e);
+      }
+    }
+  }
+
+  private InputStream getSimpleInputStream() {
+    ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
+        .add(COMMON_SETTINGS_PATH)
+        .add(ENV_COMMON_SETTINGS_PATH)
+        .add(API_SETTINGS_PATH)
+        .add(ENV_API_SETTINGS_PATH)
+        .add(EXTENSION_SETTINGS_PATH)
+        .build();
+    return ConfigUtils.getCombinedInputStream(settingsFiles);
+  }
+
+  private InputStream getRetryLibraryStream() {
+    // TODO: read from extensions-specific libraries here
+    return ConfigUtils.getCombinedInputStream(ImmutableList.of(RETRY_LIBRARY_PATH));
   }
 }

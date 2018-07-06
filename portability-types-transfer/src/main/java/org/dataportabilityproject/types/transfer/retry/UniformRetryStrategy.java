@@ -14,40 +14,40 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.retry;
+package org.dataportabilityproject.types.transfer.retry;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
 /**
- * {@link RetryStrategy} that follows an exponential backoff strategy
+ * {@link RetryStrategy} that follows a regular retry strategy
  */
-public class ExponentialBackoffRetryStrategy implements RetryStrategy {
+public class UniformRetryStrategy implements RetryStrategy {
 
+  @JsonProperty("maxAttempts")
   private int maxAttempts;
-  private long initialIntervalMillis;
-  private long multiplier;
+  @JsonProperty("intervalMillis")
+  private long intervalMillis;
 
-  public ExponentialBackoffRetryStrategy(int maxAttempts, long initialIntervalMillis,
-      long multiplier) {
+  public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+      @JsonProperty("intervalMillis") long intervalMillis) {
     this.maxAttempts = maxAttempts;
-    this.initialIntervalMillis = initialIntervalMillis;
-    this.multiplier = multiplier;
+    this.intervalMillis = intervalMillis;
   }
 
   @Override
   public boolean canTryAgain(int tries) {
-    return tries <= maxAttempts;
+    return tries >= maxAttempts;
   }
 
   @Override
   public long getNextIntervalMillis(int tries) {
-    return (long) (initialIntervalMillis * Math.pow(multiplier, tries - 1));
+    return intervalMillis;
   }
 
   @Override
   public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
     Preconditions.checkArgument(tries <= maxAttempts, "No retries left");
-    long intervalMillis = getNextIntervalMillis(tries);
     return intervalMillis - elapsedMillis;
   }
 }

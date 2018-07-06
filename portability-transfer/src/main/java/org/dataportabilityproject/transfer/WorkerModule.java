@@ -15,10 +15,17 @@
  */
 package org.dataportabilityproject.transfer;
 
+import static com.google.common.collect.MoreCollectors.onlyElement;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.dataportabilityproject.api.launcher.ExtensionContext;
 import org.dataportabilityproject.config.FlagBindingModule;
 import org.dataportabilityproject.security.AsymmetricKeyGenerator;
@@ -29,13 +36,11 @@ import org.dataportabilityproject.spi.cloud.storage.JobStore;
 import org.dataportabilityproject.spi.transfer.extension.TransferExtension;
 import org.dataportabilityproject.spi.transfer.provider.Exporter;
 import org.dataportabilityproject.spi.transfer.provider.Importer;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-
-import static com.google.common.collect.MoreCollectors.onlyElement;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategy;
+import org.dataportabilityproject.types.transfer.retry.RetryStrategyLibrary;
 
 final class WorkerModule extends FlagBindingModule {
+
   private final CloudExtension cloudExtension;
   private final ExtensionContext context;
   private final List<TransferExtension> transferExtensions;
@@ -53,6 +58,22 @@ final class WorkerModule extends FlagBindingModule {
     this.transferExtensions = transferExtensions;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
+  }
+
+  private static TransferExtension findTransferExtension(
+      ImmutableList<TransferExtension> transferExtensions, String service) {
+    try {
+      return transferExtensions
+          .stream()
+          .filter(ext -> ext.getServiceId().equals(service))
+          .collect(onlyElement());
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException(
+          "Found multiple transfer extensions for service " + service, e);
+    } catch (NoSuchElementException e) {
+      throw new IllegalStateException(
+          "Did not find a valid transfer extension for service " + service, e);
+    }
   }
 
   @Override
@@ -102,19 +123,9 @@ final class WorkerModule extends FlagBindingModule {
     return ImmutableList.copyOf(transferExtensions);
   }
 
-  private static TransferExtension findTransferExtension(
-      ImmutableList<TransferExtension> transferExtensions, String service) {
-    try {
-      return transferExtensions
-          .stream()
-          .filter(ext -> ext.getServiceId().equals(service))
-          .collect(onlyElement());
-    } catch (IllegalArgumentException e) {
-      throw new IllegalStateException(
-          "Found multiple transfer extensions for service " + service, e);
-    } catch (NoSuchElementException e) {
-      throw new IllegalStateException(
-          "Did not find a valid transfer extension for service " + service, e);
-    }
+  @Provides
+  @Singleton
+  RetryStrategyLibrary getRetryStrategyLibrary() throws IOException {
+    return context.getSetting("retryLibrary", null);
   }
 }
