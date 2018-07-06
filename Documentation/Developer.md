@@ -74,21 +74,20 @@ You only need to do this once.
 The following builds and optionally runs the demo server (including Worker, API and UI) locally
 
  * NOTE: The first time you run you need to configure your credentials by copying
-   distributions/common/dataportability.secrets.example.properties to
-   .gradle/dataportability.secrets.properties and inserting the API keys and secrets for
-   the services you with to interact with.
+   distributions/demo-server/env.secrets.template to env.secrets and inserting the API keys
+   and secrets for the services you with to interact with.
 
  * `./gradlew -PcloudType=local :distributions:demo-server:dockerize`
-   * This copies over LOCAL secrets and settings (configured in .gradle/properties.gradle) using
+   * This copies over LOCAL settings (configured in .gradle/properties.gradle) using
    the LocalCloud implementation
    * This will also build the docker image.
 
- * `docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --name dtp-demo datatransferproject/demo`
+ * `docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --env-file distributions/demo-server/env.secrets --name dtp-demo datatransferproject/demo`
    * This will run the demo server image that was just created on localhost:8080
    
 
  * You should now be able to access the web application at https://localhost:3000
- * The API is accessable via https://localhost:8080/_/listDataTypes
+ * The API is accessible via https://localhost:8080/_/listDataTypes
  * A java debugger can be connected via port 8080
  * You can interact with the docker image via `docker exec -it dtp-demo <command>`
 
@@ -106,7 +105,7 @@ If you get an error `error: duplicate class... final class AutoValue_...` it is 
 
 ## Misc Updates
 There is a rest version of the client and demo-server in progress. While it is not complete yet and lacks some of the
-features in the http based client, it is still runable and works for all services that implement oauth2.
+features in the http based client, it is still runnable and works for all services that implement oauth2.
 
 The following runs the client-rest api
   * `cd client-rest`
@@ -116,5 +115,5 @@ The following builds and runs the demo-server (which contains the worker and the
 used with the client-rest UI.
   * `docker network create dataportability`
   * `./gradlew -PtransportType=jettyrest -PapiPort=3000  -PcloudType=local clean check :distributions:demo-server:dockerize`
-  * `docker run --rm -p 8080:8080 -p 5005:5005 -p 3000:3000 --name demoserver --network dataportability dataportability/demo`
+  * `docker run --rm -p 8080:8080 -p 5005:5005 -p 3000:3000 --env-file distributions/demo-server/env.secrets --name demoserver --network dataportability dataportability/demo`
 
