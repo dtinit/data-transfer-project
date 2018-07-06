@@ -49,6 +49,11 @@ public class GooglePhotosInterface {
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
   private static final int MEDIA_PAGE_SIZE = 100; // TODO
 
+  private static final String PAGE_SIZE_KEY = "pageSize";
+  private static final String TOKEN_KEY = "pageToken";
+  private static final String ALBUM_ID_KEY = "albumId";
+  private static final String ACCESS_TOKEN_KEY = "access_token";
+
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
@@ -59,21 +64,23 @@ public class GooglePhotosInterface {
 
   public AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
-    params.put("pageSize", String.valueOf(ALBUM_PAGE_SIZE));
+    params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
-      params.put("pageToken", pageToken.get());
+      params.put(TOKEN_KEY, pageToken.get());
     }
     return makeGetRequest(BASE_URL + "albums", Optional.of(params),
         AlbumListResponse.class);
   }
 
-  public MediaItemSearchResponse listAlbumContents(String albumId, Optional<String> pageToken)
+  public MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
       throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
-    params.put("pageSize", String.valueOf(MEDIA_PAGE_SIZE));
-    params.put("albumId", albumId);
+    params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
+    if (albumId.isPresent()) {
+      params.put(ALBUM_ID_KEY, albumId.get());
+    }
     if (pageToken.isPresent()) {
-      params.put("pageToken", pageToken.get());
+      params.put(TOKEN_KEY, pageToken.get());
     }
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
     return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), content,
@@ -119,8 +126,8 @@ public class GooglePhotosInterface {
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
     }
-    if (!updatedParams.containsKey("access_token")) {
-      updatedParams.put("access_token", credential.getAccessToken());
+    if (!updatedParams.containsKey(ACCESS_TOKEN_KEY)) {
+      updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
     }
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
