@@ -22,17 +22,22 @@ import org.dataportabilityproject.types.transfer.models.DataModel;
 
 import java.util.UUID;
 
-/** Exports data from a source service. */
+/**
+ * Exports data from a source service.
+ */
 public interface Exporter<A extends AuthData, T extends DataModel> {
   // TODO: reconsider this model - can we avoid sending AuthData with every export call?
 
   /**
    * Performs an export operation, starting from the data specified by the continuation.
-   *  @param jobId the job id
+   *
+   * @param jobId the job id
    * @param authData authentication data for the operation
    * @param exportInformation info about what data to export see {@link ExportInformation} for more
    */
   // REVIEW: The original throws IOException. Continue to use checked
   // exceptions or use unchecked?
-  ExportResult<T> export(UUID jobId, A authData, Optional<ExportInformation> exportInformation);
+  // Review: We need to be able throw exceptions to be caught by the RetryingCallable.
+  ExportResult<T> export(UUID jobId, A authData, Optional<ExportInformation> exportInformation)
+      throws Exception;
 }

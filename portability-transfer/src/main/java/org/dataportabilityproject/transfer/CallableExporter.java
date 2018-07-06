@@ -46,6 +46,7 @@ public class CallableExporter implements Callable<ExportResult> {
 
   @Override
   public ExportResult call() throws Exception {
-    return exporterProvider.get().export(jobId, authData, exportInformation);
+    return exporterProvider.get()
+        .export(jobId, authData, exportInformation);
   }
 }
