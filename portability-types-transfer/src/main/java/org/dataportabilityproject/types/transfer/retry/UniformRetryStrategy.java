@@ -31,6 +31,9 @@ public class UniformRetryStrategy implements RetryStrategy {
 
   public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
       @JsonProperty("intervalMillis") long intervalMillis) {
+    Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
+    Preconditions.checkArgument(intervalMillis > 0L, "Interval should be > 0");
+    // TODO: enforce stronger requirements (e.g., interval > 500ms)
     this.maxAttempts = maxAttempts;
     this.intervalMillis = intervalMillis;
   }
