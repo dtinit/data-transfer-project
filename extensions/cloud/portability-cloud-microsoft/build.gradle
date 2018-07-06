@@ -14,6 +14,20 @@
  * limitations under the License.
  */
 
+// TODO: remove this.
+// MS pushed some dependencies out to 1.5.4 but not https://jcenter.bintray.com/com/microsoft/rest/client-runtime/
+// So to make things continue to build we need to swap in the 1.5.3 version of
+// com.microsoft.rest:client-runtime until they publish v 1.5.4
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'com.microsoft.rest' && details.requested.name == 'client-runtime') {
+                details.useVersion "1.5.3"
+            }
+        }
+    }
+}
+
 dependencies {
     
     compile project(':portability-spi-cloud')
