@@ -23,12 +23,14 @@ import java.nio.file.Paths
  * This sub-project creates a single process runtime for demonstration purposes.
  *
  * <p>
- * To enable OAuth secrets for testing, edit your gradle.settings file in the data-transfer-project/.gradle directory (NOT the one in the source directory). Add the appropriate entries, e.g.:
- *
- * data.portability.key.microsoft=keyms
- * data.portability.secret.microsoft=secretms
- * data.portability.key.google=keygoogle
- * data.portability.secret.google=secretgoogle
+ *     To run you must acquire and set API keys for the services you want to use. See:
+ *     https://github.com/google/data-transfer-project/blob/master/Documentation/Keys.md
+ * <p>
+ *     To run directly from a jar (e.g.
+ *     java -jar distributions/demo-server/build/libs/demo-server-all.jar) you need to set
+ *     the keys as environment variables.
+ * <p>
+ *     To run via Docker you need to...
  */
 
 buildscript {
@@ -101,27 +103,6 @@ task createApiFile() {
     }
 }
 
-task createSecretsFile() {
-
-    doLast {
-        def propFile = file("$buildDir/resources/main/secrets.properties")
-        propFile.delete()
-        def secretsDirectory = Paths.get("$projectDir/../../.gradle/")
-        println "secretsDirectory = [$secretsDirectory]"
-        def secretsFileName = 'dataportability.secrets.properties'
-        def secretsFile = file(secretsDirectory.resolve(secretsFileName))
-        if (secretsFile.exists()) {
-            copy {
-                from file(secretsDirectory)
-                include secretsFileName
-                into file("$buildDir/resources/main")
-                rename(secretsFileName, "secrets.properties")
-            }
-        } else {
-            throw new GradleException("Configuration " + secretsFile + " not found")
-        }
-    }
-}
 
 mainClassName = 'org.dataportabilityproject.bootstrap.vm.SingleVMMain'
 
@@ -132,7 +113,7 @@ shadowJar {
     exclude '**/pom.xml'
 }
 
-shadowJar.dependsOn(createSecretsFile, createApiFile)
+shadowJar.dependsOn(createApiFile)
 
 task createDockerfile(type: Dockerfile) {
     description = 'Builds the Demo Dockerfile, which includes both the frontend served by nginx, and a combined API + transfer worker backend'
@@ -164,15 +145,6 @@ task createDockerfile(type: Dockerfile) {
     copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
 
     defaultCommand("/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf")
-    // Read in secrets and set them as environment variables.
-    // NB: This is for demo purposes only. Production systems should manage and set secrets in a secure way.
-    // TODO: remove, see https://github.com/google/data-transfer-project/issues/449
-    def secretsFile = file(Paths.get(System.getProperty('user.home')).resolve('.gradle/dataportability.secrets.properties'))
-    if (secretsFile.exists()) {
-        def props = new Properties()
-        secretsFile.withInputStream { props.load(it) }
-        props.each { k, v -> environmentVariable(k, v) }
-    }
 }
 
 task copyWebApp {
