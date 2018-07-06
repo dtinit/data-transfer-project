@@ -17,6 +17,7 @@
 package org.dataportabilityproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import java.util.List;
 
 /**
@@ -42,6 +43,7 @@ public class RetryStrategyLibrary {
 
   public RetryStrategyLibrary(@JsonProperty("strategyMappings") List<RetryMapping> retryMappings,
       @JsonProperty("defaultRetryStrategy") RetryStrategy defaultRetryStrategy) {
+    Preconditions.checkArgument(defaultRetryStrategy != null, "Default retry strategy cannot be null");
     this.retryMappings = retryMappings;
     this.defaultRetryStrategy = defaultRetryStrategy;
   }
