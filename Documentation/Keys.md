@@ -28,3 +28,37 @@ authorization technology each providers uses.
  - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys--auth)
  - [SmugMug](../extensions/data-transfer/portability-data-transfer-smugmug#keys--auth)
  - [Twitter](../extensions/data-transfer/portability-data-transfer-twitter#keys--auth)
+
+
+## Deploying Keys
+
+Depending on how you are running DTP you'll deploy secrets differently.
+
+For demo purposes DTP will read Keys from environment variables. When deployed in production
+DTP will use the platform's secret management solution via the DTP cloud extension.
+
+You will only need keys for the specific providers you want to transfer data to/from
+not all the services DTP supports.
+
+### Running locally via Jar
+
+If you are running DTP locally via the jars directly you'll need to set the API keys
+via environment via your OS.
+  - Linux: .bashrc
+  - Windows System > Control Panel > Advanced system settings > Environment Variables
+ 
+ The format is <provider>_KEY and <provider>_SECRET, see
+ [distributions/demo-server/env.secrets.template](../blob/master/distributions/demo-server/env.secrets.template)
+ for an example.
+
+### Running locally via Docker
+
+When running via Docker you will pass in an envionment file via the `-e <file>` flag
+see [distributions/demo-server/env.secrets.template](../blob/master/distributions/demo-server/env.secrets.template)
+for a template.
+
+### Running on a cloud provider
+
+When running on a cloud provider your cloud implementation wil override
+[AppCredentialStore](../blob/master/portability-spi-cloud/src/main/java/org/dataportabilityproject/spi/cloud/storage/AppCredentialStore.java)
+to read stored credentials from your cloud provider.
