@@ -67,12 +67,7 @@ public class GooglePhotosExporter
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) throws IOException {
     if (!exportInformation.isPresent()) {
-      ExportResult<PhotosContainerResource> exportResult = exportAlbums(authData, Optional.empty());
-      // Represents a theoretical container for all photos
-      IdOnlyContainerResource defaultContainerResource = new IdOnlyContainerResource(
-          DEFAULT_ALBUM_ID);
-      exportResult.getContinuationData().addContainerResource(defaultContainerResource);
-      return exportResult;
+     return exportAlbums(authData, Optional.empty());
     } else {
       StringPaginationToken paginationToken =
           (StringPaginationToken) exportInformation.get().getPaginationData();
@@ -118,8 +113,13 @@ public class GooglePhotosExporter
     List<PhotoAlbum> albums = new ArrayList<>();
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
+    if (!paginationData.isPresent()) {
+      // Represents a theoretical container for all photos
+      continuationData.addContainerResource(new IdOnlyContainerResource(DEFAULT_ALBUM_ID));
+    }
+
     if (googleAlbums == null) {
-      return new ExportResult<>(ResultType.END, new PhotosContainerResource(null, null),
+      return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, null),
           continuationData);
     }
 
@@ -178,7 +178,7 @@ public class GooglePhotosExporter
         photos.add(
             new PhotoModel(
                 "", // TODO: no title?
-                mediaItem.getProductUrl(),  // TODO: check this
+                mediaItem.getBaseUrl(),
                 mediaItem.getDescription(),
                 mediaItem.getMimeType(),
                 mediaItem.getId(),
