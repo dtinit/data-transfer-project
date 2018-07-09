@@ -48,17 +48,17 @@ via environment via your OS.
   - Windows System > Control Panel > Advanced system settings > Environment Variables
  
  The format is <provider>_KEY and <provider>_SECRET, see
- [distributions/demo-server/env.secrets.template](../blob/master/distributions/demo-server/env.secrets.template)
+ [distributions/demo-server/env.secrets.template](../distributions/demo-server/env.secrets.template)
  for an example.
 
 ### Running locally via Docker
 
 When running via Docker you will pass in an envionment file via the `-e <file>` flag
-see [distributions/demo-server/env.secrets.template](../blob/master/distributions/demo-server/env.secrets.template)
+see [distributions/demo-server/env.secrets.template](../distributions/demo-server/env.secrets.template)
 for a template.
 
 ### Running on a cloud provider
 
 When running on a cloud provider your cloud implementation wil override
-[AppCredentialStore](../blob/master/portability-spi-cloud/src/main/java/org/dataportabilityproject/spi/cloud/storage/AppCredentialStore.java)
+[AppCredentialStore](../portability-spi-cloud/src/main/java/org/dataportabilityproject/spi/cloud/storage/AppCredentialStore.java)
 to read stored credentials from your cloud provider.
