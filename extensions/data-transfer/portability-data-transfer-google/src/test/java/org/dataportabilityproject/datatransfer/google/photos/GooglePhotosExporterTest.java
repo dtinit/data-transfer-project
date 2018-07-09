@@ -82,7 +82,7 @@ public class GooglePhotosExporterTest {
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
         .thenReturn(albumListResponse);
-    when(photosInterface.listAlbumContents(Matchers.anyString(), Matchers.any(Optional.class)))
+    when(photosInterface.listAlbumContents(Matchers.any(Optional.class), Matchers.any(Optional.class)))
         .thenReturn(mediaItemSearchResponse);
 
     verifyZeroInteractions(credentialFactory);
@@ -123,7 +123,7 @@ public class GooglePhotosExporterTest {
             .stream()
             .map(a -> ((IdOnlyContainerResource) a).getId())
             .collect(Collectors.toList()))
-        .containsExactly(ALBUM_ID);
+        .containsExactly(ALBUM_ID, GooglePhotosExporter.DEFAULT_ALBUM_ID);
   }
 
   @Test
@@ -161,7 +161,7 @@ public class GooglePhotosExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listAlbumContents(ALBUM_ID, Optional.empty());
+    verify(photosInterface).listAlbumContents(Optional.of(ALBUM_ID), Optional.empty());
     verify(mediaItemSearchResponse).getMediaItems();
 
     // Check pagination
@@ -198,7 +198,7 @@ public class GooglePhotosExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listAlbumContents(ALBUM_ID, Optional.of(PHOTO_TOKEN));
+    verify(photosInterface).listAlbumContents(Optional.of(ALBUM_ID), Optional.of(PHOTO_TOKEN));
     verify(mediaItemSearchResponse).getMediaItems();
 
     // Check pagination token
@@ -229,7 +229,7 @@ public class GooglePhotosExporterTest {
     GoogleMediaItem photoEntry = new GoogleMediaItem();
     photoEntry.setDescription("Description");
     photoEntry.setMimeType(JPEG_MEDIA_TYPE);
-    photoEntry.setProductUrl(IMG_URI);
+    photoEntry.setBaseUrl(IMG_URI);
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
     photoEntry.setMediaMetadata(mediaMetadata);
