@@ -61,7 +61,7 @@ public class GoogleMediaItem {
 
   public void setDescription(String description) { this.description = description; }
 
-  public void setProductUrl(String productUrl) { this.productUrl = productUrl; }
+  public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
 
   public void setMimeType(String mimeType) { this.mimeType = mimeType; }
 

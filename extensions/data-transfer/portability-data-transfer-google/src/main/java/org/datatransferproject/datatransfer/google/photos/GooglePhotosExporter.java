@@ -47,7 +47,7 @@ public class GooglePhotosExporter
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "media:";
-  private static final String DEFAULT_ALBUM_ID = "default";
+  static final String DEFAULT_ALBUM_ID = "default";
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile GooglePhotosInterface photosInterface;
