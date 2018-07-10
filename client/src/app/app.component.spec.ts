@@ -42,16 +42,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   }));
 
-  it(`should have as title 'Data Portability'`, async(() => {
+  it(`should have as title 'Data Transfer Project'`, async(() => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('Data Portability');
+    expect(app.title).toEqual('Data Transfer Project');
   }));
 
-  it('should render title in portability-header', async(() => {
+  it('should render title in dtp-header', async(() => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const de = fixture.debugElement;
-    expect(de.query(By.css('.portability-header')).nativeElement.textContent).toContain('Data Portability');
+    expect(de.query(By.css('.dtp-header')).nativeElement.textContent).toContain('Data Transfer Project');
   }));
 });
