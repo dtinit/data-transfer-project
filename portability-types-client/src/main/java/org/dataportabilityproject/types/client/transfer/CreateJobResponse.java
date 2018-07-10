@@ -18,16 +18,42 @@ package org.dataportabilityproject.types.client.transfer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
-/** A request to initiate a data transfer operation. */
-@ApiModel(description = "A request to initiate a data transfer operation")
-public class DataTransferRequest extends AbstractDataTransfer {
+/** Response after creating a data transfer job. */
+@ApiModel(description = "Response after creating a data transfer job")
+public class CreateJobResponse extends AbstractDataTransfer {
+
+  private Status status;
+  // The URL to go to after this is returned from the API
+  private String nextUrl;
 
   @JsonCreator
-  public DataTransferRequest(
+  public CreateJobResponse(
       @JsonProperty(value = "source", required = true) String source,
       @JsonProperty(value = "destination", required = true) String destination,
-      @JsonProperty(value = "transferDataType", required = true) String transferDataType) {
+      @JsonProperty(value = "transferDataType", required = true) String transferDataType,
+      @JsonProperty(value = "status", required = true) Status status,
+      @JsonProperty(value = "nextUrl") String nextUrl) {
     super(source, destination, transferDataType);
+    this.status = status;
+    this.nextUrl = nextUrl;
+  }
+
+  @ApiModelProperty
+  public Status getStatus() {
+    return status;
+  }
+
+  @ApiModelProperty
+  public String getNextUrl() {
+    return nextUrl;
+  }
+
+  @ApiModel
+  public enum Status {
+    INPROCESS,
+    COMPLETE,
+    ERROR
   }
 }

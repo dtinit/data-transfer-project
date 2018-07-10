@@ -18,8 +18,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable } from 'rxjs/Observable';
 import { CopyConfiguration } from './copy-configuration';
-import { DataTransferRequest } from './data-transfer-request';
-import { DataTransferResponse } from './data-transfer-response';
+import { CreateJobRequest } from './create-job-request';
+import { CreateJobResponse } from './create-job-response';
 import { ListDataTypesResponse } from './list-data-types-response';
 import { PortableDataType } from './portable-data-type';
 import { ServiceDescription, ServiceDescriptions } from './service-description';
@@ -47,9 +47,9 @@ export class BackendService {
       .catch(err => this.handleError(err));
   }
 
-  dataTransfer(formData: DataTransferRequest) {
-    let url = '/_/DataTransfer';
-    this.http.post<DataTransferResponse>(url, JSON.stringify(formData))
+  createJob(formData: CreateJobRequest) {
+    let url = '/_/CreateJob';
+    this.http.post<CreateJobResponse>(url, JSON.stringify(formData))
         .map(res=>this.redirectResponse(res))
         .catch(err=>this.handleError(err))
         .subscribe();
@@ -57,13 +57,13 @@ export class BackendService {
 
   importSetup() {
     let url = `${this.baseEndpoint}importSetup`;
-    return this.http.get<DataTransferResponse>(url)
+    return this.http.get<CreateJobResponse>(url)
       .catch(err => this.handleError(err));
   }
 
   submitSimpleCreds(formData: SimpleLoginRequest) {
     console.log("formData: " + JSON.stringify(formData));
-    this.http.post<DataTransferResponse>('/_/simpleLoginSubmit', JSON.stringify(formData))
+    this.http.post<CreateJobResponse>('/_/simpleLoginSubmit', JSON.stringify(formData))
       .map(res=>this.redirectResponse(res))
       .catch(err=>this.handleError(err))
       .subscribe();
@@ -72,7 +72,7 @@ export class BackendService {
   copySetup() {
     // copySetup needs to be relative call for XSRF token to be attached
     let url = `/_/copySetup`;
-    return this.http.get<DataTransferResponse>(url)
+    return this.http.get<CreateJobResponse>(url)
       .catch(err => this.handleError(err));
   }
 
@@ -89,11 +89,11 @@ export class BackendService {
     return body;
   }
 
-  private redirectResponse(res:DataTransferResponse){
+  private redirectResponse(res:CreateJobResponse){
     // Redirect to the export authorization flow after configure.
     // this should be returned from the configure request and is checked
-    // upon creation of the DataTransfer object.
-    console.log("DataTransferResponse, redirecting to: " + res.nextUrl)
+    // upon creation of the Data Transfer job.
+    console.log("CreateJobResponse, redirecting to: " + res.nextUrl)
     window.location.href = res.nextUrl;
   }
 
