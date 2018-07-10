@@ -66,7 +66,7 @@ dependencies {
 
 addCloudExtensionDependency(project)
 
-mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
+mainClassName = 'org.datatransferproject.transfer.WorkerMain'
 
 task copyEnvConfig(type: Copy) {
     description = 'Copies environment-specific configuration into the jar'

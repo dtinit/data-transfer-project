@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-group = 'org.dataportabilityproject'
+group = 'org.datatransferproject'
 version = '1.0-SNAPSHOT'
 
 jar {
@@ -31,7 +31,7 @@ jar {
         exclude '**/META-INF/*.RSA'
     }
     manifest {
-        attributes 'Main-Class': 'org.dataportabilityproject.api.ApiMain'
+        attributes 'Main-Class': 'org.datatransferproject.api.ApiMain'
     }
 }
 

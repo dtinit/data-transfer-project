@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.twitter;
+package org.datatransferproject.transfer.twitter;
 
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
-import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
