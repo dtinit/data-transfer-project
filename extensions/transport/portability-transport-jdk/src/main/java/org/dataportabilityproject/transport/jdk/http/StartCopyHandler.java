@@ -27,8 +27,8 @@ import org.dataportabilityproject.api.action.startjob.StartJobActionRequest;
 import org.dataportabilityproject.api.action.startjob.StartJobActionResponse;
 import org.dataportabilityproject.api.launcher.TypeManager;
 import org.dataportabilityproject.spi.api.token.TokenManager;
-import org.dataportabilityproject.types.client.transfer.DataTransferResponse;
-import org.dataportabilityproject.types.client.transfer.DataTransferResponse.Status;
+import org.dataportabilityproject.types.client.transfer.CreateJobResponse;
+import org.dataportabilityproject.types.client.transfer.CreateJobResponse.Status;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -76,8 +76,8 @@ final class StartCopyHandler implements HttpHandler {
     StartJobActionResponse response = startJobAction.handle(request);
 
     // TODO: Determine if we need more fields populated or a new object
-    DataTransferResponse dataTransferResponse =
-        new DataTransferResponse(
+    CreateJobResponse createJobResponse =
+        new CreateJobResponse(
             "", // job.exportService(),
             "", // job.importService(),
             "", // job.transferDataType(),
@@ -92,6 +92,6 @@ final class StartCopyHandler implements HttpHandler {
             HttpHeaders.CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
 
-    objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
+    objectMapper.writeValue(exchange.getResponseBody(), createJobResponse);
   }
 }

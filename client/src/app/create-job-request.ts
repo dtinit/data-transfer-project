@@ -14,10 +14,10 @@
 * limitations under the License.
 */
 
-// Represents the configuration for a data transfer job
-export interface DataTransferResponse {
-  transferDataType: string;
-  source: string;
-  destination: string;
-  nextUrl: string
+// Represents the configuration to create a data transfer job
+export class CreateJobRequest {
+constructor (
+  public transferDataType: string,
+  public source: string,
+  public destination: string){}
 }

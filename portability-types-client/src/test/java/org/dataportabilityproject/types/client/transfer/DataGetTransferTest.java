@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-/* Test for DataTransferRequest */
+/* Test for CreateJobRequest */
 public class DataGetTransferTest {
 
   @Test
@@ -29,10 +29,10 @@ public class DataGetTransferTest {
 
     String serialized =
         objectMapper.writeValueAsString(
-            new DataTransferRequest("testSource", "testDestination", "application/json"));
+            new CreateJobRequest("testSource", "testDestination", "application/json"));
 
-    DataTransferRequest deserialized =
-        objectMapper.readValue(serialized, DataTransferRequest.class);
+    CreateJobRequest deserialized =
+        objectMapper.readValue(serialized, CreateJobRequest.class);
 
     Assert.assertEquals("testSource", deserialized.getSource());
     Assert.assertEquals("testDestination", deserialized.getDestination());

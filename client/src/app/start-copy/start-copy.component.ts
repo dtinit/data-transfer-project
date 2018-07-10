@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { BackendService } from '../backend.service';
-import { DataTransferResponse } from '../data-transfer-response';
+import { CreateJobResponse } from '../create-job-response';
 
 @Component({
   selector: 'app-start-copy',
@@ -23,7 +23,7 @@ import { DataTransferResponse } from '../data-transfer-response';
   styleUrls: ['./start-copy.component.css']
 })
 export class StartCopyComponent implements OnInit {
-  dataTransferResponse: DataTransferResponse = <DataTransferResponse>{transferDataType:"", source:"", destination:""};
+  createJobResponse: CreateJobResponse = <CreateJobResponse>{transferDataType:"", source:"", destination:""};
   submitted: boolean = false;
   error_text: string = "";
   constructor(private service : BackendService) { }
@@ -37,8 +37,8 @@ export class StartCopyComponent implements OnInit {
   copySetup() {
     this.service.copySetup().subscribe(
       data => {
-        this.dataTransferResponse = data;
-        console.log('copySetup: dataTransferResponse: ' + JSON.stringify(this.dataTransferResponse));
+        this.createJobResponse = data;
+        console.log('copySetup: CreateJobResponse: ' + JSON.stringify(this.createJobResponse));
       },
       err => {
         this.error_text = 'There was an error';
