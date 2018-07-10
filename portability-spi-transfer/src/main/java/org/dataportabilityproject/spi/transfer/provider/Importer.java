@@ -30,6 +30,6 @@ public interface Importer<A extends AuthData, T extends DataModel> {
    * @param data the data
    * @return the operation result
    */
-  // REVIEW: The original throws IOException. Continue to use or return as part of the result?
+  // We need to be able throw exceptions that can be caught by RetryingCallable.
   ImportResult importItem(UUID jobId, A authData, T data) throws Exception;
 }

@@ -35,9 +35,7 @@ public interface Exporter<A extends AuthData, T extends DataModel> {
    * @param authData authentication data for the operation
    * @param exportInformation info about what data to export see {@link ExportInformation} for more
    */
-  // REVIEW: The original throws IOException. Continue to use checked
-  // exceptions or use unchecked?
-  // Review: We need to be able throw exceptions to be caught by the RetryingCallable.
+  // We need to be able throw exceptions that can be caught by RetryingCallable.
   ExportResult<T> export(UUID jobId, A authData, Optional<ExportInformation> exportInformation)
       throws Exception;
 }
