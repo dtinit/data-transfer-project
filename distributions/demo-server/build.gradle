@@ -105,7 +105,7 @@ task createApiFile() {
 }
 
 
-mainClassName = 'org.dataportabilityproject.bootstrap.vm.SingleVMMain'
+mainClassName = 'org.datatransferproject.bootstrap.vm.SingleVMMain'
 
 // TODO: refactor this to base build.gradle so other distros (like demo-google-deployment) may use
 shadowJar {

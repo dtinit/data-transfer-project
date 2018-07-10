@@ -6,7 +6,7 @@ The implementation is based off of [Flickr4Java](https://github.com/boncey/Flick
 
 ## Data Supported
 
- - [Photos](src/main/java/org/dataportabilityproject/datatransfer/flickr/photos) Import & Export
+ - [Photos](src/main/java/org/datatransferproject/datatransfer/flickr/photos) Import & Export
 
 ## Current State
 No known issues, however like much of DTP still needs some in depth testing to ensure corner
