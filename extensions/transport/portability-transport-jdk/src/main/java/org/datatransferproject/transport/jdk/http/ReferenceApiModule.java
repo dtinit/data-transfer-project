@@ -49,7 +49,7 @@ public class ReferenceApiModule extends FlagBindingModule {
     // /_/listServices, /_/listServicesthisshouldnotwork and /_/listServices/path/to/resource will
     // all be handled by the ListServicesHandler below. To prevent this, each handler below should
     // validate the request URI that it is getting passed in.
-    mapbinder.addBinding(DataTransferHandler.PATH).to(DataTransferHandler.class);
+    mapbinder.addBinding(CreateJobHandler.PATH).to(CreateJobHandler.class);
     mapbinder.addBinding(ListDataTypesHandler.PATH).to(ListDataTypesHandler.class);
     mapbinder.addBinding(ListServicesHandler.PATH).to(ListServicesHandler.class);
     mapbinder.addBinding(LegacyAuthCallbackHandler.PATH).to(LegacyAuthCallbackHandler.class);

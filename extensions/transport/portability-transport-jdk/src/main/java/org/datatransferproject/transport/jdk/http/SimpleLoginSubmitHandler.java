@@ -35,8 +35,8 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.client.transfer.DataTransferResponse;
-import org.datatransferproject.types.client.transfer.DataTransferResponse.Status;
+import org.datatransferproject.types.client.transfer.CreateJobResponse;
+import org.datatransferproject.types.client.transfer.CreateJobResponse.Status;
 import org.datatransferproject.types.client.transfer.SimpleLoginRequest;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
@@ -86,7 +86,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     Preconditions.checkArgument(HandlerUtils.validateRequest(exchange, HttpMethods.POST, PATH));
     logger.debug("received request: {}", exchange.getRequestURI());
 
-    DataTransferResponse response = handleExchange(exchange);
+    CreateJobResponse response = handleExchange(exchange);
 
     logger.debug("redirecting to: {}", response.getNextUrl());
     // Mark the response as type Json and send
@@ -99,7 +99,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
     objectMapper.writeValue(exchange.getResponseBody(), response);
   }
 
-  DataTransferResponse handleExchange(HttpExchange exchange) throws IOException {
+  CreateJobResponse handleExchange(HttpExchange exchange) throws IOException {
 
     Headers requestHeaders = exchange.getRequestHeaders();
     try {
@@ -160,7 +160,7 @@ final class SimpleLoginSubmitHandler implements HttpHandler {
       // Set new cookie
       HandlerUtils.setCookie(exchange.getResponseHeaders(), encryptedAuthData, authMode);
 
-      return new DataTransferResponse(
+      return new CreateJobResponse(
           job.exportService(),
           job.importService(),
           job.transferDataType(),

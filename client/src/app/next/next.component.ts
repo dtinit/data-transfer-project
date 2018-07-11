@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BackendService } from '../backend.service';
 import { CopyConfiguration } from '../copy-configuration';
-import { DataTransferResponse } from '../data-transfer-response';
+import { CreateJobResponse } from '../create-job-response';
 
 @Component({
   selector: 'app-next',
@@ -26,7 +26,7 @@ import { DataTransferResponse } from '../data-transfer-response';
 })
 export class NextComponent implements OnInit {
   // This is kinda ugly but is the only way to init an interface wihtout creating a dummy class
-  dataTransferResponse: DataTransferResponse = <DataTransferResponse>{transferDataType:"", source:"", destination:""};
+  createJobResponse: CreateJobResponse = <CreateJobResponse>{transferDataType:"", source:"", destination:""};
   error_text: string = "";
   constructor(private service : BackendService) { }
 
@@ -38,11 +38,11 @@ export class NextComponent implements OnInit {
   importSetup() {
     this.service.importSetup().subscribe(
       data => {
-        this.dataTransferResponse = data;
-        console.log('dataTransferResponse: ' + JSON.stringify(this.dataTransferResponse));
+        this.createJobResponse = data;
+        console.log('createJobResponse: ' + JSON.stringify(this.createJobResponse));
       },
       err => {
-        this.dataTransferResponse = null;
+        this.createJobResponse = null;
         this.error_text = 'There was an error';
         console.error(err);
       }
@@ -51,7 +51,7 @@ export class NextComponent implements OnInit {
 
   // Redirect to the import auth url to authorize
   authorize() {
-    console.log('authorize, redirecting to: ' + this.dataTransferResponse.nextUrl);
-    window.location.href = this.dataTransferResponse.nextUrl;
+    console.log('authorize, redirecting to: ' + this.createJobResponse.nextUrl);
+    window.location.href = this.createJobResponse.nextUrl;
   }
 }

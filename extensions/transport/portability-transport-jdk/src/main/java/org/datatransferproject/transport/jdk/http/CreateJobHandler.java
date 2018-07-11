@@ -37,9 +37,9 @@ import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.client.transfer.DataTransferRequest;
-import org.datatransferproject.types.client.transfer.DataTransferResponse;
-import org.datatransferproject.types.client.transfer.DataTransferResponse.Status;
+import org.datatransferproject.types.client.transfer.CreateJobRequest;
+import org.datatransferproject.types.client.transfer.CreateJobResponse;
+import org.datatransferproject.types.client.transfer.CreateJobResponse.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,15 +52,13 @@ import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
 
 /**
- * HttpHandler for the {@link CreateJobAction}. TODO: rename to CreateJobHandler as well as client
- * code as well
+ * HttpHandler for the {@link CreateJobAction}.
  */
-final class DataTransferHandler implements HttpHandler {
+final class CreateJobHandler implements HttpHandler {
 
-  // TODO: rename to CreateJob as well as client code as well
-  public static final String PATH = "/_/DataTransfer";
+  public static final String PATH = "/_/CreateJob";
   public static final String ERROR_PATH = "/error";
-  private static final Logger logger = LoggerFactory.getLogger(DataTransferHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(CreateJobHandler.class);
   private final CreateJobAction createJobAction;
   private final AuthServiceProviderRegistry registry;
   private final JobStore store;
@@ -69,7 +67,7 @@ final class DataTransferHandler implements HttpHandler {
   private final String baseApiUrl;
 
   @Inject
-  DataTransferHandler(
+  CreateJobHandler(
       CreateJobAction createJobAction,
       AuthServiceProviderRegistry registry,
       JobStore store,
@@ -91,14 +89,14 @@ final class DataTransferHandler implements HttpHandler {
         HandlerUtils.validateRequest(exchange, HandlerUtils.HttpMethods.POST, PATH),
         PATH + " only supports POST.");
     logger.debug("received request: {}", exchange.getRequestURI());
-    DataTransferRequest request =
-        objectMapper.readValue(exchange.getRequestBody(), DataTransferRequest.class);
+    CreateJobRequest request =
+        objectMapper.readValue(exchange.getRequestBody(), CreateJobRequest.class);
     CreateJobActionRequest actionRequest =
         new CreateJobActionRequest(
             request.getSource(), request.getDestination(), request.getTransferDataType());
     CreateJobActionResponse actionResponse = createJobAction.handle(actionRequest);
 
-    DataTransferResponse dataTransferResponse;
+    CreateJobResponse createJobResponse;
     if (actionResponse.getErrorMsg() != null) {
       logger.warn("Error during action: {}", actionResponse.getErrorMsg());
       handleError(exchange, request);
@@ -162,8 +160,8 @@ final class DataTransferHandler implements HttpHandler {
       store.updateJob(actionResponse.getId(), updatedPortabilityJob);
     }
 
-    dataTransferResponse =
-        new DataTransferResponse(
+    createJobResponse =
+        new CreateJobResponse(
             request.getSource(),
             request.getDestination(),
             request.getTransferDataType(),
@@ -176,13 +174,13 @@ final class DataTransferHandler implements HttpHandler {
         .getResponseHeaders()
         .set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
-    objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
+    objectMapper.writeValue(exchange.getResponseBody(), createJobResponse);
   }
 
   /** Handles error response. TODO: Determine whether to return user facing error message here. */
-  public void handleError(HttpExchange exchange, DataTransferRequest request) throws IOException {
-    DataTransferResponse dataTransferResponse =
-        new DataTransferResponse(
+  public void handleError(HttpExchange exchange, CreateJobRequest request) throws IOException {
+    CreateJobResponse createJobResponse =
+        new CreateJobResponse(
             request.getSource(),
             request.getDestination(),
             request.getTransferDataType(),
@@ -193,6 +191,6 @@ final class DataTransferHandler implements HttpHandler {
         .getResponseHeaders()
         .set(CONTENT_TYPE, "application/json; charset=" + StandardCharsets.UTF_8.name());
     exchange.sendResponseHeaders(200, 0);
-    objectMapper.writeValue(exchange.getResponseBody(), dataTransferResponse);
+    objectMapper.writeValue(exchange.getResponseBody(), createJobResponse);
   }
 }
