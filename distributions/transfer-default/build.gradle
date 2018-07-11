@@ -35,7 +35,7 @@ dependencies {
 
 addCloudExtensionDependency(project)
 
-mainClassName = 'org.dataportabilityproject.transfer.WorkerMain'
+mainClassName = 'org.datatransferproject.transfer.WorkerMain'
 
 shadowJar {
     mergeServiceFiles()
