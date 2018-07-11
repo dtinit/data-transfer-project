@@ -2,11 +2,11 @@
   <form name="startCopy" #configureTransfer="ngForm">
     <div class="form-group">
       Copy
-      <span class="fancy-u">{{dataTransferResponse.transferDataType}}</span>
+      <span class="fancy-u">{{createJobResponse.transferDataType}}</span>
       from
-      <span class="fancy-u">{{dataTransferResponse.source}}</span>
+      <span class="fancy-u">{{createJobResponse.source}}</span>
       to
-      <span class="fancy-u">{{dataTransferResponse.destination}}</span>
+      <span class="fancy-u">{{createJobResponse.destination}}</span>
     </div>
 
     <button *ngIf="!submitted"

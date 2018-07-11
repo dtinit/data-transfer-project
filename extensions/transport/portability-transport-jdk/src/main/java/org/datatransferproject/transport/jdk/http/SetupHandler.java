@@ -35,8 +35,8 @@ import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.client.transfer.DataTransferResponse;
-import org.datatransferproject.types.client.transfer.DataTransferResponse.Status;
+import org.datatransferproject.types.client.transfer.CreateJobResponse;
+import org.datatransferproject.types.client.transfer.CreateJobResponse.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
 
 /**
  * Common logic for job setup handlers. This handler is meant to retrieve the current status via a
- * DataTransferResponse Directs the frontend to: - The destination services authorization page (in
+ * CreateJobResponse Directs the frontend to: - The destination services authorization page (in
  * case of IMPORT mode) - The startCopy page (in case of COPY mode)
  */
 abstract class SetupHandler implements HttpHandler {
@@ -111,7 +111,7 @@ abstract class SetupHandler implements HttpHandler {
       String importService = job.importService();
       Preconditions.checkState(!Strings.isNullOrEmpty(importService), "Import service is invalid");
 
-      DataTransferResponse response;
+      CreateJobResponse response;
       if (mode == Mode.IMPORT) {
         response = handleImportSetup(exchange.getRequestHeaders(), job, jobId);
       } else {
@@ -137,7 +137,7 @@ abstract class SetupHandler implements HttpHandler {
     }
   }
 
-  private DataTransferResponse handleImportSetup(Headers headers, PortabilityJob job, UUID jobId)
+  private CreateJobResponse handleImportSetup(Headers headers, PortabilityJob job, UUID jobId)
       throws IOException {
     String exportAuthCookie = HandlerUtils.getCookie(headers, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
     Preconditions.checkArgument(
@@ -191,7 +191,7 @@ abstract class SetupHandler implements HttpHandler {
       store.updateJob(jobId, updatedPortabilityJob);
     }
 
-    return new DataTransferResponse(
+    return new CreateJobResponse(
         job.exportService(),
         job.importService(),
         job.transferDataType(),
@@ -199,7 +199,7 @@ abstract class SetupHandler implements HttpHandler {
         authFlowConfiguration.getUrl()); // Redirect to auth page of import service
   }
 
-  private DataTransferResponse handleCopySetup(Headers requestHeaders, PortabilityJob job) {
+  private CreateJobResponse handleCopySetup(Headers requestHeaders, PortabilityJob job) {
     // Make sure the data exists in the cookies before rendering copy page
     String exportAuthCookie =
         HandlerUtils.getCookie(requestHeaders, JsonKeys.EXPORT_AUTH_DATA_COOKIE_KEY);
@@ -211,7 +211,7 @@ abstract class SetupHandler implements HttpHandler {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(importAuthCookie), "Import auth cookie required");
 
-    return new DataTransferResponse(
+    return new CreateJobResponse(
         job.exportService(),
         job.importService(),
         job.transferDataType(),

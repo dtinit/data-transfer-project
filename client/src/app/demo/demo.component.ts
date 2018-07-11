@@ -19,7 +19,7 @@ import { BackendService } from '../backend.service';
 import { ServiceDescription, ServiceDescriptions } from '../service-description';
 import { PortableDataType } from '../portable-data-type';
 import { CopyConfiguration } from '../copy-configuration';
-import { DataTransferRequest } from '../data-transfer-request';
+import { CreateJobRequest } from '../create-job-request';
 import { ListDataTypesResponse } from '../list-data-types-response';
 
 
@@ -98,8 +98,8 @@ export class DemoComponent implements OnInit {
   }
 
   onSubmit() {
-    let formData = new DataTransferRequest(this.selectedDataType, this.selectedExportService, this.selectedImportService)
-    this.service.dataTransfer(formData);
+    let formData = new CreateJobRequest(this.selectedDataType, this.selectedExportService, this.selectedImportService)
+    this.service.createJob(formData);
   }
 
   // Toggle showing import
