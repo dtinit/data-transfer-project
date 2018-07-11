@@ -55,8 +55,8 @@ public class GooglePhotosImporter
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
-  private volatile PicasawebService photosService;
   private final ImageStreamProvider imageStreamProvider;
+  private volatile PicasawebService photosService;
 
   public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
     this(credentialFactory, jobStore, null, new ImageStreamProvider());
@@ -75,20 +75,16 @@ public class GooglePhotosImporter
   }
 
   @Override
-  public ImportResult importItem(
-      UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
+      PhotosContainerResource data) throws IOException, ServiceException {
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       logger.warn(
           "Importing albums in Google Photos is not supported. "
               + "Photos will be added to the default album.");
     }
 
-    try {
-      for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(authData, photo);
-      }
-    } catch (IOException | ServiceException e) {
-      return new ImportResult(e);
+    for (PhotoModel photo : data.getPhotos()) {
+      importSinglePhoto(authData, photo);
     }
 
     return ImportResult.OK;
@@ -117,7 +113,8 @@ public class GooglePhotosImporter
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
     // Upload photo
-    getOrCreatePhotosService(authData).insert(uploadUrl, outputPhoto);
+    getOrCreatePhotosService(authData)
+        .insert(uploadUrl, outputPhoto);
   }
 
   private PicasawebService getOrCreatePhotosService(TokensAndUrlAuthData authData) {
