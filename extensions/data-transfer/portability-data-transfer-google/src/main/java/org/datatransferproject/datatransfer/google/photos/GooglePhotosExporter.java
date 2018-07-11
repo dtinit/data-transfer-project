@@ -42,6 +42,9 @@ import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 
+// Not ready for prime-time!
+// TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
+
 public class GooglePhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
