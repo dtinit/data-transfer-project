@@ -37,7 +37,7 @@ jar {
         exclude '**/META-INF/*.RSA'
     }
     manifest {
-        attributes 'Main-Class': 'org.dataportabilityproject.transfer.WorkerMain'
+        attributes 'Main-Class': 'org.datatransferproject.transfer.WorkerMain'
     }
 }
 

@@ -4,7 +4,7 @@ This folder contains the extension implementation for the
 
 ## Data Supported
 
- - [Photos](src/main/java/org/dataportabilityproject/datatransfer/instagram/photos) Export only, no import.
+ - [Photos](src/main/java/org/datatransferproject/datatransfer/instagram/photos) Export only, no import.
 
 ## Current State
 No known issues, however like much of DTP still needs some in depth testing to ensure corner

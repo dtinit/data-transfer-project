@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataportabilityproject.transfer.twitter;
+package org.datatransferproject.transfer.twitter;
 
 import com.google.api.client.http.InputStreamContent;
 import java.io.IOException;
@@ -22,13 +22,13 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
-import org.dataportabilityproject.spi.transfer.provider.ImportResult;
-import org.dataportabilityproject.spi.transfer.provider.ImportResult.ResultType;
-import org.dataportabilityproject.spi.transfer.provider.Importer;
-import org.dataportabilityproject.types.transfer.auth.AppCredentials;
-import org.dataportabilityproject.types.transfer.auth.TokenSecretAuthData;
-import org.dataportabilityproject.types.transfer.models.photos.PhotoModel;
-import org.dataportabilityproject.types.transfer.models.photos.PhotosContainerResource;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.types.transfer.models.photos.PhotoModel;
+import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.StatusUpdate;
