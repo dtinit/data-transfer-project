@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { PortabilityDemoPage } from './app.po';
+import { DTPDemoPage } from './app.po';
 
 describe('portability-demo App', () => {
-  let page: PortabilityDemoPage;
+  let page: DTPDemoPage;
 
   beforeEach(() => {
-    page = new PortabilityDemoPage();
+    page = new DTPDemoPage();
   });
 
   // TODO: add more thorough tests
-  it('should display Data Portability header', () => {
+  it('should display Data Transfer Project header', () => {
     page.navigateTo();
-    expect(page.getParagraphText()).toEqual('Data Portability');
+    expect(page.getParagraphText()).toEqual('Data Transfer Project');
   });
 });

@@ -15,12 +15,12 @@
  */
 import { browser, by, element } from 'protractor';
 
-export class PortabilityDemoPage {
+export class DTPDemoPage {
   navigateTo() {
     return browser.get('/');
   }
 
   getParagraphText() {
-    return element(by.css('.portability-header')).getText();
+    return element(by.css('.dtp-header')).getText();
   }
 }
