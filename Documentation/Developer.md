@@ -6,8 +6,19 @@
  * General questions and discussion: [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com)
  * [Slack channel](https://portability.slack.com), email
    [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com) for invitation
+ * Proposed (still to be determined) Office Hours: Mondays  1:00 - 2:30pm UTC Please email (mailto:portability-maintainers@googlegroups.com) for an invitation via Google Hangouts (or alternative channels if needed)
  * Weekly Skype call, email [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
    for invitation
+
+## Where to start
+- Review the technical white paper at [datatransferproject.dev](https://datatransferproject.dev/)
+- Follow the instructions below to setup and see the project in action run locally using your own API keys and transfer your data from one account to another.
+
+The following are interesting places to start looking at the code
+  * See all the top level Readme.md files
+  * See service specific adapter code listed under the [data-transfer folder](../extensions/data-transfer)
+  * See the common data model code listed under the [models folder](../portability-types-transfer/src/main/java/org/datatransferproject/types/transfer/models).
+ 
 
 ## First Run/Setup
 
