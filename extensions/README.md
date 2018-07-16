@@ -1,6 +1,6 @@
 # Extensions
 
-This foldr contains all the extensions for individual service providers
+This folder contains all the extensions for individual service providers
 and cloud platforms.
 
  - **auth** contains authorization libraries used by service providers to
