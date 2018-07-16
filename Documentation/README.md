@@ -6,6 +6,6 @@ See [Overview.md](Overview.md) for a high level summary of the project
    
 See [Developer.md](Developer.md) for setup and core framework development
 
-See [Integration.md](Integration.md) for integrating a new service and/or data type in the project.
+See [Integration.md](Integration.md) for integrating a new service, data type, and/or hosting platform in the project.
 
 Other documents in this folder cover a variety of specific aspects of the project.
