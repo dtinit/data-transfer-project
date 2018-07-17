@@ -52,7 +52,7 @@ notifications:
 # Deploy the demo docker image to Docker Hub
 deploy:
   provider: script
-  script: bash docker_push
+  script: bash scripts/docker_push.sh
   skip_cleanup: true
   on:
     branch: master
