@@ -18,14 +18,20 @@ package org.datatransferproject.transfer;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.spi.ErrorHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.spi.LoggerContext;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -36,7 +42,7 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.transfer.retry.RetryStrategy;
+import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 final class WorkerModule extends FlagBindingModule {
@@ -127,5 +133,16 @@ final class WorkerModule extends FlagBindingModule {
   @Singleton
   RetryStrategyLibrary getRetryStrategyLibrary() throws IOException {
     return context.getSetting("retryLibrary", null);
+  }
+
+  void getLogger(UUID jobId) {
+    EncryptingLayout layout = new EncryptingLayout(jobId);
+
+    LoggerContext lc = (LoggerContext) LogManager.getContext(true);
+    Appender fileAppender = new FileAppender();
+    fileAppender.setLayout(layout);
+    Appender consoleAppender = new ConsoleAppender();
+    consoleAppender.setLayout(layout);
+
   }
 }
