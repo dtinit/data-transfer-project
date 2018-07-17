@@ -2,8 +2,11 @@
 
 Data Transfer Project is platform agnostic.
 
-We offer demo local and Google (GCP) deployments, with a
-Microsoft (Azure) one in progress.
+Currently supported deployments are:
+ - Local from source
+ - [Local from docker](demo-server)
+ - [Google (GCP)](demo-google-deployment)
+ - Microsoft (Azure) [in progress].
 
 We welcome contributors to add configuration for additional platforms.
 
