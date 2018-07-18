@@ -44,7 +44,7 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     AuthInterface authInterface = flickr.getAuthInterface();
-    Token token = authInterface.getRequestToken(callbackBaseUrl + "/callback1/flickr");
+    Token token = authInterface.getRequestToken(callbackBaseUrl + "/callback/flickr");
     String url =
             authInterface.getAuthorizationUrl(
                     token, Permission.WRITE);

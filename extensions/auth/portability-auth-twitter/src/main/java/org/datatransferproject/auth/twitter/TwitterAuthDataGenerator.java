@@ -55,7 +55,7 @@ final class TwitterAuthDataGenerator implements AuthDataGenerator {
     RequestToken requestToken;
     try {
        requestToken =
-          twitterApi.getOAuthRequestToken(callbackBaseUrl + "/callback1/twitter", perms);
+          twitterApi.getOAuthRequestToken(callbackBaseUrl + "/callback/twitter", perms);
     } catch (TwitterException e) {
       logger.warn("Couldn't get authData", e);
       return null;
