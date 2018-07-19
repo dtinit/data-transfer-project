@@ -135,15 +135,12 @@ final class JobProcessor {
   }
 
   private void setupConsoleLogger(UUID jobId) {
-    Enumeration enumeration = org.apache.log4j.Logger.getRootLogger()
-        .getLoggerRepository().getCurrentLoggers();
-
     EncryptingLayout.setJobId(jobId);
     ConsoleAppender appender = new ConsoleAppender();
     appender.setLayout(new EncryptingLayout());
     appender.activateOptions();
 
-
+    org.apache.log4j.Logger.getRootLogger().removeAppender("org.apache.log4j.ConsoleAppender");
     org.apache.log4j.Logger.getRootLogger().addAppender(appender);
   }
 
