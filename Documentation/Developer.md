@@ -1,13 +1,28 @@
 
-# Development
+# Developers Guide 
 
 ## Communication
 
  * General questions and discussion: [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com)
  * [Slack channel](https://portability.slack.com), email
    [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com) for invitation
- * Weekly Skype call, email [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
+ * Proposed Office Hours for anyone interested, developers, participants, etc.: TBD, email [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com) for the latest times
+ * Weekly Skype call for maintainers, email [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
    for invitation
+
+## Where to start
+
+### Understading the project
+  * Read the [Technical Overview](Overview.md) page, particularly the architecture section
+  * Read the latest white papers at [datatransferproject.dev](https://datatransferproject.dev)
+ 
+### Understanding the code
+  * Read the README files in each top level directory
+  * Integrate a new service provider or data model via the [Integration Guide](Integration.md)
+  
+### Running the project
+  * See the instructions below to run locally
+
 
 ## First Run/Setup
 
