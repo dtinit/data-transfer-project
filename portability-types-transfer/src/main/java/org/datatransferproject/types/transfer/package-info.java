@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Defines the data portability model objects. Model objects represent the flow of data through the
+ * Defines the data transfer model objects. Model objects represent the flow of data through the
  * system.
  */
 package org.datatransferproject.types.transfer;

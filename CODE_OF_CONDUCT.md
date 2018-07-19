@@ -38,16 +38,17 @@ of conduct.
 
 ## Enforcement
 Consequences for failing to comply with this policy may include, at the sole discretion of the
-Data Portability community managers:
+Data Transfer Project community managers:
 * a request for an apology;
 * a private or public warning or reprimand;
-* a temporary ban from the mailing list, blog, Data Portability repository or organization, or other
-Data Portability-supported communication group, including loss of committer status;
-* a permanent ban from any of the above, or from all current and future Data Portability-supported or
+* a temporary ban from the mailing list, blog, Data Transfer Project repository or organization, or other
+Data Transfer Project-supported communication group, including loss of committer status;
+* a permanent ban from any of the above, or from all current and future Data Transfer Project-supported or
 Google-supported communities, including loss of committer status.
 Participants warned to stop any harassing behavior are expected to comply immediately; failure to do
 so will result in an escalation of consequences.
-The decisions of the Data Portability community managers may be appealed via Data Portability mailing list.
+The decisions of the Data Transfer Project community managers may be appealed via Data Transfer Project
+mailing list.
 
 ## Acknowledgements
 This Code of Conduct is based on Contributor Covenant, version 1.4,

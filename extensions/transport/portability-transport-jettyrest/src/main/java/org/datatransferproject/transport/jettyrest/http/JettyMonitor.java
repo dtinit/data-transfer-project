@@ -8,7 +8,7 @@ public class JettyMonitor implements Logger {
   private final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JettyMonitor.class);
 
   public String getName() {
-    return "Data Portability";
+    return "Data Transfer Project";
   }
 
   public void warn(String msg, Object... args) {
