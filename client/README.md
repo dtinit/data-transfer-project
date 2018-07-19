@@ -29,4 +29,5 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 ## Deploying in production
 
-Data Transfer Project is platform agnostic. For how Google deploys Data Transfer Project, see config/README.md.
+Data Transfer Project is platform agnostic. See the `extensions/cloud/` directory for our currently supported cloud
+hosting solutions, and `distributions/` for some sample deployments on those clouds.
