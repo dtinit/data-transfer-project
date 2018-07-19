@@ -1,4 +1,4 @@
-# Data Portability Client
+# Data Transfer Project Client
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.0.3.
 
@@ -29,4 +29,4 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 ## Deploying in production
 
-Data Portability is platform agnostic. For how Google deploys Data Portability, see config/README.md.
+Data Transfer Project is platform agnostic. For how Google deploys Data Transfer Project, see config/README.md.

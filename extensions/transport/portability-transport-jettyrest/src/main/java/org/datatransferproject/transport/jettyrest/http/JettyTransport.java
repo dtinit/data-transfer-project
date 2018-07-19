@@ -102,7 +102,7 @@ public class JettyTransport {
 
   public void registerServlet(String path, Servlet servletContainer) {
     ServletHolder servletHolder = new ServletHolder(Source.EMBEDDED);
-    servletHolder.setName("Data Portability");
+    servletHolder.setName("Data Transfer Project");
     servletHolder.setServlet(servletContainer);
     servletHolder.setInitOrder(1);
 
