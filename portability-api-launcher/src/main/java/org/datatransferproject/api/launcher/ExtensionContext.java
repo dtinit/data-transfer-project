@@ -15,13 +15,14 @@
  */
 package org.datatransferproject.api.launcher;
 
+import org.apache.log4j.Layout;
 import org.datatransferproject.api.launcher.Constants.Environment;
 
 /** Provides information required to bootstrap extensions. */
 public interface ExtensionContext {
 
-  /** Returns the system logger extension service can use to record events. */
-  Logger getLogger();
+  /** Returns the layout for logging events. */
+  Layout getLayout();
 
   /**
    * Returns the runtime type manager.

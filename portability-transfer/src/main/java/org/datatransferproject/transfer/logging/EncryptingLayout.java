@@ -7,10 +7,10 @@ import org.apache.log4j.spi.LoggingEvent;
 
 public class EncryptingLayout extends Layout {
 
-  private final UUID jobId;
+  static UUID jobId;
 
-  public EncryptingLayout(UUID jobId) {
-    this.jobId = jobId;
+  public static void setJobId(UUID inputJobId) {
+    jobId = inputJobId;
   }
 
   @Override

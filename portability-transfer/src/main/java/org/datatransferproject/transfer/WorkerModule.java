@@ -24,9 +24,7 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
+import org.apache.log4j.Layout;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -37,7 +35,6 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 final class WorkerModule extends FlagBindingModule {
@@ -86,6 +83,7 @@ final class WorkerModule extends FlagBindingModule {
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
+    bind(Layout.class).toInstance(context.getLayout());
   }
 
   @Provides
@@ -129,4 +127,6 @@ final class WorkerModule extends FlagBindingModule {
   RetryStrategyLibrary getRetryStrategyLibrary() throws IOException {
     return context.getSetting("retryLibrary", null);
   }
+
+
 }

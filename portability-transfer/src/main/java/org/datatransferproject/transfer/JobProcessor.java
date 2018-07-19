@@ -24,6 +24,7 @@ import java.util.Enumeration;
 import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Layout;
 import org.datatransferproject.security.Decrypter;
 import org.datatransferproject.security.DecrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -48,23 +49,26 @@ final class JobProcessor {
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
+  private final Layout layout;
 
   @Inject
   JobProcessor(
       JobStore store,
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
-      SymmetricKeyGenerator symmetricKeyGenerator) {
+      SymmetricKeyGenerator symmetricKeyGenerator,
+      Layout layout) {
     this.store = store;
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
+    this.layout = layout;
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
     UUID jobId = JobMetadata.getJobId();
-    setupConsoleLogger(jobId);
+    setupConsoleLogger(layout);
     logger.debug("Begin processing jobId: {}", jobId);
 
     PortabilityJob job = store.findJob(jobId);
@@ -134,9 +138,9 @@ final class JobProcessor {
     }
   }
 
-  private void setupConsoleLogger(UUID jobId) {
+  private void setupConsoleLogger(Layout layout) {
     ConsoleAppender appender = new ConsoleAppender();
-    appender.setLayout(new EncryptingLayout(jobId));
+    appender.setLayout(layout);
     appender.activateOptions();
 
     // TODO: decide which loggers we want to encrypt.

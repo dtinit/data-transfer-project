@@ -19,6 +19,7 @@ package org.datatransferproject.transfer;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.log4j.Layout;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Logger;
@@ -26,6 +27,7 @@ import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.launcher.Flag;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.launcher.impl.TypeManagerImpl;
+import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -55,8 +57,8 @@ public class WorkerExtensionContext implements ExtensionContext {
   }
 
   @Override
-  public Logger getLogger() {
-    return null;
+  public Layout getLayout() {
+    return new EncryptingLayout();
   }
 
   @Override

@@ -16,6 +16,7 @@
 package org.datatransferproject.api;
 
 import com.google.common.base.Preconditions;
+import org.apache.log4j.Layout;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
@@ -58,7 +59,7 @@ public class ApiExtensionContext implements ExtensionContext {
   }
 
   @Override
-  public Logger getLogger() {
+  public Layout getLayout() {
     // TODO implement
     return null;
   }
