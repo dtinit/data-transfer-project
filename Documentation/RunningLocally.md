@@ -6,7 +6,7 @@ Transfer Worker server, and a frontend) all packaged into one Docker image.
 Note that in production, the API and Transfer Workers run separately,
 but they are combined into the same binary here for demo purposes.
 
-## Acquire Keys
+## Acquire keys
 To run the Data Transfer Project, each hosted instance (including your
 local one) needs its own API keys for each service it will facilitate
 transfers with.

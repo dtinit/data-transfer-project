@@ -23,10 +23,9 @@
 ### Running the project
   * See the instructions below to run locally
 
-
 ## First Run/Setup
 
-###  From top level directory
+From the top level data-transfer-project directory:
 * Install Git: `sudo apt-get install git-all`
 * Install Gradle: `sudo apt-get install gradle`
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
@@ -36,7 +35,7 @@
  * Install the Angular CLI `./gradlew client:installLocalAngularCli`
  * In the `client/` directory, run `npm install`
 
-## IntelliJ setup
+### IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
 
 #### Import the project
@@ -78,7 +77,7 @@ limitations under the License.
 * It should prompt you to select the new Copyright profile
 * The copyright should be added to all new files from now on (note: it might be collapsed so not immediately obvious)
 
-### Running locally with Docker
+## Running locally with Docker
 
 See [Running Locally](RunningLocally.md) for instructions.
 
