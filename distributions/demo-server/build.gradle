@@ -49,7 +49,7 @@ repositories {
     jcenter()
 }
 
-def transportType = project.hasProperty('transportType') ? transportType : "jdk"
+def transportType = project.hasProperty('transportType') ? transportType : "jettyrest"
 def offlineData = project.hasProperty('offlineData') ? offlineData : "false"
 def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
 def appPort = project.hasProperty('appPort') ? appPort : "3000"
