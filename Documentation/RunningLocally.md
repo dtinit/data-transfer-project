@@ -15,6 +15,12 @@ Please see the [API keys](Keys.md) document for instructions on acquiring keys.
 
 To be clear, **you will only be able to transfer data to/from services you have acquired a key for.** This is by design, as explained in [API keys](Keys.md).
 
+## Setup keys
+
+The first time you run the demo image, you need to configure your
+credentials by copying distributions/demo-server/env.secrets.template to
+env.secrets and inserting the API keys and secrets you acquired above.
+
 ## Install Docker
 
 See [docs.docker.com/install](https://docs.docker.com/install/) to install Docker for your OS.
@@ -23,12 +29,6 @@ See [docs.docker.com/install](https://docs.docker.com/install/) to install Docke
 
 You only need to do this once:
 `sudo service docker start`
-
-## Setup keys
-
-The first time you run the demo image, you need to configure your
-credentials by copying distributions/demo-server/env.secrets.template to
-env.secrets and inserting the API keys and secrets you acquired above.
 
 ## Obtain a Docker image
 
