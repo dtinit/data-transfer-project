@@ -7,17 +7,17 @@ import org.apache.log4j.spi.LoggingEvent;
 
 public class EncryptingLayout extends Layout {
 
-  static UUID jobId;
+  private final UUID jobId;
 
-  public static void setJobId(UUID jobId) {
-    EncryptingLayout.jobId = jobId;
+  public EncryptingLayout(UUID jobId) {
+    this.jobId = jobId;
   }
 
   @Override
   public String format(LoggingEvent event) {
     // NB: copied from SimpleLayout.format()
     return String.format("[%s] [%s]: %s - %s%s", new ISO8601DateFormat().format(event.timeStamp),
-        jobId.getMostSignificantBits(), event.getLevel().toString(),
+        jobId, event.getLevel().toString(),
         event.getRenderedMessage(), LINE_SEP);
   }
 

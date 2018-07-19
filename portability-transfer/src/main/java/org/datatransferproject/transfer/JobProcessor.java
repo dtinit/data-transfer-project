@@ -135,12 +135,12 @@ final class JobProcessor {
   }
 
   private void setupConsoleLogger(UUID jobId) {
-    EncryptingLayout.setJobId(jobId);
     ConsoleAppender appender = new ConsoleAppender();
-    appender.setLayout(new EncryptingLayout());
+    appender.setLayout(new EncryptingLayout(jobId));
     appender.activateOptions();
 
-    org.apache.log4j.Logger.getRootLogger().removeAppender("org.apache.log4j.ConsoleAppender");
+    // TODO: decide which loggers we want to encrypt.
+    org.apache.log4j.Logger.getRootLogger().removeAppender("consoleAppender");
     org.apache.log4j.Logger.getRootLogger().addAppender(appender);
   }
 
