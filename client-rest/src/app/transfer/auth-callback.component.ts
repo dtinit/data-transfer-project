@@ -6,6 +6,7 @@ import {transportError} from "../transport";
 
 /**
  * Receives callbacks from external OAuth export and import services. Updates the application state with corresponding OAuth tokens.
+ * This component supports both OAuth 1 and OAuth 2 tokens as well as legacy (frob) tokens.
  *
  * Authentication is handled in several steps:
  *
@@ -29,13 +30,14 @@ export class AuthCallbackComponent implements OnInit {
     }
 
     ngOnInit() {
-        let code = this.route.snapshot.queryParams["code"];
+        let token = this.getToken();
+
         let transferId = this.progressService.transferId();
 
         if (Step.AUTHENTICATE_EXPORT === this.progressService.currentStep()) {
             // export auth step: generate the export auth data from the export token
-            // Use SSL as the token is sent cleartext 
-            this.transferService.generateAuthData({id: transferId, authToken: code, mode: "EXPORT"}).subscribe((data => {
+            // Use SSL as the token is sent cleartext
+            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "EXPORT"}).subscribe((data => {
                 this.progressService.authExportComplete(data.authData);
 
                 // retrieve the configuration for the import OAuth service
@@ -46,10 +48,25 @@ export class AuthCallbackComponent implements OnInit {
             }));
         } else {
             // import auth step: received the import auth callback, generate the import auth data from the import token and continue the transfer process
-            this.transferService.generateAuthData({id: transferId, authToken: code, mode: "IMPORT"}).subscribe(data => {
+            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "IMPORT"}).subscribe(data => {
                 this.progressService.authImportComplete(data.authData);
                 this.router.navigate(["initiate"]);
             }, transportError);
         }
+    }
+
+    /**
+     * Returns the OAuth 2, OAuth 1 or FOB token depending on the authentication protocol being used.
+     */
+    private getToken() {
+        let code = this.route.snapshot.queryParams["code"];  // OAuth 2 token, if using OAuth 2
+        let oAuthVerifier = this.route.snapshot.queryParams["oauth_verifier"];  // OAuth 1 token, if using OAuth 1
+
+        if (code != null) {
+            return code;
+        } else if (oAuthVerifier != null) {
+            return oAuthVerifier;
+        }
+        return this.route.snapshot.queryParams["frob"];  // Legacy auth token
     }
 }

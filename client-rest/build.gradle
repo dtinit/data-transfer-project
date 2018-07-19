@@ -29,7 +29,7 @@ task buildLocalWebApp(type: NodeTask) {
     group = BasePlugin.BUILD_GROUP
     description = "Builds the client webapp using the local Angular CLI installation"
     script = file("node_modules/.bin/ng")
-    args = ["build", "--env", "localhttps"]
+    args = ["build"]
 }
 
 

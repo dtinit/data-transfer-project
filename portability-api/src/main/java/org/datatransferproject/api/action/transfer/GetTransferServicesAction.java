@@ -56,6 +56,6 @@ public final class GetTransferServicesAction
       throw new IllegalArgumentException(
           "[" + transferDataType + "] does not have an import and export service");
     }
-    return new TransferServices(transferDataType, importServices, exportServices);
+    return new TransferServices(transferDataType, exportServices,importServices);
   }
 }

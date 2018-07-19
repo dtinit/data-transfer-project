@@ -48,7 +48,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
     // Generate a request token and include that as initial auth data
     TokenSecretAuthData authData = null;
     try {
-      authData = smugMugOauthInterface.getRequestToken(callbackBaseUrl + "/callback1/smugmug");
+      authData = smugMugOauthInterface.getRequestToken(callbackBaseUrl + "/callback/smugmug");
     } catch (IOException e) {
       logger.warn("Couldnt get authData {}", e.getMessage());
       return null;
