@@ -1,5 +1,6 @@
 package org.datatransferproject.transfer.logging;
 
+import com.google.common.base.Preconditions;
 import java.util.UUID;
 import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.ISO8601DateFormat;
@@ -10,6 +11,7 @@ public class EncryptingLayout extends Layout {
   static UUID jobId;
 
   public static void setJobId(UUID inputJobId) {
+    Preconditions.checkState(jobId == null, "jobId has already been set");
     jobId = inputJobId;
   }
 
