@@ -74,7 +74,7 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
 7. Create FooTransferExtension extending TransferExtension
 
-  * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/dataportabilityproject/spi/transfer/extension/TransferExtension.java) for full documentation
+  * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/datatransferproject/spi/transfer/extension/TransferExtension.java) for full documentation
 
   * Best practices:
 
@@ -90,7 +90,7 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
 Auth Extensions are located in the [extensions/auth module](https://github.com/google/data-transfer-project/tree/master/extensions/auth), where they are organized by service provider
 
-1. See class javadoc for the [AuthServiceExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-api/src/main/java/org/dataportabilityproject/spi/api/auth/extension/AuthServiceExtension.java) for full documentation
+1. See class javadoc for the [AuthServiceExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-api/src/main/java/org/datatransferproject/spi/api/auth/extension/AuthServiceExtension.java) for full documentation
   * This class should... (TODO: add more content)
   * Best practices:
     * Validate the AuthServiceExtension isn’t initialized more than once in a running binary
@@ -103,7 +103,7 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
 
 3. Create the test directory for the FooAuthDataGeneratorTest
 
-  * `$mkdir -p extensions/auth/portability-auth-instagram/src/test/java/org/dataportabilityproject/auth/foo`
+  * `$mkdir -p extensions/auth/portability-auth-instagram/src/test/java/org/datatransferproject/auth/foo`
 
 4. Create FooAuthDataGeneratorTest with appropriate tests
 
