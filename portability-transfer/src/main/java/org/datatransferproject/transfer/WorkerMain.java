@@ -26,6 +26,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.UUID;
+import org.apache.log4j.ConsoleAppender;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -36,6 +38,7 @@ import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

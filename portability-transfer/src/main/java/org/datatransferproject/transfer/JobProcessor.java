@@ -20,14 +20,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.UUID;
 import javax.crypto.SecretKey;
+import org.apache.log4j.ConsoleAppender;
 import org.datatransferproject.security.Decrypter;
 import org.datatransferproject.security.DecrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +64,7 @@ final class JobProcessor {
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
     UUID jobId = JobMetadata.getJobId();
+    setupConsoleLogger(jobId);
     logger.debug("Begin processing jobId: {}", jobId);
 
     PortabilityJob job = store.findJob(jobId);
@@ -129,4 +133,18 @@ final class JobProcessor {
       throw new IOException("Unable to deserialize AuthData", e);
     }
   }
+
+  private void setupConsoleLogger(UUID jobId) {
+    Enumeration enumeration = org.apache.log4j.Logger.getRootLogger()
+        .getLoggerRepository().getCurrentLoggers();
+
+    EncryptingLayout.setJobId(jobId);
+    ConsoleAppender appender = new ConsoleAppender();
+    appender.setLayout(new EncryptingLayout());
+    appender.activateOptions();
+
+
+    org.apache.log4j.Logger.getRootLogger().addAppender(appender);
+  }
+
 }
