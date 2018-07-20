@@ -2,10 +2,234 @@
 ---
 $section-headings-color: #2a8de1;
 
-@import "{{ site.theme }}";
+// Thank you to @milesryandev for the amazing design of the datatransferproject.dev page
+
+body {
+    font-family: "Helvetica Neue LT", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
 .page-header {
-	color: #fff;
-	text-align: center;
-	background-color: #255fdb;
-	background-image: linear-gradient(120deg, #255fdb, #255fdb);
+    background-color: #0e3ec1;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    height: 48px;
+    text-align: center;
+    width: 100%;
+    position: fixed;
+}
+
+.page-header a {
+    text-decoration: none;
+}
+
+.download-header-link {
+    background-color: transparent;
+    border-color: white;
+    border-radius: 25px;
+    border-style: solid;
+    border-width: thin;
+    color: white;
+    float: right;
+    margin-right: 10%;
+    margin-top: 5px;
+    padding: 6px 6px 6px 6px;
+    vertical-align: middle;
+}
+
+.download-header-link:hover {
+    opacity: .6;
+}
+
+.header-text, .header-text:hover {
+    color: white;
+    display: inline-block;
+    float: left;
+    line-height: 48px;
+    margin-left: 10%;
+    vertical-align: middle;
+}
+
+.header-link {
+    color: white;
+    line-height: 48px;
+    letter-spacing: -0.025rem; 
+}
+
+.logo-image {
+    width: 20%;
+    vertical-align: middle;
+}
+
+.logo-text {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.logo-container {
+    color: #0e3ec1;
+    font-weight: 700;
+    font-size: 3rem;
+    line-height: 3rem;
+    letter-spacing: -0.025rem;
+    margin-bottom: 1.5rem;
+    margin-top: 58px;
+    vertical-align: middle;
+}
+
+.contributors-container {
+    text-align: center;
+}
+
+.main-content {
+    max-width: none;
+    width: auto;
+    margin-right: 12%;
+    margin-left: 12%;
+    padding-top: 5%;
+}
+
+h2 {
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+    letter-spacing: 0rem;
+    color: #0e3ec1;
+    display: block;
+    -webkit-margin-before: 1.33em;
+    -webkit-margin-after: 1.33em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    letter-spacing: normal;
+    word-spacing: normal;
+    padding: 0px 0 10px 0;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    clear: both;
+}
+
+p, li {
+    /* font-weight: 700; */
+    /* font-size: 1.5rem; */
+    line-height: 1.5rem;
+    letter-spacing: 0rem;
+    color: #657786;
+    -webkit-margin-before: 1em;
+    -webkit-margin-after: 1em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    letter-spacing: normal;
+    word-spacing: normal;
+}
+
+ul {
+    margin-left: 20px;
+}
+
+.main-content a {
+    color: #0e3ec1;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.87rem;
+    line-height: 1.5rem;
+    letter-spacing: 0.03rem;
+    background: transparent;
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.main-content a:hover { 
+    color: #053975;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.87rem;
+    line-height: 1.5rem;
+    letter-spacing: 0.03rem;
+    background: transparent;
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.section {
+    margin-top: 50px;
+}
+
+.section-image {
+    display: inline-block;
+    vertical-align: middle;
+    width: 220px;
+}
+
+.section-image-container {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.section-text {
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 70%;
+}
+
+.mustache {
+    height: 6px;
+    width: 72px;
+    background-color: #0e3ec1;
+    margin-bottom: 30px;
+}
+
+.state-section {
+    backgroud-color: #F5F8FA;
+}
+
+@media (max-width: 550px) {
+  .page-header {
+    font-size: .75rem;
+    font-weight: 500;
+  }
+  .download-header-link {
+    margin-right: 5%;
+    margin-top: 9px;
+  }
+  .header-text, .header-text:hover {
+    margin-left: 5%;
+  }
+}
+
+@media (max-width: 850px) and (min-width: 530px) {
+  .logo-image {
+    width: 15%;
+  }
+  .logo-container {
+    font-size: 2rem;
+    line-height: 2rem;
+  }
+}
+
+@media (max-width: 530px) {
+  .logo-image {
+    width: 15%;
+  }
+  .logo-container {
+    font-size: 1.2rem;
+    line-height: 1.2rem;
+  }
+}
+
+@media (max-width: 1000px) and (min-width: 500px) {
+  .section-image {
+    width: 100px;
+  }
+}
+
+// On small screens skip the images
+@media (max-width: 500px) {
+  .section-image {
+    visibility: hidden;
+    width: 0px;
+  }
+  .section-text {
+    max-width: 100%;
+  }
 }
