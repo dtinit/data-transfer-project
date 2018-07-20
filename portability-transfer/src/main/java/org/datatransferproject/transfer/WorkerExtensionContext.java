@@ -21,17 +21,19 @@ import java.util.HashMap;
 import java.util.Map;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
-import org.datatransferproject.api.launcher.Logger;
-import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.launcher.Flag;
+import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.launcher.impl.TypeManagerImpl;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** {@link ExtensionContext} used by the transfer worker. */
+/**
+ * {@link ExtensionContext} used by the transfer worker.
+ */
 public class WorkerExtensionContext implements ExtensionContext {
+
   private final TypeManager typeManager;
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final SettingsExtension settingsExtension;
@@ -52,11 +54,6 @@ public class WorkerExtensionContext implements ExtensionContext {
     Preconditions.checkNotNull(cloud, "Required setting 'cloud' is missing");
     environment = Environment.valueOf(settingsExtension.getSetting("environment", null));
     Preconditions.checkNotNull(environment, "Required setting 'environment' is missing");
-  }
-
-  @Override
-  public Logger getLogger() {
-    return null;
   }
 
   @Override

@@ -107,11 +107,7 @@ public class GoogleCalendarExporter implements
               "Recurrence entry " + st + " is not recognizable as an RRULE, RDATE, or EXDATE");
       }
     }
-    RecurrenceRule rule = ruleBuilder.build();
-    logger.debug("RRule: " + rule.getRRule());
-    logger.debug("RDate: " + rule.getRDate());
-    logger.debug("ExDate: " + rule.getExDate());
-    return rule;
+    return ruleBuilder.build();
   }
 
   private static CalendarModel convertToCalendarModel(CalendarListEntry calendarData) {
