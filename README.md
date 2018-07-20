@@ -1,10 +1,10 @@
 # Data Transfer Project
 
 ## Overview
-The Data Transfer Project makes it easy for users to transfer their data between online services. We provide a common framework and ecosystem to accept contributions from service providers to enable seamless transfer of data into and out of their service.
+The Data Transfer Project makes it easy for people to transfer their data between online services. We provide a common framework and ecosystem to accept contributions from service providers to enable seamless transfer of data into and out of their service.
 
 ## Who We Are
-Data Transfer Project (DTP) is a collaboration of organizations committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
+Data Transfer Project (DTP) is a collaboration of organizations committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data.
 
 We want all individuals across the web to be in control of their data.
 
@@ -27,7 +27,7 @@ The Data Transfer Project was formed in 2017 to create an open-source, service-t
 
 The partners in the Data Transfer Project believe portability and interoperability are central to innovation. Making it easier for individuals to choose among services facilitates competition, empowers individuals to try new services and enables them to choose the offering that best suits their needs.
 
-We anticipate the Data Transfer Project solution will make a particularly big impact in global markets where downloading or uploading data is expensive and/or slow. The Data Transfer Project eliminates the need to download data at all. Instead, files are transferred directly between service providers.
+We anticipate the Data Transfer Project solution will make a particularly big impact in global markets where downloading or uploading data is expensive and/or slow. The Data Transfer Project eliminates the need to download data at all. Instead, data is transferred directly between service providers.
 
 
 #### DTP is early-stage open source code that is built and maintained entirely by DTP community members.

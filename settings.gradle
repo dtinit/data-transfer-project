@@ -24,31 +24,26 @@ include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portabil
 // Transport Extensions
 include ':extensions:transport:portability-transport-jdk',':extensions:transport:portability-transport-jettyrest'
 
-// Flickr Auth and Transfer Extensions
+// Service Integrations - Auth and Transfer Extensions
+// Flickr
 include ':extensions:auth:portability-auth-flickr'
 include ':extensions:data-transfer:portability-data-transfer-flickr'
-
-// Google Auth and Transfer Extensions
+// Google
 include ':extensions:auth:portability-auth-google'
 include ':extensions:data-transfer:portability-data-transfer-google'
-
-// Instagram Auth and Transfer Extensions
+// Instagram
 include ':extensions:auth:portability-auth-instagram'
 include ':extensions:data-transfer:portability-data-transfer-instagram'
-
-// Microsoft Auth and Transfer Extensions
+// Microsoft
 include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 include ':extensions:data-transfer:portability-data-transfer-microsoft'
-
-// Remember The Milk Auth and Transfer Extensions
+// Remember The Milk
 include ':extensions:auth:portability-auth-rememberthemilk'
 include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
-
-// SmugMug Auth and Transfer Extensions
+// SmugMug
 include ':extensions:auth:portability-auth-smugmug'
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
-
-//Twitter Auth and Transfer Extensions
+// Twitter
 include ':extensions:auth:portability-auth-twitter'
 include ':extensions:data-transfer:portability-data-transfer-twitter'
 
