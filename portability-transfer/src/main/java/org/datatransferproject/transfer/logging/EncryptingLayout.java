@@ -17,7 +17,7 @@ public class EncryptingLayout extends Layout {
 
   @Override
   public String format(LoggingEvent event) {
-    // NB: copied from SimpleLayout.format()
+    // TODO: read formatting from a config file
     return String.format("[%s] [%s]: %s - %s%s",
         new ISO8601DateFormat().format(event.timeStamp),
         jobId != null ? Long.toHexString(jobId.getMostSignificantBits()) : "undefined",

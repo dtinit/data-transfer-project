@@ -16,16 +16,13 @@
 package org.datatransferproject.api;
 
 import com.google.common.base.Preconditions;
-import org.apache.log4j.Layout;
+import java.util.HashMap;
+import java.util.Map;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
-import org.datatransferproject.api.launcher.Logger;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Provides a context for initializing extensions.
@@ -33,6 +30,7 @@ import java.util.Map;
  * <p>
  */
 public class ApiExtensionContext implements ExtensionContext {
+
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final TypeManager typeManager;
   private final SettingsExtension settingsExtension;

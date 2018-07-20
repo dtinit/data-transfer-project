@@ -19,21 +19,21 @@ package org.datatransferproject.transfer;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.log4j.Layout;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
-import org.datatransferproject.api.launcher.Logger;
-import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.launcher.Flag;
+import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.launcher.impl.TypeManagerImpl;
-import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** {@link ExtensionContext} used by the transfer worker. */
+/**
+ * {@link ExtensionContext} used by the transfer worker.
+ */
 public class WorkerExtensionContext implements ExtensionContext {
+
   private final TypeManager typeManager;
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final SettingsExtension settingsExtension;

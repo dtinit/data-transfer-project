@@ -20,29 +20,24 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Layout;
 import org.datatransferproject.security.Decrypter;
 import org.datatransferproject.security.DecrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.transfer.logging.EncryptingLayout;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Process a job in two steps: <br>
- * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
- * key<br>
- * (2)Run the copy job
+ * Process a job in two steps: <br> (1) Decrypt the stored credentials, which have been encrypted
+ * with this transfer worker's public key<br> (2)Run the copy job
  */
 final class JobProcessor {
+
   private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
 
   private final JobStore store;
@@ -62,7 +57,9 @@ final class JobProcessor {
     this.symmetricKeyGenerator = symmetricKeyGenerator;
   }
 
-  /** Process our job, whose metadata is available via {@link JobMetadata}. */
+  /**
+   * Process our job, whose metadata is available via {@link JobMetadata}.
+   */
   void processJob() {
     UUID jobId = JobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
