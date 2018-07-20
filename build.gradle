@@ -22,22 +22,18 @@
  *
  * Or on Windows:
  *
- *  gradlew clean jar
+ * gradlew clean jar
  *
  * To build with a cloud extension type, use:
  *
  * ./gradlew -PcloudType=<type> clean check shadowJar
  *
- * Where <type> is "google", "microsoft", or another provider
+ * Where <type> is "google", "microsoft", or another provider in extensions/cloud.
  *
- * To specify whether to use a local or host installation of Node to build the client web app, use: "-PnodeType=local" (default) or "-PnodeType=host"
- * 
- *
- * TODO: take in a parameter - configDir as well (e.g. demo-google-deployment), and copy the
- * contents of that into src/main/resources.
+ * To specify whether to use a local or host installation of Node to build the client web app, use: "-PnodeType=local"
+ * (default) or "-PnodeType=host"
  */
 buildscript {
-
     repositories {
         jcenter()
     }
@@ -70,11 +66,10 @@ configure(sourceProjects()) {
         compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
         compile "com.google.guava:guava:${guavaVersion}"
 
-        testCompile "junit:junit:${junitVersion}"
         testCompile project(":portability-test-utilities")
+        testCompile "junit:junit:${junitVersion}"
         testCompile "com.google.truth:truth:0.39"
     }
-
 }
 
 def addCloudExtensionDependency(proj) {

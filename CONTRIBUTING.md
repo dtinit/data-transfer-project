@@ -18,8 +18,4 @@ again.
 ## Code reviews
 
 All submissions, including submissions by project members, require review. We
-use Gerrit pull requests for this purpose. Consult
-[Data Transfer Project website](https://github.com/google/data-transfer-project/) for more
-information on using pull requests.
-
-## This is not an official Google product
+use GitHub pull requests for this purpose.

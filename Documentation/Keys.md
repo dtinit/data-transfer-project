@@ -1,6 +1,9 @@
 # API Keys
-To use the Data Transfer Project each instance needs to get its own set of API keys
-for each service they want to interact with. This has many reasons and benefits:
+To run the Data Transfer Project, each hosted instance needs its own API keys
+for each service it will facilitate transfers with. These keys allow the
+DTP instance to interact with these services' APIS.
+
+This has many reasons and benefits:
 
  - **Isolation** Each instance of DTP having its own API keys means that each
    instance is isloated from the others.  So quota and abuse issues in one
