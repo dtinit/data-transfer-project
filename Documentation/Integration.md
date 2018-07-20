@@ -74,7 +74,7 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
 7. Create FooTransferExtension extending TransferExtension
 
-  * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/dataportabilityproject/spi/transfer/extension/TransferExtension.java) for full documentation
+  * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/datatransferproject/spi/transfer/extension/TransferExtension.java) for full documentation
 
   * Best practices:
 
@@ -84,14 +84,13 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
     * Return an Exporter and Importer for a given transfer type and mode
 
 8. Create FooTransferExtensionTest
-  * TODO: add more
+  * See existing directories for tests
 
 ### Auth Extension
 
-Auth Extensions are located in the [extensions/auth module](https://github.com/google/data-transfer-project/tree/master/extensions/auth), where they are organized by service provider
+Auth Extensions are located in the [extensions/auth module](https://github.com/google/data-transfer-project/tree/master/extensions/auth), where they are organized by service provider.  Note: This structure is subject to change sooner rather than later.
 
-1. See class javadoc for the [AuthServiceExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-api/src/main/java/org/dataportabilityproject/spi/api/auth/extension/AuthServiceExtension.java) for full documentation
-  * This class should... (TODO: add more content)
+1. See class javadoc for the [AuthServiceExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-api/src/main/java/org/datatransferproject/spi/api/auth/extension/AuthServiceExtension.java) for full documentation
   * Best practices:
     * Validate the AuthServiceExtension isn’t initialized more than once in a running binary
     * Most providers will interact with their api via a ‘registered’ app providing a client id/key and secret. Those will be stored in a key management system and retrieved via an identifier for the key and one for the secret,
@@ -99,11 +98,12 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
     * Return an FooAuthDataGenerator for a given transfer type and mode
 
 2. Create an FooAuthDataGenerator implementing AuthDataGenerator
-  * This class should... (TODO: add more content)
+  * This class should implement the generateConfiguration() method, which will generate the url and related data to redirect the user to for authentication, e.g. the first part of an Oauth step.
+  * This class should also implement the generateAuthData() method, which will take the token obtained in the first step and execute the necessary steps to obtain an AuthData object containing tokens to execute requests with, e.g. Oauth access tokens.
 
 3. Create the test directory for the FooAuthDataGeneratorTest
 
-  * `$mkdir -p extensions/auth/portability-auth-instagram/src/test/java/org/dataportabilityproject/auth/foo`
+  * `$mkdir -p extensions/auth/portability-auth-instagram/src/test/java/org/datatransferproject/auth/foo`
 
 4. Create FooAuthDataGeneratorTest with appropriate tests
 
@@ -115,8 +115,12 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
 
 * The first thing to do is look for any existing model classes that may support your use case or that can be extended to support your use case
 
-TODO: complete this documentation
+* If you would like to add a new Data Model, please send out a high level proposal or semi complete code to dtp-discuss@googlegroups.com
 
 ## Integrate a new cloud provider
 
-TODO: complete this documentation
+* The spi interfaces to be implemented by are located in the [portability-spi-cloud](https://github.com/google/data-transfer-project/tree/master/portability-spi-cloud) module.  See documentation in that folder and classes.
+
+* See an example of necessary plugin points in the [GCP folder](https://github.com/google/data-transfer-project/tree/master/distributions/demo-google-deployment)
+
+* If you would like to add a new Cloud Provider, please send out a high level proposal or semi complete code to dtp-discuss@googlegroups.com
