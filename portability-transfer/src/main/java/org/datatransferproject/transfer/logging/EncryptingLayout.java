@@ -19,7 +19,7 @@ public class EncryptingLayout extends Layout {
   public String format(LoggingEvent event) {
     // NB: copied from SimpleLayout.format()
     return String.format("[%s] [%s]: %s - %s%s", new ISO8601DateFormat().format(event.timeStamp),
-        jobId, event.getLevel().toString(),
+        jobId != null ? jobId : "undefined", event.getLevel().toString(),
         event.getRenderedMessage(), LINE_SEP);
   }
 

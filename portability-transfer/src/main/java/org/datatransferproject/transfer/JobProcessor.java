@@ -49,26 +49,22 @@ final class JobProcessor {
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
-  private final Layout layout;
 
   @Inject
   JobProcessor(
       JobStore store,
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
-      SymmetricKeyGenerator symmetricKeyGenerator,
-      Layout layout) {
+      SymmetricKeyGenerator symmetricKeyGenerator) {
     this.store = store;
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
-    this.layout = layout;
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
     UUID jobId = JobMetadata.getJobId();
-    setupConsoleLogger(layout);
     logger.debug("Begin processing jobId: {}", jobId);
 
     PortabilityJob job = store.findJob(jobId);
@@ -137,15 +133,4 @@ final class JobProcessor {
       throw new IOException("Unable to deserialize AuthData", e);
     }
   }
-
-  private void setupConsoleLogger(Layout layout) {
-    ConsoleAppender appender = new ConsoleAppender();
-    appender.setLayout(layout);
-    appender.activateOptions();
-
-    // TODO: decide which loggers we want to encrypt.
-    org.apache.log4j.Logger.getRootLogger().removeAppender("consoleAppender");
-    org.apache.log4j.Logger.getRootLogger().addAppender(appender);
-  }
-
 }

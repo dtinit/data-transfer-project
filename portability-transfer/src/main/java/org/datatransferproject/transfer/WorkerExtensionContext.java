@@ -57,11 +57,6 @@ public class WorkerExtensionContext implements ExtensionContext {
   }
 
   @Override
-  public Layout getLayout() {
-    return new EncryptingLayout();
-  }
-
-  @Override
   public TypeManager getTypeManager() {
     return typeManager;
   }

@@ -59,12 +59,6 @@ public class ApiExtensionContext implements ExtensionContext {
   }
 
   @Override
-  public Layout getLayout() {
-    // TODO implement
-    return null;
-  }
-
-  @Override
   public TypeManager getTypeManager() {
     return typeManager;
   }

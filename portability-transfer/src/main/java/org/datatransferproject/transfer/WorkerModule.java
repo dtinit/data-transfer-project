@@ -24,7 +24,6 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.apache.log4j.Layout;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -83,7 +82,6 @@ final class WorkerModule extends FlagBindingModule {
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
-    bind(Layout.class).toInstance(context.getLayout());
   }
 
   @Provides
