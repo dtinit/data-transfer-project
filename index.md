@@ -11,7 +11,7 @@ description: Data Transfer Project is a collaboration of organizations committed
 
 The Data Transfer Project was formed in 2017 to create an open-source, service-to-service data portability platform so that all individuals across the web could easily move their data between online service providers whenever they want.
 
-The contributors in the Data Transfer Project believe portability and interoperability are central to innovation. Making it easier for individuals to choose among services facilitates competition, empowers individuals to try new services and enables them to choose the offering that best suits their needs.
+The contributors to the Data Transfer Project believe portability and interoperability are central to innovation. Making it easier for individuals to choose among services facilitates competition, empowers individuals to try new services and enables them to choose the offering that best suits their needs.
 
 Current contributors include:
 
@@ -89,7 +89,7 @@ To get a more in-depth understanding of the project, its fundamentals and the de
 
 DTP is still in development and is not quite ready for everyone to use yet. However if you want to give it a shot we have a couple methods you can try out:
 
-Note: For both of these you need to get your own API keys from the services you want to port data between, please see instructions for getting keys.
+Note: For both of these you need to get your own API keys from the services you want to port data between; please see instructions for getting keys.
 
   * [Via Docker](https://github.com/google/data-transfer-project/blob/master/Documentation/RunningLocally.md)
   * [Via Code](https://github.com/google/data-transfer-project/blob/master/Documentation/Developer.md)
@@ -103,7 +103,7 @@ Note: For both of these you need to get your own API keys from the services you 
 
 We welcome everyone to participate, the more expertise and viewpoints we have contributing to the project the more successful it will be.
 
-  * If you are a company that wants to add an integrations to allow your users to easy import and export data: [Learn More](https://github.com/google/data-transfer-project/blob/master/Documentation/Integration.md) 
+  * If you are a company that wants to add an integration to allow your users to easy import and export data: [Learn More](https://github.com/google/data-transfer-project/blob/master/Documentation/Integration.md) 
   
   * If you are an individual that wants to contribute technically please see our contributions guide: [Learn More](https://github.com/google/data-transfer-project/blob/master/Documentation/Developer.md) 
   
@@ -116,7 +116,7 @@ We welcome everyone to participate, the more expertise and viewpoints we have co
 <div class="mustache">
 </div>
 
-DTP is still in very active development. While we have code that works for a variety of use cases we are continually making improvements that might cause things to break occasionally. So as you are trying things please use it with caution and expect some hiccups. Both our bug list, as well as documentation in each provider’s directory as good places to look for known issues, or report problems you encounter.
+DTP is still in very active development. While we have code that works for a variety of use cases we are continually making improvements that might cause things to break occasionally. So as you are trying things please use it with caution and expect some hiccups. Both our bug list, as well as documentation in each provider’s directory are good places to look for known issues, or report problems you encounter.
 </div>
 
 <div class="section-image-container"><img class="section-image" src="./images/AI_Blue_User data.png"></div>

@@ -16,7 +16,7 @@ Ideally, a Vertical will have a small number of well-defined and widely-adopted 
 
 One goal of DTP is to encourage organizations to use common Data Models in their systems, which will happen if organizations take importing and exporting data into consideration when initially designing their systems or providing updates. Using a common Data Model will significantly reduce the need for companies to maintain and update proprietary APIs.
 
-See current data models.
+See [current data models](https://github.com/google/data-transfer-project/tree/master/portability-types-transfer/src/main/java/org/datatransferproject/types/transfer/models).
 
 ### Company Specific Adapters
 
@@ -26,7 +26,7 @@ Data Adapters Data Adapters are pieces of code that translate a given Providerâ€
 
 Authentication Adapters Authentication Adapters are pieces of code that allow consumers to authenticate their accounts before transferring data out of or into another Provider. OAuth is likely to be the choice for most Providers, however DTP is agnostic to the type of authentication.
 
-See current Adapters.
+See [current Adapters](https://github.com/google/data-transfer-project/tree/master/extensions/data-transfer).
 
 ### Task Management
 
