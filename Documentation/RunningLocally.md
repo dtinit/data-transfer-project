@@ -55,7 +55,7 @@ will run the demo server image from above on localhost:8080.
   - `datatransferproject/demo` is the name of the image you obtained
 
 If everything worked, you'll start to see some log lines scrolling by, like:
- `2018-07-09 12:23:01,078 [JobPollingService RUNNING] DEBUG org.dataportabilityproject.transfer.JobPollingService - Polling for a job in state CREDS_AVAILABLE`
+ `2018-07-09 12:23:01,078 [JobPollingService RUNNING] DEBUG org.datatransferproject.transfer.JobPollingService - Polling for a job in state CREDS_AVAILABLE`
 
 ## Interact with the application
 

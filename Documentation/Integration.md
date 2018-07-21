@@ -66,11 +66,11 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
 5. Create the META-INF file
 
-  `$touch extensions/data-transfer/portability-data-transfer-foo/src/main/resources/META-INF/services/org.dataportabilityproject.spi.transfer.extension.TransferExtension`
+  `$touch extensions/data-transfer/portability-data-transfer-foo/src/main/resources/META-INF/services/org.datatransferproject.spi.transfer.extension.TransferExtension`
 
 6. Create the directory for your main code
 
- `$mkdir -p extensions/data-transfer/portability-data-transfer-foo/src/main/java/org/dataportabilityproject/transfer/foo/`
+ `$mkdir -p extensions/data-transfer/portability-data-transfer-foo/src/main/java/org/datatransferproject/transfer/foo/`
 
 7. Create FooTransferExtension extending TransferExtension
 
