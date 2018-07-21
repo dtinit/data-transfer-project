@@ -1,4 +1,4 @@
-rootProject.name = 'org.dataportabilityproject'
+rootProject.name = 'org.datatransferproject'
 
 include ':portability-types-client', ':portability-types-transfer'
 include ':portability-spi-service', ':portability-spi-api', ':portability-spi-cloud', ':portability-spi-transfer'
@@ -11,7 +11,7 @@ include ':extensions:config:portability-config-yaml'
 
 // Runnable Jar Distributions
 // Defaults
-include ':distributions:transfer-default', ':distributions:gateway-default', ':distributions:demo-server'
+include ':distributions:transfer-default', ':distributions:api-default', ':distributions:demo-server'
 // Google
 include ':distributions:demo-google-deployment:api', ':distributions:demo-google-deployment:transfer'
 
