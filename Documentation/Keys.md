@@ -49,7 +49,7 @@ If you are running DTP locally via the jars directly you'll need to set the API 
 via environment via your OS.
   - Linux: .bashrc
   - Windows System > Control Panel > Advanced system settings > Environment Variables
- 
+ https://github.com/google/data-transfer-project/pull/494/files
  The format is <provider>_KEY and <provider>_SECRET, see
  [distributions/demo-server/env.secrets.template](../distributions/demo-server/env.secrets.template)
  for an example.
@@ -62,6 +62,6 @@ for a template.
 
 ### Running on a cloud provider
 
-When running on a cloud provider your cloud implementation wil override
+When running on a cloud provider, your cloud implementation will override
 [AppCredentialStore](../portability-spi-cloud/src/main/java/org/datatransferproject/spi/cloud/storage/AppCredentialStore.java)
 to read stored credentials from your cloud provider.
