@@ -62,6 +62,6 @@ for a template.
 
 ### Running on a cloud provider
 
-When running on a cloud provider your cloud implementation wil override
-[AppCredentialStore](../portability-spi-cloud/src/main/java/org/dataportabilityproject/spi/cloud/storage/AppCredentialStore.java)
+When running on a cloud provider, your cloud implementation will override
+[AppCredentialStore](../portability-spi-cloud/src/main/java/org/datatransferproject/spi/cloud/storage/AppCredentialStore.java)
 to read stored credentials from your cloud provider.
