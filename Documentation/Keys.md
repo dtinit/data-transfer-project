@@ -6,10 +6,10 @@ DTP instance to interact with these services' APIS.
 This has many reasons and benefits:
 
  - **Isolation** Each instance of DTP having its own API keys means that each
-   instance is isloated from the others.  So quota and abuse issues in one
+   instance is isolated from the others.  So quota and abuse issues in one
    instance don't affect another instance.
 
- - **TOS** Aquiring API keys for a service usaully involves agreeing to their
+ - **TOS** Acquiring API keys for a service usually involves agreeing to their
    Terms of Service.  It is important that each Hosting Provider read, understand
    and agree to any applicable TOS for each service.
 
@@ -56,7 +56,7 @@ via environment via your OS.
 
 ### Running locally via Docker
 
-When running via Docker you will pass in an envionment file via the `-e <file>` flag
+When running via Docker you will pass in an environment file via the `-e <file>` flag
 see [distributions/demo-server/env.secrets.template](../distributions/demo-server/env.secrets.template)
 for a template.
 

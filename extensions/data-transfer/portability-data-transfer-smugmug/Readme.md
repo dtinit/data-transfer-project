@@ -18,6 +18,6 @@ SumgMug uses OAuth 1 for authorization.
 
 ## Maintained By
 
-The Instagram extention was created by the
+The Instagram extension was created by the
 [DTP maintainers](mailto:portability-maintainers@googlegroups.com)
 and is not an official product of SumgMug.

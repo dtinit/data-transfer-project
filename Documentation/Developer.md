@@ -98,7 +98,7 @@ If you get an error `error: duplicate class... final class AutoValue_...` it is 
 
 ## Misc updates
 There is a rest version of the client and demo-server in progress. While it is not complete yet and lacks some of the
-features in the http based client, it is still runnable and works for all services that implement oauth2.
+features in the http based client, it is still runnable and works for all services that implement OAuth2.
 
 The following runs the client-rest api
   * `cd client-rest`
