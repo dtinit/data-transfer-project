@@ -22,6 +22,10 @@
   
 ### Running the project
   * See the instructions below to run locally
+  
+### Start coding
+  * See the issues with label [good first issue](https://github.com/google/data-transfer-project/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+ 
 
 ## First Run/Setup
 
