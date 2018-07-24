@@ -10,7 +10,7 @@ This folder contains the extension implementation for the
 
 ## Current State
 
- - Calendar doesn't support recuring events yet
+ - Calendar doesn't support recurring events yet
  - All services still need some final testing
 
 ## Keys & Auth

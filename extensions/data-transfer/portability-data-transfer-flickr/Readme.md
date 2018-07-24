@@ -16,10 +16,10 @@ cases are working.
 
 Apply for a key at [www.flickr.com/services/apps/create/apply](https://www.flickr.com/services/apps/create/apply)
 
-Flickr uses OAth 1.0 for authorization.
+Flickr uses OAuth 1.0 for authorization.
 
 ## Maintained By
 
-The Flickr extention was created by the
+The Flickr extension was created by the
 [DTP maintainers](mailto:portability-maintainers@googlegroups.com)
 and is not an official product of Flickr.
