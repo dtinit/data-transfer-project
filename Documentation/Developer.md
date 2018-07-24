@@ -40,7 +40,7 @@ From the top level data-transfer-project directory:
  * Install Angular: `npm install -g @angular/cli`
  * [Install Docker](https://docs.docker.com/install/)
  * Install the Angular CLI `./gradlew client:installLocalAngularCli`
- * In the `client/` directory, run `npm install`
+ * In the `client-rest/` directory, run `npm install`
 
 ### IntelliJ setup
 The following instructions work for IntelliJ IDEA version 2017.2.6.
