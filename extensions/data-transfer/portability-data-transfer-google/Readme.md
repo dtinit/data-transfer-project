@@ -12,13 +12,13 @@ This folder contains the extension implementation for the
 
 ## Current State
 
- - Calendar doesn't support recuring events yet
+ - Calendar doesn't support recurring events yet
  - All services still need some final testing
 
 ## Keys & Auth
 
 Sign up for a [Google Cloud developer account](https://console.developers.google.com/start)
-and then enable the appropriate apis in the console.
+and then enable the appropriate APIs in the console.
 
 Google uses OAuth 2 for authorization.
 

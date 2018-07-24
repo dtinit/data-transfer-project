@@ -46,7 +46,7 @@ Individuals should be able to move completely from one service to another.  For 
 Individuals should be able to try out new services.  For example, an individual hears about a new email service with an amazing new UI, but it's hard to try it out without significant amounts of real data in it.  The individual should be able to easily make a copy of all their old email, import it into the new service and try it out.  Then they can decide whether to keep their email in one or both of the services.
 
 ### Moving selected data  
-Individuals should be able to move selected parts of their data to new companies.  For example, an individual may keep all of their photos in Google Photos, but wants to make a photo book with a different service.  They should be able to move just the desired pictures to the photobook service without having to use significant bandwith to first download, then upload, the photos.
+Individuals should be able to move selected parts of their data to new companies.  For example, an individual may keep all of their photos in Google Photos, but wants to make a photo book with a different service.  They should be able to move just the desired pictures to the photobook service without having to use significant bandwidth to first download, then upload, the photos.
 
 ## Architecture
 
@@ -207,7 +207,7 @@ Providers and the Hosting Entity (if separate from the Provider) should have str
 
 To access and use an API it is usually required to obtain an API key from the provider first.
 
-Each hosted instance using a service will be required to obtain an API key for transfering data to/from that service.  This ensures that each company is independently responsible for the terms that accompany the API access.
+Each hosted instance using a service will be required to obtain an API key for transferring data to/from that service.  This ensures that each company is independently responsible for the terms that accompany the API access.
 
 It also ensures that each service provider has the final say in which DTP hosting entities may use their APIs for data transfer. In practice, this means that services will be able to approve or deny companies' requests to offer data transfer with them.
 

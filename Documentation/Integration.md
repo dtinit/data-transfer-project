@@ -6,6 +6,8 @@ This guide covers the following options for integrating your service, with the p
 * [Integrate a new data model](#integrate-a-new-data-model)
 * [Integrate a new cloud provider](#integrate-a-new-cloud-provider)
 
+A current example of this approach is outlined in this [comment by bwillard](https://github.com/google/data-transfer-project/issues/499#issuecomment-407405760)
+
 ## Integrate a new transfer service
 A new service can be integrated into the Data Transfer Project by creating the following extensions:
 
@@ -98,8 +100,8 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
     * Return an FooAuthDataGenerator for a given transfer type and mode
 
 2. Create an FooAuthDataGenerator implementing AuthDataGenerator
-  * This class should implement the generateConfiguration() method, which will generate the url and related data to redirect the user to for authentication, e.g. the first part of an Oauth step.
-  * This class should also implement the generateAuthData() method, which will take the token obtained in the first step and execute the necessary steps to obtain an AuthData object containing tokens to execute requests with, e.g. Oauth access tokens.
+  * This class should implement the generateConfiguration() method, which will generate the URL and related data to redirect the user to for authentication, e.g. the first part of an OAuth step.
+  * This class should also implement the generateAuthData() method, which will take the token obtained in the first step and execute the necessary steps to obtain an AuthData object containing tokens to execute requests with, e.g. OAuth access tokens.
 
 3. Create the test directory for the FooAuthDataGeneratorTest
 
