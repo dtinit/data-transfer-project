@@ -6,9 +6,12 @@
  * General questions and discussion: [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com)
  * [Slack channel](https://portability.slack.com), email
    [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com) for invitation
- * Proposed Office Hours for anyone interested, developers, participants, etc.: TBD, email [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com) for the latest times
- * Weekly Skype call for maintainers, email [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com)
-   for invitation
+ * Office Hours for anyone interested, developers, participants, etc.: 
+   * Times: Tuesday 2pm CST and Thursday 10am CST
+   
+   To attend:
+   1. Send email stating your desired topic to discuss to [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com) 
+   1. You will receive a Google Hangout link (or let us know if you prefer another method of communication)
 
 ## Where to start
 
@@ -22,6 +25,10 @@
   
 ### Running the project
   * See the instructions below to run locally
+  
+### Start coding
+  * See the issues with label [good first issue](https://github.com/google/data-transfer-project/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+ 
 
 ## First Run/Setup
 

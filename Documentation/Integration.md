@@ -6,6 +6,8 @@ This guide covers the following options for integrating your service, with the p
 * [Integrate a new data model](#integrate-a-new-data-model)
 * [Integrate a new cloud provider](#integrate-a-new-cloud-provider)
 
+A current example of this approach is outlined in this [comment by bwillard](https://github.com/google/data-transfer-project/issues/499#issuecomment-407405760)
+
 ## Integrate a new transfer service
 A new service can be integrated into the Data Transfer Project by creating the following extensions:
 
