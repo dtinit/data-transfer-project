@@ -51,7 +51,10 @@ matrix:
         - cd ..
         - # sudo service docker start
       script:
-        - ./gradlew -PcloudType=local :distributions:demo-server:dockerize
+        - ./gradlew :distributions:demo-server:shadowJar
+        - ./gradlew :distributions:demo-server:createDockerfile
+        - ./gradlew :distributions:demo-server:copyWebApp
+        - ./gradlew :distributions:demo-server:dockerize
       deploy:
         - provider: script
           script: bash scripts/docker_push.sh
