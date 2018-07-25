@@ -48,7 +48,12 @@ matrix:
         - ./gradlew -PcloudType=local :distributions:demo-server:dockerize
       deploy:
         - provider: script
-          before_script: sudo service docker start
+          before_script:
+            - cd client-rest
+            - npm install
+            - npm install -g @anular/cli
+            - cd ..
+            - sudo service docker start
           script: bash scripts/docker_push.sh
           skip_cleanup: true
           on:
