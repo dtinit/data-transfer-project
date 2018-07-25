@@ -49,7 +49,7 @@ matrix:
         - npm install
         - npm install -g @angular/cli
         - cd ..
-        - sudo service docker start
+        - # sudo service docker start
       script:
         - ./gradlew -PcloudType=local :distributions:demo-server:dockerize
       deploy:
