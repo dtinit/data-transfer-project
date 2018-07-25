@@ -47,6 +47,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * <p>The flow is a two-step process. First, the user is sent to an authorization page and is then
  * redirected to a address in this system with the authorization code. The second step takes the
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
+ *
+ * Foo
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
   // The scopes necessary to import each supported data type.
