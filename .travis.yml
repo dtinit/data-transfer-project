@@ -14,19 +14,16 @@
 # limitations under the License.
 #
 
-language: java # Gradle (used automatically)
-jdk:
-  - oraclejdk8
 matrix:
   include:
-    - name: "Gradle tests"
+    - name: "Java (Gradle)"
+      language: java # Travis knows to use Gradle based on the presence of gradle build file
     # The angularjs flow below is more customized. There is some nodejs setup to do as well as
     # configuration to use the version of Chrome that is installed in Travis images.
-    - name: "AngularJS tests"
-      env:
-        - NODE_VERSION="8.9"
-      before_install:
-        - nvm install $NODE_VERSION
+    - name: "AngularJS"
+      language: node_js
+      node_js:
+        - '8.9'
       cache:
         directories:
           - ./client-rest/node_modules
@@ -41,19 +38,14 @@ matrix:
       script:
         - ng test --single-run --no-progress --browser=ChromeNoSandbox --environment local
         - ng e2e --no-progress --config=protractor-ci.conf.js --environment local
-      after_script:
-        - cd ..
-    - name: "Build demo image"
+    - name: "Demo image"
       services:
         - docker
-      # env:
-        # - DOCKER_HOST=tcp://127.0.0.1:2375
       before_script:
         - cd client-rest
         - npm install
         - npm install -g @angular/cli
         - cd ..
-        - # sudo service docker start
       script:
         - ./gradlew :distributions:demo-server:dockerize
       deploy:
