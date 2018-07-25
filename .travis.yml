@@ -47,7 +47,7 @@ matrix:
       before_script:
         - cd client-rest
         - npm install
-        - npm install -g @anular/cli
+        - npm install -g @angular/cli
         - cd ..
         - sudo service docker start
       script:
