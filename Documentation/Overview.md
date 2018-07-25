@@ -176,7 +176,7 @@ The User Interface (UI) is expected to be highly customized by each implementati
 
 ## Reference implementation
 
-We provide a [reference implementation](https://github.com/google/data-transfer-project/blob/master/extensions/transport/portability-transport-jdk/src/main/java/org/datatransferproject/transport/jdk/http/ReferenceApiServer.java) which runs in a docker image (for example, our [demo image](https://hub.docker.com/r/datatransferproject/demo/)) which allows for deployment to any cloud environment with minimal customization.
+We provide a [reference implementation](https://github.com/google/data-transfer-project/blob/master/extensions/transport/portability-transport-jettyrest/src/main/java/org/datatransferproject/transport/jettyrest/rest/JerseyTransportBinder.java) which runs in a docker image (for example, our [demo image](https://hub.docker.com/r/datatransferproject/demo/)) which allows for deployment to any cloud environment with minimal customization.
 
 ## Security and privacy
 

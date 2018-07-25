@@ -27,7 +27,7 @@ repositories {
 
 dependencies {
     compile project(':portability-api')
-    compile project(':extensions:transport:portability-transport-jdk')
+    compile project(':extensions:transport:portability-transport-jettyrest')
     // TODO: depend on these based on list in flag values.
     compile project(':extensions:auth:portability-auth-google')
     compile project(':extensions:auth:portability-auth-microsoft')
