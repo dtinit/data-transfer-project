@@ -17,7 +17,7 @@ matrix:
   include:
   branches:
     except:
-      - docker-fix #TODO change to master if this works
+      - docker-fix # TODO change to master if this works
     # language: java causes Travis to automatically run Gradle tests based on the
     # presence of the appropriate build files.
     - language: java # Gradle (used automatically)
@@ -58,4 +58,4 @@ deploy:
   script: ./scripts/docker_push.sh
   skip_cleanup: true
   on:
-    branch: docker-push #TODO change to master if this works
+    branch: docker-push # TODO change to master if this works
