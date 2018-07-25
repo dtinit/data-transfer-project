@@ -18,13 +18,18 @@ package org.datatransferproject.api.auth;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,20 +38,155 @@ public class PortabilityAuthServiceExtensionRegistryTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
+  private AuthServiceExtension getMockedAuthProvider(
+      List<String> supportedImportTypes, List<String> supportedExportTypes, String serviceId) {
+    AuthServiceExtension mockAuthProvider = mock(AuthServiceExtension.class);
+
+    when(mockAuthProvider.getExportTypes()).thenReturn(supportedExportTypes);
+    when(mockAuthProvider.getImportTypes()).thenReturn(supportedImportTypes);
+    when(mockAuthProvider.getServiceId()).thenReturn(serviceId);
+
+    return mockAuthProvider;
+  }
+
   @Test
   public void requireImportAndExportTest() {
     List<String> supportedImportTypes = ImmutableList.of("photos", "contacts");
     List<String> supportedExportTypes = ImmutableList.of("contacts");
 
-    AuthServiceExtension mockAuthProvider = mock(AuthServiceExtension.class);
-    when(mockAuthProvider.getExportTypes()).thenReturn(supportedExportTypes);
-    when(mockAuthProvider.getImportTypes()).thenReturn(supportedImportTypes);
-    when(mockAuthProvider.getServiceId()).thenReturn("mockAuthProvider");
+    AuthServiceExtension mockAuthProvider = getMockedAuthProvider(
+        supportedImportTypes, supportedExportTypes, "mockAuthProvider");
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("available for import but not export");
 
     AuthServiceProviderRegistry registry =
         new PortabilityAuthServiceProviderRegistry(
             ImmutableMap.of("mockServiceProvider", mockAuthProvider));
+  }
+
+  @Test
+  public void testGetTransferDataTypes() {
+    List<String> supportedServiceTypes = ImmutableList.of("photos", "contacts");
+
+    AuthServiceExtension mockAuthProvider = getMockedAuthProvider(
+        supportedServiceTypes, supportedServiceTypes, "mockAuthProvider");
+
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableMap.of("mockServiceProvider", mockAuthProvider));
+
+    Set<String> actual = registry.getTransferDataTypes();
+
+    final String services[] = new String[] {"photos", "contacts"};
+    Set<String> expected = new HashSet<>(Arrays.asList(services));
+
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testGetExportServices1() {
+    List<String> supportedServiceTypes1 = ImmutableList.of("photos", "contacts");
+    List<String> supportedServiceTypes2 = ImmutableList.of("contacts");
+
+    AuthServiceExtension mockAuthProvider1 = getMockedAuthProvider(
+        supportedServiceTypes1, supportedServiceTypes1, "mockAuthProvider1");
+    AuthServiceExtension mockAuthProvider2 = getMockedAuthProvider(
+        supportedServiceTypes2, supportedServiceTypes2, "mockAuthProvider2");
+
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableMap.of("mockServiceProvider1", mockAuthProvider1,
+                "mockServiceProvider2", mockAuthProvider2));
+
+    Set<String> actual = registry.getExportServices("contacts");
+    final String services[] = new String[]{"mockAuthProvider1", "mockAuthProvider2"};
+    Set<String> expected = new HashSet<>(Arrays.asList(services));
+
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testGetExportServices2() {
+    List<String> supportedServiceTypes1 = ImmutableList.of("photos", "contacts");
+    List<String> supportedServiceTypes2 = ImmutableList.of("contacts");
+
+    AuthServiceExtension mockAuthProvider1 = getMockedAuthProvider(
+        supportedServiceTypes1, supportedServiceTypes1, "mockAuthProvider1");
+    AuthServiceExtension mockAuthProvider2 = getMockedAuthProvider(
+        supportedServiceTypes2, supportedServiceTypes2, "mockAuthProvider2");
+
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableMap.of("mockServiceProvider1", mockAuthProvider1,
+                "mockServiceProvider2", mockAuthProvider2));
+
+    Set<String> actual = registry.getExportServices("photos");
+    final String services[] = new String[] {"mockAuthProvider1"};
+    Set<String> expected = new HashSet<>(Arrays.asList(services));
+
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testGetImportServices1() {
+    List<String> supportedServiceTypes1 = ImmutableList.of("photos", "contacts");
+    List<String> supportedServiceTypes2 = ImmutableList.of("contacts");
+
+    AuthServiceExtension mockAuthProvider1 = getMockedAuthProvider(
+        supportedServiceTypes1, supportedServiceTypes1, "mockAuthProvider1");
+    AuthServiceExtension mockAuthProvider2 = getMockedAuthProvider(
+        supportedServiceTypes2, supportedServiceTypes2, "mockAuthProvider2");
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableMap.of("mockServiceProvider1", mockAuthProvider1,
+                "mockServiceProvider2", mockAuthProvider2));
+
+    Set<String> actual = registry.getImportServices("contacts");
+    final String services[] = new String[]{"mockAuthProvider1", "mockAuthProvider2"};
+    Set<String> expected = new HashSet<>(Arrays.asList(services));
+
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testGetImportServices2() {
+    List<String> supportedServiceTypes1 = ImmutableList.of("photos", "contacts");
+    List<String> supportedServiceTypes2 = ImmutableList.of("contacts");
+
+    AuthServiceExtension mockAuthProvider1 = getMockedAuthProvider(
+        supportedServiceTypes1, supportedServiceTypes1, "mockAuthProvider1");
+    AuthServiceExtension mockAuthProvider2 = getMockedAuthProvider(
+        supportedServiceTypes2, supportedServiceTypes2, "mockAuthProvider2");
+
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableMap.of("mockServiceProvider1", mockAuthProvider1,
+                "mockServiceProvider2", mockAuthProvider2));
+
+    Set<String> actual = registry.getImportServices("photos");
+    final String services[] = new String[] {"mockAuthProvider1"};
+    Set<String> expected = new HashSet<>(Arrays.asList(services));
+
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testGetAuthDataGenerator() {
+    List<String> supportedServiceTypes = ImmutableList.of("photos", "contacts");
+    AuthServiceExtension mockAuthProvider = getMockedAuthProvider(
+        supportedServiceTypes, supportedServiceTypes, "mockAuthProvider");
+
+    when(mockAuthProvider
+        .getAuthDataGenerator("contacts", AuthServiceProviderRegistry.AuthMode.EXPORT))
+        .thenReturn(mock(AuthDataGenerator.class));
+
+    AuthServiceProviderRegistry registry =
+        new PortabilityAuthServiceProviderRegistry(
+            ImmutableMap.of("mockServiceProvider", mockAuthProvider));
+
+    AuthDataGenerator actual = registry.getAuthDataGenerator(
+        "mockServiceProvider","contacts", AuthServiceProviderRegistry.AuthMode.EXPORT);
+
+    Assert.assertNotNull(actual);
   }
 }
