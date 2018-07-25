@@ -17,10 +17,12 @@
 matrix:
   include:
     - name: "Java (Gradle)"
-      language: java # Travis knows to use Gradle based on the presence of gradle build file
-    # The angularjs flow below is more customized. There is some nodejs setup to do as well as
-    # configuration to use the version of Chrome that is installed in Travis images.
+      # Nothing to customize here. Travis knows to use Gradle (including running tests) based on
+      # the presence of gradle build file
+      language: java
     - name: "AngularJS"
+      # The AngularJS flow below is customized. There is some nodejs setup to do as well as
+      # configuration to use the version of Chrome that is installed in Travis images.
       language: node_js
       node_js:
         - '8.9'
@@ -39,6 +41,8 @@ matrix:
         - ng test --single-run --no-progress --browser=ChromeNoSandbox --environment local
         - ng e2e --no-progress --config=protractor-ci.conf.js --environment local
     - name: "Demo image"
+      # This task will build our demo docker image. It will also deploy the image to docker hub,
+      # on merges to master only.
       services:
         - docker
       before_script:
@@ -53,7 +57,7 @@ matrix:
           script: bash scripts/docker_push.sh
           skip_cleanup: true
           on:
-            branch: docker-push # TODO change to master if this works
+            branch: master
 
 addons:
   apt:
