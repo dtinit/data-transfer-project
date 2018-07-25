@@ -260,7 +260,7 @@ A Hosting Platform is the technical environment where a DTP instance can be host
 Individuals are any person who interacts with a Provider. Individuals are interested in being able to manage and move the data they have stored in a Provider’s infrastructure.
 
 ### Contributors 
-Contributors are official members of the Data Transfer Project. The are most likely Providers, but may also be organizations who are interested in enabling data transfer among their members. Contributors contribute in may ways to the Data Transfer Project Open Source project, including contributing code, tools, advice and insights.
+Contributors are official members of the Data Transfer Project. They are most likely Providers, but may also be organizations who are interested in enabling data transfer among their members. Contributors contribute in many ways to the Data Transfer Project Open Source project, including contributing code, tools, advice and insights.
 
 ### Provider
 Providers are any company or entity that holds user data. Providers may or may not be contributors.
