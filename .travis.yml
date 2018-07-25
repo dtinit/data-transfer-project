@@ -20,7 +20,7 @@ jdk:
 # The angularjs flow below is more customized. There is some nodejs setup to do as well as
 # configuration to use the version of Chrome that is installed in Travis images.
 env:
-  - NODE_VERSION="0.12"
+  - NODE_VERSION="8.9"
 before_install:
   - nvm install $NODE_VERSION
 cache:
