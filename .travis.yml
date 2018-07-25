@@ -44,16 +44,16 @@ matrix:
       after_script:
         - cd ..
     - name: "Build demo image"
+      before_script:
+        - cd client-rest
+        - npm install
+        - npm install -g @anular/cli
+        - cd ..
+        - sudo service docker start
       script:
         - ./gradlew -PcloudType=local :distributions:demo-server:dockerize
       deploy:
         - provider: script
-          before_script:
-            - cd client-rest
-            - npm install
-            - npm install -g @anular/cli
-            - cd ..
-            - sudo service docker start
           script: bash scripts/docker_push.sh
           skip_cleanup: true
           on:
