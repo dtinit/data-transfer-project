@@ -14,10 +14,6 @@
 # limitations under the License.
 #
 
-env:
-  global:
-    - DOCKER_HOST=tcp://127.0.0.1:2375
-
 language: java # Gradle (used automatically)
 jdk:
   - oraclejdk8
@@ -48,6 +44,8 @@ matrix:
       after_script:
         - cd ..
     - name: "Build demo image"
+      env:
+        - DOCKER_HOST=tcp://127.0.0.1:2375
       before_script:
         - cd client-rest
         - npm install
