@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-- language: java # Gradle (used automatically)
+language: java # Gradle (used automatically)
   jdk:
     - oraclejdk8
   # The angularjs flow below is more customized. There is some nodejs setup to do as well as
