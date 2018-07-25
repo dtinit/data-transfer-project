@@ -55,9 +55,6 @@ matrix:
         - cd ..
         - # sudo service docker start
       script:
-        - ./gradlew :distributions:demo-server:shadowJar
-        - ./gradlew :distributions:demo-server:createDockerfile
-        - ./gradlew :distributions:demo-server:copyWebApp
         - ./gradlew :distributions:demo-server:dockerize
       deploy:
         - provider: script
