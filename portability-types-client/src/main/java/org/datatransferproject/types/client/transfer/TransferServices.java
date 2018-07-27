@@ -24,7 +24,6 @@ import java.util.Set;
 
 /** Export and import services that support the provided data type. */
 public class TransferServices {
-
   private final String transferDataType;
   private final Set<String> exportServices;
   private final Set<String> importServices;

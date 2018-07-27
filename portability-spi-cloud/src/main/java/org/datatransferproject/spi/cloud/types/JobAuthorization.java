@@ -64,8 +64,8 @@ public abstract class JobAuthorization {
     // The job is in the process of obtaining export and import authorization credentials via the
     // api auth flow.
     INITIAL,
-    // The api authorization flow has completed and raw credentials are temporarily available in
-    // the api server.
+    // The authorization flow has completed and raw credentials are temporarily available in the
+    // client.
     CREDS_AVAILABLE,
     // A transfer worker has spun up and generated a key to encrypt the credentials above so that it
     // (alone)

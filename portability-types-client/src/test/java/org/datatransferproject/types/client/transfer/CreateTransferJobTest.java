@@ -20,26 +20,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-/* Test for CreateJobResponse */
-public class CreateJobResponseTest {
+/* Test for CreateTransferJob */
+public class CreateTransferJobTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
 
-    CreateJobResponse transfer =
-        new CreateJobResponse(
-            "testSource",
-            "testDestination",
-            "application/json",
-            CreateJobResponse.Status.INPROCESS,
-            "nexturltofollow");
-    String serialized = objectMapper.writeValueAsString(transfer);
+    String serialized =
+        objectMapper.writeValueAsString(
+            new CreateTransferJob("testSource", "testDestination", "photos", "https://localhost:3000"));
 
-    CreateJobResponse deserialized =
-        objectMapper.readValue(serialized, CreateJobResponse.class);
+    CreateTransferJob deserialized =
+        objectMapper.readValue(serialized, CreateTransferJob.class);
 
-    Assert.assertEquals(CreateJobResponse.Status.INPROCESS, deserialized.getStatus());
-    Assert.assertEquals("nexturltofollow", deserialized.getNextUrl());
+    Assert.assertEquals("testSource", deserialized.getSource());
+    Assert.assertEquals("testDestination", deserialized.getDestination());
+    Assert.assertEquals("photos", deserialized.getDataType());
+    Assert.assertEquals("https://localhost:3000", deserialized.getBaseCallbackUrl());
   }
 }

@@ -17,7 +17,7 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Auth data for an export or import service */
+/** Auth data for an export or import service. */
 public class ServiceAuthData {
   private String authData;
 

@@ -19,17 +19,18 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 
-/** Request to return data transfer operation. */
-@ApiModel(description = "Returns a data transfer operation")
-public class GetTransfer {
-  private final String id;
+/** The worker that was reserved for a transfer job. */
+@ApiModel(description = "The worker reserved for a transfer job")
+public class ReservedWorker {
+    // null/missing until worker has been reserved
+    private final String publicKey;
 
-  @JsonCreator
-  public GetTransfer(@JsonProperty(value = "id", required = true) String id) {
-    this.id = id;
-  }
+    @JsonCreator
+    public ReservedWorker(@JsonProperty(value = "publicKey", required = false) String publicKey) {
+        this.publicKey = publicKey;
+    }
 
-  public String getId() {
-    return id;
-  }
+    public String getPublicKey() {
+        return publicKey;
+    }
 }

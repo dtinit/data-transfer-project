@@ -16,7 +16,7 @@ export class ProgressGuard implements CanActivate {
             return false;
         } else if ("/import" == state.url && this.progressService.currentStep() < Step.AUTHENTICATE_EXPORT) {
             return false;
-        } else if ("/initiate" == state.url && this.progressService.currentStep() < Step.AUTHENTICATE_IMPORT) {
+        } else if ("/initiate" == state.url && this.progressService.currentStep() < Step.WORKER_RESERVED) {
             return false;
         }
         return true;

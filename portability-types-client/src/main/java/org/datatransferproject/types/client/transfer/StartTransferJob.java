@@ -17,13 +17,14 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Request to initiate the data transfer process */
-public class StartTransfer {
+/** Request to start a transfer job. */
+public class StartTransferJob {
   private String id;
+  // TODO: replace with credentials encrypted by client
   private String exportAuthData;
   private String importAuthData;
 
-  public StartTransfer(
+  public StartTransferJob(
       @JsonProperty(value = "id", required = true) String id,
       @JsonProperty(value = "exportAuthData", required = true) String exportAuthData,
       @JsonProperty(value = "importAuthData", required = true) String importAuthData) {
@@ -36,12 +37,12 @@ public class StartTransfer {
     return id;
   }
 
-  /** Returns encrypted auth data for the export service. */
+  /** Returns auth data for the export service. */
   public String getExportAuthData() {
     return exportAuthData;
   }
 
-  /** Returns encrypted auth data for the import service. */
+  /** Returns auth data for the import service. */
   public String getImportAuthData() {
     return importAuthData;
   }

@@ -20,22 +20,33 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-/* Test for CreateJobRequest */
-public class CreateJobRequestTest {
+import static com.google.common.truth.Truth.assertThat;
+
+/* Test for TransferJob */
+public class TransferJobTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
 
-    String serialized =
-        objectMapper.writeValueAsString(
-            new CreateJobRequest("testSource", "testDestination", "application/json"));
+    TransferJob transfer =
+        new TransferJob(
+            "1-2-3",
+            "testSource",
+            "testDestination",
+            "photos",
+            "exportUrl",
+            "importUrl");
+    String serialized = objectMapper.writeValueAsString(transfer);
 
-    CreateJobRequest deserialized =
-        objectMapper.readValue(serialized, CreateJobRequest.class);
+    TransferJob deserialized =
+        objectMapper.readValue(serialized, TransferJob.class);
 
-    Assert.assertEquals("testSource", deserialized.getSource());
-    Assert.assertEquals("testDestination", deserialized.getDestination());
-    Assert.assertEquals("application/json", deserialized.getTransferDataType());
+    assertThat("1-2-3").isEqualTo(deserialized.getId());
+    assertThat("testSource").isEqualTo(deserialized.getSource());
+    assertThat("testDestination").isEqualTo(deserialized.getDestination());
+    assertThat("photos").isEqualTo(deserialized.getDataType());
+    assertThat("exportUrl").isEqualTo(deserialized.getExportUrl());
+    assertThat("importUrl").isEqualTo(deserialized.getImportUrl());
   }
 }

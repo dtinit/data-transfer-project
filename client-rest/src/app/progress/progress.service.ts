@@ -16,10 +16,13 @@ export class ProgressService {
                 step: Step.BEGIN,
                 transferId: undefined,
                 dataType: undefined,
+                exportService: undefined,
+                exportAuthData: undefined,
+                exportUrl: undefined,
                 importService: undefined,
                 importAuthData: undefined,
-                exportService: undefined,
-                exportAuthData: undefined
+                importUrl: undefined,
+                workerPublicKey: undefined
             };
             this.save();
         }
@@ -45,12 +48,24 @@ export class ProgressService {
         return this.appState.exportService;
     }
 
+    exportUrl(): string | undefined {
+        return this.appState.exportUrl;
+    }
+
     importAuthData(): string | undefined {
         return this.appState.importAuthData;
     }
 
     importService(): string | undefined {
         return this.appState.importService;
+    }
+
+    importUrl(): string | undefined {
+        return this.appState.importUrl;
+    }
+
+    workerPublicKey(): string | undefined {
+        return this.appState.workerPublicKey;
     }
 
     private save(): void {
@@ -79,12 +94,13 @@ export class ProgressService {
         this.save();
     }
 
-    createComplete(transferId: string) {
+    createComplete(transferId: string, exportUrl: string, importUrl: string) {
         this.appState.transferId = transferId;
+        this.appState.exportUrl = exportUrl;
+        this.appState.importUrl = importUrl;
         this.appState.step = Step.AUTHENTICATE_EXPORT;
         this.save();
     }
-
 
     authExportComplete(exportAuthData: string) {
         this.appState.exportAuthData = exportAuthData;
@@ -95,6 +111,12 @@ export class ProgressService {
     authImportComplete(importAuthData: string) {
         this.appState.importAuthData = importAuthData;
         this.appState.step = Step.INITIATE;
+        this.save();
+    }
+
+    workerReserved(workerPublicKey: string) {
+        this.appState.workerPublicKey = workerPublicKey;
+        this.appState.step = Step.WORKER_RESERVED;
         this.save();
     }
 
@@ -115,12 +137,15 @@ interface AppState {
     transferId: string | undefined;
     dataType: string | undefined
     exportService: string | undefined
+    exportUrl: string | undefined
     exportAuthData: string | undefined
     importService: string | undefined
     importAuthData: string | undefined
+    importUrl: string | undefined
+    workerPublicKey: string | undefined
 }
 
 
 export enum Step {
-    BEGIN, DATA, SERVICES, CREATE, AUTHENTICATE_EXPORT, AUTHENTICATE_IMPORT, INITIATE, RUNNING, ERROR
+    BEGIN, DATA, SERVICES, CREATE, AUTHENTICATE_EXPORT, AUTHENTICATE_IMPORT, WORKER_RESERVED, INITIATE, RUNNING, ERROR
 }

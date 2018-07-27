@@ -6,7 +6,7 @@ import {TransferService} from "./transfer.service";
 import {transportError} from "../transport";
 
 /**
- * Creates a transfer request on the API server.
+ * Creates a transfer job request on the API server.
  * TODO: Add form validation
  */
 @Component({
@@ -45,14 +45,15 @@ export class CreateTransferComponent implements OnInit {
 
     next() {
         this.progressService.servicesSelected(this.servicesForm.get("exportService").value, this.servicesForm.get("importService").value);
-        this.transferService.createTransfer({
+        this.transferService.createTransferJob({
             source: this.progressService.exportService(),
             destination: this.progressService.importService(),
-            transferDataType: this.progressService.dataType()
-        }).subscribe(transfer => {
+            dataType: this.progressService.dataType(),
+            baseCallbackUrl: "https://localhost:3000"
+        }).subscribe(transferJob => {
             // redirect to OAuth service
-            this.progressService.createComplete(transfer.id);
-            window.location.href = transfer.link;
+            this.progressService.createComplete(transferJob.id, transferJob.exportUrl, transferJob.importUrl);
+            window.location.href = transferJob.exportUrl;
         }, transportError);
     }
 

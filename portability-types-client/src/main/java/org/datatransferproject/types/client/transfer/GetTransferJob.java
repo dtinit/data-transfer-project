@@ -17,13 +17,15 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModel;
 
-/** Request to prepare the import auth data flow */
-public class PrepareImport {
+/** Request a transfer job. */
+@ApiModel(description = "Returns a data transfer job")
+public class GetTransferJob {
   private final String id;
 
   @JsonCreator
-  public PrepareImport(@JsonProperty(value = "id", required = true) String id) {
+  public GetTransferJob(@JsonProperty(value = "id", required = true) String id) {
     this.id = id;
   }
 

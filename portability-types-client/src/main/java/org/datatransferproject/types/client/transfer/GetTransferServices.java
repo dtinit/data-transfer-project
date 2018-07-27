@@ -17,7 +17,7 @@ package org.datatransferproject.types.client.transfer;
 
 import java.util.Objects;
 
-/** A request to list services available for export and import for the given type. */
+/** Request to list services available for export and import for the given type. */
 public class GetTransferServices {
   private final String transferDataType;
 

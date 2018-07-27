@@ -5,12 +5,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.action.datatype.DataTypesAction;
-import org.datatransferproject.api.action.transfer.CreateTransferAction;
-import org.datatransferproject.api.action.transfer.GenerateServiceAuthDataAction;
-import org.datatransferproject.api.action.transfer.GetTransferAction;
-import org.datatransferproject.api.action.transfer.GetTransferServicesAction;
-import org.datatransferproject.api.action.transfer.PrepareImportAuthAction;
-import org.datatransferproject.api.action.transfer.StartTransferAction;
+import org.datatransferproject.api.action.transfer.*;
 import org.datatransferproject.api.auth.PortabilityAuthServiceProviderRegistry;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -96,10 +91,11 @@ public class ApiServicesModule extends FlagBindingModule {
     Multibinder<Action> actionBinder = Multibinder.newSetBinder(binder(), Action.class);
     actionBinder.addBinding().to(DataTypesAction.class);
     actionBinder.addBinding().to(GetTransferServicesAction.class);
-    actionBinder.addBinding().to(CreateTransferAction.class);
+    actionBinder.addBinding().to(CreateTransferJobAction.class);
     actionBinder.addBinding().to(GenerateServiceAuthDataAction.class);
-    actionBinder.addBinding().to(GetTransferAction.class);
-    actionBinder.addBinding().to(PrepareImportAuthAction.class);
-    actionBinder.addBinding().to(StartTransferAction.class);
+    actionBinder.addBinding().to(ReserveWorkerAction.class);
+    actionBinder.addBinding().to(GetReservedWorkerAction.class);
+    actionBinder.addBinding().to(StartTransferJobAction.class);
+    actionBinder.addBinding().to(GetTransferJobAction.class);
   }
 }

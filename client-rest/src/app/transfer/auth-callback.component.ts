@@ -10,16 +10,12 @@ import {transportError} from "../transport";
  *
  * Authentication is handled in several steps:
  *
- * 1. After receiving the callback and token (code) from the export OAuth service, this component requests the API server to generate export auth data, which it stores as part
- *    of application state.
+ * After receiving the callback and token (code) from the export OAuth service, this component stores the raw auth
+ * data/tokens locally, and either:
+ * - 1st callback: redirects to the import auth URL, if we are handling the (first) callback from export auth
+ * - 2nd callback: calls ReserveWorker in the API server, if we are handling the (second) callback from import auth
  *
- * 2. Import auth configuration is generated and the browser is redirected to the import OAuth service.
- *
- * 3. After the user has authenticated, the import OAuth service will redirect the browser back to this compenent, passing the import auth token (code).
- *
- * 4. This component requests the API server to generate import auth data, which it stores as part of application state.
- *
- * 5. The transfer process is continued.
+ * From there, the transfer process is continued server-side.
  */
 @Component({
     template: "<div></div>"
@@ -31,26 +27,29 @@ export class AuthCallbackComponent implements OnInit {
 
     ngOnInit() {
         let token = this.getToken();
-
         let transferId = this.progressService.transferId();
+        let importUrl = this.progressService.importUrl();
 
         if (Step.AUTHENTICATE_EXPORT === this.progressService.currentStep()) {
-            // export auth step: generate the export auth data from the export token
-            // Use SSL as the token is sent cleartext
-            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "EXPORT"}).subscribe((data => {
+            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "EXPORT"}).subscribe(
+            (data => {
                 this.progressService.authExportComplete(data.authData);
 
-                // retrieve the configuration for the import OAuth service
-                this.transferService.prepareImport(transferId).subscribe(transfer => {
-                    // redirect to the import OAuth service. When authentication is complete, the browser will be redirected back to this component
-                    window.location.href = transfer.link;
-                }, transportError);
+                // Redirect to the import OAuth service. When authentication is complete, the browser will be redirected
+                // back to this component
+                window.location.href = this.progressService.importUrl();
             }));
         } else {
-            // import auth step: received the import auth callback, generate the import auth data from the import token and continue the transfer process
-            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "IMPORT"}).subscribe(data => {
+            // import auth step: received the import auth callback, generate the import auth data from the import token
+            // and continue the transfer process
+            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "IMPORT"}).subscribe(
+            data => {
                 this.progressService.authImportComplete(data.authData);
-                this.router.navigate(["initiate"]);
+
+                this.transferService.reserveWorker({id: transferId}).subscribe(
+                unused => { // TODO: make this return void?
+                    this.router.navigate(["initiate"]);
+                }, transportError);
             }, transportError);
         }
     }
