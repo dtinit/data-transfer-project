@@ -19,12 +19,7 @@ import org.datatransferproject.api.action.Action;
 import org.datatransferproject.spi.api.transport.TransportBinder;
 import org.datatransferproject.transport.jettyrest.http.JettyTransport;
 import org.datatransferproject.types.client.datatype.GetDataTypes;
-import org.datatransferproject.types.client.transfer.CreateTransfer;
-import org.datatransferproject.types.client.transfer.GenerateServiceAuthData;
-import org.datatransferproject.types.client.transfer.GetTransfer;
-import org.datatransferproject.types.client.transfer.GetTransferServices;
-import org.datatransferproject.types.client.transfer.PrepareImport;
-import org.datatransferproject.types.client.transfer.StartTransfer;
+import org.datatransferproject.types.client.transfer.*;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
@@ -61,11 +56,12 @@ public class JerseyTransportBinder implements TransportBinder {
     controllers.add(new TransferServicesController(actions.get(GetTransferServices.class)));
     controllers.add(
         new TransferController(
-            actions.get(CreateTransfer.class),
-            actions.get(PrepareImport.class),
+            actions.get(CreateTransferJob.class),
             actions.get(GenerateServiceAuthData.class),
-            actions.get(StartTransfer.class),
-            actions.get(GetTransfer.class)));
+            actions.get(ReserveWorker.class),
+            actions.get(GetReservedWorker.class),
+            actions.get(StartTransferJob.class),
+            actions.get(GetTransferJob.class)));
 
     // Create a Jersey JAX-RS Application (resourceConfig), add the actions, and register it with
     // the Jetty transport.

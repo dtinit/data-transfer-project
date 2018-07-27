@@ -19,15 +19,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 
-/** Request to create a data transfer job. */
-@ApiModel(description = "Request to create a data transfer job")
-public class CreateJobRequest extends AbstractDataTransfer {
+/** Request to return the worker that was reserved for the given transfer job. */
+@ApiModel(description = "Returns the worker reserved for a given transfer job")
+public class GetReservedWorker {
+    private final String id;
 
-  @JsonCreator
-  public CreateJobRequest(
-      @JsonProperty(value = "source", required = true) String source,
-      @JsonProperty(value = "destination", required = true) String destination,
-      @JsonProperty(value = "transferDataType", required = true) String transferDataType) {
-    super(source, destination, transferDataType);
-  }
+    @JsonCreator
+    public GetReservedWorker(@JsonProperty(value = "id", required = true) String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
 }

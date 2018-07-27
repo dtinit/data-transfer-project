@@ -55,10 +55,14 @@ public class GenerateServiceAuthDataAction
 
   public ServiceAuthData handle(GenerateServiceAuthData request) {
     try {
-      UUID jobId = decodeJobId(request.getId());
+      String id = request.getId();
+      Preconditions.checkNotNull(id, "transfer job ID required for GenerateServiceAuthDataAction");
+      UUID jobId = decodeJobId(id);
 
+      Preconditions.checkNotNull(request.getAuthToken(),
+              "Auth token required for GenerateServiceAuthDataAction, transfer job ID: %s", jobId);
       PortabilityJob job = jobStore.findJob(jobId);
-      Preconditions.checkNotNull(job, "existing job not found for jobId: %s", jobId);
+      Preconditions.checkNotNull(job, "existing job not found for transfer job ID: %s", jobId);
 
       // TODO: Determine service from job or from authUrl path?
       AuthMode authMode =

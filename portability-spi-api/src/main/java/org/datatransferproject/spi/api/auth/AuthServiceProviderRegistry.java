@@ -10,7 +10,7 @@ public interface AuthServiceProviderRegistry {
    * specified
    *
    * @param serviceId the AuthServiceExtension to use
-   * @param transferDataType The TransferdataType to authorize for
+   * @param transferDataType The transfer data type to authorize for
    * @param mode The authorization mode
    * @return An AuthDataGenerator from the specified AuthServiceExtension for the type and mode
    *     requested.

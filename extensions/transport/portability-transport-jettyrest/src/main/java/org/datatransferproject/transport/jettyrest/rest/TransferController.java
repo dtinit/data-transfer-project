@@ -16,13 +16,7 @@
 package org.datatransferproject.transport.jettyrest.rest;
 
 import org.datatransferproject.api.action.Action;
-import org.datatransferproject.types.client.transfer.CreateTransfer;
-import org.datatransferproject.types.client.transfer.GenerateServiceAuthData;
-import org.datatransferproject.types.client.transfer.GetTransfer;
-import org.datatransferproject.types.client.transfer.PrepareImport;
-import org.datatransferproject.types.client.transfer.ServiceAuthData;
-import org.datatransferproject.types.client.transfer.StartTransfer;
-import org.datatransferproject.types.client.transfer.Transfer;
+import org.datatransferproject.types.client.transfer.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -37,51 +31,60 @@ import javax.ws.rs.core.MediaType;
 @Produces({MediaType.APPLICATION_JSON})
 @Path("/transfer")
 public class TransferController {
-    private final Action<CreateTransfer, Transfer> createAction;
-    private final Action<PrepareImport, Transfer> importAction;
-    private final Action<GenerateServiceAuthData, ServiceAuthData> generateAction;
-    private final Action<StartTransfer, Transfer> startAction;
-    private final Action<GetTransfer, Transfer> getAction;
+    private final Action<CreateTransferJob, TransferJob> createJobAction;
+    private final Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction;
+    private final Action<ReserveWorker, String> reserveWorkerAction;
+    private final Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction;
+    private final Action<StartTransferJob, TransferJob> startJobAction;
+    private final Action<GetTransferJob, TransferJob> getJobAction;
 
     public TransferController(
-            Action<CreateTransfer, Transfer> createAction,
-            Action<PrepareImport, Transfer> importAction,
-            Action<GenerateServiceAuthData, ServiceAuthData> generateAction,
-            Action<StartTransfer, Transfer> startAction,
-            Action<GetTransfer, Transfer> getAction) {
-        this.createAction = createAction;
-        this.importAction = importAction;
-        this.generateAction = generateAction;
-        this.startAction = startAction;
-        this.getAction = getAction;
+            Action<CreateTransferJob, TransferJob> createJobAction,
+            Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction,
+            Action<ReserveWorker, String> reserveWorkerAction,
+            Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction,
+            Action<StartTransferJob, TransferJob> startJobAction,
+            Action<GetTransferJob, TransferJob> getJobAction) {
+        this.createJobAction = createJobAction;
+        this.generateAuthDataAction = generateAuthDataAction;
+        this.reserveWorkerAction = reserveWorkerAction;
+        this.getReservedWorkerAction = getReservedWorkerAction;
+        this.startJobAction = startJobAction;
+        this.getJobAction = getJobAction;
     }
 
     @GET
     @Path("{id}")
-    public Transfer find(@PathParam("id") String id) {
-        return getAction.handle((new GetTransfer(id)));
+    public TransferJob getTransferJob(@PathParam("id") String id) {
+        return getJobAction.handle((new GetTransferJob(id)));
     }
 
     @POST
-    public Transfer create(CreateTransfer request) {
-        return createAction.handle(request);
-    }
-
-    @POST
-    @Path("{id}/import")
-    public Transfer prepareImport(@PathParam("id") String id) {
-        return importAction.handle(new PrepareImport(id));
+    public TransferJob createTransferJob(CreateTransferJob request) {
+        return createJobAction.handle(request);
     }
 
     @POST
     @Path("{id}/generate")
     public ServiceAuthData generate(GenerateServiceAuthData generate) {
-        return generateAction.handle(generate);
+        return generateAuthDataAction.handle(generate);
+    }
+
+    @POST
+    @Path("worker/{id}")
+    public String reserveWorker(ReserveWorker reserveWorker) {
+        return reserveWorkerAction.handle(reserveWorker);
+    }
+
+    @GET
+    @Path("worker/{id}")
+    public ReservedWorker getWorker(@PathParam("id") String id) {
+        return getReservedWorkerAction.handle((new GetReservedWorker(id)));
     }
 
     @POST
     @Path("{id}/start")
-    public Transfer startTransfer(StartTransfer request) {
-        return startAction.handle(request);
+    public TransferJob startTransferJob(StartTransferJob request) {
+        return startJobAction.handle(request);
     }
 }

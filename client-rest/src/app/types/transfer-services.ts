@@ -2,9 +2,7 @@
  * Available transfer services for a given data type.
  */
 export interface TransferServices {
-
-    transferDataType: string;
+    dataType: string;
     exportServices: Array<string>;
     importServices: Array<string>;
-
 }
