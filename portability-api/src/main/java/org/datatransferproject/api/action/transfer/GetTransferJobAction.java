@@ -1,5 +1,6 @@
 package org.datatransferproject.api.action.transfer;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -28,6 +29,7 @@ public class GetTransferJobAction implements Action<GetTransferJob, TransferJob>
   @Override
   public TransferJob handle(GetTransferJob transferRequest) {
     String id = transferRequest.getId();
+    Preconditions.checkNotNull(id, "transfer job ID required for GetTransferJobAction");
     UUID jobId = decodeJobId(id);
 
     PortabilityJob job = jobStore.findJob(jobId);

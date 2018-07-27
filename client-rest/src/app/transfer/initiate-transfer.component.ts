@@ -34,18 +34,26 @@ export class InitiateTransferComponent implements OnInit {
     }
 
     initiate() {
+        // Poll until a worker public key is available, indicating a worker has been assigned for our transfer job.
+        // Once we have this key, we'll use it to encrypt the user's export and import auth credentials and start the
+        // transfer job.
+        let pollAttempt = 0;
+        let maxPollAttempts = 20;
         let pollForWorkerKey = Observable.interval(1500)
           .switchMap(() => this.transferService.getReservedWorker({id: this.progressService.transferId()}))
-          .take(20)
+          .take(maxPollAttempts)
           .subscribe(
             reservedWorker => {
-                console.log("polling for worker");
+                console.log("polling for assigned transfer worker");
+                pollAttempt++;
                 if (reservedWorker.publicKey) {
-                  console.log("got worker with key: " + reservedWorker.publicKey);
+                  console.log("got transfer worker with public key: " + reservedWorker.publicKey);
                   pollForWorkerKey.unsubscribe();
                   this.progressService.workerReserved(reservedWorker.publicKey);
                   this.startTransferJob();
                   // TODO encrypt creds with worker public key
+                } else if (pollAttempt == maxPollAttempts) {
+                  alert(`Could not poll worker public key`);
                 }
             }, transportError);
     }
@@ -66,5 +74,4 @@ export class InitiateTransferComponent implements OnInit {
         this.progressService.reset();
         this.router.navigate([""]);
     }
-
 }

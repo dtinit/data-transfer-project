@@ -1,5 +1,6 @@
 package org.datatransferproject.api.action.transfer;
 
+import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
@@ -49,6 +50,7 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
   @Override
   public TransferJob handle(StartTransferJob startTransferJob) {
     String id = startTransferJob.getId();
+    Preconditions.checkNotNull(id, "transfer job ID required for StartTransferJobAction");
     UUID jobId = decodeJobId(id);
     PortabilityJob job = jobStore.findJob(jobId);
 

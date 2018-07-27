@@ -39,6 +39,7 @@ public class ReserveWorkerAction implements Action<ReserveWorker, String> {
     @Override
     public String handle(ReserveWorker reserveWorker) {
         String id = reserveWorker.getId();
+        Preconditions.checkNotNull(id, "transfer job ID required for ReserveWorkerAction");
         UUID jobId = decodeJobId(id);
         updateStateToCredsAvailable(jobId);
         return "";

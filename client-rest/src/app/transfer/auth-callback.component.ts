@@ -31,6 +31,8 @@ export class AuthCallbackComponent implements OnInit {
         let importUrl = this.progressService.importUrl();
 
         if (Step.AUTHENTICATE_EXPORT === this.progressService.currentStep()) {
+            // export auth step: received the export auth callback, generate the export auth data from the export token
+            // and redirect to the import url. Use SSL as the token is sent cleartext.
             this.transferService.generateAuthData({id: transferId, authToken: token, mode: "EXPORT"}).subscribe(
             (data => {
                 this.progressService.authExportComplete(data.authData);
@@ -41,7 +43,7 @@ export class AuthCallbackComponent implements OnInit {
             }));
         } else {
             // import auth step: received the import auth callback, generate the import auth data from the import token
-            // and continue the transfer process
+            // and continue the transfer process. Use SSL as the token is sent cleartext.
             this.transferService.generateAuthData({id: transferId, authToken: token, mode: "IMPORT"}).subscribe(
             data => {
                 this.progressService.authImportComplete(data.authData);
