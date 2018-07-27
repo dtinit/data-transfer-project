@@ -47,13 +47,14 @@ export class InitiateTransferComponent implements OnInit {
                 console.log("polling for assigned transfer worker");
                 pollAttempt++;
                 if (reservedWorker.publicKey) {
+                  // TODO: Remove debug statement in production
                   console.log("got transfer worker with public key: " + reservedWorker.publicKey);
                   pollForWorkerKey.unsubscribe();
                   this.progressService.workerReserved(reservedWorker.publicKey);
                   this.startTransferJob();
-                  // TODO encrypt creds with worker public key
+                  // TODO: encrypt creds with worker public key
                 } else if (pollAttempt == maxPollAttempts) {
-                  alert(`Could not poll worker public key`);
+                  alert(`Timed out getting a worker for this data transfer`);
                 }
             }, transportError);
     }
