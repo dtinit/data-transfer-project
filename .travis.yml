@@ -38,7 +38,7 @@ matrix:
         - export DISPLAY=:99.0
         - sh -e /etc/init.d/xvfb start
       script:
-        - ng test --watch --no-progress --browsers=ChromeNoSandbox --environment local
+        - ng test --watch --no-progress --browsers=ChromeHeadless --environment local
         - ng e2e --configuration=protractor-ci.conf.js --environment local
     #- name: "Demo image"
       # This task will build our demo docker image. It will also deploy the image to docker hub,
