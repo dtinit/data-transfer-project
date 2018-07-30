@@ -39,7 +39,8 @@ matrix:
         - sh -e /etc/init.d/xvfb start
       script:
         - ng test --no-watch --no-progress --browsers=ChromeHeadless --environment local
-        - ng e2e --protractor-config=e2e/protractor.conf.js
+        - npm run webdriver-update-ci
+        - ng e2e --protractor-config=e2e/protractor.conf.js --webdriver-update=false
     #- name: "Demo image"
       # This task will build our demo docker image. It will also deploy the image to docker hub,
       # on merges to master only.
