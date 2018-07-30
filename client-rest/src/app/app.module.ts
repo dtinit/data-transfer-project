@@ -1,4 +1,4 @@
-import {RouterModule} from '@angular/router';
+import {RouterTestingModule} from '@angular/router/testing';
 import {BrowserModule} from "@angular/platform-browser";
 import {NgModule} from "@angular/core";
 
@@ -18,7 +18,7 @@ import {InitiateTransferComponent} from "./transfer/initiate-transfer.component"
         AppComponent, ProgressComponent, AuthCallbackComponent, StartComponent, DataComponent, CreateTransferComponent, InitiateTransferComponent
     ],
     imports: [
-        BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, CommonModule, routing, RouterModule, RouterModule.forRoot(appRoutes),
+        BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, CommonModule, routing, RouterTestingModule,
     ],
     providers: [ProgressService, DataTypesService, TransferService, ProgressGuard, TitleCasePipe],
     bootstrap: [AppComponent]
