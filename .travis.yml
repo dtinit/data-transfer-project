@@ -36,9 +36,10 @@ matrix:
         - npm install -g @angular/cli
         - export CHROME_BIN=chromium-browser
         - export DISPLAY=:99.0
+        - ls
         - sh -e /etc/init.d/xvfb start
       script:
-        - ng test --watch --no-progress --browsers=ChromeHeadless --environment local
+        - ng test --no-watch --no-progress --browsers=ChromeHeadless --environment local
         - ng e2e --configuration=protractor-ci.conf.js --environment local
     #- name: "Demo image"
       # This task will build our demo docker image. It will also deploy the image to docker hub,
