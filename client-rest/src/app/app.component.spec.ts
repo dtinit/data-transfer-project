@@ -22,6 +22,7 @@ describe("AppComponent", () => {
     const app = fixture.debugElement.componentInstance;
     expect(app.title).toEqual("Data Transfer Project Demo");
   }));
+
   it("should render title in a h3 tag", async(() => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
