@@ -34,7 +34,8 @@ module.exports = function (config) {
               '--headless',
               '--disable-gpu',
               '--disable-extensions',
-              '--remove-debugging-port=9222'
+              '--remove-debugging-port=9222',
+              '--no-sandbox'
             ]
           }
         },
