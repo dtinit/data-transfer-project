@@ -31,10 +31,13 @@ module.exports = function (config) {
             base: 'Chrome',
             flags: [
               '--no-sandbox',
-              '--disable-setuid-sandbox'
-            ]
+              '--disable-setuid-sandbox',
+              '--remote-debugging-port=9222'
+            ],
+            debug: true
           }
         },
-        singleRun: false
+        browserNoActivityTimeout: 120000,
+        singleRun: true
   });
 };
