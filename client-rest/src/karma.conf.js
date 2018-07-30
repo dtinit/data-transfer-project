@@ -30,12 +30,8 @@ module.exports = function (config) {
           ChromeHeadless: {
             base: 'Chrome',
             flags: [
-              '--disable-translate',
-              '--headless',
-              '--disable-gpu',
-              '--disable-extensions',
-              '--remove-debugging-port=9222',
-              '--no-sandbox'
+              '--no-sandbox',
+              '--disable-setuid-sandbox'
             ]
           }
         },
