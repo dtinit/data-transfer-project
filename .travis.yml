@@ -15,14 +15,13 @@
 #
 matrix:
   include:
-    #- name: "Java (Gradle)"
+    - name: "Java (Gradle)"
       # Nothing to customize here. Travis knows to use Gradle (including running tests) based on
       # the presence of gradle build file
-    #  language: java
-    # TODO: Re-enable Angular tests once they are working for client-rest (#511)
+      language: java
     - name: "AngularJS"
-    #  # The AngularJS flow below is customized. There is some nodejs setup to do as well as
-    #  # configuration to use the version of Chrome that is installed in Travis images.
+      # The AngularJS flow below is customized. There is some nodejs setup to do as well as
+      # configuration to use the version of Chrome that is installed in Travis images.
       language: node_js
       node_js:
         - '8.9'
@@ -41,24 +40,24 @@ matrix:
         - ng test --no-watch --no-progress --browsers=ChromeHeadless --environment local
         - npm run webdriver-update-ci
         - ng e2e --protractor-config=e2e/protractor.conf.js --webdriver-update=false
-    #- name: "Demo image"
+    - name: "Demo image"
       # This task will build our demo docker image. It will also deploy the image to docker hub,
       # on merges to master only.
-    #  services:
-    #    - docker
-    #  before_script:
-    #    - cd client-rest
-    #    - npm install
-    #    - npm install -g @angular/cli
-    #    - cd ..
-    #  script:
-    #    - ./gradlew :distributions:demo-server:dockerize
-    #  deploy:
-    #    - provider: script
-    #      script: bash scripts/docker_push.sh
-    #      skip_cleanup: true
-    #      on:
-    #        branch: master
+      services:
+        - docker
+      before_script:
+        - cd client-rest
+        - npm install
+        - npm install -g @angular/cli
+        - cd ..
+      script:
+        - ./gradlew :distributions:demo-server:dockerize
+      deploy:
+        - provider: script
+          script: bash scripts/docker_push.sh
+          skip_cleanup: true
+          on:
+            branch: master
 
 addons:
   apt:
