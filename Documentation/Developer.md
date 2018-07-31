@@ -39,7 +39,7 @@ From the top level data-transfer-project directory:
  * Install Node: `nvm install node`
  * Install Angular: `npm install -g @angular/cli`
  * [Install Docker](https://docs.docker.com/install/)
- * Install the Angular CLI `./gradlew client:installLocalAngularCli`
+ * Install the Angular CLI `./gradlew client-rest:installLocalAngularCli`
  * In the `client-rest/` directory, run `npm install`
 
 ### IntelliJ setup
