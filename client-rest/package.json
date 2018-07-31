@@ -7,7 +7,8 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "webdriver-update-ci": "webdriver-manager update --standalone false --gecko false --versions.chrome 2.40"
   },
   "private": true,
   "dependencies": {
