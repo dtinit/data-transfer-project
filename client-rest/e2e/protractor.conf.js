@@ -9,7 +9,10 @@ exports.config = {
     './src/**/*.e2e-spec.ts'
   ],
   capabilities: {
-    'browserName': 'chrome'
+    'browserName': 'chrome',
+    chromeOptions: {
+      args: ["--disable-dev-shm-usage", "--headless", "--disable-gpu",  "--no-sandbox", "--disable-extensions"]
+    }
   },
   directConnect: true,
   baseUrl: 'http://localhost:4200/',
