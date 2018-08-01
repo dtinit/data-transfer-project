@@ -21,11 +21,11 @@ To configure kubectl to connect to your Kubernetes cluster, run the `gcloud cont
 > gcloud container clusters list 
 NAME                          LOCATION       
 portability-api-cluster       us-central1-a  
-portability-transfer-cluster  us-central1-a  
+portability-worker-cluster  us-central1-a  
 > gcloud container clusters get-credentials portability-api-cluster --zone=us-central1-a
 Fetching cluster endpoint and auth data.
 kubeconfig entry generated for portability-api-cluster.
->gcloud container clusters get-credentials portability-transfer-cluster --zone=us-central1-a 
+>gcloud container clusters get-credentials portability-worker-cluster --zone=us-central1-a 
 Fetching cluster endpoint and auth data.
 kubeconfig entry generated for portability-transfer-cluster.
 ```
