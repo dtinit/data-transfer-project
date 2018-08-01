@@ -84,7 +84,7 @@ public abstract class PortabilityJob {
                 .setEncryptedImportAuthData(encryptedImportAuthData)
                 .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
                 .setAuthSecretKey((String) properties.get(ENCRYPTED_AUTH_KEY))
-                .setAuthPublicKey(encodedPublicKey)
+                .setWorkerPublicKey(encodedPublicKey)
                 .setEncryptedInitialExportAuthData(encryptedExportInitialAuthData)
                 .setEncryptedInitialImportAuthData(encryptedImportInitialAuthData)
                 .build())
@@ -146,8 +146,8 @@ public abstract class PortabilityJob {
     if (null != jobAuthorization().encryptedImportAuthData()) {
       builder.put(IMPORT_ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedImportAuthData());
     }
-    if (null != jobAuthorization().authPublicKey()) {
-      builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
+    if (null != jobAuthorization().workerPublicKey()) {
+      builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().workerPublicKey());
     }
 
     if (null != jobAuthorization().encryptedInitialExportAuthData()) {
@@ -206,11 +206,11 @@ public abstract class PortabilityJob {
           isUnset(
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData(),
-              jobAuthorization.authPublicKey());
+              jobAuthorization.workerPublicKey());
           break;
         case CREDS_ENCRYPTION_KEY_GENERATED:
           // Expected associated keys from the assigned transfer worker to be present
-          isSet(jobAuthorization.sessionSecretKey(), jobAuthorization.authPublicKey());
+          isSet(jobAuthorization.sessionSecretKey(), jobAuthorization.workerPublicKey());
           isUnset(
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData());
@@ -219,7 +219,7 @@ public abstract class PortabilityJob {
           // Expected all fields set
           isSet(
               jobAuthorization.sessionSecretKey(),
-              jobAuthorization.authPublicKey(),
+              jobAuthorization.workerPublicKey(),
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData());
           break;

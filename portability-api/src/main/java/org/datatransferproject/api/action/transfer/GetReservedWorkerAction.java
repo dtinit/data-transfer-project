@@ -1,15 +1,12 @@
 package org.datatransferproject.api.action.transfer;
 
 import com.google.api.client.util.Preconditions;
-import com.google.api.client.util.Sleeper;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.GetReservedWorker;
-import org.datatransferproject.types.client.transfer.GetTransferJob;
 import org.datatransferproject.types.client.transfer.ReservedWorker;
-import org.datatransferproject.types.client.transfer.TransferJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +43,6 @@ public class GetReservedWorkerAction implements Action<GetReservedWorker, Reserv
             return new ReservedWorker(null);
         }
         logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED, returning its public key", jobId);
-        return new ReservedWorker(job.jobAuthorization().authPublicKey());
+        return new ReservedWorker(job.jobAuthorization().workerPublicKey());
     }
 }

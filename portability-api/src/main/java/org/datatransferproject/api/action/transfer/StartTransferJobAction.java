@@ -59,11 +59,11 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
       // Update this job with credentials encrypted with a public key, e.g. for a specific transfer
       // worker instance
       job =
-          encryptAndUpdateJobWithCredentials(
-              jobId,
-              job,
-              startTransferJob.getExportAuthData(),
-              startTransferJob.getImportAuthData());
+          encryptAuthDataAndUpdateJob(
+	      jobId, 
+	      job, 
+	      startTransferJob.getExportAuthData(), 
+	      startTransferJob.getImportAuthData());
     }
 
     return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(), null, null);
@@ -73,38 +73,34 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
    * Encrypt the export and import credentials with a new {@link SecretKey} and {@link PublicKey}
    * assigned to this job then update the data store to {@code State.CREDS_ENCRYPTED} state.
    */
-  private PortabilityJob encryptAndUpdateJobWithCredentials(
+  private PortabilityJob encryptAuthDataAndUpdateJob(
       UUID jobId,
       PortabilityJob job,
       String exportAuthData,
       String importAuthData) {
-
     // Step 1 - Generate authSecretKey, a new SecretKey which must not be persisted as is.
     SecretKey authSecretKey = symmetricKeyGenerator.generate();
 
     // Step 2 - Encrypt the auth data with authSecretKey
-    Encrypter secretKeyEncrypter = EncrypterFactory.create(authSecretKey);
-    String doublyEncryptedExportAuthData =
-        secretKeyEncrypter.encrypt(exportAuthData);
-    String doublyEncryptedImportAuthData =
-        secretKeyEncrypter.encrypt(importAuthData);
+    Encrypter authSecretKeyEncrypter = EncrypterFactory.create(authSecretKey);
+    String authSecretKeyEncryptedExportAuthData = authSecretKeyEncrypter.encrypt(exportAuthData);
+    String authSecretKeyEncryptedImportAuthData = authSecretKeyEncrypter.encrypt(importAuthData);
 
-    // Step 3 - Encrypt the authSecretKey itself with the authPublickey
-    PublicKey authPublicKey =
-        asymmetricKeyGenerator.parse(
-            BaseEncoding.base64Url().decode(job.jobAuthorization().authPublicKey()));
-    Encrypter asymmetricEncrypter = EncrypterFactory.create(authPublicKey);
+    // Step 3 - Encrypt the authSecretKey itself with workerPublicKey
+    PublicKey workerPublicKey =
+        asymmetricKeyGenerator.parse(BaseEncoding.base64Url().decode(job.jobAuthorization().workerPublicKey()));
+    Encrypter workerPublicKeyEncrypter = EncrypterFactory.create(workerPublicKey);
 
-    String encryptedAuthSecretKey =
-        asymmetricEncrypter.encrypt(BaseEncoding.base64Url().encode(authSecretKey.getEncoded()));
+    String workerPublicKeyEncryptedAuthSecretKey =
+        workerPublicKeyEncrypter.encrypt(BaseEncoding.base64Url().encode(authSecretKey.getEncoded()));
 
     // Populate job with encrypted auth data
     JobAuthorization updatedJobAuthorization =
         job.jobAuthorization()
             .toBuilder()
-            .setEncryptedExportAuthData(doublyEncryptedExportAuthData)
-            .setEncryptedImportAuthData(doublyEncryptedImportAuthData)
-            .setAuthSecretKey(encryptedAuthSecretKey)
+            .setEncryptedExportAuthData(authSecretKeyEncryptedExportAuthData)
+            .setEncryptedImportAuthData(authSecretKeyEncryptedImportAuthData)
+            .setAuthSecretKey(workerPublicKeyEncryptedAuthSecretKey)
             .setState(CREDS_ENCRYPTED)
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();

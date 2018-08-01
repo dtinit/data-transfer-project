@@ -149,7 +149,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     assertThat(job.jobAuthorization().state())
         .isEqualTo(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED);
-    assertThat(job.jobAuthorization().authPublicKey()).isNotEmpty();
+    assertThat(job.jobAuthorization().workerPublicKey()).isNotEmpty();
 
     // Client encrypts data and updates the job
     job =
