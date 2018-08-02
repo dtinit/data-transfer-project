@@ -45,7 +45,7 @@ public abstract class JobAuthorization {
   public abstract String sessionSecretKey();
 
   /**
-   * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the workerPublicKey
+   * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
    * before storage.
    */
   @Nullable
@@ -54,8 +54,8 @@ public abstract class JobAuthorization {
 
   /** The PublicKey of the 'transfer worker' instance assigned to this job, encoded for storage. */
   @Nullable
-  @JsonProperty("workerPublicKey")
-  public abstract String workerPublicKey();
+  @JsonProperty("authPublicKey")
+  public abstract String authPublicKey();
 
   public abstract Builder toBuilder();
 
@@ -106,7 +106,7 @@ public abstract class JobAuthorization {
 
     /**
      * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the
-     * workerPublicKey before storage.
+     * authPublicKey before storage.
      */
     @JsonProperty("authSecretKey")
     public abstract Builder setAuthSecretKey(String authSecretKey);
@@ -114,8 +114,8 @@ public abstract class JobAuthorization {
     /**
      * The PublicKey of the 'transfer worker' instance assigned to this job, encoded for storage.
      */
-    @JsonProperty("workerPublicKey")
-    public abstract Builder setWorkerPublicKey(String workerPublicKey);
+    @JsonProperty("authPublicKey")
+    public abstract Builder setAuthPublicKey(String authPublicKey);
 
     public abstract JobAuthorization build();
   }

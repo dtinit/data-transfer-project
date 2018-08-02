@@ -102,7 +102,7 @@ class JobPollingService extends AbstractScheduledService {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
     // Verify no transfer worker key
-    if (existingJob.jobAuthorization().workerPublicKey() != null) {
+    if (existingJob.jobAuthorization().authPublicKey() != null) {
       logger.debug("public key cannot be persisted again");
       return false;
     }
@@ -116,7 +116,7 @@ class JobPollingService extends AbstractScheduledService {
                 existingJob
                     .jobAuthorization()
                     .toBuilder()
-                    .setWorkerPublicKey(encodedPublicKey)
+                    .setAuthPublicKey(encodedPublicKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                     .build())
             .build();

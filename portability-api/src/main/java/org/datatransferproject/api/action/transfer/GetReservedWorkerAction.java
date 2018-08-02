@@ -43,6 +43,6 @@ public class GetReservedWorkerAction implements Action<GetReservedWorker, Reserv
             return new ReservedWorker(null);
         }
         logger.debug("Got job {} in state CREDS_ENCRYPTION_KEY_GENERATED, returning its public key", jobId);
-        return new ReservedWorker(job.jobAuthorization().workerPublicKey());
+        return new ReservedWorker(job.jobAuthorization().authPublicKey());
     }
 }
