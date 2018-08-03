@@ -1,17 +1,17 @@
 # Data Models
 
-Data Models are a common format for transfer data between two adapters.
+Data Models are a common format for transfering data between two adapters.
 
 For any vertical (e.g. data type) there will hopefully be between 1 and a small handful
 of data models.
 
 ## Philosophy
 
-Data Models are meant to be tools to transfer data internally to in DTP.  They are **not meant to be 
-the one true representation** of this type of data.
+Data Models are meant to be tools to transfer data internally in DTP. They are **not meant to be 
+the one true representation** of this type of data outside of DTP.
 
-If there are existing standards for the type of data then that schema should be used instead of
-inventing a new schema.  However if there isn't a well adopted standard than providers are free
+If there are existing standards for a type of data then that schema/standard should be used instead
+of inventing a new schema.  However if there isn't a well adopted standard than providers are free
 to come up with their own schema.
 
 Ideally there is just one data model per vertical. That ensures that there is not fragmentation
@@ -22,9 +22,10 @@ services to be able to use DTP even if they have features that aren't yet standa
 
 ##  New Data Models
 New data models should be added as needed.  If you are the first service
-providers in a vertical it is up to you to pick a data model.
+provider in a vertical it is up to you to pick a data model.
 
-If you are a new provider in a vertical and don't like the current data model you have two options:
+If you are a new provider in an existing vertical and don't like the current data model you have
+two options:
 
  1) Utilize the existing data model.  We know it might not be your first choice, but it will
     be a lot less work and make the ecosystem better.
@@ -32,13 +33,13 @@ If you are a new provider in a vertical and don't like the current data model yo
  1) Define a new data model. This allows you the flexibility to define the perfect data model.
     However it carries a significant tax:
  
-    - Keep in mind if you do this, we **highly recommend** that you only import data from data
+    - If you do this, we **highly recommend** that you only import data from data
       models that you also export data to. So if you want access to other provider's data, or want
       your users to be able to export to other providers it is up to you to write adapters for
       the other services to your new data model.
       
  We believe by putting the onus of updating adapters on the creator of the new data model we allow
- the flexibility not to have DTP locked into a bad initial schema choice, but ensure that the
+ the flexibility of not having DTP locked into a bad initial schema choice, but ensure that the
  cost of the churn associated with changing or adding a data model is born by the initiator of the
  change.
 
