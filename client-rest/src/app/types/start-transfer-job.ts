@@ -5,4 +5,5 @@ export interface StartTransferJob {
     id: string;
     exportAuthData: string;
     importAuthData: string;
+    authDataEncrypted: boolean;
 }

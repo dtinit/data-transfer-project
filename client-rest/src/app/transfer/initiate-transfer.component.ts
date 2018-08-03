@@ -63,7 +63,9 @@ export class InitiateTransferComponent implements OnInit {
       let start: StartTransferJob = {
             id: this.progressService.transferId(),
             exportAuthData: this.progressService.exportAuthData(),
-            importAuthData: this.progressService.importAuthData()
+            importAuthData: this.progressService.importAuthData(),
+            // TODO: remove flag once client encrypts creds
+            authDataEncrypted: false
         };
         this.progressService.initiated();
         this.initiated = true;

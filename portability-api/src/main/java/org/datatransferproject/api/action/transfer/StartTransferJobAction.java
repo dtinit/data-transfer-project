@@ -54,11 +54,17 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
     UUID jobId = decodeJobId(id);
     PortabilityJob job = jobStore.findJob(jobId);
 
-    // TODO: move creds encryption to the client, and pass encrypted creds to this action.
-    // Update this job with credentials encrypted with a public key, e.g. for a specific transfer
-    // worker instance
-    job = encryptAndUpdateJobWithCredentials(
-        jobId, job, startTransferJob.getExportAuthData(), startTransferJob.getImportAuthData());
+    if (!startTransferJob.isAuthDataEncrypted()) {
+      // TODO: move creds encryption to the client, and pass encrypted creds to this action.
+      // Update this job with credentials encrypted with a public key, e.g. for a specific transfer
+      // worker instance
+      job =
+          encryptAndUpdateJobWithCredentials(
+              jobId,
+              job,
+              startTransferJob.getExportAuthData(),
+              startTransferJob.getImportAuthData());
+    }
 
     return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(), null, null);
   }
