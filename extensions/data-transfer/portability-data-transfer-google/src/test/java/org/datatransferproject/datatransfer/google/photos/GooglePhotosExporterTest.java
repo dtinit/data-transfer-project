@@ -123,7 +123,7 @@ public class GooglePhotosExporterTest {
             .stream()
             .map(a -> ((IdOnlyContainerResource) a).getId())
             .collect(Collectors.toList()))
-        .containsExactly(ALBUM_ID, GooglePhotosExporter.DEFAULT_ALBUM_ID);
+        .containsExactly(ALBUM_ID);
   }
 
   @Test
