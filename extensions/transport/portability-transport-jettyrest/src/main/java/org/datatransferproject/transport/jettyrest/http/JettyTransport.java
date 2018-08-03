@@ -15,6 +15,13 @@
  */
 package org.datatransferproject.transport.jettyrest.http;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -32,16 +39,11 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.Servlet;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.Writer;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.List;
-
-/** Provides HTTP(s) communication to the system via Jetty. */
+/**
+ * Provides HTTP(s) communication to the system via Jetty.
+ */
 public class JettyTransport {
+
   private static final Logger logger = LoggerFactory.getLogger(JettyTransport.class);
 
   private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
@@ -65,17 +67,25 @@ public class JettyTransport {
 
     HttpConfiguration https = new HttpConfiguration();
     https.addCustomizer(new SecureRequestCustomizer());
-    SslContextFactory sslContextFactory = new SslContextFactory();
-    sslContextFactory.setKeyStore(keyStore);
-    sslContextFactory.setKeyStorePassword("password");
-    sslContextFactory.setKeyManagerPassword("password");
-    ServerConnector sslConnector =
-        new ServerConnector(
-            server,
-            new SslConnectionFactory(sslContextFactory, "http/1.1"),
-            new HttpConnectionFactory(https));
-    sslConnector.setPort(httpPort);
-    server.setConnectors(new Connector[] {sslConnector});
+
+    boolean useHttps = false;
+    if (useHttps) {
+      SslContextFactory sslContextFactory = new SslContextFactory();
+      sslContextFactory.setKeyStore(keyStore);
+      sslContextFactory.setKeyStorePassword("password");
+      sslContextFactory.setKeyManagerPassword("password");
+      ServerConnector sslConnector =
+          new ServerConnector(
+              server,
+              new SslConnectionFactory(sslContextFactory, "http/1.1"),
+              new HttpConnectionFactory(https));
+      sslConnector.setPort(httpPort);
+      server.setConnectors(new Connector[]{sslConnector});
+    } else {
+      ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+      connector.setPort(httpPort);
+      server.setConnectors(new Connector[]{connector});
+    }
 
     server.setErrorHandler(new JettyErrorHandler());
     ContextHandlerCollection contexts = new ContextHandlerCollection();
