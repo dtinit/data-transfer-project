@@ -1,13 +1,13 @@
 # Data Models
 
-Data Models are a common format for transfer data between two providers.
+Data Models are a common format for transfer data between two adapters.
 
 For any vertical (e.g. data type) there will hopefully be between 1 and a small handful
 of data models.
 
 ## Philosophy
 
-Data Models are meant to be tools to transfer data in DTP.  They are **not meant to be 
+Data Models are meant to be tools to transfer data internally to in DTP.  They are **not meant to be 
 the one true representation** of this type of data.
 
 If there are existing standards for the type of data then that schema should be used instead of
@@ -57,8 +57,8 @@ before you do a lot of work, the maintainers will ask this question:
 "How are DTP users better off by making this change?"
 
 We are very much trying to avoid bike-shedding and centithreads over the schemas we use.
-We understand they aren't perfect, they aren't meant to be.  They are just meant to service the need
-to transfer data in DTP between participating providers.
+All schemas have flaws, we understand our schemas aren't perfect, they aren't meant to be. 
+They are just meant to service the need to transfer data in DTP between adapters.
 
 If there is a concrete use case in DTP that would be enabled by changing a schema than we should
 change it.
@@ -68,3 +68,5 @@ fidelity loss, then you can change a schema.
 
 If your schema is theoretically better than the existing schema, we believe you, but lets wait to
 change the schema until it is causing problems.
+
+Just like all changes, any schema changes must keep all tests passing.
