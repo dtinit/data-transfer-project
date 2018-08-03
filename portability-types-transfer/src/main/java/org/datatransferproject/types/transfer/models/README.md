@@ -1,6 +1,6 @@
 # Data Models
 
-Data Models are a common format for transfering data between two adapters.
+Data Models are a common format for transferring data between two adapters.
 
 For any vertical (e.g. data type) there will hopefully be between 1 and a small handful
 of data models.
