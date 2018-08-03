@@ -116,10 +116,13 @@ public class GooglePhotosExporter
     List<PhotoAlbum> albums = new ArrayList<>();
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
+    // TODO: fix this when we have a plan for orphan data
+    /*
     if (!paginationData.isPresent()) {
       // Represents a theoretical container for all photos
       continuationData.addContainerResource(new IdOnlyContainerResource(DEFAULT_ALBUM_ID));
     }
+    */
 
     if (googleAlbums == null) {
       return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, null),
