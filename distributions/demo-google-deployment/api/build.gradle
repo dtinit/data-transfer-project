@@ -53,6 +53,9 @@ repositories {
 
 dependencies {
     compile project(':portability-api')
+    // TODO: move logging to another location
+    compile project(':portability-transfer')
+
     compile project(':extensions:transport:portability-transport-jettyrest')
     compile project(':extensions:config:portability-config-yaml')
     // TODO: depend on these based on list in flag values.
@@ -98,7 +101,8 @@ task copyConfig(type: Copy) {
 
 task copyResources(type: Copy) {
     description = 'Copies resources and configuration into the jar'
-    dependsOn copyConfig, copyEnvConfig, copyIndexHtml
+    dependsOn copyConfig, copyEnvConfig
+    // dependsOn copyIndexHtml
     into 'build/resources/main'
     from('../resources') {
         exclude { details -> details.file.name.contains('config') }
@@ -163,7 +167,7 @@ task createApiServerDockerfileLocal(type: Dockerfile) {
     exposePort 5005 // Port to open up for the debugger
     defaultCommand("java",
             "-Xdebug",
-            "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005",
+            "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005",
             "-jar",
             "/app/api.jar")
     ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'

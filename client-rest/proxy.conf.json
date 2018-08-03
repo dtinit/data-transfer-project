@@ -1,6 +1,6 @@
 {
   "/api/*": {
-    "target": "https://localhost:8080/",
+    "target": "https://gardenswithoutwalls-qa.net",
     "secure": false,
     "logLevel": "debug"
   }

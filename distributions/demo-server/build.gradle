@@ -136,7 +136,7 @@ task createDockerfile(type: Dockerfile) {
     copyFile("build/webapp/test-keys/server.crt", "/etc/ssl/certs")
     copyFile("build/webapp/test-keys/server.key", "/etc/ssl")
 
-    // Install supervisor to allow mutliple processes to run
+    // Install supervisor to allow multiple processes to run
     runCommand("apt-get install -y supervisor")
     runCommand("mkdir -p /var/log/supervisor")
 
