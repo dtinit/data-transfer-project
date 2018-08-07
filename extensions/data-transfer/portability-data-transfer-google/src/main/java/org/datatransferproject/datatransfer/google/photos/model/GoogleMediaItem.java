@@ -43,21 +43,18 @@ public class GoogleMediaItem {
   @JsonProperty("location")
   private Object location; // Not yet available (2018-06-18)
 
+  @JsonProperty("filename")
+  private String filename;
+
   public String getId() { return id; }
 
   public String getDescription() { return description; }
 
   public String getProductUrl() { return productUrl; }
 
-  public String getBaseUrl() { return baseUrl; }
-
   public String getMimeType() { return mimeType; }
 
   public MediaMetadata getMediaMetadata() { return mediaMetadata; }
-
-  public ContributorInfo getContributorInfo() { return contributorInfo; }
-
-  public void setId(String id) { this.id = id; }
 
   public void setDescription(String description) { this.description = description; }
 

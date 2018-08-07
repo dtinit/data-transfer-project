@@ -116,19 +116,6 @@ public class GooglePhotosExporter
     List<PhotoAlbum> albums = new ArrayList<>();
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
-    // TODO: fix this when we have a plan for orphan data
-    /*
-    if (!paginationData.isPresent()) {
-      // Represents a theoretical container for all photos
-      continuationData.addContainerResource(new IdOnlyContainerResource(DEFAULT_ALBUM_ID));
-    }
-    */
-
-    if (googleAlbums == null) {
-      return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, null),
-          continuationData);
-    }
-
     for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
       albums.add(
@@ -145,6 +132,7 @@ public class GooglePhotosExporter
     if (nextPageData == null || continuationData.getContainerResources().isEmpty()) {
       resultType = ResultType.END;
     }
+
     PhotosContainerResource containerResource = new PhotosContainerResource(albums, null);
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
@@ -184,7 +172,7 @@ public class GooglePhotosExporter
         photos.add(
             new PhotoModel(
                 "", // TODO: no title?
-                mediaItem.getBaseUrl(),
+                mediaItem.getProductUrl(),
                 mediaItem.getDescription(),
                 mediaItem.getMimeType(),
                 mediaItem.getId(),

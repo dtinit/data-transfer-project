@@ -40,6 +40,9 @@ public class GoogleAlbum {
   @JsonProperty("coverPhotoBaseUrl")
   private String coverPhotoBaseUrl;
 
+  @JsonProperty("coverPhotoMediaItemId")
+  private String coverPhotoMediaItemId;
+
   public String getId() { return id; }
 
   public String getTitle() { return title; }
@@ -47,6 +50,4 @@ public class GoogleAlbum {
   public void setId(String id) { this.id = id; }
 
   public void setTitle(String title) { this.title = title; }
-
-  public void setProductUrl(String productUrl) { this.productUrl = productUrl; }
 }

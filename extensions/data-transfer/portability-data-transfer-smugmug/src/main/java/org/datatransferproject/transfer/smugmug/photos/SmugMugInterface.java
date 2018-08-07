@@ -28,7 +28,22 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
-import org.datatransferproject.transfer.smugmug.photos.model.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import org.datatransferproject.transfer.smugmug.photos.model.ImageUploadResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUser;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUserResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.builder.ServiceBuilder;
@@ -38,16 +53,8 @@ import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 public class SmugMugInterface {
+
   private static final String BASE_URL = "https://api.smugmug.com";
   private static final String USER_URL = "/api/v2!authuser";
   private static final String ALBUMS_KEY = "UserAlbums";
@@ -81,7 +88,8 @@ public class SmugMugInterface {
   SmugMugAlbumInfoResponse getAlbumInfo(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {})
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {
+    })
         .getResponse();
   }
 
@@ -91,7 +99,8 @@ public class SmugMugInterface {
     if (Strings.isNullOrEmpty(url)) {
       url = user.getUris().get(ALBUMS_KEY).getUri();
     }
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {})
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {
+    })
         .getResponse();
   }
 
@@ -117,7 +126,9 @@ public class SmugMugInterface {
             json,
             null, // No HttpContent for album creation
             ImmutableMap.of(), // No special Smugmug headers are required
-            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {});
+            false,
+            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {
+            });
 
     Preconditions.checkState(response.getResponse() != null, "Response is null");
     Preconditions.checkState(response.getResponse().getAlbum() != null, "Album is null");
@@ -139,13 +150,16 @@ public class SmugMugInterface {
         // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
         ImmutableMap.of(
             "X-Smug-AlbumUri", "/api/v2/album/" + albumId,
-            "X-Smug-ResponseType", "json",
+            "X-Smug-ResponseType", "JSON",
             "X-Smug-Version", "v2"),
-        new TypeReference<ImageUploadResponse>() {});
+        true,
+        new TypeReference<ImageUploadResponse>() {
+        });
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
-    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {})
+    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {
+    })
         .getResponse();
   }
 
@@ -181,6 +195,7 @@ public class SmugMugInterface {
       Map<String, String> contentParams,
       HttpContent content,
       Map<String, String> smugMugHeaders,
+      boolean isUpload,
       TypeReference<T> typeReference)
       throws IOException {
 
@@ -194,7 +209,8 @@ public class SmugMugInterface {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       content.writeTo(outputStream);
 
-      request.addPayload(outputStream.toByteArray());
+      byte[] byteArray = outputStream.toByteArray();
+      request.addPayload(byteArray);
     }
 
     for (Entry<String, String> param : contentParams.entrySet()) {
@@ -210,6 +226,13 @@ public class SmugMugInterface {
     }
     // add accept and content type headers so the response comes back in json and not html
     request.addHeader(HttpHeaders.ACCEPT, "application/json");
+
+    if (isUpload) {
+      String oauthHeader = String.join(",", request.getOauthParameters().entrySet().stream()
+          .map(a -> String.format("%s=\"%s\"", a.getKey(), a.getValue()))
+          .collect(Collectors.toList()));
+      request.addHeader("Authorization", oauthHeader);
+    }
 
     Response response = request.send();
     if (response.getCode() < 200 || response.getCode() >= 300) {

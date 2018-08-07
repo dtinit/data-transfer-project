@@ -38,6 +38,9 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
   private final SmugMugOauthInterface smugMugOauthInterface;
 
   public SmugMugAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
+    // NB: once a user grants access to an application on SM, they have to manually revoke access
+    // before permissions can be updated.  E.g., if a user first grants "Read" permissions to an
+    // app, they have to revoke the app before being able to grant "Add" permissions.
     this.perms = authMode == AuthMode.IMPORT ? "Add" : "Read";
     this.smugMugOauthInterface =
         new SmugMugOauthInterface(appCredentials.getKey(), appCredentials.getSecret());

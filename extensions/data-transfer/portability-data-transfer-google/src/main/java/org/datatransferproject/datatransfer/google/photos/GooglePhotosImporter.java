@@ -113,7 +113,7 @@ public class GooglePhotosImporter
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
     // Upload photo
-    getOrCreatePhotosService(authData)
+    PhotoEntry response = getOrCreatePhotosService(authData)
         .insert(uploadUrl, outputPhoto);
   }
 
