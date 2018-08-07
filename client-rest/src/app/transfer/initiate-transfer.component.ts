@@ -73,6 +73,10 @@ export class InitiateTransferComponent implements OnInit {
       }, transportError);
     }
 
+    authorizing(): Boolean {
+      return this.progressService.authorizing();
+    }
+
     reset() {
         this.progressService.reset();
         this.router.navigate([""]);

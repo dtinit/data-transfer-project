@@ -22,10 +22,15 @@ export class ProgressService {
                 importService: undefined,
                 importAuthData: undefined,
                 importUrl: undefined,
+                tempAuthToken: undefined,
                 workerPublicKey: undefined
             };
             this.save();
         }
+    }
+
+    authorizing(): Boolean {
+        return this.appState.step == Step.AUTHENTICATE_EXPORT || this.appState.step == Step.AUTHENTICATE_IMPORT;
     }
 
     currentStep(): Step {
@@ -64,6 +69,10 @@ export class ProgressService {
         return this.appState.importUrl;
     }
 
+    tempAuthToken(): string | undefined {
+        return this.appState.tempAuthToken;
+    }
+
     workerPublicKey(): string | undefined {
         return this.appState.workerPublicKey;
     }
@@ -76,6 +85,11 @@ export class ProgressService {
         if (this.appState.step < Step.DATA) {
             this.appState.step = Step.DATA;
         }
+        this.save();
+    }
+
+    tokenReceived(token: string) {
+        this.appState.tempAuthToken = token;
         this.save();
     }
 
@@ -142,6 +156,7 @@ interface AppState {
     importService: string | undefined
     importAuthData: string | undefined
     importUrl: string | undefined
+    tempAuthToken: string | undefined
     workerPublicKey: string | undefined
 }
 

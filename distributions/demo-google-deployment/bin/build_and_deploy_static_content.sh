@@ -53,47 +53,41 @@ GCS_BUCKET="gs://static-${PROJECT_ID}/"
 gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit 1; }
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 
-GCP_DIR=$(pwd)
-print_and_exec "cd client/"
-echo -e "\nCleaning up old resources"
-if [[ -e "../../static/" ]]; then
-  rm -rf ../../static/
-fi
-print_and_exec "ng build --prod --env=${ENV}"
-print_and_exec "mkdir ../../static/"
-# Reorganize everything in a top level static/ directory. This is a hack to keep static assets
-# consistent between local and GCP environments"
-print_and_exec "cp -r build/resources/static/* ../../static"
-print_and_exec "rm -rf build/resources/static/"
-print_and_exec "cp -r build/resources/* ../../static/"
-print_and_exec "gsutil cp -r ../../static ${GCS_BUCKET}"
-echo -e "\nMaking folder public"
-print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
-cd ../../static
+echo -e "PROJECT_ID: ${PROJECT_ID}"
+
+print_and_exec "cd client-rest/"
+rm -rf static
+rm -rf dist/portability-demo/static
+print_and_exec "ng build --prod"
+print_and_exec "mkdir static"
+print_and_exec "mv dist/portability-demo/* static/"
+print_and_exec "mv static dist/portability-demo"
+print_and_exec "mv dist/portability-demo/static/index.html dist/portability-demo"
+cd dist/portability-demo
 
 echo -e "new index.html\n"
 cat index.html
-main_new=$(ls | grep main.*.bundle.js)
-styles_new=$(ls | grep styles.*.bundle.css)
-inline_new=$(ls | grep inline.*.bundle.js)
-vendor_new=$(ls | grep vendor.*.bundle.js)
-polyfills_new=$(ls | grep polyfills.*.bundle.js)
-echo -e "\nnew bundles:\n$main_new\n$styles_new\n$inline_new\n$vendor_new\n$polyfills_new"
-# Prepend bundle references in index.html with static/.
-sed -i "s|$main_new|static/$main_new|g" "index.html"
-sed -i "s|$styles_new|static/$styles_new|g" "index.html"
-sed -i "s|$inline_new|static/$inline_new|g" "index.html"
-sed -i "s|$vendor_new|static/$vendor_new|g" "index.html"
-sed -i "s|$polyfills_new|static/$polyfills_new|g" "index.html"
-echo -e "\nindex.html after referencing bundles in static/\n"
+
+cd static
+main_new=$(ls | grep main.*.js)
+styles_new=$(ls | grep styles.*.css)
+runtime_new=$(ls | grep runtime.*.js)
+polyfills_new=$(ls | grep polyfills.*.js)
+
+print_and_exec "cd .."
+print_and_exec "pwd"
+echo -e "\nnew artifacts:\n$main_new\n$styles_new\n$runtime_new\n$polyfills_new"
+# Prepend artifact references in index.html with static/.
+sed -i .original "s|$main_new|static/$main_new|g" "index.html"
+sed -i .original "s|$styles_new|static/$styles_new|g" "index.html"
+sed -i .original "s|$runtime_new|static/$runtime_new|g" "index.html"
+sed -i .original "s|$polyfills_new|static/$polyfills_new|g" "index.html"
+rm *.original
+
+echo -e "\nindex.html after referencing artifacts in static/\n"
 cat index.html
 
-INDEX_HTML_LOCATION="../data-transfer-project/distributions/demo-google-deployment/resources/config/environments/$ENV/index.html"
-if [[ -e ${INDEX_HTML_LOCATION} ]]; then
-  print_and_exec "mkdir -p /tmp/${PROJECT_ID}/"
-  print_and_exec "cp ${INDEX_HTML_LOCATION} /tmp/${PROJECT_ID}/index.html"
-  echo -e "\nSaving old index html at /tmp/${PROJECT_ID}/index.html. Was:\n"
-  cat /tmp/${PROJECT_ID}/index.html
-fi
-print_and_exec "cp index.html ${INDEX_HTML_LOCATION}"
+print_and_exec "gsutil cp -r . ${GCS_BUCKET}"
+echo -e "\nMaking folder public"
+print_and_exec "gsutil iam ch allUsers:objectViewer ${GCS_BUCKET}"
 

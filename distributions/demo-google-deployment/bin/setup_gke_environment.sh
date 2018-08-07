@@ -166,7 +166,7 @@ create_backend_pool() { # args: ${1}: backend name, "api" or "transfer"
   mv ${TEMP_DEPLOYMENT_YAML_FILE_PATH} ${DEPLOYMENT_YAML_FILE_PATH}
 
   print_step "Importing the service account credentials, created earlier, as a Kubernetes Secret"
-  kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/service_account_creds.json
+  kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/service_acct_creds.json
 
   echo -e "Done creating ${BACKEND} pool!"
   if [[ ${BACKEND} == "api" ]]; then
@@ -345,7 +345,8 @@ gcloud compute url-maps create ${LB_NAME} \
 --default-service ${API_BACKEND_SERVICE_NAME}
 gcloud compute url-maps add-path-matcher ${LB_NAME} \
 --default-service ${API_BACKEND_SERVICE_NAME} --path-matcher-name "static-bucket-mapping" \
---backend-bucket-path-rules "/static/*=${STATIC_BUCKET_NAME}"
+--backend-bucket-path-rules "/static/*=${STATIC_BUCKET_NAME},/index.html=${STATIC_BUCKET_NAME}" \
+--backend-service-path-rules "/api/*=${API_BACKEND_SERVICE_NAME}"
 
 print_step "Reserving a static external IP"
 gcloud compute addresses create ${LB_EXTERNAL_IP_NAME} --global

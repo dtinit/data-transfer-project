@@ -10,7 +10,8 @@ const appRoutes: Routes = [
     {path: "data", component: DataComponent, canActivate: [ProgressGuard]},
     {path: "create", component: CreateTransferComponent, canActivate: [ProgressGuard]},
     {path: "initiate", component: InitiateTransferComponent, canActivate: [ProgressGuard]},
-    {path: "callback/:service", component: AuthCallbackComponent},
+    {path: "auth", component: AuthCallbackComponent},
+    {path: "callback/:service", component: StartComponent},
 
     // otherwise redirect to start
     {path: "**", redirectTo: ""}

@@ -17,3 +17,7 @@
 # API settings for Google cloud common to all environments
 baseUrl: http://localhost:3000 # default to local
 baseApiUrl: http://localhost:8080 # default to local
+# Whether the API server should serve requests using HTTPS. False because we
+# implement HTTPS at the load balancer in front of our API servers and don't
+# need it for communication within our network.
+useHttps: false

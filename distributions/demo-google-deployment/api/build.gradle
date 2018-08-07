@@ -19,8 +19,6 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 /**
  * Script to build and dockerize an API server using the Google cloud extension.
  *
- * <p>TODO(#202): Test deploying a prod image to GCP
- *
  * <p>TODO(@jimmarino): Automatically set cloudType=google so it is not needed on the commandline
  *
  * <ul>To run locally:
@@ -53,6 +51,8 @@ repositories {
 
 dependencies {
     compile project(':portability-api')
+    // TODO(olsona): portability-transfer is pulled in for logging, move logging to another location
+    compile project(':portability-transfer')
     compile project(':extensions:transport:portability-transport-jettyrest')
     compile project(':extensions:config:portability-config-yaml')
     // TODO: depend on these based on list in flag values.
@@ -67,15 +67,6 @@ dependencies {
 addCloudExtensionDependency(project)
 
 mainClassName = 'org.datatransferproject.api.ApiMain'
-
-task copyIndexHtml(type: Copy) {
-    description = 'Copies index.html into the jar'
-    ext.env = project.hasProperty('env') ? env : 'local'
-    into 'build/resources/main/static'
-    from("../resources/config/environments/" + ext.env) {
-        include 'index.html'
-    }
-}
 
 task copyEnvConfig(type: Copy) {
     description = 'Copies environment-specific configuration into the jar'
@@ -98,7 +89,7 @@ task copyConfig(type: Copy) {
 
 task copyResources(type: Copy) {
     description = 'Copies resources and configuration into the jar'
-    dependsOn copyConfig, copyEnvConfig, copyIndexHtml
+    dependsOn copyConfig, copyEnvConfig
     into 'build/resources/main'
     from('../resources') {
         exclude { details -> details.file.name.contains('config') }

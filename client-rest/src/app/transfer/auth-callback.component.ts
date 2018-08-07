@@ -1,7 +1,7 @@
 import {Component, OnInit} from "@angular/core";
 import {TransferService} from "./transfer.service";
 import {ProgressService, Step} from "../progress";
-import {ActivatedRoute, Router} from "@angular/router";
+import {Router} from "@angular/router";
 import {transportError} from "../transport";
 
 /**
@@ -22,11 +22,11 @@ import {transportError} from "../transport";
 })
 export class AuthCallbackComponent implements OnInit {
 
-    constructor(private progressService: ProgressService, private transferService: TransferService, private route: ActivatedRoute, private router: Router) {
+    constructor(private progressService: ProgressService, private transferService: TransferService, private router: Router) {
     }
 
     ngOnInit() {
-        let token = this.getToken();
+        let token = this.progressService.tempAuthToken();
         let transferId = this.progressService.transferId();
         let importUrl = this.progressService.importUrl();
 
@@ -47,27 +47,11 @@ export class AuthCallbackComponent implements OnInit {
             this.transferService.generateAuthData({id: transferId, authToken: token, mode: "IMPORT"}).subscribe(
             data => {
                 this.progressService.authImportComplete(data.authData);
-
                 this.transferService.reserveWorker({id: transferId}).subscribe(
                 unused => { // TODO: make this return void?
                     this.router.navigate(["initiate"]);
                 }, transportError);
             }, transportError);
         }
-    }
-
-    /**
-     * Returns the OAuth 2, OAuth 1 or FOB token depending on the authentication protocol being used.
-     */
-    private getToken() {
-        let code = this.route.snapshot.queryParams["code"];  // OAuth 2 token, if using OAuth 2
-        let oAuthVerifier = this.route.snapshot.queryParams["oauth_verifier"];  // OAuth 1 token, if using OAuth 1
-
-        if (code != null) {
-            return code;
-        } else if (oAuthVerifier != null) {
-            return oAuthVerifier;
-        }
-        return this.route.snapshot.queryParams["frob"];  // Legacy auth token
     }
 }
