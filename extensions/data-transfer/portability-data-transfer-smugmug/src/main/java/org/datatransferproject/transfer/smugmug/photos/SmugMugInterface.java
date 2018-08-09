@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
 import org.datatransferproject.transfer.smugmug.photos.model.ImageUploadResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImage;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
@@ -60,6 +62,8 @@ public class SmugMugInterface {
   private static final String USER_URL = "/api/v2!authuser";
   private static final String ALBUMS_KEY = "UserAlbums";
   private static final String FOLDER_KEY = "Folder";
+  private static final int MAX_ALBUMS = 50; // TODO: evaluate
+  private static final int MAX_IMAGES = 50; // TODO: evaluate
 
   private final OAuthService oAuthService;
   private final HttpTransport httpTransport;
@@ -89,8 +93,14 @@ public class SmugMugInterface {
   SmugMugAlbumInfoResponse getAlbumInfo(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {
-    })
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {})
+        .getResponse();
+  }
+
+  SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {})
         .getResponse();
   }
 
@@ -100,8 +110,7 @@ public class SmugMugInterface {
     if (Strings.isNullOrEmpty(url)) {
       url = user.getUris().get(ALBUMS_KEY).getUri();
     }
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {
-    })
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {})
         .getResponse();
   }
 
@@ -187,8 +196,14 @@ public class SmugMugInterface {
       String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
     // Note: there are no request params that need to go here, because smugmug fully specifies
     // which resource to get in the URL of a request, without using query params.
+    String fullUrl;
+    if (!url.contains("https://")) {
+      fullUrl = BASE_URL + url;
+    } else {
+      fullUrl = url;
+    }
     OAuthRequest request =
-        new OAuthRequest(Verb.GET, BASE_URL + url + "?_accept=application%2Fjson");
+        new OAuthRequest(Verb.GET, fullUrl + "?_accept=application%2Fjson");
     oAuthService.signRequest(accessToken, request);
     final Response response = request.send();
 

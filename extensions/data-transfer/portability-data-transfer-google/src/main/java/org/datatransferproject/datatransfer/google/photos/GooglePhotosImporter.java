@@ -83,8 +83,10 @@ public class GooglePhotosImporter
               + "Photos will be added to the default album.");
     }
 
-    for (PhotoModel photo : data.getPhotos()) {
-      importSinglePhoto(authData, photo);
+    if (data.getPhotos() != null && data.getPhotos().size() > 0) {
+      for (PhotoModel photo : data.getPhotos()) {
+        importSinglePhoto(authData, photo);
+      }
     }
 
     return ImportResult.OK;

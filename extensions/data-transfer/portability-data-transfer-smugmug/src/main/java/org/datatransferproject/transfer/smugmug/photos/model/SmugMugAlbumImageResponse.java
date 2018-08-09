@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
-import java.util.Map;
+import java.util.List;
 
-public class SmugMugAlbumImage {
+public class SmugMugAlbumImageResponse {
+  @JsonProperty("AlbumImage")
+  private List<SmugMugAlbumImage> albumImages;
 
-  @JsonProperty("Album")
-  private SmugMugAlbum album;
+  @JsonProperty("Pages")
+  private SmugMugPageInfo pageInfo;
 
-  @JsonProperty("Image")
-  private SmugMugImage image;
+  public List<SmugMugAlbumImage> getAlbumImages() {
+    return albumImages;
+  }
 
-  @JsonProperty("ImageAlbum")
-  private SmugMugAlbum imageAlbum;
-
-  public SmugMugImage getImage() { return image; }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("Album", album)
-        .add("Image", image)
-        .add("ImageAlbum", imageAlbum)
-        .toString();
+  public SmugMugPageInfo getPageInfo() {
+    return pageInfo;
   }
 }
