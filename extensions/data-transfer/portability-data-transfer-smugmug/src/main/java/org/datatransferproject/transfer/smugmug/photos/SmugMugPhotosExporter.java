@@ -139,7 +139,7 @@ public class SmugMugPhotosExporter
     for (SmugMugAlbum album : albumsResponse.getAlbums()) {
       if (!album.getPrivacy().equals(PRIVATE_ALBUM)) {
         albumsList.add(new PhotoAlbum(album.getWebUri(), album.getName(), album.getDescription()));
-        continuationData.addContainerResource(new IdOnlyContainerResource(album.getWebUri()));
+        continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
       }
     }
     PhotosContainerResource resource = new PhotosContainerResource(albumsList, null);

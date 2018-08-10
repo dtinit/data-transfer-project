@@ -89,19 +89,12 @@ public class SmugMugInterface {
     this.user = getUserInformation().getUser();
   }
 
-  /* Returns the album information corresponding to the album URI provided. */
-  SmugMugAlbumInfoResponse getAlbumInfo(String url) throws IOException {
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {})
-        .getResponse();
-  }
-
   SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {})
+    SmugMugAlbumImageResponse response = makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {})
         .getResponse();
+    return response;
   }
 
   /* Returns the album corresponding to the url provided. If the url is null or empty, this

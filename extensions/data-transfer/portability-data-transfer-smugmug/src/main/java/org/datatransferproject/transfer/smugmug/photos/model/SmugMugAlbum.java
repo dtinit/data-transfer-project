@@ -32,6 +32,9 @@ public class SmugMugAlbum {
   @JsonProperty("Privacy")
   private String privacy;
 
+  @JsonProperty("Uri")
+  private String uri;
+
   @JsonProperty("UrlName")
   private String urlName;
 
@@ -45,6 +48,8 @@ public class SmugMugAlbum {
   public String getName() { return name; }
 
   public String getPrivacy() { return privacy; }
+
+  public String getUri() { return uri; }
 
   public String getUrlName() { return urlName; }
 

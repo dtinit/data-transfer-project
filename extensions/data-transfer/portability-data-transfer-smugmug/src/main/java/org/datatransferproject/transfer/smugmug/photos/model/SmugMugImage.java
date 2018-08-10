@@ -63,6 +63,40 @@ public class SmugMugImage {
 
   public String getWebUri() { return webUri; }
 
+  public void setAltitude(long altitude) {
+    this.altitude = altitude;
+  }
+
+  public void setCaption(String caption) { this.caption = caption; }
+
+  public void setDate(String date) {
+    this.date = date;
+  }
+
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
+  }
+
+  public void setFormat(String format) {
+    this.format = format;
+  }
+
+  public void setHidden(boolean hidden) {
+    this.hidden = hidden;
+  }
+
+  public void setKeywords(String keywords) {
+    this.keywords = keywords;
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public void setWebUri(String webUri) {
+    this.webUri = webUri;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
