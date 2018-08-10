@@ -253,13 +253,4 @@ public class SmugMugPhotosExporter
         throw new IllegalArgumentException("Don't know how to map: " + smugMugformat);
     }
   }
-
-  // TODO: we really should put this in a common location, just not sure which would be best
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
-  }
 }

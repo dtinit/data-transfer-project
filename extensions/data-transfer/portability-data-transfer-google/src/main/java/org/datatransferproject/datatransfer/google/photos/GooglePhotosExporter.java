@@ -173,14 +173,14 @@ public class GooglePhotosExporter
     for (GoogleMediaItem mediaItem : mediaItemSearchResponse.getMediaItems()) {
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         // TODO: address videos later on
-        PhotoModel model = new PhotoModel(
+        photos.add(new PhotoModel(
             "", // TODO: no title?
             mediaItem.getBaseUrl() + "=d",
             mediaItem.getDescription(),
             mediaItem.getMimeType(),
             mediaItem.getId(),
-            albumId, false);
-        photos.add(model);
+            albumId,
+            false));
       }
     }
 

@@ -58,8 +58,6 @@ public class SmugMugInterface {
   private static final String USER_URL = "/api/v2!authuser";
   private static final String ALBUMS_KEY = "UserAlbums";
   private static final String FOLDER_KEY = "Folder";
-  private static final int MAX_ALBUMS = 50; // TODO: evaluate
-  private static final int MAX_IMAGES = 50; // TODO: evaluate
 
   private final OAuthService oAuthService;
   private final HttpTransport httpTransport;
@@ -128,8 +126,7 @@ public class SmugMugInterface {
             json,
             null, // No HttpContent for album creation
             ImmutableMap.of(), // No special Smugmug headers are required
-            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {
-            });
+            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {});
 
     Preconditions.checkState(response.getResponse() != null, "Response is null");
     Preconditions.checkState(response.getResponse().getAlbum() != null, "Album is null");

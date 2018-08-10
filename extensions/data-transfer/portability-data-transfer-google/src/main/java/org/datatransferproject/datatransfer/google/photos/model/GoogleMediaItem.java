@@ -52,8 +52,6 @@ public class GoogleMediaItem {
 
   public String getBaseUrl() { return baseUrl; }
 
-  public String getProductUrl() { return productUrl; }
-
   public String getMimeType() { return mimeType; }
 
   public MediaMetadata getMediaMetadata() { return mediaMetadata; }
