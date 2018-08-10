@@ -21,12 +21,12 @@ import java.util.List;
 
 public class SmugMugAlbumImageResponse {
   @JsonProperty("AlbumImage")
-  private List<SmugMugAlbumImage> albumImages;
+  private List<SmugMugImage> albumImages;
 
   @JsonProperty("Pages")
   private SmugMugPageInfo pageInfo;
 
-  public List<SmugMugAlbumImage> getAlbumImages() {
+  public List<SmugMugImage> getAlbumImages() {
     return albumImages;
   }
 

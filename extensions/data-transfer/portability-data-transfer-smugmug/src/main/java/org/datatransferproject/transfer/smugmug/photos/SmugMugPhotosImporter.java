@@ -123,7 +123,12 @@ public class SmugMugPhotosImporter
         "Cached album URI for %s is null",
         inputPhoto.getAlbumId());
 
-    InputStream inputStream = getImageAsStream(inputPhoto.getFetchableUrl());
+    InputStream inputStream;
+    if (inputPhoto.isInJobStore()) {
+      inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl());
+    } else {
+      inputStream = getImageAsStream(inputPhoto.getFetchableUrl());
+    }
     ImageUploadResponse response = smugMugInterface
         .uploadImage(inputPhoto, newAlbumUri, inputStream);
   }

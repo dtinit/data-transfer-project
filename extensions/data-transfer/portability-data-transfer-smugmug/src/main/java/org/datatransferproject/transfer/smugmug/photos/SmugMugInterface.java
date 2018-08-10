@@ -31,16 +31,12 @@ import com.google.common.net.HttpHeaders;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
 import org.datatransferproject.transfer.smugmug.photos.model.ImageUploadResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImage;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugResponse;
@@ -92,7 +88,9 @@ public class SmugMugInterface {
   SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    SmugMugAlbumImageResponse response = makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {})
+    SmugMugAlbumImageResponse response = makeRequest(url,
+        new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {
+        })
         .getResponse();
     return response;
   }
@@ -103,7 +101,8 @@ public class SmugMugInterface {
     if (Strings.isNullOrEmpty(url)) {
       url = user.getUris().get(ALBUMS_KEY).getUri();
     }
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {})
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {
+    })
         .getResponse();
   }
 
@@ -178,11 +177,11 @@ public class SmugMugInterface {
         .getResponse();
   }
 
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
+  public InputStream getImageAsStream(String urlStr) {
+    OAuthRequest request = new OAuthRequest(Verb.GET, urlStr);
+    oAuthService.signRequest(accessToken, request);
+    final Response response = request.send();
+    return response.getStream();
   }
 
   private <T> SmugMugResponse<T> makeRequest(

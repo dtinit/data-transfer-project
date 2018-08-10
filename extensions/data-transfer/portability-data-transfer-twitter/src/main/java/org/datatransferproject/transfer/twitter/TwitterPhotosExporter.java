@@ -76,8 +76,8 @@ final class TwitterPhotosExporter implements
                 status.getText(),
                 null,
                 Long.toString(status.getId()),
-                null
-            ));
+                null,
+                false));
           }
         }
       }

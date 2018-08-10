@@ -30,12 +30,12 @@ public class SmugMugAlbumInfoResponse {
   private String locatorType;
 
   @JsonProperty("AlbumImage")
-  private List<SmugMugAlbumImage> albumImages;
+  private List<SmugMugImage> albumImages;
 
   @JsonProperty("Pages")
   private SmugMugPageInfo pages;
 
-  public List<SmugMugAlbumImage> getAlbumImages() {
+  public List<SmugMugImage> getAlbumImages() {
     return albumImages;
   }
 

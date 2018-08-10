@@ -16,7 +16,6 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.InputStreamContent;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -33,7 +32,6 @@ import org.datatransferproject.datatransfer.google.photos.model.AlbumListRespons
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -181,7 +179,7 @@ public class GooglePhotosExporter
             mediaItem.getDescription(),
             mediaItem.getMimeType(),
             mediaItem.getId(),
-            albumId);
+            albumId, false);
         photos.add(model);
       }
     }

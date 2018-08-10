@@ -20,24 +20,18 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.media.MediaStreamSource;
-import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 import com.google.gdata.util.ServiceException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
@@ -85,7 +79,7 @@ public class GooglePhotosImporter
 
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(authData, photo);
+        importSinglePhoto(authData, photo, jobId);
       }
     }
 
@@ -93,7 +87,7 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  void importSinglePhoto(TokensAndUrlAuthData authData, PhotoModel inputPhoto)
+  void importSinglePhoto(TokensAndUrlAuthData authData, PhotoModel inputPhoto, UUID jobId)
       throws IOException, ServiceException {
 
     // Set up photo
@@ -107,16 +101,21 @@ public class GooglePhotosImporter
       mediaType = "image/jpeg";
     }
 
-    MediaStreamSource streamSource =
-        new MediaStreamSource(imageStreamProvider.get(inputPhoto.getFetchableUrl()), mediaType);
+    MediaStreamSource streamSource;
+    if (inputPhoto.isInJobStore()) {
+      streamSource = new MediaStreamSource(
+          jobStore.getStream(jobId, inputPhoto.getFetchableUrl()), mediaType);
+    } else {
+      streamSource = new MediaStreamSource(
+          imageStreamProvider.get(inputPhoto.getFetchableUrl()), mediaType);
+    }
     outputPhoto.setMediaSource(streamSource);
 
     String albumId = DEFAULT_ALBUM_ID;
     URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
 
     // Upload photo
-    PhotoEntry response = getOrCreatePhotosService(authData)
-        .insert(uploadUrl, outputPhoto);
+    getOrCreatePhotosService(authData).insert(uploadUrl, outputPhoto);
   }
 
   private PicasawebService getOrCreatePhotosService(TokensAndUrlAuthData authData) {

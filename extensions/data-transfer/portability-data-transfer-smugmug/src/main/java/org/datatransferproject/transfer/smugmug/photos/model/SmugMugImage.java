@@ -17,17 +17,18 @@
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import java.util.Map;
 
 public class SmugMugImage {
-  @JsonProperty("Altitude")
-  private long altitude;
+  @JsonProperty("Title")
+  private String title;
 
   @JsonProperty("Caption")
   private String caption;
 
-  @JsonProperty("Date")
-  private String date;
+  @JsonProperty("Hidden")
+  private boolean hidden;
 
   @JsonProperty("FileName")
   private String fileName;
@@ -35,76 +36,44 @@ public class SmugMugImage {
   @JsonProperty("Format")
   private String format;
 
-  @JsonProperty("Hidden")
-  private boolean hidden;
+  @JsonProperty("UploadKey")
+  private String uploadKey;
 
-  @JsonProperty("Keywords")
-  private String keywords;
+  @JsonProperty("ArchivedUri")
+  private String archivedUri;
 
-  @JsonProperty("Latitude")
-  private double latitude;
+  @JsonProperty("Uris")
+  private Map<String, SmugMugUrl> uris;
 
-  @JsonProperty("Longitude")
-  private double longitude;
-
-  @JsonProperty("Title")
-  private String title;
-
-  @JsonProperty("WebUri")
-  private String webUri;
-
-  public String getCaption() { return caption; }
-
-  public String getFileName() { return fileName; }
-
-  public String getFormat() { return format; }
-
-  public String getTitle() { return title; }
-
-  public String getWebUri() { return webUri; }
-
-  public void setAltitude(long altitude) {
-    this.altitude = altitude;
+  public void setTitle(String title) {
+    this.title = title;
   }
 
-  public void setCaption(String caption) { this.caption = caption; }
-
-  public void setDate(String date) {
-    this.date = date;
+  public void setCaption(String caption) {
+    this.caption = caption;
   }
 
   public void setFileName(String fileName) {
     this.fileName = fileName;
   }
 
-  public void setFormat(String format) {
-    this.format = format;
+  public String getTitle() {
+    return title;
   }
 
-  public void setHidden(boolean hidden) {
-    this.hidden = hidden;
+  public String getCaption() {
+    return caption;
   }
 
-  public void setKeywords(String keywords) {
-    this.keywords = keywords;
+  public String getFileName() {
+    return fileName;
   }
 
-  public void setTitle(String title) {
-    this.title = title;
+  public String getFormat() {
+    return format;
   }
 
-  public void setWebUri(String webUri) {
-    this.webUri = webUri;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("Title", title)
-        .add("Caption", caption)
-        .add("Date", date)
-        .add("Hidden", hidden)
-        .add("WebUri", webUri)
-        .toString();
+  public String getArchivedUri() {
+    return archivedUri;
   }
 }

@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.google.gdata.util.ServiceException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -70,7 +69,7 @@ public class GooglePhotosExporterTest {
   private MediaItemSearchResponse mediaItemSearchResponse;
 
   @Before
-  public void setup() throws IOException, ServiceException {
+  public void setup() throws IOException {
     credentialFactory = mock(GoogleCredentialFactory.class);
     photosInterface = mock(GooglePhotosInterface.class);
 
@@ -89,7 +88,7 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void exportAlbumFirstSet() throws IOException, ServiceException {
+  public void exportAlbumFirstSet() throws IOException {
     setUpSingleAlbumResponse();
 
     // Run test
@@ -127,7 +126,7 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void exportAlbumSubsequentSet() throws IOException, ServiceException {
+  public void exportAlbumSubsequentSet() throws IOException {
     setUpSingleAlbumResponse();
     StringPaginationToken inputPaginationToken =
         new StringPaginationToken(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
@@ -150,7 +149,7 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void exportPhotoFirstSet() throws IOException, ServiceException {
+  public void exportPhotoFirstSet() throws IOException {
     setUpSinglePhotoResponse();
 
     ContainerResource inputContainerResource = new IdOnlyContainerResource(ALBUM_ID);
@@ -177,13 +176,13 @@ public class GooglePhotosExporterTest {
     // Check photos field of container
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMG_URI);
+        .containsExactly(IMG_URI + "=d"); // for download
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
   }
 
   @Test
-  public void exportPhotoSubsequentSet() throws IOException, ServiceException {
+  public void exportPhotoSubsequentSet() throws IOException {
     setUpSinglePhotoResponse();
 
     StringPaginationToken inputPaginationToken =
