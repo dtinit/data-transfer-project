@@ -53,6 +53,7 @@ repositories {
 
 dependencies {
     compile project(':portability-api')
+    compile project(':portability-transfer')
     compile project(':extensions:transport:portability-transport-jettyrest')
     compile project(':extensions:config:portability-config-yaml')
     // TODO: depend on these based on list in flag values.

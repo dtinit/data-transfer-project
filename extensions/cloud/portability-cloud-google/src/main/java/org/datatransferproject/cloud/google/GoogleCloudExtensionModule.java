@@ -137,7 +137,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
                     + "only. See GCP build script (distributions/demo-google-deployment/bin/"
                     + "build_docker_image.sh) for more info. Creds location was: %s",
                 credsLocation);
-        throw new GoogleCredentialException(cause);
+        // throw new GoogleCredentialException(cause);  // DO NOT SUBMIT
       }
       // Note: Tried an extra check via Kubernetes API to verify GOOGLE_APPLICATION_CREDENTIALS
       // is the same as the secret via Kubernetes, but this API did not seem reliable.
