@@ -49,9 +49,12 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.transfer.models.DataModel;
 
-/** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
+/**
+ * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
+ */
 @Singleton
 public final class GoogleJobStore implements JobStore {
+
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
@@ -70,7 +73,7 @@ public final class GoogleJobStore implements JobStore {
    * <p>To update an existing {@link PortabilityJob} instead, use {@link JobStore#update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
-   *     problem inserting the job.
+   * problem inserting the job.
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -168,7 +171,8 @@ public final class GoogleJobStore implements JobStore {
    * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or
    * null if none found.
    *
-   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
+   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying
+   * to
    * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
@@ -231,7 +235,9 @@ public final class GoogleJobStore implements JobStore {
   }
 
   private static Map<String, Object> getProperties(Entity entity) {
-    if (entity == null) return null;
+    if (entity == null) {
+      return null;
+    }
     ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
     for (String property : entity.getNames()) {
       // builder.put(property, entity.getValue(property));
@@ -312,7 +318,6 @@ public final class GoogleJobStore implements JobStore {
           .set(model.getClass().getName(), serialized)
           .build();
 
-
       transaction.put(entity);
       transaction.commit();
     } catch (IOException t) {
@@ -370,7 +375,8 @@ public final class GoogleJobStore implements JobStore {
       return null;
     }
     try {
-      return objectMapper.readValue(entity.getString(InputStream.class.getName()), InputStream.class);
+      return objectMapper
+          .readValue(entity.getString(InputStream.class.getName()), InputStream.class);
     } catch (IOException e) {
       throw new RuntimeException("Failed to deserialize entityKey: " + fullKey, e);
     }
