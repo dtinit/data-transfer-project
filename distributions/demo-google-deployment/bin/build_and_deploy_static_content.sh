@@ -20,7 +20,7 @@
 
 #!/bin/sh
 
-USAGE="Usage: ./distributions/demo-google-deployment/bin/build_and_deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX>"
+USAGE="Usage: ./distributions/demo-google-deployment/bin/build_and_deploy_static_content.sh <ENV_NAME> <PROJECT_ID_SUFFIX> <WEBSITE>"
 print_and_exec() {
   echo -e "\n${1}"
   ${1}
@@ -40,15 +40,22 @@ if [ -z $2 ]; then
   i.e. 'qa8' for project ID ${BASE_PROJECT_ID}-qa8"
   exit 1
 fi
+
 # script below sets env variables BASE_PROJECT_ID
 source ./distributions/demo-google-deployment/bin/init_project_vars.sh
 
 echo -e "Set hidden var:
 BASE_PROJECT_ID: ${BASE_PROJECT_ID}"
-
+PROJECT_ID="$BASE_PROJECT_ID-$PROJECT_ID_SUFFIX"
 ENV=$1
 PROJECT_ID_SUFFIX=$2
-PROJECT_ID="$BASE_PROJECT_ID-$PROJECT_ID_SUFFIX"
+
+if [ -z $3 ]; then
+  echo -e "${USAGE}\nERROR: Must provide a website,
+  i.e. 'www.example.net' for project ID ${PROJECT_ID}"
+  exit 1
+fi
+
 GCS_BUCKET="gs://static-${PROJECT_ID}/"
 gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit 1; }
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }

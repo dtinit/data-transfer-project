@@ -46,6 +46,7 @@ OWNERS: ${OWNERS}
 if [[ -z ${BASE_PROJECT_ID} || \
       -z ${ORGANIZATION_ID} || \
       -z ${BILLING_ACCOUNT_ID} || \
+      -z ${WEBSITE} || \
       -z ${OWNERS} ]]; then
   echo "ERROR: Please make sure all variables for your project are set in init_project_vars.sh.
   See init_project_vars_example.sh."
@@ -288,19 +289,20 @@ gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
     --certificate ${CRT_FILE_PATH} --private-key ${KEY_FILE_PATH}
 
 print_step "Creating GCS 'static' bucket"
-BUCKET_NAME="static-$PROJECT_ID"
+BUCKET_NAME="$WEBSITE"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
 
 print_step "Creating backend 'static' bucket"
 gcloud compute --project ${PROJECT_ID} backend-buckets create ${STATIC_BUCKET_NAME} --gcs-bucket-name=${BUCKET_NAME}
-# TODO use --enable-cdn flag when we are ready to use CDN
 
 print_step "Creating GCS 'app-data' bucket for storing encrypted app secrets"
 BUCKET_NAME="app-data-$PROJECT_ID"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
+# TODO set error page for the website bucket with "-e 404.html"
+gsutil web set -m index.html ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
 
 print_step "Granting service account ${SERVICE_ACCOUNT} viewer privileges to 'app-data' bucket"
