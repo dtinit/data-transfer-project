@@ -94,7 +94,7 @@ public class SmugMugTransferExtension implements TransferExtension {
 
     ObjectMapper mapper = context.getService(TypeManager.class).getMapper();
 
-    exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper);
+    exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper, jobStore);
     importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper);
     initialized = true;
   }

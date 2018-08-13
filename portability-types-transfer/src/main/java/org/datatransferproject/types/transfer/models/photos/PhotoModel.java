@@ -17,14 +17,17 @@ package org.datatransferproject.types.transfer.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 
 public class PhotoModel {
+
   private final String title;
   private final String fetchableUrl;
   private final String description;
   private final String mediaType;
-  private String dataId;
   private final String albumId;
+  private final boolean inJobStore;
+  private String dataId;
 
   @JsonCreator
   public PhotoModel(
@@ -33,13 +36,15 @@ public class PhotoModel {
       @JsonProperty("description") String description,
       @JsonProperty("mediaType") String mediaType,
       @JsonProperty("dataId") String dataId,
-      @JsonProperty("albumId") String albumId) {
+      @JsonProperty("albumId") String albumId,
+      @JsonProperty("inJobStore") boolean inJobStore) {
     this.title = title;
     this.fetchableUrl = fetchableUrl;
     this.description = description;
     this.mediaType = mediaType;
     this.dataId = dataId;
     this.albumId = albumId;
+    this.inJobStore = inJobStore;
   }
 
   public String getTitle() {
@@ -64,5 +69,21 @@ public class PhotoModel {
 
   public String getDataId() {
     return dataId;
+  }
+
+  public boolean isInJobStore() {
+    return inJobStore;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("title", title)
+        .add("fetchableUrl", fetchableUrl)
+        .add("description", description)
+        .add("mediaType", mediaType)
+        .add("dataId", dataId)
+        .add("albumId", albumId)
+        .toString();
   }
 }

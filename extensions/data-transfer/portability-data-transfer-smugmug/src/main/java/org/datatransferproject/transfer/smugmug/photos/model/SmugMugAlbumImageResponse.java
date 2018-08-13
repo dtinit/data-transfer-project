@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public class SmugMugAlbumInfoResponse {
-
-  @JsonProperty("Uri")
-  private String uri;
-
-  @JsonProperty("Locator")
-  private String locator;
-
-  @JsonProperty("LocatorType")
-  private String locatorType;
-
+public class SmugMugAlbumImageResponse {
   @JsonProperty("AlbumImage")
   private List<SmugMugImage> albumImages;
 
   @JsonProperty("Pages")
-  private SmugMugPageInfo pages;
+  private SmugMugPageInfo pageInfo;
 
   public List<SmugMugImage> getAlbumImages() {
     return albumImages;
   }
 
   public SmugMugPageInfo getPageInfo() {
-    return pages;
+    return pageInfo;
   }
 }

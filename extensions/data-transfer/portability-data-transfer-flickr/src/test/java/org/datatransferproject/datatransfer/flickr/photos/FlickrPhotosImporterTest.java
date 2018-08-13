@@ -64,7 +64,8 @@ public class FlickrPhotosImporterTest {
   private static final PhotoAlbum PHOTO_ALBUM =
       new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
   private static final PhotoModel PHOTO_MODEL =
-      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, null, ALBUM_ID);
+      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, null, ALBUM_ID,
+          false);
 
   private Flickr flickr = mock(Flickr.class);
   private PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);

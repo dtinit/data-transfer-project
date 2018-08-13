@@ -18,7 +18,9 @@ package org.datatransferproject.datatransfer.google.photos;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.photos.PhotoEntry;
 import com.google.gdata.util.ServiceException;
+import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.junit.Before;
@@ -68,10 +70,10 @@ public class GooglePhotosImporterTest {
     // Set up
     String description = "description";
     PhotoModel photoModel = new PhotoModel(PHOTO_TITLE, IMG_URI, description, JPEG_MEDIA_TYPE, null,
-        "album_id");
+        "album_id", false);
 
     // Run test
-    googlePhotosImporter.importSinglePhoto(null, photoModel);
+    googlePhotosImporter.importSinglePhoto(null, photoModel, uuid);
 
     // Check results
     // Verify correct methods were called

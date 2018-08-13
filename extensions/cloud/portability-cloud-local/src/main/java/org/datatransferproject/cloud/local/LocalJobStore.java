@@ -17,6 +17,7 @@ package org.datatransferproject.cloud.local;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.InputStream;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<UUID, Map<String, InputStream>> STREAM_MAP = new ConcurrentHashMap<>();
 
   private final Logger logger = LoggerFactory.getLogger(LocalJobStore.class);
   /**
@@ -173,5 +175,24 @@ public final class LocalJobStore implements JobStore {
   private static String createFullKey(UUID jobId, String key) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
     return String.format("%s-%s", jobId.toString(), key);
+  }
+
+  @Override
+  public void create(UUID jobId, String key, InputStream stream) {
+    if (!STREAM_MAP.containsKey(jobId)) {
+      STREAM_MAP.put(jobId, new ConcurrentHashMap<>());
+    }
+    STREAM_MAP.get(jobId).put(key, stream);
+  }
+
+  @Override
+  public InputStream getStream(UUID jobId, String key) {
+    if (!STREAM_MAP.containsKey(jobId)) {
+      return null;
+    }
+    if (!STREAM_MAP.get(jobId).containsKey(key)) {
+      return null;
+    }
+    return STREAM_MAP.get(jobId).get(key);
   }
 }

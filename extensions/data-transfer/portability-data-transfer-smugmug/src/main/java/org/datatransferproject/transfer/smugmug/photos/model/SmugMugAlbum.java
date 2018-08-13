@@ -20,55 +20,38 @@ import java.util.Map;
 
 public class SmugMugAlbum {
 
-  @JsonProperty("NiceName")
-  private String niceName;
-
-  @JsonProperty("UrlName")
-  private String urlName;
-
-  @JsonProperty("Title")
-  private String title;
-
-  @JsonProperty("Name")
-  private String name;
+  @JsonProperty("Date")
+  private String date;
 
   @JsonProperty("Description")
   private String description;
 
-  @JsonProperty("AllowDownloads")
-  private String allowDownloads;
+  @JsonProperty("Name")
+  private String name;
 
-  @JsonProperty("AlbumKey")
-  private String albumKey;
-
-  @JsonProperty("NodeID")
-  private String nodeID;
-
-  @JsonProperty("ImageCount")
-  private int imageCount;
-
-  @JsonProperty("UrlPath")
-  private String urlPath;
+  @JsonProperty("Privacy")
+  private String privacy;
 
   @JsonProperty("Uri")
   private String uri;
 
-  @JsonProperty("Uris")
-  private Map<String, SmugMugUrl> uris;
+  @JsonProperty("UrlName")
+  private String urlName;
 
-  public Map<String, SmugMugUrl> getUris() {
-    return uris;
-  }
+  @JsonProperty("WebUri")
+  private String webUri;
 
-  public String getTitle() {
-    return title;
-  }
+  public String getDate() { return date; }
 
-  public String getAlbumKey() {
-    return albumKey;
-  }
+  public String getDescription() { return description; }
 
-  public String getDescription() {
-    return description;
-  }
+  public String getName() { return name; }
+
+  public String getPrivacy() { return privacy; }
+
+  public String getUri() { return uri; }
+
+  public String getUrlName() { return urlName; }
+
+  public String getWebUri() { return webUri; }
 }

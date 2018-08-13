@@ -22,15 +22,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import java.io.IOException;
-import java.util.UUID;
-
 import com.google.common.base.Throwables;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.transfer.smugmug.photos.model.ImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -99,27 +101,36 @@ public class SmugMugPhotosImporter
 
     // Put new album ID in job store so photos can be assigned to correct album
     // TODO(olsona): thread safety!
-    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    TempPhotosData tempPhotosData = jobStore
+        .findData(jobId, createCacheKey(), TempPhotosData.class);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(jobId, createCacheKey(), tempPhotosData);
     }
-    tempPhotosData.addAlbumId(inputAlbum.getId(), response.getAlbum().getAlbumKey());
+    tempPhotosData.addAlbumId(inputAlbum.getId(), response.getUri());
   }
 
   @VisibleForTesting
   void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
       throws IOException {
     // Find album to upload photo to
-    String newAlbumKey =
-        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class).lookupNewAlbumId(inputPhoto.getAlbumId());
+    String newAlbumUri =
+        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class)
+            .lookupNewAlbumId(inputPhoto.getAlbumId());
 
     checkState(
-        !Strings.isNullOrEmpty(newAlbumKey),
-        "Cached album key for %s is null",
+        !Strings.isNullOrEmpty(newAlbumUri),
+        "Cached album URI for %s is null",
         inputPhoto.getAlbumId());
 
-    smugMugInterface.uploadImage(inputPhoto.getFetchableUrl(), newAlbumKey);
+    InputStream inputStream;
+    if (inputPhoto.isInJobStore()) {
+      inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl());
+    } else {
+      inputStream = getImageAsStream(inputPhoto.getFetchableUrl());
+    }
+    ImageUploadResponse response = smugMugInterface
+        .uploadImage(inputPhoto, newAlbumUri, inputStream);
   }
 
   // Returns the provided interface, or a new one specific to the authData provided.
@@ -130,8 +141,16 @@ public class SmugMugPhotosImporter
         : smugMugInterface;
   }
 
-  /** Key for cache of album mappings.
-   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+  private InputStream getImageAsStream(String urlStr) throws IOException {
+    URL url = new URL(urlStr);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.connect();
+    return conn.getInputStream();
+  }
+
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
    */
   private String createCacheKey() {
     // TODO: store objects containing individual mappings instead of single object containing all mappings

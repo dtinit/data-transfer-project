@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 
 public final class ImageUploadResponse {
 
@@ -28,12 +29,21 @@ public final class ImageUploadResponse {
   @JsonProperty("image")
   private ImageInfo image;
 
-  public String getStat() {
-    return stat;
-  }
+  @JsonProperty("code")
+  private String code;
 
-  public ImageInfo getImage() {
-    return image;
+  @JsonProperty("message")
+  private String message;
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("stat", stat)
+        .add("method", method)
+        .add("image", image)
+        .add("code", code)
+        .add("message", message)
+        .toString();
   }
 
   public static class ImageInfo {
@@ -50,16 +60,15 @@ public final class ImageUploadResponse {
     @JsonProperty("URL")
     private String url;
 
-    public String getImageUri() {
-      return imageUri;
-    }
-
-    public String getAlbumImageUri() {
-      return albumImageUri;
-    }
-
-    public String getUrl() {
-      return url;
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+          .add("ImageUri", imageUri)
+          .add("AlbumImageUri", albumImageUri)
+          .add("StatusImageReplaceUri", statusImageReplaceUri)
+          .add("URL", url)
+          .toString();
     }
   }
+
 }
