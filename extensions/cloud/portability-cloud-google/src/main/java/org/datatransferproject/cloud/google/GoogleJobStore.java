@@ -38,6 +38,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
@@ -331,6 +332,47 @@ public final class GoogleJobStore implements JobStore {
       return objectMapper.readValue(entity.getString(type.getName()), type);
     } catch (IOException t) {
       throw new RuntimeException("Failed to deserialized entityKey: " + entityKey, t);
+    }
+  }
+
+  @Override
+  public void create(UUID jobId, String key, InputStream stream) throws IOException {
+    Preconditions.checkNotNull(jobId);
+    Transaction transaction = datastore.newTransaction();
+    Key fullKey = getDataKey(jobId, key);
+    Entity shouldNotExist = transaction.get(fullKey);
+    if (shouldNotExist != null) {
+      transaction.rollback();
+      throw new IOException(
+          "Record already exists for key: " + fullKey.getName() + ". Record: " + shouldNotExist);
+    }
+
+    String serialized = objectMapper.writeValueAsString(stream);
+    Entity entity = Entity.newBuilder(fullKey)
+        .set(CREATED_FIELD, Timestamp.now())
+        .set(InputStream.class.getName(), serialized)
+        .build();
+
+    try {
+      transaction.put(entity);
+    } catch (DatastoreException e) {
+      throw new IOException(
+          "Could not create initial record for jobID: " + jobId + ". Record: " + entity, e);
+    }
+    transaction.commit();
+  }
+
+  @Override
+  public InputStream getStream(UUID jobId, String key) throws IOException {
+    Key fullKey = getDataKey(jobId, key);
+    Entity entity = datastore.get(fullKey);
+    if (entity == null) {
+      return null;
+    }
+    try {
+      return objectMapper.readValue(entity.getString(InputStream.class.getName()), InputStream.class);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to deserialize entityKey: " + fullKey, e);
     }
   }
 }
