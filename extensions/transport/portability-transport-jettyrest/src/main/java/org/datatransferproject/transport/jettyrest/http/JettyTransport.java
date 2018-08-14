@@ -68,6 +68,7 @@ public class JettyTransport {
       server = new Server();
       SslContextFactory sslContextFactory = new SslContextFactory();
       sslContextFactory.setKeyStore(keyStore);
+      // TODO configure
       sslContextFactory.setKeyStorePassword("password");
       sslContextFactory.setKeyManagerPassword("password");
       HttpConfiguration https = new HttpConfiguration();
