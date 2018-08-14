@@ -35,10 +35,9 @@ public class JettyRestExtension implements ServiceExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-
     KeyStore keyStore = context.getService(KeyStore.class);
-
-    transport = new JettyTransport(keyStore);
+    boolean useHttps = context.getSetting("useHttps", true);
+    transport = new JettyTransport(keyStore, useHttps);
     binder = new JerseyTransportBinder(transport);
     context.registerService(TransportBinder.class, binder);
   }
