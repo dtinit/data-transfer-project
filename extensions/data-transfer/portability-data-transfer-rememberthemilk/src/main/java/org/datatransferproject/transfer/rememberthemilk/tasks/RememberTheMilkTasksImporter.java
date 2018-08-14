@@ -62,18 +62,15 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data) {
+  public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data)
+      throws IOException {
     String timeline;
 
     TempTasksData tempTasksData = jobstore.findData(jobId, createCacheKey(), TempTasksData.class);
-    if (tempTasksData == null) {
-      tempTasksData = new TempTasksData(jobId.toString());
-      try {
+      if (tempTasksData == null) {
+        tempTasksData = new TempTasksData(jobId.toString());
         jobstore.create(jobId, createCacheKey(), tempTasksData);
-      } catch (IOException e) {
-        return new ImportResult(e);
       }
-    }
 
     try {
       RememberTheMilkService service = getOrCreateService(authData);
