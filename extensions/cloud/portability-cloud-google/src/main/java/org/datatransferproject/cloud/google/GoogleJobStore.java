@@ -111,8 +111,7 @@ public final class GoogleJobStore implements JobStore {
    * validator.validate() is called first in the transaction.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
-   * @throws IllegalStateException if validator.validate() failed
+   * updating it @throws IllegalStateException if validator.validate() failed
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
@@ -172,8 +171,7 @@ public final class GoogleJobStore implements JobStore {
    * null if none found.
    *
    * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying
-   * to
-   * OrderBy.asc("created") currently fails because we don't yet have an index set up.
+   * to OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
   public UUID findFirst(JobAuthorization.State jobState) {
@@ -378,7 +376,7 @@ public final class GoogleJobStore implements JobStore {
       return objectMapper
           .readValue(entity.getString(InputStream.class.getName()), InputStream.class);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to deserialize entityKey: " + fullKey, e);
+      throw new IOException("Failed to deserialize entityKey: " + fullKey, e);
     }
   }
 }
