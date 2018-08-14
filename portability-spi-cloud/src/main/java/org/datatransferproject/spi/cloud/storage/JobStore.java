@@ -88,7 +88,8 @@ public interface JobStore {
   /**
    * Returns a model instance for the id of the given type or null if not found.
    */
-  default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+  default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type)
+      throws IOException {
     throw new UnsupportedOperationException();
   }
 
