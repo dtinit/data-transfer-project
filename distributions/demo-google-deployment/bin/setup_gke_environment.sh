@@ -124,7 +124,7 @@ create_api_backend_service() {
 
   print_step "Creating GCP backend service '${API_BACKEND_SERVICE_NAME}'"
   gcloud compute backend-services create ${API_BACKEND_SERVICE_NAME} \
-  --port=80 --port-name=http --protocol=HTTP --global --http-health-checks=portability-health-check
+  --port-name=http --protocol=HTTP --global --http-health-checks=portability-health-check
 
   print_step "Adding instance group ${INSTANCE_GROUP_NAME} as a backend to ${API_BACKEND_SERVICE_NAME}"
   gcloud compute backend-services add-backend ${API_BACKEND_SERVICE_NAME} \
@@ -182,6 +182,7 @@ fi
 
 ENV=$1
 PROJECT_ID="${BASE_PROJECT_ID}-$ENV"
+SERVICE_ACCOUNT="${PROJECT_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit 1; }
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 kubectl=$(which kubectl)|| { echo "Kubernetes CLI (kubectl) not found." >&2; exit 1; }
@@ -223,7 +224,7 @@ if [[ ! -e ${KEY_FILE_PATH} ]]; then
 fi
 
 print_step
-read -p "Creating project ${PROJECT_ID}. Continue (y/N)? " response
+read -p "Creating project ${PROJECT_ID} for organization ID ${ORGANIZATION_ID}. Continue (y/N)? " response
 response=${response,,} # to lower
 if [[ ${response} =~ ^(yes|y| ) ]]; then
   echo "Continuing"
@@ -247,7 +248,6 @@ fi
 
 print_step "Creating a service account for IAM"
 gcloud iam --project ${PROJECT_ID} service-accounts create ${PROJECT_ID} --display-name "${PROJECT_ID} service account"
-SERVICE_ACCOUNT="${PROJECT_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 echo -e "\nCreated service account:"
 gcloud iam --project ${PROJECT_ID} service-accounts describe ${SERVICE_ACCOUNT}
 
@@ -277,6 +277,8 @@ gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$BILLING_ACCO
 print_step "Enabling APIs"
 # Needed for 'gcloud compute'
 gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
+# Needed for using GKE
+gcloud services --project ${PROJECT_ID} enable container.googleapis.com
 # Needed for managing container images
 gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 # Needed for storing job state in Cloud DataStore
@@ -313,7 +315,6 @@ gcloud kms keyrings create portability_secrets --location global
 # Currently only one purposes is supported: "encryption". Can't have separate encrypt/decrypt keys.
 gcloud kms keys create portability_secrets_key --location global --keyring portability_secrets \
 --purpose encryption
-
 KUBECTL_CONTEXT=$(kubectl config current-context)
 print_step
 read -p "Confirm we are using the correct Kubernetes context for ${PROJECT_ID}. Current context is:
@@ -330,7 +331,7 @@ fi
 print_step "Creating credentials for service account to access GCP APIs. Both the API and transfer
 worker pools, which we are about to create below, will import these credentials in create_backend_pool."
 gcloud iam service-accounts keys create \
-    /tmp/service_account_creds.json \
+    /tmp/service_acct_creds.json \
     --iam-account=${SERVICE_ACCOUNT}
 
 # Create the API pool
@@ -340,7 +341,7 @@ create_backend_pool "api"
 create_backend_pool "transfer"
 
 # Clean up service account creds so we don't leave these lying around on our local machines
-rm /tmp/service_account_creds.json
+rm /tmp/service_acct_creds.json
 
 print_step "Creating load balancer"
 gcloud compute url-maps create ${LB_NAME} \
@@ -429,10 +430,9 @@ Next steps, not done by this script, are:
 3. Select a region for DataStore at https://console.cloud.google.com/datastore/setup
 4. Encrypt and upload app secrets (encrypt_and_upload_app_secrets.sh)
 5. Upload the latest static content to the bucket with build_and_deploy_static_content.sh
-6. Upload the latest docker image to the GKE cluster with build_and_upload_docker_image.sh
-   (This depends on secrets from step 4 and index.html generated in step 5).
-7. Deploy the image you just loaded in Kubernetes Engine -> Workloads -> portability-api -> Actions
-   -> Rolling Update
+6. Upload the latest docker image to the GKE cluster (see api/build.gradle and transfer/build.gradle)
+7. Deploy the images you just loaded in Kubernetes Engine -> Workloads -> portability-api -> Actions
+   -> Rolling Update. Same for portability-transfer.
 8. (Optional) Enable IAP to whitelist only select users to view the app
 9. Setup Stackdriver account and billing at https://app.google.stackdriver.com/project=project-name
    This will enable monitoring (logging is already on by default).
