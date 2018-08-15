@@ -48,36 +48,46 @@ public class JettyTransport {
   private static final String LOG_CLASS = "org.eclipse.jetty.util.log.class";
 
   private final KeyStore keyStore;
+  private final boolean useHttps;
 
   private int httpPort = 8080; // TODO configure
 
   private Server server;
   private List<Handler> handlers = new ArrayList<>();
 
-  public JettyTransport(KeyStore keyStore) {
+  public JettyTransport(KeyStore keyStore, boolean useHttps) {
     this.keyStore = keyStore;
+    this.useHttps = useHttps;
     System.setProperty(LOG_CLASS, JettyMonitor.class.getName()); // required by Jetty
     System.setProperty(ANNOUNCE, "false");
+    logger.info("Creating JettyTransport. useHttps=" + useHttps);
   }
 
   public void start() {
-    server = new Server();
-
-    HttpConfiguration https = new HttpConfiguration();
-    https.addCustomizer(new SecureRequestCustomizer());
-    SslContextFactory sslContextFactory = new SslContextFactory();
-    sslContextFactory.setKeyStore(keyStore);
-    sslContextFactory.setKeyStorePassword("password");
-    sslContextFactory.setKeyManagerPassword("password");
-    ServerConnector sslConnector =
-        new ServerConnector(
-            server,
-            new SslConnectionFactory(sslContextFactory, "http/1.1"),
-            new HttpConnectionFactory(https));
-    sslConnector.setPort(httpPort);
-    server.setConnectors(new Connector[] {sslConnector});
+    if (useHttps) {
+      server = new Server();
+      SslContextFactory sslContextFactory = new SslContextFactory();
+      sslContextFactory.setKeyStore(keyStore);
+      // TODO configure
+      sslContextFactory.setKeyStorePassword("password");
+      sslContextFactory.setKeyManagerPassword("password");
+      HttpConfiguration https = new HttpConfiguration();
+      ServerConnector sslConnector =
+              new ServerConnector(
+                      server,
+                      new SslConnectionFactory(sslContextFactory, "http/1.1"),
+                      new HttpConnectionFactory(https));
+      sslConnector.setPort(httpPort);
+      server.setConnectors(new Connector[]{sslConnector});
+    } else {
+      server = new Server(httpPort);
+      ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+      connector.setPort(httpPort);
+      server.setConnectors(new Connector[]{connector});
+    }
 
     server.setErrorHandler(new JettyErrorHandler());
+
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.setHandlers(handlers.toArray(new Handler[0]));
     server.setHandler(contexts);
