@@ -44,7 +44,9 @@ import org.slf4j.LoggerFactory;
  * state is held in {@link JobMetadata}.
  */
 public class WorkerMain {
-  private static final Logger logger = LoggerFactory.getLogger(WorkerMain.class);
+  private static final Logger logger =
+      LoggerFactory
+          .getLogger(WorkerMain.class);
 
   private Worker worker;
 
