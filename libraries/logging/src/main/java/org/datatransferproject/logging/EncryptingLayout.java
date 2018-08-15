@@ -36,7 +36,7 @@ public class EncryptingLayout extends Layout {
     // TODO: read formatting from a config file
     return String.format("[%s] [%s]: %s - %s%s",
         new ISO8601DateFormat().format(event.timeStamp),
-        jobId != null ? Long.toHexString(jobId.getMostSignificantBits()) : "undefined",
+        jobId != null ? jobId.toString() : "undefined",
         event.getLevel().toString(),
         event.getRenderedMessage(), LINE_SEP);
   }
