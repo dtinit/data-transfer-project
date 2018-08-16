@@ -34,9 +34,9 @@ public class CreateTransferJobTest {
     CreateTransferJob deserialized =
         objectMapper.readValue(serialized, CreateTransferJob.class);
 
-    Assert.assertEquals("testSource", deserialized.getSource());
-    Assert.assertEquals("testDestination", deserialized.getDestination());
+    Assert.assertEquals("testSource", deserialized.getExportService());
+    Assert.assertEquals("testDestination", deserialized.getImportService());
     Assert.assertEquals("photos", deserialized.getDataType());
-    Assert.assertEquals("https://localhost:3000", deserialized.getBaseCallbackUrl());
+    Assert.assertEquals("https://localhost:3000", deserialized.getCallbackUrl());
   }
 }
