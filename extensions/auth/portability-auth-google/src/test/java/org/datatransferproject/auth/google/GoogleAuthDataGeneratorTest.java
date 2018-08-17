@@ -33,7 +33,7 @@ public class GoogleAuthDataGeneratorTest {
             + "&scope="
             + CalendarScopes.CALENDAR
             + "&state=NTQzMjE%3D",
-        config.getUrl());
+        config.getAuthUrl());
   }
 
   @Test
@@ -52,6 +52,6 @@ public class GoogleAuthDataGeneratorTest {
             + "&scope="
             + CalendarScopes.CALENDAR_READONLY
             + "&state=NTQzMjE%3D",
-        config.getUrl());
+        config.getAuthUrl());
   }
 }
