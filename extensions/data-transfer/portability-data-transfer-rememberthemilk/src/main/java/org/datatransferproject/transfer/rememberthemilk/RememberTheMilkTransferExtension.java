@@ -42,7 +42,7 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
 
   @Override
   public String getServiceId() {
-    return "remember the milk";
+    return "REMEMBER_THE_MILK";
   }
 
   @Override

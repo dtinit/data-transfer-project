@@ -45,7 +45,7 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     builder.add("CALENDAR", "CONTACTS");
     if (Boolean.parseBoolean(System.getProperty("offlineData"))) {
-      builder.add("offline-data");
+      builder.add("OFFLINE-DATA");
     }
     SUPPORTED_SERVICES = builder.build();
   }

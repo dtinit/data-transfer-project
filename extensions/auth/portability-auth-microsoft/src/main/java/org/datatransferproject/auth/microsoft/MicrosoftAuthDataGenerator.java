@@ -53,7 +53,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
           .put("CONTACTS", ImmutableList.of("user.read", "Contacts.Read"))
           .put("CALENDAR", ImmutableList.of("user.read", "Calendars.Read"))
           // needed because offline exported as one drive files
-          .put("offline-data", ImmutableList.of("user.read", "Files.Read.All"))
+          .put(""OFFLINE-DATA"", ImmutableList.of("user.read", "Files.Read.All"))
           .build();
 
   private final String redirectPath;

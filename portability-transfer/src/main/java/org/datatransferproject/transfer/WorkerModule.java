@@ -62,7 +62,7 @@ final class WorkerModule extends FlagBindingModule {
     try {
       return transferExtensions
           .stream()
-          .filter(ext -> ext.getServiceId().equals(service))
+          .filter(ext -> ext.getServiceId().equals(service.toLowerCase()))
           .collect(onlyElement());
     } catch (IllegalArgumentException e) {
       throw new IllegalStateException(

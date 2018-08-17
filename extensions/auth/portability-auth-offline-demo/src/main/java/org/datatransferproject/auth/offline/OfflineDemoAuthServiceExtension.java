@@ -32,7 +32,7 @@ import java.util.List;
 public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
   private static final String SERVICE_ID = "OFFLINE-DEMO";
 
-  private static final List<String> SUPPORTED_SERVICES = Collections.singletonList("offline-data");
+  private static final List<String> SUPPORTED_SERVICES = Collections.singletonList("OFFLINE-DATA");
 
   @Override
   public String getServiceId() {
