@@ -52,6 +52,7 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
     compile project(':libraries:config')
+    compile project(':libraries:logging')
     compile project(':libraries:security')
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")
@@ -80,6 +81,7 @@ dependencies {
 
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")
+    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.mockito:mockito-all:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }

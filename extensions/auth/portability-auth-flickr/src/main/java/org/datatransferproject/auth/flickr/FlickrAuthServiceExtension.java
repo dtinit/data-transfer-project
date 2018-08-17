@@ -31,10 +31,10 @@ import org.slf4j.LoggerFactory;
 public class FlickrAuthServiceExtension implements AuthServiceExtension {
   private static final String FLICKR_KEY = "FLICKR_KEY";
   private static final String FLICKR_SECRET = "FLICKR_SECRET";
-  private static final String SERVICE_ID = "flickr";
+  private static final String SERVICE_ID = "FLICKR";
 
   private final Logger logger = LoggerFactory.getLogger(FlickrAuthServiceExtension.class);
-  private final List<String> supportedServices = ImmutableList.of("photos");
+  private final List<String> supportedServices = ImmutableList.of("PHOTOS");
   private FlickrAuthDataGenerator flickrAuthDataGenerator;
   private boolean initialized = false;
 

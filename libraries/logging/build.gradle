@@ -14,22 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public class AlbumListResponse {
-  @JsonProperty("albums")
-  private GoogleAlbum[] albums;
-
-  @JsonProperty("nextPageToken")
-  private String nextPageToken;
-
-  public GoogleAlbum[] getAlbums() {
-    return albums;
-  }
-
-  public String getNextPageToken() {
-    return nextPageToken;
-  }
+dependencies {
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 }

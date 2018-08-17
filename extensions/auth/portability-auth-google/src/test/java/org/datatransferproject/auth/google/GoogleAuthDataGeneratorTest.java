@@ -21,7 +21,7 @@ public class GoogleAuthDataGeneratorTest {
   public void generateConfigurationImport() {
     GoogleAuthDataGenerator generator =
         new GoogleAuthDataGenerator(
-            "redirect", appCredentials, httpTransport, null, "calendar", AuthMode.IMPORT);
+            "redirect", appCredentials, httpTransport, null, "CALENDAR", AuthMode.IMPORT);
 
     AuthFlowConfiguration config =
         generator.generateConfiguration("http://localhost/test", "54321");
@@ -40,7 +40,7 @@ public class GoogleAuthDataGeneratorTest {
   public void generateConfigurationExport() {
     GoogleAuthDataGenerator generator =
         new GoogleAuthDataGenerator(
-            "redirect", appCredentials, httpTransport, null, "calendar", AuthMode.EXPORT);
+            "redirect", appCredentials, httpTransport, null, "CALENDAR", AuthMode.EXPORT);
 
     AuthFlowConfiguration config =
         generator.generateConfiguration("http://localhost/test", "54321");

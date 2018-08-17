@@ -5,12 +5,12 @@ export interface CreateTransferJob {
     /**
     * Source (export) service.
     */
-    source: string;
+    exportService: string;
 
     /**
     * Target (import) service.
     */
-    destination: string;
+    importService: string;
 
     /**
     * The data type to transfer.
@@ -18,7 +18,7 @@ export interface CreateTransferJob {
     dataType: string;
 
     /**
-    * The base URL for auth callbacks.
+    * The URL for auth callbacks.
     */
-    baseCallbackUrl: string;
+    callbackUrl: string;
 }

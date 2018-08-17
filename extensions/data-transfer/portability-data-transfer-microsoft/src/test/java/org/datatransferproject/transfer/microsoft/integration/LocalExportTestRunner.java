@@ -22,7 +22,7 @@ public class LocalExportTestRunner {
     TokenAuthData token = authTestDriver.getOAuthTokenCode();
 
     Exporter<TokenAuthData, ContactsModelWrapper> contacts =
-        (Exporter<TokenAuthData, ContactsModelWrapper>) serviceProvider.getExporter("contacts");
+        (Exporter<TokenAuthData, ContactsModelWrapper>) serviceProvider.getExporter("CONTACTS");
     ExportResult<ContactsModelWrapper> wrapper = contacts.export(UUID.randomUUID(), token,
         Optional.empty());
   }

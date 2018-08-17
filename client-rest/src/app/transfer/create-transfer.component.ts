@@ -47,10 +47,10 @@ export class CreateTransferComponent implements OnInit {
     next() {
         this.progressService.servicesSelected(this.servicesForm.get("exportService").value, this.servicesForm.get("importService").value);
         this.transferService.createTransferJob({
-            source: this.progressService.exportService(),
-            destination: this.progressService.importService(),
+            exportService: this.progressService.exportService(),
+            importService: this.progressService.importService(),
             dataType: this.progressService.dataType(),
-            baseCallbackUrl: `${environment.apiBaseUrl}`
+            callbackUrl: `${environment.apiBaseUrl}`
         }).subscribe(transferJob => {
             // redirect to OAuth service
             this.progressService.createComplete(transferJob.id, transferJob.exportUrl, transferJob.importUrl);

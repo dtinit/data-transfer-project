@@ -18,7 +18,7 @@ package org.datatransferproject.transfer;
 import com.google.common.base.Preconditions;
 import java.security.KeyPair;
 import java.util.UUID;
-import org.datatransferproject.transfer.logging.EncryptingLayout;
+import org.datatransferproject.logging.EncryptingLayout;
 
 /**
  * A class that contains metadata for a transfer worker's job.

@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class InstagramTransferExtension implements TransferExtension {
   private final Logger logger = LoggerFactory.getLogger(InstagramTransferExtension.class);
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("photos");
+  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
 
   private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
 
