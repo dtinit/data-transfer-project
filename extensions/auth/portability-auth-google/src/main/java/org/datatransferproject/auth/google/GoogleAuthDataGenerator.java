@@ -52,6 +52,8 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  * <p>The flow is a two-step process. First, the user is sent to an authorization page and is then
  * redirected to a address in this system with the authorization code. The second step takes the
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
   private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
@@ -118,7 +120,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
             .setRedirectUri(callbackBaseUrl + redirectPath)
             .setState(encodedJobId)
             .build();
-    return new AuthFlowConfiguration(url, AUTH_PROTOCOL);
+    return new AuthFlowConfiguration(url, getTokenUrl(), AUTH_PROTOCOL);
   }
 
   @Override

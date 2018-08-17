@@ -32,6 +32,8 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  * <p>The flow is a two-step process. First, the user is sent to an authorization page and is then
  * redirected to a address in this system with the authorization code. The second step takes the
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
   private static final AuthProtocol AUTHORIZATION_PROTOCOL = OAUTH_2;
@@ -106,7 +108,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     // constructs a request for the Microsoft Graph authorization code.
     String redirectUrl = callbackBaseUrl + redirectPath;
     String queryPart = constructAuthQueryPart(redirectUrl, id, scopes);
-    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart, AUTHORIZATION_PROTOCOL);
+    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart, getTokenUrl(), AUTHORIZATION_PROTOCOL);
   }
 
   public TokenAuthData generateAuthData(

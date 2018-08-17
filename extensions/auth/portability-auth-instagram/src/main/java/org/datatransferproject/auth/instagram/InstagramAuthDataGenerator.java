@@ -36,6 +36,11 @@ import java.util.List;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Instagram API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 public class InstagramAuthDataGenerator implements AuthDataGenerator {
   private static final AuthProtocol AUTHORIZATION_PROTOCOL = OAUTH_2;
   private static final String CALLBACK_PATH = "/callback/instagram";
@@ -61,7 +66,7 @@ public class InstagramAuthDataGenerator implements AuthDataGenerator {
             .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
             .setState(encodedJobId)
             .build();
-    return new AuthFlowConfiguration(url, AUTHORIZATION_PROTOCOL);
+    return new AuthFlowConfiguration(url, getTokenUrl(), AUTHORIZATION_PROTOCOL);
   }
 
   @Override

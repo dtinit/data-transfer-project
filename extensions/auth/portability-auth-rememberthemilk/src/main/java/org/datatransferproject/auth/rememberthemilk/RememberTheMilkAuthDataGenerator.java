@@ -41,6 +41,11 @@ import org.slf4j.LoggerFactory;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.CUSTOM;
 
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Remember The Milk API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
   private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
   private static final AuthProtocol AUTH_PROTOCOL = CUSTOM;
@@ -72,7 +77,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
       return null;
     }
 
-    return new AuthFlowConfiguration(authUrlSigned.toString(), AUTH_PROTOCOL, null);
+    return new AuthFlowConfiguration(authUrlSigned.toString(), getTokenUrl(), AUTH_PROTOCOL, null);
   }
 
   @Override

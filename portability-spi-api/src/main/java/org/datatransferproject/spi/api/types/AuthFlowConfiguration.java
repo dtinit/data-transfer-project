@@ -15,6 +15,7 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
 @JsonTypeName("org.dataportability:AuthFlowConfiguration")
 public class AuthFlowConfiguration extends PortableType {
   private final String url;
+  private final String tokenUrl;
   private final AuthProtocol authProtocol;
   private AuthData initialAuthData;
 
@@ -23,8 +24,9 @@ public class AuthFlowConfiguration extends PortableType {
    *
    * @param url the initial URL.
    */
-  public AuthFlowConfiguration(String url, AuthProtocol authProtocol) {
+  public AuthFlowConfiguration(String url, String tokenUrl, AuthProtocol authProtocol) {
     this.url = url;
+    this.tokenUrl = tokenUrl;
     this.authProtocol = authProtocol;
   }
 
@@ -37,9 +39,11 @@ public class AuthFlowConfiguration extends PortableType {
   @JsonCreator
   public AuthFlowConfiguration(
           @JsonProperty("url") String url,
+          @JsonProperty("tokenUrl") String tokenUrl,
           @JsonProperty("authProtocol") AuthProtocol authProtocol,
           @JsonProperty("initialAuthData") AuthData initialAuthData) {
     this.url = url;
+    this.tokenUrl = tokenUrl;
     this.authProtocol = authProtocol;
     this.initialAuthData = initialAuthData;
   }
@@ -47,6 +51,11 @@ public class AuthFlowConfiguration extends PortableType {
   /** Returns the initial flow URL. */
   public String getUrl() {
     return url;
+  }
+
+  /** Returns the access token URL. */
+  public String getTokenUrl() {
+    return tokenUrl;
   }
 
   /** Returns the initial authentication data or null if the flow does not use it. */

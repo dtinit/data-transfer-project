@@ -34,7 +34,11 @@ import java.io.IOException;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_1;
 
-/* SmugmugAuthDataGenerator used for obtaining auth credentials for the Smugmug API*/
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Smugmug API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 public class SmugMugAuthDataGenerator implements AuthDataGenerator {
   private static final Logger logger = LoggerFactory.getLogger(SmugMugAuthDataGenerator.class);
   private static final AuthProtocol AUTH_PROTOCOL = OAUTH_1;
@@ -59,7 +63,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
     }
 
     String url = smugMugOauthInterface.getAuthorizationUrl(authData, perms);
-    return new AuthFlowConfiguration(url, AUTH_PROTOCOL, authData);
+    return new AuthFlowConfiguration(url, getTokenUrl(), AUTH_PROTOCOL, authData);
   }
 
   @Override

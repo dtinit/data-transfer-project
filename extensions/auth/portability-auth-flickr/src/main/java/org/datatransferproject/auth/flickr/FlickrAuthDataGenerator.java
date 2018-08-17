@@ -36,6 +36,11 @@ import org.slf4j.LoggerFactory;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_1;
 
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Flickr API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 public class FlickrAuthDataGenerator implements AuthDataGenerator {
   private static final Logger logger = LoggerFactory.getLogger(FlickrAuthDataGenerator.class);
   private static final AuthProtocol AUTH_PROTOCOL = OAUTH_1;
@@ -53,7 +58,7 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
     String url =
             authInterface.getAuthorizationUrl(
                     token, Permission.WRITE);
-    return new AuthFlowConfiguration(url, AUTH_PROTOCOL, toAuthData(token));
+    return new AuthFlowConfiguration(url, getTokenUrl(), AUTH_PROTOCOL, toAuthData(token));
   }
 
   @Override

@@ -67,7 +67,7 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
     }
 
     return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(),
-            null, null, null, null);
+            null, null, null, null, null, null);
   }
 
   /**

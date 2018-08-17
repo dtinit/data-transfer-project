@@ -34,7 +34,7 @@ public class OfflineDemoAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    return new AuthFlowConfiguration(callbackBaseUrl + "/callback/offline-demo?code=123", AUTH_PROTOCOL);
+    return new AuthFlowConfiguration(callbackBaseUrl + "/callback/offline-demo?code=123", getTokenUrl(), AUTH_PROTOCOL);
   }
 
   @Override
