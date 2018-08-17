@@ -53,22 +53,22 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   // These are READ/WRITE scopes
   private static final Map<String, List<String>> IMPORT_SCOPES =
       ImmutableMap.<String, List<String>>builder()
-          .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR))
-          .put("mail", ImmutableList.of(GmailScopes.GMAIL_MODIFY))
-          .put("photos", ImmutableList.of("https://picasaweb.google.com/data/"))
-          .put("tasks", ImmutableList.of(TasksScopes.TASKS))
-          .put("contacts", ImmutableList.of(PeopleServiceScopes.CONTACTS))
+          .put("CALENDAR", ImmutableList.of(CalendarScopes.CALENDAR))
+          .put("MAIL", ImmutableList.of(GmailScopes.GMAIL_MODIFY))
+          .put("PHOTOS", ImmutableList.of("https://picasaweb.google.com/data/"))
+          .put("TASKS", ImmutableList.of(TasksScopes.TASKS))
+          .put("CONTACTS", ImmutableList.of(PeopleServiceScopes.CONTACTS))
           .build();
 
   // The scopes necessary to export each supported data type.
   // These should contain READONLY permissions
   private static final Map<String, List<String>> EXPORT_SCOPES =
       ImmutableMap.<String, List<String>>builder()
-          .put("calendar", ImmutableList.of(CalendarScopes.CALENDAR_READONLY))
-          .put("mail", ImmutableList.of(GmailScopes.GMAIL_READONLY))
-          .put("photos", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
-          .put("tasks", ImmutableList.of(TasksScopes.TASKS_READONLY))
-          .put("contacts", ImmutableList.of(PeopleServiceScopes.CONTACTS_READONLY))
+          .put("CALENDAR", ImmutableList.of(CalendarScopes.CALENDAR_READONLY))
+          .put("MAIL", ImmutableList.of(GmailScopes.GMAIL_READONLY))
+          .put("PHOTOS", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
+          .put("TASKS", ImmutableList.of(TasksScopes.TASKS_READONLY))
+          .put("CONTACTS", ImmutableList.of(PeopleServiceScopes.CONTACTS_READONLY))
           .build();
 
   private final List<String> scopes;

@@ -28,7 +28,7 @@ public class DataTypesActionTest {
   @Test
   public void testHandle() {
     AuthServiceProviderRegistry registry = mock(AuthServiceProviderRegistry.class);
-    Set<String> dataTypes = new HashSet<>(Arrays.asList("contacts", "photos"));
+    Set<String> dataTypes = new HashSet<>(Arrays.asList("CONTACTS", "PHOTOS"));
     when(registry.getTransferDataTypes()).thenReturn(dataTypes);
     DataTypesAction dataTypesAction = new DataTypesAction(registry);
 

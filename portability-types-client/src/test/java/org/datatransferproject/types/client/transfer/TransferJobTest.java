@@ -34,7 +34,7 @@ public class TransferJobTest {
             "1-2-3",
             "testSource",
             "testDestination",
-            "photos",
+            "PHOTOS",
             "exportUrl",
             "importUrl");
     String serialized = objectMapper.writeValueAsString(transfer);
@@ -45,7 +45,7 @@ public class TransferJobTest {
     assertThat("1-2-3").isEqualTo(deserialized.getId());
     assertThat("testSource").isEqualTo(deserialized.getSource());
     assertThat("testDestination").isEqualTo(deserialized.getDestination());
-    assertThat("photos").isEqualTo(deserialized.getDataType());
+    assertThat("PHOTOS").isEqualTo(deserialized.getDataType());
     assertThat("exportUrl").isEqualTo(deserialized.getExportUrl());
     assertThat("importUrl").isEqualTo(deserialized.getImportUrl());
   }

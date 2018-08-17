@@ -21,9 +21,9 @@ import org.datatransferproject.transfer.microsoft.transformer.TransformerService
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
   // TODO: centralized place, or enum type for these?
-  private static final String CONTACTS = "contacts";
-  private static final String CALENDAR = "calendar";
-  private static final String PHOTOS = "photos";
+  private static final String CONTACTS = "CONTACTS";
+  private static final String CALENDAR = "CALENDAR";
+  private static final String PHOTOS = "PHOTOS";
   private static final String OFFLINE_DATA = "offline-data";
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
 
