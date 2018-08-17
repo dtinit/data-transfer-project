@@ -15,11 +15,7 @@
  */
 package org.datatransferproject.auth.instagram;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.auth.oauth2.*;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -28,16 +24,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import java.io.IOException;
-import java.util.List;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
-import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+import java.io.IOException;
+import java.util.List;
+
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+
 public class InstagramAuthDataGenerator implements AuthDataGenerator {
+  private static final AuthProtocol AUTHORIZATION_PROTOCOL = OAUTH_2;
   private static final String CALLBACK_PATH = "/callback/instagram";
   private static final String AUTHORIZATION_SERVER_URL =
       "https://api.instagram.com/oauth/authorize";
@@ -61,7 +61,7 @@ public class InstagramAuthDataGenerator implements AuthDataGenerator {
             .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
             .setState(encodedJobId)
             .build();
-    return new AuthFlowConfiguration(url);
+    return new AuthFlowConfiguration(url, AUTHORIZATION_PROTOCOL);
   }
 
   @Override

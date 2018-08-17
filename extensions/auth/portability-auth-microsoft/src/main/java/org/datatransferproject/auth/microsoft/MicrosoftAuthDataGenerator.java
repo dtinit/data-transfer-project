@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+
 /**
  * Provides configuration for conducting an OAuth flow against the Microsoft AD API. Returned tokens
  * can be used to make requests against the Microsoft Graph API.
@@ -31,6 +34,7 @@ import java.util.function.Supplier;
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
  */
 public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
+  private static final AuthProtocol AUTHORIZATION_PROTOCOL = OAUTH_2;
   private static final String AUTHORIZATION_URL =
       "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
   private static final String TOKEN_URL =
@@ -102,7 +106,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     // constructs a request for the Microsoft Graph authorization code.
     String redirectUrl = callbackBaseUrl + redirectPath;
     String queryPart = constructAuthQueryPart(redirectUrl, id, scopes);
-    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart);
+    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart, AUTHORIZATION_PROTOCOL);
   }
 
   public TokenAuthData generateAuthData(

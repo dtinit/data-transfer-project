@@ -33,9 +33,14 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
+
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+
 /* TwitterAuthDataGenerator used for obtaining auth credentials for the Twitter API*/
 final class TwitterAuthDataGenerator implements AuthDataGenerator {
-  private final Logger logger = LoggerFactory.getLogger(TwitterAuthDataGenerator.class);
+  private static final Logger logger = LoggerFactory.getLogger(TwitterAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
   private final String perms;
   private final Twitter twitterApi;
 
@@ -63,6 +68,7 @@ final class TwitterAuthDataGenerator implements AuthDataGenerator {
 
     return new AuthFlowConfiguration(
         requestToken.getAuthorizationURL(),
+        AUTH_PROTOCOL,
         new TokenSecretAuthData(requestToken.getToken(), requestToken.getTokenSecret()));
   }
 

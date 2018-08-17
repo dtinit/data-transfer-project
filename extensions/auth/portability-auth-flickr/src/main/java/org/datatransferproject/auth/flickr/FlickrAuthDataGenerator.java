@@ -33,9 +33,14 @@ import org.scribe.model.Verifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_1;
+
 public class FlickrAuthDataGenerator implements AuthDataGenerator {
+  private static final Logger logger = LoggerFactory.getLogger(FlickrAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_1;
+
   private final Flickr flickr;
-  private final static Logger logger = LoggerFactory.getLogger(FlickrAuthDataGenerator.class);
 
   FlickrAuthDataGenerator(AppCredentials appCredentials){
     flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
@@ -48,7 +53,7 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
     String url =
             authInterface.getAuthorizationUrl(
                     token, Permission.WRITE);
-    return new AuthFlowConfiguration(url, toAuthData(token));
+    return new AuthFlowConfiguration(url, AUTH_PROTOCOL, toAuthData(token));
   }
 
   @Override

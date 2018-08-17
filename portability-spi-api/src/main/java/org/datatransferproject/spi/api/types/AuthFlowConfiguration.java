@@ -12,7 +12,15 @@ import org.datatransferproject.types.transfer.auth.AuthData;
  */
 @JsonTypeName("org.dataportability:AuthFlowConfiguration")
 public class AuthFlowConfiguration extends PortableType {
+  public enum AuthProtocol {
+    UNKNOWN,
+    OAUTH_1,
+    OAUTH_2,
+    CUSTOM
+  }
+
   private final String url;
+  private final AuthProtocol authProtocol;
   private AuthData initialAuthData;
 
   /**
@@ -20,20 +28,24 @@ public class AuthFlowConfiguration extends PortableType {
    *
    * @param url the initial URL.
    */
-  public AuthFlowConfiguration(String url) {
+  public AuthFlowConfiguration(String url, AuthProtocol authProtocol) {
     this.url = url;
+    this.authProtocol = authProtocol;
   }
 
   /**
    * Ctor.
-   *
-   * @param url the initial URL.
+   *  @param url the initial URL.
+   * @param authProtocol the protocol used for authentication.
    * @param initialAuthData the initial authentication data
    */
   @JsonCreator
   public AuthFlowConfiguration(
-      @JsonProperty("url") String url, @JsonProperty("initialAuthData") AuthData initialAuthData) {
+          @JsonProperty("url") String url,
+          @JsonProperty("authProtocol") AuthProtocol authProtocol,
+          @JsonProperty("initialAuthData") AuthData initialAuthData) {
     this.url = url;
+    this.authProtocol = authProtocol;
     this.initialAuthData = initialAuthData;
   }
 
@@ -45,5 +57,10 @@ public class AuthFlowConfiguration extends PortableType {
   /** Returns the initial authentication data or null if the flow does not use it. */
   public AuthData getInitialAuthData() {
     return initialAuthData;
+  }
+
+  /** Returns the authentication protocol. */
+  public AuthProtocol getAuthProtocol() {
+    return authProtocol;
   }
 }

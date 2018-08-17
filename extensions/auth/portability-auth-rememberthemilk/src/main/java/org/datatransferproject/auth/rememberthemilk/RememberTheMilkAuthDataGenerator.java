@@ -38,13 +38,17 @@ import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.CUSTOM;
+
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
+  private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = CUSTOM;
   private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private static final String GET_TOKEN_URL = "https://api.rememberthemilk.com/services/rest/";
   private static final String GET_TOKEN_METHOD = "rtm.auth.getToken";
 
-  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
   private final RememberTheMilkSignatureGenerator signatureGenerator;
   private final String perms;
   private final XmlMapper xmlMapper;
@@ -68,7 +72,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
       return null;
     }
 
-    return new AuthFlowConfiguration(authUrlSigned.toString(), null);
+    return new AuthFlowConfiguration(authUrlSigned.toString(), AUTH_PROTOCOL, null);
   }
 
   @Override

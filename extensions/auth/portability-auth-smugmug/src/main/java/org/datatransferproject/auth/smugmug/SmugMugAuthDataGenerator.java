@@ -31,9 +31,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
+import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_1;
+
 /* SmugmugAuthDataGenerator used for obtaining auth credentials for the Smugmug API*/
 public class SmugMugAuthDataGenerator implements AuthDataGenerator {
-  private final Logger logger = LoggerFactory.getLogger(SmugMugAuthDataGenerator.class);
+  private static final Logger logger = LoggerFactory.getLogger(SmugMugAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_1;
   private final String perms;
   private final SmugMugOauthInterface smugMugOauthInterface;
 
@@ -55,7 +59,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
     }
 
     String url = smugMugOauthInterface.getAuthorizationUrl(authData, perms);
-    return new AuthFlowConfiguration(url, authData);
+    return new AuthFlowConfiguration(url, AUTH_PROTOCOL, authData);
   }
 
   @Override
