@@ -33,10 +33,10 @@ import org.slf4j.LoggerFactory;
 public final class TwitterAuthServiceExtension implements AuthServiceExtension {
   private static final String TWITTER_KEY = "TWITTER_KEY";
   private static final String TWITTER_SECRET = "TWITTER_SECRET";
-  private static final String SERVICE_ID = "Twitter";
+  private static final String SERVICE_ID = "TWITTER";
 
   private final Logger logger = LoggerFactory.getLogger(TwitterAuthServiceExtension.class);
-  private final List<String> supportedServices = ImmutableList.of("photos");
+  private final List<String> supportedServices = ImmutableList.of("PHOTOS");
   private AuthDataGenerator importAuthDataGenerator;
   private AuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;

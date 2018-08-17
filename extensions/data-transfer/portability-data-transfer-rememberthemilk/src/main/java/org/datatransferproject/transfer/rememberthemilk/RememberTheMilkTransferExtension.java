@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RememberTheMilkTransferExtension implements TransferExtension {
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("tasks");
+  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("TASKS");
   private static final String RTM_KEY = "RTM_KEY";
   private static final String RTM_SECRET = "RTM_SECRET";
   private final Logger logger = LoggerFactory.getLogger(RememberTheMilkTransferExtension.class);
@@ -42,7 +42,7 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
 
   @Override
   public String getServiceId() {
-    return "remember the milk";
+    return "REMEMBER_THE_MILK";
   }
 
   @Override

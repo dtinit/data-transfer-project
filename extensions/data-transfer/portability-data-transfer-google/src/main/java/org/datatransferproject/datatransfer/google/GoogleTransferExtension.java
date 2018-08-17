@@ -36,7 +36,7 @@ public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("calendar", "contacts", "mail", "photos", "tasks");
+      ImmutableList.of("CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "TASKS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -88,19 +88,19 @@ public class GoogleTransferExtension implements TransferExtension {
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("contacts", new GoogleContactsImporter(credentialFactory));
-    importerBuilder.put("calendar", new GoogleCalendarImporter(credentialFactory, jobStore));
-    importerBuilder.put("mail", new GoogleMailImporter(credentialFactory, jobStore)) ;
-    importerBuilder.put("tasks", new GoogleTasksImporter(credentialFactory, jobStore));
-    importerBuilder.put("photos", new GooglePhotosImporter(credentialFactory, jobStore));
+    importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
+    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory, jobStore));
+    importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, jobStore)) ;
+    importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
+    importerBuilder.put("PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
-    exporterBuilder.put("contacts", new GoogleContactsExporter(credentialFactory));
-    exporterBuilder.put("calendar", new GoogleCalendarExporter(credentialFactory));
-    exporterBuilder.put("mail", new GoogleMailExporter(credentialFactory));
-    exporterBuilder.put("tasks", new GoogleTasksExporter(credentialFactory));
-    exporterBuilder.put("photos", new GooglePhotosExporter(credentialFactory));
+    exporterBuilder.put("CONTACTS", new GoogleContactsExporter(credentialFactory));
+    exporterBuilder.put("CALENDAR", new GoogleCalendarExporter(credentialFactory));
+    exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
+    exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory));
+    exporterBuilder.put("PHOTOS", new GooglePhotosExporter(credentialFactory));
 
     exporterMap = exporterBuilder.build();
 

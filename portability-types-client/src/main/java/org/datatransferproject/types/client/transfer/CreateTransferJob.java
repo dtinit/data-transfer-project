@@ -23,31 +23,31 @@ import io.swagger.annotations.ApiModelProperty;
 /** Request to create a transfer job. */
 @ApiModel(description = "A request to create a data transfer job")
 public class CreateTransferJob {
-    private final String source;
-    private final String destination;
+    private final String exportService;
+    private final String importService;
     private final String dataType;
-    private final String baseCallbackUrl;
+    private final String callbackUrl;
 
     @JsonCreator
     public CreateTransferJob(
-            @JsonProperty(value = "source", required = true) String source,
-            @JsonProperty(value = "destination", required = true) String destination,
+            @JsonProperty(value = "exportService", required = true) String exportService,
+            @JsonProperty(value = "importService", required = true) String importService,
             @JsonProperty(value = "dataType", required = true) String dataType,
-            @JsonProperty(value = "baseCallbackUrl", required = true) String baseCallbackUrl) {
-        this.source = source;
-        this.destination = destination;
+            @JsonProperty(value = "callbackUrl", required = true) String callbackUrl) {
+        this.exportService = exportService;
+        this.importService = importService;
         this.dataType = dataType;
-        this.baseCallbackUrl = baseCallbackUrl;
+        this.callbackUrl = callbackUrl;
     }
 
     @ApiModelProperty(value = "The service to transfer data from", dataType = "string", required = true)
-    public String getSource() {
-        return source;
+    public String getExportService() {
+        return exportService;
     }
 
     @ApiModelProperty(value = "The service to transfer data to", dataType = "string", required = true)
-    public String getDestination() {
-        return destination;
+    public String getImportService() {
+        return importService;
     }
 
     @ApiModelProperty(value = "The type of data to transfer", dataType = "string", required = true)
@@ -55,8 +55,8 @@ public class CreateTransferJob {
         return dataType;
     }
 
-    @ApiModelProperty(value = "The base of the auth callback URLs", dataType = "string", required = true)
-    public String getBaseCallbackUrl() {
-        return baseCallbackUrl;
+    @ApiModelProperty(value = "The auth callback URL", dataType = "string", required = true)
+    public String getCallbackUrl() {
+        return callbackUrl;
     }
 }

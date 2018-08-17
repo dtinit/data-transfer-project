@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 public class InstagramAuthServiceExtension implements AuthServiceExtension {
   private static final String INSTAGRAM_KEY = "INSTAGRAM_KEY";
   private static final String INSTAGRAM_SECRET = "INSTAGRAM_SECRET";
-  private static final String INSTAGRAM_SERVICE_ID = "instagram";
+  private static final String INSTAGRAM_SERVICE_ID = "INSTAGRAM";
   private final Logger logger = LoggerFactory.getLogger(InstagramAuthServiceExtension.class);
-  private final List<String> SUPPORTED_EXPORT_SERVICES = ImmutableList.of("photos");
+  private final List<String> SUPPORTED_EXPORT_SERVICES = ImmutableList.of("PHOTOS");
 
   private InstagramAuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;
