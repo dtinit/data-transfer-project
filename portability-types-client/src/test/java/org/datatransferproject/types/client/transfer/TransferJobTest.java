@@ -17,7 +17,6 @@
 package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -32,8 +31,8 @@ public class TransferJobTest {
     TransferJob transfer =
         new TransferJob(
             "1-2-3",
-            "testSource",
-            "testDestination",
+            "testExportService",
+            "testImportService",
             "photos",
             "exportUrl",
             "importUrl");
@@ -43,8 +42,8 @@ public class TransferJobTest {
         objectMapper.readValue(serialized, TransferJob.class);
 
     assertThat("1-2-3").isEqualTo(deserialized.getId());
-    assertThat("testSource").isEqualTo(deserialized.getSource());
-    assertThat("testDestination").isEqualTo(deserialized.getDestination());
+    assertThat("testExportService").isEqualTo(deserialized.getExportService());
+    assertThat("testImportService").isEqualTo(deserialized.getImportService());
     assertThat("photos").isEqualTo(deserialized.getDataType());
     assertThat("exportUrl").isEqualTo(deserialized.getExportUrl());
     assertThat("importUrl").isEqualTo(deserialized.getImportUrl());

@@ -28,8 +28,8 @@ public class TransferJob {
     }
 
     private final String id;
-    private final String source;
-    private final String destination;
+    private final String exportService;
+    private final String importService;
     private final String dataType;
     private final State state = State.CREATED;
     private final String exportUrl;
@@ -38,14 +38,14 @@ public class TransferJob {
     @JsonCreator
     public TransferJob(
             @JsonProperty(value = "id", required = true) String id,
-            @JsonProperty(value = "source", required = true) String source,
-            @JsonProperty(value = "destination", required = true) String destination,
+            @JsonProperty(value = "exportService", required = true) String exportService,
+            @JsonProperty(value = "importService", required = true) String importService,
             @JsonProperty(value = "dataType", required = true) String dataType,
             @JsonProperty(value = "exportUrl", required = true) String exportUrl,
             @JsonProperty(value = "importUrl", required = true) String importUrl) {
         this.id = id;
-        this.source = source;
-        this.destination = destination;
+        this.exportService = exportService;
+        this.importService = importService;
         this.dataType = dataType;
         this.exportUrl = exportUrl;
         this.importUrl = importUrl;
@@ -55,12 +55,12 @@ public class TransferJob {
         return id;
     }
 
-    public String getSource() {
-        return source;
+    public String getExportService() {
+        return exportService;
     }
 
-    public String getDestination() {
-        return destination;
+    public String getImportService() {
+        return importService;
     }
 
     public String getDataType() {
