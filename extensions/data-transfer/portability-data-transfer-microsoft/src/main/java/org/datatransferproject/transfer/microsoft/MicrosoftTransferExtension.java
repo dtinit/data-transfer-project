@@ -24,7 +24,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private static final String CONTACTS = "CONTACTS";
   private static final String CALENDAR = "CALENDAR";
   private static final String PHOTOS = "PHOTOS";
-  private static final String OFFLINE_DATA = ""OFFLINE-DATA"";
+  private static final String OFFLINE_DATA = "OFFLINE-DATA";
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
 
   private final boolean offlineData;
