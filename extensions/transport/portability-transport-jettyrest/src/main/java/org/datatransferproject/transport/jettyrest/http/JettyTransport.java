@@ -15,7 +15,14 @@
  */
 package org.datatransferproject.transport.jettyrest.http;
 
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -118,6 +125,7 @@ public class JettyTransport {
   }
 
   private class JettyErrorHandler extends ErrorHandler {
+
     protected void writeErrorPage(
         HttpServletRequest request, Writer writer, int code, String message, boolean showStacks)
         throws IOException {
