@@ -303,8 +303,9 @@ print_step "Creating GCS 'app-data' bucket for storing encrypted app secrets"
 BUCKET_NAME="app-data-$PROJECT_ID"
 GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
 gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
-# TODO set error page for the website bucket with "-e 404.html"
-gsutil web set -m index.html ${GCS_BUCKET_NAME}
+# Note: setting the error page to index.html is a hack to map /callback/* to the Angular app
+# (via the error page). GCLB doesn't allow us to map /callback/* to index.html otherwise.
+gsutil web set -m index.html -e index.html ${GCS_BUCKET_NAME}
 echo "Created GCS bucket $GCS_BUCKET_NAME"
 
 print_step "Granting service account ${SERVICE_ACCOUNT} viewer privileges to 'app-data' bucket"
