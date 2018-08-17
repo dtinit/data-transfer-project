@@ -20,8 +20,8 @@ import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 /**
  * Generates authentication data for the offline data demo importer.

@@ -33,9 +33,8 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
-
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 /* TwitterAuthDataGenerator used for obtaining auth credentials for the Twitter API*/
 final class TwitterAuthDataGenerator implements AuthDataGenerator {

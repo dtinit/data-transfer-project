@@ -33,8 +33,8 @@ import org.scribe.model.Verifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_1;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_1;
 
 public class FlickrAuthDataGenerator implements AuthDataGenerator {
   private static final Logger logger = LoggerFactory.getLogger(FlickrAuthDataGenerator.class);

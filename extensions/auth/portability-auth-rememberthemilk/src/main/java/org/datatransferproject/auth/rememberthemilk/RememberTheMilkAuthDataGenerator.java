@@ -38,8 +38,8 @@ import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.CUSTOM;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.CUSTOM;
 
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
   private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);

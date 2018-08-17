@@ -15,7 +15,6 @@
  */
 
 dependencies {
-    compile project(":portability-types-common")
     compile("io.swagger:swagger-annotations:${swaggerVersion}")
     testCompile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
 }

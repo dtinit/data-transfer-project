@@ -33,8 +33,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import java.io.IOException;
 import java.util.List;
 
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 public class InstagramAuthDataGenerator implements AuthDataGenerator {
   private static final AuthProtocol AUTHORIZATION_PROTOCOL = OAUTH_2;

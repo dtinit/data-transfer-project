@@ -6,19 +6,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.datatransferproject.types.transfer.PortableType;
 import org.datatransferproject.types.transfer.auth.AuthData;
 
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+
 /**
  * Configuration for an authorization flow. A flow has an initial URL and optional initial
  * authentication data.
  */
 @JsonTypeName("org.dataportability:AuthFlowConfiguration")
 public class AuthFlowConfiguration extends PortableType {
-  public enum AuthProtocol {
-    UNKNOWN,
-    OAUTH_1,
-    OAUTH_2,
-    CUSTOM
-  }
-
   private final String url;
   private final AuthProtocol authProtocol;
   private AuthData initialAuthData;

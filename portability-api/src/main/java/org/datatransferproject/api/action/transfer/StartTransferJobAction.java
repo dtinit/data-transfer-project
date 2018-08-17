@@ -66,7 +66,8 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
               startTransferJob.getImportAuthData());
     }
 
-    return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(), null, null);
+    return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(),
+            null, null, null, null);
   }
 
   /**

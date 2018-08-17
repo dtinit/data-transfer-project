@@ -42,8 +42,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_2;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 /**
  * Provides configuration for conducting an OAuth flow against the Google AD API. Returned tokens

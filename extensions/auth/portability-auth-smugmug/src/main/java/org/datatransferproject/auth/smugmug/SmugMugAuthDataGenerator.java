@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol;
-import static org.datatransferproject.spi.api.types.AuthFlowConfiguration.AuthProtocol.OAUTH_1;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_1;
 
 /* SmugmugAuthDataGenerator used for obtaining auth credentials for the Smugmug API*/
 public class SmugMugAuthDataGenerator implements AuthDataGenerator {
