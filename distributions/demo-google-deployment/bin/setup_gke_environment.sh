@@ -345,10 +345,8 @@ rm /tmp/service_acct_creds.json
 
 print_step "Creating load balancer"
 gcloud compute url-maps create ${LB_NAME} \
---default-service ${API_BACKEND_SERVICE_NAME}
+--default-service ${STATIC_BUCKET_NAME}
 gcloud compute url-maps add-path-matcher ${LB_NAME} \
---default-service ${API_BACKEND_SERVICE_NAME} --path-matcher-name "static-bucket-mapping" \
---backend-bucket-path-rules "/static/*=${STATIC_BUCKET_NAME},/index.html=${STATIC_BUCKET_NAME}" \
 --backend-service-path-rules "/api/*=${API_BACKEND_SERVICE_NAME}"
 
 print_step "Reserving a static external IP"
