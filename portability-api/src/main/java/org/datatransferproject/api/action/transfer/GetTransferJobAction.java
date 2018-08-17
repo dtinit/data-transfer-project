@@ -34,6 +34,7 @@ public class GetTransferJobAction implements Action<GetTransferJob, TransferJob>
 
     PortabilityJob job = jobStore.findJob(jobId);
 
+    // TODO(#553): This list of nulls should be cleaned up when we refactor TransferJob.
     return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(),
             null, null, null, null, null, null);
   }

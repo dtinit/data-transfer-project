@@ -32,7 +32,11 @@ public interface AuthDataGenerator {
   AuthData generateAuthData(
       String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra);
 
-  // TODO(#553): Implement this for auth extensions. Currently unused by the demo-server frontend.
+  /**
+   * Return the URL used to exchange an access code for token.
+   *
+   * <p>TODO(#553): Implement this for auth extensions. Currently unused by the demo-server frontend.
+   */
   default String getTokenUrl() {
     return "";
   }

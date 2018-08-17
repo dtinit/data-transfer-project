@@ -108,7 +108,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
     // constructs a request for the Microsoft Graph authorization code.
     String redirectUrl = callbackBaseUrl + redirectPath;
     String queryPart = constructAuthQueryPart(redirectUrl, id, scopes);
-    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart, getTokenUrl(), AUTHORIZATION_PROTOCOL);
+    return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart, AUTHORIZATION_PROTOCOL, getTokenUrl());
   }
 
   public TokenAuthData generateAuthData(

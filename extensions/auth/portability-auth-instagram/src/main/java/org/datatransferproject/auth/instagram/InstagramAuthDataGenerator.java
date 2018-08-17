@@ -66,7 +66,7 @@ public class InstagramAuthDataGenerator implements AuthDataGenerator {
             .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
             .setState(encodedJobId)
             .build();
-    return new AuthFlowConfiguration(url, getTokenUrl(), AUTHORIZATION_PROTOCOL);
+    return new AuthFlowConfiguration(url, AUTHORIZATION_PROTOCOL, getTokenUrl());
   }
 
   @Override

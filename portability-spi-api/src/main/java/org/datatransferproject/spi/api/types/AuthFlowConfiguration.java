@@ -24,7 +24,7 @@ public class AuthFlowConfiguration extends PortableType {
    *
    * @param authUrl the initial URL.
    */
-  public AuthFlowConfiguration(String authUrl, String tokenUrl, AuthProtocol authProtocol) {
+  public AuthFlowConfiguration(String authUrl, AuthProtocol authProtocol, String tokenUrl) {
     this.authUrl = authUrl;
     this.tokenUrl = tokenUrl;
     this.authProtocol = authProtocol;

@@ -120,7 +120,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
             .setRedirectUri(callbackBaseUrl + redirectPath)
             .setState(encodedJobId)
             .build();
-    return new AuthFlowConfiguration(url, getTokenUrl(), AUTH_PROTOCOL);
+    return new AuthFlowConfiguration(url, AUTH_PROTOCOL, getTokenUrl());
   }
 
   @Override
