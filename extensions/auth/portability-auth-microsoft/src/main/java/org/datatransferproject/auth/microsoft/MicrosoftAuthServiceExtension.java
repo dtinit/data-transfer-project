@@ -43,9 +43,9 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
 
   static {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
-    builder.add("calendar", "contacts");
+    builder.add("CALENDAR", "CONTACTS");
     if (Boolean.parseBoolean(System.getProperty("offlineData"))) {
-      builder.add("offline-data");
+      builder.add("OFFLINE-DATA");
     }
     SUPPORTED_SERVICES = builder.build();
   }
@@ -59,7 +59,7 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private Map<String, MicrosoftAuthDataGenerator> exportAuthDataGenerators;
 
   public String getServiceId() {
-    return "microsoft";
+    return "MICROSOFT";
   }
 
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {

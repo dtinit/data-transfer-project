@@ -39,7 +39,7 @@ public class LocalImportTestRunner {
     TokenAuthData token = authTestDriver.getOAuthTokenCode();
 
     Importer<TokenAuthData, ContactsModelWrapper> contacts =
-        (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter("contacts");
+        (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter("CONTACTS");
 
     ContactsModelWrapper wrapper = new ContactsModelWrapper(createCards());
     ImportResult result = contacts.importItem(UUID.randomUUID(), token, wrapper);

@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SmugMugTransferExtension implements TransferExtension {
-  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("photos");
+  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
   private static final Logger LOGGER = LoggerFactory.getLogger(SmugMugTransferExtension.class);
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";

@@ -32,10 +32,10 @@ import org.slf4j.LoggerFactory;
 public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension {
   private static final String RTM_KEY = "RTM_KEY";
   private static final String RTM_SECRET = "RTM_SECRET";
-  private static final String SERVICE_ID = "remember the milk";
+  private static final String SERVICE_ID = "REMEMBER_THE_MILK";
 
   private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthServiceExtension.class);
-  private final List<String> supportedServices = ImmutableList.of("tasks");
+  private final List<String> supportedServices = ImmutableList.of("TASKS");
   private RememberTheMilkAuthDataGenerator importAuthDataGenerator;
   private RememberTheMilkAuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;

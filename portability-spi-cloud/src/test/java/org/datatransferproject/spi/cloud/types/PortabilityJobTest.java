@@ -43,7 +43,7 @@ public class PortabilityJobTest {
             .setState(State.NEW)
             .setExportService("fooService")
             .setImportService("barService")
-            .setTransferDataType("photos")
+            .setTransferDataType("PHOTOS")
             .setCreatedTimestamp(date)
             .setLastUpdateTimestamp(date.plusMinutes(2))
             .setJobAuthorization(jobAuthorization)

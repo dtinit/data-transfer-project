@@ -40,20 +40,20 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
   // These are READ/WRITE scopes
   private static final Map<String, List<String>> importAuthScopes =
       ImmutableMap.<String, List<String>>builder()
-          .put("mail", ImmutableList.of("user.read", "Mail.ReadWrite"))
-          .put("contacts", ImmutableList.of("user.read", "Contacts.ReadWrite"))
-          .put("calendar", ImmutableList.of("user.read", "Calendars.ReadWrite"))
+          .put("MAIL", ImmutableList.of("user.read", "Mail.ReadWrite"))
+          .put("CONTACTS", ImmutableList.of("user.read", "Contacts.ReadWrite"))
+          .put("CALENDAR", ImmutableList.of("user.read", "Calendars.ReadWrite"))
           .build();
 
   // The scopes necessary to export each supported data type.
   // These should contain READONLY permissions
   private static final Map<String, List<String>> exportAuthScopes =
       ImmutableMap.<String, List<String>>builder()
-          .put("mail", ImmutableList.of("user.read", "Mail.Read"))
-          .put("contacts", ImmutableList.of("user.read", "Contacts.Read"))
-          .put("calendar", ImmutableList.of("user.read", "Calendars.Read"))
+          .put("MAIL", ImmutableList.of("user.read", "Mail.Read"))
+          .put("CONTACTS", ImmutableList.of("user.read", "Contacts.Read"))
+          .put("CALENDAR", ImmutableList.of("user.read", "Calendars.Read"))
           // needed because offline exported as one drive files
-          .put("offline-data", ImmutableList.of("user.read", "Files.Read.All"))
+          .put("OFFLINE-DATA", ImmutableList.of("user.read", "Files.Read.All"))
           .build();
 
   private final String redirectPath;
