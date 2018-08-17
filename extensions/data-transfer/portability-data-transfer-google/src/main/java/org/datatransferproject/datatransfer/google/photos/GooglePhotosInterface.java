@@ -16,6 +16,7 @@
 
 package org.datatransferproject.datatransfer.google.photos;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.GenericUrl;
@@ -54,7 +55,8 @@ public class GooglePhotosInterface {
   private static final String ALBUM_ID_KEY = "albumId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = new ObjectMapper().configure(
+      DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
 
