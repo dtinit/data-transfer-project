@@ -32,7 +32,8 @@ public class AuthFlowConfiguration extends PortableType {
 
   /**
    * Ctor.
-   *  @param url the initial URL.
+   * @param url the initial URL.
+   * @param tokenUrl the URL to exchange an access code for token.
    * @param authProtocol the protocol used for authentication.
    * @param initialAuthData the initial authentication data
    */

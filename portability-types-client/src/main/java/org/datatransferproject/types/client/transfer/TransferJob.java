@@ -91,12 +91,4 @@ public class TransferJob {
     public String getImportUrl() {
         return importUrl;
     }
-
-    public AuthProtocol getExportAuthProtocol() {
-        return exportAuthProtocol;
-    }
-
-    public AuthProtocol getImportAuthProtocol() {
-        return importAuthProtocol;
-    }
 }
