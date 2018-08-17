@@ -33,9 +33,17 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
-/* TwitterAuthDataGenerator used for obtaining auth credentials for the Twitter API*/
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
+
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Twitter API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 final class TwitterAuthDataGenerator implements AuthDataGenerator {
-  private final Logger logger = LoggerFactory.getLogger(TwitterAuthDataGenerator.class);
+  private static final Logger logger = LoggerFactory.getLogger(TwitterAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
   private final String perms;
   private final Twitter twitterApi;
 
@@ -63,6 +71,8 @@ final class TwitterAuthDataGenerator implements AuthDataGenerator {
 
     return new AuthFlowConfiguration(
         requestToken.getAuthorizationURL(),
+        getTokenUrl(),
+        AUTH_PROTOCOL,
         new TokenSecretAuthData(requestToken.getToken(), requestToken.getTokenSecret()));
   }
 

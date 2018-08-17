@@ -58,7 +58,7 @@ public class AuthTestDriver {
 
     Desktop desktop = Desktop.getDesktop();
 
-    desktop.browse(new URI(configuration.getUrl()));
+    desktop.browse(new URI(configuration.getAuthUrl()));
 
     // Execute the request and retrieve the auth code.
     String authCode = retrieveAuthCode(client);

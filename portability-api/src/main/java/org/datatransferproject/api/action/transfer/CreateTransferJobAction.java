@@ -137,7 +137,9 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             }
 
             return new TransferJob(encodedJobId, job.exportService(), job.importService(), job.transferDataType(),
-                    exportConfiguration.getUrl(), importConfiguration.getUrl());
+                    exportConfiguration.getAuthUrl(), importConfiguration.getAuthUrl(),
+                    exportConfiguration.getTokenUrl(), importConfiguration.getTokenUrl(),
+                    exportConfiguration.getAuthProtocol(), importConfiguration.getAuthProtocol());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
