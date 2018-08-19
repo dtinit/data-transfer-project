@@ -45,16 +45,7 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
     job = updateJobWithCredentials(jobId, job, startTransferJob.getEncryptedAuthData());
 
     return new TransferJob(
-        id,
-        job.exportService(),
-        job.importService(),
-        job.transferDataType(),
-        null,
-        null,
-        null,
-        null,
-        null,
-        null);
+        id, job.exportService(), job.importService(), job.transferDataType(), null, null);
   }
 
   /**
