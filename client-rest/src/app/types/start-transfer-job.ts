@@ -3,7 +3,9 @@
  */
 export interface StartTransferJob {
     id: string;
-    exportAuthData: string;
-    importAuthData: string;
-    authDataEncrypted: boolean;
+
+    /**
+     * A JWE containing the auth data pair in the form {exportAuthData: AuthData, importAuthData: AuthData}
+     */
+    encryptedAuthData?: string;
 }

@@ -7,6 +7,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -23,10 +24,10 @@ public abstract class PortabilityJob {
   private static final String DATA_TYPE_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_KEY = "EXPORT_SERVICE";
   private static final String IMPORT_SERVICE_KEY = "IMPORT_SERVICE";
+  private static final String ENCRYPTED_CREDS_KEY = "ENCRYPTED_CREDS_KEY";
   private static final String EXPORT_ENCRYPTED_CREDS_KEY = "EXPORT_ENCRYPTED_CREDS_KEY";
   private static final String IMPORT_ENCRYPTED_CREDS_KEY = "IMPORT_ENCRYPTED_CREDS_KEY";
   private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
-  private static final String ENCRYPTED_AUTH_KEY = "ENCRYPTED_AUTH_KEY";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
   private static final String IMPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
@@ -46,6 +47,10 @@ public abstract class PortabilityJob {
 
   public static PortabilityJob fromMap(Map<String, Object> properties) {
     LocalDateTime now = LocalDateTime.now();
+    String encryptedAuthData =
+        properties.containsKey(ENCRYPTED_CREDS_KEY)
+            ? (String) properties.get(ENCRYPTED_CREDS_KEY)
+            : null;
     String encryptedExportAuthData =
         properties.containsKey(EXPORT_ENCRYPTED_CREDS_KEY)
             ? (String) properties.get(EXPORT_ENCRYPTED_CREDS_KEY)
@@ -80,10 +85,10 @@ public abstract class PortabilityJob {
             JobAuthorization.builder()
                 .setState(
                     JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE)))
+                .setEncryptedAuthData(encryptedAuthData)
                 .setEncryptedExportAuthData(encryptedExportAuthData)
                 .setEncryptedImportAuthData(encryptedImportAuthData)
                 .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
-                .setAuthSecretKey((String) properties.get(ENCRYPTED_AUTH_KEY))
                 .setAuthPublicKey(encodedPublicKey)
                 .setEncryptedInitialExportAuthData(encryptedExportInitialAuthData)
                 .setEncryptedInitialImportAuthData(encryptedImportInitialAuthData)
@@ -136,9 +141,6 @@ public abstract class PortabilityJob {
             .put(IMPORT_SERVICE_KEY, importService())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
             .put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
-    if (jobAuthorization().authSecretKey() != null) {
-      builder.put(ENCRYPTED_AUTH_KEY, jobAuthorization().authSecretKey());
-    }
 
     if (null != jobAuthorization().encryptedExportAuthData()) {
       builder.put(EXPORT_ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedExportAuthData());
@@ -148,6 +150,9 @@ public abstract class PortabilityJob {
     }
     if (null != jobAuthorization().authPublicKey()) {
       builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
+    }
+    if (null != jobAuthorization().encryptedAuthData()) {
+      builder.put(ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedAuthData());
     }
 
     if (null != jobAuthorization().encryptedInitialExportAuthData()) {
@@ -215,13 +220,13 @@ public abstract class PortabilityJob {
               jobAuthorization.encryptedExportAuthData(),
               jobAuthorization.encryptedImportAuthData());
           break;
-        case CREDS_ENCRYPTED:
+        case CREDS_STORED:
           // Expected all fields set
-          isSet(
-              jobAuthorization.sessionSecretKey(),
-              jobAuthorization.authPublicKey(),
-              jobAuthorization.encryptedExportAuthData(),
-              jobAuthorization.encryptedImportAuthData());
+          //          isSet(
+          //              jobAuthorization.sessionSecretKey(),
+          //              jobAuthorization.authPublicKey(),
+          //              jobAuthorization.encryptedExportAuthData(),
+          //              jobAuthorization.encryptedImportAuthData());
           break;
       }
       return setJobAuthorization(jobAuthorization);

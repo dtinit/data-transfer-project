@@ -17,24 +17,27 @@ package org.datatransferproject.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.util.UUID;
-import javax.crypto.SecretKey;
-import org.datatransferproject.security.Decrypter;
-import org.datatransferproject.security.DecrypterFactory;
-import org.datatransferproject.security.SymmetricKeyGenerator;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEObject;
+import com.nimbusds.jose.crypto.RSADecrypter;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.auth.AuthDataPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.UUID;
+
 /**
- * Process a job in two steps: <br> (1) Decrypt the stored credentials, which have been encrypted
- * with this transfer worker's public key<br> (2)Run the copy job
+ * Process a job in two steps: <br>
+ * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
+ * key<br>
+ * (2)Run the copy job
  */
 final class JobProcessor {
 
@@ -43,30 +46,22 @@ final class JobProcessor {
   private final JobStore store;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
-  private final SymmetricKeyGenerator symmetricKeyGenerator;
 
   @Inject
-  JobProcessor(
-      JobStore store,
-      ObjectMapper objectMapper,
-      InMemoryDataCopier copier,
-      SymmetricKeyGenerator symmetricKeyGenerator) {
+  JobProcessor(JobStore store, ObjectMapper objectMapper, InMemoryDataCopier copier) {
     this.store = store;
     this.objectMapper = objectMapper;
     this.copier = copier;
-    this.symmetricKeyGenerator = symmetricKeyGenerator;
   }
 
-  /**
-   * Process our job, whose metadata is available via {@link JobMetadata}.
-   */
+  /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
     UUID jobId = JobMetadata.getJobId();
     logger.debug("Begin processing jobId: {}", jobId);
 
     PortabilityJob job = store.findJob(jobId);
     JobAuthorization jobAuthorization = job.jobAuthorization();
-    Preconditions.checkState(jobAuthorization.state() == JobAuthorization.State.CREDS_ENCRYPTED);
+    Preconditions.checkState(jobAuthorization.state() == JobAuthorization.State.CREDS_STORED);
 
     try {
       logger.debug(
@@ -75,43 +70,21 @@ final class JobProcessor {
           job.exportService(),
           job.importService());
 
-      // Decrypt the encrypted outer symmetric key, which has been encrypted with our public key
-      Decrypter workerKeyDecrypter = DecrypterFactory.create(JobMetadata.getKeyPair().getPrivate());
-      byte[] encodedOuterSymmetricKey =
-          BaseEncoding.base64Url()
-              .decode(workerKeyDecrypter.decrypt(jobAuthorization.authSecretKey()));
-      SecretKey outerSymmetricKey = symmetricKeyGenerator.parse(encodedOuterSymmetricKey);
+      // Decrypt the data
+      RSADecrypter decrypter = new RSADecrypter(JobMetadata.getKeyPair().getPrivate());
+      JWEObject object = JWEObject.parse(jobAuthorization.encryptedAuthData());
+      object.decrypt(decrypter);
+      AuthDataPair pair =
+          objectMapper.readValue(object.getPayload().toString(), AuthDataPair.class);
 
-      // Decrypt the doubly encrypted export and import credentials, which have been doubly
-      // encrypted with two symmetric keys
-
-      // First decrypt with the outer (secondary) encryption key
-      Decrypter outerAuthDataDecrypter = DecrypterFactory.create(outerSymmetricKey);
-      String singlyEncryptedExportAuthData =
-          outerAuthDataDecrypter.decrypt(jobAuthorization.encryptedExportAuthData());
-      String singlyEncryptedImportAuthData =
-          outerAuthDataDecrypter.decrypt(jobAuthorization.encryptedImportAuthData());
-
-      // Parse the inner (initial) symmetric encryption key that is stored encoded with the
-      // jobAuthorization
-      byte[] keyBytes = BaseEncoding.base64Url().decode(jobAuthorization.sessionSecretKey());
-      SecretKey innerSymmetricKey = symmetricKeyGenerator.parse(keyBytes);
-
-      // Decrypt one more time
-      Decrypter innerAuthDataDecrypter = DecrypterFactory.create(innerSymmetricKey);
-
-      String serializedExportAuthData =
-          innerAuthDataDecrypter.decrypt(singlyEncryptedExportAuthData);
-      AuthData exportAuthData = deSerialize(serializedExportAuthData);
-
-      String serializedImportAuthData =
-          innerAuthDataDecrypter.decrypt(singlyEncryptedImportAuthData);
-      AuthData importAuthData = deSerialize(serializedImportAuthData);
+      AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
+      AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
       // Copy the data
       copier.copy(exportAuthData, importAuthData, jobId);
       logger.debug("Finished copy for jobId: " + jobId);
-    } catch (IOException e) {
+
+    } catch (IOException | ParseException | JOSEException e) {
       logger.error("Error processing jobId: " + jobId, e);
     } finally {
       try {
@@ -120,14 +93,6 @@ final class JobProcessor {
       } catch (IOException e) {
         logger.error("Error removing jobId: " + jobId, e);
       }
-    }
-  }
-
-  private AuthData deSerialize(String serialized) throws IOException {
-    try {
-      return objectMapper.readValue(serialized, AuthData.class);
-    } catch (IOException e) {
-      throw new IOException("Unable to deserialize AuthData", e);
     }
   }
 }

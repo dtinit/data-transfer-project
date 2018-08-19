@@ -7,7 +7,6 @@ import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.security.DecrypterFactory;
-import org.datatransferproject.security.EncrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
@@ -97,8 +96,7 @@ public class GenerateServiceAuthDataAction
 
       // Serialize and encrypt the auth data
       String serialized = objectMapper.writeValueAsString(authData);
-      String encryptedAuthData = EncrypterFactory.create(key).encrypt(serialized);
-      return new ServiceAuthData(encryptedAuthData);
+      return new ServiceAuthData(serialized);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

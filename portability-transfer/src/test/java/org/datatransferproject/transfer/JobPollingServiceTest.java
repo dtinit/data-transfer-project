@@ -15,13 +15,6 @@
  */
 package org.datatransferproject.transfer;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.UUID;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -34,6 +27,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
   private static final UUID TEST_ID = UUID.randomUUID();
@@ -44,9 +46,19 @@ public class JobPollingServiceTest {
   private JobStore store;
   private JobPollingService jobPollingService;
 
-  private static final KeyPair createTestKeyPair() {
-    PublicKey publicKey =
-        new PublicKey() {
+  private static KeyPair createTestKeyPair() {
+    RSAPublicKey publicKey =
+        new RSAPublicKey() {
+          @Override
+          public BigInteger getModulus() {
+            return BigInteger.ZERO;
+          }
+
+          @Override
+          public BigInteger getPublicExponent() {
+            return BigInteger.ZERO;
+          }
+
           @Override
           public String getAlgorithm() {
             return "RSA";
@@ -62,8 +74,18 @@ public class JobPollingServiceTest {
             return "DummyPublicKey".getBytes();
           }
         };
-    PrivateKey privateKey =
-        new PrivateKey() {
+    RSAPrivateKey privateKey =
+        new RSAPrivateKey() {
+          @Override
+          public BigInteger getModulus() {
+            return BigInteger.ZERO;
+          }
+
+          @Override
+          public BigInteger getPrivateExponent() {
+            return BigInteger.ZERO;
+          }
+
           @Override
           public String getAlgorithm() {
             return "RSA";
@@ -159,7 +181,7 @@ public class JobPollingServiceTest {
                     .toBuilder()
                     .setEncryptedExportAuthData("dummy export data")
                     .setEncryptedImportAuthData("dummy import data")
-                    .setState(State.CREDS_ENCRYPTED)
+                    .setState(State.CREDS_STORED)
                     .build())
             .build();
     store.updateJob(TEST_ID, job);
@@ -169,7 +191,7 @@ public class JobPollingServiceTest {
     jobPollingService.runOneIteration();
     job = store.findJob(TEST_ID);
     JobAuthorization jobAuthorization = job.jobAuthorization();
-    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
+    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_STORED);
     assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
     assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
 
