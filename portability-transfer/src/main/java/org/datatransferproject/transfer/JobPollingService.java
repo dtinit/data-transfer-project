@@ -112,9 +112,6 @@ class JobPollingService extends AbstractScheduledService {
       logger.debug("public key cannot be persisted again");
       return false;
     }
-    // Populate job with public key to persist
-    // xcv  String encodedPublicKey =
-    // BaseEncoding.base64Url().encode(keyPair.getPublic().getEncoded());
 
     String kid = UUID.randomUUID().toString();
     JWK jwk =
