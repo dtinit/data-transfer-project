@@ -31,16 +31,8 @@ public abstract class JobAuthorization {
   public abstract String encryptedInitialImportAuthData();
 
   @Nullable
-  @JsonProperty("encryptedExportAuthData")
-  public abstract String encryptedExportAuthData();
-
-  @Nullable
   @JsonProperty("encryptedAuthData")
   public abstract String encryptedAuthData();
-
-  @Nullable
-  @JsonProperty("encryptedImportAuthData")
-  public abstract String encryptedImportAuthData();
 
   /**
    * The SecretKey used to encrypt all data, including auth data, associated with this job, encoded
@@ -95,12 +87,6 @@ public abstract class JobAuthorization {
      */
     @JsonProperty("encryptedAuthData")
     public abstract Builder setEncryptedAuthData(String authData);
-
-    @JsonProperty("encryptedExportAuthData")
-    public abstract Builder setEncryptedExportAuthData(String authData);
-
-    @JsonProperty("encryptedImportAuthData")
-    public abstract Builder setEncryptedImportAuthData(String authData);
 
     /**
      * The SecretKey used to encrypt all data, including auth data, associated with this job,
