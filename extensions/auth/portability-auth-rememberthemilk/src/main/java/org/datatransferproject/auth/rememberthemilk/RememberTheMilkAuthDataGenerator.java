@@ -38,13 +38,22 @@ import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.CUSTOM;
+
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Remember The Milk API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
+  private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = CUSTOM;
   private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private static final String GET_TOKEN_URL = "https://api.rememberthemilk.com/services/rest/";
   private static final String GET_TOKEN_METHOD = "rtm.auth.getToken";
 
-  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
   private final RememberTheMilkSignatureGenerator signatureGenerator;
   private final String perms;
   private final XmlMapper xmlMapper;
@@ -68,7 +77,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
       return null;
     }
 
-    return new AuthFlowConfiguration(authUrlSigned.toString(), null);
+    return new AuthFlowConfiguration(authUrlSigned.toString(), getTokenUrl(), AUTH_PROTOCOL, null);
   }
 
   @Override

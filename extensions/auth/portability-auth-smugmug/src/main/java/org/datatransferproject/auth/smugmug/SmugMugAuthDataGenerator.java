@@ -31,9 +31,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-/* SmugmugAuthDataGenerator used for obtaining auth credentials for the Smugmug API*/
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_1;
+
+/*
+ * {@link AuthDataGenerator} to obtain auth credentials for the Smugmug API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
+ */
 public class SmugMugAuthDataGenerator implements AuthDataGenerator {
-  private final Logger logger = LoggerFactory.getLogger(SmugMugAuthDataGenerator.class);
+  private static final Logger logger = LoggerFactory.getLogger(SmugMugAuthDataGenerator.class);
+  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_1;
   private final String perms;
   private final SmugMugOauthInterface smugMugOauthInterface;
 
@@ -58,7 +66,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
     }
 
     String url = smugMugOauthInterface.getAuthorizationUrl(authData, perms);
-    return new AuthFlowConfiguration(url, authData);
+    return new AuthFlowConfiguration(url, getTokenUrl(), AUTH_PROTOCOL, authData);
   }
 
   @Override

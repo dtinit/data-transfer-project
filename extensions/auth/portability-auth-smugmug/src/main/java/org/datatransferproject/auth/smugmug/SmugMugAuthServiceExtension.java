@@ -35,10 +35,10 @@ public class SmugMugAuthServiceExtension implements AuthServiceExtension {
 
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
-  private static final String SERVICE_ID = "SmugMug";
+  private static final String SERVICE_ID = "SMUGMUG";
 
   private final Logger logger = LoggerFactory.getLogger(SmugMugAuthServiceExtension.class);
-  private final List<String> supportedServices = ImmutableList.of("photos");
+  private final List<String> supportedServices = ImmutableList.of("PHOTOS");
   private AuthDataGenerator importAuthDataGenerator;
   private AuthDataGenerator exportAuthDataGenerator;
   private boolean initialized = false;

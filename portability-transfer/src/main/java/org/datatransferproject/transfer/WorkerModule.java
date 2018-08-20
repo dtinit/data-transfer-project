@@ -18,6 +18,7 @@ package org.datatransferproject.transfer;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -57,12 +58,12 @@ final class WorkerModule extends FlagBindingModule {
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
-  private static TransferExtension findTransferExtension(
+  @VisibleForTesting static TransferExtension findTransferExtension(
       ImmutableList<TransferExtension> transferExtensions, String service) {
     try {
       return transferExtensions
           .stream()
-          .filter(ext -> ext.getServiceId().equals(service))
+          .filter(ext -> ext.getServiceId().toLowerCase().equals(service.toLowerCase()))
           .collect(onlyElement());
     } catch (IllegalArgumentException e) {
       throw new IllegalStateException(

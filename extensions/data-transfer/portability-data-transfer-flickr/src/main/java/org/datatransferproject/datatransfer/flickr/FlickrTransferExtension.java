@@ -37,7 +37,7 @@ public class FlickrTransferExtension implements TransferExtension {
   private static final String FLICKER_SECRET = "FLICKR_SECRET";
 
   private final Logger logger = LoggerFactory.getLogger(FlickrTransferExtension.class);
-  private final Set<String> supportedServices = ImmutableSet.of("photos");
+  private final Set<String> supportedServices = ImmutableSet.of("PHOTOS");
 
   private Importer importer;
   private Exporter exporter;

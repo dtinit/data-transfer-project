@@ -53,9 +53,9 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     @Override
     public TransferJob handle(CreateTransferJob request) {
         String dataType = request.getDataType();
-        String exportService = request.getSource();
-        String importService = request.getDestination();
-        String baseCallbackUrl = request.getBaseCallbackUrl();
+        String exportService = request.getExportService();
+        String importService = request.getImportService();
+        String callbackUrl = request.getCallbackUrl();
 
         // Create a new job and persist
         UUID jobId = UUID.randomUUID();
@@ -85,9 +85,9 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             String encodedJobId = encodeJobId(jobId);
 
             AuthFlowConfiguration exportConfiguration =
-                    exportGenerator.generateConfiguration(baseCallbackUrl, encodedJobId);
+                    exportGenerator.generateConfiguration(callbackUrl, encodedJobId);
             AuthFlowConfiguration importConfiguration =
-                    importGenerator.generateConfiguration(baseCallbackUrl, encodedJobId);
+                    importGenerator.generateConfiguration(callbackUrl, encodedJobId);
 
             boolean jobNeedsUpdate = false;
             // If present, store initial auth data for export services, e.g. used for oauth1
@@ -137,7 +137,9 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             }
 
             return new TransferJob(encodedJobId, job.exportService(), job.importService(), job.transferDataType(),
-                    exportConfiguration.getUrl(), importConfiguration.getUrl());
+                    exportConfiguration.getAuthUrl(), importConfiguration.getAuthUrl(),
+                    exportConfiguration.getTokenUrl(), importConfiguration.getTokenUrl(),
+                    exportConfiguration.getAuthProtocol(), importConfiguration.getAuthProtocol());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -52,13 +52,13 @@ public class AuthTestDriver {
 
     MicrosoftAuthDataGenerator dataGenerator =
         new MicrosoftAuthDataGenerator(
-            "/response", () -> clientId, () -> secret, client, mapper, "contacts", AuthMode.EXPORT);
+            "/response", () -> clientId, () -> secret, client, mapper, "CONTACTS", AuthMode.EXPORT);
 
     AuthFlowConfiguration configuration = dataGenerator.generateConfiguration(callbackBase, "1");
 
     Desktop desktop = Desktop.getDesktop();
 
-    desktop.browse(new URI(configuration.getUrl()));
+    desktop.browse(new URI(configuration.getAuthUrl()));
 
     // Execute the request and retrieve the auth code.
     String authCode = retrieveAuthCode(client);

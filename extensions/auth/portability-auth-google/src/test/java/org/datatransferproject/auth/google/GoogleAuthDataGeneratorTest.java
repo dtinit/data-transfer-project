@@ -21,7 +21,7 @@ public class GoogleAuthDataGeneratorTest {
   public void generateConfigurationImport() {
     GoogleAuthDataGenerator generator =
         new GoogleAuthDataGenerator(
-            "redirect", appCredentials, httpTransport, null, "calendar", AuthMode.IMPORT);
+            "redirect", appCredentials, httpTransport, null, "CALENDAR", AuthMode.IMPORT);
 
     AuthFlowConfiguration config =
         generator.generateConfiguration("http://localhost/test", "54321");
@@ -33,14 +33,14 @@ public class GoogleAuthDataGeneratorTest {
             + "&scope="
             + CalendarScopes.CALENDAR
             + "&state=NTQzMjE%3D",
-        config.getUrl());
+        config.getAuthUrl());
   }
 
   @Test
   public void generateConfigurationExport() {
     GoogleAuthDataGenerator generator =
         new GoogleAuthDataGenerator(
-            "redirect", appCredentials, httpTransport, null, "calendar", AuthMode.EXPORT);
+            "redirect", appCredentials, httpTransport, null, "CALENDAR", AuthMode.EXPORT);
 
     AuthFlowConfiguration config =
         generator.generateConfiguration("http://localhost/test", "54321");
@@ -52,6 +52,6 @@ public class GoogleAuthDataGeneratorTest {
             + "&scope="
             + CalendarScopes.CALENDAR_READONLY
             + "&state=NTQzMjE%3D",
-        config.getUrl());
+        config.getAuthUrl());
   }
 }

@@ -17,7 +17,6 @@
 package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 
 public class AlbumListResponse {
   @JsonProperty("albums")
