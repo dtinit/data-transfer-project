@@ -144,8 +144,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     assertThat(job.jobAuthorization().state()).isEqualTo(State.INITIAL);
     // no auth data should exist yet
-    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
-    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedAuthData()).isNull();
 
     // API atomically updates job to from 'initial' to 'creds available'
     job =
@@ -159,8 +158,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     assertThat(job.jobAuthorization().state()).isEqualTo(State.CREDS_AVAILABLE);
     // no auth data should exist yet
-    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
-    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedAuthData()).isNull();
 
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
@@ -179,8 +177,7 @@ public class JobPollingServiceTest {
             .setAndValidateJobAuthorization(
                 job.jobAuthorization()
                     .toBuilder()
-                    .setEncryptedExportAuthData("dummy export data")
-                    .setEncryptedImportAuthData("dummy import data")
+                    .setEncryptedAuthData("dummy export data")
                     .setState(State.CREDS_STORED)
                     .build())
             .build();
@@ -192,8 +189,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     JobAuthorization jobAuthorization = job.jobAuthorization();
     assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_STORED);
-    assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
-    assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
+    assertThat(jobAuthorization.encryptedAuthData()).isNotEmpty();
 
     store.remove(TEST_ID);
   }

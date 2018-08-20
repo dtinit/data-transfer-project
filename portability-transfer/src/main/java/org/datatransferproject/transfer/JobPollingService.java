@@ -52,7 +52,7 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void runOneIteration() {
     if (JobMetadata.isInitialized()) {
       pollUntilJobIsReady();
     } else {
@@ -114,10 +114,7 @@ class JobPollingService extends AbstractScheduledService {
     }
 
     String kid = UUID.randomUUID().toString();
-    JWK jwk =
-        new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
-            .keyID(kid)
-            .build();
+    JWK jwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).keyID(kid).build();
 
     PortabilityJob updatedJob =
         existingJob
@@ -166,8 +163,7 @@ class JobPollingService extends AbstractScheduledService {
     } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_STORED) {
       logger.debug("Polled job {} in state CREDS_STORED", jobId);
       JobAuthorization jobAuthorization = job.jobAuthorization();
-      if (!Strings.isNullOrEmpty(jobAuthorization.encryptedExportAuthData())
-          && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
+      if (!Strings.isNullOrEmpty(jobAuthorization.encryptedAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
       } else {
         logger.warn(
