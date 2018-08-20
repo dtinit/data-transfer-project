@@ -60,6 +60,7 @@ export class InitiateTransferComponent implements OnInit {
 
     encryptAndStartTransfer() {
         // encrypt the export/import auth data pair as a JWE using the public key associated with the transfer job
+        // .cf https://tools.ietf.org/html/rfc7516#page-32
         let cryptographer = new Jose.WebCryptographer();
         (<any>cryptographer).setContentEncryptionAlgorithm("A128CBC-HS256"); // workaround missing method definition in Typescript type definition for WebCryptographer
         cryptographer.setKeyEncryptionAlgorithm("RSA-OAEP");
