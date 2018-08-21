@@ -30,7 +30,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  * <ul>To run locally:
  *  <li>./gradlew clean -PcloudType=google -PgcpProject=<your-project-name> \
  *      :distributions:demo-google-deployment:transfer:dockerizeLocal
- *  <li>docker run --rm -p 8082:8082 -p 5006:5006 gcr.io/world-takeout-test/portability-transfer
+ *  <li>docker run --rm -p 8082:8082 -p 5006:5006 gcr.io/<your-project-name>/portability-transfer
  * </ul>
  *
  * <ul>To run for prod environments:
