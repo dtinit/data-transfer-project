@@ -285,6 +285,8 @@ gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 gcloud services --project ${PROJECT_ID} enable datastore.googleapis.com
 # Needed for encrypting app secrets
 gcloud services --project ${PROJECT_ID} enable cloudkms.googleapis.com
+# Kubernetes Engine API
+gcloud services --project ${PROJECT_ID} enable container.googleapis.com
 
 print_step "Installing SSL certificate"
 gcloud compute ssl-certificates create ${SSL_CERT_NAME} \
