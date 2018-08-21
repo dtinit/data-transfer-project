@@ -27,6 +27,10 @@ import com.google.api.client.json.JsonFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -41,8 +45,11 @@ import org.datatransferproject.spi.cloud.extension.CloudExtensionModule;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 
-/** Bindings for cloud platform components using Google Cloud Platform. * */
+/**
+ * Bindings for cloud platform components using Google Cloud Platform. *
+ */
 final class GoogleCloudExtensionModule extends CloudExtensionModule {
+
   // The value for the 'cloud' flag when hosting on Google Cloud Platform.
   private static final String GOOGLE_CLOUD_NAME = "GOOGLE";
   // Environment variable where GCP project ID is stored. The value is set in
@@ -108,6 +115,15 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
         .setCredentials(credentials)
         .build()
         .getService();
+  }
+
+  @Provides
+  @Singleton
+  Bucket getBucket(@ProjectId String projectId) {
+    Storage storage = StorageOptions.getDefaultInstance().getService();
+    // TODO: this assumes the bucket already exists, is that a fair assumption?
+    String bucketId = projectId + "-bucket";
+    return storage.get(bucketId);
   }
 
   @Provides
@@ -208,12 +224,14 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   private void validateUsingGoogle(String cloud) {
     if (!cloud.equals(GOOGLE_CLOUD_NAME)) {
       throw new IllegalStateException("Injecting Google objects when cloud != Google! (cloud was "
-        + cloud);
+          + cloud);
     }
   }
 
   @BindingAnnotation
   @Target({FIELD, PARAMETER, METHOD})
   @Retention(RUNTIME)
-  public @interface ProjectId {}
+  public @interface ProjectId {
+
+  }
 }

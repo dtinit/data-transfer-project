@@ -16,6 +16,7 @@
 package org.datatransferproject.cloud.google;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.ReadChannel;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
@@ -31,6 +32,7 @@ import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
+import com.google.cloud.storage.Bucket;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -38,8 +40,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.channels.Channels;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -48,19 +52,68 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.transfer.models.DataModel;
 
-/** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
+/**
+ * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
+ */
 @Singleton
 public final class GoogleJobStore implements JobStore {
+
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
+  private final Bucket bucket;
   private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore, ObjectMapper objectMapper) {
+  public GoogleJobStore(Datastore datastore, Bucket bucket, ObjectMapper objectMapper) {
     this.datastore = datastore;
+    this.bucket = bucket;
     this.objectMapper = objectMapper;
+  }
+
+  @VisibleForTesting
+  static String getDataKeyName(UUID jobId, String key) {
+    return String.format("%s-%s", jobId, key);
+  }
+
+  private static Map<String, Object> getProperties(Entity entity) {
+    if (entity == null) {
+      return null;
+    }
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+    for (String property : entity.getNames()) {
+      // builder.put(property, entity.getValue(property));
+      if (entity.getValue(property) instanceof StringValue) {
+        builder.put(property, (String) entity.getString(property));
+      } else if (entity.getValue(property) instanceof LongValue) {
+        // This conversion is safe because of integer to long conversion above
+        builder.put(property, new Long(entity.getLong(property)).intValue());
+      } else if (entity.getValue(property) instanceof DoubleValue) {
+        builder.put(property, (Double) entity.getDouble(property));
+      } else if (entity.getValue(property) instanceof BooleanValue) {
+        builder.put(property, (Boolean) entity.getBoolean(property));
+      } else if (entity.getValue(property) instanceof TimestampValue) {
+        builder.put(property, (Timestamp) entity.getTimestamp(property));
+      } else {
+        Blob blob = entity.getBlob(property);
+        Object obj = null;
+        try {
+          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+            try {
+              obj = in.readObject();
+            } catch (ClassNotFoundException e) {
+              e.printStackTrace();
+            }
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        builder.put(property, obj); // BlobValue
+      }
+    }
+
+    return builder.build();
   }
 
   /**
@@ -69,7 +122,7 @@ public final class GoogleJobStore implements JobStore {
    * <p>To update an existing {@link PortabilityJob} instead, use {@link JobStore#update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
-   *     problem inserting the job.
+   * problem inserting the job.
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -107,8 +160,7 @@ public final class GoogleJobStore implements JobStore {
    * validator.validate() is called first in the transaction.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
-   * @throws IllegalStateException if validator.validate() failed
+   * updating it @throws IllegalStateException if validator.validate() failed
    */
   @Override
   public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
@@ -167,8 +219,8 @@ public final class GoogleJobStore implements JobStore {
    * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or
    * null if none found.
    *
-   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
-   * OrderBy.asc("created") currently fails because we don't yet have an index set up.
+   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying
+   * to OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
   public UUID findFirst(JobAuthorization.State jobState) {
@@ -185,6 +237,88 @@ public final class GoogleJobStore implements JobStore {
     }
     Key key = results.next();
     return UUID.fromString(key.getName());
+  }
+
+  @Override
+  public <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
+    Preconditions.checkNotNull(jobId);
+    Transaction transaction = datastore.newTransaction();
+    Key fullKey = getDataKey(jobId, key);
+    Entity shouldNotExist = transaction.get(fullKey);
+    if (shouldNotExist != null) {
+      transaction.rollback();
+      throw new IOException(
+          "Record already exists for key: " + fullKey.getName() + ". Record: " + shouldNotExist);
+    }
+
+    String serialized = objectMapper.writeValueAsString(model);
+    Entity entity = Entity.newBuilder(fullKey)
+        .set(CREATED_FIELD, Timestamp.now())
+        .set(model.getClass().getName(), serialized)
+        .build();
+
+    try {
+      transaction.put(entity);
+    } catch (DatastoreException e) {
+      throw new IOException(
+          "Could not create initial record for jobID: " + jobId + ". Record: " + entity, e);
+    }
+    transaction.commit();
+  }
+
+  @Override
+  public <T extends DataModel> void update(UUID jobId, String key, T model) {
+    Transaction transaction = datastore.newTransaction();
+    Key entityKey = getDataKey(jobId, key);
+
+    try {
+      Entity previousEntity = transaction.get(entityKey);
+      if (previousEntity == null) {
+        throw new IOException("Could not find record for data key: " + entityKey.getName());
+      }
+
+      String serialized = objectMapper.writeValueAsString(model);
+      Entity entity = Entity.newBuilder(entityKey)
+          .set(CREATED_FIELD, Timestamp.now())
+          .set(model.getClass().getName(), serialized)
+          .build();
+
+      transaction.put(entity);
+      transaction.commit();
+    } catch (IOException t) {
+      transaction.rollback();
+      throw new RuntimeException("Failed atomic update of key: " + key, t);
+    }
+  }
+
+  @Override
+  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+    Key entityKey = getDataKey(jobId, key);
+    Entity entity = datastore.get(entityKey);
+    if (entity == null) {
+      return null;
+    }
+    String entityString = entity.getString(type.getName());
+    try {
+      return objectMapper.readValue(entityString, type);
+    } catch (IOException t) {
+      throw new RuntimeException("Failed to deserialize entityKey: " + entityString, t);
+    }
+  }
+
+  @Override
+  public void create(UUID jobId, String key, InputStream stream) {
+    String blobName = getDataKeyName(jobId, key);
+    // TODO: use result to determine success/failure
+    bucket.create(blobName, stream);
+  }
+
+  @Override
+  public InputStream getStream(UUID jobId, String key) {
+    String blobName = getDataKeyName(jobId, key);
+    com.google.cloud.storage.Blob blob = bucket.get(blobName);
+    ReadChannel channel = blob.reader();
+    return Channels.newInputStream(channel);
   }
 
   private Entity createEntity(Key key, Map<String, Object> data) throws IOException {
@@ -220,117 +354,8 @@ public final class GoogleJobStore implements JobStore {
     return datastore.newKeyFactory().setKind(KIND).newKey(jobId.toString());
   }
 
-  @VisibleForTesting
-  static String getDataKeyName(UUID jobId, String key) {
-    return String.format("%s-%s", jobId, key);
-  }
-
   private Key getDataKey(UUID jobId, String key) {
     return datastore.newKeyFactory().setKind(KIND).newKey(getDataKeyName(jobId, key));
   }
 
-  private static Map<String, Object> getProperties(Entity entity) {
-    if (entity == null) return null;
-    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
-    for (String property : entity.getNames()) {
-      // builder.put(property, entity.getValue(property));
-      if (entity.getValue(property) instanceof StringValue) {
-        builder.put(property, (String) entity.getString(property));
-      } else if (entity.getValue(property) instanceof LongValue) {
-        // This conversion is safe because of integer to long conversion above
-        builder.put(property, new Long(entity.getLong(property)).intValue());
-      } else if (entity.getValue(property) instanceof DoubleValue) {
-        builder.put(property, (Double) entity.getDouble(property));
-      } else if (entity.getValue(property) instanceof BooleanValue) {
-        builder.put(property, (Boolean) entity.getBoolean(property));
-      } else if (entity.getValue(property) instanceof TimestampValue) {
-        builder.put(property, (Timestamp) entity.getTimestamp(property));
-      } else {
-        Blob blob = entity.getBlob(property);
-        Object obj = null;
-        try {
-          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-            try {
-              obj = in.readObject();
-            } catch (ClassNotFoundException e) {
-              e.printStackTrace();
-            }
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        builder.put(property, obj); // BlobValue
-      }
-    }
-
-    return builder.build();
-  }
-
-  @Override
-  public <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
-    Preconditions.checkNotNull(jobId);
-    Transaction transaction = datastore.newTransaction();
-    Key fullKey = getDataKey(jobId, key);
-    Entity shouldNotExist = transaction.get(fullKey);
-    if (shouldNotExist != null) {
-      transaction.rollback();
-      throw new IOException(
-          "Record already exists for key: " + fullKey.getName() + ". Record: " + shouldNotExist);
-    }
-
-    String serialized = objectMapper.writeValueAsString(model);
-    Entity entity = Entity.newBuilder(fullKey)
-        .set(CREATED_FIELD, Timestamp.now())
-        .set(model.getClass().getName(), serialized)
-        .build();
-
-    try {
-      transaction.put(entity);
-    } catch (DatastoreException e) {
-      transaction.rollback();
-      throw new IOException(
-          "Could not create initial record for jobID: " + jobId + ". Record: " + entity, e);
-    }
-    transaction.commit();
-  }
-
-  @Override
-  public <T extends DataModel> void update(UUID jobId, String key, T model) {
-    Transaction transaction = datastore.newTransaction();
-    Key entityKey = getDataKey(jobId, key);
-
-    try {
-      Entity previousEntity = transaction.get(entityKey);
-      if (previousEntity == null) {
-        throw new IOException("Could not find record for data key: " + entityKey.getName());
-      }
-
-      String serialized = objectMapper.writeValueAsString(model);
-      Entity entity = Entity.newBuilder(entityKey)
-          .set(CREATED_FIELD, Timestamp.now())
-          .set(model.getClass().getName(), serialized)
-          .build();
-
-
-      transaction.put(entity);
-      transaction.commit();
-    } catch (IOException t) {
-      transaction.rollback();
-      throw new RuntimeException("Failed atomic update of key: " + key, t);
-    }
-  }
-
-  @Override
-  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
-    Key entityKey = getDataKey(jobId, key);
-    Entity entity = datastore.get(entityKey);
-    if (entity == null) {
-      return null;
-    }
-    try {
-      return objectMapper.readValue(entity.getString(type.getName()), type);
-    } catch (IOException t) {
-      throw new RuntimeException("Failed to deserialized entityKey: " + entityKey, t);
-    }
-  }
 }
