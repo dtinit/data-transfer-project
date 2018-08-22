@@ -58,12 +58,12 @@ final class TwitterAuthDataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     // Generate a request token and include that as initial auth data
     RequestToken requestToken;
     try {
        requestToken =
-          twitterApi.getOAuthRequestToken(callbackBaseUrl + "/callback/twitter", perms);
+          twitterApi.getOAuthRequestToken(callbackUrl, perms);
     } catch (TwitterException e) {
       logger.warn("Couldn't get authData", e);
       return null;
@@ -78,7 +78,7 @@ final class TwitterAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions.checkNotNull(
         initialAuthData,

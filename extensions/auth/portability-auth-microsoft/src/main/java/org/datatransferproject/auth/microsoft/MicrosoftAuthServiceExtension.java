@@ -38,7 +38,6 @@ import java.util.Map;
  * runtime with a system property: -DofflineData=true
  */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
-  private static final String REDIRECT_PATH = "/callback/microsoft";
   private static final ImmutableList<String> SUPPORTED_SERVICES;
 
   static {
@@ -115,8 +114,7 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
       authGenerators.put(
           transferDataType,
           new MicrosoftAuthDataGenerator(
-              REDIRECT_PATH,
-              appCredentials::getKey,
+                  appCredentials::getKey,
               appCredentials::getSecret,
               okHttpClient,
               mapper,
