@@ -170,4 +170,10 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
         .setApprovalPrompt("force")
         .build();
   }
+
+  @Override
+  public String getTokenUrl() {
+    return "https://accounts.google.com/signin/oauth/consent";
+  }
+
 }

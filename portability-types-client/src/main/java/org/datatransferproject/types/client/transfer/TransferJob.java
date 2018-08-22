@@ -52,8 +52,8 @@ public class TransferJob {
             @JsonProperty(value = "dataType", required = true) String dataType,
             @JsonProperty(value = "exportUrl", required = true) String exportUrl,
             @JsonProperty(value = "importUrl", required = true) String importUrl,
-            @JsonProperty(value = "exportTokenUrl", required = true) String exportTokenUrl,
-            @JsonProperty(value = "importTokenUrl", required = true) String importTokenUrl,
+            @JsonProperty(value = "exportTokenUrl", required = false) String exportTokenUrl,
+            @JsonProperty(value = "importTokenUrl", required = false) String importTokenUrl,
             @JsonProperty(value = "exportAuthProtocol", required = true) AuthProtocol exportAuthProtocol,
             @JsonProperty(value = "importAuthProtocol", required = true) AuthProtocol importAuthProtocol) {
         this.id = id;
