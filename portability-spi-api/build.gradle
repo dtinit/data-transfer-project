@@ -15,6 +15,7 @@
  */
 
 dependencies {
+    compile project(':portability-types-common')
     compile project(':portability-types-transfer')
     compile project(':portability-api-launcher')
 }

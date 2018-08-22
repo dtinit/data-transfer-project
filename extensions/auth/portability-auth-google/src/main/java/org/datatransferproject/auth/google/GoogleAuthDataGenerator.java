@@ -31,15 +31,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
+
 /**
  * Provides configuration for conducting an OAuth flow against the Google AD API. Returned tokens
  * can be used to make requests against the Google Graph API.
@@ -47,8 +52,11 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * <p>The flow is a two-step process. First, the user is sent to an authorization page and is then
  * redirected to a address in this system with the authorization code. The second step takes the
  * authorization code and posts it against the AD API to obtain a token for querying the Graph API.
+ *
+ * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
+  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
   // The scopes necessary to import each supported data type.
   // These are READ/WRITE scopes
   private static final Map<String, List<String>> IMPORT_SCOPES =
@@ -112,7 +120,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
             .setRedirectUri(callbackBaseUrl + redirectPath)
             .setState(encodedJobId)
             .build();
-    return new AuthFlowConfiguration(url);
+    return new AuthFlowConfiguration(url, AUTH_PROTOCOL, getTokenUrl());
   }
 
   @Override

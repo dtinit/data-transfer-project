@@ -206,9 +206,9 @@ fi
 # Enter the text records and wait 1-2 minutes and confirm
 # It should save cert as follows:
 # Your certificate and chain have been saved at:
-# /etc/letsencrypt/live/gardenswithoutwalls-qa.net/fullchain.pem
+# /etc/letsencrypt/live/your-domain-name.net/fullchain.pem
 # Your key file has been saved at:
-# /etc/letsencrypt/live/gardenswithoutwalls-qa.net/privkey.pem
+# /etc/letsencrypt/live/your-domain-name.net/privkey.pem
 # Note: it is easiest to then sudo cp these files to a temporary location since the default
 # file permissions are difficult.
 read -p "Please enter the path to the certificate file (.crt or .pem): " CRT_FILE_PATH
