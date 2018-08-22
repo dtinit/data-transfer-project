@@ -62,13 +62,13 @@ public final class GoogleJobStore implements JobStore {
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
-  private final Bucket bucket;
+  private final GcsInterface gcsInterface;
   private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore, Bucket bucket, ObjectMapper objectMapper) {
+  public GoogleJobStore(Datastore datastore, GcsInterface gcsInterface, ObjectMapper objectMapper) {
     this.datastore = datastore;
-    this.bucket = bucket;
+    this.gcsInterface = gcsInterface;
     this.objectMapper = objectMapper;
   }
 
@@ -310,13 +310,13 @@ public final class GoogleJobStore implements JobStore {
   public void create(UUID jobId, String key, InputStream stream) {
     String blobName = getDataKeyName(jobId, key);
     // TODO: use result to determine success/failure
-    bucket.create(blobName, stream);
+    gcsInterface.create(blobName, stream);
   }
 
   @Override
   public InputStream getStream(UUID jobId, String key) {
     String blobName = getDataKeyName(jobId, key);
-    com.google.cloud.storage.Blob blob = bucket.get(blobName);
+    com.google.cloud.storage.Blob blob = gcsInterface.get(blobName);
     ReadChannel channel = blob.reader();
     return Channels.newInputStream(channel);
   }
