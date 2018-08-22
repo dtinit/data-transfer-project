@@ -120,7 +120,6 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Singleton
   Bucket getBucket(@ProjectId String projectId) {
     Storage storage = StorageOptions.getDefaultInstance().getService();
-    // TODO: this assumes the bucket already exists, is that a fair assumption?
     String bucketId = "user-data-" + projectId;
     return storage.get(bucketId);
   }

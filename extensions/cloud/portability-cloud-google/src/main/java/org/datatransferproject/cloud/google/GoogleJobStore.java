@@ -310,15 +310,13 @@ public final class GoogleJobStore implements JobStore {
 
   @Override
   public void create(UUID jobId, String key, InputStream stream) {
-    String keyName = getDataKeyName(jobId, key);
     // TODO: use result to determine success/failure
-    googleUserDataStore.create(keyName, stream);
+    googleUserDataStore.create(jobId, key, stream);
   }
 
   @Override
   public InputStream getStream(UUID jobId, String key) {
-    String keyName = getDataKeyName(jobId, key);
-    com.google.cloud.storage.Blob blob = googleUserDataStore.get(keyName);
+    com.google.cloud.storage.Blob blob = googleUserDataStore.get(jobId, key);
     ReadChannel channel = blob.reader();
     return Channels.newInputStream(channel);
   }

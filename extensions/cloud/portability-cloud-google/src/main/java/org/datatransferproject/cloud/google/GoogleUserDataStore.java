@@ -18,9 +18,14 @@ package org.datatransferproject.cloud.google;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.io.InputStream;
+import java.util.UUID;
 
+/**
+ * Class for temporarily storing user data for transfer
+ */
 public class GoogleUserDataStore {
   private final Bucket bucket;
 
@@ -29,11 +34,18 @@ public class GoogleUserDataStore {
     this.bucket = bucket;
   }
 
-  public Blob create(String blobName, InputStream inputStream) {
+  public Blob create(UUID jobId, String keyName, InputStream inputStream) {
+    String blobName = getDataKeyName(jobId, keyName);
     return bucket.create(blobName, inputStream);
   }
 
-  public Blob get(String blobName) {
+  public Blob get(UUID jobId, String keyName) {
+    String blobName = getDataKeyName(jobId, keyName);
     return bucket.get(blobName);
+  }
+
+  @VisibleForTesting
+  static String getDataKeyName(UUID jobId, String key) {
+    return String.format("%s-%s", jobId, key);
   }
 }
