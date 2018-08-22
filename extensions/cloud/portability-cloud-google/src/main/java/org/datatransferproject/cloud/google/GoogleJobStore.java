@@ -207,7 +207,7 @@ public final class GoogleJobStore implements JobStore {
     try {
       return PortabilityJob.fromMap(getProperties(entity));
     } catch (IOException | ClassNotFoundException e) {
-      // TODO: is this the right thing to do?
+      // TODO: Rethrow as IOException and propagate to callers
       throw new RuntimeException(e);
     }
   }
