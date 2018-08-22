@@ -64,7 +64,7 @@ public interface JobStore {
    *
    * @param jobId the job id
    */
-  PortabilityJob findJob(UUID jobId) throws IOException, ClassNotFoundException;
+  PortabilityJob findJob(UUID jobId);
 
   /**
    * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store,

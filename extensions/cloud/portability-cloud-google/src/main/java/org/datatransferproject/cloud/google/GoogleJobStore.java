@@ -199,12 +199,17 @@ public final class GoogleJobStore implements JobStore {
    * Returns the job keyed by {@code jobId} in Datastore, or null if not found.
    */
   @Override
-  public PortabilityJob findJob(UUID jobId) throws IOException, ClassNotFoundException {
+  public PortabilityJob findJob(UUID jobId) {
     Entity entity = datastore.get(getKey(jobId));
     if (entity == null) {
       return null;
     }
-    return PortabilityJob.fromMap(getProperties(entity));
+    try {
+      return PortabilityJob.fromMap(getProperties(entity));
+    } catch (IOException | ClassNotFoundException e) {
+      // TODO: is this the right thing to do?
+      throw new RuntimeException(e);
+    }
   }
 
   /**
