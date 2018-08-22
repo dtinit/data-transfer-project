@@ -37,10 +37,11 @@ import org.datatransferproject.types.transfer.models.DataModel;
  * Class for temporarily storing user data for transfer
  */
 public class GoogleTempFileStore {
+  // TODO: extract a temp file store interface
   private final Bucket bucket;
 
   @Inject
-  public GoogleTempFileStore(Bucket bucket, ObjectMapper objectMapper) {
+  public GoogleTempFileStore(Bucket bucket) {
     this.bucket = bucket;
   }
 

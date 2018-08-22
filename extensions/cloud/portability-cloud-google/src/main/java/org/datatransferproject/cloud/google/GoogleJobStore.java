@@ -59,9 +59,7 @@ public final class GoogleJobStore implements JobStore {
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
-  // Keeping googleTempFileStore in GoogleJobStore is temporary.  Eventually we plan to pull it
-  // out and have importers interact with it separately so that GoogleJobStore is only for job
-  // metadata and GoogleTempFileStore is only for user data.
+  // TODO: refactor googleTempFileStore into separate interface
   private final GoogleTempFileStore googleTempFileStore;
   private final ObjectMapper objectMapper;
 
@@ -78,7 +76,8 @@ public final class GoogleJobStore implements JobStore {
     return String.format("%s-%s", jobId, key);
   }
 
-  private static Map<String, Object> getProperties(Entity entity) {
+  private static Map<String, Object> getProperties(Entity entity)
+      throws IOException, ClassNotFoundException {
     if (entity == null) {
       return null;
     }
@@ -99,16 +98,8 @@ public final class GoogleJobStore implements JobStore {
       } else {
         Blob blob = entity.getBlob(property);
         Object obj = null;
-        try {
-          try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-            try {
-              obj = in.readObject();
-            } catch (ClassNotFoundException e) {
-              e.printStackTrace();
-            }
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
+        try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+          obj = in.readObject();
         }
         builder.put(property, obj); // BlobValue
       }
@@ -208,7 +199,7 @@ public final class GoogleJobStore implements JobStore {
    * Returns the job keyed by {@code jobId} in Datastore, or null if not found.
    */
   @Override
-  public PortabilityJob findJob(UUID jobId) {
+  public PortabilityJob findJob(UUID jobId) throws IOException, ClassNotFoundException {
     Entity entity = datastore.get(getKey(jobId));
     if (entity == null) {
       return null;

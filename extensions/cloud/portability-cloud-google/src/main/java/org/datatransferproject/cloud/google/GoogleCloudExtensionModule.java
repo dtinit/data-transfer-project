@@ -120,6 +120,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Singleton
   Bucket getBucket(@ProjectId String projectId) {
     Storage storage = StorageOptions.getDefaultInstance().getService();
+    // Must match BUCKET_NAME for user data bucket in setup_gke_environment.sh
     String bucketId = "user-data-" + projectId;
     return storage.get(bucketId);
   }
