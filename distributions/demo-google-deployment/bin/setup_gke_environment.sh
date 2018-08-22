@@ -309,6 +309,13 @@ echo "Created GCS bucket $GCS_BUCKET_NAME"
 print_step "Granting service account ${SERVICE_ACCOUNT} viewer privileges to 'app-data' bucket"
 gsutil acl -p ${PROJECT_ID} ch -u ${SERVICE_ACCOUNT}:R ${GCS_BUCKET_NAME}
 
+# TODO: what if the bucket already exists?
+print_step "Creating GCS 'user-data' bucket for storing encrypted user data"
+BUCKET_NAME="user-data-$PROJECT_ID"
+GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
+gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
+echo "Created GCS bucket $GCS_BUCKET_NAME"
+
 print_step "Creating a key to encrypt app secrets"
 gcloud kms keyrings create portability_secrets --location global
 # Currently only one purposes is supported: "encryption". Can't have separate encrypt/decrypt keys.
