@@ -66,7 +66,8 @@ public final class GoogleJobStore implements JobStore {
   private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore, GoogleTempFileStore googleTempFileStore, ObjectMapper objectMapper) {
+  public GoogleJobStore(Datastore datastore, GoogleTempFileStore googleTempFileStore,
+      ObjectMapper objectMapper) {
     this.datastore = datastore;
     this.googleTempFileStore = googleTempFileStore;
     this.objectMapper = objectMapper;
