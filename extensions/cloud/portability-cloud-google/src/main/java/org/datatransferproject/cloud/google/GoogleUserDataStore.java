@@ -21,11 +21,11 @@ import com.google.cloud.storage.Bucket;
 import com.google.inject.Inject;
 import java.io.InputStream;
 
-public class GcsInterface {
+public class GoogleUserDataStore {
   private final Bucket bucket;
 
   @Inject
-  public GcsInterface(Bucket bucket) {
+  public GoogleUserDataStore(Bucket bucket) {
     this.bucket = bucket;
   }
 

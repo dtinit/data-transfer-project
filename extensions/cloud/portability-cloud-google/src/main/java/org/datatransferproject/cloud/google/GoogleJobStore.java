@@ -32,7 +32,6 @@ import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Transaction;
-import com.google.cloud.storage.Bucket;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -62,13 +61,16 @@ public final class GoogleJobStore implements JobStore {
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
-  private final GcsInterface gcsInterface;
+  // Keeping googleUserDataStore in GoogleJobStore is temporary.  Eventually we plan to pull it
+  // out and have importers interact with it separately so that GoogleJobStore is only for job
+  // metadata and GoogleUserDataStore is only for user data.
+  private final GoogleUserDataStore googleUserDataStore;
   private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore, GcsInterface gcsInterface, ObjectMapper objectMapper) {
+  public GoogleJobStore(Datastore datastore, GoogleUserDataStore googleUserDataStore, ObjectMapper objectMapper) {
     this.datastore = datastore;
-    this.gcsInterface = gcsInterface;
+    this.googleUserDataStore = googleUserDataStore;
     this.objectMapper = objectMapper;
   }
 
@@ -298,25 +300,25 @@ public final class GoogleJobStore implements JobStore {
     if (entity == null) {
       return null;
     }
-    String entityString = entity.getString(type.getName());
+    String serializedEntity = entity.getString(type.getName());
     try {
-      return objectMapper.readValue(entityString, type);
+      return objectMapper.readValue(serializedEntity, type);
     } catch (IOException t) {
-      throw new RuntimeException("Failed to deserialize entityKey: " + entityString, t);
+      throw new RuntimeException("Failed to deserialize entity: " + serializedEntity, t);
     }
   }
 
   @Override
   public void create(UUID jobId, String key, InputStream stream) {
-    String blobName = getDataKeyName(jobId, key);
+    String keyName = getDataKeyName(jobId, key);
     // TODO: use result to determine success/failure
-    gcsInterface.create(blobName, stream);
+    googleUserDataStore.create(keyName, stream);
   }
 
   @Override
   public InputStream getStream(UUID jobId, String key) {
-    String blobName = getDataKeyName(jobId, key);
-    com.google.cloud.storage.Blob blob = gcsInterface.get(blobName);
+    String keyName = getDataKeyName(jobId, key);
+    com.google.cloud.storage.Blob blob = googleUserDataStore.get(keyName);
     ReadChannel channel = blob.reader();
     return Channels.newInputStream(channel);
   }

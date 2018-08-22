@@ -28,7 +28,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
@@ -122,7 +121,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   Bucket getBucket(@ProjectId String projectId) {
     Storage storage = StorageOptions.getDefaultInstance().getService();
     // TODO: this assumes the bucket already exists, is that a fair assumption?
-    String bucketId = projectId + "-bucket";
+    String bucketId = "user-data-" + projectId;
     return storage.get(bucketId);
   }
 
@@ -231,7 +230,5 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @BindingAnnotation
   @Target({FIELD, PARAMETER, METHOD})
   @Retention(RUNTIME)
-  public @interface ProjectId {
-
-  }
+  public @interface ProjectId {}
 }
