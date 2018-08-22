@@ -17,6 +17,7 @@ package org.datatransferproject.cloud.local;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.InputStream;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
+  private static LocalTempFileStore localTempFileStore = new LocalTempFileStore();
 
   private final Logger logger = LoggerFactory.getLogger(LocalJobStore.class);
   /**
@@ -168,6 +170,18 @@ public final class LocalJobStore implements JobStore {
       return null;
     }
     return (T) DATA_MAP.get(createFullKey(jobId, key)).get(type);
+  }
+
+  @Override
+  public void create(UUID jobId, String key, InputStream stream) throws IOException {
+    String filename = createFullKey(jobId, key);
+    localTempFileStore.writeInputStream(filename, stream);
+  }
+
+  @Override
+  public InputStream getStream(UUID jobId, String key) throws IOException {
+    String filename = createFullKey(jobId, key);
+    return localTempFileStore.getInputStream(filename);
   }
 
   private static String createFullKey(UUID jobId, String key) {
