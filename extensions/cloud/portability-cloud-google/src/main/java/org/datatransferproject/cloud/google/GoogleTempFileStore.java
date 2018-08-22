@@ -16,32 +16,45 @@
 
 package org.datatransferproject.cloud.google;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.ReadChannel;
+import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Key;
 import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.Channels;
 import java.util.UUID;
+import org.datatransferproject.types.transfer.models.DataModel;
 
 /**
  * Class for temporarily storing user data for transfer
  */
-public class GoogleUserDataStore {
+public class GoogleTempFileStore {
   private final Bucket bucket;
 
   @Inject
-  public GoogleUserDataStore(Bucket bucket) {
+  public GoogleTempFileStore(Bucket bucket, ObjectMapper objectMapper) {
     this.bucket = bucket;
   }
 
-  public Blob create(UUID jobId, String keyName, InputStream inputStream) {
+  Blob create(UUID jobId, String keyName, InputStream inputStream) {
     String blobName = getDataKeyName(jobId, keyName);
+    // TODO: use result to determine success/failure
     return bucket.create(blobName, inputStream);
   }
 
-  public Blob get(UUID jobId, String keyName) {
+  InputStream getStream(UUID jobId, String keyName) {
     String blobName = getDataKeyName(jobId, keyName);
-    return bucket.get(blobName);
+    Blob blob = bucket.get(blobName);
+    ReadChannel channel = blob.reader();
+    return Channels.newInputStream(channel);
   }
 
   @VisibleForTesting

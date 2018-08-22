@@ -16,7 +16,6 @@
 package org.datatransferproject.cloud.google;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.ReadChannel;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Blob;
 import com.google.cloud.datastore.BooleanValue;
@@ -42,7 +41,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.channels.Channels;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -61,16 +59,16 @@ public final class GoogleJobStore implements JobStore {
   private static final String CREATED_FIELD = "created";
 
   private final Datastore datastore;
-  // Keeping googleUserDataStore in GoogleJobStore is temporary.  Eventually we plan to pull it
+  // Keeping googleTempFileStore in GoogleJobStore is temporary.  Eventually we plan to pull it
   // out and have importers interact with it separately so that GoogleJobStore is only for job
-  // metadata and GoogleUserDataStore is only for user data.
-  private final GoogleUserDataStore googleUserDataStore;
+  // metadata and GoogleTempFileStore is only for user data.
+  private final GoogleTempFileStore googleTempFileStore;
   private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore, GoogleUserDataStore googleUserDataStore, ObjectMapper objectMapper) {
+  public GoogleJobStore(Datastore datastore, GoogleTempFileStore googleTempFileStore, ObjectMapper objectMapper) {
     this.datastore = datastore;
-    this.googleUserDataStore = googleUserDataStore;
+    this.googleTempFileStore = googleTempFileStore;
     this.objectMapper = objectMapper;
   }
 
@@ -310,15 +308,12 @@ public final class GoogleJobStore implements JobStore {
 
   @Override
   public void create(UUID jobId, String key, InputStream stream) {
-    // TODO: use result to determine success/failure
-    googleUserDataStore.create(jobId, key, stream);
+    googleTempFileStore.create(jobId, key, stream);
   }
 
   @Override
   public InputStream getStream(UUID jobId, String key) {
-    com.google.cloud.storage.Blob blob = googleUserDataStore.get(jobId, key);
-    ReadChannel channel = blob.reader();
-    return Channels.newInputStream(channel);
+    return googleTempFileStore.getStream(jobId, key);
   }
 
   private Entity createEntity(Key key, Map<String, Object> data) throws IOException {
