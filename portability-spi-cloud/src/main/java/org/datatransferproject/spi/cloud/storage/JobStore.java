@@ -14,10 +14,12 @@ import org.datatransferproject.types.transfer.models.DataModel;
  * back-end services.
  */
 public interface JobStore {
+
   interface JobUpdateValidator {
+
     /**
-     * Validation to do as part of an atomic update. Implementers should throw an
-     * {@code IllegalStateException} if the validation fails.
+     * Validation to do as part of an atomic update. Implementers should throw an {@code
+     * IllegalStateException} if the validation fails.
      */
     void validate(PortabilityJob previous, PortabilityJob updated);
   }
@@ -28,7 +30,7 @@ public interface JobStore {
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
-   *     problem inserting the job.
+   * problem inserting the job.
    */
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
@@ -67,8 +69,8 @@ public interface JobStore {
   PortabilityJob findJob(UUID jobId);
 
   /**
-   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store,
-   * or null if none found.
+   * Gets the ID of the first {@link PortabilityJob} in state {@code jobState} in the store, or null
+   * if none found.
    */
   UUID findFirst(JobAuthorization.State jobState);
 
@@ -76,17 +78,24 @@ public interface JobStore {
     throw new UnsupportedOperationException();
   }
 
-  /** Updates the given model instance associated with a job. */
+  /**
+   * Updates the given model instance associated with a job.
+   */
   default <T extends DataModel> void update(UUID jobId, String key, T model) {
     throw new UnsupportedOperationException();
   }
 
-  /** Returns a model instance for the id of the given type or null if not found. */
-  default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+  /**
+   * Returns a model instance for the id of the given type or null if not found.
+   */
+  default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type)
+      throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  /** Removes the data model instance. */
+  /**
+   * Removes the data model instance.
+   */
   default void removeData(UUID JobId, String key) {
     throw new UnsupportedOperationException();
   }

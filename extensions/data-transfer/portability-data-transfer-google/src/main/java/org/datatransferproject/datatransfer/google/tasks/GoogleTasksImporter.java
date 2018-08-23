@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
+
   private final Logger logger = LoggerFactory.getLogger(GoogleTasksImporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
@@ -50,7 +51,8 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
   }
 
   @VisibleForTesting
-  GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Tasks tasksClient) {
+  GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
+      Tasks tasksClient) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.tasksClient = tasksClient;
@@ -58,17 +60,13 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) {
+      UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) throws IOException {
 
     Tasks tasksService = getOrCreateTasksService(authData);
     TempTasksData tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
     if (tempTasksData == null) {
       tempTasksData = new TempTasksData(jobId.toString());
-      try {
-        jobStore.create(jobId, createCacheKey(), tempTasksData);
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      jobStore.create(jobId, createCacheKey(), tempTasksData);
     }
 
     for (TaskListModel oldTasksList : data.getLists()) {
@@ -77,11 +75,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
       TaskList insertedTaskList;
 
-      try {
-        insertedTaskList = tasksService.tasklists().insert(newTaskList).execute();
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      insertedTaskList = tasksService.tasklists().insert(newTaskList).execute();
 
       tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
 
@@ -99,11 +93,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
         newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
       }
       String newTaskListId = tempTasksData.lookupNewTaskListId(oldTask.getTaskListId());
-      try {
-        tasksService.tasks().insert(newTaskListId, newTask).execute();
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      tasksService.tasks().insert(newTaskListId, newTask).execute();
     }
 
     return new ImportResult(ResultType.OK);
@@ -116,13 +106,14 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
 
-  /** Key for cache of album mappings.
-   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
    */
   private String createCacheKey() {
     // TODO: store objects containing individual mappings instead of single object containing all mappings
