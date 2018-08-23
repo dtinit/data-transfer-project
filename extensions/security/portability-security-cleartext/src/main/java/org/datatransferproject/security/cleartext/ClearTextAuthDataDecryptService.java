@@ -40,7 +40,7 @@ public class ClearTextAuthDataDecryptService implements AuthDataDecryptService {
     try {
       return objectMapper.readValue(encrypted, AuthDataPair.class);
     } catch (IOException e) {
-      throw new SecurityException("Error decrypting auth tokens", e);
+      throw new SecurityException("Error deserializing auth tokens", e);
     }
   }
 }
