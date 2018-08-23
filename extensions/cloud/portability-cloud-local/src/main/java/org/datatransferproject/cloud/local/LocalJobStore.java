@@ -174,18 +174,21 @@ public final class LocalJobStore implements JobStore {
 
   @Override
   public void create(UUID jobId, String key, InputStream stream) throws IOException {
-    String filename = createFullKey(jobId, key);
-    localTempFileStore.writeInputStream(filename, stream);
+    localTempFileStore.writeInputStream(makeFileName(jobId, key), stream);
   }
 
   @Override
   public InputStream getStream(UUID jobId, String key) throws IOException {
-    String filename = createFullKey(jobId, key);
-    return localTempFileStore.getInputStream(filename);
+    return localTempFileStore.getInputStream(makeFileName(jobId, key));
   }
 
   private static String createFullKey(UUID jobId, String key) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
     return String.format("%s-%s", jobId.toString(), key);
+  }
+
+  private static String makeFileName(UUID jobId, String inputName) {
+    String replace = inputName.replace("/","_");
+    return createFullKey(jobId, replace);
   }
 }
