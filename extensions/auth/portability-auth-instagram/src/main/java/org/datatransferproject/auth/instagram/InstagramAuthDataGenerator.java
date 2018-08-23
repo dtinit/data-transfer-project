@@ -43,7 +43,6 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  */
 public class InstagramAuthDataGenerator implements AuthDataGenerator {
   private static final AuthProtocol AUTHORIZATION_PROTOCOL = OAUTH_2;
-  private static final String CALLBACK_PATH = "/callback/instagram";
   private static final String AUTHORIZATION_SERVER_URL =
       "https://api.instagram.com/oauth/authorize";
   private static final String TOKEN_SERVER_URL = "https://api.instagram.com/oauth/access_token";
@@ -57,13 +56,13 @@ public class InstagramAuthDataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     // TODO: move to common location
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
     String url =
         createFlow()
             .newAuthorizationUrl()
-            .setRedirectUri(callbackBaseUrl + CALLBACK_PATH)
+            .setRedirectUri(callbackUrl)
             .setState(encodedJobId)
             .build();
     return new AuthFlowConfiguration(url, AUTHORIZATION_PROTOCOL, getTokenUrl());
@@ -71,7 +70,7 @@ public class InstagramAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkArgument(
         Strings.isNullOrEmpty(extra), "Extra data not expected for Instagram oauth flow");
     Preconditions.checkArgument(
@@ -81,7 +80,7 @@ public class InstagramAuthDataGenerator implements AuthDataGenerator {
     try {
       response =
           flow.newTokenRequest(authCode)
-              .setRedirectUri(callbackBaseUrl + CALLBACK_PATH) // TODO(chuy): Parameterize
+              .setRedirectUri(callbackUrl)
               .execute();
     } catch (IOException e) {
       throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);

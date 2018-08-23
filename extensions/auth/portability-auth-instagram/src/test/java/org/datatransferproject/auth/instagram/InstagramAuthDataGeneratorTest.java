@@ -43,7 +43,7 @@ public class InstagramAuthDataGeneratorTest {
         .isEqualTo(
             "https://api.instagram.com/oauth/authorize"
                 + "?client_id=dummy-id"
-                + "&redirect_uri=http://localhost/test/callback/instagram"
+                + "&redirect_uri=http://localhost/test"
                 + "&response_type=code"
                 + "&scope=basic"
                 + "&state=NTQzMjE%3D");

@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.types.client.transfer;
+package org.datatransferproject.types.transfer.auth;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Request to start a transfer job. */
-public class StartTransferJob {
-  private final String id;
-  private final String encryptedAuthData;
+/** Encapsulates authorization tokens needed to perform a data transfer. */
+public class AuthDataPair  {
+  private String exportAuthData;
+  private String importAuthData;
 
-  public StartTransferJob(
-      @JsonProperty(value = "id", required = true) String id,
-      @JsonProperty(value = "encryptedAuthData", required = true) String encryptedAuthData) {
-    this.id = id;
-    this.encryptedAuthData = encryptedAuthData;
+  @JsonCreator
+  public AuthDataPair(
+      @JsonProperty("exportAuthData") String exportAuthData,
+      @JsonProperty("importAuthData") String importAuthData) {
+    this.exportAuthData = exportAuthData;
+    this.importAuthData = importAuthData;
   }
 
-  public String getId() {
-    return id;
+  public String getExportAuthData() {
+    return exportAuthData;
   }
 
-  public String getEncryptedAuthData() {
-    return encryptedAuthData;
+  public String getImportAuthData() {
+    return importAuthData;
   }
 }

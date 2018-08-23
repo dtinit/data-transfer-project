@@ -4,6 +4,7 @@ import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {ProgressService} from "../progress";
 import {TransferService} from "./transfer.service";
 import {transportError} from "../transport";
+import {environment} from "../../environments/environment";
 
 /**
  * Creates a transfer job request on the API server.
@@ -48,8 +49,9 @@ export class CreateTransferComponent implements OnInit {
         this.transferService.createTransferJob({
             exportService: this.progressService.exportService(),
             importService: this.progressService.importService(),
+            exportCallbackUrl: `${environment.apiBaseUrl}/callback/${this.progressService.exportService().toLowerCase()}`,
+            importCallbackUrl: `${environment.apiBaseUrl}/callback/${this.progressService.importService().toLowerCase()}`,
             dataType: this.progressService.dataType(),
-            callbackUrl: "https://localhost:3000"
         }).subscribe(transferJob => {
             // redirect to OAuth service
             this.progressService.createComplete(transferJob.id, transferJob.exportUrl, transferJob.importUrl);

@@ -5,6 +5,8 @@ import {ProgressService} from "../progress";
 import {TransferService} from "./transfer.service";
 import {StartTransferJob} from "../types";
 import {transportError} from "../transport";
+import {Jose, JoseJWE} from "jose-jwe-jws";
+
 
 /**
  * Initiates a transfer operation.
@@ -40,37 +42,50 @@ export class InitiateTransferComponent implements OnInit {
         let pollAttempt = 0;
         let maxPollAttempts = 20;
         let pollForWorkerKey = Observable.interval(1500)
-          .switchMap(() => this.transferService.getReservedWorker({id: this.progressService.transferId()}))
-          .take(maxPollAttempts)
-          .subscribe(
-            reservedWorker => {
-                console.log("polling for assigned transfer worker");
-                pollAttempt++;
-                if (reservedWorker.publicKey) {
-                  // TODO: Remove debug statement in production
-                  console.log("got transfer worker with public key: " + reservedWorker.publicKey);
-                  pollForWorkerKey.unsubscribe();
-                  this.progressService.workerReserved(reservedWorker.publicKey);
-                  this.startTransferJob();
-                  // TODO: encrypt creds with worker public key
-                } else if (pollAttempt == maxPollAttempts) {
-                  alert(`Timed out getting a worker for this data transfer`);
-                }
-            }, transportError);
+            .switchMap(() => this.transferService.getReservedWorker({id: this.progressService.transferId()}))
+            .take(maxPollAttempts)
+            .subscribe(
+                reservedWorker => {
+                    console.log("polling for assigned transfer worker");
+                    pollAttempt++;
+                    if (reservedWorker.publicKey) {
+                        pollForWorkerKey.unsubscribe();
+                        this.progressService.workerReserved(reservedWorker.publicKey);
+                        this.encryptAndStartTransfer();
+                    } else if (pollAttempt == maxPollAttempts) {
+                        alert(`Timed out getting a worker for this data transfer`);
+                    }
+                }, transportError);
     }
 
-    startTransferJob() {
-      let start: StartTransferJob = {
-            id: this.progressService.transferId(),
-            exportAuthData: this.progressService.exportAuthData(),
-            importAuthData: this.progressService.importAuthData(),
-            // TODO: remove flag once client encrypts creds
-            authDataEncrypted: false
+    encryptAndStartTransfer() {
+        // encrypt the export/import auth data pair as a JWE using the public key associated with the transfer job
+        // .cf https://tools.ietf.org/html/rfc7516#page-32
+        let cryptographer = new Jose.WebCryptographer();
+        (<any>cryptographer).setContentEncryptionAlgorithm("A128CBC-HS256"); // workaround missing method definition in Typescript type definition for WebCryptographer
+        cryptographer.setKeyEncryptionAlgorithm("RSA-OAEP");
+        let serializedKey = JSON.parse(this.progressService.workerPublicKey());
+        Jose.Utils.importRsaPublicKey(serializedKey, "RSA-OAEP").then(rsaKey => {
+            let encrypter = new JoseJWE.Encrypter(cryptographer, rsaKey);
+            // encrypt the auth data
+            let authData = JSON.stringify({exportAuthData: this.progressService.exportAuthData(), importAuthData: this.progressService.importAuthData()});
+            encrypter.encrypt(authData).then(encryptedData => {
+                this.startTransfer(encryptedData);
+            });
+        });
+    }
+
+    startTransfer(encryptedData: string) {
+        let transferId = this.progressService.transferId();
+        let start: StartTransferJob = {
+            id: transferId,
+            encryptedAuthData: encryptedData
         };
         this.progressService.initiated();
         this.initiated = true;
         this.transferService.startTransferJob(start).subscribe(transferJob => {
-      }, transportError);
+        }, transportError);
+
     }
 
     reset() {

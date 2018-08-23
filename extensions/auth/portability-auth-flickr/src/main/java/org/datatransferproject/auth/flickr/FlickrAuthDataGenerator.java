@@ -52,9 +52,9 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     AuthInterface authInterface = flickr.getAuthInterface();
-    Token token = authInterface.getRequestToken(callbackBaseUrl + "/callback/flickr");
+    Token token = authInterface.getRequestToken(callbackUrl);
     String url =
             authInterface.getAuthorizationUrl(
                     token, Permission.WRITE);
@@ -63,7 +63,7 @@ public class FlickrAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions.checkNotNull(initialAuthData, "Earlier auth data not expected for Flickr flow");
     AuthInterface authInterface = flickr.getAuthInterface();

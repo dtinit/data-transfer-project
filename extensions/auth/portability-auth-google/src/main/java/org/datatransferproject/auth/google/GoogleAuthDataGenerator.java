@@ -80,29 +80,23 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
           .build();
 
   private final List<String> scopes;
-  private final String redirectPath;
   private final String clientId;
   private final String clientSecret;
   private final HttpTransport httpTransport;
   private final ObjectMapper objectMapper;
 
   /**
-   * @param redirectPath the path part this generator is configured to request OAuth authentication
-   *     code responses be sent to
    * @param appCredentials The Application credentials that the registration portal
    *     (console.cloud.google.com) assigned the portability instance
    * @param httpTransport The http transport to use for underlying GoogleAuthorizationCodeFlow
    * @param objectMapper The json factory provider
    */
   public GoogleAuthDataGenerator(
-      String redirectPath,
-      AppCredentials appCredentials,
-      HttpTransport httpTransport,
-      ObjectMapper objectMapper,
-      String dataType,
-      AuthMode mode) {
-
-    this.redirectPath = redirectPath;
+          AppCredentials appCredentials,
+          HttpTransport httpTransport,
+          ObjectMapper objectMapper,
+          String dataType,
+          AuthMode mode) {
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
@@ -111,13 +105,13 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     // TODO: Move to common location
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
     String url =
         createFlow()
             .newAuthorizationUrl()
-            .setRedirectUri(callbackBaseUrl + redirectPath)
+            .setRedirectUri(callbackUrl)
             .setState(encodedJobId)
             .build();
     return new AuthFlowConfiguration(url, AUTH_PROTOCOL, getTokenUrl());
@@ -125,7 +119,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkState(
         initialAuthData == null, "Earlier auth data not expected for Google flow");
     AuthorizationCodeFlow flow;
@@ -134,7 +128,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
       flow = createFlow();
       response =
           flow.newTokenRequest(authCode)
-              .setRedirectUri(callbackBaseUrl + redirectPath) // TODO(chuy): Parameterize
+              .setRedirectUri(callbackUrl)
               .execute();
     } catch (IOException e) {
       throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);

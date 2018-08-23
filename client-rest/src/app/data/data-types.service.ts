@@ -14,7 +14,7 @@ export class DataTypesService {
     }
 
     getDataTypes(): Observable<DataTypes> {
-        return this.http.get(`${environment.apiUrl}/datatypes`) as Observable<DataTypes>;
+        return this.http.get(`${environment.apiBaseUrl}/api/datatypes`) as Observable<DataTypes>;
     }
 
 }
