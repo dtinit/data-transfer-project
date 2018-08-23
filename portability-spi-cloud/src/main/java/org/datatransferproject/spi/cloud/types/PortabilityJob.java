@@ -26,6 +26,7 @@ public abstract class PortabilityJob {
   private static final String IMPORT_SERVICE_KEY = "IMPORT_SERVICE";
   private static final String ENCRYPTED_CREDS_KEY = "ENCRYPTED_CREDS_KEY";
   private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
+  private static final String ENCRYPTION_SCHEME = "ENCRYPTION_SCHEME";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
   private static final String IMPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
@@ -75,6 +76,7 @@ public abstract class PortabilityJob {
             JobAuthorization.builder()
                 .setState(
                     JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE)))
+                .setEncryptionScheme((String) properties.get(ENCRYPTION_SCHEME))
                 .setEncryptedAuthData(encryptedAuthData)
                 .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
                 .setAuthPublicKey(encodedPublicKey)
@@ -133,9 +135,16 @@ public abstract class PortabilityJob {
     if (null != jobAuthorization().authPublicKey()) {
       builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
     }
+
     if (null != jobAuthorization().encryptedAuthData()) {
       builder.put(ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedAuthData());
     }
+
+    builder.put(
+        ENCRYPTION_SCHEME,
+        null != jobAuthorization().encryptionScheme()
+            ? jobAuthorization().encryptionScheme()
+            : "jwe");
 
     if (null != jobAuthorization().encryptedInitialExportAuthData()) {
       builder.put(
