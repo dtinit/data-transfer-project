@@ -13,39 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import java.util.Map;
 
-public class SmugMugAlbumImage {
-
+public class SmugMugImage {
   @JsonProperty("Title")
   private String title;
 
   @JsonProperty("Caption")
   private String caption;
 
-  @JsonProperty("Keywords")
-  private String keywords;
+  @JsonProperty("Hidden")
+  private boolean hidden;
+
+  @JsonProperty("FileName")
+  private String fileName;
 
   @JsonProperty("Format")
   private String format;
 
-  @JsonProperty("Latitude")
-  private String latitude;
-
-  @JsonProperty("Longitude")
-  private String longitude;
-
-  @JsonProperty("FileName")
-  private String fileName;
+  @JsonProperty("UploadKey")
+  private String uploadKey;
 
   @JsonProperty("ArchivedUri")
   private String archivedUri;
 
   @JsonProperty("Uris")
   private Map<String, SmugMugUrl> uris;
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public void setCaption(String caption) {
+    this.caption = caption;
+  }
+
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
+  }
 
   public String getTitle() {
     return title;
@@ -59,15 +69,11 @@ public class SmugMugAlbumImage {
     return fileName;
   }
 
-  public String getArchivedUri() {
-    return archivedUri;
-  }
-
-  public Map<String, SmugMugUrl> getUris() {
-    return uris;
-  }
-
   public String getFormat() {
     return format;
+  }
+
+  public String getArchivedUri() {
+    return archivedUri;
   }
 }

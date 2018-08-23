@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
 public class PhotoModel {
+
   private final String title;
   private final String fetchableUrl;
   private final String description;

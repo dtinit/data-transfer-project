@@ -28,9 +28,23 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
-import org.datatransferproject.transfer.smugmug.photos.model.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.annotation.Nullable;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUser;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUserResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -38,16 +52,8 @@ import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 public class SmugMugInterface {
+
   private static final String BASE_URL = "https://api.smugmug.com";
   private static final String USER_URL = "/api/v2!authuser";
   private static final String ALBUMS_KEY = "UserAlbums";
@@ -77,12 +83,14 @@ public class SmugMugInterface {
     this.user = getUserInformation().getUser();
   }
 
-  /* Returns the album information corresponding to the album URI provided. */
-  SmugMugAlbumInfoResponse getAlbumInfo(String url) throws IOException {
+  SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumInfoResponse>>() {})
+    SmugMugAlbumImageResponse response = makeRequest(url,
+        new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {
+        })
         .getResponse();
+    return response;
   }
 
   /* Returns the album corresponding to the url provided. If the url is null or empty, this
@@ -91,7 +99,8 @@ public class SmugMugInterface {
     if (Strings.isNullOrEmpty(url)) {
       url = user.getUris().get(ALBUMS_KEY).getUri();
     }
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {})
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {
+    })
         .getResponse();
   }
 
@@ -127,41 +136,63 @@ public class SmugMugInterface {
 
   /* Uploads the resource at photoUrl to the albumId provided
    * The albumId must exist before calling upload, else the request will fail */
-  ImageUploadResponse uploadImage(String photoUrl, String albumId) throws IOException {
+  SmugMugImageUploadResponse uploadImage(PhotoModel photoModel, String albumUri, InputStream inputStream)
+      throws IOException {
     // Set up photo
-    InputStreamContent content = new InputStreamContent(null, getImageAsStream(photoUrl));
+    InputStreamContent content = new InputStreamContent(null, inputStream);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    content.writeTo(outputStream);
+    byte[] contentBytes = outputStream.toByteArray();
+
+    // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
+    Map<String, String> headersMap = new HashMap<>();
+    headersMap.put("X-Smug-AlbumUri", albumUri);
+    headersMap.put("X-Smug-ResponseType", "JSON");
+    headersMap.put("X-Smug-Version", "v2");
+    headersMap.put("Content-Type", photoModel.getMediaType());
+
+    if (!Strings.isNullOrEmpty(photoModel.getTitle())) {
+      headersMap.put("X-Smug-Title", photoModel.getTitle());
+    }
+    if (!Strings.isNullOrEmpty(photoModel.getDescription())) {
+      headersMap.put("X-Smug-Caption", photoModel.getDescription());
+    }
 
     // Upload photo
     return postRequest(
         "https://upload.smugmug.com/",
         ImmutableMap.of(), // No content params for photo upload
-        content,
-        // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
-        ImmutableMap.of(
-            "X-Smug-AlbumUri", "/api/v2/album/" + albumId,
-            "X-Smug-ResponseType", "json",
-            "X-Smug-Version", "v2"),
-        new TypeReference<ImageUploadResponse>() {});
+        contentBytes,
+        headersMap,
+        new TypeReference<SmugMugImageUploadResponse>() {
+        });
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
-    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {})
+    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {
+    })
         .getResponse();
   }
 
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
+  public InputStream getImageAsStream(String urlStr) {
+    OAuthRequest request = new OAuthRequest(Verb.GET, urlStr);
+    oAuthService.signRequest(accessToken, request);
+    final Response response = request.send();
+    return response.getStream();
   }
 
   private <T> SmugMugResponse<T> makeRequest(
       String url, TypeReference<SmugMugResponse<T>> typeReference) throws IOException {
     // Note: there are no request params that need to go here, because smugmug fully specifies
     // which resource to get in the URL of a request, without using query params.
+    String fullUrl;
+    if (!url.contains("https://")) {
+      fullUrl = BASE_URL + url;
+    } else {
+      fullUrl = url;
+    }
     OAuthRequest request =
-        new OAuthRequest(Verb.GET, BASE_URL + url + "?_accept=application%2Fjson");
+        new OAuthRequest(Verb.GET, fullUrl + "?_accept=application%2Fjson");
     oAuthService.signRequest(accessToken, request);
     final Response response = request.send();
 
@@ -179,7 +210,7 @@ public class SmugMugInterface {
   private <T> T postRequest(
       String url,
       Map<String, String> contentParams,
-      HttpContent content,
+      @Nullable byte[] contentBytes,
       Map<String, String> smugMugHeaders,
       TypeReference<T> typeReference)
       throws IOException {
@@ -188,15 +219,14 @@ public class SmugMugInterface {
     if (!fullUrl.contains("://")) {
       fullUrl = BASE_URL + url;
     }
-
     OAuthRequest request = new OAuthRequest(Verb.POST, fullUrl);
-    if (content != null) {
-      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-      content.writeTo(outputStream);
 
-      request.addPayload(outputStream.toByteArray());
+    // Add payload
+    if (contentBytes != null) {
+      request.addPayload(contentBytes);
     }
 
+    // Add body params
     for (Entry<String, String> param : contentParams.entrySet()) {
       request.addBodyParameter(param.getKey(), param.getValue());
     }
@@ -205,6 +235,7 @@ public class SmugMugInterface {
     // signature
     oAuthService.signRequest(accessToken, request);
 
+    // Add headers
     for (Entry<String, String> header : smugMugHeaders.entrySet()) {
       request.addHeader(header.getKey(), header.getValue());
     }

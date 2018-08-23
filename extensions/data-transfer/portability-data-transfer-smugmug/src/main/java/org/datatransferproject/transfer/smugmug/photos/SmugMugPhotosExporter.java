@@ -22,6 +22,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -30,9 +39,9 @@ import org.datatransferproject.spi.transfer.types.ExportInformation;
 import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
 import org.datatransferproject.spi.transfer.types.StringPaginationToken;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbum;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImage;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumInfoResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImage;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
@@ -41,29 +50,25 @@ import org.datatransferproject.types.transfer.models.photos.PhotosContainerResou
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 public class SmugMugPhotosExporter
     implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "photo:";
-  static final String ALBUM_URL_FORMATTER = "/api/v2/album/%s!images";
+  static final String PRIVATE_ALBUM = "Private";
 
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final Logger logger = LoggerFactory.getLogger(SmugMugPhotosExporter.class);
   private final ObjectMapper mapper;
+  private final JobStore jobStore;
 
   private SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosExporter(
-      HttpTransport transport, AppCredentials appCredentials, ObjectMapper mapper) {
-    this(null, transport, appCredentials, mapper);
+      HttpTransport transport, AppCredentials appCredentials, ObjectMapper mapper,
+      JobStore jobStore) {
+    this(null, transport, appCredentials, mapper, jobStore);
   }
 
   @VisibleForTesting
@@ -71,16 +76,19 @@ public class SmugMugPhotosExporter
       SmugMugInterface smugMugInterface,
       HttpTransport transport,
       AppCredentials appCredentials,
-      ObjectMapper mapper) {
+      ObjectMapper mapper,
+      JobStore jobStore) {
     this.transport = transport;
     this.appCredentials = appCredentials;
     this.smugMugInterface = smugMugInterface;
     this.mapper = mapper;
+    this.jobStore = jobStore;
   }
 
   @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation) {
+      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
+      throws IOException {
 
     StringPaginationToken paginationToken = exportInformation.isPresent()
         ? (StringPaginationToken) exportInformation.get().getPaginationData()
@@ -95,33 +103,33 @@ public class SmugMugPhotosExporter
       smugMugInterface = getOrCreateSmugMugInterface(authData);
     } catch (IOException e) {
       logger.warn("Unable to create smugmug service for user: {}", e.getMessage());
-      return new ExportResult(e);
+      throw e;
     }
 
     if (resource != null) {
-      return exportPhotos(resource, paginationToken, smugMugInterface);
+      return exportPhotos(resource, paginationToken, smugMugInterface, jobId);
     } else {
       return exportAlbums(paginationToken, smugMugInterface);
     }
   }
 
   private ExportResult<PhotosContainerResource> exportAlbums(
-      StringPaginationToken paginationData, SmugMugInterface smugMugInterface) {
+      StringPaginationToken paginationData, SmugMugInterface smugMugInterface) throws IOException {
 
     SmugMugAlbumsResponse albumsResponse;
     try {
       // Make request to SmugMug
       String albumInfoUri = "";
       if (paginationData != null) {
-        String token = paginationData.getToken();
+        String pageToken = paginationData.getToken();
         Preconditions.checkState(
-            token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
-        albumInfoUri = token.substring(ALBUM_TOKEN_PREFIX.length());
+            pageToken.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + pageToken);
+        albumInfoUri = pageToken.substring(ALBUM_TOKEN_PREFIX.length());
       }
       albumsResponse = smugMugInterface.getAlbums(albumInfoUri);
     } catch (IOException e) {
       logger.warn("Unable to get AlbumsResponse: " + e.getMessage());
-      return new ExportResult(e);
+      throw e;
     }
 
     // Set up continuation data
@@ -137,8 +145,10 @@ public class SmugMugPhotosExporter
     // Build album list
     List<PhotoAlbum> albumsList = new ArrayList<>();
     for (SmugMugAlbum album : albumsResponse.getAlbums()) {
-      albumsList.add(new PhotoAlbum(album.getAlbumKey(), album.getTitle(), album.getDescription()));
-      continuationData.addContainerResource(new IdOnlyContainerResource(album.getAlbumKey()));
+      if (!album.getPrivacy().equals(PRIVATE_ALBUM)) {
+        albumsList.add(new PhotoAlbum(album.getWebUri(), album.getName(), album.getDescription()));
+        continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
+      }
     }
     PhotosContainerResource resource = new PhotosContainerResource(albumsList, null);
 
@@ -154,7 +164,7 @@ public class SmugMugPhotosExporter
   private ExportResult<PhotosContainerResource> exportPhotos(
       IdOnlyContainerResource containerResource,
       StringPaginationToken paginationData,
-      SmugMugInterface smugMugInterface) {
+      SmugMugInterface smugMugInterface, UUID jobId) throws IOException {
     List<PhotoModel> photoList = new ArrayList<>();
 
     // Make request to SmugMug
@@ -165,46 +175,52 @@ public class SmugMugPhotosExporter
           token.startsWith(PHOTO_TOKEN_PREFIX), "Invalid pagination token " + token);
       photoInfoUri = token.substring(PHOTO_TOKEN_PREFIX.length());
     } else {
-      String id = containerResource.getId();
-      photoInfoUri = String.format(ALBUM_URL_FORMATTER, id);
+      photoInfoUri = containerResource.getId();
     }
 
-    SmugMugAlbumInfoResponse albumInfoResponse = null;
+    SmugMugAlbumImageResponse albumImageList;
     try {
-      albumInfoResponse = smugMugInterface.getAlbumInfo(photoInfoUri);
+      albumImageList = smugMugInterface.getListOfAlbumImages(photoInfoUri + "!images");
     } catch (IOException e) {
-      logger.warn("Unable to get SmugMugAlbumInfo");
-      return new ExportResult(e);
+      logger.warn("Unable to get SmugMugAlbumImageResponse");
+      throw e;
     }
 
     // Set up continuation data
     StringPaginationToken pageToken = null;
-    if (albumInfoResponse.getPageInfo().getNextPage() != null) {
+    if (albumImageList.getPageInfo().getNextPage() != null) {
       pageToken =
           new StringPaginationToken(
-              PHOTO_TOKEN_PREFIX + albumInfoResponse.getPageInfo().getNextPage());
+              PHOTO_TOKEN_PREFIX + albumImageList.getPageInfo().getNextPage());
     }
     ContinuationData continuationData = new ContinuationData(pageToken);
 
     // Make list of photos - images may be empty if the album provided is empty
-    List<SmugMugAlbumImage> images =
-        albumInfoResponse.getImages() == null ? ImmutableList.of() : albumInfoResponse.getImages();
+    List<SmugMugImage> images =
+        albumImageList.getAlbumImages() == null
+            ? ImmutableList.of()
+            : albumImageList.getAlbumImages();
 
-    for (SmugMugAlbumImage image : images) {
-      String title = image.getTitle();
+    for (SmugMugImage albumImage : images) {
+      String title = albumImage.getTitle();
       if (Strings.isNullOrEmpty(title)) {
-        title = image.getFileName();
+        title = albumImage.getFileName();
       }
 
-      photoList.add(
-          new PhotoModel(
-              title,
-              // TODO: sign the archived uri to get private photos to work.
-              image.getArchivedUri(),
-              image.getCaption(),
-              getMimeType(image.getFormat()),
-              null,
-              containerResource.getId(), false));
+      PhotoModel model = new PhotoModel(
+          title,
+          // TODO: sign the archived uri to get private photos to work.
+          albumImage.getArchivedUri(),
+          albumImage.getCaption(),
+          getMimeType(albumImage.getFormat()),
+          null,
+          containerResource.getId(),
+          true);
+
+      InputStream inputStream = smugMugInterface.getImageAsStream(model.getFetchableUrl());
+      jobStore.create(jobId, model.getFetchableUrl(), inputStream);
+
+      photoList.add(model);
     }
 
     PhotosContainerResource resource = new PhotosContainerResource(null, photoList);
