@@ -1,6 +1,7 @@
 import {Component, OnInit} from "@angular/core";
 import {Router} from "@angular/router";
 import {ProgressService} from "../progress";
+import {environment} from "../../environments/environment";
 
 /**
  * Displays the initial start step.
@@ -14,6 +15,9 @@ export class StartComponent implements OnInit {
     }
 
     ngOnInit() {
+        if ("cleartext" === environment.encryptionScheme) {
+            console.warn("Client configured to pass authentication credentials as clear text. This scheme should be used for demo purposes only.");
+        }
     }
 
     next() {
