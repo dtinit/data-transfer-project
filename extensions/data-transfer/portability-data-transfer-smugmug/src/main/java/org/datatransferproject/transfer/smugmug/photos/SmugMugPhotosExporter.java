@@ -204,7 +204,7 @@ public class SmugMugPhotosExporter
               image.getCaption(),
               getMimeType(image.getFormat()),
               null,
-              containerResource.getId()));
+              containerResource.getId(), false));
     }
 
     PhotosContainerResource resource = new PhotosContainerResource(null, photoList);
