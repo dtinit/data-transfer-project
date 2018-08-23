@@ -70,6 +70,7 @@ final class JobProcessor {
           job.exportService(),
           job.importService());
 
+      // TODO refactor to a service extension
       // Decrypt the data
       RSADecrypter decrypter = new RSADecrypter(JobMetadata.getKeyPair().getPrivate());
       JWEObject object = JWEObject.parse(jobAuthorization.encryptedAuthData());
