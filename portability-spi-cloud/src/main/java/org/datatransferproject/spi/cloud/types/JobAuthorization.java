@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.auto.value.AutoValue;
+
 import javax.annotation.Nullable;
 
 /** Authorization data related to a job. */
@@ -30,27 +31,16 @@ public abstract class JobAuthorization {
   public abstract String encryptedInitialImportAuthData();
 
   @Nullable
-  @JsonProperty("encryptedExportAuthData")
-  public abstract String encryptedExportAuthData();
-
-  @Nullable
-  @JsonProperty("encryptedImportAuthData")
-  public abstract String encryptedImportAuthData();
+  @JsonProperty("encryptedAuthData")
+  public abstract String encryptedAuthData();
 
   /**
    * The SecretKey used to encrypt all data, including auth data, associated with this job, encoded
    * for storage.
    */
+  @Deprecated
   @JsonProperty("sessionSecretKey")
   public abstract String sessionSecretKey();
-
-  /**
-   * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the authPublicKey
-   * before storage.
-   */
-  @Nullable
-  @JsonProperty("authSecretKey")
-  public abstract String authSecretKey();
 
   /** The PublicKey of the 'transfer worker' instance assigned to this job, encoded for storage. */
   @Nullable
@@ -72,7 +62,7 @@ public abstract class JobAuthorization {
     // may use them.
     CREDS_ENCRYPTION_KEY_GENERATED,
     // The api server has encrypted the credentials for the transfer worker to use.
-    CREDS_ENCRYPTED,
+    CREDS_STORED,
   }
 
   @AutoValue.Builder
@@ -91,25 +81,20 @@ public abstract class JobAuthorization {
     @JsonProperty("encryptedInitialImportAuthData")
     public abstract Builder setEncryptedInitialImportAuthData(String authData);
 
-    @JsonProperty("encryptedExportAuthData")
-    public abstract Builder setEncryptedExportAuthData(String authData);
-
-    @JsonProperty("encryptedImportAuthData")
-    public abstract Builder setEncryptedImportAuthData(String authData);
+    /**
+     * Sets the auth data using {@link org.datatransferproject.types.transfer.auth.AuthDataPair}
+     * encrypted as a JWE.
+     */
+    @JsonProperty("encryptedAuthData")
+    public abstract Builder setEncryptedAuthData(String authData);
 
     /**
      * The SecretKey used to encrypt all data, including auth data, associated with this job,
      * encoded for storage.
      */
+    @Deprecated
     @JsonProperty("sessionSecretKey")
     public abstract Builder setSessionSecretKey(String sessionSecretKey);
-
-    /**
-     * The SecretKey used to symmetrically encrypt auth data. Must be encrypted with the
-     * authPublicKey before storage.
-     */
-    @JsonProperty("authSecretKey")
-    public abstract Builder setAuthSecretKey(String authSecretKey);
 
     /**
      * The PublicKey of the 'transfer worker' instance assigned to this job, encoded for storage.
