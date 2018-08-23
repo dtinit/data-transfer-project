@@ -63,6 +63,7 @@ dependencies {
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
+    compile project(':extensions:data-transfer:portability-data-transfer-smugmug')
     compile project(":extensions:security:portability-security-cleartext")
 }
 
