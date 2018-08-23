@@ -91,11 +91,11 @@ public interface JobStore {
     throw new UnsupportedOperationException();
   }
 
-  default void create(UUID jobId, String key, InputStream stream) {
+  default void create(UUID jobId, String key, InputStream stream) throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  default InputStream getStream(UUID jobId, String key) {
+  default InputStream getStream(UUID jobId, String key) throws IOException {
     throw new UnsupportedOperationException();
   }
 }
