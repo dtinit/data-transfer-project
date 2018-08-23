@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -46,8 +45,11 @@ import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
-  @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
-  @VisibleForTesting static final String DEFAULT_ALBUM = "Default";
+
+  @VisibleForTesting
+  static final String COPY_PREFIX = "Copy of - ";
+  @VisibleForTesting
+  static final String DEFAULT_ALBUM = "Default";
 
   private final JobStore jobStore;
   private final Flickr flickr;
@@ -73,7 +75,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, PhotosContainerResource data) {
+  public ImportResult importItem(UUID jobId, AuthData authData, PhotosContainerResource data)
+      throws IOException {
     Auth auth;
     try {
       auth = FlickrUtils.getAuth(authData, flickr);
@@ -83,14 +86,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     RequestContext.getRequestContext().setAuth(auth);
 
     // TODO: store objects containing individual mappings instead of single object containing all mappings
-    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    TempPhotosData tempPhotosData = jobStore
+        .findData(jobId, createCacheKey(), TempPhotosData.class);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
-      try {
-        jobStore.create(jobId, createCacheKey(), tempPhotosData);
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      jobStore.create(jobId, createCacheKey(), tempPhotosData);
     }
 
     Preconditions.checkArgument(
@@ -106,8 +106,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       for (PhotoModel photo : data.getPhotos()) {
         try {
           importSinglePhoto(jobId, photo);
-        } catch (FlickrException | IOException e) {
-          return new ImportResult(e);
+        } catch (FlickrException e) {
+          throw new IOException(e);
         }
       }
     }
@@ -175,8 +175,9 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     return uploader.upload(inStream, uploadMetaData);
   }
 
-  /** Key for cache of album mappings.
-   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
    */
   private String createCacheKey() {
     // TODO: store objects containing individual mappings instead of single object containing all mappings
@@ -185,6 +186,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   @VisibleForTesting
   class ImageStreamProvider {
+
     /**
      * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotosImporter} to
      * upload the image.

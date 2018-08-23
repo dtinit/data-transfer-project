@@ -15,12 +15,19 @@
  */
 package org.datatransferproject.transfer.microsoft.calendar;
 
+import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempCalendarData;
 import org.datatransferproject.transfer.microsoft.common.RequestHelper;
@@ -31,18 +38,12 @@ import org.datatransferproject.types.transfer.models.calendar.CalendarContainerR
 import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
-
-/** Imports Outlook calendar information using the Microsoft Graph API. */
+/**
+ * Imports Outlook calendar information using the Microsoft Graph API.
+ */
 public class MicrosoftCalendarImporter
     implements Importer<TokenAuthData, CalendarContainerResource> {
+
   private static final String CALENDAR_SUBPATH =
       "/v1.0/me/calendars"; // must be relative for batch operations
   private static final String EVENT_SUBPATH =
@@ -71,15 +72,12 @@ public class MicrosoftCalendarImporter
   @SuppressWarnings("unchecked")
   @Override
   public ImportResult importItem(
-      UUID jobId, TokenAuthData authData, CalendarContainerResource data) {
-    TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
+      UUID jobId, TokenAuthData authData, CalendarContainerResource data) throws IOException {
+    TempCalendarData calendarMappings = jobStore
+        .findData(jobId, createCacheKey(), TempCalendarData.class);
     if (calendarMappings == null) {
       calendarMappings = new TempCalendarData(jobId);
-      try {
-        jobStore.create(jobId, createCacheKey(), calendarMappings);
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      jobStore.create(jobId, createCacheKey(), calendarMappings);
     }
 
     Map<String, String> requestIdToExportedId = new HashMap<>();
@@ -91,7 +89,8 @@ public class MicrosoftCalendarImporter
     List<Map<String, Object>> calendarRequests = new ArrayList<>();
 
     for (CalendarModel calendar : data.getCalendars()) {
-      Map<String, Object> request = createRequestItem(calendar, requestId, CALENDAR_SUBPATH, problems);
+      Map<String, Object> request = createRequestItem(calendar, requestId, CALENDAR_SUBPATH,
+          problems);
       requestIdToExportedId.put(String.valueOf(requestId), calendar.getId());
       requestId++;
       calendarRequests.add(request);
@@ -166,8 +165,9 @@ public class MicrosoftCalendarImporter
     return createRequest(id, url, contact);
   }
 
-  /** Key for cache of album mappings.
-   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
    */
   private String createCacheKey() {
     // TODO: store objects containing individual mappings instead of single object containing all mappings
