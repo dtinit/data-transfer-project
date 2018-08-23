@@ -68,7 +68,7 @@ public class GooglePhotosImporterTest {
     // Set up
     String description = "description";
     PhotoModel photoModel = new PhotoModel(PHOTO_TITLE, IMG_URI, description, JPEG_MEDIA_TYPE, null,
-        "album_id");
+        "album_id", false);
 
     // Run test
     googlePhotosImporter.importSinglePhoto(null, photoModel);

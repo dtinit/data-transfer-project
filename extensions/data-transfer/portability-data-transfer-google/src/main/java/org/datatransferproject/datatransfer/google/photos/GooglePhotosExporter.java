@@ -188,7 +188,7 @@ public class GooglePhotosExporter
                 mediaItem.getDescription(),
                 mediaItem.getMimeType(),
                 mediaItem.getId(),
-                albumId));
+                albumId, false));
       }
     }
 

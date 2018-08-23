@@ -221,7 +221,7 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
         PhotoAlbum album = new PhotoAlbum(albumId, parentName, "");
         albums.add(album);
       }
-      PhotoModel photoModel = new PhotoModel(name, null, "", mimeType, id, albumId);
+      PhotoModel photoModel = new PhotoModel(name, null, "", mimeType, id, albumId, false);
 
       photoModels.add(photoModel);
     }
