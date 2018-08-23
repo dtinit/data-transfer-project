@@ -29,14 +29,20 @@ public class CreateTransferJobTest {
 
     String serialized =
         objectMapper.writeValueAsString(
-            new CreateTransferJob("testSource", "testDestination", "PHOTOS", "https://localhost:3000"));
+            new CreateTransferJob(
+                    "testSource",
+                    "testDestination",
+                    "https://localhost:3000/callback/testSource",
+                    "https://localhost:3000/callback/testDestination",
+                    "PHOTOS"));
 
     CreateTransferJob deserialized =
         objectMapper.readValue(serialized, CreateTransferJob.class);
 
     Assert.assertEquals("testSource", deserialized.getExportService());
     Assert.assertEquals("testDestination", deserialized.getImportService());
+    Assert.assertEquals("https://localhost:3000/callback/testSource", deserialized.getExportCallbackUrl());
+    Assert.assertEquals("https://localhost:3000/callback/testDestination", deserialized.getImportCallbackUrl());
     Assert.assertEquals("PHOTOS", deserialized.getDataType());
-    Assert.assertEquals("https://localhost:3000", deserialized.getCallbackUrl());
   }
 }

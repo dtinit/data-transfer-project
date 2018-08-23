@@ -21,10 +21,10 @@ public class GoogleAuthDataGeneratorTest {
   public void generateConfigurationImport() {
     GoogleAuthDataGenerator generator =
         new GoogleAuthDataGenerator(
-            "redirect", appCredentials, httpTransport, null, "CALENDAR", AuthMode.IMPORT);
+                appCredentials, httpTransport, null, "CALENDAR", AuthMode.IMPORT);
 
     AuthFlowConfiguration config =
-        generator.generateConfiguration("http://localhost/test", "54321");
+        generator.generateConfiguration("http://localhost/testredirect", "54321");
 
     Assert.assertEquals(
         "https://accounts.google.com/o/oauth2/auth?"
@@ -40,10 +40,10 @@ public class GoogleAuthDataGeneratorTest {
   public void generateConfigurationExport() {
     GoogleAuthDataGenerator generator =
         new GoogleAuthDataGenerator(
-            "redirect", appCredentials, httpTransport, null, "CALENDAR", AuthMode.EXPORT);
+                appCredentials, httpTransport, null, "CALENDAR", AuthMode.EXPORT);
 
     AuthFlowConfiguration config =
-        generator.generateConfiguration("http://localhost/test", "54321");
+        generator.generateConfiguration("http://localhost/testredirect", "54321");
 
     Assert.assertEquals(
         "https://accounts.google.com/o/oauth2/auth?"

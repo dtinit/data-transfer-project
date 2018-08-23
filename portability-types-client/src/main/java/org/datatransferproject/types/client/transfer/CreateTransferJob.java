@@ -25,19 +25,22 @@ import io.swagger.annotations.ApiModelProperty;
 public class CreateTransferJob {
     private final String exportService;
     private final String importService;
+    private final String exportCallbackUrl;
+    private final String importCallbackUrl;
     private final String dataType;
-    private final String callbackUrl;
 
     @JsonCreator
     public CreateTransferJob(
             @JsonProperty(value = "exportService", required = true) String exportService,
             @JsonProperty(value = "importService", required = true) String importService,
-            @JsonProperty(value = "dataType", required = true) String dataType,
-            @JsonProperty(value = "callbackUrl", required = true) String callbackUrl) {
+            @JsonProperty(value = "exportCallbackUrl", required = true) String exportCallbackUrl,
+            @JsonProperty(value = "importCallbackUrl", required = true) String importCallbackUrl,
+            @JsonProperty(value = "dataType", required = true) String dataType) {
         this.exportService = exportService;
         this.importService = importService;
+        this.exportCallbackUrl = exportCallbackUrl;
+        this.importCallbackUrl = importCallbackUrl;
         this.dataType = dataType;
-        this.callbackUrl = callbackUrl;
     }
 
     @ApiModelProperty(value = "The service to transfer data from", dataType = "string", required = true)
@@ -50,13 +53,18 @@ public class CreateTransferJob {
         return importService;
     }
 
+    @ApiModelProperty(value = "The export auth callback URL", dataType = "string", required = true)
+    public String getExportCallbackUrl() {
+        return exportCallbackUrl;
+    }
+
+    @ApiModelProperty(value = "The import auth callback URL", dataType = "string", required = true)
+    public String getImportCallbackUrl() {
+        return importCallbackUrl;
+    }
+
     @ApiModelProperty(value = "The type of data to transfer", dataType = "string", required = true)
     public String getDataType() {
         return dataType;
-    }
-
-    @ApiModelProperty(value = "The auth callback URL", dataType = "string", required = true)
-    public String getCallbackUrl() {
-        return callbackUrl;
     }
 }

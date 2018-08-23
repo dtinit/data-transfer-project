@@ -55,11 +55,11 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     // Generate a request token and include that as initial auth data
     TokenSecretAuthData authData = null;
     try {
-      authData = smugMugOauthInterface.getRequestToken(callbackBaseUrl + "/callback/smugmug");
+      authData = smugMugOauthInterface.getRequestToken(callbackUrl);
     } catch (IOException e) {
       logger.warn("Couldnt get authData {}", e.getMessage());
       return null;
@@ -71,7 +71,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
 
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions.checkNotNull(

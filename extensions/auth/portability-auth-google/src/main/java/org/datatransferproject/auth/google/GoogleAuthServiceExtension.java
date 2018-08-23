@@ -103,8 +103,7 @@ public class GoogleAuthServiceExtension implements AuthServiceExtension {
       generators.put(
           transferDataType,
           new GoogleAuthDataGenerator(
-              REDIRECT_PATH,
-              appCredentials,
+                  appCredentials,
               httpTransport,
               typeManager.getMapper(),
               transferDataType,

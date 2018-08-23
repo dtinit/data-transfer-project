@@ -52,7 +52,7 @@ public class AuthTestDriver {
 
     MicrosoftAuthDataGenerator dataGenerator =
         new MicrosoftAuthDataGenerator(
-            "/response", () -> clientId, () -> secret, client, mapper, "CONTACTS", AuthMode.EXPORT);
+                () -> clientId, () -> secret, client, mapper, "CONTACTS", AuthMode.EXPORT);
 
     AuthFlowConfiguration configuration = dataGenerator.generateConfiguration(callbackBase, "1");
 
