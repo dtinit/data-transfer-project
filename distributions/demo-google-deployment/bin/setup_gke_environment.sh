@@ -123,7 +123,7 @@ create_api_backend_service() {
 
   print_step "Creating GCP backend service '${API_BACKEND_SERVICE_NAME}'"
   gcloud compute backend-services create ${API_BACKEND_SERVICE_NAME} \
-  --port=80 --port-name=http --protocol=HTTP --global --http-health-checks=portability-health-check
+  --port-name=http --protocol=HTTP --global --http-health-checks=portability-health-check
 
   print_step "Adding instance group ${INSTANCE_GROUP_NAME} as a backend to ${API_BACKEND_SERVICE_NAME}"
   gcloud compute backend-services add-backend ${API_BACKEND_SERVICE_NAME} \
@@ -166,7 +166,7 @@ create_backend_pool() { # args: ${1}: backend name, "api" or "transfer"
   mv ${TEMP_DEPLOYMENT_YAML_FILE_PATH} ${DEPLOYMENT_YAML_FILE_PATH}
 
   print_step "Importing the service account credentials, created earlier, as a Kubernetes Secret"
-  kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/service_account_creds.json
+  kubectl create secret generic portability-service-account-creds --from-file=key.json=/tmp/service_acct_creds.json
 
   echo -e "Done creating ${BACKEND} pool!"
   if [[ ${BACKEND} == "api" ]]; then
@@ -181,6 +181,7 @@ fi
 
 ENV=$1
 PROJECT_ID="${BASE_PROJECT_ID}-$ENV"
+SERVICE_ACCOUNT="${PROJECT_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 gcloud=$(which gcloud)|| { echo "Google Cloud SDK (gcloud) not found." >&2; exit 1; }
 gsutil=$(which gsutil)|| { echo "Google Cloud Storage CLI (gsutil) not found." >&2; exit 1; }
 kubectl=$(which kubectl)|| { echo "Kubernetes CLI (kubectl) not found." >&2; exit 1; }
@@ -204,9 +205,9 @@ fi
 # Enter the text records and wait 1-2 minutes and confirm
 # It should save cert as follows:
 # Your certificate and chain have been saved at:
-# /etc/letsencrypt/live/gardenswithoutwalls-qa.net/fullchain.pem
+# /etc/letsencrypt/live/your-domain-name.net/fullchain.pem
 # Your key file has been saved at:
-# /etc/letsencrypt/live/gardenswithoutwalls-qa.net/privkey.pem
+# /etc/letsencrypt/live/your-domain-name.net/privkey.pem
 # Note: it is easiest to then sudo cp these files to a temporary location since the default
 # file permissions are difficult.
 read -p "Please enter the path to the certificate file (.crt or .pem): " CRT_FILE_PATH
@@ -222,7 +223,7 @@ if [[ ! -e ${KEY_FILE_PATH} ]]; then
 fi
 
 print_step
-read -p "Creating project ${PROJECT_ID}. Continue (y/N)? " response
+read -p "Creating project ${PROJECT_ID} for organization ID ${ORGANIZATION_ID}. Continue (y/N)? " response
 response=${response,,} # to lower
 if [[ ${response} =~ ^(yes|y| ) ]]; then
   echo "Continuing"
@@ -276,6 +277,8 @@ gcloud alpha billing projects link ${PROJECT_ID} --billing-account=$BILLING_ACCO
 print_step "Enabling APIs"
 # Needed for 'gcloud compute'
 gcloud services --project ${PROJECT_ID} enable compute.googleapis.com
+# Needed for using GKE
+gcloud services --project ${PROJECT_ID} enable container.googleapis.com
 # Needed for managing container images
 gcloud services --project ${PROJECT_ID} enable containerregistry.googleapis.com
 # Needed for storing job state in Cloud DataStore
@@ -306,6 +309,13 @@ echo "Created GCS bucket $GCS_BUCKET_NAME"
 print_step "Granting service account ${SERVICE_ACCOUNT} viewer privileges to 'app-data' bucket"
 gsutil acl -p ${PROJECT_ID} ch -u ${SERVICE_ACCOUNT}:R ${GCS_BUCKET_NAME}
 
+# TODO: what if the bucket already exists?
+print_step "Creating GCS 'user-data' bucket for storing encrypted user data"
+BUCKET_NAME="user-data-$PROJECT_ID"
+GCS_BUCKET_NAME="gs://$BUCKET_NAME/"
+gsutil mb -p ${PROJECT_ID} ${GCS_BUCKET_NAME}
+echo "Created GCS bucket $GCS_BUCKET_NAME"
+
 print_step "Creating a key to encrypt app secrets"
 gcloud kms keyrings create portability_secrets --location global
 # Currently only one purposes is supported: "encryption". Can't have separate encrypt/decrypt keys.
@@ -328,7 +338,7 @@ fi
 print_step "Creating credentials for service account to access GCP APIs. Both the API and transfer
 worker pools, which we are about to create below, will import these credentials in create_backend_pool."
 gcloud iam service-accounts keys create \
-    /tmp/service_account_creds.json \
+    /tmp/service_acct_creds.json \
     --iam-account=${SERVICE_ACCOUNT}
 
 # Create the API pool
@@ -338,7 +348,7 @@ create_backend_pool "api"
 create_backend_pool "transfer"
 
 # Clean up service account creds so we don't leave these lying around on our local machines
-rm /tmp/service_account_creds.json
+rm /tmp/service_acct_creds.json
 
 print_step "Creating load balancer"
 gcloud compute url-maps create ${LB_NAME} \
