@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.security.DecrypterFactory;
@@ -32,19 +31,16 @@ public class GenerateServiceAuthDataAction
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
-  private final String baseUrl;
 
   @Inject
   public GenerateServiceAuthDataAction(
-      JobStore jobStore,
-      AuthServiceProviderRegistry registry,
-      SymmetricKeyGenerator symmetricKeyGenerator,
-      TypeManager typeManager,
-      @Named("baseUrl") String baseUrl) {
+          JobStore jobStore,
+          AuthServiceProviderRegistry registry,
+          SymmetricKeyGenerator symmetricKeyGenerator,
+          TypeManager typeManager) {
     this.jobStore = jobStore;
     this.registry = registry;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
-    this.baseUrl = baseUrl;
     this.objectMapper = typeManager.getMapper();
   }
 
@@ -96,7 +92,7 @@ public class GenerateServiceAuthDataAction
       // Generate auth data
       AuthData authData =
           generator.generateAuthData(
-                  baseUrl, request.getAuthToken(), jobId.toString(), initialAuthData, null);
+                  request.getCallbackUrl(), request.getAuthToken(), jobId.toString(), initialAuthData, null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Serialize and encrypt the auth data

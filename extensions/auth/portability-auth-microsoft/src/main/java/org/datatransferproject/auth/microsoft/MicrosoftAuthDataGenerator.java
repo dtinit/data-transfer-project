@@ -62,7 +62,6 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
           .put("OFFLINE-DATA", ImmutableList.of("user.read", "Files.Read.All"))
           .build();
 
-  private final String redirectPath;
   private final Supplier<String> clientIdSupplier;
   private final Supplier<String> clientSecretSupplier;
   private final OkHttpClient httpClient;
@@ -71,10 +70,7 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
 
   /**
    * Ctor.
-   *
-   * @param redirectPath the path part this generator is configured to request OAuth authentication
-   *     code responses be sent to
-   * @param clientIdSupplier The Application ID that the registration portal
+   *  @param clientIdSupplier The Application ID that the registration portal
    *     (apps.dev.microsoft.com) assigned the portability instance
    * @param clientSecretSupplier The application secret that was created in the app registration
    *     portal for the portability instance
@@ -83,17 +79,15 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
    * @param mode the mode to create this authorization generator for
    */
   public MicrosoftAuthDataGenerator(
-      String redirectPath,
-      Supplier<String> clientIdSupplier,
-      Supplier<String> clientSecretSupplier,
-      OkHttpClient client,
-      ObjectMapper mapper,
-      String transferDataType,
-      AuthMode mode) {
+          Supplier<String> clientIdSupplier,
+          Supplier<String> clientSecretSupplier,
+          OkHttpClient client,
+          ObjectMapper mapper,
+          String transferDataType,
+          AuthMode mode) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(transferDataType) && mode != null,
         "A valid mode and transfer data type must be present");
-    this.redirectPath = redirectPath;
     this.clientIdSupplier = clientIdSupplier;
     this.clientSecretSupplier = clientSecretSupplier;
     httpClient = client;
@@ -104,17 +98,15 @@ public class MicrosoftAuthDataGenerator implements AuthDataGenerator {
             : importAuthScopes.get(transferDataType);
   }
 
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     // constructs a request for the Microsoft Graph authorization code.
-    String redirectUrl = callbackBaseUrl + redirectPath;
-    String queryPart = constructAuthQueryPart(redirectUrl, id, scopes);
+    String queryPart = constructAuthQueryPart(callbackUrl, id, scopes);
     return new AuthFlowConfiguration(AUTHORIZATION_URL + "?" + queryPart, AUTHORIZATION_PROTOCOL, getTokenUrl());
   }
 
   public TokenAuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
-    String redirectUrl = callbackBaseUrl + redirectPath;
-    String params = constructTokenParams(authCode, redirectUrl, "user.read", "Contacts.ReadWrite");
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+    String params = constructTokenParams(authCode, callbackUrl, "user.read", "Contacts.ReadWrite");
 
     Request.Builder tokenReqBuilder = new Request.Builder().url(TOKEN_URL);
     tokenReqBuilder.header("Content-Type", "application/x-www-form-urlencoded");

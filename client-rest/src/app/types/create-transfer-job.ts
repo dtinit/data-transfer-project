@@ -13,12 +13,17 @@ export interface CreateTransferJob {
     importService: string;
 
     /**
+    * The URL for export auth callback.
+    */
+    exportCallbackUrl: string;
+
+    /**
+    * The URL for import auth callback.
+    */
+    importCallbackUrl: string;
+
+    /**
     * The data type to transfer.
     */
     dataType: string;
-
-    /**
-    * The URL for auth callbacks.
-    */
-    callbackUrl: string;
 }

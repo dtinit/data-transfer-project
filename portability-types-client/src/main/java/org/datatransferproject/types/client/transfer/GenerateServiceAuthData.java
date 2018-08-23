@@ -32,14 +32,17 @@ public class GenerateServiceAuthData {
   private final String id;
   private final String authToken;
   private final Mode mode;
+  private final String callbackUrl;
 
   public GenerateServiceAuthData(
       @JsonProperty(value = "id", required = true) String id,
       @JsonProperty(value = "authToken", required = true) String authToken,
-      @JsonProperty(value = "mode", required = true) Mode mode) {
+      @JsonProperty(value = "mode", required = true) Mode mode,
+      @JsonProperty(value = "callbackUrl", required = true) String callbackUrl) {
     this.id = id;
     this.authToken = authToken;
     this.mode = mode;
+    this.callbackUrl = callbackUrl;
   }
 
   public String getId() {
@@ -52,5 +55,9 @@ public class GenerateServiceAuthData {
 
   public Mode getMode() {
     return mode;
+  }
+
+  public String getCallbackUrl() {
+    return callbackUrl;
   }
 }

@@ -55,7 +55,8 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
         String dataType = request.getDataType();
         String exportService = request.getExportService();
         String importService = request.getImportService();
-        String callbackUrl = request.getCallbackUrl();
+        String exportCallbackUrl = request.getExportCallbackUrl();
+        String importCallbackUrl = request.getImportCallbackUrl();
 
         // Create a new job and persist
         UUID jobId = UUID.randomUUID();
@@ -85,9 +86,9 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             String encodedJobId = encodeJobId(jobId);
 
             AuthFlowConfiguration exportConfiguration =
-                    exportGenerator.generateConfiguration(callbackUrl, encodedJobId);
+                    exportGenerator.generateConfiguration(exportCallbackUrl, encodedJobId);
             AuthFlowConfiguration importConfiguration =
-                    importGenerator.generateConfiguration(callbackUrl, encodedJobId);
+                    importGenerator.generateConfiguration(importCallbackUrl, encodedJobId);
 
             boolean jobNeedsUpdate = false;
             // If present, store initial auth data for export services, e.g. used for oauth1
