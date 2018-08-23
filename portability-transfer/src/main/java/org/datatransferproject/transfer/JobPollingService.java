@@ -19,19 +19,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.RSAKey;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -44,11 +43,16 @@ class JobPollingService extends AbstractScheduledService {
   private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
   private final JobStore store;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
+  private final Set<PublicKeySerializer> publicKeySerializers;
 
   @Inject
-  JobPollingService(JobStore store, AsymmetricKeyGenerator asymmetricKeyGenerator) {
+  JobPollingService(
+      JobStore store,
+      AsymmetricKeyGenerator asymmetricKeyGenerator,
+      Set<PublicKeySerializer> publicKeySerializers) {
     this.store = store;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
+    this.publicKeySerializers = publicKeySerializers;
   }
 
   @Override
@@ -113,8 +117,16 @@ class JobPollingService extends AbstractScheduledService {
       return false;
     }
 
-    String kid = UUID.randomUUID().toString();
-    JWK jwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).keyID(kid).build();
+    String scheme = existingJob.jobAuthorization().encryptionScheme();
+    PublicKeySerializer keySerializer = getPublicKeySerializer(scheme);
+    if (keySerializer == null) {
+      logger.error(
+          String.format(
+              "Public key serializer not found for scheme %s processing job: %s", scheme, jobId));
+      return false;
+    }
+    PublicKey publicKey = keyPair.getPublic();
+    String serializedKey = keySerializer.serialize(publicKey);
 
     PortabilityJob updatedJob =
         existingJob
@@ -123,7 +135,7 @@ class JobPollingService extends AbstractScheduledService {
                 existingJob
                     .jobAuthorization()
                     .toBuilder()
-                    .setAuthPublicKey(jwk.toString())
+                    .setAuthPublicKey(serializedKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                     .build())
             .build();
@@ -152,6 +164,15 @@ class JobPollingService extends AbstractScheduledService {
         existingJob.exportService(),
         existingJob.importService());
     return true;
+  }
+
+  private PublicKeySerializer getPublicKeySerializer(String scheme) {
+    for (PublicKeySerializer keySerializer : publicKeySerializers) {
+      if (keySerializer.canHandle(scheme)) {
+        return keySerializer;
+      }
+    }
+    return null;
   }
 
   /** Polls for job with populated auth data and stops this service when found. */

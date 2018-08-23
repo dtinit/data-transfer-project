@@ -34,6 +34,10 @@ public abstract class JobAuthorization {
   @JsonProperty("encryptedAuthData")
   public abstract String encryptedAuthData();
 
+  @Nullable
+  @JsonProperty("encryptionScheme")
+  public abstract String encryptionScheme();
+
   /**
    * The SecretKey used to encrypt all data, including auth data, associated with this job, encoded
    * for storage.
@@ -87,6 +91,9 @@ public abstract class JobAuthorization {
      */
     @JsonProperty("encryptedAuthData")
     public abstract Builder setEncryptedAuthData(String authData);
+
+    @JsonProperty("encryptionScheme")
+    public abstract Builder setEncryptionScheme(String scheme);
 
     /**
      * The SecretKey used to encrypt all data, including auth data, associated with this job,

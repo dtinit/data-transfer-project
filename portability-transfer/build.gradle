@@ -85,7 +85,4 @@ dependencies {
     testCompile("org.mockito:mockito-all:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 
-    compile group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '5.14'
-
-
 }

@@ -6,6 +6,7 @@ import {TransferService} from "./transfer.service";
 import {StartTransferJob} from "../types";
 import {transportError} from "../transport";
 import {Jose, JoseJWE} from "jose-jwe-jws";
+import {environment} from "../../environments/environment";
 
 
 /**
@@ -51,11 +52,21 @@ export class InitiateTransferComponent implements OnInit {
                     if (reservedWorker.publicKey) {
                         pollForWorkerKey.unsubscribe();
                         this.progressService.workerReserved(reservedWorker.publicKey);
-                        this.encryptAndStartTransfer();
+                        if ("cleartext" === environment.encryptionScheme) {
+                            this.clearTextAndStartTransfer();
+                        } else {
+                            this.encryptAndStartTransfer();
+                        }
                     } else if (pollAttempt == maxPollAttempts) {
                         alert(`Timed out getting a worker for this data transfer`);
                     }
                 }, transportError);
+    }
+
+    clearTextAndStartTransfer() {
+        // send auth data as cleartext
+        let authData = JSON.stringify({exportAuthData: this.progressService.exportAuthData(), importAuthData: this.progressService.importAuthData()});
+        this.startTransfer(authData);
     }
 
     encryptAndStartTransfer() {
