@@ -30,9 +30,8 @@ public class LocalTempFileStore {
   void writeInputStream(String filename, InputStream inputStream) throws IOException {
     File file = new File(TEMP_DIR + filename);
     file.createNewFile();
-
     try (OutputStream outputStream = new FileOutputStream(file)) {
-      byte[] buffer = new byte[inputStream.available()];
+      byte[] buffer = new byte[1024];
       int bytesRead;
       while ((bytesRead = inputStream.read(buffer)) != -1) {
         outputStream.write(buffer, 0, bytesRead);

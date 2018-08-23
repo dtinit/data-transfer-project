@@ -102,7 +102,7 @@ public class GooglePhotosImporter
     }
 
     MediaStreamSource streamSource;
-    if (inputPhoto.isInJobStore()) {
+    if (inputPhoto.isInTempStore()) {
       streamSource = new MediaStreamSource(
           jobStore.getStream(jobId, inputPhoto.getFetchableUrl()), mediaType);
     } else {

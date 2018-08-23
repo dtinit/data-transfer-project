@@ -42,7 +42,9 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
     UUID jobId = decodeJobId(id);
     PortabilityJob job = jobStore.findJob(jobId);
 
-    job = updateJobWithCredentials(jobId, job, startTransferJob.getEncryptedAuthData());
+    String authData = startTransferJob.getEncryptedAuthData();
+
+    job = updateJobWithCredentials(jobId, job, authData);
 
     return new TransferJob(
         id,

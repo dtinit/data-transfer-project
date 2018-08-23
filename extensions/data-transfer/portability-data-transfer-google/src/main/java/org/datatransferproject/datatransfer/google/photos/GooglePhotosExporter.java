@@ -155,9 +155,7 @@ public class GooglePhotosExporter
 
     try {
       mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
-          .listAlbumContents(
-              albumId.equalsIgnoreCase(DEFAULT_ALBUM_ID) ? Optional.empty() : Optional.of(albumId),
-              paginationToken);
+          .listAlbumContents(Optional.of(albumId), paginationToken);
     } catch (IOException e) {
       return new ExportResult<>(e);
     }
@@ -202,12 +200,5 @@ public class GooglePhotosExporter
     Credential credential = credentialFactory.createCredential(authData);
     GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
     return photosInterface;
-  }
-
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
   }
 }

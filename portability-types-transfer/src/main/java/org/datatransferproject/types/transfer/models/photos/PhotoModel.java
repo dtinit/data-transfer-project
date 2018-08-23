@@ -26,7 +26,7 @@ public class PhotoModel {
   private final String description;
   private final String mediaType;
   private final String albumId;
-  private final boolean inJobStore;
+  private final boolean inTempStore;
   private String dataId;
 
   @JsonCreator
@@ -37,14 +37,14 @@ public class PhotoModel {
       @JsonProperty("mediaType") String mediaType,
       @JsonProperty("dataId") String dataId,
       @JsonProperty("albumId") String albumId,
-      @JsonProperty("inJobStore") boolean inJobStore) {
+      @JsonProperty("inTempStore") boolean inTempStore) {
     this.title = title;
     this.fetchableUrl = fetchableUrl;
     this.description = description;
     this.mediaType = mediaType;
     this.dataId = dataId;
     this.albumId = albumId;
-    this.inJobStore = inJobStore;
+    this.inTempStore = inTempStore;
   }
 
   public String getTitle() {
@@ -71,9 +71,7 @@ public class PhotoModel {
     return dataId;
   }
 
-  public boolean isInJobStore() {
-    return inJobStore;
-  }
+  public boolean isInTempStore() { return inTempStore; }
 
   @Override
   public String toString() {
@@ -84,6 +82,7 @@ public class PhotoModel {
         .add("mediaType", mediaType)
         .add("dataId", dataId)
         .add("albumId", albumId)
+        .add("inTempStore", inTempStore)
         .toString();
   }
 }

@@ -124,10 +124,10 @@ public class SmugMugPhotosImporter
         inputPhoto.getAlbumId());
 
     InputStream inputStream;
-    if (inputPhoto.isInJobStore()) {
+    if (inputPhoto.isInTempStore()) {
       inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl());
     } else {
-      inputStream = getImageAsStream(inputPhoto.getFetchableUrl());
+      inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
     ImageUploadResponse response = smugMugInterface
         .uploadImage(inputPhoto, newAlbumUri, inputStream);
@@ -139,13 +139,6 @@ public class SmugMugPhotosImporter
     return smugMugInterface == null
         ? new SmugMugInterface(transport, appCredentials, authData, mapper)
         : smugMugInterface;
-  }
-
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
   }
 
   /**
