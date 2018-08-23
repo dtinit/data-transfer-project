@@ -16,12 +16,6 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -41,11 +35,18 @@ import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  *
- * <p>The implementation currently uses the Graph Upload API, which has a content size limit of
- * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
+ * <p>The implementation currently uses the Graph Upload API, which has a content size limit of 4MB.
+ * In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
 public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosContainerResource> {
@@ -72,11 +73,16 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokenAuthData authData, PhotosContainerResource resource) throws IOException {
+      UUID jobId, TokenAuthData authData, PhotosContainerResource resource) {
     TempPhotoData photoData = jobStore.findData(jobId, createCacheKey(), TempPhotoData.class);
     if (photoData == null) {
       photoData = new TempPhotoData(jobId.toString());
-      jobStore.create(jobId, createCacheKey(), photoData);
+      try {
+        jobStore.create(jobId, createCacheKey(), photoData);
+      } catch (IOException e) {
+        return new ImportResult(e);
+      }
+
     }
 
     for (PhotoAlbum album : resource.getAlbums()) {
@@ -176,17 +182,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
     }
   }
 
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
-    return "tempPhotosData";
-  }
-
   private static class StreamingBody extends RequestBody {
-
     private final MediaType contentType;
     private final InputStream stream;
 
@@ -211,5 +207,13 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
         Util.closeQuietly(source);
       }
     }
+  }
+
+  /** Key for cache of album mappings.
+   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+   */
+  private String createCacheKey() {
+    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    return "tempPhotosData";
   }
 }

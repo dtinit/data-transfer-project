@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
-import org.datatransferproject.transfer.smugmug.photos.model.ImageUploadResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
@@ -136,7 +136,7 @@ public class SmugMugInterface {
 
   /* Uploads the resource at photoUrl to the albumId provided
    * The albumId must exist before calling upload, else the request will fail */
-  ImageUploadResponse uploadImage(PhotoModel photoModel, String albumUri, InputStream inputStream)
+  SmugMugImageUploadResponse uploadImage(PhotoModel photoModel, String albumUri, InputStream inputStream)
       throws IOException {
     // Set up photo
     InputStreamContent content = new InputStreamContent(null, inputStream);
@@ -164,7 +164,7 @@ public class SmugMugInterface {
         ImmutableMap.of(), // No content params for photo upload
         contentBytes,
         headersMap,
-        new TypeReference<ImageUploadResponse>() {
+        new TypeReference<SmugMugImageUploadResponse>() {
         });
   }
 

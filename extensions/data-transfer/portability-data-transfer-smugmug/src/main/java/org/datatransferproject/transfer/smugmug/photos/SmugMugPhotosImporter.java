@@ -25,14 +25,12 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
-import org.datatransferproject.transfer.smugmug.photos.model.ImageUploadResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -129,7 +127,7 @@ public class SmugMugPhotosImporter
     } else {
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
-    ImageUploadResponse response = smugMugInterface
+    SmugMugImageUploadResponse response = smugMugInterface
         .uploadImage(inputPhoto, newAlbumUri, inputStream);
   }
 

@@ -83,21 +83,19 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     RequestContext.getRequestContext().setAuth(auth);
 
     // TODO: store objects containing individual mappings instead of single object containing all mappings
-    TempPhotosData tempPhotosData;
-    try {
-      tempPhotosData = jobStore
-          .findData(jobId, createCacheKey(), TempPhotosData.class);
-      if (tempPhotosData == null) {
-        tempPhotosData = new TempPhotosData(jobId);
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    if (tempPhotosData == null) {
+      tempPhotosData = new TempPhotosData(jobId);
+      try {
         jobStore.create(jobId, createCacheKey(), tempPhotosData);
+      } catch (IOException e) {
+        return new ImportResult(e);
       }
-    } catch (IOException e) {
-      return new ImportResult(e);
     }
 
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getPhotos() != null,
-         "Error: There is no data to import");
+        "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
       importAlbums(data.getAlbums(), tempPhotosData);

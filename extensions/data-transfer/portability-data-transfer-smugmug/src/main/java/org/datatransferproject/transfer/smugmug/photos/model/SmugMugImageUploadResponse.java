@@ -18,7 +18,7 @@ package org.datatransferproject.transfer.smugmug.photos.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-public final class ImageUploadResponse {
+public final class SmugMugImageUploadResponse {
 
   @JsonProperty("stat")
   private String stat;

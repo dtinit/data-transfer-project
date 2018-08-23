@@ -71,11 +71,15 @@ public class MicrosoftCalendarImporter
   @SuppressWarnings("unchecked")
   @Override
   public ImportResult importItem(
-          UUID jobId, TokenAuthData authData, CalendarContainerResource data) throws IOException {
+      UUID jobId, TokenAuthData authData, CalendarContainerResource data) {
     TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
     if (calendarMappings == null) {
       calendarMappings = new TempCalendarData(jobId);
-      jobStore.create(jobId, createCacheKey(), calendarMappings);
+      try {
+        jobStore.create(jobId, createCacheKey(), calendarMappings);
+      } catch (IOException e) {
+        return new ImportResult(e);
+      }
     }
 
     Map<String, String> requestIdToExportedId = new HashMap<>();
