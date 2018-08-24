@@ -82,7 +82,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     // callbackbaseurl, id, initialAuthData and extra are not used.
     try {
       return new TokenAuthData(getToken(authCode));

@@ -1,13 +1,8 @@
 package org.datatransferproject.api.action.transfer;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
-import org.datatransferproject.security.AsymmetricKeyGenerator;
-import org.datatransferproject.security.Encrypter;
-import org.datatransferproject.security.EncrypterFactory;
-import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -22,24 +17,17 @@ import java.security.PublicKey;
 import java.util.UUID;
 
 import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
-import static org.datatransferproject.spi.cloud.types.JobAuthorization.State.CREDS_ENCRYPTED;
+import static org.datatransferproject.spi.cloud.types.JobAuthorization.State.CREDS_STORED;
 
 /** Starts a transfer job. */
 public class StartTransferJobAction implements Action<StartTransferJob, TransferJob> {
   private static final Logger logger = LoggerFactory.getLogger(StartTransferJobAction.class);
 
   private final JobStore jobStore;
-  private final SymmetricKeyGenerator symmetricKeyGenerator;
-  private final AsymmetricKeyGenerator asymmetricKeyGenerator;
 
   @Inject
-  StartTransferJobAction(
-      JobStore jobStore,
-      SymmetricKeyGenerator symmetricKeyGenerator,
-      AsymmetricKeyGenerator asymmetricKeyGenerator) {
+  StartTransferJobAction(JobStore jobStore) {
     this.jobStore = jobStore;
-    this.symmetricKeyGenerator = symmetricKeyGenerator;
-    this.asymmetricKeyGenerator = asymmetricKeyGenerator;
   }
 
   @Override
@@ -54,66 +42,42 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
     UUID jobId = decodeJobId(id);
     PortabilityJob job = jobStore.findJob(jobId);
 
-    if (!startTransferJob.isAuthDataEncrypted()) {
-      // TODO: move creds encryption to the client, and pass encrypted creds to this action.
-      // Update this job with credentials encrypted with a public key, e.g. for a specific transfer
-      // worker instance
-      job =
-          encryptAndUpdateJobWithCredentials(
-              jobId,
-              job,
-              startTransferJob.getExportAuthData(),
-              startTransferJob.getImportAuthData());
-    }
+    String authData = startTransferJob.getEncryptedAuthData();
 
-    // TODO(#553): This list of nulls should be cleaned up when we refactor TransferJob.
-    return new TransferJob(id, job.exportService(), job.importService(), job.transferDataType(),
-            null, null, null, null, null, null);
+    job = updateJobWithCredentials(jobId, job, authData);
+
+    return new TransferJob(
+        id,
+        job.exportService(),
+        job.importService(),
+        job.transferDataType(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   /**
    * Encrypt the export and import credentials with a new {@link SecretKey} and {@link PublicKey}
-   * assigned to this job then update the data store to {@code State.CREDS_ENCRYPTED} state.
+   * assigned to this job then update the data store to {@link JobAuthorization.State#CREDS_STORED}
+   * state.
    */
-  private PortabilityJob encryptAndUpdateJobWithCredentials(
-      UUID jobId,
-      PortabilityJob job,
-      String exportAuthData,
-      String importAuthData) {
-
-    // Step 1 - Generate authSecretKey, a new SecretKey which must not be persisted as is.
-    SecretKey authSecretKey = symmetricKeyGenerator.generate();
-
-    // Step 2 - Encrypt the auth data with authSecretKey
-    Encrypter secretKeyEncrypter = EncrypterFactory.create(authSecretKey);
-    String doublyEncryptedExportAuthData =
-        secretKeyEncrypter.encrypt(exportAuthData);
-    String doublyEncryptedImportAuthData =
-        secretKeyEncrypter.encrypt(importAuthData);
-
-    // Step 3 - Encrypt the authSecretKey itself with the authPublickey
-    PublicKey authPublicKey =
-        asymmetricKeyGenerator.parse(
-            BaseEncoding.base64Url().decode(job.jobAuthorization().authPublicKey()));
-    Encrypter asymmetricEncrypter = EncrypterFactory.create(authPublicKey);
-
-    String encryptedAuthSecretKey =
-        asymmetricEncrypter.encrypt(BaseEncoding.base64Url().encode(authSecretKey.getEncoded()));
+  private PortabilityJob updateJobWithCredentials(UUID jobId, PortabilityJob job, String authData) {
 
     // Populate job with encrypted auth data
     JobAuthorization updatedJobAuthorization =
         job.jobAuthorization()
             .toBuilder()
-            .setEncryptedExportAuthData(doublyEncryptedExportAuthData)
-            .setEncryptedImportAuthData(doublyEncryptedImportAuthData)
-            .setAuthSecretKey(encryptedAuthSecretKey)
-            .setState(CREDS_ENCRYPTED)
+            .setEncryptedAuthData(authData)
+            .setState(CREDS_STORED)
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
-    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_ENCRYPTED", jobId);
+    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_STORED", jobId);
     try {
       jobStore.updateJob(jobId, job);
-      logger.debug("Updated job {} to CREDS_ENCRYPTED", jobId);
+      logger.debug("Updated job {} to CREDS_STORED", jobId);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }

@@ -46,17 +46,20 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
   private final SmugMugOauthInterface smugMugOauthInterface;
 
   public SmugMugAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
+    // NB: once a user grants access to an application on SM, they have to manually revoke access
+    // before permissions can be updated.  E.g., if a user first grants "Read" permissions to an
+    // app, they have to revoke the app before being able to grant "Add" permissions.
     this.perms = authMode == AuthMode.IMPORT ? "Add" : "Read";
     this.smugMugOauthInterface =
         new SmugMugOauthInterface(appCredentials.getKey(), appCredentials.getSecret());
   }
 
   @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+  public AuthFlowConfiguration generateConfiguration(String callbackUrl, String id) {
     // Generate a request token and include that as initial auth data
     TokenSecretAuthData authData = null;
     try {
-      authData = smugMugOauthInterface.getRequestToken(callbackBaseUrl + "/callback/smugmug");
+      authData = smugMugOauthInterface.getRequestToken(callbackUrl);
     } catch (IOException e) {
       logger.warn("Couldnt get authData {}", e.getMessage());
       return null;
@@ -68,7 +71,7 @@ public class SmugMugAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+      String callbackUrl, String authCode, String id, AuthData initialAuthData, String extra) {
 
     Preconditions.checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected");
     Preconditions.checkNotNull(

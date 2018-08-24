@@ -3,7 +3,9 @@
  */
 export interface StartTransferJob {
     id: string;
-    exportAuthData: string;
-    importAuthData: string;
-    authDataEncrypted: boolean;
+
+    /**
+     * The auth data pair in the form {exportAuthData: AuthData, importAuthData: AuthData} encrypted according to the scheme in use by the client and server.
+     */
+    encryptedAuthData: string;
 }

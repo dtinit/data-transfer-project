@@ -24,8 +24,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.List;
-import java.util.ServiceLoader;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -36,8 +34,18 @@ import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
+import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
+import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
@@ -117,6 +125,21 @@ public class WorkerMain {
 
     List<TransferExtension> transferExtensions = getTransferExtensions();
 
+    Set<SecurityExtension> securityExtensions = new HashSet<>();
+    ServiceLoader.load(SecurityExtension.class)
+        .iterator()
+        .forEachRemaining(securityExtensions::add);
+    securityExtensions.forEach(e -> e.initialize(extensionContext));
+
+    Set<PublicKeySerializer> publicKeySerializers =
+        securityExtensions
+            .stream()
+            .flatMap(e -> e.getPublicKeySerializers().stream())
+            .collect(toSet());
+
+    Set<AuthDataDecryptService> decryptServices =
+        securityExtensions.stream().flatMap(e -> e.getDecryptServices().stream()).collect(toSet());
+
     // TODO: make configurable
     SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator();
     AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator();
@@ -127,6 +150,8 @@ public class WorkerMain {
                 extensionContext,
                 cloudExtension,
                 transferExtensions,
+                publicKeySerializers,
+                decryptServices,
                 symmetricKeyGenerator,
                 asymmetricKeyGenerator));
     worker = injector.getInstance(Worker.class);

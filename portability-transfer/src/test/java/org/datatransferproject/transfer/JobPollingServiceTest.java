@@ -15,24 +15,30 @@
  */
 package org.datatransferproject.transfer;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.UUID;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
+import org.datatransferproject.spi.transfer.security.SecurityException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Collections;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
@@ -44,9 +50,19 @@ public class JobPollingServiceTest {
   private JobStore store;
   private JobPollingService jobPollingService;
 
-  private static final KeyPair createTestKeyPair() {
-    PublicKey publicKey =
-        new PublicKey() {
+  private static KeyPair createTestKeyPair() {
+    RSAPublicKey publicKey =
+        new RSAPublicKey() {
+          @Override
+          public BigInteger getModulus() {
+            return BigInteger.ZERO;
+          }
+
+          @Override
+          public BigInteger getPublicExponent() {
+            return BigInteger.ZERO;
+          }
+
           @Override
           public String getAlgorithm() {
             return "RSA";
@@ -62,8 +78,18 @@ public class JobPollingServiceTest {
             return "DummyPublicKey".getBytes();
           }
         };
-    PrivateKey privateKey =
-        new PrivateKey() {
+    RSAPrivateKey privateKey =
+        new RSAPrivateKey() {
+          @Override
+          public BigInteger getModulus() {
+            return BigInteger.ZERO;
+          }
+
+          @Override
+          public BigInteger getPrivateExponent() {
+            return BigInteger.ZERO;
+          }
+
           @Override
           public String getAlgorithm() {
             return "RSA";
@@ -85,7 +111,20 @@ public class JobPollingServiceTest {
   @Before
   public void setUp() throws Exception {
     store = new LocalJobStore();
-    jobPollingService = new JobPollingService(store, asymmetricKeyGenerator);
+    PublicKeySerializer serializer =
+        new PublicKeySerializer() {
+          @Override
+          public boolean canHandle(String scheme) {
+            return true;
+          }
+
+          @Override
+          public String serialize(PublicKey publicKey) throws SecurityException {
+            return "key";
+          }
+        };
+    jobPollingService =
+        new JobPollingService(store, asymmetricKeyGenerator, Collections.singleton(serializer));
   }
 
   // TODO(data-transfer-project/issues/43): Make this an integration test which uses both the API
@@ -112,6 +151,7 @@ public class JobPollingServiceTest {
             .setImportService("DummyImportService")
             .setAndValidateJobAuthorization(
                 JobAuthorization.builder()
+                    .setEncryptionScheme("cleartext")
                     .setState(State.INITIAL)
                     .setSessionSecretKey("fooBar")
                     .build())
@@ -122,8 +162,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     assertThat(job.jobAuthorization().state()).isEqualTo(State.INITIAL);
     // no auth data should exist yet
-    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
-    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedAuthData()).isNull();
 
     // API atomically updates job to from 'initial' to 'creds available'
     job =
@@ -137,8 +176,7 @@ public class JobPollingServiceTest {
     job = store.findJob(TEST_ID);
     assertThat(job.jobAuthorization().state()).isEqualTo(State.CREDS_AVAILABLE);
     // no auth data should exist yet
-    assertThat(job.jobAuthorization().encryptedExportAuthData()).isNull();
-    assertThat(job.jobAuthorization().encryptedImportAuthData()).isNull();
+    assertThat(job.jobAuthorization().encryptedAuthData()).isNull();
 
     // Worker initiates the JobPollingService
     jobPollingService.runOneIteration();
@@ -157,9 +195,8 @@ public class JobPollingServiceTest {
             .setAndValidateJobAuthorization(
                 job.jobAuthorization()
                     .toBuilder()
-                    .setEncryptedExportAuthData("dummy export data")
-                    .setEncryptedImportAuthData("dummy import data")
-                    .setState(State.CREDS_ENCRYPTED)
+                    .setEncryptedAuthData("dummy export data")
+                    .setState(State.CREDS_STORED)
                     .build())
             .build();
     store.updateJob(TEST_ID, job);
@@ -169,9 +206,8 @@ public class JobPollingServiceTest {
     jobPollingService.runOneIteration();
     job = store.findJob(TEST_ID);
     JobAuthorization jobAuthorization = job.jobAuthorization();
-    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_ENCRYPTED);
-    assertThat(jobAuthorization.encryptedExportAuthData()).isNotEmpty();
-    assertThat(jobAuthorization.encryptedImportAuthData()).isNotEmpty();
+    assertThat(jobAuthorization.state()).isEqualTo(JobAuthorization.State.CREDS_STORED);
+    assertThat(jobAuthorization.encryptedAuthData()).isNotEmpty();
 
     store.remove(TEST_ID);
   }

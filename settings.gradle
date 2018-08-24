@@ -24,6 +24,9 @@ include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portabil
 // Transport Extensions
 include ':extensions:transport:portability-transport-jettyrest'
 
+// Security extensions
+include ':extensions:security:portability-security-cleartext', ':extensions:security:portability-security-jwe'
+
 // Service Integrations - Auth and Transfer Extensions
 // Flickr
 include ':extensions:auth:portability-auth-flickr'

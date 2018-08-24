@@ -3,6 +3,7 @@ import {TransferService} from "./transfer.service";
 import {ProgressService, Step} from "../progress";
 import {Router} from "@angular/router";
 import {transportError} from "../transport";
+import {environment} from "../../environments/environment";
 
 /**
  * Receives callbacks from external OAuth export and import services. Updates the application state with corresponding OAuth tokens.
@@ -33,7 +34,12 @@ export class AuthCallbackComponent implements OnInit {
         if (Step.AUTHENTICATE_EXPORT === this.progressService.currentStep()) {
             // export auth step: received the export auth callback, generate the export auth data from the export token
             // and redirect to the import url. Use SSL as the token is sent cleartext.
-            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "EXPORT"}).subscribe(
+            this.transferService.generateAuthData({
+              id: transferId,
+              authToken: token,
+              mode: "EXPORT",
+              callbackUrl: `${environment.apiBaseUrl}/callback/${this.progressService.exportService().toLowerCase()}`
+            }).subscribe(
             (data => {
                 this.progressService.authExportComplete(data.authData);
 
@@ -44,7 +50,12 @@ export class AuthCallbackComponent implements OnInit {
         } else {
             // import auth step: received the import auth callback, generate the import auth data from the import token
             // and continue the transfer process. Use SSL as the token is sent cleartext.
-            this.transferService.generateAuthData({id: transferId, authToken: token, mode: "IMPORT"}).subscribe(
+            this.transferService.generateAuthData({
+              id: transferId,
+              authToken: token,
+              mode: "IMPORT",
+              callbackUrl: `${environment.apiBaseUrl}/callback/${this.progressService.importService().toLowerCase()}`
+            }).subscribe(
             data => {
                 this.progressService.authImportComplete(data.authData);
                 this.transferService.reserveWorker({id: transferId}).subscribe(

@@ -84,4 +84,5 @@ dependencies {
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.mockito:mockito-all:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
+
 }

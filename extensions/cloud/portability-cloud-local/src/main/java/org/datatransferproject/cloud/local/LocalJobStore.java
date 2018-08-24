@@ -17,6 +17,7 @@ package org.datatransferproject.cloud.local;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.InputStream;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
+  private static LocalTempFileStore localTempFileStore = new LocalTempFileStore();
 
   private final Logger logger = LoggerFactory.getLogger(LocalJobStore.class);
   /**
@@ -170,8 +172,23 @@ public final class LocalJobStore implements JobStore {
     return (T) DATA_MAP.get(createFullKey(jobId, key)).get(type);
   }
 
+  @Override
+  public void create(UUID jobId, String key, InputStream stream) throws IOException {
+    localTempFileStore.writeInputStream(makeFileName(jobId, key), stream);
+  }
+
+  @Override
+  public InputStream getStream(UUID jobId, String key) throws IOException {
+    return localTempFileStore.getInputStream(makeFileName(jobId, key));
+  }
+
   private static String createFullKey(UUID jobId, String key) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
     return String.format("%s-%s", jobId.toString(), key);
+  }
+
+  private static String makeFileName(UUID jobId, String inputName) {
+    String replace = inputName.replace("/","_");
+    return createFullKey(jobId, replace);
   }
 }

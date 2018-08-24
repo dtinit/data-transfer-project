@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempTasksData;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.ListInfo;
@@ -42,6 +41,7 @@ import org.slf4j.LoggerFactory;
  * Importer for Tasks data type to Remember The Milk Service.
  */
 public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskContainerResource> {
+
   private final JobStore jobstore;
   private final AppCredentials appCredentials;
   private final Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksImporter.class);
@@ -62,17 +62,14 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data) {
+  public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data)
+      throws IOException {
     String timeline;
 
     TempTasksData tempTasksData = jobstore.findData(jobId, createCacheKey(), TempTasksData.class);
     if (tempTasksData == null) {
       tempTasksData = new TempTasksData(jobId.toString());
-      try {
-        jobstore.create(jobId, createCacheKey(), tempTasksData);
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      jobstore.create(jobId, createCacheKey(), tempTasksData);
     }
 
     try {
@@ -100,7 +97,8 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
           }
           if (task.getDueTime() != null) {
             // TODO: Address recurring events with different due dates/times
-            service.setDueDate(timeline, newList, addedTask.id, addedTask.tasks.get(0).id, task.getDueTime());
+            service.setDueDate(timeline, newList, addedTask.id, addedTask.tasks.get(0).id,
+                task.getDueTime());
           }
         }
       }

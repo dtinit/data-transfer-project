@@ -17,20 +17,22 @@ package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A service that polls storage for a job to process in two steps: <br>
@@ -41,15 +43,20 @@ class JobPollingService extends AbstractScheduledService {
   private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
   private final JobStore store;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
+  private final Set<PublicKeySerializer> publicKeySerializers;
 
   @Inject
-  JobPollingService(JobStore store, AsymmetricKeyGenerator asymmetricKeyGenerator) {
+  JobPollingService(
+      JobStore store,
+      AsymmetricKeyGenerator asymmetricKeyGenerator,
+      Set<PublicKeySerializer> publicKeySerializers) {
     this.store = store;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
+    this.publicKeySerializers = publicKeySerializers;
   }
 
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void runOneIteration() {
     if (JobMetadata.isInitialized()) {
       pollUntilJobIsReady();
     } else {
@@ -85,7 +92,8 @@ class JobPollingService extends AbstractScheduledService {
     // so we don't have to make the user start from scratch. Some options are to manage this key
     // pair within our hosting platform's key management system rather than generating here, or to
     // encrypt and store the private key on the client.
-    // Note: tryToClaimJob may fail if another transfer worker beat us to it. That's ok -- this transfer
+    // Note: tryToClaimJob may fail if another transfer worker beat us to it. That's ok -- this
+    // transfer
     // worker will keep polling until it can claim a job.
     boolean claimed = tryToClaimJob(jobId, keyPair);
     if (claimed) {
@@ -96,8 +104,10 @@ class JobPollingService extends AbstractScheduledService {
     }
   }
 
-  /** Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
-   * Returns true if the claim was successful; otherwise it returns false. */
+  /**
+   * Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
+   * Returns true if the claim was successful; otherwise it returns false.
+   */
   private boolean tryToClaimJob(UUID jobId, KeyPair keyPair) {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
@@ -106,8 +116,17 @@ class JobPollingService extends AbstractScheduledService {
       logger.debug("public key cannot be persisted again");
       return false;
     }
-    // Populate job with public key to persist
-    String encodedPublicKey = BaseEncoding.base64Url().encode(keyPair.getPublic().getEncoded());
+
+    String scheme = existingJob.jobAuthorization().encryptionScheme();
+    PublicKeySerializer keySerializer = getPublicKeySerializer(scheme);
+    if (keySerializer == null) {
+      logger.error(
+          String.format(
+              "Public key serializer not found for scheme %s processing job: %s", scheme, jobId));
+      return false;
+    }
+    PublicKey publicKey = keyPair.getPublic();
+    String serializedKey = keySerializer.serialize(publicKey);
 
     PortabilityJob updatedJob =
         existingJob
@@ -116,7 +135,7 @@ class JobPollingService extends AbstractScheduledService {
                 existingJob
                     .jobAuthorization()
                     .toBuilder()
-                    .setAuthPublicKey(encodedPublicKey)
+                    .setAuthPublicKey(serializedKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                     .build())
             .build();
@@ -147,17 +166,25 @@ class JobPollingService extends AbstractScheduledService {
     return true;
   }
 
+  private PublicKeySerializer getPublicKeySerializer(String scheme) {
+    for (PublicKeySerializer keySerializer : publicKeySerializers) {
+      if (keySerializer.canHandle(scheme)) {
+        return keySerializer;
+      }
+    }
+    return null;
+  }
+
   /** Polls for job with populated auth data and stops this service when found. */
   private void pollUntilJobIsReady() {
     UUID jobId = JobMetadata.getJobId();
     PortabilityJob job = store.findJob(jobId);
     if (job == null) {
       logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
-    } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_ENCRYPTED) {
-      logger.debug("Polled job {} in state CREDS_ENCRYPTED", jobId);
+    } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_STORED) {
+      logger.debug("Polled job {} in state CREDS_STORED", jobId);
       JobAuthorization jobAuthorization = job.jobAuthorization();
-      if (!Strings.isNullOrEmpty(jobAuthorization.encryptedExportAuthData())
-          && !Strings.isNullOrEmpty(jobAuthorization.encryptedImportAuthData())) {
+      if (!Strings.isNullOrEmpty(jobAuthorization.encryptedAuthData())) {
         logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
       } else {
         logger.warn(
@@ -168,7 +195,7 @@ class JobPollingService extends AbstractScheduledService {
       this.stopAsync();
     } else {
       logger.debug(
-          "Polling job {} until it's in state CREDS_ENCRYPTED. " + "It's currently in state: {}",
+          "Polling job {} until it's in state CREDS_STORED. " + "It's currently in state: {}",
           jobId,
           job.jobAuthorization().state());
     }

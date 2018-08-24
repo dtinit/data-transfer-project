@@ -70,7 +70,7 @@ public class GooglePhotosExporter
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) throws IOException {
     if (!exportInformation.isPresent()) {
-     return exportAlbums(authData, Optional.empty());
+      return exportAlbums(authData, Optional.empty());
     } else {
       StringPaginationToken paginationToken =
           (StringPaginationToken) exportInformation.get().getPaginationData();
@@ -80,7 +80,7 @@ public class GooglePhotosExporter
       if (idOnlyContainerResource != null) {
         // export more photos
         return exportPhotos(
-            authData, idOnlyContainerResource.getId(), Optional.ofNullable(paginationToken));
+            authData, idOnlyContainerResource.getId(), jobId, Optional.ofNullable(paginationToken));
       } else {
         // export more albums if there are no more photos
         return exportAlbums(authData, Optional.ofNullable(paginationToken));
@@ -116,19 +116,6 @@ public class GooglePhotosExporter
     List<PhotoAlbum> albums = new ArrayList<>();
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
-    // TODO: fix this when we have a plan for orphan data
-    /*
-    if (!paginationData.isPresent()) {
-      // Represents a theoretical container for all photos
-      continuationData.addContainerResource(new IdOnlyContainerResource(DEFAULT_ALBUM_ID));
-    }
-    */
-
-    if (googleAlbums == null) {
-      return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, null),
-          continuationData);
-    }
-
     for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
       albums.add(
@@ -145,12 +132,14 @@ public class GooglePhotosExporter
     if (nextPageData == null || continuationData.getContainerResources().isEmpty()) {
       resultType = ResultType.END;
     }
+
     PhotosContainerResource containerResource = new PhotosContainerResource(albums, null);
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(
-      TokensAndUrlAuthData authData, String albumId, Optional<PaginationData> paginationData) {
+      TokensAndUrlAuthData authData, String albumId, UUID jobId,
+      Optional<PaginationData> paginationData) {
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
@@ -163,9 +152,7 @@ public class GooglePhotosExporter
 
     try {
       mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
-          .listAlbumContents(
-              albumId.equalsIgnoreCase(DEFAULT_ALBUM_ID) ? Optional.empty() : Optional.of(albumId),
-              paginationToken);
+          .listAlbumContents(Optional.of(albumId), paginationToken);
     } catch (IOException e) {
       return new ExportResult<>(e);
     }
@@ -181,14 +168,14 @@ public class GooglePhotosExporter
     for (GoogleMediaItem mediaItem : mediaItemSearchResponse.getMediaItems()) {
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         // TODO: address videos later on
-        photos.add(
-            new PhotoModel(
-                "", // TODO: no title?
-                mediaItem.getBaseUrl(),
-                mediaItem.getDescription(),
-                mediaItem.getMimeType(),
-                mediaItem.getId(),
-                albumId));
+        photos.add(new PhotoModel(
+            "", // TODO: no title?
+            mediaItem.getBaseUrl() + "=d",
+            mediaItem.getDescription(),
+            mediaItem.getMimeType(),
+            mediaItem.getId(),
+            albumId,
+            false));
       }
     }
 
