@@ -1,2 +1,2 @@
-# job polling interval in seconds
-pollInterval: 1
+# job polling interval in milliseconds
+pollInterval: 1000
