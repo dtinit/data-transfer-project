@@ -113,13 +113,14 @@ public class SmugMugPhotosImporter
   void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
       throws IOException {
     // Find album to upload photo to
-    String newAlbumUri = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class)
-        .lookupNewAlbumId(inputPhoto.getAlbumId());
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    checkState(tempPhotosData != null,
+        "cached temp photos data for %s is null", inputPhoto.getAlbumId());
 
+    String newAlbumUri = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
-        "Cached album URI for %s is null",
-        inputPhoto.getAlbumId());
+        "Cached album URI for %s is null", inputPhoto.getAlbumId());
 
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
