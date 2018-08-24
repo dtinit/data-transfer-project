@@ -30,8 +30,8 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
@@ -106,20 +106,21 @@ public class SmugMugPhotosImporter
       jobStore.create(jobId, createCacheKey(), tempPhotosData);
     }
     tempPhotosData.addAlbumId(inputAlbum.getId(), response.getUri());
+    jobStore.update(jobId, createCacheKey(), tempPhotosData);
   }
 
   @VisibleForTesting
   void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
       throws IOException {
     // Find album to upload photo to
-    String newAlbumUri =
-        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class)
-            .lookupNewAlbumId(inputPhoto.getAlbumId());
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    checkState(tempPhotosData != null,
+        "cached temp photos data for %s is null", inputPhoto.getAlbumId());
 
+    String newAlbumUri = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
-        "Cached album URI for %s is null",
-        inputPhoto.getAlbumId());
+        "Cached album URI for %s is null", inputPhoto.getAlbumId());
 
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {

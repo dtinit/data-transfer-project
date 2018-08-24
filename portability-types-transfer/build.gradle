@@ -24,6 +24,9 @@ dependencies {
 
     testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+
+    compile("org.slf4j:slf4j-api:${slf4jVersion}")
+    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 }
 
 

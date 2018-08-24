@@ -22,6 +22,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for retrying a {@link Callable} given a {@link RetryStrategyLibrary}.
@@ -29,6 +31,8 @@ import java.util.concurrent.Callable;
  * @param <T> The type that the inner {@link Callable} returns.
  */
 public class RetryingCallable<T> implements Callable<T> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(RetryingCallable.class);
 
   private final Callable<T> callable;
   private final RetryStrategyLibrary retryStrategyLibrary;
@@ -60,6 +64,7 @@ public class RetryingCallable<T> implements Callable<T> {
         return callable.call();
       } catch (Exception e) {
         mostRecentException = e;
+        LOGGER.error("Caught exception", e);
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
         // TODO: do we want to reset anything (eg, number of retries) if we see a different RetryStrategy?
         RetryStrategy strategy = retryStrategyLibrary.checkoutRetryStrategy(e);
