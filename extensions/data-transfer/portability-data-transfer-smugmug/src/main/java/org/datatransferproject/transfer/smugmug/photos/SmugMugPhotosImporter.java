@@ -30,8 +30,8 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
@@ -113,8 +113,8 @@ public class SmugMugPhotosImporter
   void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
       throws IOException {
     // Find album to upload photo to
-    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
-    String newAlbumUri = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
+    String newAlbumUri = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class)
+        .lookupNewAlbumId(inputPhoto.getAlbumId());
 
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
