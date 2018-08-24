@@ -106,15 +106,15 @@ public class SmugMugPhotosImporter
       jobStore.create(jobId, createCacheKey(), tempPhotosData);
     }
     tempPhotosData.addAlbumId(inputAlbum.getId(), response.getUri());
+    jobStore.update(jobId, createCacheKey(), tempPhotosData);
   }
 
   @VisibleForTesting
   void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
       throws IOException {
     // Find album to upload photo to
-    String newAlbumUri =
-        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class)
-            .lookupNewAlbumId(inputPhoto.getAlbumId());
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    String newAlbumUri = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
 
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
