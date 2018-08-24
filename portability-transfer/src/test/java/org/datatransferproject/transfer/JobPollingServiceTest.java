@@ -15,6 +15,18 @@
  */
 package org.datatransferproject.transfer;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.when;
+
+import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -29,23 +41,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Collections;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class JobPollingServiceTest {
+
   private static final UUID TEST_ID = UUID.randomUUID();
   private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
 
-  @Mock private AsymmetricKeyGenerator asymmetricKeyGenerator;
+  @Mock
+  private AsymmetricKeyGenerator asymmetricKeyGenerator;
 
   private JobStore store;
   private JobPollingService jobPollingService;
@@ -124,7 +127,8 @@ public class JobPollingServiceTest {
           }
         };
     jobPollingService =
-        new JobPollingService(store, asymmetricKeyGenerator, Collections.singleton(serializer));
+        new JobPollingService(store, asymmetricKeyGenerator, Collections.singleton(serializer),
+            Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS));
   }
 
   // TODO(data-transfer-project/issues/43): Make this an integration test which uses both the API

@@ -15,15 +15,24 @@
  */
 package org.datatransferproject.transfer;
 
+import static java.util.stream.Collectors.toSet;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -40,18 +49,12 @@ import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
-
-import static java.util.stream.Collectors.toSet;
-
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
  * state is held in {@link JobMetadata}.
  */
 public class WorkerMain {
+
   private static final Logger logger = LoggerFactory.getLogger(WorkerMain.class);
 
   private Worker worker;

@@ -32,8 +32,6 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 /**
  * A service that polls storage for a job to process in two steps: <br>
  * (1) find an unassigned job for this transfer worker <br>
@@ -44,15 +42,18 @@ class JobPollingService extends AbstractScheduledService {
   private final JobStore store;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
   private final Set<PublicKeySerializer> publicKeySerializers;
+  private final Scheduler scheduler;
 
   @Inject
   JobPollingService(
       JobStore store,
       AsymmetricKeyGenerator asymmetricKeyGenerator,
-      Set<PublicKeySerializer> publicKeySerializers) {
+      Set<PublicKeySerializer> publicKeySerializers,
+      Scheduler scheduler) {
     this.store = store;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     this.publicKeySerializers = publicKeySerializers;
+    this.scheduler = scheduler;
   }
 
   @Override
@@ -71,7 +72,7 @@ class JobPollingService extends AbstractScheduledService {
   // https://github.com/google/data-transfer-project/issues/400
   @Override
   protected Scheduler scheduler() {
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
+    return scheduler;
   }
 
   /**

@@ -51,6 +51,9 @@ public class YamlSettingsExtension implements SettingsExtension {
   // TODO: support wildcard expansion of file names
   private static final String RETRY_LIBRARY_PATH = "config/retry/default.yaml";
 
+  private static final String TRANSFER_SETTINGS_PATH = "config/transfer.yaml";
+  private static final String ENV_TRANSFER_SETTINGS_PATH = "config/env/transfer.yaml";
+
   private Map<String, Object> settings;
 
   @Override
@@ -100,6 +103,8 @@ public class YamlSettingsExtension implements SettingsExtension {
         .add(API_SETTINGS_PATH)
         .add(ENV_API_SETTINGS_PATH)
         .add(EXTENSION_SETTINGS_PATH)
+        .add(TRANSFER_SETTINGS_PATH)
+        .add(ENV_TRANSFER_SETTINGS_PATH)
         .build();
     return ConfigUtils.getCombinedInputStream(settingsFiles);
   }

@@ -86,6 +86,7 @@ task copyConfig(type: Copy) {
     from('../resources') {
         include 'config/common.yaml'
         include 'config/retry/default.yaml'
+        include 'config/transfer.yaml'
     }
 }
 
