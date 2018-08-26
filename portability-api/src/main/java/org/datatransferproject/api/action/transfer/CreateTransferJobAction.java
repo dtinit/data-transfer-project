@@ -17,6 +17,8 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.CreateTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
@@ -31,6 +33,8 @@ import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.A
  * flow.
  */
 public class CreateTransferJobAction implements Action<CreateTransferJob, TransferJob> {
+  private static final Logger logger = LoggerFactory.getLogger(CreateTransferJobAction.class);
+
   private final JobStore jobStore;
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -55,20 +59,25 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
 
   @Override
   public TransferJob handle(CreateTransferJob request) {
+    // Create a new job and persist
+    UUID jobId = UUID.randomUUID();
+
     String dataType = request.getDataType();
     String exportService = request.getExportService();
     String importService = request.getImportService();
-    String exportCallbackUrl = request.getExportCallbackUrl();
+    // TODO(rtannenbaum): Remove job_id param, this is for testing only
+    String exportCallbackUrl = request.getExportCallbackUrl() + "?job_id=" + jobId.toString();
     String importCallbackUrl = request.getImportCallbackUrl();
 
-    // Create a new job and persist
-    UUID jobId = UUID.randomUUID();
     SecretKey sessionKey = symmetricKeyGenerator.generate();
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
 
     String encryptionScheme = request.getEncryptionScheme();
     PortabilityJob job =
         createJob(encodedSessionKey, dataType, exportService, importService, encryptionScheme);
+    // TODO(rtannenbaum): Remove logging, for testing only
+    logger.info("Created a new transfer job with id: {}, dataType: {}, exportService: {}, importService: {}, "
+            + " encryptionScheme: {}", jobId, dataType, exportService, importService, encryptionScheme);
 
     AuthDataGenerator exportGenerator =
         registry.getAuthDataGenerator(job.exportService(), job.transferDataType(), EXPORT);

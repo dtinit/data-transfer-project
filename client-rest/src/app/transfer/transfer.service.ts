@@ -21,8 +21,8 @@ export class TransferService {
         return this.http.post(`${environment.apiBaseUrl}/api/transfer/${generate.id}/generate`, generate) as Observable<ServiceAuthData>;
     }
 
-    reserveWorker(reserveWorker: ReserveWorker): Observable<string> {
-        return this.http.post(`${environment.apiBaseUrl}/api/transfer/worker/${reserveWorker.id}`, reserveWorker) as Observable<string>;
+    reserveWorker(reserveWorker: ReserveWorker): Observable<ReservedWorker> {
+        return this.http.post(`${environment.apiBaseUrl}/api/transfer/worker/${reserveWorker.id}`, reserveWorker) as Observable<ReservedWorker>;
     }
 
     getReservedWorker(getWorker: GetReservedWorker): Observable<ReservedWorker> {

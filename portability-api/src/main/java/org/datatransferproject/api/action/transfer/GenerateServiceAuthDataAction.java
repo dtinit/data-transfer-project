@@ -16,6 +16,8 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.GenerateServiceAuthData;
 import org.datatransferproject.types.client.transfer.ServiceAuthData;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
@@ -26,6 +28,8 @@ import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
 /** Called after an import or export service authentication flow has successfully completed. */
 public class GenerateServiceAuthDataAction
     implements Action<GenerateServiceAuthData, ServiceAuthData> {
+  private static final Logger logger = LoggerFactory.getLogger(CreateTransferJobAction.class);
+
   private JobStore jobStore;
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -59,12 +63,17 @@ public class GenerateServiceAuthDataAction
       PortabilityJob job = jobStore.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for transfer job ID: %s", jobId);
 
+
       // TODO: Determine service from job or from authUrl path?
       AuthMode authMode =
           GenerateServiceAuthData.Mode.EXPORT == request.getMode()
               ? AuthMode.EXPORT
               : AuthMode.IMPORT;
       String service = (authMode == AuthMode.EXPORT) ? job.exportService() : job.importService();
+
+      // TODO(rtannenbaum): Remove logging, for testing only
+      logger.info("Generating auth data for job id: {}, authMode: {}, service: {}, authToken: {}, callbackUrl: {}",
+              jobId, authMode, service, request.getAuthToken(), request.getCallbackUrl());
 
       AuthDataGenerator generator =
           registry.getAuthDataGenerator(service, job.transferDataType(), authMode);
@@ -85,6 +94,8 @@ public class GenerateServiceAuthDataAction
         // Decrypt and deserialize the object
         String serialized = DecrypterFactory.create(key).decrypt(encryptedInitialAuthData);
         initialAuthData = objectMapper.readValue(serialized, AuthData.class);
+          // TODO(rtannenbaum): Remove logging, for testing only
+        logger.info("Had initial auth data in JobStore: {}", initialAuthData);
       }
 
       // TODO: Use UUID instead of UUID.toString()
@@ -96,6 +107,7 @@ public class GenerateServiceAuthDataAction
 
       // Serialize and encrypt the auth data
       String serialized = objectMapper.writeValueAsString(authData);
+      logger.info("Generated auth data for job: {}", jobId);
       return new ServiceAuthData(serialized);
     } catch (IOException e) {
       throw new RuntimeException(e);

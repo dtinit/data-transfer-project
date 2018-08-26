@@ -60,7 +60,7 @@ export class AuthCallbackComponent implements OnInit {
                 this.progressService.authImportComplete(data.authData);
 
                 this.transferService.reserveWorker({id: transferId}).subscribe(
-                unused => { // TODO: make this return void?
+                unused => {
                     this.router.navigate(["initiate"]);
                 }, transportError);
             }, transportError);
