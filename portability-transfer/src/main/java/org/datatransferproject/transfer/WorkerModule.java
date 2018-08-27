@@ -156,7 +156,7 @@ final class WorkerModule extends FlagBindingModule {
   @Singleton
   Scheduler getScheduler() {
     // TODO: parse a Duration from the settings
-    long interval = context.getSetting("pollInterval", 20 * 1000); // Default: poll every 20s
+    long interval = context.getSetting("pollInterval", 2000); // Default: poll every 2s
     return AbstractScheduledService.Scheduler
         .newFixedDelaySchedule(0, interval, TimeUnit.MILLISECONDS);
   }
