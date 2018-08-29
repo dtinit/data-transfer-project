@@ -27,11 +27,13 @@ import java.net.URL;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
@@ -51,9 +53,10 @@ public class GooglePhotosImporter
   private final JobStore jobStore;
   private final ImageStreamProvider imageStreamProvider;
   private volatile PicasawebService photosService;
+  private volatile GooglePhotosInterface photosInterface;
 
   public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory, jobStore, null, new ImageStreamProvider());
+    this(credentialFactory, jobStore, null, null, new ImageStreamProvider());
   }
 
   @VisibleForTesting
@@ -61,10 +64,12 @@ public class GooglePhotosImporter
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
       PicasawebService photosService,
+      GooglePhotosInterface photosInterface,
       ImageStreamProvider imageStreamProvider) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.photosService = photosService;
+    this.photosInterface = photosInterface;
     this.imageStreamProvider = imageStreamProvider;
   }
 
@@ -72,9 +77,9 @@ public class GooglePhotosImporter
   public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
       PhotosContainerResource data) throws IOException, ServiceException {
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
-      logger.warn(
-          "Importing albums in Google Photos is not supported. "
-              + "Photos will be added to the default album.");
+      for (PhotoAlbum album : data.getAlbums()) {
+        importSingleAlbum(jobId, album, authData);
+      }
     }
 
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
@@ -84,6 +89,17 @@ public class GooglePhotosImporter
     }
 
     return ImportResult.OK;
+  }
+
+  @VisibleForTesting
+  void importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, TokensAndUrlAuthData authData)
+      throws IOException {
+    // Set up album
+    GoogleAlbum outputAlbum = new GoogleAlbum();
+    outputAlbum.setTitle("Copy of " + inputAlbum.getName());
+
+    getOrCreatePhotosInterface(authData)
+        .createAlbum(outputAlbum);
   }
 
   @VisibleForTesting
@@ -127,5 +143,16 @@ public class GooglePhotosImporter
     PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
     service.setOAuth2Credentials(credential);
     return service;
+  }
+
+  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
+      TokensAndUrlAuthData authData) {
+    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+  }
+
+  private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
+    Credential credential = credentialFactory.createCredential(authData);
+    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
+    return photosInterface;
   }
 }

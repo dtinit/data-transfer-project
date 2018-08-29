@@ -30,6 +30,7 @@ import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -60,11 +62,11 @@ public class GooglePhotosInterface {
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
 
-  public GooglePhotosInterface(Credential credential) {
+  GooglePhotosInterface(Credential credential) {
     this.credential = credential;
   }
 
-  public AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -74,7 +76,7 @@ public class GooglePhotosInterface {
         AlbumListResponse.class);
   }
 
-  public MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
+  MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
       throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
@@ -87,6 +89,13 @@ public class GooglePhotosInterface {
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
     return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), content,
         MediaItemSearchResponse.class);
+  }
+
+  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
+    Map<String, GoogleAlbum> json = ImmutableMap.of("album", googleAlbum);
+    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
+
+    return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
