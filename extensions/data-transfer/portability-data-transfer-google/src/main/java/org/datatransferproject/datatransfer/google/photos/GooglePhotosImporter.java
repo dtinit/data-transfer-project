@@ -15,16 +15,11 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
@@ -78,13 +73,13 @@ public class GooglePhotosImporter
       PhotosContainerResource data) throws IOException {
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
-        importSingleAlbum(jobId, album, authData);
+        importSingleAlbum(jobId, authData, album);
       }
     }
 
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(authData, photo, jobId);
+        importSinglePhoto(jobId, authData, photo);
       }
     }
 
@@ -92,13 +87,13 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  void importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, TokensAndUrlAuthData authData)
+  void importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
       throws IOException {
     // Set up album
-    Map<String, String> albumInfo = new HashMap<>();
-    albumInfo.put("title", "Copy of " + inputAlbum.getName());
+    GoogleAlbum googleAlbum = new GoogleAlbum();
+    googleAlbum.setTitle("Copy of " + inputAlbum.getName());
 
-    GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(albumInfo);
+    GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
     TempPhotosData tempPhotosData = jobStore
         .findData(jobId, createCacheKey(), TempPhotosData.class);
     if (tempPhotosData == null) {
@@ -110,7 +105,7 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  void importSinglePhoto(TokensAndUrlAuthData authData, PhotoModel inputPhoto, UUID jobId)
+  void importSinglePhoto(UUID jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
       throws IOException {
     // Upload photo
     // TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads

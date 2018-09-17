@@ -32,7 +32,6 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
@@ -99,9 +98,10 @@ public class GooglePhotosInterface {
         MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(Map<String, String> albumInfo) throws IOException {
-    Map<String, Map<String, String>> json = ImmutableMap.of("album", albumInfo);
-    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
+  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
+    Map<String, Object> albumMap = createJsonMap(googleAlbum);
+    Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
+    HttpContent content = new JsonHttpContent(new JacksonFactory(), contentMap);
 
     return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
@@ -123,12 +123,7 @@ public class GooglePhotosInterface {
   }
 
   NewMediaItemResult createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
-    // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
-    // NewMediaItemUpload to a Map before making the HttpContent.
-    TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
-    };
-    HashMap<String, Object> map = objectMapper
-        .readValue(objectMapper.writeValueAsString(newMediaItemUpload), typeRef);
+    HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
 
     return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), httpContent,
@@ -194,5 +189,13 @@ public class GooglePhotosInterface {
     }
 
     return String.join("&", paramStrings);
+  }
+
+  private HashMap<String, Object> createJsonMap(Object object) throws IOException {
+    // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
+    // NewMediaItemUpload to a Map before making the HttpContent.
+    TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
+    };
+    return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 }
