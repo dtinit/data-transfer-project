@@ -56,6 +56,7 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class GoogleAuthDataGenerator implements AuthDataGenerator {
+
   private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
   // The scopes necessary to import each supported data type.
   // These are READ/WRITE scopes
@@ -63,7 +64,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
       ImmutableMap.<String, List<String>>builder()
           .put("CALENDAR", ImmutableList.of(CalendarScopes.CALENDAR))
           .put("MAIL", ImmutableList.of(GmailScopes.GMAIL_MODIFY))
-          .put("PHOTOS", ImmutableList.of("https://picasaweb.google.com/data/"))
+          .put("PHOTOS", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary"))
           .put("TASKS", ImmutableList.of(TasksScopes.TASKS))
           .put("CONTACTS", ImmutableList.of(PeopleServiceScopes.CONTACTS))
           .build();
@@ -87,21 +88,22 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
 
   /**
    * @param appCredentials The Application credentials that the registration portal
-   *     (console.cloud.google.com) assigned the portability instance
+   * (console.cloud.google.com) assigned the portability instance
    * @param httpTransport The http transport to use for underlying GoogleAuthorizationCodeFlow
    * @param objectMapper The json factory provider
    */
   public GoogleAuthDataGenerator(
-          AppCredentials appCredentials,
-          HttpTransport httpTransport,
-          ObjectMapper objectMapper,
-          String dataType,
-          AuthMode mode) {
+      AppCredentials appCredentials,
+      HttpTransport httpTransport,
+      ObjectMapper objectMapper,
+      String dataType,
+      AuthMode mode) {
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
     this.objectMapper = objectMapper;
-    this.scopes = mode == AuthMode.IMPORT ? IMPORT_SCOPES.get(dataType) : EXPORT_SCOPES.get(dataType);
+    this.scopes =
+        mode == AuthMode.IMPORT ? IMPORT_SCOPES.get(dataType) : EXPORT_SCOPES.get(dataType);
   }
 
   @Override
@@ -149,15 +151,17 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
         credential.getTokenServerEncodedUrl());
   }
 
-  /** Creates an AuthorizationCodeFlow for use in online and offline mode. */
+  /**
+   * Creates an AuthorizationCodeFlow for use in online and offline mode.
+   */
   private GoogleAuthorizationCodeFlow createFlow() {
     return new GoogleAuthorizationCodeFlow.Builder(
-            httpTransport,
-            // Figure out how to adapt objectMapper.getFactory(),
-            new JacksonFactory(),
-            clientId,
-            clientSecret,
-            scopes)
+        httpTransport,
+        // Figure out how to adapt objectMapper.getFactory(),
+        new JacksonFactory(),
+        clientId,
+        clientSecret,
+        scopes)
         .setAccessType("offline")
         // TODO: Needed for local caching
         // .setDataStoreFactory(GoogleStaticObjects.getDataStoreFactory())
