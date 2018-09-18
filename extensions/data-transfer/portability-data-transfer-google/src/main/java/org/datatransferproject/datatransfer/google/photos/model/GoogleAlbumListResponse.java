@@ -18,10 +18,21 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ContributorInfo {
-  @JsonProperty("profilePictureBaseUrl")
-  private String profilePictureBaseUrl;
+/**
+ * The response provided by the Google Photos API for an album query
+ */
+public class GoogleAlbumListResponse {
+  @JsonProperty("albums")
+  private GoogleAlbum[] albums;
 
-  @JsonProperty("displayName")
-  private String displayName;
+  @JsonProperty("nextPageToken")
+  private String nextPageToken;
+
+  public GoogleAlbum[] getAlbums() {
+    return albums;
+  }
+
+  public String getNextPageToken() {
+    return nextPageToken;
+  }
 }

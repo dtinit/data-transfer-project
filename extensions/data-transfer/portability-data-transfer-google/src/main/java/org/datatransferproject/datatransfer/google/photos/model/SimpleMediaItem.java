@@ -18,6 +18,9 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Wrapper class for an upload token, used by {@link NewMediaItem}.
+ */
 public class SimpleMediaItem {
 
   @JsonProperty("uploadToken")

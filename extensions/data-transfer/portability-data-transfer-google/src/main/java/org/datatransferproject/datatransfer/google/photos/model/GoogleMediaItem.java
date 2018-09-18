@@ -18,15 +18,15 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ Media item returned by queries to the Google Photos API.  Represents what is stored by Google.
+ */
 public class GoogleMediaItem {
   @JsonProperty("id")
   private String id;
 
   @JsonProperty("description")
   private String description;
-
-  @JsonProperty("productUrl")
-  private String productUrl;
 
   @JsonProperty("baseUrl")
   private String baseUrl;
@@ -36,12 +36,6 @@ public class GoogleMediaItem {
 
   @JsonProperty("mediaMetadata")
   private MediaMetadata mediaMetadata;
-
-  @JsonProperty("contributorInfo")
-  private ContributorInfo contributorInfo;
-
-  @JsonProperty("location")
-  private Object location; // Not yet available (2018-06-18)
 
   @JsonProperty("filename")
   private String filename;

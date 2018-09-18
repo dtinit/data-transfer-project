@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
@@ -105,19 +105,19 @@ public class GooglePhotosExporter
       paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
     }
 
-    AlbumListResponse albumListResponse;
+    GoogleAlbumListResponse googleAlbumListResponse;
 
-    albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
+    googleAlbumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
 
     PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(albumListResponse.getNextPageToken())) {
+    if (!Strings.isNullOrEmpty(googleAlbumListResponse.getNextPageToken())) {
       nextPageData = new StringPaginationToken(
-          ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
+          ALBUM_TOKEN_PREFIX + googleAlbumListResponse.getNextPageToken());
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>();
-    GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
+    GoogleAlbum[] googleAlbums = googleAlbumListResponse.getAlbums();
 
     for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later

@@ -18,6 +18,9 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Class containing the response from uploading {@code NewMediaItemUpload} to the Google Photos API.
+ */
 public class NewMediaItemResult {
 
   @JsonProperty("uploadToken")

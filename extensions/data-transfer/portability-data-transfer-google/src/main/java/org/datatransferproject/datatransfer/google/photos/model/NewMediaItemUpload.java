@@ -22,6 +22,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import javax.annotation.Nullable;
 
+/**
+ * Class containing all the information necessary to create new {@link NewMediaItem}s in the Google
+ * Photos API.
+ */
 @JsonInclude(Include.NON_NULL)
 public class NewMediaItemUpload {
 
@@ -31,18 +35,9 @@ public class NewMediaItemUpload {
   @JsonProperty("newMediaItems")
   private List<NewMediaItem> newMediaItems;
 
-  @JsonProperty("albumPosition")
-  private AlbumPosition albumPosition;
-
-  public NewMediaItemUpload(@Nullable String albumId, List<NewMediaItem> newMediaItems,
-      @Nullable AlbumPosition albumPosition) {
+  public NewMediaItemUpload(@Nullable String albumId, List<NewMediaItem> newMediaItems) {
     this.albumId = albumId;
     this.newMediaItems = newMediaItems;
-    this.albumPosition = albumPosition;
-  }
-
-  public AlbumPosition getAlbumPosition() {
-    return albumPosition;
   }
 
   public String getAlbumId() {

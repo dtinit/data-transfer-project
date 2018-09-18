@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
@@ -64,6 +64,9 @@ public class GooglePhotosInterface {
   private static final String TOKEN_KEY = "pageToken";
   private static final String ALBUM_ID_KEY = "albumId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
+  private static final Map<String, String> PHOTO_UPLOAD_PARAMS = ImmutableMap.of(
+      "Content-type", "application/octet-stream",
+      "X-Goog-Upload-Protocol", "raw");
 
   private final ObjectMapper objectMapper = new ObjectMapper().configure(
       DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -76,14 +79,14 @@ public class GooglePhotosInterface {
     this.jsonFactory = jsonFactory;
   }
 
-  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  GoogleAlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
     return makeGetRequest(BASE_URL + "albums", Optional.of(params),
-        AlbumListResponse.class);
+        GoogleAlbumListResponse.class);
   }
 
   MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
@@ -111,17 +114,13 @@ public class GooglePhotosInterface {
 
   String uploadPhotoContent(InputStream inputStream) throws IOException {
     // TODO: add filename
-    Map<String, String> parameters = ImmutableMap.of(
-        "Content-type", "application/octet-stream",
-        "X-Goog-Upload-Protocol", "raw");
-
     InputStreamContent content = new InputStreamContent(null, inputStream);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     content.writeTo(outputStream);
     byte[] contentBytes = outputStream.toByteArray();
     HttpContent httpContent = new ByteArrayContent(null, contentBytes);
 
-    return makePostRequest(BASE_URL + "uploads/", Optional.of(parameters), httpContent,
+    return makePostRequest(BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent,
         String.class);
   }
 
