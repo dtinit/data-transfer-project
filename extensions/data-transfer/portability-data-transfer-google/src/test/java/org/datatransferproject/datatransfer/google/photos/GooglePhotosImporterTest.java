@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -74,8 +75,8 @@ public class GooglePhotosImporterTest {
     imageStreamProvider = mock(ImageStreamProvider.class);
     when(imageStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
 
-    googlePhotosImporter = new GooglePhotosImporter(null, jobStore, googlePhotosInterface,
-        imageStreamProvider);
+    googlePhotosImporter = new GooglePhotosImporter(null, jobStore, null,
+        googlePhotosInterface, imageStreamProvider);
   }
 
   @Test

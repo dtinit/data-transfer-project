@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -77,7 +78,7 @@ public class GooglePhotosExporterTest {
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
     googlePhotosExporter =
-        new GooglePhotosExporter(credentialFactory, photosInterface);
+        new GooglePhotosExporter(credentialFactory, null, photosInterface);
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
         .thenReturn(albumListResponse);

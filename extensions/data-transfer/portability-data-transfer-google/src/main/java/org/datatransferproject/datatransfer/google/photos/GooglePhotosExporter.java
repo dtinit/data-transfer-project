@@ -16,6 +16,7 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -52,16 +53,19 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
+  private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
+  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory) {
     this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
   }
 
   @VisibleForTesting
   GooglePhotosExporter(GoogleCredentialFactory credentialFactory,
-      GooglePhotosInterface photosInterface) {
+      JsonFactory jsonFactory, GooglePhotosInterface photosInterface) {
     this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
   }
 
@@ -194,7 +198,7 @@ public class GooglePhotosExporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
+    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential, jsonFactory);
     return photosInterface;
   }
 }
