@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+plugins {
+    id 'maven-publish'
+}
+
 dependencies {
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
     compile("com.google.gdata:core:${gdataVersion}") {
