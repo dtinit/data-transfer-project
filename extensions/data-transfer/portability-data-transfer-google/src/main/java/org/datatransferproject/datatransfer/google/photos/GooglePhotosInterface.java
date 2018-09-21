@@ -41,8 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
 
 public class GooglePhotosInterface {
 
@@ -60,11 +59,11 @@ public class GooglePhotosInterface {
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
 
-  public GooglePhotosInterface(Credential credential) {
+  GooglePhotosInterface(Credential credential) {
     this.credential = credential;
   }
 
-  public AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -74,7 +73,7 @@ public class GooglePhotosInterface {
         AlbumListResponse.class);
   }
 
-  public MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
+  MediaItemListResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
       throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
@@ -86,7 +85,17 @@ public class GooglePhotosInterface {
     }
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
     return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), content,
-        MediaItemSearchResponse.class);
+        MediaItemListResponse.class);
+  }
+
+  MediaItemListResponse listAllMediaItems(Optional<String> pageToken) throws IOException {
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
+    if (pageToken.isPresent()) {
+      params.put(TOKEN_KEY, pageToken.get());
+    }
+    return makeGetRequest(BASE_URL + "mediaItems", Optional.of(params),
+        MediaItemListResponse.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)

@@ -21,14 +21,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -50,7 +54,6 @@ public class GooglePhotosExporter
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "media:";
-  static final String DEFAULT_ALBUM_ID = "default";
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile GooglePhotosInterface photosInterface;
@@ -70,7 +73,13 @@ public class GooglePhotosExporter
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) throws IOException {
     if (!exportInformation.isPresent()) {
-      return exportAlbums(authData, Optional.empty());
+      ExportResult<PhotosContainerResource> albumResult = exportAlbums(authData, Optional.empty());
+      List<PhotoModel> albumlessPhotos = getAlbumlessPhotos(authData);
+      if (albumlessPhotos != null && albumlessPhotos.size() > 0) {
+        return addMorePhotos(albumResult, albumlessPhotos);
+      } else {
+        return albumResult;
+      }
     } else {
       StringPaginationToken paginationToken =
           (StringPaginationToken) exportInformation.get().getPaginationData();
@@ -80,7 +89,7 @@ public class GooglePhotosExporter
       if (idOnlyContainerResource != null) {
         // export more photos
         return exportPhotos(
-            authData, idOnlyContainerResource.getId(), jobId, Optional.ofNullable(paginationToken));
+            authData, idOnlyContainerResource.getId(), Optional.ofNullable(paginationToken));
       } else {
         // export more albums if there are no more photos
         return exportAlbums(authData, Optional.ofNullable(paginationToken));
@@ -92,8 +101,9 @@ public class GooglePhotosExporter
    * Note: not all accounts have albums to return.  In that case, we just return an empty list of
    * albums instead of trying to iterate through a null list.
    */
-  private ExportResult<PhotosContainerResource> exportAlbums(
-      TokensAndUrlAuthData authData, Optional<PaginationData> paginationData) throws IOException {
+  @VisibleForTesting
+  ExportResult<PhotosContainerResource> exportAlbums(TokensAndUrlAuthData authData,
+      Optional<PaginationData> paginationData) throws IOException {
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
@@ -107,9 +117,9 @@ public class GooglePhotosExporter
     albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
 
     PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(albumListResponse.getNextPageToken())) {
-      nextPageData = new StringPaginationToken(
-          ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
+    String token = albumListResponse.getNextPageToken();
+    if (!Strings.isNullOrEmpty(token)) {
+      nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + token);
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
@@ -137,8 +147,8 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  private ExportResult<PhotosContainerResource> exportPhotos(
-      TokensAndUrlAuthData authData, String albumId, UUID jobId,
+  @VisibleForTesting
+  ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData, String albumId,
       Optional<PaginationData> paginationData) {
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
@@ -148,34 +158,27 @@ public class GooglePhotosExporter
       paginationToken = Optional.of(token.substring(PHOTO_TOKEN_PREFIX.length()));
     }
 
-    MediaItemSearchResponse mediaItemSearchResponse;
+    MediaItemListResponse mediaItemListResponse;
 
     try {
-      mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
+      mediaItemListResponse = getOrCreatePhotosInterface(authData)
           .listAlbumContents(Optional.of(albumId), paginationToken);
     } catch (IOException e) {
       return new ExportResult<>(e);
     }
 
     PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
+    if (!Strings.isNullOrEmpty(mediaItemListResponse.getNextPageToken())) {
       nextPageData = new StringPaginationToken(
-          PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
+          PHOTO_TOKEN_PREFIX + mediaItemListResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
     List<PhotoModel> photos = new ArrayList<>();
-    for (GoogleMediaItem mediaItem : mediaItemSearchResponse.getMediaItems()) {
+    for (GoogleMediaItem mediaItem : mediaItemListResponse.getMediaItems()) {
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         // TODO: address videos later on
-        photos.add(new PhotoModel(
-            "", // TODO: no title?
-            mediaItem.getBaseUrl() + "=d",
-            mediaItem.getDescription(),
-            mediaItem.getMimeType(),
-            mediaItem.getId(),
-            albumId,
-            false));
+        photos.add(convertToPhotoModel(albumId, mediaItem));
       }
     }
 
@@ -188,6 +191,85 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
+  private List<PhotoModel> getAlbumlessPhotos(TokensAndUrlAuthData authData) throws IOException {
+    // TODO: what if this doesn't fit in memory?
+    // Get list of all media items
+    List<GoogleMediaItem> mediaItems = new LinkedList<>();
+    MediaItemListResponse mediaItemResponse = getOrCreatePhotosInterface(authData)
+        .listAllMediaItems(Optional.empty());
+    mediaItems.addAll(Arrays.asList(mediaItemResponse.getMediaItems()));
+    String token;
+    while ((token = mediaItemResponse.getNextPageToken()) != null) {
+      mediaItemResponse = getOrCreatePhotosInterface(authData)
+          .listAllMediaItems(Optional.of(token));
+      mediaItems.addAll(Arrays.asList(mediaItemResponse.getMediaItems()));
+    }
+
+    // Get list of all albums, and then list of photos in albums
+    List<GoogleAlbum> allAlbums = new LinkedList<>();
+    AlbumListResponse albumListResponse = getOrCreatePhotosInterface(authData)
+        .listAlbums(Optional.empty());
+    allAlbums.addAll(Arrays.asList(albumListResponse.getAlbums()));
+    while (albumListResponse.getNextPageToken() != null) {
+      albumListResponse = getOrCreatePhotosInterface(authData)
+          .listAlbums(Optional.of(albumListResponse.getNextPageToken()));
+      allAlbums.addAll(Arrays.asList(albumListResponse.getAlbums()));
+    }
+    List<GoogleMediaItem> albumMediaItems = new LinkedList<>();
+    for (GoogleAlbum album : allAlbums) {
+      MediaItemListResponse albumMediaItemResponse = getOrCreatePhotosInterface(authData)
+          .listAlbumContents(Optional.of(album.getId()), Optional.empty());
+      albumMediaItems.addAll(Arrays.asList(albumMediaItemResponse.getMediaItems()));
+      while (albumMediaItemResponse.getNextPageToken() != null) {
+        albumMediaItemResponse = getOrCreatePhotosInterface(authData)
+            .listAlbumContents(Optional.of(album.getId()),
+                Optional.of(albumMediaItemResponse.getNextPageToken()));
+        albumMediaItems.addAll(Arrays.asList(albumMediaItemResponse.getMediaItems()));
+      }
+    }
+
+    // Subtract album photos list from list of all media items
+    mediaItems.removeAll(albumMediaItems);
+
+    // Convert to PhotoModels
+    if (mediaItems.size() > 0) {
+      return mediaItems.stream()
+          .map(a -> convertToPhotoModel(null, a))
+          .collect(Collectors.toList());
+    } else {
+      return null;
+    }
+  }
+
+  @VisibleForTesting
+  ExportResult<PhotosContainerResource> addMorePhotos(
+      ExportResult<PhotosContainerResource> origExportResult, List<PhotoModel> addlPhotos) {
+    ArrayList<PhotoModel> finalPhotoList = new ArrayList<>(
+        addlPhotos);
+    PhotosContainerResource origPhotosContainerResource = origExportResult.getExportedData();
+    finalPhotoList.addAll(origExportResult.getExportedData().getPhotos());
+
+    return new ExportResult<>(
+        origExportResult.getType(),
+        new PhotosContainerResource(
+            origPhotosContainerResource.getAlbums(),
+            finalPhotoList),
+        origExportResult.getContinuationData());
+  }
+
+  private PhotoModel convertToPhotoModel(@Nullable String albumId, GoogleMediaItem mediaItem) {
+    Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
+
+    return new PhotoModel(
+        "", // TODO: no title?
+        mediaItem.getBaseUrl() + "=d",
+        mediaItem.getDescription(),
+        mediaItem.getMimeType(),
+        mediaItem.getId(),
+        albumId,
+        false);
+  }
+
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
       TokensAndUrlAuthData authData) {
     return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
@@ -195,7 +277,6 @@ public class GooglePhotosExporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
-    return photosInterface;
+    return new GooglePhotosInterface(credential);
   }
 }
