@@ -19,12 +19,13 @@ package org.datatransferproject.spi.transfer.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.datatransferproject.types.transfer.models.DataModel;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.UUID;
+import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 
 /*
  * TempPhotosData used to store album and photos information before they are ready to be uploaded.
@@ -43,20 +44,27 @@ public class TempPhotosData extends DataModel {
   @JsonProperty("newAlbumIds")
   private final Map<String, String> newAlbumIds;
 
+  // Collection of contained photo ids.
+  @JsonProperty("containedPhotoIds")
+  private final Collection<String> containedPhotoIds;
+
   @JsonCreator
   public TempPhotosData(
       @JsonProperty("jobId") UUID jobId,
       @JsonProperty("tempPhotoAlbums") Map<String, PhotoAlbum> tempPhotoAlbums,
-      @JsonProperty("newAlbumIds") Map<String, String> newAlbumIds) {
+      @JsonProperty("newAlbumIds") Map<String, String> newAlbumIds,
+      @JsonProperty("containedPhotoIds") Collection<String> containedPhotoIds) {
     this.jobId = jobId;
     this.tempPhotoAlbums = tempPhotoAlbums;
     this.newAlbumIds = newAlbumIds;
+    this.containedPhotoIds = containedPhotoIds;
   }
 
   public TempPhotosData(@JsonProperty("jobId") UUID jobId) {
     this.jobId = jobId;
     this.tempPhotoAlbums = new HashMap<>();
     this.newAlbumIds = new HashMap<>();
+    this.containedPhotoIds = new LinkedHashSet<>();
   }
 
   // Adds the <Key, PhotoAlbum> mapping provided
@@ -69,6 +77,8 @@ public class TempPhotosData extends DataModel {
     return tempPhotoAlbums.getOrDefault(key, null);
   }
 
+  // Store any album data in the cache because Flickr only allows you to create an album with a
+  // photo in it, so we have to wait for the first photo to create the album
   // Adds a mapping from old album id to new album id
   public void addAlbumId(String oldAlbumId, String newAlbumId) {
     newAlbumIds.put(oldAlbumId, newAlbumId);
@@ -84,5 +94,21 @@ public class TempPhotosData extends DataModel {
     if (tempPhotoAlbums.containsKey(key)) {
       tempPhotoAlbums.remove(key);
     }
+  }
+
+  public void addContainedPhotoId(String photoId) {
+    containedPhotoIds.add(photoId);
+  }
+
+  public void addAllContainedPhotoIds(Collection<String> photoIds) {
+    containedPhotoIds.addAll(photoIds);
+  }
+
+  public Collection lookupContainedPhotoIds() {
+    return containedPhotoIds;
+  }
+
+  public boolean isContainedPhotoId(String photoId) {
+    return containedPhotoIds.contains(photoId);
   }
 }

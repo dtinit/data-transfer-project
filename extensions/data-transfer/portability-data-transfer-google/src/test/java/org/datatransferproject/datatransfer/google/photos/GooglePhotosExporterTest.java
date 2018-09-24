@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
@@ -39,6 +40,7 @@ import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.MediaMetadata;
 import org.datatransferproject.datatransfer.google.photos.model.Photo;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -63,7 +65,7 @@ public class GooglePhotosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GooglePhotosExporter googlePhotosExporter;
-
+  private JobStore jobStore;
   private GooglePhotosInterface photosInterface;
 
   private AlbumListResponse albumListResponse;
@@ -72,13 +74,14 @@ public class GooglePhotosExporterTest {
   @Before
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
+    jobStore = new LocalJobStore();
     photosInterface = mock(GooglePhotosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemListResponse = mock(MediaItemListResponse.class);
 
     googlePhotosExporter =
-        new GooglePhotosExporter(credentialFactory, photosInterface);
+        new GooglePhotosExporter(credentialFactory, jobStore, photosInterface);
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
         .thenReturn(albumListResponse);

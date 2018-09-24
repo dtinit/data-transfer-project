@@ -22,9 +22,11 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -33,6 +35,7 @@ import org.datatransferproject.datatransfer.google.photos.model.AlbumListRespons
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -41,6 +44,7 @@ import org.datatransferproject.spi.transfer.types.ExportInformation;
 import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
 import org.datatransferproject.spi.transfer.types.PaginationData;
 import org.datatransferproject.spi.transfer.types.StringPaginationToken;
+import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
@@ -56,16 +60,20 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
+  private final JobStore jobStore;
   private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
+  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
     this.credentialFactory = credentialFactory;
+    this.jobStore = jobStore;
   }
 
   @VisibleForTesting
   GooglePhotosExporter(GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
       GooglePhotosInterface photosInterface) {
     this.credentialFactory = credentialFactory;
+    this.jobStore = jobStore;
     this.photosInterface = photosInterface;
   }
 
@@ -191,6 +199,46 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
+  private void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
+      throws IOException {
+    // Get list of all album ids
+    List<String> albumIds = new LinkedList<>();
+    AlbumListResponse albumListResponse = getOrCreatePhotosInterface(authData)
+        .listAlbums(Optional.empty());
+    albumIds.addAll(Arrays.stream(albumListResponse.getAlbums()).map(GoogleAlbum::getId)
+        .collect(Collectors.toList()));
+    String token;
+    while ((token = albumListResponse.getNextPageToken()) != null) {
+      albumListResponse = getOrCreatePhotosInterface(authData)
+          .listAlbums(Optional.of(token));
+      albumIds.addAll(Arrays.stream(albumListResponse.getAlbums()).map(GoogleAlbum::getId)
+          .collect(Collectors.toList()));
+    }
+
+    // Get list of all ids belonging to photos belonging to albums
+    TempPhotosData tempPhotosData = jobStore
+        .findData(jobId, createCacheKey(), TempPhotosData.class);
+    if (tempPhotosData == null) {
+      tempPhotosData = new TempPhotosData(jobId);
+      jobStore.create(jobId, createCacheKey(), tempPhotosData);
+    }
+    for (String albumId : albumIds) {
+      MediaItemListResponse albumMediaItemResponse = getOrCreatePhotosInterface(authData)
+          .listAlbumContents(Optional.of(albumId), Optional.empty());
+      tempPhotosData.addAllContainedPhotoIds(
+          Arrays.stream(albumMediaItemResponse.getMediaItems()).map(GoogleMediaItem::getId)
+              .collect(Collectors.toList()));
+      while ((token = albumMediaItemResponse.getNextPageToken()) != null) {
+        albumMediaItemResponse = getOrCreatePhotosInterface(authData)
+            .listAlbumContents(Optional.of(albumId), Optional.of(token));
+        tempPhotosData.addAllContainedPhotoIds(
+            Arrays.stream(albumMediaItemResponse.getMediaItems()).map(GoogleMediaItem::getId)
+                .collect(Collectors.toList()));
+      }
+    }
+    jobStore.update(jobId, createCacheKey(), tempPhotosData);
+  }
+
   private List<PhotoModel> getAlbumlessPhotos(TokensAndUrlAuthData authData) throws IOException {
     // TODO: what if this doesn't fit in memory?
     // Get list of all media items
@@ -278,5 +326,9 @@ public class GooglePhotosExporter
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(credential);
+  }
+
+  private static String createCacheKey() {
+    return "tempPhotosData";
   }
 }
