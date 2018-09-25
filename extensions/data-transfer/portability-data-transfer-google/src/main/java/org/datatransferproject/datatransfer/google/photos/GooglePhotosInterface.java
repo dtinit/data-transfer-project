@@ -16,33 +16,42 @@
 
 package org.datatransferproject.datatransfer.google.photos;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
+import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
 
 public class GooglePhotosInterface {
 
@@ -60,11 +69,11 @@ public class GooglePhotosInterface {
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
 
-  public GooglePhotosInterface(Credential credential) {
+  GooglePhotosInterface(Credential credential) {
     this.credential = credential;
   }
 
-  public AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -74,7 +83,7 @@ public class GooglePhotosInterface {
         AlbumListResponse.class);
   }
 
-  public MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
+  MediaItemSearchResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
       throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
@@ -87,6 +96,38 @@ public class GooglePhotosInterface {
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
     return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), content,
         MediaItemSearchResponse.class);
+  }
+
+  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
+    Map<String, Object> albumMap = createJsonMap(googleAlbum);
+    Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
+    HttpContent content = new JsonHttpContent(new JacksonFactory(), contentMap);
+
+    return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
+  }
+
+  String uploadPhotoContent(InputStream inputStream) throws IOException {
+    // TODO: add filename
+    Map<String, String> parameters = ImmutableMap.of(
+        "Content-type", "application/octet-stream",
+        "X-Goog-Upload-Protocol", "raw");
+
+    InputStreamContent content = new InputStreamContent(null, inputStream);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    content.writeTo(outputStream);
+    byte[] contentBytes = outputStream.toByteArray();
+    HttpContent httpContent = new ByteArrayContent(null, contentBytes);
+
+    return makePostRequest(BASE_URL + "uploads/", Optional.of(parameters), httpContent,
+        String.class);
+  }
+
+  NewMediaItemResult createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
+    HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
+    HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
+
+    return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), httpContent,
+        NewMediaItemResult.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
@@ -105,14 +146,14 @@ public class GooglePhotosInterface {
     return objectMapper.readValue(result, clazz);
   }
 
-  private <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
+  <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
       HttpContent httpContent, Class<T> clazz)
       throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest getRequest = requestFactory
+    HttpRequest postRequest = requestFactory
         .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
             httpContent);
-    HttpResponse response = getRequest.execute();
+    HttpResponse response = postRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
       throw new IOException(
@@ -120,7 +161,11 @@ public class GooglePhotosInterface {
     }
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
-    return objectMapper.readValue(result, clazz);
+    if (clazz.isAssignableFrom(String.class)) {
+      return (T) result;
+    } else {
+      return objectMapper.readValue(result, clazz);
+    }
   }
 
   private String generateParamsString(Optional<Map<String, String>> params) {
@@ -144,5 +189,13 @@ public class GooglePhotosInterface {
     }
 
     return String.join("&", paramStrings);
+  }
+
+  private HashMap<String, Object> createJsonMap(Object object) throws IOException {
+    // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
+    // NewMediaItemUpload to a Map before making the HttpContent.
+    TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
+    };
+    return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 }
