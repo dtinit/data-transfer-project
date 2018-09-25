@@ -49,6 +49,9 @@ include ':extensions:data-transfer:portability-data-transfer-smugmug'
 // Twitter
 include ':extensions:auth:portability-auth-twitter'
 include ':extensions:data-transfer:portability-data-transfer-twitter'
+// Facebook
+include ':extensions:auth:portability-auth-facebook'
+include ':extensions:data-transfer:portability-data-transfer-facebook'
 
 include ':extensions:auth:portability-auth-offline-demo'
 include ':extensions:data-transfer:portability-data-transfer-offline-demo'
