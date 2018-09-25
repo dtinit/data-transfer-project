@@ -43,8 +43,8 @@ public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   // TODO: internationalize copy prefix
-  static final String COPY_PREFIX = "Copy of ";
-  static final Logger LOGGER = LoggerFactory.getLogger(GooglePhotosImporter.class);
+  private static final String COPY_PREFIX = "Copy of ";
+  private static final Logger LOGGER = LoggerFactory.getLogger(GooglePhotosImporter.class);
 
   private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
