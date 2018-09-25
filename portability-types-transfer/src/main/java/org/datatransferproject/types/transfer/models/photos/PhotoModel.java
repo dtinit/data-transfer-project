@@ -18,6 +18,7 @@ package org.datatransferproject.types.transfer.models.photos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 
 public class PhotoModel {
 
@@ -84,5 +85,18 @@ public class PhotoModel {
         .add("albumId", albumId)
         .add("inTempStore", inTempStore)
         .toString();
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PhotoModel that = (PhotoModel) o;
+    return Objects.equal(getTitle(), that.getTitle()) &&
+            Objects.equal(getFetchableUrl(), that.getFetchableUrl()) &&
+            Objects.equal(getDescription(), that.getDescription()) &&
+            Objects.equal(getMediaType(), that.getMediaType()) &&
+            Objects.equal(getDataId(), that.getDataId()) &&
+            Objects.equal(getAlbumId(), that.getAlbumId());
   }
 }

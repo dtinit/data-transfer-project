@@ -63,6 +63,7 @@ dependencies {
     compile project(':extensions:auth:portability-auth-rememberthemilk')
     compile project(':extensions:auth:portability-auth-instagram')
     compile project(':extensions:auth:portability-auth-smugmug')
+    compile project(':extensions:auth:portability-auth-facebook')
 }
 
 
