@@ -59,6 +59,7 @@ public class FacebookPhotosExporter
     // Get albums
     Iterable<List<Album>> connection = getOrCreatePhotosInterface(authData).getAlbums();
 
+    // TODO(wmorland): Paginate through albums
     for (List<Album> albums : connection) {
       for (Album album : albums) {
         exportAlbums.add(new PhotoAlbum(album.getId(), album.getName(), album.getDescription()));

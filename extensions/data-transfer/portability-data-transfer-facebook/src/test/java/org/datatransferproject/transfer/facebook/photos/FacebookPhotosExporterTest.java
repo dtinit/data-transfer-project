@@ -16,7 +16,6 @@
 
 package org.datatransferproject.transfer.facebook.photos;
 
-import com.google.common.base.Preconditions;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -34,6 +33,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class FacebookPhotosExporterTest {
   private static final String ALBUM_NAME = "My Album";
@@ -49,44 +50,36 @@ public class FacebookPhotosExporterTest {
 
   @Before
   public void setUp() {
-    FacebookPhotosInterface photosInterface =
-        new FacebookPhotosInterface() {
-          @Override
-          public Iterable<List<Album>> getAlbums() {
-            Album album = new Album();
-            album.setId(ALBUM_ID);
-            album.setName(ALBUM_NAME);
-            album.setDescription(ALBUM_DESCRIPTION);
+    FacebookPhotosInterface photosInterface = mock(FacebookPhotosInterface.class);
 
-            ArrayList<Album> innerList = new ArrayList<>();
-            innerList.add(album);
+    // Set up example album
+    Album album = new Album();
+    album.setId(ALBUM_ID);
+    album.setName(ALBUM_NAME);
+    album.setDescription(ALBUM_DESCRIPTION);
 
-            ArrayList<List<Album>> albums = new ArrayList<>();
-            albums.add(innerList);
+    ArrayList<Album> innerAlbumList = new ArrayList<>();
+    innerAlbumList.add(album);
 
-            return albums;
-          }
+    ArrayList<List<Album>> albums = new ArrayList<>();
+    albums.add(innerAlbumList);
+    when(photosInterface.getAlbums()).thenReturn(albums);
 
-          @Override
-          public Iterable<List<Photo>> getPhotos(String albumId) {
-            Preconditions.checkArgument(albumId.equals(ALBUM_ID));
+    // Set up example photo
+    Photo photo = new Photo();
+    photo.setId(PHOTO_ID);
+    Photo.Image image = new Photo.Image();
+    image.setSource(PHOTO_SOURCE);
+    photo.addImage(image);
+    photo.setName(PHOTO_NAME);
 
-            Photo photo = new Photo();
-            photo.setId(PHOTO_ID);
-            Photo.Image image = new Photo.Image();
-            image.setSource(PHOTO_SOURCE);
-            photo.addImage(image);
-            photo.setName(PHOTO_NAME);
+    ArrayList<Photo> innerPhotoList = new ArrayList<>();
+    innerPhotoList.add(photo);
 
-            ArrayList<Photo> innerList = new ArrayList<>();
-            innerList.add(photo);
+    ArrayList<List<Photo>> photos = new ArrayList<>();
+    photos.add(innerPhotoList);
+    when(photosInterface.getPhotos(ALBUM_ID)).thenReturn(photos);
 
-            ArrayList<List<Photo>> photos = new ArrayList<>();
-            photos.add(innerList);
-
-            return photos;
-          }
-        };
     facebookPhotosExporter =
         new FacebookPhotosExporter(new AppCredentials("key", "secret"), photosInterface);
   }
