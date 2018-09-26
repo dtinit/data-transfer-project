@@ -104,7 +104,7 @@ def configurePublication(project) {
     project.publishing {
         publications {
             mavenJava(MavenPublication) {
-                from components.java
+                from project.components.java
                 artifact project.sourcesJar
                 artifact project.javadocJar
                 pom.withXml {
