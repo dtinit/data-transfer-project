@@ -15,10 +15,12 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
     compile project(':extensions:auth:portability-auth-microsoft')
 }
 
+configurePublication(project)
 

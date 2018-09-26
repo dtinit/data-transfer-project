@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -28,3 +29,5 @@ dependencies {
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
+
+configurePublication(project)

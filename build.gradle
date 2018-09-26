@@ -91,84 +91,99 @@ configure(sourceProjects()) {
     }
 }
 
-// Setup publishing configuration for all subprojects that have applied the Maven Publish plugin
-subprojects {
-
-    plugins.withId('maven-publish') {
-
-        apply plugin: 'io.spring.bintray'
-
-        // Configure artifact publication
-        def pomConfig = {
-            licenses {
-                license {
-                    name 'Apache 2.0'
-                    url 'https://www.apache.org/licenses/LICENSE-2.0.html'
-                    distribution 'repo'
-                }
-            }
-            developers {
-                developer {
-                    id 'dtp'
-                    name 'Data Transfer Project'
-                    email "dev@null.com"
-                }
-            }
-
-            scm {
-                url 'https://github.com/google/data-transfer-project'
-            }
-        }
-        publishing {
-            publications {
-                mavenJava(MavenPublication) {
-                    from components.java
-                    artifact sourcesJar
-                    artifact javadocJar
-                    pom.withXml {
-                        def root = asNode()
-                        root.appendNode('description', 'The Data Transfer Project')
-                        root.appendNode('name', 'DTP')
-                        root.appendNode('url', 'https://datatransferproject.dev/')
-                        root.children().last() + pomConfig
-                    }
-                }
-            }
-        }
-
-        // Configuration for uploading to Bintray
-        // secrets stored in ~/.gradle/gradle.properties
-        def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : 'undefined'
-        def bKey = project.hasProperty('bintrayKey') ? project.property('bintrayKey') : 'undefined'
-
-        bintray {
-
-            bintrayUser = bUser
-            bintrayKey = bKey
-
-            repo = 'TBD'
-            publication = 'mavenJava'
-
-            org = 'TBD'
-            labels = ['TBD', 'TBD']
-            licenses = ['Apache']
-            overrideOnUpload = false // upload task should not override existing artifacts
-
-            websiteUrl = 'https://datatransferproject.dev/'
-            issueTrackerUrl = 'https://github.com/google/data-transfer-project/issues'
-            vcsUrl = 'https://github.com/google/data-transfer-project'
-
-            // if syncing to Maven Central
-            // ossrhUser =
-            // ossrhPassword =
-            // gpgPassphrase =
-        }
-
-    }
-}
-
 def addCloudExtensionDependency(proj) {
     proj.dependencies { compile project(":extensions:cloud:portability-cloud-${proj.rootProject.ext.cloudType}") }
+}
+
+/**
+ * Configures the project to publish Maven artifacts to BinTray.
+ */
+def configurePublication(project) {
+    // Configure artifact publication
+
+    project.publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact project.sourcesJar
+                artifact project.javadocJar
+                pom.withXml {
+                    def root = asNode()
+                    root.appendNode('description', 'The Data Transfer Project')
+                    root.appendNode('name', 'DTP')
+                    root.appendNode('url', 'https://datatransferproject.dev/')
+                    root.children().last() + getPomConfig();
+                }
+            }
+        }
+    }
+
+    configBinTray(project);
+
+}
+
+/**
+ * Configures the project to upload artifacts to BinTray.
+ */
+def configBinTray(project) {
+    // Configuration for uploading to BinTray and signing artifacts
+    // secrets stored in ~/.gradle/gradle.properties
+    def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : 'undefined'
+    def bKey = project.hasProperty('bintrayKey') ? project.property('bintrayKey') : 'undefined'
+    def gpgPhrase = project.hasProperty('gpgPassphrase') ? project.property('gpgPassphrase') : 'undefined'
+
+    project.bintray {
+
+        bintrayUser = bUser
+        bintrayKey = bKey
+        gpgPassphrase = gpgPhrase
+        publication = 'mavenJava'
+
+        org = 'test-dtp'   // TODO currently publish to a test org and repo - these will be changed when permanents ones are established
+        repo = 'DTP'
+        labels = ['data transfer']
+        licenses = ['Apache-2.0']
+        overrideOnUpload = false // upload task should not override existing artifacts
+
+        websiteUrl = 'https://datatransferproject.dev/'
+        issueTrackerUrl = 'https://github.com/google/data-transfer-project/issues'
+        vcsUrl = 'https://github.com/google/data-transfer-project'
+
+        // if syncing to Maven Central
+        // ossrhUser =
+        // ossrhPassword =
+        // gpgPassphrase =
+    }
+
+}
+
+/**
+ * Returns the sections of a Maven POM required for publication.
+ */
+def getPomConfig() {
+    return {
+        licenses {
+            license {
+                name 'Apache 2.0'
+                url 'https://www.apache.org/licenses/LICENSE-2.0.html'
+                distribution 'repo'
+            }
+        }
+        developers {
+            developer {
+                id 'dtp'
+                name 'Data Transfer Project'
+                email "dev@null.com"
+            }
+        }
+
+        scm {
+            url 'https://github.com/google/data-transfer-project'
+            developerConnection 'scm:git:ssh://git@github.com:google/data-transfer-project.git'
+
+        }
+    }
+
 }
 
 

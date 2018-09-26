@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -28,3 +29,5 @@ dependencies {
     compile("com.google.http-client:google-http-client-xml:${googleApiClient}")
     compile("com.google.api-client:google-api-client:${googleApiClient}")
 }
+
+configurePublication(project)

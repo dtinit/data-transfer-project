@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -41,3 +42,4 @@ dependencies {
 }
 
 
+configurePublication(project)

@@ -17,6 +17,7 @@
 
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 group = "${projectGroup}"
@@ -91,3 +92,6 @@ dependencies {
     testCompile project(':extensions:cloud:portability-cloud-local')
 
 }
+
+configurePublication(project)
+

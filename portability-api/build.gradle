@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 jar {
@@ -67,3 +68,5 @@ dependencies {
 sourceSets.test {
     resources.srcDirs = ["src/test/resources"]
 }
+
+configurePublication(project)
