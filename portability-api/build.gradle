@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-group = 'org.datatransferproject'
-version = '1.0-SNAPSHOT'
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
+}
 
 jar {
     // TODO: consider using the gradle fatjar plugin rather than this dependency jar building logic
@@ -67,3 +68,5 @@ dependencies {
 sourceSets.test {
     resources.srcDirs = ["src/test/resources"]
 }
+
+configurePublication(project)
