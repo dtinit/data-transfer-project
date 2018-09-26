@@ -15,9 +15,12 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
     compile project(':portability-spi-transfer')
     compile group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '5.14'
 }
+
+configurePublication(project)

@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -34,3 +35,5 @@ dependencies {
     testCompile("org.mockito:mockito-all:${mockitoVersion}")
 }
 
+
+configurePublication(project)

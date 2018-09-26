@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -31,3 +32,5 @@ dependencies {
     testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.7.5'
 
 }
+
+configurePublication(project)

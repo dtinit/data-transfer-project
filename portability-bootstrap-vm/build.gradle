@@ -17,9 +17,12 @@
 
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
     compile project(':portability-api')
     compile project(':portability-transfer')
 }
+
+configurePublication(project)

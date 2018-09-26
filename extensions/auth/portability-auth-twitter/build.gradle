@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -27,3 +28,5 @@ dependencies {
 
     compile 'org.twitter4j:twitter4j-core:4.0.3'
 }
+
+configurePublication(project)

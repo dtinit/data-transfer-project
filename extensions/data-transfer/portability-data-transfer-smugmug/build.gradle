@@ -15,6 +15,7 @@
  */
 plugins {
     id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -28,3 +29,5 @@ dependencies {
 
     compile("org.scribe:scribe:1.3.7")
 }
+
+configurePublication(project)

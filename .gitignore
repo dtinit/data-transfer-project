@@ -1,7 +1,4 @@
 .gradle/
-gradle/
-**/gradlew
-**/gradlew.bat
 *.log
 
 secrets.csv
