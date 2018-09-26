@@ -16,22 +16,24 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gdata.client.photos.PicasawebService;
-import com.google.gdata.data.PlainTextConstruct;
-import com.google.gdata.data.media.MediaStreamSource;
-import com.google.gdata.data.photos.PhotoEntry;
-import com.google.gdata.util.ServiceException;
+import com.google.common.base.Strings;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
+import java.util.Collections;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.photos.model.NewMediaItem;
+import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
@@ -40,46 +42,51 @@ import org.slf4j.LoggerFactory;
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  static final String ALBUM_POST_URL = "https://picasaweb.google.com/data/feed/api/user/default";
-  static final String PHOTO_POST_URL_FORMATTER =
-      "https://picasaweb.google.com/data/feed/api/user/default/albumid/%s";
-  // The default album to upload to if the photo is not associated with an album
-  static final String DEFAULT_ALBUM_ID = "default";
-  static final Logger logger = LoggerFactory.getLogger(GooglePhotosImporter.class);
+  // TODO: internationalize copy prefix
+  private static final String COPY_PREFIX = "Copy of ";
+  private static final Logger LOGGER = LoggerFactory.getLogger(GooglePhotosImporter.class);
+
+  private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
+  private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
-  private volatile PicasawebService photosService;
+  private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory, jobStore, null, new ImageStreamProvider());
+  public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
+      JsonFactory jsonFactory) {
+    this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider());
   }
 
   @VisibleForTesting
   GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
-      PicasawebService photosService,
+      JsonFactory jsonFactory,
+      GooglePhotosInterface photosInterface,
       ImageStreamProvider imageStreamProvider) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
-    this.photosService = photosService;
+    this.jsonFactory = jsonFactory;
+    this.photosInterface = photosInterface;
     this.imageStreamProvider = imageStreamProvider;
   }
 
   @Override
   public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
-      PhotosContainerResource data) throws IOException, ServiceException {
+      PhotosContainerResource data) throws IOException {
+    // Uploads album metadata
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
-      logger.warn(
-          "Importing albums in Google Photos is not supported. "
-              + "Photos will be added to the default album.");
+      for (PhotoAlbum album : data.getAlbums()) {
+        importSingleAlbum(jobId, authData, album);
+      }
     }
 
+    // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(authData, photo, jobId);
+        importSinglePhoto(jobId, authData, photo);
       }
     }
 
@@ -87,45 +94,74 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  void importSinglePhoto(TokensAndUrlAuthData authData, PhotoModel inputPhoto, UUID jobId)
-      throws IOException, ServiceException {
+  void importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
+      throws IOException {
+    // Set up album
+    GoogleAlbum googleAlbum = new GoogleAlbum();
+    googleAlbum.setTitle(COPY_PREFIX + inputAlbum.getName());
 
-    // Set up photo
-    PhotoEntry outputPhoto = new PhotoEntry();
-    outputPhoto.setTitle(new PlainTextConstruct("copy of " + inputPhoto.getTitle()));
-    outputPhoto.setDescription(new PlainTextConstruct(inputPhoto.getDescription()));
-    outputPhoto.setClient(GoogleStaticObjects.APP_NAME);
-
-    String mediaType = inputPhoto.getMediaType();
-    if (mediaType == null) {
-      mediaType = "image/jpeg";
+    GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
+    TempPhotosData tempPhotosData = jobStore
+        .findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
+    if (tempPhotosData == null) {
+      tempPhotosData = new TempPhotosData(jobId);
+      jobStore.create(jobId, TEMP_PHOTOS_KEY, tempPhotosData);
     }
+    tempPhotosData.addAlbumId(inputAlbum.getId(), responseAlbum.getId());
+    jobStore.update(jobId, TEMP_PHOTOS_KEY, tempPhotosData);
+  }
 
-    MediaStreamSource streamSource;
-    if (inputPhoto.isInTempStore()) {
-      streamSource = new MediaStreamSource(
-          jobStore.getStream(jobId, inputPhoto.getFetchableUrl()), mediaType);
-    } else {
-      streamSource = new MediaStreamSource(
-          imageStreamProvider.get(inputPhoto.getFetchableUrl()), mediaType);
-    }
-    outputPhoto.setMediaSource(streamSource);
-
-    String albumId = DEFAULT_ALBUM_ID;
-    URL uploadUrl = new URL(String.format(PHOTO_POST_URL_FORMATTER, albumId));
-
+  @VisibleForTesting
+  void importSinglePhoto(UUID jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
+      throws IOException {
+    /*
+    TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
+    Resumable uploads would allow the upload of larger media that don't fit in memory.  To do this,
+    however, seems to require knowledge of the total file size.
+    */
     // Upload photo
-    getOrCreatePhotosService(authData).insert(uploadUrl, outputPhoto);
+    InputStream inputStream;
+    if (inputPhoto.isInTempStore()) {
+      inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl());
+    } else {
+      inputStream = imageStreamProvider.get(inputPhoto.getFetchableUrl());
+    }
+
+    String uploadToken = getOrCreatePhotosInterface(authData).uploadPhotoContent(inputStream);
+
+    String description;
+    if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
+      description = "";
+    } else {
+      description = COPY_PREFIX + inputPhoto.getDescription();
+    }
+    NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
+
+    TempPhotosData tempPhotosData = jobStore
+        .findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
+    String albumId;
+    if (Strings.isNullOrEmpty(inputPhoto.getAlbumId())) {
+      // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
+      // upload a NewMediaItem without a corresponding album id.
+      albumId = null;
+    } else {
+      albumId = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
+    }
+
+    NewMediaItemUpload uploadItem = new NewMediaItemUpload(albumId,
+        Collections.singletonList(newMediaItem));
+
+    getOrCreatePhotosInterface(authData).createPhoto(uploadItem);
   }
 
-  private PicasawebService getOrCreatePhotosService(TokensAndUrlAuthData authData) {
-    return photosService == null ? makePhotosService(authData) : photosService;
+  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
+      TokensAndUrlAuthData authData) {
+    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
   }
 
-  private synchronized PicasawebService makePhotosService(TokensAndUrlAuthData authData) {
+  private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    PicasawebService service = new PicasawebService(GoogleStaticObjects.APP_NAME);
-    service.setOAuth2Credentials(credential);
-    return service;
+    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential, jsonFactory);
+    return photosInterface;
   }
 }

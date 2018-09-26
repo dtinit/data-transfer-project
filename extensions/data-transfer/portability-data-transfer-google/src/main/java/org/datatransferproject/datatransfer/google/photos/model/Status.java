@@ -13,38 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class NewEnrichmentItem {
+/**
+ * Information about whether a request was successful, used by {@link NewMediaItemResult}.
+ */
+public class Status {
 
-  @JsonProperty("textEnrichment")
-  private TextEnrichment textEnrichment;
+  @JsonProperty("code")
+  private int code;
 
-  @JsonProperty("locationEnrichment")
-  private LocationEnrichment locationEnrichment;
-
-  @JsonProperty("mapEnrichment")
-  private MapEnrichment mapEnrichment;
-
-  public class TextEnrichment {
-    @JsonProperty("text")
-    private String text;
-  }
-
-  public class LocationEnrichment {
-    @JsonProperty("location")
-    private Location location;
-  }
-
-  public class MapEnrichment {
-    @JsonProperty("origin")
-    private Location origin;
-
-    @JsonProperty("destination")
-    private Location destination;
-  }
-
+  @JsonProperty("message")
+  private String message;
 }

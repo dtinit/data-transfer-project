@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
@@ -65,7 +65,7 @@ public class GooglePhotosExporterTest {
   private GoogleCredentialFactory credentialFactory;
   private GooglePhotosInterface photosInterface;
 
-  private AlbumListResponse albumListResponse;
+  private GoogleAlbumListResponse googleAlbumListResponse;
   private MediaItemSearchResponse mediaItemSearchResponse;
 
   @Before
@@ -73,14 +73,14 @@ public class GooglePhotosExporterTest {
     credentialFactory = mock(GoogleCredentialFactory.class);
     photosInterface = mock(GooglePhotosInterface.class);
 
-    albumListResponse = mock(AlbumListResponse.class);
+    googleAlbumListResponse = mock(GoogleAlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
     googlePhotosExporter =
-        new GooglePhotosExporter(credentialFactory, photosInterface);
+        new GooglePhotosExporter(credentialFactory, null, photosInterface);
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
-        .thenReturn(albumListResponse);
+        .thenReturn(googleAlbumListResponse);
     when(photosInterface.listAlbumContents(Matchers.any(Optional.class), Matchers.any(Optional.class)))
         .thenReturn(mediaItemSearchResponse);
 
@@ -98,7 +98,7 @@ public class GooglePhotosExporterTest {
     // Check results
     // Verify correct methods were called
     verify(photosInterface).listAlbums(Optional.empty());
-    verify(albumListResponse).getAlbums();
+    verify(googleAlbumListResponse).getAlbums();
 
     // Check pagination token
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
@@ -139,7 +139,7 @@ public class GooglePhotosExporterTest {
     // Check results
     // Verify correct methods were called
     verify(photosInterface).listAlbums(Optional.of(ALBUM_TOKEN));
-    verify(albumListResponse).getAlbums();
+    verify(googleAlbumListResponse).getAlbums();
 
     // Check pagination token
     ContinuationData continuationData = (ContinuationData) result.getContinuationData();
@@ -215,8 +215,8 @@ public class GooglePhotosExporterTest {
     albumEntry.setId(ALBUM_ID);
     albumEntry.setTitle("Title");
 
-    when(albumListResponse.getAlbums()).thenReturn(new GoogleAlbum[]{albumEntry});
-    when(albumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
+    when(googleAlbumListResponse.getAlbums()).thenReturn(new GoogleAlbum[]{albumEntry});
+    when(googleAlbumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
 
     setUpSinglePhotoResponse();
   }

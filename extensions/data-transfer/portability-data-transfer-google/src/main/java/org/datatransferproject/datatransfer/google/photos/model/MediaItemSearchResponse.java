@@ -18,6 +18,9 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Response returned by a search for GoogleMediaItems
+ */
 public class MediaItemSearchResponse {
   @JsonProperty("mediaItems")
   private GoogleMediaItem[] mediaItems;

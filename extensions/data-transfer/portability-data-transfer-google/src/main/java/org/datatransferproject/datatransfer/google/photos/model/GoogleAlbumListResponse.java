@@ -18,18 +18,21 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Location {
-  @JsonProperty("locationName")
-  private String locationName;
+/**
+ * The response provided by the Google Photos API for an album query
+ */
+public class GoogleAlbumListResponse {
+  @JsonProperty("albums")
+  private GoogleAlbum[] albums;
 
-  @JsonProperty("latlng")
-  private LatLng latLng;
+  @JsonProperty("nextPageToken")
+  private String nextPageToken;
 
-  public class LatLng {
-    @JsonProperty("latitude")
-    private double latitude;
+  public GoogleAlbum[] getAlbums() {
+    return albums;
+  }
 
-    @JsonProperty("longitude")
-    private double longitude;
+  public String getNextPageToken() {
+    return nextPageToken;
   }
 }

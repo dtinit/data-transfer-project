@@ -92,7 +92,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory, jobStore));
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, jobStore)) ;
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
-    importerBuilder.put("PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore));
+    importerBuilder.put("PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -100,7 +100,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("CALENDAR", new GoogleCalendarExporter(credentialFactory));
     exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory));
-    exporterBuilder.put("PHOTOS", new GooglePhotosExporter(credentialFactory));
+    exporterBuilder.put("PHOTOS", new GooglePhotosExporter(credentialFactory, jsonFactory));
 
     exporterMap = exporterBuilder.build();
 

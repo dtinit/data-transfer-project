@@ -18,10 +18,17 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class SharedAlbumOptions {
-  @JsonProperty("isCollaborative")
-  private boolean isCollaborative;
+/**
+ * Class containing the response from uploading {@code NewMediaItemUpload} to the Google Photos API.
+ */
+public class NewMediaItemResult {
 
-  @JsonProperty("isCommentable")
-  private boolean isCommentable;
+  @JsonProperty("uploadToken")
+  private String uploadToken;
+
+  @JsonProperty("status")
+  private Status status;
+
+  @JsonProperty("mediaItem")
+  private GoogleMediaItem mediaItem;
 }

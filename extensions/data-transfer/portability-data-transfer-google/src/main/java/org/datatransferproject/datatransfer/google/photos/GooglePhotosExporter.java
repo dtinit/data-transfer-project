@@ -16,6 +16,7 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
@@ -50,19 +51,21 @@ public class GooglePhotosExporter
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "media:";
-  static final String DEFAULT_ALBUM_ID = "default";
 
   private final GoogleCredentialFactory credentialFactory;
+  private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory) {
+  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory) {
     this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
   }
 
   @VisibleForTesting
   GooglePhotosExporter(GoogleCredentialFactory credentialFactory,
-      GooglePhotosInterface photosInterface) {
+      JsonFactory jsonFactory, GooglePhotosInterface photosInterface) {
     this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
   }
 
@@ -102,19 +105,19 @@ public class GooglePhotosExporter
       paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
     }
 
-    AlbumListResponse albumListResponse;
+    GoogleAlbumListResponse googleAlbumListResponse;
 
-    albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
+    googleAlbumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
 
     PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(albumListResponse.getNextPageToken())) {
+    if (!Strings.isNullOrEmpty(googleAlbumListResponse.getNextPageToken())) {
       nextPageData = new StringPaginationToken(
-          ALBUM_TOKEN_PREFIX + albumListResponse.getNextPageToken());
+          ALBUM_TOKEN_PREFIX + googleAlbumListResponse.getNextPageToken());
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>();
-    GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
+    GoogleAlbum[] googleAlbums = googleAlbumListResponse.getAlbums();
 
     for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
@@ -195,7 +198,7 @@ public class GooglePhotosExporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential);
+    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential, jsonFactory);
     return photosInterface;
   }
 }

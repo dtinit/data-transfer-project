@@ -18,10 +18,19 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ContributorInfo {
-  @JsonProperty("profilePictureBaseUrl")
-  private String profilePictureBaseUrl;
+/**
+ * Wrapper class for an upload token, used by {@link NewMediaItem}.
+ */
+public class SimpleMediaItem {
 
-  @JsonProperty("displayName")
-  private String displayName;
+  @JsonProperty("uploadToken")
+  private String uploadToken;
+
+  SimpleMediaItem(String uploadToken) {
+    this.uploadToken = uploadToken;
+  }
+
+  public String getUploadToken() {
+    return uploadToken;
+  }
 }
