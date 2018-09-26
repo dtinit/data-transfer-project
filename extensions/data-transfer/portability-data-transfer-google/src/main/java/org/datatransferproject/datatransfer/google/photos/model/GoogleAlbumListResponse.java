@@ -18,10 +18,21 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class SharedAlbumOptions {
-  @JsonProperty("isCollaborative")
-  private boolean isCollaborative;
+/**
+ * The response provided by the Google Photos API for an album query
+ */
+public class GoogleAlbumListResponse {
+  @JsonProperty("albums")
+  private GoogleAlbum[] albums;
 
-  @JsonProperty("isCommentable")
-  private boolean isCommentable;
+  @JsonProperty("nextPageToken")
+  private String nextPageToken;
+
+  public GoogleAlbum[] getAlbums() {
+    return albums;
+  }
+
+  public String getNextPageToken() {
+    return nextPageToken;
+  }
 }

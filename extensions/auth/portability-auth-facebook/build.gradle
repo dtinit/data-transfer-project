@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+dependencies {
+    compile project(':portability-spi-api')
+    compile project(':portability-spi-cloud')
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+    compile "org.slf4j:slf4j-api:${slf4jVersion}"
+    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
 
-public class ShareInfo {
-  @JsonProperty("sharedAlbumOptions")
-  private SharedAlbumOptions sharedAlbumOptions;
+    compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
+    compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
 
-  @JsonProperty("shareableUrl")
-  private String shareableUrl;
-
-  @JsonProperty("shareToken")
-  private String shareToken;
+    testCompile("org.mockito:mockito-all:${mockitoVersion}")
 }

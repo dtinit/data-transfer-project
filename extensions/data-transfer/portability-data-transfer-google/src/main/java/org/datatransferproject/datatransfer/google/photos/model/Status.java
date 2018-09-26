@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AlbumPosition {
+/**
+ * Information about whether a request was successful, used by {@link NewMediaItemResult}.
+ */
+public class Status {
 
-  @JsonProperty("position")
-  private PositionType position;
+  @JsonProperty("code")
+  private int code;
 
-  @JsonProperty("relativeMediaItemId")
-  private String relativeMediaItemId;
-
-  @JsonProperty("relativeEnrichmentItemId")
-  private String relativeEnrichmentItemId;
-
-  public enum PositionType {
-    POSITION_TYPE_UNSPECIFIED,
-    FIRST_IN_ALBUM,
-    LAST_IN_ALBUM,
-    AFTER_MEDIA_ITEM,
-    AFTER_ENRICHMENT_ITEM;
-  }
+  @JsonProperty("message")
+  private String message;
 }

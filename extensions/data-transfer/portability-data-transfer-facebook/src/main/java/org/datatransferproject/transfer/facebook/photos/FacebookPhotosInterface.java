@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+package org.datatransferproject.transfer.facebook.photos;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.restfb.types.Album;
+import com.restfb.types.Photo;
 
-public class ContributorInfo {
-  @JsonProperty("profilePictureBaseUrl")
-  private String profilePictureBaseUrl;
+import java.util.List;
 
-  @JsonProperty("displayName")
-  private String displayName;
+public interface FacebookPhotosInterface {
+  Iterable<List<Album>> getAlbums();
+
+  Iterable<List<Photo>> getPhotos(String albumId);
 }

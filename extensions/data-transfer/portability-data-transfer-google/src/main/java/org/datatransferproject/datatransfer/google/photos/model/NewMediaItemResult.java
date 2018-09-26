@@ -18,33 +18,17 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class NewEnrichmentItem {
+/**
+ * Class containing the response from uploading {@code NewMediaItemUpload} to the Google Photos API.
+ */
+public class NewMediaItemResult {
 
-  @JsonProperty("textEnrichment")
-  private TextEnrichment textEnrichment;
+  @JsonProperty("uploadToken")
+  private String uploadToken;
 
-  @JsonProperty("locationEnrichment")
-  private LocationEnrichment locationEnrichment;
+  @JsonProperty("status")
+  private Status status;
 
-  @JsonProperty("mapEnrichment")
-  private MapEnrichment mapEnrichment;
-
-  public class TextEnrichment {
-    @JsonProperty("text")
-    private String text;
-  }
-
-  public class LocationEnrichment {
-    @JsonProperty("location")
-    private Location location;
-  }
-
-  public class MapEnrichment {
-    @JsonProperty("origin")
-    private Location origin;
-
-    @JsonProperty("destination")
-    private Location destination;
-  }
-
+  @JsonProperty("mediaItem")
+  private GoogleMediaItem mediaItem;
 }

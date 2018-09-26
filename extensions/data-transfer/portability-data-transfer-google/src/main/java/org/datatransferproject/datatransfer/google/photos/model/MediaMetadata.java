@@ -18,33 +18,16 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Metadata about a {@code MediaItem}.
+ */
 public class MediaMetadata {
-  @JsonProperty("creationTime")
-  private String creationTime;
-
-  @JsonProperty("width")
-  private String width;
-
-  @JsonProperty("height")
-  private String height;
 
   @JsonProperty("photo")
   private Photo photo;
 
   @JsonProperty("video")
   private Video video;
-
-  public String getCreationTime() {
-    return creationTime;
-  }
-
-  public String getWidth() {
-    return width;
-  }
-
-  public String getHeight() {
-    return height;
-  }
 
   public Photo getPhoto() {
     return photo;

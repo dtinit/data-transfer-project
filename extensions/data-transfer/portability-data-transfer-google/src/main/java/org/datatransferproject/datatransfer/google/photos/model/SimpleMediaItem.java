@@ -18,18 +18,19 @@ package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Location {
-  @JsonProperty("locationName")
-  private String locationName;
+/**
+ * Wrapper class for an upload token, used by {@link NewMediaItem}.
+ */
+public class SimpleMediaItem {
 
-  @JsonProperty("latlng")
-  private LatLng latLng;
+  @JsonProperty("uploadToken")
+  private String uploadToken;
 
-  public class LatLng {
-    @JsonProperty("latitude")
-    private double latitude;
+  SimpleMediaItem(String uploadToken) {
+    this.uploadToken = uploadToken;
+  }
 
-    @JsonProperty("longitude")
-    private double longitude;
+  public String getUploadToken() {
+    return uploadToken;
   }
 }

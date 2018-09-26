@@ -16,6 +16,7 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -31,7 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
@@ -61,19 +62,21 @@ public class GooglePhotosExporter
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
+  private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, JsonFactory jsonFactory) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+    this.jsonFactory = jsonFactory;
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(GoogleCredentialFactory credentialFactory,
-      JobStore jobStore,
-      GooglePhotosInterface photosInterface) {
+  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
+      JsonFactory jsonFactory, GooglePhotosInterface photosInterface) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+    this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
   }
 
@@ -120,19 +123,19 @@ public class GooglePhotosExporter
       paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
     }
 
-    AlbumListResponse albumListResponse;
+    GoogleAlbumListResponse googleAlbumListResponse;
 
-    albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
+    googleAlbumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
 
     PaginationData nextPageData = null;
-    String token = albumListResponse.getNextPageToken();
+    String token = googleAlbumListResponse.getNextPageToken();
     if (!Strings.isNullOrEmpty(token)) {
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + token);
     }
 
     ContinuationData continuationData = new ContinuationData(nextPageData);
     List<PhotoAlbum> albums = new ArrayList<>();
-    GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
+    GoogleAlbum[] googleAlbums = googleAlbumListResponse.getAlbums();
 
     for (GoogleAlbum googleAlbum : googleAlbums) {
       // Add album info to list so album can be recreated later
@@ -203,7 +206,7 @@ public class GooglePhotosExporter
       throws IOException {
     // Get list of all album ids
     List<String> albumIds = new LinkedList<>();
-    AlbumListResponse albumListResponse = getOrCreatePhotosInterface(authData)
+    GoogleAlbumListResponse albumListResponse = getOrCreatePhotosInterface(authData)
         .listAlbums(Optional.empty());
     albumIds.addAll(Arrays.stream(albumListResponse.getAlbums()).map(GoogleAlbum::getId)
         .collect(Collectors.toList()));
@@ -255,7 +258,7 @@ public class GooglePhotosExporter
 
     // Get list of all albums, and then list of photos in albums
     List<GoogleAlbum> allAlbums = new LinkedList<>();
-    AlbumListResponse albumListResponse = getOrCreatePhotosInterface(authData)
+    GoogleAlbumListResponse albumListResponse = getOrCreatePhotosInterface(authData)
         .listAlbums(Optional.empty());
     allAlbums.addAll(Arrays.asList(albumListResponse.getAlbums()));
     while (albumListResponse.getNextPageToken() != null) {
@@ -325,7 +328,7 @@ public class GooglePhotosExporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GooglePhotosInterface(credential);
+    return new GooglePhotosInterface(credential, jsonFactory);
   }
 
   private static String createCacheKey() {
