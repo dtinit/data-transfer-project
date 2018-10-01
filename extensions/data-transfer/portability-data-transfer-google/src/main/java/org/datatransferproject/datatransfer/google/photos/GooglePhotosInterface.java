@@ -58,7 +58,7 @@ public class GooglePhotosInterface {
 
   private static final String BASE_URL = "https://photoslibrary.googleapis.com/v1/";
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
-  private static final int MEDIA_PAGE_SIZE = 2; // TODO // DO NOT SUBMIT
+  private static final int MEDIA_PAGE_SIZE = 50; // TODO
 
   private static final String PAGE_SIZE_KEY = "pageSize";
   private static final String TOKEN_KEY = "pageToken";
