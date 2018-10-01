@@ -148,6 +148,7 @@ def configBinTray(project) {
         websiteUrl = 'https://datatransferproject.dev/'
         issueTrackerUrl = 'https://github.com/google/data-transfer-project/issues'
         vcsUrl = 'https://github.com/google/data-transfer-project'
+        connection 'scm:git:git://github.com/google/data-transfer-project.git'
 
         // if syncing to Maven Central
         // ossrhUser =
