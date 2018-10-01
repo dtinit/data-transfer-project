@@ -229,9 +229,11 @@ public class GooglePhotosExporter
           for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
             tempPhotosData.addContainedPhotoId(mediaItem.getId());
           }
-        } while ((photoToken = containedMediaSearchResponse.getNextPageToken()) != null);
+          photoToken = containedMediaSearchResponse.getNextPageToken();
+        } while (photoToken != null);
       }
-    } while ((albumToken = albumListResponse.getNextPageToken()) != null);
+      albumToken = albumListResponse.getNextPageToken();
+    } while (albumToken != null);
 
     jobStore.create(jobId, createCacheKey(), tempPhotosData);
   }
