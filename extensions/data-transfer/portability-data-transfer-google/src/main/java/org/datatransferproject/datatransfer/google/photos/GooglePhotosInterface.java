@@ -48,9 +48,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
 
@@ -58,12 +58,14 @@ public class GooglePhotosInterface {
 
   private static final String BASE_URL = "https://photoslibrary.googleapis.com/v1/";
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
-  private static final int MEDIA_PAGE_SIZE = 100; // TODO
+  private static final int MEDIA_PAGE_SIZE = 2; // TODO // DO NOT SUBMIT
 
   private static final String PAGE_SIZE_KEY = "pageSize";
   private static final String TOKEN_KEY = "pageToken";
   private static final String ALBUM_ID_KEY = "albumId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
+  private static final String FILTERS_KEY = "filters";
+  private static final String INCLUDE_ARCHIVED_KEY = "includeArchivedMedia";
   private static final Map<String, String> PHOTO_UPLOAD_PARAMS = ImmutableMap.of(
       "Content-type", "application/octet-stream",
       "X-Goog-Upload-Protocol", "raw");
@@ -79,39 +81,31 @@ public class GooglePhotosInterface {
     this.jsonFactory = jsonFactory;
   }
 
-  GoogleAlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
     return makeGetRequest(BASE_URL + "albums", Optional.of(params),
-        GoogleAlbumListResponse.class);
+        AlbumListResponse.class);
   }
 
-  MediaItemListResponse listAlbumContents(Optional<String> albumId, Optional<String> pageToken)
+  MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
       throws IOException {
-    Map<String, String> params = new LinkedHashMap<>();
+    Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
     if (albumId.isPresent()) {
       params.put(ALBUM_ID_KEY, albumId.get());
+    } else {
+      params.put(FILTERS_KEY, ImmutableMap.of(INCLUDE_ARCHIVED_KEY, String.valueOf(true)));
     }
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
     return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), content,
-        MediaItemListResponse.class);
-  }
-
-  MediaItemListResponse listAllMediaItems(Optional<String> pageToken) throws IOException {
-    Map<String, String> params = new LinkedHashMap<>();
-    params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
-    if (pageToken.isPresent()) {
-      params.put(TOKEN_KEY, pageToken.get());
-    }
-    return makeGetRequest(BASE_URL + "mediaItems", Optional.of(params),
-        MediaItemListResponse.class);
+        MediaItemSearchResponse.class);
   }
 
   GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {

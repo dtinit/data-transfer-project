@@ -17,17 +17,20 @@
 package org.datatransferproject.datatransfer.google.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
- * Response returned by a search for GoogleMediaItems
+ * The response provided by the Google Photos API for an album query
  */
-public class MediaItemListResponse {
-  @JsonProperty("mediaItems")
-  private GoogleMediaItem[] mediaItems;
+public class AlbumListResponse {
+  @JsonProperty("albums")
+  private GoogleAlbum[] albums;
 
   @JsonProperty("nextPageToken")
   private String nextPageToken;
 
-  public GoogleMediaItem[] getMediaItems() { return mediaItems; }
+  public GoogleAlbum[] getAlbums() {
+    return albums;
+  }
 
   public String getNextPageToken() {
     return nextPageToken;

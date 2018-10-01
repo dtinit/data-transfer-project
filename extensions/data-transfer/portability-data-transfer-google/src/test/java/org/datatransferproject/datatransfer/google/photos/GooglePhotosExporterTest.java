@@ -27,27 +27,25 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.model.MediaMetadata;
 import org.datatransferproject.datatransfer.google.photos.model.Photo;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
 import org.datatransferproject.spi.transfer.types.PaginationData;
 import org.datatransferproject.spi.transfer.types.StringPaginationToken;
+import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.transfer.models.ContainerResource;
 import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
 import org.datatransferproject.types.transfer.models.photos.PhotoModel;
@@ -59,6 +57,7 @@ import org.mockito.Matchers;
 public class GooglePhotosExporterTest {
 
   private String IMG_URI = "image uri";
+  private String PHOTO_ID = "photo id";
   private String ALBUM_ID = "GoogleAlbum id";
   private String ALBUM_TOKEN = "album_token";
   private String PHOTO_TOKEN = "photo_token";
@@ -69,8 +68,8 @@ public class GooglePhotosExporterTest {
   private JobStore jobStore;
   private GooglePhotosInterface photosInterface;
 
-  private MediaItemListResponse mediaItemListResponse;
-  private GoogleAlbumListResponse googleAlbumListResponse;
+  private MediaItemSearchResponse mediaItemSearchResponse;
+  private AlbumListResponse albumListResponse;
 
   @Before
   public void setup() throws IOException {
@@ -78,16 +77,18 @@ public class GooglePhotosExporterTest {
     jobStore = new LocalJobStore();
     photosInterface = mock(GooglePhotosInterface.class);
 
-    googleAlbumListResponse = mock(GoogleAlbumListResponse.class);
-    mediaItemListResponse = mock(MediaItemListResponse.class);
+    albumListResponse = mock(AlbumListResponse.class);
+    mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
     googlePhotosExporter =
-        new GooglePhotosExporter(credentialFactory, jobStore, new JacksonFactory(), photosInterface);
+        new GooglePhotosExporter(credentialFactory, jobStore, new JacksonFactory(),
+            photosInterface);
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
-        .thenReturn(googleAlbumListResponse);
-    when(photosInterface.listAlbumContents(Matchers.any(Optional.class), Matchers.any(Optional.class)))
-        .thenReturn(mediaItemListResponse);
+        .thenReturn(albumListResponse);
+    when(photosInterface
+        .listMediaItems(Matchers.any(Optional.class), Matchers.any(Optional.class)))
+        .thenReturn(mediaItemSearchResponse);
 
     verifyZeroInteractions(credentialFactory);
   }
@@ -95,7 +96,7 @@ public class GooglePhotosExporterTest {
   @Test
   public void exportAlbumFirstSet() throws IOException {
     setUpSingleAlbum();
-    when(googleAlbumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
+    when(albumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
@@ -104,7 +105,7 @@ public class GooglePhotosExporterTest {
     // Check results
     // Verify correct methods were called
     verify(photosInterface).listAlbums(Optional.empty());
-    verify(googleAlbumListResponse).getAlbums();
+    verify(albumListResponse).getAlbums();
 
     // Check pagination token
     ContinuationData continuationData = result.getContinuationData();
@@ -134,7 +135,7 @@ public class GooglePhotosExporterTest {
   @Test
   public void exportAlbumSubsequentSet() throws IOException {
     setUpSingleAlbum();
-    when(googleAlbumListResponse.getNextPageToken()).thenReturn(null);
+    when(albumListResponse.getNextPageToken()).thenReturn(null);
 
     StringPaginationToken inputPaginationToken =
         new StringPaginationToken(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
@@ -146,29 +147,33 @@ public class GooglePhotosExporterTest {
     // Check results
     // Verify correct methods were called
     verify(photosInterface).listAlbums(Optional.of(ALBUM_TOKEN));
-    verify(googleAlbumListResponse).getAlbums();
+    verify(albumListResponse).getAlbums();
 
     // Check pagination token - should be absent
     ContinuationData continuationData = result.getContinuationData();
-    PaginationData paginationData = continuationData.getPaginationData();
-    assertNull(paginationData);
+    StringPaginationToken paginationData = (StringPaginationToken) continuationData
+        .getPaginationData();
+    assertThat(paginationData.getToken()).isEqualTo(GooglePhotosExporter.PHOTO_TOKEN_PREFIX);
   }
 
   @Test
   public void exportPhotoFirstSet() throws IOException {
     setUpSingleAlbum();
-    when(googleAlbumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, ALBUM_ID);
-    when(mediaItemListResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{mediaItem});
-    when(mediaItemListResponse.getNextPageToken()).thenReturn(PHOTO_TOKEN);
+    when(albumListResponse.getNextPageToken()).thenReturn(null);
+    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{mediaItem});
+    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(PHOTO_TOKEN);
+
+    IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
 
     ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.exportPhotos(null, ALBUM_ID, Optional.empty());
+        googlePhotosExporter
+            .exportPhotos(null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listAlbumContents(Optional.of(ALBUM_ID), Optional.empty());
-    verify(mediaItemListResponse).getMediaItems();
+    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.empty());
+    verify(mediaItemSearchResponse).getMediaItems();
 
     // Check pagination
     ContinuationData continuationData = result.getContinuationData();
@@ -191,22 +196,24 @@ public class GooglePhotosExporterTest {
   @Test
   public void exportPhotoSubsequentSet() throws IOException {
     setUpSingleAlbum();
-    when(googleAlbumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, ALBUM_ID);
-    when(mediaItemListResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{mediaItem});
-    when(mediaItemListResponse.getNextPageToken()).thenReturn(null);
+    when(albumListResponse.getNextPageToken()).thenReturn(null);
+    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{mediaItem});
+    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
     StringPaginationToken inputPaginationToken =
         new StringPaginationToken(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
+    IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .exportPhotos(null, ALBUM_ID, Optional.of(inputPaginationToken));
+        .exportPhotos(null, Optional.of(idOnlyContainerResource),
+            Optional.of(inputPaginationToken), uuid);
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listAlbumContents(Optional.of(ALBUM_ID), Optional.of(PHOTO_TOKEN));
-    verify(mediaItemListResponse).getMediaItems();
+    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.of(PHOTO_TOKEN));
+    verify(mediaItemSearchResponse).getMediaItems();
 
     // Check pagination token
     ContinuationData continuationData = result.getContinuationData();
@@ -215,87 +222,65 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void exportAlbumLessPhoto() throws IOException {
-    // Set up an album with a photo, and then an albumless photo
+  public void populateContainedPhotosList() throws IOException {
+    // Set up an album with two photos
     setUpSingleAlbum();
-    when(googleAlbumListResponse.getNextPageToken()).thenReturn(null);
+    when(albumListResponse.getNextPageToken()).thenReturn(null);
 
-    MediaItemListResponse albumMediaResponse = mock(MediaItemListResponse.class);
-    GoogleMediaItem albumPhoto = setUpSinglePhoto(IMG_URI, ALBUM_ID);
+    MediaItemSearchResponse albumMediaResponse = mock(MediaItemSearchResponse.class);
+    GoogleMediaItem firstPhoto = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+    String secondUri = "second uri";
+    String secondId = "second id";
+    GoogleMediaItem secondPhoto = setUpSinglePhoto(secondUri, secondId);
+
     when(photosInterface
-        .listAlbumContents(Matchers.eq(Optional.of(ALBUM_ID)), Matchers.any(Optional.class)))
+        .listMediaItems(Matchers.eq(Optional.of(ALBUM_ID)), Matchers.any(Optional.class)))
         .thenReturn(albumMediaResponse);
-    when(albumMediaResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{albumPhoto});
+    when(albumMediaResponse.getMediaItems())
+        .thenReturn(new GoogleMediaItem[]{firstPhoto, secondPhoto});
     when(albumMediaResponse.getNextPageToken()).thenReturn(null);
 
-    MediaItemListResponse albumlessMediaResponse = mock(MediaItemListResponse.class);
-    String albumlessUri = "albumlessUri";
-    GoogleMediaItem albumlessPhoto = setUpSinglePhoto(albumlessUri, null);
-    when(photosInterface
-        .listAllMediaItems(Matchers.any(Optional.class)))
-        .thenReturn(albumlessMediaResponse);
-    when(albumlessMediaResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{albumlessPhoto});
-    when(albumlessMediaResponse.getNextPageToken()).thenReturn(null);
-
     // Run test
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.export(uuid, null, Optional.empty());
+    googlePhotosExporter.populateContainedPhotosList(uuid, null);
 
-    // Check result
-    assertThat(result.getExportedData()).isNotNull();
-    PhotosContainerResource exportedResource = result.getExportedData();
-
-    // Verify correct methods were called
-    verify(photosInterface).listAlbumContents(Optional.of(ALBUM_ID), Optional.empty());
-    verify(photosInterface).listAllMediaItems(Optional.empty());
-
-    // Check photo content of exportResult
-    assertThat(exportedResource.getPhotos()).hasSize(1); // one photo, hopefully albumless
-    PhotoModel exportedPhoto = exportedResource.getPhotos().iterator().next();
-    assertThat(exportedPhoto.getFetchableUrl()).isEqualTo(albumlessUri + "=d"); // for download
-
-    // Check album content of exportResult
-    assertThat(exportedResource.getAlbums()).hasSize(1); // one album
-    PhotoAlbum exportedAlbum = exportedResource.getAlbums().iterator().next();
-    assertThat(exportedAlbum.getId()).isEqualTo(ALBUM_ID);
+    // Check contents of job store
+    TempPhotosData tempPhotosData = jobStore.findData(uuid, "tempPhotosData", TempPhotosData.class);
+    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
   @Test
-  public void addPhotosToExportResult() {
-    // Set up
-    String albumId = "albumId";
-    String containerPhotoId = "containerPhotoId";
-    String additionalPhotoId = "additionalPhotoId";
-    PhotoAlbum album = new PhotoAlbum(albumId, null, null);
-    PhotoModel containerPhoto = new PhotoModel(containerPhotoId, null, null, null, null, albumId,
-        false);
-    PhotoModel additionalPhoto = new PhotoModel(additionalPhotoId, null, null, null, null, null,
-        false);
+  /* Tests that when there is no album information passed along to exportPhotos, only albumless
+  photos are exported.
+  */
+  public void onlyExportAlbumlessPhoto() throws IOException {
+    // Set up - two photos will be returned by a media item search without an album id, but one of
+    // them will have already been put into the list of contained photos
+    String containedPhotoUri = "contained photo uri";
+    String containedPhotoId = "contained photo id";
+    GoogleMediaItem containedPhoto = setUpSinglePhoto(containedPhotoUri, containedPhotoId);
+    String albumlessPhotoUri = "albumless photo uri";
+    String albumlessPhotoId = "albumless photo id";
+    GoogleMediaItem albumlessPhoto = setUpSinglePhoto(albumlessPhotoUri, albumlessPhotoId);
+    MediaItemSearchResponse mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
-    ResultType resultType = ResultType.CONTINUE;
-    ContinuationData continuationData = new ContinuationData(
-        new StringPaginationToken("token"));
+    when(photosInterface
+        .listMediaItems(Matchers.eq(Optional.empty()), Matchers.eq(Optional.empty())))
+        .thenReturn(mediaItemSearchResponse);
+    when(mediaItemSearchResponse.getMediaItems())
+        .thenReturn(new GoogleMediaItem[]{containedPhoto, albumlessPhoto});
+    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
-    ExportResult<PhotosContainerResource> originalExportResult = new ExportResult<>(
-        resultType,
-        new PhotosContainerResource(Collections.singleton(album),
-            Collections.singleton(containerPhoto)),
-        continuationData);
-    List<PhotoModel> additionalPhotos = Collections.singletonList(additionalPhoto);
+    TempPhotosData tempPhotosData = new TempPhotosData(uuid);
+    tempPhotosData.addContainedPhotoId(containedPhotoId);
+    jobStore.create(uuid, "tempPhotosData", tempPhotosData);
 
     // Run test
-    ExportResult<PhotosContainerResource> newExportResult = googlePhotosExporter
-        .addMorePhotos(originalExportResult, additionalPhotos);
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter
+        .exportPhotos(null, Optional.empty(), Optional.empty(), uuid);
 
     // Check results
-    assertThat(newExportResult.getType()).isEqualTo(resultType);
-    assertThat(newExportResult.getContinuationData()).isEqualTo(continuationData);
-
-    PhotosContainerResource newResource = newExportResult.getExportedData();
-    assertThat(newResource.getAlbums()).hasSize(1);
-    assertThat(newResource.getAlbums().iterator().next()).isEqualTo(album);
-    assertThat(newResource.getPhotos()).hasSize(2);
-    assertThat(newResource.getPhotos()).containsExactly(containerPhoto, additionalPhoto);
+    assertThat(result.getExportedData().getPhotos().stream().map(PhotoModel::getFetchableUrl)
+        .collect(Collectors.toList())).containsExactly(albumlessPhotoUri + "=d"); // download
   }
 
   /**
@@ -306,17 +291,18 @@ public class GooglePhotosExporterTest {
     albumEntry.setId(ALBUM_ID);
     albumEntry.setTitle("Title");
 
-    when(googleAlbumListResponse.getAlbums()).thenReturn(new GoogleAlbum[]{albumEntry});
+    when(albumListResponse.getAlbums()).thenReturn(new GoogleAlbum[]{albumEntry});
   }
 
   /**
    * Sets up a response for a single photo
    */
-  private GoogleMediaItem setUpSinglePhoto(String imageUri, @Nullable String photoToken) {
+  private GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
     GoogleMediaItem photoEntry = new GoogleMediaItem();
     photoEntry.setDescription("Description");
     photoEntry.setMimeType("image/jpeg");
     photoEntry.setBaseUrl(imageUri);
+    photoEntry.setId(photoId);
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
     photoEntry.setMediaMetadata(mediaMetadata);
