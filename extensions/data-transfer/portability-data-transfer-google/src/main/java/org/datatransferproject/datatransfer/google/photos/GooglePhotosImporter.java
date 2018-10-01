@@ -19,6 +19,7 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.gdata.model.gd.Im;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -76,6 +77,11 @@ public class GooglePhotosImporter
   @Override
   public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
       PhotosContainerResource data) throws IOException {
+    if (data == null) {
+      // Nothing to do
+      return ImportResult.OK;
+    }
+
     // Uploads album metadata
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {

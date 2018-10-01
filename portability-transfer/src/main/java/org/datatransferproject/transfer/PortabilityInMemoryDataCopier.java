@@ -114,19 +114,21 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     }
     logger.debug(jobIdPrefix + "Finished export");
 
-    logger.debug(jobIdPrefix + "Starting import");
-    CallableImporter callableImporter = new CallableImporter(importerProvider, jobId,
-        importAuthData,
-        exportResult.getExportedData());
-    RetryingCallable<ImportResult> retryingImporter = new RetryingCallable<>(callableImporter,
-        retryStrategyLibrary, Clock.systemUTC());
-    try {
-      retryingImporter.call();
-    } catch (RetryException e) {
-      logger.warn(jobIdPrefix + "Error happened during import: {}", e);
-      return;
+    if (exportResult.getExportedData() != null) {
+      logger.debug(jobIdPrefix + "Starting import");
+      CallableImporter callableImporter = new CallableImporter(importerProvider, jobId,
+          importAuthData,
+          exportResult.getExportedData());
+      RetryingCallable<ImportResult> retryingImporter = new RetryingCallable<>(callableImporter,
+          retryStrategyLibrary, Clock.systemUTC());
+      try {
+        retryingImporter.call();
+      } catch (RetryException e) {
+        logger.warn(jobIdPrefix + "Error happened during import: {}", e);
+        return;
+      }
+      logger.debug(jobIdPrefix + "Finished import");
     }
-    logger.debug(jobIdPrefix + "Finished import");
 
     // Import and Export were successful, determine what to do next
     ContinuationData continuationData = exportResult.getContinuationData();
@@ -141,7 +143,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             importAuthData,
             Optional.of(new ExportInformation(
                 continuationData.getPaginationData(),
-                exportInformation.get().getContainerResource())));
+                exportInformation.isPresent()
+                    ? exportInformation.get().getContainerResource()
+                    : null)));
       }
 
       // Start processing sub-resources

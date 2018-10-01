@@ -54,6 +54,8 @@ public class GoogleMediaItem {
 
   public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
 
+  public void setId(String id) { this.id = id; }
+
   public void setMimeType(String mimeType) { this.mimeType = mimeType; }
 
   public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }

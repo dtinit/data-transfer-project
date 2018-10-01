@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * The response provided by the Google Photos API for an album query
  */
-public class GoogleAlbumListResponse {
+public class AlbumListResponse {
   @JsonProperty("albums")
   private GoogleAlbum[] albums;
 
