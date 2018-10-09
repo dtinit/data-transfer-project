@@ -33,7 +33,7 @@ import javax.ws.rs.core.MediaType;
 public class TransferController {
     private final Action<CreateTransferJob, TransferJob> createJobAction;
     private final Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction;
-    private final Action<ReserveWorker, String> reserveWorkerAction;
+    private final Action<ReserveWorker, ReservedWorker> reserveWorkerAction;
     private final Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction;
     private final Action<StartTransferJob, TransferJob> startJobAction;
     private final Action<GetTransferJob, TransferJob> getJobAction;
@@ -41,7 +41,7 @@ public class TransferController {
     public TransferController(
             Action<CreateTransferJob, TransferJob> createJobAction,
             Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction,
-            Action<ReserveWorker, String> reserveWorkerAction,
+            Action<ReserveWorker, ReservedWorker> reserveWorkerAction,
             Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction,
             Action<StartTransferJob, TransferJob> startJobAction,
             Action<GetTransferJob, TransferJob> getJobAction) {
@@ -72,7 +72,7 @@ public class TransferController {
 
     @POST
     @Path("worker/{id}")
-    public String reserveWorker(ReserveWorker reserveWorker) {
+    public ReservedWorker reserveWorker(ReserveWorker reserveWorker) {
         return reserveWorkerAction.handle(reserveWorker);
     }
 
