@@ -41,6 +41,8 @@ public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker
     Preconditions.checkNotNull(id, "transfer job ID required for ReserveWorkerAction");
     UUID jobId = decodeJobId(id);
     updateStateToCredsAvailable(jobId);
+    // Instead of returning an empty string, return a ReservedWorker response with an empty public key.
+    // TODO(seehamrun): consider making this a ReserveWorkerResponse type that contains a status if this was successful
     return new ReservedWorker("");
   }
 
