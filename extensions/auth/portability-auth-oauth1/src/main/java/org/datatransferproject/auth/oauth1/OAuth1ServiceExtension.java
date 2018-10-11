@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.auth.oauth2;
+package org.datatransferproject.auth.oauth1;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
@@ -32,55 +32,57 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OAuth2ServiceExtension implements AuthServiceExtension {
+public class OAuth1ServiceExtension implements AuthServiceExtension {
 
-  private static final Logger logger = LoggerFactory.getLogger(OAuth2ServiceExtension.class);
+  private final Logger logger = LoggerFactory.getLogger(OAuth1ServiceExtension.class);
 
-  private final OAuth2Config oAuth2Config;
-
-  private volatile Map<String, OAuth2DataGenerator> exportAuthDataGenerators;
-  private volatile Map<String, OAuth2DataGenerator> importAuthDataGenerators;
+  private volatile Map<String, OAuth1DataGenerator> exportAuthDataGenerators;
+  private volatile Map<String, OAuth1DataGenerator> importAuthDataGenerators;
 
   private AppCredentials appCredentials;
   private HttpTransport httpTransport;
 
-  private boolean initialized = false;
+  private final OAuth1Config config;
 
-  public OAuth2ServiceExtension(OAuth2Config oAuth2Config) {
-    this.oAuth2Config = oAuth2Config;
+  private boolean initialized;
+
+  public OAuth1ServiceExtension(OAuth1Config config) {
+    this.config = config;
   }
 
   @Override
   public String getServiceId() {
-    return oAuth2Config.getServiceName();
+    return config.getServiceName();
   }
 
   @Override
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
+    Preconditions.checkArgument(initialized, "OAuth1ServiceExtension is not initialized.");
     return getOrCreateAuthDataGenerator(transferDataType, mode);
   }
 
   @Override
   public List<String> getImportTypes() {
-    return new ArrayList<>(oAuth2Config.getImportScopes().keySet());
+    return new ArrayList(config.getImportScopes().keySet());
   }
 
   @Override
   public List<String> getExportTypes() {
-    return new ArrayList<>(oAuth2Config.getExportScopes().keySet());
+    return new ArrayList(config.getExportScopes().keySet());
   }
 
   @Override
   public void initialize(ExtensionContext context) {
     if (initialized) {
+      logger.warn("OAuth1ServiceExtension already initialized.");
       return;
     }
 
-    String serviceName = oAuth2Config.getServiceName().toUpperCase();
-
+    String serviceName = config.getServiceName().toUpperCase();
     try {
       appCredentials = context.getService(AppCredentialStore.class)
-          .getAppCredentials(serviceName + "_KEY", serviceName + "_SECRET");
+          .getAppCredentials(serviceName + "_KEY",
+              serviceName + "_SECRET");
     } catch (IOException e) {
       logger.warn("Problem getting app credentials: {}.  Did you set {}_KEY and {}_SECRET?", e,
           serviceName, serviceName);
@@ -93,21 +95,21 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
     initialized = true;
   }
 
-  private synchronized OAuth2DataGenerator getOrCreateAuthDataGenerator(
+  private synchronized OAuth1DataGenerator getOrCreateAuthDataGenerator(
       String transferType, AuthMode mode) {
-    Preconditions.checkState(initialized, "Cannot get OAuth2DataGenerator before initialization");
-    Preconditions.checkArgument(mode == AuthMode.EXPORT
-        ? getExportTypes().contains(transferType)
-        : getImportTypes().contains(transferType));
+    Preconditions.checkArgument(
+        mode == AuthMode.EXPORT
+            ? config.getExportScopes().containsKey(transferType)
+            : config.getImportScopes().containsKey(transferType),
+        String.format("Transfer type %s is not supported for %s by %s.", transferType, mode,
+            config.getServiceName()));
 
-    Map<String, OAuth2DataGenerator> generators =
+    Map<String, OAuth1DataGenerator> generators =
         mode == AuthMode.EXPORT ? exportAuthDataGenerators : importAuthDataGenerators;
 
     if (!generators.containsKey(transferType)) {
-      generators.put(
-          transferType,
-          new OAuth2DataGenerator(oAuth2Config, appCredentials, httpTransport, transferType, mode)
-      );
+      generators.put(transferType,
+          new OAuth1DataGenerator(config, appCredentials, httpTransport, transferType, mode));
     }
 
     return generators.get(transferType);

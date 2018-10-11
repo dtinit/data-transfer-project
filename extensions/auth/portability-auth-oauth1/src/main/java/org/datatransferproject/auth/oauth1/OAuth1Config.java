@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile project(':portability-spi-api')
-    compile project(':portability-spi-cloud')
+package org.datatransferproject.auth.oauth1;
 
-    compile "com.google.http-client:google-http-client:${googleHttpClientVersion}"
-    compile "com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}"
+import java.util.List;
+import java.util.Map;
 
-    compile "org.slf4j:slf4j-api:${slf4jVersion}"
-    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+public interface OAuth1Config {
 
-    testCompile("com.google.truth:truth:${truthVersion}")
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.mockito:mockito-all:${mockitoVersion}")
+  String getServiceName();
+
+  String getRequestTokenUrl();
+
+  String getAuthorizeUrl();
+
+  String getAccessTokenUrl();
+
+  Map<String, List<String>> getExportScopes();
+
+  Map<String, List<String>> getImportScopes();
 }
