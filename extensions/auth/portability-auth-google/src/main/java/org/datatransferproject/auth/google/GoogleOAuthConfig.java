@@ -31,7 +31,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
 
   @Override
   public String getAuthUrl() {
-    return "https://accounts.google.com/o/oauth2/v2/auth";
+    return "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force";
   }
 
   @Override

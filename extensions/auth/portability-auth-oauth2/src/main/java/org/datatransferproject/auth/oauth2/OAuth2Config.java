@@ -16,6 +16,7 @@
 
 package org.datatransferproject.auth.oauth2;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,5 +31,9 @@ public interface OAuth2Config {
   Map<String, List<String>> getExportScopes();
 
   Map<String, List<String>> getImportScopes();
+
+  default Map<String, String> getExtraParameters() {
+    return new HashMap<>();
+  }
 
 }

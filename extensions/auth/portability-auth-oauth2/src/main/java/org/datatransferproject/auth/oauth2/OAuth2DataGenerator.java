@@ -102,7 +102,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   }
 
   private AuthorizationCodeFlow createFlow() {
-    return new AuthorizationCodeFlow.Builder(
+    AuthorizationCodeFlow.Builder authCodeFlowBuilder = new AuthorizationCodeFlow.Builder(
         BearerToken.authorizationHeaderAccessMethod(), // Access Method
         httpTransport,
         new JacksonFactory(),
@@ -111,7 +111,8 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
             clientId, clientSecret), // HttpExecuteInterceptor
         clientId, // client ID
         authServerUrl)
-        .setScopes(scopes)
-        .build();
+        .setScopes(scopes);
+
+    return authCodeFlowBuilder.build();
   }
 }
