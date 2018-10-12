@@ -32,8 +32,4 @@ public interface OAuth2Config {
 
   Map<String, List<String>> getImportScopes();
 
-  default Map<String, String> getExtraParameters() {
-    return new HashMap<>();
-  }
-
 }

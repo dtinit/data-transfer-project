@@ -19,7 +19,7 @@ include ':distributions:demo-google-deployment:api', ':distributions:demo-google
 include ':portability-api', ':portability-transfer', ':portability-bootstrap-vm'
 
 // Auth Extensions
-include ':extensions:auth:portability-auth-oauth1', ':extensions:auth:portability-auth-oauth2'
+include ':extensions:auth:portability-auth-oauth2'
 
 // Cloud Extensions
 include ':extensions:cloud:portability-cloud-local', ':extensions:cloud:portability-cloud-google', ':extensions:cloud:portability-cloud-microsoft'

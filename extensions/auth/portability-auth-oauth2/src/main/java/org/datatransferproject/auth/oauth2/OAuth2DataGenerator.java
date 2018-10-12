@@ -18,7 +18,11 @@ package org.datatransferproject.auth.oauth2;
 
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
-import com.google.api.client.auth.oauth2.*;
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -37,6 +41,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class OAuth2DataGenerator implements AuthDataGenerator {
 
+  private final OAuth2Config config;
   private final List<String> scopes;
   private final String clientId;
   private final String clientSecret;
@@ -47,6 +52,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   OAuth2DataGenerator(OAuth2Config config, AppCredentials appCredentials,
       HttpTransport httpTransport,
       String dataType, AuthMode authMode) {
+    this.config = config;
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
@@ -74,15 +80,15 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
       AuthData initialAuthData, String extra) {
     Preconditions.checkArgument(
         Strings.isNullOrEmpty(extra), "Extra data not expected for OAuth flow");
-    Preconditions.checkArgument(
-        initialAuthData == null, "Earlier auth data not expected for OAuth flow");
+    Preconditions.checkArgument(initialAuthData == null,
+        "Initial auth data not expected for " + config.getServiceName());
     AuthorizationCodeFlow flow = createFlow();
     TokenResponse response;
     try {
-      response =
-          flow.newTokenRequest(authCode)
-              .setRedirectUri(callbackBaseUrl)
-              .execute();
+      response = flow
+          .newTokenRequest(authCode)
+          .setRedirectUri(callbackBaseUrl)
+          .execute();
     } catch (IOException e) {
       throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);
     }

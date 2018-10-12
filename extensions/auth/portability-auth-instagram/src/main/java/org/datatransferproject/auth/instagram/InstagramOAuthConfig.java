@@ -16,6 +16,9 @@
 
 package org.datatransferproject.auth.instagram;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.datatransferproject.auth.oauth2.OAuth2Config;
@@ -39,11 +42,11 @@ public class InstagramOAuthConfig implements OAuth2Config {
 
   @Override
   public Map<String, List<String>> getExportScopes() {
-    return null;
+    return ImmutableMap.of("PHOTOS", ImmutableList.of("basic"));
   }
 
   @Override
   public Map<String, List<String>> getImportScopes() {
-    return null;
+    return ImmutableMap.of();
   }
 }
