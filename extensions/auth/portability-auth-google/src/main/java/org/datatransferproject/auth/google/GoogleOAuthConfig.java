@@ -18,11 +18,15 @@ package org.datatransferproject.auth.google;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Map;
-import org.datatransferproject.auth.oauth2.OAuth2Config;
+import java.util.Set;
+import org.datatransferproject.auth.OAuth2Config;
 
 public class GoogleOAuthConfig implements OAuth2Config {
+
+  // https://developers.google.com/identity/protocols/OAuth2WebServer
 
   @Override
   public String getServiceName() {
@@ -30,34 +34,38 @@ public class GoogleOAuthConfig implements OAuth2Config {
   }
 
   @Override
+  // See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
   public String getAuthUrl() {
     return "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force";
   }
 
   @Override
+  //See https://developers.google.com/identity/protocols/OAuth2WebServer#exchange-authorization-code
   public String getTokenUrl() {
     return "https://www.googleapis.com/oauth2/v4/token";
   }
 
   @Override
-  public Map<String, List<String>> getExportScopes() {
-    return ImmutableMap.<String, List<String>>builder()
-        .put("CALENDAR", ImmutableList.of("https://www.googleapis.com/auth/calendar.readonly"))
-        .put("CONTACTS", ImmutableList.of("https://www.googleapis.com/auth/contacts.readonly"))
-        .put("MAIL", ImmutableList.of("https://www.googleapis.com/auth/gmail.readonly"))
-        .put("PHOTOS", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
-        .put("TASKS", ImmutableList.of("https://www.googleapis.com/auth/tasks.readonly"))
+  // See https://developers.google.com/identity/protocols/googlescopes
+  public Map<String, Set<String>> getExportScopes() {
+    return ImmutableMap.<String, Set<String>>builder()
+        .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar.readonly"))
+        .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts.readonly"))
+        .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.readonly"))
+        .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
+        .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks.readonly"))
         .build();
   }
 
   @Override
-  public Map<String, List<String>> getImportScopes() {
-    return ImmutableMap.<String, List<String>>builder()
-        .put("CALENDAR", ImmutableList.of("https://www.googleapis.com/auth/calendar"))
-        .put("CONTACTS", ImmutableList.of("https://www.googleapis.com/auth/contacts"))
-        .put("MAIL", ImmutableList.of("https://www.googleapis.com/auth/gmail.modify"))
-        .put("PHOTOS", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary"))
-        .put("TASKS", ImmutableList.of("https://www.googleapis.com/auth/tasks"))
+  // See https://developers.google.com/identity/protocols/googlescopes
+  public Map<String, Set<String>> getImportScopes() {
+    return ImmutableMap.<String, Set<String>>builder()
+        .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar"))
+        .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts"))
+        .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.modify"))
+        .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
+        .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
         .build();
   }
 }

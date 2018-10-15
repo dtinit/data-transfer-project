@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.auth.oauth2;
+package org.datatransferproject.auth;
 
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
@@ -31,7 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
@@ -42,7 +42,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class OAuth2DataGenerator implements AuthDataGenerator {
 
   private final OAuth2Config config;
-  private final List<String> scopes;
+  private final Set<String> scopes;
+  // TODO: handle dynamic updates of client ids and secrets
   private final String clientId;
   private final String clientSecret;
   private final HttpTransport httpTransport;

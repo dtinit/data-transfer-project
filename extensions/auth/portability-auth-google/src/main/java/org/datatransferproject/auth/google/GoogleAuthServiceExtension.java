@@ -15,7 +15,7 @@
  */
 package org.datatransferproject.auth.google;
 
-import org.datatransferproject.auth.oauth2.OAuth2ServiceExtension;
+import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
 /**

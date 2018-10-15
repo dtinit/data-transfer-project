@@ -16,14 +16,15 @@
 
 package org.datatransferproject.auth.instagram;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.HashMap;
-import java.util.List;
+import com.google.common.collect.ImmutableSet;
 import java.util.Map;
-import org.datatransferproject.auth.oauth2.OAuth2Config;
+import java.util.Set;
+import org.datatransferproject.auth.OAuth2Config;
 
 public class InstagramOAuthConfig implements OAuth2Config {
+
+  // https://www.instagram.com/developer/authentication/
 
   @Override
   public String getServiceName() {
@@ -41,12 +42,14 @@ public class InstagramOAuthConfig implements OAuth2Config {
   }
 
   @Override
-  public Map<String, List<String>> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", ImmutableList.of("basic"));
+  // See https://www.instagram.com/developer/authorization/
+  public Map<String, Set<String>> getExportScopes() {
+    return ImmutableMap.of("PHOTOS", ImmutableSet.of("basic"));
   }
 
   @Override
-  public Map<String, List<String>> getImportScopes() {
+  // Instagram does not provide an API for import; https://help.instagram.com/442418472487929
+  public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.of();
   }
 }

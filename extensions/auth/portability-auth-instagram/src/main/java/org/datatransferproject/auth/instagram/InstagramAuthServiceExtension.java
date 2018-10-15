@@ -15,7 +15,8 @@
  */
 package org.datatransferproject.auth.instagram;
 
-import org.datatransferproject.auth.oauth2.OAuth2ServiceExtension;
+
+import org.datatransferproject.auth.OAuth2ServiceExtension;
 
 public class InstagramAuthServiceExtension extends OAuth2ServiceExtension {
 

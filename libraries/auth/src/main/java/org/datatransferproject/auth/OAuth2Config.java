@@ -14,22 +14,42 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.auth.oauth2;
+package org.datatransferproject.auth;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * Interface for providing information necessary to run OAuth2 flow
+ */
 public interface OAuth2Config {
 
+  /**
+  Returns the name of the service, used for client id and secret retrieval and display
+   */
   String getServiceName();
 
+  /**
+   * Returns the authorization URL to be used
+   */
   String getAuthUrl();
 
+  /**
+   * Returns the token URL to be used
+   */
   String getTokenUrl();
 
-  Map<String, List<String>> getExportScopes();
+  /**
+   * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
+   * defined in the auth data generator or elsewhere
+   */
+  Map<String, Set<String>> getExportScopes();
 
-  Map<String, List<String>> getImportScopes();
+  /**
+   * Returns a map of scopes needed for import, keyed by data type (e.g., PHOTOS, CALENDAR) as
+   * defined in the auth data generator or elsewhere
+   */
+  Map<String, Set<String>> getImportScopes();
 
 }

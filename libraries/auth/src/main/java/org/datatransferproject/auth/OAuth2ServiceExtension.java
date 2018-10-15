@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.auth.oauth2;
+package org.datatransferproject.auth;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
