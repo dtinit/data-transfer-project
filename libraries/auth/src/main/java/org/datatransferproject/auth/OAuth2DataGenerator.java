@@ -43,7 +43,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
 
   private final OAuth2Config config;
   private final Set<String> scopes;
-  // TODO: handle dynamic updates of client ids and secrets
+  // TODO: handle dynamic updates of client ids and secrets #597
   private final String clientId;
   private final String clientSecret;
   private final HttpTransport httpTransport;
