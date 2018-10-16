@@ -60,6 +60,13 @@ public interface OAuth1Config {
   String getScopeParameterName();
 
   /**
+   * Shows what step the scopes should be requested in
+   */
+  default OAuth1Step whenAddScopes() {
+    return OAuth1Step.AUTHORIZATION;
+  }
+
+  /**
    * Returns the {@link OAuthSigner} for the initial token request
    */
   OAuthSigner getRequestTokenSigner(String clientSecret);
@@ -68,4 +75,10 @@ public interface OAuth1Config {
    * Returns the {@link OAuthSigner} for the access token request
    */
   OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret);
+
+  enum OAuth1Step {
+    REQUEST_TOKEN,
+    AUTHORIZATION,
+    ACCESS_TOKEN;
+  }
 }

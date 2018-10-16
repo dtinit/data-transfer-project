@@ -20,11 +20,11 @@ import com.google.api.client.auth.oauth.OAuthAuthorizeTemporaryTokenUrl;
 import com.google.api.client.auth.oauth.OAuthCredentialsResponse;
 import com.google.api.client.auth.oauth.OAuthGetAccessToken;
 import com.google.api.client.auth.oauth.OAuthGetTemporaryToken;
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import org.datatransferproject.auth.OAuth1Config.OAuth1Step;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
@@ -70,6 +70,9 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     tempTokenRequest.transport = httpTransport;
     tempTokenRequest.consumerKey = clientId;
     tempTokenRequest.signer = config.getRequestTokenSigner(clientSecret);
+    if (config.whenAddScopes() == OAuth1Step.REQUEST_TOKEN) {
+      tempTokenRequest.set(config.getScopeParameterName(), scope);
+    }
     TokenSecretAuthData authData;
     try {
       // get request token
@@ -83,7 +86,9 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     OAuthAuthorizeTemporaryTokenUrl authorizeUrl = new OAuthAuthorizeTemporaryTokenUrl(
         config.getAuthorizationUrl());
     authorizeUrl.temporaryToken = authData.getToken();
-    authorizeUrl.set(config.getScopeParameterName(), scope);
+    if (config.whenAddScopes() == OAuth1Step.AUTHORIZATION) {
+      authorizeUrl.set(config.getScopeParameterName(), scope);
+    }
     String url = authorizeUrl.build();
 
     return new AuthFlowConfiguration(url, getTokenUrl(), AuthProtocol.OAUTH_1, authData);

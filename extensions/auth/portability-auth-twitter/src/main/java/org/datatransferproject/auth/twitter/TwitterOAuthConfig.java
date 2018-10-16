@@ -61,6 +61,11 @@ public class TwitterOAuthConfig implements OAuth1Config {
   }
 
   @Override
+  public OAuth1Step whenAddScopes() {
+    return OAuth1Step.REQUEST_TOKEN;
+  }
+
+  @Override
   public OAuthSigner getRequestTokenSigner(String clientSecret) {
     OAuthHmacSigner signer = new OAuthHmacSigner();
     signer.clientSharedSecret = clientSecret;
