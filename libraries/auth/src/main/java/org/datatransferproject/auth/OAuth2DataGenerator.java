@@ -56,7 +56,6 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
       String dataType, AuthMode authMode) {
     this.config = config;
     validateConfig();
-
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
