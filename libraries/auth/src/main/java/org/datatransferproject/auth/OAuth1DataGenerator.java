@@ -16,18 +16,32 @@
 
 package org.datatransferproject.auth;
 
+import com.google.api.client.auth.oauth.OAuthAuthorizeTemporaryTokenUrl;
+import com.google.api.client.auth.oauth.OAuthCredentialsResponse;
+import com.google.api.client.auth.oauth.OAuthGetAccessToken;
+import com.google.api.client.auth.oauth.OAuthGetTemporaryToken;
+import com.google.api.client.auth.oauth.OAuthHmacSigner;
 import com.google.api.client.http.HttpTransport;
-import java.util.Set;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.io.IOException;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
+import org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OAuth1DataGenerator implements AuthDataGenerator {
 
+  private static final Logger logger = LoggerFactory.getLogger(OAuth1DataGenerator.class);
+  private static final String OUT_OF_BOUNDS_CALLBACK = "oob"; // TODO: universal?
+
   private final OAuth1Config config;
-  private final Set<String> scopes;
+  private final String scope;
   // TODO: handle dynamic updates of client ids and secrets #597
   private final String clientId;
   private final String clientSecret;
@@ -36,22 +50,82 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
   OAuth1DataGenerator(OAuth1Config config, AppCredentials appCredentials,
       HttpTransport httpTransport, String datatype, AuthMode mode) {
     this.config = config;
+    validateConfig();
+
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
-    this.scopes = mode == AuthMode.EXPORT
+    this.scope = mode == AuthMode.EXPORT
         ? config.getExportScopes().get(datatype)
         : config.getImportScopes().get(datatype);
   }
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    return null;
+    String callback =
+        (Strings.isNullOrEmpty(callbackBaseUrl)) ? OUT_OF_BOUNDS_CALLBACK : callbackBaseUrl;
+    OAuthGetTemporaryToken tempTokenRequest = new OAuthGetTemporaryToken(
+        config.getRequestTokenUrl());
+    tempTokenRequest.callback = callback;
+    tempTokenRequest.transport = httpTransport;
+    tempTokenRequest.consumerKey = clientId;
+    tempTokenRequest.signer = new OAuthHmacSigner(); // TODO: this isn't universal!
+    TokenSecretAuthData authData;
+    try {
+      // get request token
+      OAuthCredentialsResponse tempTokenResponse = tempTokenRequest.execute();
+      authData = new TokenSecretAuthData(tempTokenResponse.token, tempTokenResponse.tokenSecret);
+    } catch (IOException e) {
+      logger.warn("Couldn't get request token {}", e.getMessage());
+      return null;
+    }
+
+    OAuthAuthorizeTemporaryTokenUrl authorizeUrl = new OAuthAuthorizeTemporaryTokenUrl(
+        config.getAuthorizationUrl());
+    authorizeUrl.temporaryToken = authData.getToken();
+    authorizeUrl.set(config.getScopeParameterName(), scope);
+    String url = authorizeUrl.build();
+
+    return new AuthFlowConfiguration(url, getTokenUrl(), AuthProtocol.OAUTH_1, authData);
   }
 
   @Override
   public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
       AuthData initialAuthData, String extra) {
-    return null;
+    Preconditions
+        .checkArgument(Strings.isNullOrEmpty(extra), "Extra data not expected for OAuth flow");
+    Preconditions.checkArgument(initialAuthData != null,
+        "Initial auth data expected for " + config.getServiceName());
+
+    OAuthGetAccessToken accessTokenRequest = new OAuthGetAccessToken(config.getAccessTokenUrl());
+    accessTokenRequest.transport = httpTransport;
+    accessTokenRequest.temporaryToken = ((TokenSecretAuthData) initialAuthData).getToken();
+    accessTokenRequest.signer = new OAuthHmacSigner(); // TODO: not universal
+    accessTokenRequest.verifier = authCode;
+    TokenSecretAuthData accessToken;
+    try {
+      OAuthCredentialsResponse response = accessTokenRequest.execute();
+      accessToken = new TokenSecretAuthData(response.token, response.tokenSecret);
+    } catch (IOException e) {
+      logger.warn("Couldn't get access token {}", e.getMessage());
+      return null;
+    }
+
+    return accessToken;
+  }
+
+  private void validateConfig() {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getServiceName()),
+        "Config is missing service name");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getRequestTokenUrl()),
+        "Config is missing request token url");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getAuthorizationUrl()),
+        "Config is missing authorization url");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getAccessTokenUrl()),
+        "Config is missing access token url");
+    Preconditions
+        .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
+    Preconditions
+        .checkArgument(config.getImportScopes() != null, "Config is missing import scopes");
   }
 }

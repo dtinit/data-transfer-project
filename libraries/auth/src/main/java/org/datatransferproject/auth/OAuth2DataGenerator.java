@@ -55,6 +55,8 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
       HttpTransport httpTransport,
       String dataType, AuthMode authMode) {
     this.config = config;
+    validateConfig();
+
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
@@ -120,5 +122,18 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         .setScopes(scopes);
 
     return authCodeFlowBuilder.build();
+  }
+
+  private void validateConfig() {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getServiceName()),
+        "Config is missing service name");
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
+    Preconditions
+        .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
+    Preconditions
+        .checkArgument(config.getImportScopes() != null, "Config is missing import scopes");
   }
 }

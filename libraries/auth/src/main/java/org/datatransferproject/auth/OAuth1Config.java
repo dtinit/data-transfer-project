@@ -17,7 +17,6 @@
 package org.datatransferproject.auth;
 
 import java.util.Map;
-import java.util.Set;
 
 public interface OAuth1Config {
 
@@ -45,11 +44,16 @@ public interface OAuth1Config {
    * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
    * defined in the auth data generator or elsewhere
    */
-  Map<String, Set<String>> getExportScopes();
+  Map<String, String> getExportScopes();
 
   /**
    * Returns a map of scopes needed for import, keyed by data type (e.g., PHOTOS, CALENDAR) as
    * defined in the auth data generator or elsewhere
    */
-  Map<String, Set<String>> getImportScopes();
+  Map<String, String> getImportScopes();
+
+  /**
+   * Returns the parameter name for scopes
+   */
+  String getScopeParameterName();
 }
