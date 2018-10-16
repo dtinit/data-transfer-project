@@ -50,8 +50,6 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   private final String clientId;
   private final String clientSecret;
   private final HttpTransport httpTransport;
-  private final String authServerUrl;
-  private final String tokenServerUrl;
 
   OAuth2DataGenerator(OAuth2Config config, AppCredentials appCredentials,
       HttpTransport httpTransport,
@@ -63,8 +61,6 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     this.scopes = authMode == AuthMode.EXPORT
         ? config.getExportScopes().get(dataType)
         : config.getImportScopes().get(dataType);
-    this.authServerUrl = config.getAuthUrl();
-    this.tokenServerUrl = config.getTokenUrl();
   }
 
   @Override
@@ -116,11 +112,11 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         BearerToken.authorizationHeaderAccessMethod(), // Access Method
         httpTransport,
         new JacksonFactory(),
-        new GenericUrl(tokenServerUrl),
+        new GenericUrl(config.getTokenUrl()),
         new ClientParametersAuthentication(
             clientId, clientSecret), // HttpExecuteInterceptor
         clientId, // client ID
-        authServerUrl)
+        config.getAuthUrl())
         .setScopes(scopes);
 
     return authCodeFlowBuilder.build();

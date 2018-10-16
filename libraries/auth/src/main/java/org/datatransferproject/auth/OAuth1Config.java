@@ -19,25 +19,27 @@ package org.datatransferproject.auth;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Interface for providing information necessary to run OAuth2 flow
- */
-public interface OAuth2Config {
+public interface OAuth1Config {
 
   /**
-  Returns the name of the service, used for display, and client id and secret retrieval
+   * Returns the name of the service, used for display, and client id and secret retrieval
    */
   String getServiceName();
 
   /**
-   * Returns the authorization URL to be used
+   * Returns the request token url
    */
-  String getAuthUrl();
+  String getRequestTokenUrl();
 
   /**
-   * Returns the token URL to be used
+   * Returns the authorization url
    */
-  String getTokenUrl();
+  String getAuthorizationUrl();
+
+  /**
+   * Returns the access token url
+   */
+  String getAccessTokenUrl();
 
   /**
    * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
@@ -50,5 +52,4 @@ public interface OAuth2Config {
    * defined in the auth data generator or elsewhere
    */
   Map<String, Set<String>> getImportScopes();
-
 }
