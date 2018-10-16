@@ -22,6 +22,9 @@ import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
+/**
+ * Class that provides Instagram-specific information for OAuth2
+ */
 public class InstagramOAuthConfig implements OAuth2Config {
 
   // https://www.instagram.com/developer/authentication/
@@ -41,14 +44,14 @@ public class InstagramOAuthConfig implements OAuth2Config {
     return "https://api.instagram.com/oauth/access_token";
   }
 
-  @Override
   // See https://www.instagram.com/developer/authorization/
+  @Override
   public Map<String, Set<String>> getExportScopes() {
     return ImmutableMap.of("PHOTOS", ImmutableSet.of("basic"));
   }
 
-  @Override
   // Instagram does not provide an API for import; https://help.instagram.com/442418472487929
+  @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.of();
   }

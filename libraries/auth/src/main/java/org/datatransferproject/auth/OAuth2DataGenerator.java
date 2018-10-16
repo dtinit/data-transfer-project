@@ -39,6 +39,9 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+/**
+ * General implementation of an {@link AuthDataGenerator} for OAuth2.
+ */
 public class OAuth2DataGenerator implements AuthDataGenerator {
 
   private final OAuth2Config config;
@@ -94,7 +97,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
       throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);
     }
 
-    // Figure out storage
+    // TODO: Figure out storage
     Credential credential;
     try {
       credential = flow.createAndStoreCredential(response, id);

@@ -22,6 +22,9 @@ import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
+/**
+ * Class that supplies Google-specific OAuth2 info
+ */
 public class GoogleOAuthConfig implements OAuth2Config {
 
   // https://developers.google.com/identity/protocols/OAuth2WebServer
@@ -31,20 +34,20 @@ public class GoogleOAuthConfig implements OAuth2Config {
     return "Google";
   }
 
-  @Override
   // See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
+  @Override
   public String getAuthUrl() {
     return "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force";
   }
 
-  @Override
   //See https://developers.google.com/identity/protocols/OAuth2WebServer#exchange-authorization-code
+  @Override
   public String getTokenUrl() {
     return "https://www.googleapis.com/oauth2/v4/token";
   }
 
-  @Override
   // See https://developers.google.com/identity/protocols/googlescopes
+  @Override
   public Map<String, Set<String>> getExportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar.readonly"))
@@ -55,8 +58,8 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .build();
   }
 
-  @Override
   // See https://developers.google.com/identity/protocols/googlescopes
+  @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar"))

@@ -36,6 +36,8 @@ import java.util.Map;
  *
  * <p>This extension provides support for demonstrating offline data export. To enable, launch the
  * runtime with a system property: -DofflineData=true
+ *
+ * Note: this is in the process of being deprecated in favor of using OAuth2ServiceExtension.
  */
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final ImmutableList<String> SUPPORTED_SERVICES;

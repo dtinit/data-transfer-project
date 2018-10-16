@@ -32,6 +32,10 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * General implementation of an {@link AuthServiceExtension} for OAuth2.  Largely exists to provide
+ * the appropriate {@link OAuth2DataGenerator} upon request.
+ */
 public class OAuth2ServiceExtension implements AuthServiceExtension {
 
   private static final Logger logger = LoggerFactory.getLogger(OAuth2ServiceExtension.class);
