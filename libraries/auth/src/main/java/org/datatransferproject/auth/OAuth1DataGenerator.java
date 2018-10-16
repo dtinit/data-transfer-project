@@ -69,7 +69,7 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     tempTokenRequest.callback = callback;
     tempTokenRequest.transport = httpTransport;
     tempTokenRequest.consumerKey = clientId;
-    tempTokenRequest.signer = new OAuthHmacSigner(); // TODO: this isn't universal!
+    tempTokenRequest.signer = config.getRequestTokenSigner(clientSecret);
     TokenSecretAuthData authData;
     try {
       // get request token
@@ -100,8 +100,10 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     OAuthGetAccessToken accessTokenRequest = new OAuthGetAccessToken(config.getAccessTokenUrl());
     accessTokenRequest.transport = httpTransport;
     accessTokenRequest.temporaryToken = ((TokenSecretAuthData) initialAuthData).getToken();
-    accessTokenRequest.signer = new OAuthHmacSigner(); // TODO: not universal
+    accessTokenRequest.consumerKey = clientId;
     accessTokenRequest.verifier = authCode;
+    accessTokenRequest.signer = config
+        .getAccessTokenSigner(clientSecret, ((TokenSecretAuthData) initialAuthData).getSecret());
     TokenSecretAuthData accessToken;
     try {
       OAuthCredentialsResponse response = accessTokenRequest.execute();

@@ -16,11 +16,13 @@
 
 package org.datatransferproject.auth.flickr;
 
+import com.google.api.client.auth.oauth.OAuthHmacSigner;
+import com.google.api.client.auth.oauth.OAuthSigner;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
 
-public class FlickrOAuthconfig implements OAuth1Config {
+public class FlickrOAuthConfig implements OAuth1Config {
 
   @Override
   public String getServiceName() {
@@ -55,5 +57,20 @@ public class FlickrOAuthconfig implements OAuth1Config {
   @Override
   public String getScopeParameterName() {
     return "perms";
+  }
+
+  @Override
+  public OAuthSigner getRequestTokenSigner(String clientSecret) {
+    OAuthHmacSigner signer = new OAuthHmacSigner();
+    signer.clientSharedSecret = clientSecret;
+    return signer;
+  }
+
+  @Override
+  public OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret) {
+    OAuthHmacSigner signer = new OAuthHmacSigner();
+    signer.clientSharedSecret = clientSecret;
+    signer.tokenSharedSecret = tokenSecret;
+    return signer;
   }
 }

@@ -16,6 +16,8 @@
 
 package org.datatransferproject.auth.twitter;
 
+import com.google.api.client.auth.oauth.OAuthHmacSigner;
+import com.google.api.client.auth.oauth.OAuthSigner;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
@@ -56,5 +58,20 @@ public class TwitterOAuthConfig implements OAuth1Config {
   public String getScopeParameterName() {
     // Wanted during request token phase
     return "x_auth_access_type";
+  }
+
+  @Override
+  public OAuthSigner getRequestTokenSigner(String clientSecret) {
+    OAuthHmacSigner signer = new OAuthHmacSigner();
+    signer.clientSharedSecret = clientSecret;
+    return signer;
+  }
+
+  @Override
+  public OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret) {
+    OAuthHmacSigner signer = new OAuthHmacSigner();
+    signer.clientSharedSecret = clientSecret;
+    signer.tokenSharedSecret = tokenSecret;
+    return signer;
   }
 }

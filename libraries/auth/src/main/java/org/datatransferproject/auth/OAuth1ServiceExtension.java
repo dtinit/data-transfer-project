@@ -57,7 +57,7 @@ public class OAuth1ServiceExtension implements AuthServiceExtension {
 
   @Override
   public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
-    return null;
+    return getOrCreateAuthDataGenerator(transferDataType, mode);
   }
 
   @Override

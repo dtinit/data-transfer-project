@@ -16,6 +16,8 @@
 
 package org.datatransferproject.auth;
 
+import com.google.api.client.auth.oauth.OAuthHmacSigner;
+import com.google.api.client.auth.oauth.OAuthSigner;
 import java.util.Map;
 
 public interface OAuth1Config {
@@ -56,4 +58,14 @@ public interface OAuth1Config {
    * Returns the parameter name for scopes
    */
   String getScopeParameterName();
+
+  /**
+   * Returns the {@link OAuthSigner} for the initial token request
+   */
+  OAuthSigner getRequestTokenSigner(String clientSecret);
+
+  /**
+   * Returns the {@link OAuthSigner} for the access token request
+   */
+  OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret);
 }
