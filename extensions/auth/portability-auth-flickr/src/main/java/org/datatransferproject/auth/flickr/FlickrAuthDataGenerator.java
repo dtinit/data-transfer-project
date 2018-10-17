@@ -39,7 +39,7 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
 /*
  * {@link AuthDataGenerator} to obtain auth credentials for the Flickr API.
  *
- * Note: this is in the process of being deprecated in favor of OAuth2DataGenerator.
+ * Note: this is in the process of being deprecated in favor of OAuth1DataGenerator.
  * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class FlickrAuthDataGenerator implements AuthDataGenerator {
