@@ -37,6 +37,7 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
 /*
  * {@link AuthDataGenerator} to obtain auth credentials for the Smugmug API.
  *
+ * Note: this is in the process of being deprecated in favor of OAuth2DataGenerator.
  * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class SmugMugAuthDataGenerator implements AuthDataGenerator {
