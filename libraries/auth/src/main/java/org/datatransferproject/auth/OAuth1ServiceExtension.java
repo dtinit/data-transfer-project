@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * General implementation of an {@link AuthServiceExtension} for OAuth2.  Largely exists to provide
+ * General implementation of an {@link AuthServiceExtension} for OAuth1.  Largely exists to provide
  * the appropriate {@link OAuth1DataGenerator} upon request.
  */
 public class OAuth1ServiceExtension implements AuthServiceExtension {
