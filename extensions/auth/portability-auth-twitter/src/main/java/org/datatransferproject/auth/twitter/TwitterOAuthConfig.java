@@ -22,6 +22,11 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
 
+/**
+ * Class that supplies Twitter-specific OAuth1 info
+ * See https://developer.twitter.com/en/docs/basics/authentication/overview/3-legged-oauth
+ * and https://developer.twitter.com/en/docs/basics/authentication/api-reference
+ */
 public class TwitterOAuthConfig implements OAuth1Config {
 
   @Override

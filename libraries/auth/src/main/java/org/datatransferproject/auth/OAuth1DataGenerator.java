@@ -35,10 +35,13 @@ import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * General implementation of an {@link AuthDataGenerator} for OAuth1.
+ */
 public class OAuth1DataGenerator implements AuthDataGenerator {
 
   private static final Logger logger = LoggerFactory.getLogger(OAuth1DataGenerator.class);
-  private static final String OUT_OF_BOUNDS_CALLBACK = "oob"; // TODO: universal?
+  private static final String OUT_OF_BOUNDS_CALLBACK = "oob"; // TODO: is this universal?
 
   private final OAuth1Config config;
   private final String scope;
