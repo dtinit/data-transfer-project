@@ -117,8 +117,11 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         new ClientParametersAuthentication(
             clientId, clientSecret), // HttpExecuteInterceptor
         clientId, // client ID
-        config.getAuthUrl())
-        .setScopes(scopes);
+        config.getAuthUrl());
+
+    if (scopes != null && scopes.size() > 0) {
+        authCodeFlowBuilder.setScopes(scopes);
+    }
 
     return authCodeFlowBuilder.build();
   }
@@ -130,9 +133,5 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         .checkArgument(!Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
-    Preconditions
-        .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
-    Preconditions
-        .checkArgument(config.getImportScopes() != null, "Config is missing import scopes");
   }
 }

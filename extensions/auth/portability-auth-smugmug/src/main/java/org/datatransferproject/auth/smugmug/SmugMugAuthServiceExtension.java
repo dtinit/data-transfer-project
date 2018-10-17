@@ -16,22 +16,14 @@
 
 package org.datatransferproject.auth.smugmug;
 
-import com.google.api.client.http.HttpTransport;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.List;
-import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.auth.OAuth1ServiceExtension;
-import org.datatransferproject.spi.api.auth.AuthDataGenerator;
-import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
-import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * An {@link AuthServiceExtension} providing an authentication mechanism for SmugMug services.
+ */
 public class SmugMugAuthServiceExtension extends OAuth1ServiceExtension {
+
   public SmugMugAuthServiceExtension() {
     super(new SmugMugOAuthConfig());
   }

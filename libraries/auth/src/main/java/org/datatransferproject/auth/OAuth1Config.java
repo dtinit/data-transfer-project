@@ -69,12 +69,21 @@ public interface OAuth1Config {
   /**
    * Returns the {@link OAuthSigner} for the initial token request
    */
-  OAuthSigner getRequestTokenSigner(String clientSecret);
+  default OAuthSigner getRequestTokenSigner(String clientSecret) {
+    OAuthHmacSigner signer = new OAuthHmacSigner();
+    signer.clientSharedSecret = clientSecret;
+    return signer;
+  }
 
   /**
    * Returns the {@link OAuthSigner} for the access token request
    */
-  OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret);
+  default OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret) {
+    OAuthHmacSigner signer = new OAuthHmacSigner();
+    signer.clientSharedSecret = clientSecret;
+    signer.tokenSharedSecret = tokenSecret;
+    return signer;
+  }
 
   enum OAuth1Step {
     REQUEST_TOKEN,

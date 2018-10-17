@@ -62,19 +62,4 @@ public class FlickrOAuthConfig implements OAuth1Config {
   public String getScopeParameterName() {
     return "perms";
   }
-
-  @Override
-  public OAuthSigner getRequestTokenSigner(String clientSecret) {
-    OAuthHmacSigner signer = new OAuthHmacSigner();
-    signer.clientSharedSecret = clientSecret;
-    return signer;
-  }
-
-  @Override
-  public OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret) {
-    OAuthHmacSigner signer = new OAuthHmacSigner();
-    signer.clientSharedSecret = clientSecret;
-    signer.tokenSharedSecret = tokenSecret;
-    return signer;
-  }
 }
