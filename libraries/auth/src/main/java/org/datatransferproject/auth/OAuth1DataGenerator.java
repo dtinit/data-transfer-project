@@ -73,7 +73,7 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     tempTokenRequest.transport = httpTransport;
     tempTokenRequest.consumerKey = clientId;
     tempTokenRequest.signer = config.getRequestTokenSigner(clientSecret);
-    if (config.whenAddScopes() == OAuth1Step.REQUEST_TOKEN && !Strings.isNullOrEmpty(scope)) {
+    if (config.whenAddScopes() == OAuth1Step.REQUEST_TOKEN) {
       tempTokenRequest.set(config.getScopeParameterName(), scope);
     }
     TokenSecretAuthData authData;
@@ -89,7 +89,7 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     OAuthAuthorizeTemporaryTokenUrl authorizeUrl = new OAuthAuthorizeTemporaryTokenUrl(
         config.getAuthorizationUrl());
     authorizeUrl.temporaryToken = authData.getToken();
-    if (config.whenAddScopes() == OAuth1Step.AUTHORIZATION && !Strings.isNullOrEmpty(scope)) {
+    if (config.whenAddScopes() == OAuth1Step.AUTHORIZATION) {
       authorizeUrl.set(config.getScopeParameterName(), scope);
     }
     String url = authorizeUrl.build();
@@ -133,5 +133,9 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
         "Config is missing authorization url");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getAccessTokenUrl()),
         "Config is missing access token url");
+    Preconditions
+        .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
+    Preconditions
+        .checkArgument(config.getImportScopes() != null, "Config is missing import scopes");
   }
 }

@@ -45,22 +45,26 @@ public interface OAuth1Config {
   /**
    * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
    * defined in the auth data generator or elsewhere
+   * Note: this method assumes that scopes are required to use this service
    */
   Map<String, String> getExportScopes();
 
   /**
    * Returns a map of scopes needed for import, keyed by data type (e.g., PHOTOS, CALENDAR) as
    * defined in the auth data generator or elsewhere
+   * Note: this method assumes that scopes are required to use this service
    */
   Map<String, String> getImportScopes();
 
   /**
    * Returns the parameter name for scopes
+   * Note: this method assumes that scopes are required to use this service
    */
   String getScopeParameterName();
 
   /**
    * Shows what step the scopes should be requested in
+   * Note: this method assumes that scopes are required to use this service
    */
   default OAuth1Step whenAddScopes() {
     return OAuth1Step.AUTHORIZATION;
