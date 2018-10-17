@@ -130,6 +130,8 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         .checkArgument(!Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
+
+    // This decision is not OAuth spec, but part of an effort to prevent accidental scope omission
     Preconditions
         .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
     Preconditions

@@ -20,6 +20,9 @@ import com.google.api.client.auth.oauth.OAuthHmacSigner;
 import com.google.api.client.auth.oauth.OAuthSigner;
 import java.util.Map;
 
+/**
+ * Interface for providing information necessary to run OAuth1 flow
+ */
 public interface OAuth1Config {
 
   /**
