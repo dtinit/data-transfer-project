@@ -35,7 +35,7 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ExportInformation;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
@@ -44,7 +44,7 @@ import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
  * Exports Outlook calendar information using the Microsoft Graph API.
  */
 public class MicrosoftCalendarExporter
-    implements Exporter<TokenAuthData, CalendarContainerResource> {
+    implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
 
   private static final String CALENDARS_SUBPATH = "/v1.0/me/calendars";
   private static final String EVENTS_URL = "/v1.0/me/calendars/%s/events";
@@ -69,7 +69,7 @@ public class MicrosoftCalendarExporter
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(UUID jobId, TokenAuthData authData,
+  public ExportResult<CalendarContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) {
     if (exportInformation.isPresent()) {
       // TODO support pagination
@@ -166,9 +166,9 @@ public class MicrosoftCalendarExporter
     return baseUrl + String.format(EVENTS_URL, eventId);
   }
 
-  private Request.Builder getBuilder(String url, TokenAuthData authData) {
+  private Request.Builder getBuilder(String url, TokensAndUrlAuthData authData) {
     Request.Builder calendarsRequestBuilder = new Request.Builder().url(url);
-    calendarsRequestBuilder.header("Authorization", "Bearer " + authData.getToken());
+    calendarsRequestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
     return calendarsRequestBuilder;
   }
 }

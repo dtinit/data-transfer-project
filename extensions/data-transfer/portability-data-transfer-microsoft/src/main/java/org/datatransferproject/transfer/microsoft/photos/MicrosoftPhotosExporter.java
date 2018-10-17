@@ -16,19 +16,6 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
-
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -39,13 +26,28 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
+import org.datatransferproject.types.transfer.models.photos.PhotoModel;
+import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 
 /**
  * Exports Microsoft OneDrive photos using the Graph API.
  *
  * <p>Converts folders to albums.
  */
-public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosExporter implements
+    Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+
   private static final String ODATA_NEXT = "@odata.nextLink";
   private final String photosRootUrl;
   private final String photosFolderTemplate;
@@ -66,7 +68,8 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export( UUID jobId, TokenAuthData authData, Optional<ExportInformation> exportInformation) {
+  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
+      Optional<ExportInformation> exportInformation) {
 
     try {
 
@@ -96,7 +99,7 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
    *
    * @param authData the authorization data
    */
-  private List<Map<String, Object>> requestAllPhotoItems(TokenAuthData authData)
+  private List<Map<String, Object>> requestAllPhotoItems(TokensAndUrlAuthData authData)
       throws IOException {
     List<Map<String, Object>> photoItems = new ArrayList<>();
 
@@ -128,14 +131,14 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
   @SuppressWarnings("unchecked")
   private void requestItems(
       String url,
-      TokenAuthData authData,
+      TokensAndUrlAuthData authData,
       Deque<Map<String, Object>> folderItems,
       List<Map<String, Object>> photoItems)
       throws IOException {
     // continue processing paginated results until there is no next url to request from
     while (url != null) {
       Request.Builder requestBuilder = new Request.Builder().url(url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
       try (Response graphResponse = client.newCall(requestBuilder.build()).execute()) {
         ResponseBody body = graphResponse.body();
@@ -170,16 +173,18 @@ public class MicrosoftPhotosExporter implements Exporter<TokenAuthData, PhotosCo
     }
   }
 
-  /** Downloads the photo items to the job store. */
+  /**
+   * Downloads the photo items to the job store.
+   */
   private void downloadAndCachePhotos(
-      UUID jobId, TokenAuthData authData, List<Map<String, Object>> photoItems) {
+      UUID jobId, TokensAndUrlAuthData authData, List<Map<String, Object>> photoItems) {
     for (Map<String, Object> photoItem : photoItems) {
 
       String id = (String) photoItem.get("id");
       String url = String.format(photosContentTemplate, id);
 
       Request.Builder requestBuilder = new Request.Builder().url(url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
       try (Response graphResponse = client.newCall(requestBuilder.build()).execute()) {
         ResponseBody body = graphResponse.body();

@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
@@ -31,6 +32,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+public class MicrosoftAuthServiceExtension extends OAuth2ServiceExtension {
+  public MicrosoftAuthServiceExtension() {
+    super(new MicrosoftOAuthConfig());
+  }
+}
+
 /**
  * Bootstraps the Microsoft authentication extension.
  *
@@ -39,6 +46,7 @@ import java.util.Map;
  *
  * Note: this is in the process of being deprecated in favor of using OAuth2ServiceExtension.
  */
+/*
 public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
   private static final ImmutableList<String> SUPPORTED_SERVICES;
 
@@ -127,3 +135,4 @@ public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
     return authGenerators.get(transferDataType);
   }
 }
+*/

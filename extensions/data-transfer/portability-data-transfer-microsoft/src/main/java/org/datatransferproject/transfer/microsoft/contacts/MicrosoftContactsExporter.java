@@ -36,12 +36,13 @@ import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
 import org.datatransferproject.transfer.microsoft.types.GraphPagination;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
 
 /**
  * Exports Microsoft contacts using the Graph API.
  */
-public class MicrosoftContactsExporter implements Exporter<TokenAuthData, ContactsModelWrapper> {
+public class MicrosoftContactsExporter implements Exporter<TokensAndUrlAuthData, ContactsModelWrapper> {
 
   private static final String CONTACTS_SUBPATH = "/v1.0/me/contacts";
   private static final String ODATA_NEXT = "@odata.nextLink";
@@ -64,7 +65,7 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
 
   @Override
   public ExportResult<ContactsModelWrapper> export(
-      UUID jobId, TokenAuthData authData, Optional<ExportInformation> exportInformation) {
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     GraphPagination graphPagination =
         exportInformation.isPresent() ? (GraphPagination) exportInformation.get()
             .getPaginationData() : null;
@@ -76,9 +77,9 @@ public class MicrosoftContactsExporter implements Exporter<TokenAuthData, Contac
   }
 
   @SuppressWarnings("unchecked")
-  private ExportResult<ContactsModelWrapper> doExport(TokenAuthData authData, String url) {
+  private ExportResult<ContactsModelWrapper> doExport(TokensAndUrlAuthData authData, String url) {
     Request.Builder graphReqBuilder = new Request.Builder().url(url);
-    graphReqBuilder.header("Authorization", "Bearer " + authData.getToken());
+    graphReqBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
     try (Response graphResponse = client.newCall(graphReqBuilder.build()).execute()) {
       ResponseBody body = graphResponse.body();
