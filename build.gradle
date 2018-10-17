@@ -173,7 +173,7 @@ def getPomConfig() {
             developer {
                 id 'dtp'
                 name 'Data Transfer Project'
-                email "dev@null.com"
+                email "portability-maintainers@googlegroups.com"
             }
         }
 
