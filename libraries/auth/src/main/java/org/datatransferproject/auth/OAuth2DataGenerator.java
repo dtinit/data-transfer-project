@@ -50,21 +50,18 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   private final String clientId;
   private final String clientSecret;
   private final HttpTransport httpTransport;
-  private final String authServerUrl;
-  private final String tokenServerUrl;
 
   OAuth2DataGenerator(OAuth2Config config, AppCredentials appCredentials,
       HttpTransport httpTransport,
       String dataType, AuthMode authMode) {
     this.config = config;
+    validateConfig();
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
     this.scopes = authMode == AuthMode.EXPORT
         ? config.getExportScopes().get(dataType)
         : config.getImportScopes().get(dataType);
-    this.authServerUrl = config.getAuthUrl();
-    this.tokenServerUrl = config.getTokenUrl();
   }
 
   @Override
@@ -116,13 +113,28 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         BearerToken.authorizationHeaderAccessMethod(), // Access Method
         httpTransport,
         new JacksonFactory(),
-        new GenericUrl(tokenServerUrl),
+        new GenericUrl(config.getTokenUrl()),
         new ClientParametersAuthentication(
             clientId, clientSecret), // HttpExecuteInterceptor
         clientId, // client ID
-        authServerUrl)
+        config.getAuthUrl())
         .setScopes(scopes);
 
     return authCodeFlowBuilder.build();
+  }
+
+  private void validateConfig() {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getServiceName()),
+        "Config is missing service name");
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
+
+    // This decision is not OAuth spec, but part of an effort to prevent accidental scope omission
+    Preconditions
+        .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
+    Preconditions
+        .checkArgument(config.getImportScopes() != null, "Config is missing import scopes");
   }
 }

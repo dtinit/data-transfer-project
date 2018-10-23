@@ -39,6 +39,7 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
 /*
  * {@link AuthDataGenerator} to obtain auth credentials for the Twitter API.
  *
+ * Note: this is in the process of being deprecated in favor of OAuth1DataGenerator.
  * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 final class TwitterAuthDataGenerator implements AuthDataGenerator {

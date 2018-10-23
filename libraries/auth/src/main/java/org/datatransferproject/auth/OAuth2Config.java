@@ -16,7 +16,6 @@
 
 package org.datatransferproject.auth;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +25,7 @@ import java.util.Set;
 public interface OAuth2Config {
 
   /**
-  Returns the name of the service, used for client id and secret retrieval and display
+  Returns the name of the service, used for display, and client id and secret retrieval
    */
   String getServiceName();
 
