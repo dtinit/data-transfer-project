@@ -20,24 +20,24 @@ import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.util.Optional;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.UUID;
-
 /**
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph
  * API.
  */
 public class MicrosoftCalendarExportTest {
+
   private static final String CALENDARS_RESPONSE =
       "{"
           + "    \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users('foo%40bar.com')/calendars\","
@@ -220,7 +220,7 @@ public class MicrosoftCalendarExportTest {
   private OkHttpClient client;
   private ObjectMapper mapper;
   private TransformerServiceImpl transformerService;
-  private TokenAuthData token;
+  private TokensAndUrlAuthData token;
 
   @Test
   public void testExport() throws Exception {
@@ -234,7 +234,8 @@ public class MicrosoftCalendarExportTest {
     MicrosoftCalendarExporter exporter =
         new MicrosoftCalendarExporter(baseUrl.toString(), client, mapper, transformerService);
 
-    ExportResult<CalendarContainerResource> resource = exporter.export(UUID.randomUUID(), token, Optional.empty());
+    ExportResult<CalendarContainerResource> resource = exporter
+        .export(UUID.randomUUID(), token, Optional.empty());
 
     CalendarContainerResource calendarResource = resource.getExportedData();
 
@@ -261,7 +262,7 @@ public class MicrosoftCalendarExportTest {
     client = new OkHttpClient.Builder().build();
     mapper = new ObjectMapper();
     transformerService = new TransformerServiceImpl();
-    token = new TokenAuthData("token123");
+    token = new TokensAndUrlAuthData("token123", "refreshToken", "tokenUrl");
     server = new MockWebServer();
   }
 

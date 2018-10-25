@@ -15,115 +15,11 @@
  */
 package org.datatransferproject.auth.microsoft;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import okhttp3.OkHttpClient;
-import org.datatransferproject.api.launcher.ExtensionContext;
-import org.datatransferproject.spi.api.auth.AuthDataGenerator;
-import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
-import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
-import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.auth.OAuth2ServiceExtension;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+public class MicrosoftAuthServiceExtension extends OAuth2ServiceExtension {
 
-/**
- * Bootstraps the Microsoft authentication extension.
- *
- * <p>This extension provides support for demonstrating offline data export. To enable, launch the
- * runtime with a system property: -DofflineData=true
- *
- * Note: this is in the process of being deprecated in favor of using OAuth2ServiceExtension.
- */
-public class MicrosoftAuthServiceExtension implements AuthServiceExtension {
-  private static final ImmutableList<String> SUPPORTED_SERVICES;
-
-  static {
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
-    builder.add("CALENDAR", "CONTACTS");
-    if (Boolean.parseBoolean(System.getProperty("offlineData"))) {
-      builder.add("OFFLINE-DATA");
-    }
-    SUPPORTED_SERVICES = builder.build();
-  }
-
-  private AppCredentials appCredentials;
-  private boolean initialized = false;
-  private OkHttpClient okHttpClient;
-  private ObjectMapper mapper;
-
-  private Map<String, MicrosoftAuthDataGenerator> importAuthDataGenerators;
-  private Map<String, MicrosoftAuthDataGenerator> exportAuthDataGenerators;
-
-  public String getServiceId() {
-    return "MICROSOFT";
-  }
-
-  public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
-    Preconditions.checkArgument(
-        SUPPORTED_SERVICES.contains(transferDataType),
-        "TransferDataType " + transferDataType + " is not supported.");
-    return getOrCreateAuthDataGenerator(transferDataType, mode);
-  }
-
-  @Override
-  public List<String> getImportTypes() {
-    return SUPPORTED_SERVICES;
-  }
-
-  @Override
-  public List<String> getExportTypes() {
-    return SUPPORTED_SERVICES;
-  }
-
-  @Override
-  public void initialize(ExtensionContext context) {
-    mapper = context.getTypeManager().getMapper();
-
-    OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-    okHttpClient = clientBuilder.build();
-
-    AppCredentialStore appCredentialStore = context.getService(AppCredentialStore.class);
-    try {
-      appCredentials = appCredentialStore.getAppCredentials("MICROSOFT_KEY", "MICROSOFT_SECRET");
-      if (appCredentials == null) {
-        throw new IllegalStateException("Microsoft Graph API credentials not found");
-      }
-    } catch (IOException e) {
-      throw new IllegalStateException(
-          "Error retrieving Microsoft Graph API credentials - Were they set?", e);
-    }
-
-    importAuthDataGenerators = new HashMap<>();
-    exportAuthDataGenerators = new HashMap<>();
-
-    initialized = true;
-  }
-
-  private synchronized AuthDataGenerator getOrCreateAuthDataGenerator(
-      String transferDataType, AuthMode mode) {
-    Preconditions.checkState(
-        initialized, "Attempting to getAuthDataGenerator before initialization");
-
-    Map<String, MicrosoftAuthDataGenerator> authGenerators =
-        mode == AuthMode.EXPORT ? exportAuthDataGenerators : importAuthDataGenerators;
-
-    if (!authGenerators.containsKey(transferDataType)) {
-      authGenerators.put(
-          transferDataType,
-          new MicrosoftAuthDataGenerator(
-                  appCredentials::getKey,
-              appCredentials::getSecret,
-              okHttpClient,
-              mapper,
-              transferDataType,
-              mode));
-    }
-
-    return authGenerators.get(transferDataType);
+  public MicrosoftAuthServiceExtension() {
+    super(new MicrosoftOAuthConfig());
   }
 }
