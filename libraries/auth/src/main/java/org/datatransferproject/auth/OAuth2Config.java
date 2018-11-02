@@ -55,7 +55,7 @@ public interface OAuth2Config {
   /**
    * Returns a map of any additional parameters necessary for this service
    */
-  default List<String> getAdditionalAuthUrlParameters() {
+  default Map<String, String> getAdditionalAuthUrlParameters() {
     return null;
   }
 

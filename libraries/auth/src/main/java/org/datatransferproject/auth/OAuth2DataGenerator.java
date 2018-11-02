@@ -19,22 +19,19 @@ package org.datatransferproject.auth;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.UrlEncodedContent;
-import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
-import java.util.HashMap;
+import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import org.apache.http.client.utils.URIBuilder;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
@@ -71,19 +68,26 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
 
-    List<String> queryParams = new LinkedList<>();
-    queryParams.add("response_type=code");
-    queryParams.add("client_id=" + clientId);
-    queryParams.add("redirect_uri=" + callbackBaseUrl);
-    queryParams.add("scope=" + String.join(",", scopes));
-    queryParams.add("state=" + encodedJobId);
+    URIBuilder builder = new URIBuilder()
+        .setPath(config.getAuthUrl())
+        .setParameter("response_type", "code")
+        .setParameter("client_id", clientId)
+        .setParameter("redirect_uri", callbackBaseUrl)
+        .setParameter("scope", String.join(" ", scopes))
+        .setParameter("state", encodedJobId);
+
     if (config.getAdditionalAuthUrlParameters() != null) {
-      queryParams.addAll(config.getAdditionalAuthUrlParameters());
+      for (Entry<String, String> entry : config.getAdditionalAuthUrlParameters().entrySet()) {
+        builder.setParameter(entry.getKey(), entry.getValue());
+      }
     }
 
-    String url = String.format("%s?%s", config.getAuthUrl(), String.join("&", queryParams));
-
-    return new AuthFlowConfiguration(url, OAUTH_2, getTokenUrl());
+    try {
+      String url = builder.build().toString();
+      return new AuthFlowConfiguration(url, OAUTH_2, getTokenUrl());
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException("Could not produce url.", e);
+    }
   }
 
   @Override
@@ -100,8 +104,6 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     params.put("grant_type", "authorization_code");
     params.put("redirect_uri", callbackBaseUrl);
     params.put("code", authCode);
-
-    //HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
 
     HttpContent content = new UrlEncodedContent(params);
 

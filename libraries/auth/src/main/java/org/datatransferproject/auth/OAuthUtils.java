@@ -28,7 +28,10 @@ import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class OAuthUtils {
+/**
+ * Util class for making OAuth requests and parsing the responses
+ */
+class OAuthUtils {
 
   static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent,
       Class<T> clazz) throws IOException {

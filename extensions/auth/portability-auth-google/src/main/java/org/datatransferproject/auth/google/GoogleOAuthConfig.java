@@ -73,7 +73,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
   }
 
   @Override
-  public List<String> getAdditionalAuthUrlParameters() {
-    return ImmutableList.of("approval_prompt=force");
+  public Map<String, String> getAdditionalAuthUrlParameters() {
+    return ImmutableMap.of("approval_prompt", "force");
   }
 }
