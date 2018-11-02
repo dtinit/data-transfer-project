@@ -75,7 +75,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     queryParams.add("response_type=code");
     queryParams.add("client_id=" + clientId);
     queryParams.add("redirect_uri=" + callbackBaseUrl);
-    queryParams.add("scope=" + String.join(",", scopes));
+    queryParams.add("scope=" + String.join(" ", scopes));
     queryParams.add("state=" + encodedJobId);
     if (config.getAdditionalAuthUrlParameters() != null) {
       queryParams.addAll(config.getAdditionalAuthUrlParameters());
