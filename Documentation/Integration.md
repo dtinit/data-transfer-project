@@ -74,7 +74,7 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
  `$mkdir -p extensions/data-transfer/portability-data-transfer-foo/src/main/java/org/datatransferproject/transfer/foo/`
 
-7. Create FooTransferExtension implementing  TransferExtension
+7. Create FooTransferExtension implementing TransferExtension
 
   * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/datatransferproject/spi/transfer/extension/TransferExtension.java) for full documentation
 
