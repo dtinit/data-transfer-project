@@ -101,8 +101,6 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     params.put("redirect_uri", callbackBaseUrl);
     params.put("code", authCode);
 
-    //HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
-
     HttpContent content = new UrlEncodedContent(params);
 
     try {
