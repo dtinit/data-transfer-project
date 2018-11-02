@@ -16,8 +16,10 @@
 
 package org.datatransferproject.auth.google;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
@@ -37,7 +39,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
   // See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
   @Override
   public String getAuthUrl() {
-    return "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force";
+    return "https://accounts.google.com/o/oauth2/auth";
   }
 
   //See https://developers.google.com/identity/protocols/OAuth2WebServer#exchange-authorization-code
@@ -68,5 +70,10 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
         .build();
+  }
+
+  @Override
+  public List<String> getAdditionalAuthUrlParameters() {
+    return ImmutableList.of("approval_prompt=force");
   }
 }

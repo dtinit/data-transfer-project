@@ -18,19 +18,22 @@ package org.datatransferproject.auth;
 
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.TokenResponse;
-import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.UrlEncodedContent;
+import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
@@ -67,12 +70,19 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
-    String url =
-        createFlow()
-            .newAuthorizationUrl()
-            .setRedirectUri(callbackBaseUrl)
-            .setState(encodedJobId)
-            .build();
+
+    List<String> queryParams = new LinkedList<>();
+    queryParams.add("response_type=code");
+    queryParams.add("client_id=" + clientId);
+    queryParams.add("redirect_uri=" + callbackBaseUrl);
+    queryParams.add("scope=" + String.join(",", scopes));
+    queryParams.add("state=" + encodedJobId);
+    if (config.getAdditionalAuthUrlParameters() != null) {
+      queryParams.addAll(config.getAdditionalAuthUrlParameters());
+    }
+
+    String url = String.format("%s?%s", config.getAuthUrl(), String.join("&", queryParams));
+
     return new AuthFlowConfiguration(url, OAUTH_2, getTokenUrl());
   }
 
@@ -83,44 +93,30 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
         Strings.isNullOrEmpty(extra), "Extra data not expected for OAuth flow");
     Preconditions.checkArgument(initialAuthData == null,
         "Initial auth data not expected for " + config.getServiceName());
-    AuthorizationCodeFlow flow = createFlow();
-    TokenResponse response;
+
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("client_id", clientId);
+    params.put("client_secret", clientSecret);
+    params.put("grant_type", "authorization_code");
+    params.put("redirect_uri", callbackBaseUrl);
+    params.put("code", authCode);
+
+    //HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
+
+    HttpContent content = new UrlEncodedContent(params);
+
     try {
-      response = flow
-          .newTokenRequest(authCode)
-          .setRedirectUri(callbackBaseUrl)
-          .execute();
+      OAuth2TokenResponse tokenResponse = OAuthUtils
+          .makePostRequest(httpTransport, config.getTokenUrl(), content, OAuth2TokenResponse.class);
+
+      return new TokensAndUrlAuthData(
+          tokenResponse.getAccessToken(),
+          tokenResponse.getRefreshToken(),
+          config.getTokenUrl()
+      );
     } catch (IOException e) {
-      throw new RuntimeException("Error calling AuthorizationCodeFlow.execute ", e);
+      throw new RuntimeException("Error getting token", e); // TODO
     }
-
-    // TODO: Figure out storage
-    Credential credential;
-    try {
-      credential = flow.createAndStoreCredential(response, id);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Error calling AuthorizationCodeFlow.createAndStoreCredential ", e);
-    }
-    return new TokensAndUrlAuthData(
-        credential.getAccessToken(),
-        credential.getRefreshToken(),
-        credential.getTokenServerEncodedUrl());
-  }
-
-  private AuthorizationCodeFlow createFlow() {
-    AuthorizationCodeFlow.Builder authCodeFlowBuilder = new AuthorizationCodeFlow.Builder(
-        BearerToken.authorizationHeaderAccessMethod(), // Access Method
-        httpTransport,
-        new JacksonFactory(),
-        new GenericUrl(config.getTokenUrl()),
-        new ClientParametersAuthentication(
-            clientId, clientSecret), // HttpExecuteInterceptor
-        clientId, // client ID
-        config.getAuthUrl())
-        .setScopes(scopes);
-
-    return authCodeFlowBuilder.build();
   }
 
   private void validateConfig() {
