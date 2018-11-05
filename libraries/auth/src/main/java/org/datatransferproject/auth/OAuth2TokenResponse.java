@@ -14,14 +14,29 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile project(':portability-spi-api')
-    compile project(':portability-spi-cloud')
+package org.datatransferproject.auth;
 
-    compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
-    compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
-    compile("org.apache.httpcomponents:httpclient:${apacheHttpVersion}")
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class OAuth2TokenResponse {
+
+  @JsonProperty("access_token")
+  private String accessToken;
+
+  @JsonProperty("refresh_token")
+  private String refreshToken;
+
+  @JsonProperty("error")
+  private String error;
+
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
+  }
 }
