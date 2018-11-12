@@ -46,6 +46,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
@@ -127,26 +129,6 @@ public class WorkerMain {
 
   public void poll() {
     worker.doWork();
-  }
-
-  private static SettingsExtension getSettingsExtension() {
-    ImmutableList.Builder<SettingsExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(SettingsExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<SettingsExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one SettingsExtension is required, but found " + extensions.size());
-    return extensions.get(0);
-  }
-
-  private static CloudExtension getCloudExtension() {
-    ImmutableList.Builder<CloudExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<CloudExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one CloudExtension is required, but found " + extensions.size());
-    return extensions.get(0);
   }
 
   private static List<TransferExtension> getTransferExtensions() {
