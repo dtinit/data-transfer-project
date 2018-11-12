@@ -16,7 +16,7 @@
 package org.datatransferproject.api.launcher;
 
 /** Implementations provide custom monitoring sinks. */
-public interface MonitorExtension extends AbstractExtension {
+public interface MonitorExtension extends BootExtension {
 
   /** Returns a monitor. */
   Monitor getMonitor();

@@ -15,13 +15,20 @@
  */
 package org.datatransferproject.api.launcher;
 
-/** Implementations provide an extension to the system. */
-public interface AbstractExtension extends SystemExtension{
+/**
+ * An extension that contributes a set of capabilities to a system.
+ *
+ * <p>Extensions fall into two categories: those required to boot a runtime system where basic
+ * services have not yet been initialized; and those that are instantiated after the core boot
+ * process has completed and core services are available.
+ */
+public interface SystemExtension {
   /**
-   * Initializes the extension. Implementations prepare provided services.
-   *
-   * @param context the extension context.
+   * Signals to the extension to prepare for receiving requests. For example, implementations may
+   * open sockets or other resources.
    */
-  void initialize(ExtensionContext context);
+  default void start() {}
 
+  /** Signals the extension to terminate and cleanup resources. */
+  default void shutdown() {}
 }

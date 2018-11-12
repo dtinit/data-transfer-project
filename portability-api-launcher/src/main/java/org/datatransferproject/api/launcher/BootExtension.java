@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.config.extension;
+package org.datatransferproject.api.launcher;
 
-import org.datatransferproject.api.launcher.BootExtension;
-
-/** Extension that provides settings. */
-public interface SettingsExtension extends BootExtension {
-  /**
-   * Returns the configuration value for an extension setting or the default value if not found.
-   *
-   * @param setting the extension setting name
-   * @param defaultValue the default value. Null may be passed.
-   */
-  <T> T getSetting(String setting, T defaultValue);
+/** Implementations provide services required to boot a runtime system. */
+public interface BootExtension extends SystemExtension {
+  /** Initializes the extension. Implementations prepare core bootstrap services. */
+  void initialize();
 }
