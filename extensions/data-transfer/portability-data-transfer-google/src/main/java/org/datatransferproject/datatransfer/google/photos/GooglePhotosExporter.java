@@ -22,12 +22,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
@@ -220,17 +217,21 @@ public class GooglePhotosExporter
     do {
       albumListResponse = getOrCreatePhotosInterface(authData)
           .listAlbums(Optional.ofNullable(albumToken));
-      for (GoogleAlbum album : albumListResponse.getAlbums()) {
-        String albumId = album.getId();
-        String photoToken = null;
-        do {
-          containedMediaSearchResponse = getOrCreatePhotosInterface(authData)
-              .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
-          for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
-            tempPhotosData.addContainedPhotoId(mediaItem.getId());
-          }
-          photoToken = containedMediaSearchResponse.getNextPageToken();
-        } while (photoToken != null);
+      if (albumListResponse.getAlbums() != null) {
+        for (GoogleAlbum album : albumListResponse.getAlbums()) {
+          String albumId = album.getId();
+          String photoToken = null;
+          do {
+            containedMediaSearchResponse = getOrCreatePhotosInterface(authData)
+                .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+            if (containedMediaSearchResponse.getMediaItems() != null) {
+              for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
+                tempPhotosData.addContainedPhotoId(mediaItem.getId());
+              }
+            }
+            photoToken = containedMediaSearchResponse.getNextPageToken();
+          } while (photoToken != null);
+        }
       }
       albumToken = albumListResponse.getNextPageToken();
     } while (albumToken != null);

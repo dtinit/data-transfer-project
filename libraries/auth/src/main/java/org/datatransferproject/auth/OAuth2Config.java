@@ -26,7 +26,7 @@ import java.util.Set;
 public interface OAuth2Config {
 
   /**
-  Returns the name of the service, used for client id and secret retrieval and display
+  Returns the name of the service, used for display, and client id and secret retrieval
    */
   String getServiceName();
 
@@ -51,5 +51,12 @@ public interface OAuth2Config {
    * defined in the auth data generator or elsewhere
    */
   Map<String, Set<String>> getImportScopes();
+
+  /**
+   * Returns a map of any additional parameters necessary for this service
+   */
+  default Map<String, String> getAdditionalAuthUrlParameters() {
+    return null;
+  }
 
 }

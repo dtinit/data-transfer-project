@@ -20,6 +20,7 @@ dependencies {
 
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
+    compile("org.apache.httpcomponents:httpclient:${apacheHttpVersion}")
 
     compile("org.slf4j:slf4j-api:${slf4jVersion}")
     compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")

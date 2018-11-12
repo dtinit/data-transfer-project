@@ -13,13 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.auth.microsoft;
 
-import org.datatransferproject.auth.OAuth2ServiceExtension;
+package org.datatransferproject.auth;
 
-public class MicrosoftAuthServiceExtension extends OAuth2ServiceExtension {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-  public MicrosoftAuthServiceExtension() {
-    super(new MicrosoftOAuthConfig());
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class OAuth2TokenResponse {
+
+  @JsonProperty("access_token")
+  private String accessToken;
+
+  @JsonProperty("refresh_token")
+  private String refreshToken;
+
+  @JsonProperty("error")
+  private String error;
+
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
   }
 }
