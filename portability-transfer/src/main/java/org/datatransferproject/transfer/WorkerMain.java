@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -47,6 +48,7 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
 /**
@@ -70,9 +72,12 @@ public class WorkerMain {
   }
 
   public void initialize() {
+    Monitor monitor = loadMonitor();
+
     SettingsExtension settingsExtension = getSettingsExtension();
     settingsExtension.initialize();
-    WorkerExtensionContext extensionContext = new WorkerExtensionContext(settingsExtension);
+    WorkerExtensionContext extensionContext =
+        new WorkerExtensionContext(settingsExtension, monitor);
 
     // TODO this should be moved into a service extension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
@@ -143,5 +148,4 @@ public class WorkerMain {
         !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
     return extensions;
   }
-
 }

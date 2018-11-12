@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 /**
  * The system monitoring and logging interface which can be obtained either via injection or from
- * {@link ExtensionContext#getService(Class)}.
+ * {@link ExtensionContext#getMonitor()}.
  *
  * <p>Implementations are responsible for processing and forwarding events to an external sink or
  * service.
