@@ -30,7 +30,7 @@ import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.token.JWTTokenManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.launcher.impl.TypeManagerImpl;
+import org.datatransferproject.launcher.types.TypeManagerImpl;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
