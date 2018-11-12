@@ -25,6 +25,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Types;
 import org.datatransferproject.api.action.Action;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.token.JWTTokenManager;
 import org.datatransferproject.config.extension.SettingsExtension;
@@ -55,6 +56,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 
 import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
 /** Starts the api server. */
@@ -82,6 +84,9 @@ public class ApiMain {
       TrustManagerFactory trustManagerFactory,
       KeyManagerFactory keyManagerFactory,
       KeyStore keyStore) {
+
+    Monitor monitor = loadMonitor();
+
     // TODO init with types
     TypeManager typeManager = new TypeManagerImpl();
     typeManager.registerTypes(
@@ -90,7 +95,8 @@ public class ApiMain {
     SettingsExtension settingsExtension = getSettingsExtension();
 
     settingsExtension.initialize();
-    ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension);
+    ApiExtensionContext extensionContext =
+        new ApiExtensionContext(typeManager, settingsExtension, monitor);
 
     if (trustManagerFactory != null) {
       extensionContext.registerService(TrustManagerFactory.class, trustManagerFactory);
