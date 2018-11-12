@@ -24,7 +24,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.launcher.impl.TypeManagerImpl;
+import org.datatransferproject.launcher.types.TypeManagerImpl;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
