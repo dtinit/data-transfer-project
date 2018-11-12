@@ -71,7 +71,7 @@ public class WorkerMain {
 
   public void initialize() {
     SettingsExtension settingsExtension = getSettingsExtension();
-    settingsExtension.initialize(null);
+    settingsExtension.initialize();
     WorkerExtensionContext extensionContext = new WorkerExtensionContext(settingsExtension);
 
     // TODO this should be moved into a service extension

@@ -89,7 +89,7 @@ public class ApiMain {
 
     SettingsExtension settingsExtension = getSettingsExtension();
 
-    settingsExtension.initialize(null);
+    settingsExtension.initialize();
     ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension);
 
     if (trustManagerFactory != null) {
