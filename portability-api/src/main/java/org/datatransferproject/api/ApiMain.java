@@ -19,8 +19,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -55,6 +53,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
+
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -175,30 +176,6 @@ public class ApiMain {
 
   public void stop() {
     serviceExtensions.forEach(ServiceExtension::shutdown);
-  }
-
-  private SettingsExtension getSettingsExtension() {
-    ImmutableList.Builder<SettingsExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(SettingsExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<SettingsExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one SettingsExtension is required, but found " + extensions.size());
-    return extensions.get(0);
-  }
-
-  private CloudExtension getCloudExtension() {
-    List<CloudExtension> cloudExtensions = new ArrayList<>();
-    ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(cloudExtensions::add);
-    if (cloudExtensions.isEmpty()) {
-      throw new IllegalStateException(
-          "A cloud extension is not available. Exactly one is required.");
-    } else if (cloudExtensions.size() > 1) {
-      throw new IllegalStateException(
-          "Multiple cloud extensions were found. Exactly one is required.");
-    }
-
-    return cloudExtensions.get(0);
   }
 
   private void bindActions(Injector injector, ApiExtensionContext context) {
