@@ -2,12 +2,12 @@ package org.datatransferproject.spi.transfer.types;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.datatransferproject.types.transfer.EntityType;
+import org.datatransferproject.types.transfer.PortableType;
 import org.datatransferproject.types.transfer.models.ContainerResource;
 
 /** Contains information about how to export data. */
 @JsonTypeName("org.dataportability:ExportInformation")
-public class ExportInformation extends EntityType {
+public class ExportInformation extends PortableType {
   private final PaginationData paginationData;
   private final ContainerResource containerResource;
 
