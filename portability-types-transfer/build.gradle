@@ -25,7 +25,6 @@ dependencies {
         exclude(module: 'jetty-util')
         exclude(module: 'servlet-api')
     }
-    compile("com.google.guava:guava:${guavaVersion}")
 
     testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
