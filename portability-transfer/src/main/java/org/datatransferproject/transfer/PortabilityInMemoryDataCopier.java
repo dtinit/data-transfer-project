@@ -67,12 +67,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}.
    */
   @Override
-  public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId)
+  public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId, Optional<ExportInformation> exportInfo)
       throws IOException {
-    // Initial copy, starts off the process with no previous paginationData or containerResource
-    // information
-    Optional<ExportInformation> emptyExportInfo = Optional.empty();
-    copyHelper(jobId, exportAuthData, importAuthData, emptyExportInfo);
+    copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
   /**
