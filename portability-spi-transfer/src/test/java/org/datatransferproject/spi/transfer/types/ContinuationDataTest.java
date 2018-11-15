@@ -1,6 +1,8 @@
 package org.datatransferproject.spi.transfer.types;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.datatransferproject.types.common.IntPaginationToken;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.junit.Assert;
 import org.junit.Test;
 

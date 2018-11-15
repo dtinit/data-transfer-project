@@ -22,7 +22,7 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 import java.io.IOException;
 import java.util.Map;

@@ -26,7 +26,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

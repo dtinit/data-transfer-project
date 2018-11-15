@@ -32,9 +32,9 @@ import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempTasksData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.tasks.TaskContainerResource;
-import org.datatransferproject.types.transfer.models.tasks.TaskListModel;
-import org.datatransferproject.types.transfer.models.tasks.TaskModel;
+import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskListModel;
+import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

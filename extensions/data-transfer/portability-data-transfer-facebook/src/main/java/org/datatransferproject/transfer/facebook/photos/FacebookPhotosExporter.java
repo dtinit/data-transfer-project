@@ -22,12 +22,12 @@ import com.restfb.types.Album;
 import com.restfb.types.Photo;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 
 import java.util.ArrayList;
 import java.util.List;

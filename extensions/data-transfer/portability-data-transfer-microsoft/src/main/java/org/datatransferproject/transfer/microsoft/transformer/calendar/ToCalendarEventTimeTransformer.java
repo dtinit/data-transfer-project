@@ -23,7 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.function.BiFunction;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 
 /**
  * Maps from a Graph API dateTimeTimeZone resource as defined by microsoft.graph.dateTimeTimeZone

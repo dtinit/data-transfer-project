@@ -16,7 +16,7 @@
 package org.datatransferproject.spi.transfer.provider;
 
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 import java.util.UUID;
 

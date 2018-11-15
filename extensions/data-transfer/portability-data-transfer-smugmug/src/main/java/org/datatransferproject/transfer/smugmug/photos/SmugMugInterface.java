@@ -44,7 +44,7 @@ import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUser;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUserResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;

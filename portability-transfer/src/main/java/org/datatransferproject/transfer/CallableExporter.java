@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 
 /**

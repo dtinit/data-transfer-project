@@ -40,9 +40,9 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 

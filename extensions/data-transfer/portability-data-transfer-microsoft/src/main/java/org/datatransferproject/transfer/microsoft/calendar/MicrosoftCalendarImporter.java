@@ -34,9 +34,9 @@ import org.datatransferproject.transfer.microsoft.common.RequestHelper;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 
 /**
  * Imports Outlook calendar information using the Microsoft Graph API.

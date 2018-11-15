@@ -1,6 +1,6 @@
 package org.datatransferproject.spi.transfer.store;
 
-import org.datatransferproject.types.transfer.PortableType;
+import org.datatransferproject.types.common.PortableType;
 
 /**
  * Used by {@link org.datatransferproject.spi.transfer.provider.Importer}s and {@link
