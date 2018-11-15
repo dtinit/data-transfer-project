@@ -13,17 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-dependencies {
-    compile project(':portability-spi-api')
-    compile project(':portability-spi-cloud')
-    compile project(':libraries:auth')
-
-    compile "org.slf4j:slf4j-api:${slf4jVersion}"
-    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
-
-    compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
-    compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
-
-    testCompile("org.mockito:mockito-all:${mockitoVersion}")
-}
+/** Implements importers and exporters for Facebook services. */
+package org.datatransferproject.auth.facebook;
