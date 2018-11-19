@@ -71,6 +71,13 @@ paths:
                   type: "string"
                 encryptionScheme:
                   type: "string"
+              example:
+                exportService: "testSource"
+                importService: "testDestination"
+                exportCallbackUrl: "https://localhost:3000/callback/testSource"
+                importCallbackUrl: "https://localhost:3000/callback/testDestination"
+                dataType: "PHOTOS"
+                encryptionScheme: "cleartext"
       responses:
         200:
           description: "Job has been created"
@@ -276,6 +283,16 @@ components:
           - "OAUTH_1"
           - "OAUTH_2"
           - "CUSTOM"
+      example:
+        id: "MjUzN2UzZjItMjVkOS00YTVkLThhMWQtMDA0OWM4MDhjOGI1"
+        exportService: "testSource"
+        importService: "testDestination"
+        exportUrl: "https://www.testSource.com/api/oauth?redirect_uri=https://localhost:3000/callback/testSource&scope=photos"
+        importUrl: "https://www.testDestination.com/api/oauth2/auth?redirect_uri=https://localhost:3000/callback/testDestination&response_type=code&scope=all_photos"
+        exportTokenUrl: ""
+        importTokenUrl: ""
+        exportAuthProtocol: "OAUTH_2"
+        importAuthProtocol: "OAUTH_2"
     ReservedWorker:
       type: "object"
       properties:
