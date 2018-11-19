@@ -18,11 +18,18 @@ package org.datatransferproject.transfer.facebook.photos;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.restfb.Connection;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -36,6 +43,9 @@ import java.util.UUID;
 
 public class FacebookPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+  private static final String ALBUM_TOKEN_PREFIX = "album:";
+  static final String PHOTO_TOKEN_PREFIX = "media:";
+
   private AppCredentials appCredentials;
   private FacebookPhotosInterface photosInterface;
 
@@ -54,41 +64,83 @@ public class FacebookPhotosExporter
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     Preconditions.checkNotNull(authData);
 
-    ArrayList<PhotoAlbum> exportAlbums;
     if (!exportInformation.isPresent()) {
-      exportAlbums = new ArrayList<>();
-
-      // Get albums
-      Iterable<List<Album>> connection = getOrCreatePhotosInterface(authData).getAlbums();
-
-      // TODO(wmorland): Paginate through albums
-      for (List<Album> albums : connection) {
-        for (Album album : albums) {
-          exportAlbums.add(new PhotoAlbum(album.getId(), album.getName(), album.getDescription()));
-        }
-      }
-    } else {
-      PhotosContainerResource containerResource =
-              (PhotosContainerResource) exportInformation.get().getContainerResource();
-      exportAlbums =  new ArrayList<>(containerResource.getAlbums());
+      // No export information if at the start of a bulk export
+      // Start by getting the list of albums to export
+      return exportAlbums(authData, Optional.empty());
     }
 
-      // Get photos for each album
-      ArrayList<PhotoModel> exportPhotos = new ArrayList<>();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) exportInformation.get().getPaginationData();
+    ContainerResource containerResource = exportInformation.get().getContainerResource();
 
-      for (PhotoAlbum album : exportAlbums) {
-        exportAlbumPhotos(authData, exportPhotos, album);
+    boolean containerResourcePresent = containerResource != null;
+    boolean paginationDataPresent = paginationToken != null;
+
+    if (!containerResourcePresent
+        && paginationDataPresent
+        && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
+      // Continue exporting albums
+      return exportAlbums(authData, Optional.of(paginationToken));
+    } else if (containerResourcePresent && containerResource instanceof PhotosContainerResource) {
+      // We have had albums specified from the front end so process them for import
+      PhotosContainerResource photosContainerResource = (PhotosContainerResource) containerResource;
+      Preconditions.checkNotNull(photosContainerResource.getAlbums());
+      ContinuationData continuationData = new ContinuationData(null);
+      for (PhotoAlbum album : photosContainerResource.getAlbums()) {
+        continuationData.addContainerResource(new IdOnlyContainerResource(album.getId()));
       }
-
       return new ExportResult<>(
-          ExportResult.ResultType.END, new PhotosContainerResource(exportAlbums, exportPhotos));
-
-
+          ExportResult.ResultType.CONTINUE, photosContainerResource, continuationData);
+    } else if (containerResourcePresent && containerResource instanceof IdOnlyContainerResource) {
+      // Export photos
+      return exportPhotos(authData, (IdOnlyContainerResource) containerResource);
+    } else {
+      throw new IllegalStateException(String.format("Invalid state passed into FacebookPhotosExporter. ExportInformation: %s", exportInformation));
+    }
   }
 
-  private void exportAlbumPhotos(TokensAndUrlAuthData authData, ArrayList<PhotoModel> exportPhotos, PhotoAlbum album) {
-    Iterable<List<Photo>> photoConnection =
-        getOrCreatePhotosInterface(authData).getPhotos(album.getId());
+  private ExportResult<PhotosContainerResource> exportAlbums(
+          TokensAndUrlAuthData authData, Optional<StringPaginationToken> paginationData) {
+    Optional<String> paginationToken = Optional.empty();
+    if (paginationData.isPresent()) {
+      String token = paginationData.get().getToken();
+      Preconditions.checkArgument(
+          token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
+      paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
+    }
+
+    ArrayList<PhotoAlbum> exportAlbums = new ArrayList<>();
+
+    // Get albums
+    Connection<Album> connection = getOrCreatePhotosInterface(authData).getAlbums(paginationToken);
+
+    PaginationData nextPageData = null;
+    String token = connection.getAfterCursor();
+    if (!Strings.isNullOrEmpty(token)) {
+      nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + token);
+    }
+    ContinuationData continuationData = new ContinuationData(nextPageData);
+
+    List<Album> albums = connection.getData();
+
+    for (Album album : albums) {
+      exportAlbums.add(new PhotoAlbum(album.getId(), album.getName(), album.getDescription()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(album.getId()));
+    }
+
+    return new ExportResult<>(
+        ExportResult.ResultType.CONTINUE,
+        new PhotosContainerResource(exportAlbums, null),
+        continuationData);
+  }
+
+  private ExportResult<PhotosContainerResource> exportPhotos(
+      TokensAndUrlAuthData authData, IdOnlyContainerResource containerResource) {
+    ArrayList<PhotoModel> exportPhotos = new ArrayList<>();
+
+    String albumId = containerResource.getId();
+    Iterable<List<Photo>> photoConnection = getOrCreatePhotosInterface(authData).getPhotos(albumId);
     for (List<Photo> photos : photoConnection) {
       for (Photo photo : photos) {
         Preconditions.checkNotNull(photo.getImages().get(0).getSource());
@@ -99,10 +151,13 @@ public class FacebookPhotosExporter
                 photo.getName(),
                 "image/jpg",
                 photo.getId(),
-                album.getId(),
+                albumId,
                 false));
       }
     }
+
+    return new ExportResult<>(
+        ExportResult.ResultType.END, new PhotosContainerResource(null, exportPhotos));
   }
 
   private synchronized FacebookPhotosInterface getOrCreatePhotosInterface(

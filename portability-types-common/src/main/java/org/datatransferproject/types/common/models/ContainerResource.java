@@ -18,6 +18,7 @@ import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
         @JsonSubTypes.Type(PhotosContainerResource.class),
         @JsonSubTypes.Type(MailContainerResource.class),
         @JsonSubTypes.Type(CalendarContainerResource.class),
-        @JsonSubTypes.Type(TaskContainerResource.class)
+        @JsonSubTypes.Type(TaskContainerResource.class),
+        @JsonSubTypes.Type(IdOnlyContainerResource.class)
 })
 public abstract class ContainerResource extends DataModel {}
