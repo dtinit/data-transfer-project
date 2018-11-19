@@ -94,21 +94,21 @@ public class FacebookPhotosExporter
           ExportResult.ResultType.CONTINUE, photosContainerResource, continuationData);
     } else if (containerResourcePresent && containerResource instanceof IdOnlyContainerResource) {
       // Export photos
-      return exportPhotos(authData, (IdOnlyContainerResource) containerResource);
+      return exportPhotos(
+          authData,
+          (IdOnlyContainerResource) containerResource,
+          Optional.ofNullable(paginationToken));
     } else {
-      throw new IllegalStateException(String.format("Invalid state passed into FacebookPhotosExporter. ExportInformation: %s", exportInformation));
+      throw new IllegalStateException(
+          String.format(
+              "Invalid state passed into FacebookPhotosExporter. ExportInformation: %s",
+              exportInformation));
     }
   }
 
   private ExportResult<PhotosContainerResource> exportAlbums(
-          TokensAndUrlAuthData authData, Optional<StringPaginationToken> paginationData) {
-    Optional<String> paginationToken = Optional.empty();
-    if (paginationData.isPresent()) {
-      String token = paginationData.get().getToken();
-      Preconditions.checkArgument(
-          token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
-      paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
-    }
+      TokensAndUrlAuthData authData, Optional<StringPaginationToken> paginationData) {
+    Optional<String> paginationToken = stripTokenPrefix(paginationData, ALBUM_TOKEN_PREFIX);
 
     ArrayList<PhotoAlbum> exportAlbums = new ArrayList<>();
 
@@ -136,28 +136,54 @@ public class FacebookPhotosExporter
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(
-      TokensAndUrlAuthData authData, IdOnlyContainerResource containerResource) {
+      TokensAndUrlAuthData authData,
+      IdOnlyContainerResource containerResource,
+      Optional<StringPaginationToken> paginationData) {
+    Optional<String> paginationToken = stripTokenPrefix(paginationData, PHOTO_TOKEN_PREFIX);
+
     ArrayList<PhotoModel> exportPhotos = new ArrayList<>();
 
     String albumId = containerResource.getId();
-    Iterable<List<Photo>> photoConnection = getOrCreatePhotosInterface(authData).getPhotos(albumId);
-    for (List<Photo> photos : photoConnection) {
-      for (Photo photo : photos) {
-        Preconditions.checkNotNull(photo.getImages().get(0).getSource());
-        exportPhotos.add(
-            new PhotoModel(
-                String.format("%s.jpg", photo.getId()),
-                photo.getImages().get(0).getSource(),
-                photo.getName(),
-                "image/jpg",
-                photo.getId(),
-                albumId,
-                false));
-      }
+    Connection<Photo> photoConnection =
+        getOrCreatePhotosInterface(authData).getPhotos(albumId, paginationToken);
+    List<Photo> photos = photoConnection.getData();
+    for (Photo photo : photos) {
+      Preconditions.checkNotNull(photo.getImages().get(0).getSource());
+      exportPhotos.add(
+          new PhotoModel(
+              String.format("%s.jpg", photo.getId()),
+              photo.getImages().get(0).getSource(),
+              photo.getName(),
+              "image/jpg",
+              photo.getId(),
+              albumId,
+              false));
     }
 
-    return new ExportResult<>(
-        ExportResult.ResultType.END, new PhotosContainerResource(null, exportPhotos));
+    String token = photoConnection.getAfterCursor();
+    if (Strings.isNullOrEmpty(token)) {
+      return new ExportResult<>(
+          ExportResult.ResultType.END, new PhotosContainerResource(null, exportPhotos));
+    } else {
+      PaginationData nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + token);
+      ContinuationData continuationData = new ContinuationData(nextPageData);
+      continuationData.addContainerResource(containerResource);
+      return new ExportResult<>(
+          ExportResult.ResultType.CONTINUE,
+          new PhotosContainerResource(null, exportPhotos),
+          continuationData);
+    }
+  }
+
+  private Optional<String> stripTokenPrefix(
+      Optional<StringPaginationToken> paginationData, String prefix) {
+    Optional<String> paginationToken = Optional.empty();
+    if (paginationData.isPresent()) {
+      String token = paginationData.get().getToken();
+      Preconditions.checkArgument(token.startsWith(prefix), "Invalid pagination token " + token);
+      paginationToken = Optional.of(token.substring(prefix.length()));
+    }
+    return paginationToken;
   }
 
   private synchronized FacebookPhotosInterface getOrCreatePhotosInterface(

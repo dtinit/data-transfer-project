@@ -34,13 +34,13 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -82,12 +82,14 @@ public class FacebookPhotosExporterTest {
     photo.addImage(image);
     photo.setName(PHOTO_NAME);
 
-    ArrayList<Photo> innerPhotoList = new ArrayList<>();
-    innerPhotoList.add(photo);
+    ArrayList<Photo> photos = new ArrayList<>();
+    photos.add(photo);
 
-    ArrayList<List<Photo>> photos = new ArrayList<>();
-    photos.add(innerPhotoList);
-    when(photosInterface.getPhotos(ALBUM_ID)).thenReturn(photos);
+    @SuppressWarnings("unchecked")
+    Connection<Photo> photoConnection = mock(Connection.class);
+
+    when(photosInterface.getPhotos(ALBUM_ID, Optional.empty())).thenReturn(photoConnection);
+    when(photoConnection.getData()).thenReturn(photos);
 
     facebookPhotosExporter =
         new FacebookPhotosExporter(new AppCredentials("key", "secret"), photosInterface);
@@ -105,9 +107,7 @@ public class FacebookPhotosExporterTest {
     assertEquals(
         new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION),
         exportedData.getAlbums().toArray()[0]);
-    assertEquals(
-        PHOTO_TOKEN_PREFIX,
-        ((StringPaginationToken) result.getContinuationData().getPaginationData()).getToken());
+    assertNull(result.getContinuationData().getPaginationData());
     assertThat(result.getContinuationData().getContainerResources())
         .contains(new IdOnlyContainerResource(ALBUM_ID));
   }
@@ -118,10 +118,7 @@ public class FacebookPhotosExporterTest {
         facebookPhotosExporter.export(
             uuid,
             new TokensAndUrlAuthData("accessToken", null, null),
-            Optional.of(
-                new ExportInformation(
-                    new StringPaginationToken(PHOTO_TOKEN_PREFIX),
-                    new IdOnlyContainerResource(ALBUM_ID))));
+            Optional.of(new ExportInformation(null, new IdOnlyContainerResource(ALBUM_ID))));
 
     assertEquals(ExportResult.ResultType.END, result.getType());
     PhotosContainerResource exportedData = result.getExportedData();
@@ -150,16 +147,16 @@ public class FacebookPhotosExporterTest {
     assertEquals(
         new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION),
         exportedData.getAlbums().toArray()[0]);
-    assertEquals(
-        PHOTO_TOKEN_PREFIX,
-        ((StringPaginationToken) result.getContinuationData().getPaginationData()).getToken());
+    assertNull((result.getContinuationData().getPaginationData()));
     assertThat(result.getContinuationData().getContainerResources())
         .contains(new IdOnlyContainerResource(ALBUM_ID));
   }
 
   @Test(expected = IllegalStateException.class)
   public void testIllegalExport() {
-    facebookPhotosExporter.export(uuid, new TokensAndUrlAuthData("accessToken", null, null),
-            Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
+    facebookPhotosExporter.export(
+        uuid,
+        new TokensAndUrlAuthData("accessToken", null, null),
+        Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
   }
 }

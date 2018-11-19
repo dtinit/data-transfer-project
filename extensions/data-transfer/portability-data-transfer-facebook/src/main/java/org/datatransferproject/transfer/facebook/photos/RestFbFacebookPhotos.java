@@ -44,8 +44,11 @@ public class RestFbFacebookPhotos implements FacebookPhotosInterface {
     return client.fetchConnection("me/albums", Album.class, parameters.toArray(new Parameter[0]));
   }
 
-  public Connection<Photo> getPhotos(String albumId) {
+  public Connection<Photo> getPhotos(String albumId, Optional<String> paginationToken) {
+    ArrayList<Parameter> parameters = new ArrayList<>();
+    parameters.add(Parameter.with("fields", "name,images"));
+    paginationToken.ifPresent(token -> parameters.add(Parameter.with("after", token)));
     return client.fetchConnection(
-        String.format("%s/photos", albumId), Photo.class, Parameter.with("fields", "name,images"));
+        String.format("%s/photos", albumId), Photo.class, parameters.toArray(new Parameter[0]));
   }
 }
