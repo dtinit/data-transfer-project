@@ -1,0 +1,204 @@
+package org.datatransferproject.datatransfer.google.drive;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.Drive.Files.List;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
+import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
+import org.datatransferproject.spi.transfer.types.StringPaginationToken;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
+import org.datatransferproject.types.transfer.models.blob.DigitalDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class DriveExporter implements
+    Exporter<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
+  private static final Logger logger = LoggerFactory.getLogger(DriveExporter.class);
+  private static final String DRIVE_QUERY_FORMAT  = "'%s' in parents and trashed=false";
+  static final String FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+  private static final String FUSION_TABLE_MIME_TYPE = "application/vnd.google-apps.fusiontable";
+  private static final String MAP_MIME_TYPE = "application/vnd.google-apps.map";
+  // This is generated from calling https://www.googleapis.com/drive/v3/about and
+  // picking the best default.
+  private static final ImmutableMap<String, String> EXPORT_FORMATS =
+      ImmutableMap.<String, String>builder()
+          .put(
+              "application/vnd.google-apps.document",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+          .put(
+              "application/vnd.google-apps.spreadsheet",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+          .put(
+              "application/vnd.google-apps.drawing",
+              "image/svg+xml")
+          .put(
+              "application/vnd.google-apps.presentation",
+              "application/vnd.openxmlformats-officedocument.presentationml.presentation")
+          .put(
+              "application/vnd.google-apps.script",
+              "application/vnd.google-apps.script+json")
+          .put(
+              "application/vnd.google-apps.jam",
+              "application/pdf"
+          )
+          .put(
+              "application/vnd.google-apps.form",
+              "application/zip"
+          )
+          .put(
+              "application/vnd.google-apps.site",
+              "text/plain"
+          )
+          .build();
+
+  private final GoogleCredentialFactory credentialFactory;
+  private volatile Drive driveInterface;
+  private final JobStore jobStore;
+
+  public DriveExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+    this(credentialFactory,
+        // Lazily initialized later on
+        null,
+        jobStore);
+  }
+
+  @VisibleForTesting
+  DriveExporter(
+      GoogleCredentialFactory credentialFactory,
+      Drive driveInterface,
+      JobStore jobStore) {
+    this.credentialFactory = credentialFactory;
+    this.driveInterface = driveInterface;
+    this.jobStore = checkNotNull(jobStore, "Job store can't be null");
+  }
+
+  @Override
+  public ExportResult<BlobbyStorageContainerResource> export(UUID jobId,
+      TokensAndUrlAuthData authData, Optional<ExportInformation> optionalExportInformation)
+      throws Exception {
+    Drive driveInterface = getDriveInterface((authData));
+    List driveListOperation = driveInterface.files().list();
+    // If the folder Id isn't specified then use root
+    String parentId = "root";
+    if (optionalExportInformation.isPresent()) {
+      ExportInformation exportInformation = optionalExportInformation.get();
+      if (exportInformation.getPaginationData() != null) {
+        StringPaginationToken paginationToken =
+            (StringPaginationToken) exportInformation.getPaginationData();
+        driveListOperation.setPageToken(paginationToken.getToken());
+      }
+
+      if (exportInformation.getContainerResource() != null) {
+        BlobbyStorageContainerResource parent =
+            (BlobbyStorageContainerResource) exportInformation.getContainerResource();
+        parentId = parent.getId();
+      }
+    }
+    driveListOperation
+        .setFields("files(id, name, modifiedTime, mimeType)")
+        .setQ(String.format(DRIVE_QUERY_FORMAT, parentId));
+
+    ArrayList<DigitalDocument> files = new ArrayList<>();
+    ArrayList<BlobbyStorageContainerResource> folders = new ArrayList<>();
+
+    FileList fileList = driveListOperation.execute();
+
+    for (File file : fileList.getFiles()) {
+      if (FOLDER_MIME_TYPE.equals(file.getMimeType())) {
+        folders.add(new BlobbyStorageContainerResource(
+            file.getName(),
+            file.getId(),
+            null,
+            null
+        ));
+      } else if (FUSION_TABLE_MIME_TYPE.equals(file.getMimeType())) {
+        logger.warn("Exporting of fusion tables is not yet supported: {}", file);
+      } else if (MAP_MIME_TYPE.equals(file.getMimeType())) {
+        logger.warn("Exporting of maps is not yet supported: {}", file);
+      } else {
+        try {
+          InputStream inputStream;
+          String newMimeType = file.getMimeType();
+          if (EXPORT_FORMATS.containsKey(file.getMimeType())) {
+            newMimeType = EXPORT_FORMATS.get(file.getMimeType());
+            inputStream = driveInterface.files().export(file.getId(), newMimeType)
+                .executeMedia().getContent();
+          } else {
+            inputStream =
+                driveInterface.files().get(file.getId()).setAlt("media").executeMedia()
+                    .getContent();
+          }
+          jobStore.create(jobId, file.getId(), inputStream);
+          files.add(new DigitalDocument(
+              file.getName(),
+              file.getModifiedTime().toStringRfc3339(),
+              newMimeType,
+              file.getMimeType(),
+              file.getId()));
+        } catch (Exception e) {
+          logger.error("Couldn't export {} with error", file, e);
+        }
+      }
+      logger.info("Exported {}", file);
+    }
+
+    ResultType resultType = fileList.getFiles().isEmpty()
+        || Strings.isNullOrEmpty(fileList.getNextPageToken())
+        ? ResultType.END : ResultType.CONTINUE;
+
+    BlobbyStorageContainerResource result = new BlobbyStorageContainerResource(
+        null,
+        parentId,
+        files,
+        folders);
+
+    StringPaginationToken paginationToken = null;
+    if (!Strings.isNullOrEmpty(fileList.getNextPageToken())) {
+      paginationToken = new StringPaginationToken(fileList.getNextPageToken());
+    }
+
+    ContinuationData continuationData = new ContinuationData(paginationToken);
+    folders.forEach(continuationData::addContainerResource);
+    return new ExportResult<>(
+        resultType,
+        result,
+        continuationData
+    );
+  }
+
+  private synchronized Drive getDriveInterface(TokensAndUrlAuthData authData) {
+    if (driveInterface == null) {
+      driveInterface = makeDriveInterface(authData);
+    }
+
+    return driveInterface;
+  }
+
+  private synchronized Drive makeDriveInterface(TokensAndUrlAuthData authData) {
+    Credential credential = credentialFactory.createCredential(authData);
+    return new Drive.Builder(
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        .setApplicationName(GoogleStaticObjects.APP_NAME)
+        .build();
+  }
+}

@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.google.api.services.tasks.TasksScopes;
@@ -62,6 +63,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   // These are READ/WRITE scopes
   private static final Map<String, List<String>> IMPORT_SCOPES =
       ImmutableMap.<String, List<String>>builder()
+          .put("BLOBS", ImmutableList.of(DriveScopes.DRIVE))
           .put("CALENDAR", ImmutableList.of(CalendarScopes.CALENDAR))
           .put("MAIL", ImmutableList.of(GmailScopes.GMAIL_MODIFY))
           .put("PHOTOS", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary"))
@@ -73,6 +75,7 @@ public class GoogleAuthDataGenerator implements AuthDataGenerator {
   // These should contain READONLY permissions
   private static final Map<String, List<String>> EXPORT_SCOPES =
       ImmutableMap.<String, List<String>>builder()
+          .put("BLOBS", ImmutableList.of(DriveScopes.DRIVE_READONLY))
           .put("CALENDAR", ImmutableList.of(CalendarScopes.CALENDAR_READONLY))
           .put("MAIL", ImmutableList.of(GmailScopes.GMAIL_READONLY))
           .put("PHOTOS", ImmutableList.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
