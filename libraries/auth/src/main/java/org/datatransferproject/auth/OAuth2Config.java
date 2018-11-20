@@ -16,6 +16,7 @@
 
 package org.datatransferproject.auth;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,5 +51,12 @@ public interface OAuth2Config {
    * defined in the auth data generator or elsewhere
    */
   Map<String, Set<String>> getImportScopes();
+
+  /**
+   * Returns a map of any additional parameters necessary for this service
+   */
+  default Map<String, String> getAdditionalAuthUrlParameters() {
+    return null;
+  }
 
 }

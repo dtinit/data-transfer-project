@@ -14,17 +14,29 @@
  * limitations under the License.
  */
 
+package org.datatransferproject.auth;
 
-plugins {
-    id 'maven-publish'
-    id 'io.spring.bintray'
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class OAuth2TokenResponse {
+
+  @JsonProperty("access_token")
+  private String accessToken;
+
+  @JsonProperty("refresh_token")
+  private String refreshToken;
+
+  @JsonProperty("error")
+  private String error;
+
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
+  }
 }
-
-dependencies {
-
-    compile project(':portability-types-transfer')
-    compile project(':portability-api-launcher')
-
-}
-
-configurePublication(project)

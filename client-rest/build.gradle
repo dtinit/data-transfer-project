@@ -16,6 +16,8 @@
  */
 plugins {
     id "com.moowork.node" version "1.2.0"
+    id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 task installLocalAngularCli(type: NpmTask) {
@@ -93,5 +95,40 @@ task installTools {
         dependsOn installLocalAngularCli
     }
 }
+
+// creates the distribution ZIP containing the compiled Angular application
+task createDistribution(type: Zip) {
+    from "dist/portability-demo"
+    include "*"
+    include "*/*"
+    archiveName "client-rest.zip"
+    destinationDir(file("${buildDir}/libs"))
+}
+
+def distFile = file("${buildDir}/libs/client-rest.zip")
+def distArtifact = artifacts.add('archives', distFile) {
+}
+
+project.publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact distArtifact
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'The Data Transfer Project')
+                root.appendNode('name', 'DTP')
+                root.appendNode('url', 'https://datatransferproject.dev/')
+                root.children().last() + getPomConfig();
+            }
+        }
+    }
+}
+
+configBinTray(project);
+
+// link the publish task to archive creation to ensure the latter is present
+tasks.findAll { it.name.startsWith('publish') }*.dependsOn(createDistribution)
+
+
 
 
