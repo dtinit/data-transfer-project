@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /** A Wrapper for all the possible objects that can be returned by a photos exporter. */
 @JsonTypeName("PhotosContainerResource")
@@ -43,5 +44,19 @@ public class PhotosContainerResource extends ContainerResource {
 
   public Collection<PhotoModel> getPhotos() {
     return photos;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PhotosContainerResource that = (PhotosContainerResource) o;
+    return Objects.equals(getAlbums(), that.getAlbums()) &&
+            Objects.equals(getPhotos(), that.getPhotos());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getAlbums(), getPhotos());
   }
 }

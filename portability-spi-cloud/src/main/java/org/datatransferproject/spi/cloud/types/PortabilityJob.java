@@ -13,6 +13,7 @@ import org.datatransferproject.types.common.ExportInformation;
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A job that will fulfill a transfer request.
@@ -169,6 +170,21 @@ public abstract class PortabilityJob {
           IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
     }
     return builder.build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PortabilityJob that = (PortabilityJob) o;
+    return Objects.equals(state(), that.state()) &&
+            Objects.equals(exportService(), that.exportService()) &&
+            Objects.equals(importService(), that.importService()) &&
+            Objects.equals(transferDataType(), that.transferDataType()) &&
+            Objects.equals(exportInformation(), that.exportInformation()) &&
+            Objects.equals(createdTimestamp(), that.createdTimestamp()) &&
+            Objects.equals(lastUpdateTimestamp(), that.lastUpdateTimestamp()) &&
+            Objects.equals(jobAuthorization(), that.jobAuthorization());
   }
 
   /** The job states. */
