@@ -15,12 +15,17 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -236,7 +241,18 @@ public class GooglePhotosExporter
       albumToken = albumListResponse.getNextPageToken();
     } while (albumToken != null);
 
+    // TODO: if we see complaints about objects being too large for JobStore in other places, we
+    // should consider putting logic in JobStore itself to handle it
+    InputStream stream = convertJsonToInputStream(tempPhotosData);
+    jobStore.create(jobId, createCacheKey(), stream);
+
     jobStore.create(jobId, createCacheKey(), tempPhotosData);
+  }
+
+  @VisibleForTesting
+  static InputStream convertJsonToInputStream(Object jsonObject) throws JsonProcessingException {
+    String tempString = new ObjectMapper().writeValueAsString(jsonObject);
+    return new ByteArrayInputStream(tempString.getBytes(StandardCharsets.UTF_8));
   }
 
   private Optional<String> getPhotosPaginationToken(Optional<PaginationData> paginationData) {
@@ -255,12 +271,24 @@ public class GooglePhotosExporter
   private List<PhotoModel> convertPhotosList(Optional<String> albumId,
       GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
+
+    TempPhotosData tempPhotosData = null;
+    InputStream stream = jobStore.getStream(jobId, createCacheKey());
+    if (stream != null) {
+      tempPhotosData = new ObjectMapper().readValue(stream, TempPhotosData.class);
+      stream.close();
+    }
+
     for (GoogleMediaItem mediaItem : mediaItems) {
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         // TODO: address videos
-        if (albumId.isPresent() ||
-            !jobStore.findData(jobId, createCacheKey(), TempPhotosData.class)
-                .isContainedPhotoId(mediaItem.getId())) {
+        boolean shouldUpload = albumId.isPresent();
+
+        if (tempPhotosData != null) {
+          shouldUpload = shouldUpload || !tempPhotosData.isContainedPhotoId(mediaItem.getId());
+        }
+
+        if (shouldUpload) {
           photos.add(convertToPhotoModel(albumId, mediaItem));
         }
       }

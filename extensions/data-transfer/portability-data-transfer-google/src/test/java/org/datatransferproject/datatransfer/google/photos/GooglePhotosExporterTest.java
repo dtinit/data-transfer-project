@@ -24,14 +24,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
@@ -52,6 +53,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 
 public class GooglePhotosExporterTest {
@@ -74,7 +76,7 @@ public class GooglePhotosExporterTest {
   @Before
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = new LocalJobStore();
+    jobStore = mock(JobStore.class);
     photosInterface = mock(GooglePhotosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);
@@ -166,9 +168,8 @@ public class GooglePhotosExporterTest {
 
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
 
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter
-            .exportPhotos(null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
+    ExportResult<PhotosContainerResource> result = googlePhotosExporter
+        .exportPhotos(null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
 
     // Check results
     // Verify correct methods were called
@@ -244,8 +245,11 @@ public class GooglePhotosExporterTest {
     googlePhotosExporter.populateContainedPhotosList(uuid, null);
 
     // Check contents of job store
-    TempPhotosData tempPhotosData = jobStore.findData(uuid, "tempPhotosData", TempPhotosData.class);
-    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
+    ArgumentCaptor<TempPhotosData> tempPhotosDataArgumentCaptor = ArgumentCaptor
+        .forClass(TempPhotosData.class);
+    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"), tempPhotosDataArgumentCaptor.capture());
+    assertThat(tempPhotosDataArgumentCaptor.getValue().lookupContainedPhotoIds())
+        .containsExactly(PHOTO_ID, secondId);
   }
 
   @Test
@@ -272,7 +276,8 @@ public class GooglePhotosExporterTest {
 
     TempPhotosData tempPhotosData = new TempPhotosData(uuid);
     tempPhotosData.addContainedPhotoId(containedPhotoId);
-    jobStore.create(uuid, "tempPhotosData", tempPhotosData);
+    InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempPhotosData);
+    when(jobStore.getStream(uuid, "tempPhotosData")).thenReturn(stream);
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
