@@ -15,17 +15,8 @@
  */
 package org.datatransferproject.transfer;
 
-import org.datatransferproject.types.transfer.auth.AuthData;
-
-import java.io.IOException;
-import java.util.UUID;
-
-/** In-memory Copier interface */
-public interface InMemoryDataCopier {
-  /* Copies the provided dataType from exportService to importService */
-  void copy(
-      AuthData exportAuthData,
-      AuthData importAuthData,
-      UUID jobId)
-      throws IOException, CopyException;
+public class CopyException extends Exception {
+  public CopyException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

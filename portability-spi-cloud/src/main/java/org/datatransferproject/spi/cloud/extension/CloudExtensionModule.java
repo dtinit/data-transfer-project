@@ -17,6 +17,8 @@
 package org.datatransferproject.spi.cloud.extension;
 
 import com.google.inject.AbstractModule;
+import org.datatransferproject.spi.cloud.hooks.JobHooks;
+import org.datatransferproject.spi.cloud.hooks.DefaultJobHooks;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.CryptoKeyStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -30,6 +32,7 @@ public class CloudExtensionModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(JobHooks.class).to(DefaultJobHooks.class);
     requireBinding(JobStore.class);
     requireBinding(AppCredentialStore.class);
   }
