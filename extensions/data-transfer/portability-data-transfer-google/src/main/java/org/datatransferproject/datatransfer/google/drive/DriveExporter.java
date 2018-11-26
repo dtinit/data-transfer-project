@@ -11,10 +11,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.InputStream;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -23,15 +23,23 @@ import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
 import org.datatransferproject.spi.transfer.types.StringPaginationToken;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
-import org.datatransferproject.types.transfer.models.blob.DigitalDocument;
+import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
+import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DriveExporter implements
+/**
+ * An {@link Exporter} to export data from Google Drive.
+ *
+ * <p> Exports first part content in MS format, and blobby content in the original format.
+ *
+ * <p> Doesn't necessarily export all files in Drive, things like Maps, and Fusion Tables are
+ * currently skipped as there isn't a good export mechanism for them.
+ */
+public final class DriveExporter implements
     Exporter<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
   private static final Logger logger = LoggerFactory.getLogger(DriveExporter.class);
   private static final String DRIVE_QUERY_FORMAT  = "'%s' in parents and trashed=false";
@@ -72,8 +80,10 @@ public class DriveExporter implements
           .build();
 
   private final GoogleCredentialFactory credentialFactory;
-  private volatile Drive driveInterface;
   private final JobStore jobStore;
+
+  // Don't access this directly, instead access via getDriveInterface.
+  private Drive driveInterface;
 
   public DriveExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
     this(credentialFactory,
@@ -85,9 +95,9 @@ public class DriveExporter implements
   @VisibleForTesting
   DriveExporter(
       GoogleCredentialFactory credentialFactory,
-      Drive driveInterface,
+      @Nullable  Drive driveInterface,
       JobStore jobStore) {
-    this.credentialFactory = credentialFactory;
+    this.credentialFactory = checkNotNull(credentialFactory, "Credential Factory can't be null");
     this.driveInterface = driveInterface;
     this.jobStore = checkNotNull(jobStore, "Job store can't be null");
   }
@@ -118,7 +128,7 @@ public class DriveExporter implements
         .setFields("files(id, name, modifiedTime, mimeType)")
         .setQ(String.format(DRIVE_QUERY_FORMAT, parentId));
 
-    ArrayList<DigitalDocument> files = new ArrayList<>();
+    ArrayList<DigitalDocumentWrapper> files = new ArrayList<>();
     ArrayList<BlobbyStorageContainerResource> folders = new ArrayList<>();
 
     FileList fileList = driveListOperation.execute();
@@ -149,10 +159,11 @@ public class DriveExporter implements
                     .getContent();
           }
           jobStore.create(jobId, file.getId(), inputStream);
-          files.add(new DigitalDocument(
+          files.add(new DigitalDocumentWrapper(
+              new DtpDigitalDocument(
               file.getName(),
               file.getModifiedTime().toStringRfc3339(),
-              newMimeType,
+              newMimeType),
               file.getMimeType(),
               file.getId()));
         } catch (Exception e) {
@@ -162,9 +173,7 @@ public class DriveExporter implements
       logger.info("Exported {}", file);
     }
 
-    ResultType resultType = fileList.getFiles().isEmpty()
-        || Strings.isNullOrEmpty(fileList.getNextPageToken())
-        ? ResultType.END : ResultType.CONTINUE;
+    ResultType resultType = isDone(fileList) ? ResultType.END : ResultType.CONTINUE;
 
     BlobbyStorageContainerResource result = new BlobbyStorageContainerResource(
         null,
@@ -186,15 +195,21 @@ public class DriveExporter implements
     );
   }
 
+  private static boolean isDone(FileList fileList) {
+    return fileList.getFiles().isEmpty() || Strings.isNullOrEmpty(fileList.getNextPageToken());
+  }
+
   private synchronized Drive getDriveInterface(TokensAndUrlAuthData authData) {
     if (driveInterface == null) {
-      driveInterface = makeDriveInterface(authData);
+      driveInterface = makeDriveInterface(authData, credentialFactory);
     }
 
     return driveInterface;
   }
 
-  private synchronized Drive makeDriveInterface(TokensAndUrlAuthData authData) {
+  static synchronized Drive makeDriveInterface(
+      TokensAndUrlAuthData authData,
+      GoogleCredentialFactory credentialFactory) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Drive.Builder(
         credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)

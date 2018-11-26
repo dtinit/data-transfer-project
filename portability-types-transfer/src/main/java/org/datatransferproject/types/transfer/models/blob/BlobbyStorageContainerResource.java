@@ -6,18 +6,23 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.datatransferproject.types.transfer.models.ContainerResource;
 
+/**
+ * Represents a folder in a blobby storage system such as Google Drive or Microsoft OneDrive.
+ * Can contain multiple files (via {@link DigitalDocumentWrapper}) or folders (via nested
+ * BlobbyStorageContainerResource).
+ */
 public class BlobbyStorageContainerResource extends ContainerResource {
 
   private final String name;
   private final String id;
-  private final Collection<DigitalDocument> files;
+  private final Collection<DigitalDocumentWrapper> files;
   private final Collection<BlobbyStorageContainerResource> folders;
 
   @JsonCreator
   public BlobbyStorageContainerResource(
       @JsonProperty("name") String name,
       @JsonProperty("id") String id,
-      @JsonProperty("files") Collection<DigitalDocument> files,
+      @JsonProperty("files") Collection<DigitalDocumentWrapper> files,
       @JsonProperty("folders") Collection<BlobbyStorageContainerResource> folders) {
     this.name = name;
     this.id = id;
@@ -25,7 +30,7 @@ public class BlobbyStorageContainerResource extends ContainerResource {
     this.folders = folders == null ? ImmutableList.of() : folders;
   }
 
-  public Collection<DigitalDocument> getFiles() {
+  public Collection<DigitalDocumentWrapper> getFiles() {
     return files;
   }
 

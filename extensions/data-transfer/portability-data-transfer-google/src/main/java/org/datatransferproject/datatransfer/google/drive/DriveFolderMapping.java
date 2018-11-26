@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.datatransferproject.types.transfer.models.DataModel;
 
 @JsonTypeName("org.dataportability:GoogleDriveFolderMapping")
-public class DriveFolderMapping extends DataModel {
+class DriveFolderMapping extends DataModel {
 
   private final String oldId;
   private final String newId;
 
   @JsonCreator
-  public DriveFolderMapping(
+  DriveFolderMapping(
       @JsonProperty("oldId") String oldId,
       @JsonProperty("newId") String newId) {
 
