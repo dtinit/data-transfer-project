@@ -128,7 +128,7 @@ task createDockerfile(type: Dockerfile) {
     exposePort 5005
 
     // API & Worker combined binary
-    copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
+    copyFile("build/libs/demo-server-${project.version}-all.jar", "/app/demo-server-all.jar")
 
     // nginx configuration
     runCommand("apt-get update")
