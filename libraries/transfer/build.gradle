@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-dependencies {
-    // Logging
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
 }
+
+configurePublication(project)

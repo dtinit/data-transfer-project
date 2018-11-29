@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
+}
 
 dependencies {
     compile project(':portability-spi-cloud')
@@ -37,3 +41,5 @@ dependencies {
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }
+
+configurePublication(project)
