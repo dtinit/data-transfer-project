@@ -12,6 +12,8 @@ import org.datatransferproject.datatransfer.google.calendar.GoogleCalendarImport
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.contacts.GoogleContactsExporter;
 import org.datatransferproject.datatransfer.google.contacts.GoogleContactsImporter;
+import org.datatransferproject.datatransfer.google.drive.DriveExporter;
+import org.datatransferproject.datatransfer.google.drive.DriveImporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosImporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailExporter;
@@ -36,7 +38,7 @@ public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "TASKS");
+      ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "TASKS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -88,6 +90,7 @@ public class GoogleTransferExtension implements TransferExtension {
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+    importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore));
     importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
     importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory, jobStore));
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, jobStore)) ;
@@ -96,11 +99,13 @@ public class GoogleTransferExtension implements TransferExtension {
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
+    exporterBuilder.put("BLOBS", new DriveExporter(credentialFactory, jobStore));
     exporterBuilder.put("CONTACTS", new GoogleContactsExporter(credentialFactory));
     exporterBuilder.put("CALENDAR", new GoogleCalendarExporter(credentialFactory));
     exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory));
     exporterBuilder.put("PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory));
+
 
     exporterMap = exporterBuilder.build();
 
