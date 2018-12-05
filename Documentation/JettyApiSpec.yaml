@@ -1,0 +1,300 @@
+openapi: "3.0.2"
+info:
+  description: "This documents the REST endpoints supported by the portability-transport-jettyrest extension to the Data Transfer Project."
+  title: "Data Transfer Project"
+  version: "1.0-SNAPSHOT"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+tags:
+- name: "datatypes"
+  description: "Information about supported datatypes"
+- name: "services"
+  description: "Information about supported services"
+- name: "job"
+  description: "Information and actions on a transfer job"
+paths:
+  /datatypes:
+    get:
+      tags:
+      - "datatypes"
+      summary: "Get the datatypes available"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataTypes"
+  /transfer/services/{dataType}:
+    get:
+      tags:
+      - "services"
+      summary: "Get available services"
+      description: "Returns the available import and export services for a given datatype."
+      parameters:
+      - name: "dataType"
+        in: "path"
+        description: "The data type to transfer"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Services"
+  /transfer:
+    post:
+      tags:
+      - "job"
+      summary: "Create a new transfer job"
+      description: "Creates a new transfer job and returns the information necessary to authenticate with the import and export services."
+      requestBody:
+        description: "Details of the new job"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                exportService:
+                  type: "string"
+                importService:
+                  type: "string"
+                exportCallbackUrl:
+                  type: "string"
+                importCallbackUrl:
+                  type: "string"
+                dataType:
+                  type: "string"
+                encryptionScheme:
+                  type: "string"
+              example:
+                exportService: "testSource"
+                importService: "testDestination"
+                exportCallbackUrl: "https://localhost:3000/callback/testSource"
+                importCallbackUrl: "https://localhost:3000/callback/testDestination"
+                dataType: "PHOTOS"
+                encryptionScheme: "cleartext"
+      responses:
+        200:
+          description: "Job has been created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferJob"
+  /transfer/{id}:
+    get:
+      tags:
+      - "job"
+      summary: "Get a transfer job"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the requested transfer job"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferJob"
+  /transfer/{id}/generate:
+    post:
+      tags:
+      - "job"
+      summary: "Request to generate transfer auth data for an export or import service."
+      description: "This request is issued after the authorization token has been received for the export and import services."
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the transfer job"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        description: "The auth data"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                id:
+                  type: "string"
+                authToken:
+                  type: "string"
+                mode:
+                  type: "string"
+                  enum:
+                  - "EXPORT"
+                  - "IMPORT"
+                callbackUrl:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  authData:
+                    type: "string"
+  /transfer/worker/{id}:
+    parameters:
+    - name: "id"
+      in: "path"
+      description: "The id of the transfer job"
+      required: true
+      schema:
+        type: "string"
+    post:
+      tags:
+      - "job"
+      summary: "Request to reserve a worker to process a transfer job."
+      requestBody:
+        description: "The id of the transfer job"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                id:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservedWorker"
+    get:
+      tags:
+      - "job"
+      summary: "Request to return the worker that was reserved for the given transfer job."
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservedWorker"
+  /{id}/start:
+    post:
+      tags:
+      - "job"
+      summary: "Request to start a transfer job."
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the transfer job"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferJob"
+externalDocs:
+  description: "Find out more about the Data Transfer Project"
+  url: "https://datatransferproject.dev/"
+components:
+  schemas:
+    DataTypes:
+      type: "object"
+      properties:
+        dataTypes:
+          type: "array"
+          items:
+            type: "string"
+      example:
+        datatypes:
+        - "PHOTOS"
+        - "CONTACTS"
+        - "CALENDAR"
+        - "MAIL"
+        - "TASKS"
+    Services:
+      type: "object"
+      properties:
+        transferDataType:
+          type: "string"
+        exportServices:
+          type: "array"
+          items:
+            type: "string"
+        importServices:
+          type: "array"
+          items:
+            type: "string"
+      example:
+        transferDataType: "PHOTOS"
+        exportServices:
+        - "FLICKR"
+        - "INSTAGRAM"
+        - "SMUGMUG"
+        - "Facebook"
+        - "TWITTER"
+        - "GOOGLE"
+        importServices:
+        - "FLICKR"
+        - "SMUGMUG"
+        - "Facebook"
+        - "TWITTER"
+        - "GOOGLE"
+    TransferJob:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        exportService:
+          type: "string"
+        importService:
+          type: "string"
+        dataType:
+          type: "string"
+        exportUrl:
+          type: "string"
+        importUrl:
+          type: "string"
+        exportTokenUrl:
+          type: "string"
+        importTokenUrl:
+          type: "string"
+        exportAuthProtocol:
+          type: "string"
+          enum:
+          - "UNKNOWN"
+          - "OAUTH_1"
+          - "OAUTH_2"
+          - "CUSTOM"
+        importAuthProtocol:
+          type: "string"
+          enum:
+          - "UNKNOWN"
+          - "OAUTH_1"
+          - "OAUTH_2"
+          - "CUSTOM"
+      example:
+        id: "MjUzN2UzZjItMjVkOS00YTVkLThhMWQtMDA0OWM4MDhjOGI1"
+        exportService: "testSource"
+        importService: "testDestination"
+        exportUrl: "https://www.testSource.com/api/oauth?redirect_uri=https://localhost:3000/callback/testSource&scope=photos"
+        importUrl: "https://www.testDestination.com/api/oauth2/auth?redirect_uri=https://localhost:3000/callback/testDestination&response_type=code&scope=all_photos"
+        exportTokenUrl: ""
+        importTokenUrl: ""
+        exportAuthProtocol: "OAUTH_2"
+        importAuthProtocol: "OAUTH_2"
+    ReservedWorker:
+      type: "object"
+      properties:
+        publicKey:
+          type: "string"
