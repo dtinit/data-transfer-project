@@ -3,8 +3,9 @@ package org.datatransferproject.types.transfer.models.blob;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.models.ContainerResource;
+
 import java.util.Collection;
-import org.datatransferproject.types.transfer.models.ContainerResource;
 
 /**
  * Represents a folder in a blobby storage system such as Google Drive or Microsoft OneDrive.
