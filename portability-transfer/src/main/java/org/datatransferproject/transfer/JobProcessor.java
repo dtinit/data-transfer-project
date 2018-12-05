@@ -18,6 +18,7 @@ package org.datatransferproject.transfer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.datatransferproject.spi.cloud.hooks.JobHooks;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -49,6 +50,7 @@ final class JobProcessor {
   private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
 
   private final JobStore store;
+  private final JobHooks hooks;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final Set<AuthDataDecryptService> decryptServices;
@@ -56,10 +58,12 @@ final class JobProcessor {
   @Inject
   JobProcessor(
       JobStore store,
+      JobHooks hooks,
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
       Set<AuthDataDecryptService> decryptServices) {
     this.store = store;
+    this.hooks = hooks;
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.decryptServices = decryptServices;
@@ -67,8 +71,9 @@ final class JobProcessor {
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
+    boolean success = false;
     UUID jobId = JobMetadata.getJobId();
-    logger.debug("Begin processing jobId: {}", jobId);
+    hooks.jobStarted(jobId);
 
     PortabilityJob job = store.findJob(jobId);
     JobAuthorization jobAuthorization = job.jobAuthorization();
@@ -89,7 +94,7 @@ final class JobProcessor {
                 "No auth decrypter found for scheme %s while processing job: %s", scheme, jobId));
         return;
       }
-      
+
       String encrypted = jobAuthorization.encryptedAuthData();
       PrivateKey privateKey = JobMetadata.getKeyPair().getPrivate();
       AuthDataPair pair = decryptService.decrypt(encrypted, privateKey);
@@ -101,16 +106,12 @@ final class JobProcessor {
       // Copy the data
       copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       logger.debug("Finished copy for jobId: " + jobId);
-
-    } catch (IOException | SecurityException e) {
+      success = true;
+    } catch (IOException | SecurityException | CopyException e) {
       logger.error("Error processing jobId: " + jobId, e);
     } finally {
-      try {
-        store.remove(jobId);
-        JobMetadata.reset();
-      } catch (IOException e) {
-        logger.error("Error removing jobId: " + jobId, e);
-      }
+      hooks.jobFinished(jobId, success);
+      JobMetadata.reset();
     }
   }
 

@@ -68,7 +68,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    */
   @Override
   public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId, Optional<ExportInformation> exportInfo)
-      throws IOException {
+      throws IOException, CopyException {
     copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
@@ -86,7 +86,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      Optional<ExportInformation> exportInformation) {
+      Optional<ExportInformation> exportInformation) throws CopyException {
 
     String jobIdPrefix = "Job " + jobId + ": ";
     logger.debug(jobIdPrefix + "copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
@@ -106,8 +106,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     try {
       exportResult = retryingExporter.call();
     } catch (RetryException e) {
-      logger.warn(jobIdPrefix + "Error happened during export: {}", e);
-      return;
+      throw new CopyException(jobIdPrefix + "Error happened during export", e);
     }
     logger.debug(jobIdPrefix + "Finished export");
 
@@ -121,8 +120,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       try {
         retryingImporter.call();
       } catch (RetryException e) {
-        logger.warn(jobIdPrefix + "Error happened during import: {}", e);
-        return;
+        throw new CopyException(jobIdPrefix + "Error happened during import", e);
       }
       logger.debug(jobIdPrefix + "Finished import");
     }

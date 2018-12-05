@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer;
+package org.datatransferproject.spi.cloud.hooks;
 
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.transfer.auth.AuthData;
-
-import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
-/** In-memory Copier interface */
-public interface InMemoryDataCopier {
-  /* Copies the provided dataType from exportService to importService */
-  void copy(
-          AuthData exportAuthData,
-          AuthData importAuthData,
-          UUID jobId, Optional<ExportInformation> exportInfo)
-      throws IOException, CopyException;
+/** A default implementation of the job hooks. */
+public interface JobHooks {
+
+  /**
+   * Called when a job starts processing on a worker.
+   */
+  void jobStarted(UUID jobId);
+
+  /**
+   * Called when a job finishes processing on a worker. The {@code success} parameter
+   * indicates whether the transfer was succesful or not.
+   */
+  void jobFinished(UUID jobId, boolean success);
 }
