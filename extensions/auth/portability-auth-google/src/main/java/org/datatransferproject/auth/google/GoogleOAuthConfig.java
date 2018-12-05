@@ -52,6 +52,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
   @Override
   public Map<String, Set<String>> getExportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
+        .put("BLOBS", ImmutableSet.of("https://www.googleapis.com/auth/drive.readonly"))
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar.readonly"))
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts.readonly"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.readonly"))
@@ -64,6 +65,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
   @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
+        .put("BLOBS", ImmutableSet.of("https://www.googleapis.com/auth/drive"))
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar"))
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.modify"))
