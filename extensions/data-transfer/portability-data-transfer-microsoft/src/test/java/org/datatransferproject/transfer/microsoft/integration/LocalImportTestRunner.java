@@ -23,7 +23,7 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransferExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 
 import java.io.IOException;
 import java.io.StringWriter;

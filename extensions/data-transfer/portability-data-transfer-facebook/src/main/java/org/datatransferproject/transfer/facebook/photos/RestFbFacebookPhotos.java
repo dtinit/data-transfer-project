@@ -16,6 +16,7 @@
 
 package org.datatransferproject.transfer.facebook.photos;
 
+import com.restfb.Connection;
 import com.restfb.DefaultFacebookClient;
 import com.restfb.Parameter;
 import com.restfb.Version;
@@ -24,7 +25,8 @@ import com.restfb.types.Photo;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 
 public class RestFbFacebookPhotos implements FacebookPhotosInterface {
   private DefaultFacebookClient client;
@@ -35,13 +37,18 @@ public class RestFbFacebookPhotos implements FacebookPhotosInterface {
             authData.getAccessToken(), appCredentials.getSecret(), Version.VERSION_3_0);
   }
 
-  public Iterable<List<Album>> getAlbums() {
-    return client.fetchConnection(
-        "me/albums", Album.class, Parameter.with("fields", "description,name"));
+  public Connection<Album> getAlbums(Optional<String> paginationToken) {
+    ArrayList<Parameter> parameters = new ArrayList<>();
+    parameters.add(Parameter.with("fields", "description,name"));
+    paginationToken.ifPresent(token -> parameters.add(Parameter.with("after", token)));
+    return client.fetchConnection("me/albums", Album.class, parameters.toArray(new Parameter[0]));
   }
 
-  public Iterable<List<Photo>> getPhotos(String albumId) {
+  public Connection<Photo> getPhotos(String albumId, Optional<String> paginationToken) {
+    ArrayList<Parameter> parameters = new ArrayList<>();
+    parameters.add(Parameter.with("fields", "name,images"));
+    paginationToken.ifPresent(token -> parameters.add(Parameter.with("after", token)));
     return client.fetchConnection(
-        String.format("%s/photos", albumId), Photo.class, Parameter.with("fields", "name,images"));
+        String.format("%s/photos", albumId), Photo.class, parameters.toArray(new Parameter[0]));
   }
 }

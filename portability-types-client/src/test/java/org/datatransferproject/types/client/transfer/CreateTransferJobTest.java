@@ -35,6 +35,7 @@ public class CreateTransferJobTest {
                 "https://localhost:3000/callback/testSource",
                 "https://localhost:3000/callback/testDestination",
                 "PHOTOS",
+                null,
                 "cleartext"));
 
     CreateTransferJob deserialized = objectMapper.readValue(serialized, CreateTransferJob.class);

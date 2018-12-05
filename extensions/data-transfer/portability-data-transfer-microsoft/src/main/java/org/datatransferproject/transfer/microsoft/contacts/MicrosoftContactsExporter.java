@@ -31,13 +31,12 @@ import okhttp3.ResponseBody;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
 import org.datatransferproject.transfer.microsoft.types.GraphPagination;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 
 /**
  * Exports Microsoft contacts using the Graph API.

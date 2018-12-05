@@ -16,13 +16,14 @@
 
 package org.datatransferproject.transfer.facebook.photos;
 
+import com.restfb.Connection;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
 
-import java.util.List;
+import java.util.Optional;
 
 public interface FacebookPhotosInterface {
-  Iterable<List<Album>> getAlbums();
+  Connection<Album> getAlbums(Optional<String> paginationToken);
 
-  Iterable<List<Photo>> getPhotos(String albumId);
+  Connection<Photo> getPhotos(String albumId, Optional<String> paginationToken);
 }

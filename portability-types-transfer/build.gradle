@@ -20,6 +20,7 @@ plugins {
 }
 
 dependencies {
+    compile project(":portability-types-common")
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
     compile("org.slf4j:slf4j-api:${slf4jVersion}")
     compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")

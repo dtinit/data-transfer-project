@@ -40,9 +40,9 @@ import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempMailData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.mail.MailContainerModel;
-import org.datatransferproject.types.transfer.models.mail.MailContainerResource;
-import org.datatransferproject.types.transfer.models.mail.MailMessageModel;
+import org.datatransferproject.types.common.models.mail.MailContainerModel;
+import org.datatransferproject.types.common.models.mail.MailContainerResource;
+import org.datatransferproject.types.common.models.mail.MailMessageModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

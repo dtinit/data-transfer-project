@@ -27,9 +27,9 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.models.ContainerResource;
+import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
@@ -67,12 +67,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}.
    */
   @Override
-  public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId)
+  public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId, Optional<ExportInformation> exportInfo)
       throws IOException {
-    // Initial copy, starts off the process with no previous paginationData or containerResource
-    // information
-    Optional<ExportInformation> emptyExportInfo = Optional.empty();
-    copyHelper(jobId, exportAuthData, importAuthData, emptyExportInfo);
+    copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
   /**

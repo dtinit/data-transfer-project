@@ -34,9 +34,9 @@ import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumRespons
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

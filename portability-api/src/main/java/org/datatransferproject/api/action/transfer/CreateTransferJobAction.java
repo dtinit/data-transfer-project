@@ -17,9 +17,11 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.CreateTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
+import org.datatransferproject.types.common.ExportInformation;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
@@ -58,6 +60,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     String dataType = request.getDataType();
     String exportService = request.getExportService();
     String importService = request.getImportService();
+    Optional<ExportInformation> exportInformation = Optional.ofNullable(request.getExportInformation());
     String exportCallbackUrl = request.getExportCallbackUrl();
     String importCallbackUrl = request.getImportCallbackUrl();
 
@@ -68,7 +71,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
 
     String encryptionScheme = request.getEncryptionScheme();
     PortabilityJob job =
-        createJob(encodedSessionKey, dataType, exportService, importService, encryptionScheme);
+        createJob(encodedSessionKey, dataType, exportService, importService, exportInformation, encryptionScheme);
 
     AuthDataGenerator exportGenerator =
         registry.getAuthDataGenerator(job.exportService(), job.transferDataType(), EXPORT);
@@ -166,6 +169,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
       String dataType,
       String exportService,
       String importService,
+      Optional<ExportInformation> exportInformation,
       String encryptionScheme) {
 
     // Job auth data
@@ -176,11 +180,13 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             .setState(JobAuthorization.State.INITIAL)
             .build();
 
-    return PortabilityJob.builder()
-        .setTransferDataType(dataType)
-        .setExportService(exportService)
-        .setImportService(importService)
-        .setAndValidateJobAuthorization(jobAuthorization)
-        .build();
+    PortabilityJob.Builder builder =
+        PortabilityJob.builder()
+            .setTransferDataType(dataType)
+            .setExportService(exportService)
+            .setImportService(importService)
+            .setAndValidateJobAuthorization(jobAuthorization);
+    exportInformation.ifPresent(builder::setExportInformation);
+    return builder.build();
   }
 }
