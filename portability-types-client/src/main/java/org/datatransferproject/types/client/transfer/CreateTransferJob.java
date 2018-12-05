@@ -19,6 +19,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import org.datatransferproject.types.common.ExportInformation;
+
+import javax.annotation.Nullable;
 
 /** Request to create a transfer job. */
 @ApiModel(description = "A request to create a data transfer job")
@@ -28,6 +31,7 @@ public class CreateTransferJob {
   private final String exportCallbackUrl;
   private final String importCallbackUrl;
   private final String dataType;
+  private final ExportInformation exportInformation;
   private final String encryptionScheme;
 
   @JsonCreator
@@ -37,12 +41,14 @@ public class CreateTransferJob {
       @JsonProperty(value = "exportCallbackUrl", required = true) String exportCallbackUrl,
       @JsonProperty(value = "importCallbackUrl", required = true) String importCallbackUrl,
       @JsonProperty(value = "dataType", required = true) String dataType,
+      @JsonProperty(value = "exportInformation", required = false) ExportInformation exportInformation,
       @JsonProperty(value = "encryptionScheme", required = true) String encryptionScheme) {
     this.exportService = exportService;
     this.importService = importService;
     this.exportCallbackUrl = exportCallbackUrl;
     this.importCallbackUrl = importCallbackUrl;
     this.dataType = dataType;
+    this.exportInformation = exportInformation;
     this.encryptionScheme = encryptionScheme;
   }
 
@@ -72,6 +78,12 @@ public class CreateTransferJob {
   @ApiModelProperty(value = "The type of data to transfer", dataType = "string", required = true)
   public String getDataType() {
     return dataType;
+  }
+
+  @Nullable
+  @ApiModelProperty(value = "The optional export information")
+  public ExportInformation getExportInformation() {
+    return exportInformation;
   }
 
   @ApiModelProperty(value = "The encryption scheme to use", dataType = "string", required = true)

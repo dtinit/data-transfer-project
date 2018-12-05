@@ -18,7 +18,7 @@ package org.datatransferproject.transfer.microsoft.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.datatransferproject.spi.transfer.types.PaginationData;
+import org.datatransferproject.types.common.PaginationData;
 
 /**
  * Encapsulates the Microsoft Graph API OData next link.

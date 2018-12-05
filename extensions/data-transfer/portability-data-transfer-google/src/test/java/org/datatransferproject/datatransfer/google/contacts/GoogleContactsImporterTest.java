@@ -22,7 +22,7 @@ import com.google.api.services.people.v1.PeopleService.People.CreateContact;
 import com.google.api.services.people.v1.model.Person;
 import ezvcard.VCard;
 import ezvcard.property.StructuredName;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.junit.Before;
 import org.junit.Test;
 

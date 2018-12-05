@@ -45,7 +45,7 @@ import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -6,7 +6,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransferExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 
 import java.util.UUID;
 

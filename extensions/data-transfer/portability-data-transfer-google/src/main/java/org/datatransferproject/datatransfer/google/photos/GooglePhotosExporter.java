@@ -40,15 +40,15 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
-import org.datatransferproject.spi.transfer.types.PaginationData;
-import org.datatransferproject.spi.transfer.types.StringPaginationToken;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 
 // Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first

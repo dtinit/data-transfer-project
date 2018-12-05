@@ -31,9 +31,9 @@ import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.transfer.models.tasks.TaskContainerResource;
-import org.datatransferproject.types.transfer.models.tasks.TaskListModel;
-import org.datatransferproject.types.transfer.models.tasks.TaskModel;
+import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskListModel;
+import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

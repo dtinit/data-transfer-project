@@ -19,6 +19,11 @@ plugins {
     id 'maven-publish'
     id 'io.spring.bintray'
 }
-dependencies {}
+dependencies {
+    compile("com.google.auto.value:auto-value:${autoValueVersion}")
+
+    testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+}
 
 configurePublication(project);

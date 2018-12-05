@@ -3,7 +3,7 @@ package org.datatransferproject.spi.api.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.datatransferproject.types.transfer.PortableType;
+import org.datatransferproject.types.common.PortableType;
 import org.datatransferproject.types.transfer.auth.AuthData;
 
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;

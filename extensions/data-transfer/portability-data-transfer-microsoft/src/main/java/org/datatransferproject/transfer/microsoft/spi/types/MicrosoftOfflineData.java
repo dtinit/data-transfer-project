@@ -15,7 +15,7 @@
  */
 package org.datatransferproject.transfer.microsoft.spi.types;
 
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * Encapsulates exported offline data. Note the format of the exported contents are opaque; they may

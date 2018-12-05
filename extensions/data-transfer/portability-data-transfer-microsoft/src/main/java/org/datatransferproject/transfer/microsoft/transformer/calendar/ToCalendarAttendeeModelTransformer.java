@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
 import org.datatransferproject.transfer.microsoft.transformer.common.TransformerHelper;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 
 /**
  * Maps from a Graph API calendar attendee resource as defined by

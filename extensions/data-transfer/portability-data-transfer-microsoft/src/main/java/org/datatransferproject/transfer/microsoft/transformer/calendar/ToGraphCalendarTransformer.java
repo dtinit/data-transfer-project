@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 
 /**
  * Maps from a transfer calendar type to a Graph API calendar resource as defined by:

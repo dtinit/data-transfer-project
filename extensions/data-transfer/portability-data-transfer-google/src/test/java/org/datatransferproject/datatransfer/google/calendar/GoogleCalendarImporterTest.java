@@ -32,9 +32,9 @@ import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.types.TempCalendarData;
-import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -18,7 +18,7 @@ package org.datatransferproject.spi.transfer.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -18,7 +18,7 @@ package org.datatransferproject.transfer.microsoft.transformer.calendar;
 import java.util.HashMap;
 import java.util.Map;
 import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -24,6 +24,7 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.SecurityException;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.security.PrivateKey;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -99,8 +101,10 @@ final class JobProcessor {
       AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
       AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
+      Optional<ExportInformation> exportInfo = Optional.ofNullable(job.exportInformation());
+
       // Copy the data
-      copier.copy(exportAuthData, importAuthData, jobId);
+      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       logger.debug("Finished copy for jobId: " + jobId);
       success = true;
     } catch (IOException | SecurityException | CopyException e) {

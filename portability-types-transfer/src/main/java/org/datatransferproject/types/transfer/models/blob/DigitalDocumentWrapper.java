@@ -2,7 +2,7 @@ package org.datatransferproject.types.transfer.models.blob;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * This is a wrapper around a {@link DtpDigitalDocument} that encodes a blobby file.

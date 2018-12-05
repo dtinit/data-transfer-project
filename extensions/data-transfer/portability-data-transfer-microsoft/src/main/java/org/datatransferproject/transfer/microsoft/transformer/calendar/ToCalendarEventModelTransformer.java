@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
 import org.datatransferproject.transfer.microsoft.transformer.common.TransformerHelper;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 
 /**
  * Maps from a Graph API calendar event resource as defined by:
