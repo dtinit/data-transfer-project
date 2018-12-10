@@ -18,23 +18,24 @@ package org.datatransferproject.auth.rememberthemilk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+
+import static java.lang.String.format;
 
 public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension {
   private static final String RTM_KEY = "RTM_KEY";
   private static final String RTM_SECRET = "RTM_SECRET";
   private static final String SERVICE_ID = "REMEMBER_THE_MILK";
 
-  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthServiceExtension.class);
   private final List<String> supportedServices = ImmutableList.of("TASKS");
   private RememberTheMilkAuthDataGenerator importAuthDataGenerator;
   private RememberTheMilkAuthDataGenerator exportAuthDataGenerator;
@@ -75,15 +76,21 @@ public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension
       appCredentials =
           context.getService(AppCredentialStore.class).getAppCredentials(RTM_KEY, RTM_SECRET);
     } catch (IOException e) {
-      logger.warn(
-          "Error retrieving RememberTheMilk Credentials. Did you set {} and {}?",
-          RTM_KEY,
-          RTM_SECRET);
+      Monitor monitor = context.getMonitor();
+      monitor.info(
+          () ->
+              format(
+                  "Unable to retrieve RememberTheMilk AppCredentials. Did you set %s and %s?",
+                  RTM_KEY, RTM_SECRET),
+          e);
       return;
     }
 
-    importAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.IMPORT);
-    exportAuthDataGenerator = new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.EXPORT);
+    Monitor monitor = context.getMonitor();
+    importAuthDataGenerator =
+        new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.IMPORT, monitor);
+    exportAuthDataGenerator =
+        new RememberTheMilkAuthDataGenerator(appCredentials, AuthMode.EXPORT, monitor);
     initialized = true;
   }
 }

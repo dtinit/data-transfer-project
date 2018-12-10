@@ -42,8 +42,6 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -61,19 +59,27 @@ import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.g
 
 /** Starts the api server. */
 public class ApiMain {
-  private static final Logger logger = LoggerFactory.getLogger(ApiMain.class);
 
+  private final Monitor monitor;
   private List<ServiceExtension> serviceExtensions = Collections.emptyList();
 
   /** Starts the api server, currently the reference implementation. */
   public static void main(String[] args) {
-    logger.warn("Starting reference api server.");
-    Thread.setDefaultUncaughtExceptionHandler(
-        (thread, t) -> logger.warn("Uncaught exception in thread: {}", thread.getName(), t));
 
-    ApiMain apiMain = new ApiMain();
+    Monitor monitor = loadMonitor();
+    monitor.info(() -> "Starting API Server.");
+
+    Thread.setDefaultUncaughtExceptionHandler(
+        (thread, t) ->
+            monitor.severe(() -> "Uncaught exception in thread: " + thread.getName(), t));
+
+    ApiMain apiMain = new ApiMain(monitor);
     apiMain.initializeHttp();
     apiMain.start();
+  }
+
+  public ApiMain(Monitor monitor) {
+    this.monitor = monitor;
   }
 
   public void initializeHttp() {
@@ -84,8 +90,6 @@ public class ApiMain {
       TrustManagerFactory trustManagerFactory,
       KeyManagerFactory keyManagerFactory,
       KeyStore keyStore) {
-
-    Monitor monitor = loadMonitor();
 
     // TODO init with types
     TypeManager typeManager = new TypeManagerImpl();
@@ -140,7 +144,7 @@ public class ApiMain {
             });
 
     // TODO: make configurable
-    SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator();
+    SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator(monitor);
     TokenManager tokenManager;
 
     try {
@@ -152,10 +156,12 @@ public class ApiMain {
               cloudExtension
                   .getAppCredentialStore()
                   .getAppCredentials(JWTTokenManager.JWT_KEY_NAME, JWTTokenManager.JWT_SECRET_NAME)
-                  .getSecret());
+                  .getSecret(),
+              monitor);
     } catch (IOException e) {
-      logger.error(
-          "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?");
+      monitor.info(
+          () -> "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?",
+          e);
       throw new RuntimeException(e);
     }
 

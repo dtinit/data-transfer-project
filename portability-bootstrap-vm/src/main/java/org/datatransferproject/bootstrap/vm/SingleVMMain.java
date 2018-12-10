@@ -2,6 +2,7 @@ package org.datatransferproject.bootstrap.vm;
 
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import org.datatransferproject.api.ApiMain;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.transfer.WorkerMain;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -11,6 +12,8 @@ import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 
 /**
  * Bootstraps all services (Gateway and 1..N Workers) in a single VM.
@@ -38,7 +41,8 @@ public class SingleVMMain {
   }
 
   public void initializeGateway() {
-    ApiMain apiMain = new ApiMain();
+    Monitor monitor = loadMonitor();
+    ApiMain apiMain = new ApiMain(monitor);
 
     try (InputStream stream =
         ApiMain.class.getClassLoader().getResourceAsStream("demo-selfsigned-keystore.jks")) {

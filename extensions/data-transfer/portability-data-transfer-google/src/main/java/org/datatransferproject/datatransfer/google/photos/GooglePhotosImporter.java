@@ -32,8 +32,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +44,6 @@ public class GooglePhotosImporter
 
   // TODO: internationalize copy prefix
   private static final String COPY_PREFIX = "Copy of ";
-  private static final Logger LOGGER = LoggerFactory.getLogger(GooglePhotosImporter.class);
 
   private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
@@ -55,8 +53,8 @@ public class GooglePhotosImporter
   private final ImageStreamProvider imageStreamProvider;
   private volatile GooglePhotosInterface photosInterface;
 
-  public GooglePhotosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory) {
+  public GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory, JobStore jobStore, JsonFactory jsonFactory) {
     this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider());
   }
 
@@ -75,8 +73,8 @@ public class GooglePhotosImporter
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
-      PhotosContainerResource data) throws IOException {
+  public ImportResult importItem(
+      UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) throws IOException {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -107,8 +105,7 @@ public class GooglePhotosImporter
     googleAlbum.setTitle(COPY_PREFIX + inputAlbum.getName());
 
     GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
-    TempPhotosData tempPhotosData = jobStore
-        .findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(jobId, TEMP_PHOTOS_KEY, tempPhotosData);
@@ -143,8 +140,7 @@ public class GooglePhotosImporter
     }
     NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
 
-    TempPhotosData tempPhotosData = jobStore
-        .findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
+    TempPhotosData tempPhotosData = jobStore.findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
     String albumId;
     if (Strings.isNullOrEmpty(inputPhoto.getAlbumId())) {
       // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
@@ -154,8 +150,8 @@ public class GooglePhotosImporter
       albumId = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
     }
 
-    NewMediaItemUpload uploadItem = new NewMediaItemUpload(albumId,
-        Collections.singletonList(newMediaItem));
+    NewMediaItemUpload uploadItem =
+        new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
 
     getOrCreatePhotosInterface(authData).createPhoto(uploadItem);
   }

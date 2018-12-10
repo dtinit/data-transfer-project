@@ -1,5 +1,6 @@
 package org.datatransferproject.api.action.datatype;
 
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.types.client.datatype.DataTypes;
 import org.datatransferproject.types.client.datatype.GetDataTypes;
@@ -18,7 +19,7 @@ public class DataTypesActionTest {
   @Test
   public void testGetRequestType() {
     AuthServiceProviderRegistry registry = mock(AuthServiceProviderRegistry.class);
-    DataTypesAction dataTypesAction = new DataTypesAction(registry);
+    DataTypesAction dataTypesAction = new DataTypesAction(registry, new Monitor() {});
 
     Class<GetDataTypes> actual = dataTypesAction.getRequestType();
     Assert.assertNotEquals(actual, null);
@@ -30,7 +31,7 @@ public class DataTypesActionTest {
     AuthServiceProviderRegistry registry = mock(AuthServiceProviderRegistry.class);
     Set<String> dataTypes = new HashSet<>(Arrays.asList("CONTACTS", "PHOTOS"));
     when(registry.getTransferDataTypes()).thenReturn(dataTypes);
-    DataTypesAction dataTypesAction = new DataTypesAction(registry);
+    DataTypesAction dataTypesAction = new DataTypesAction(registry, new Monitor() {});
 
     GetDataTypes request = mock(GetDataTypes.class);
     DataTypes actual = dataTypesAction.handle(request);

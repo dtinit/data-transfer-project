@@ -1,14 +1,18 @@
 package org.datatransferproject.transport.jettyrest.http;
 
+import org.datatransferproject.api.launcher.Monitor;
 import org.eclipse.jetty.util.log.Logger;
-import org.slf4j.LoggerFactory;
 
 /** */
 public class JettyMonitor implements Logger {
-  private final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JettyMonitor.class);
+  private static Monitor DELEGATE;
 
   public String getName() {
     return "Data Transfer Project";
+  }
+
+  public static void setDelegate(Monitor delegate) {
+    JettyMonitor.DELEGATE = delegate;
   }
 
   public void warn(String msg, Object... args) {
@@ -20,19 +24,19 @@ public class JettyMonitor implements Logger {
   }
 
   public void warn(String msg, Throwable thrown) {
-    LOGGER.warn(msg, thrown);
+    DELEGATE.info(() -> msg, thrown);
   }
 
   public void info(String msg, Object... args) {
-    LOGGER.info(msg);
+    DELEGATE.info(() -> msg);
   }
 
   public void info(Throwable thrown) {
-    LOGGER.info("Error processing request", thrown);
+    DELEGATE.info(() -> "Error processing request", thrown);
   }
 
   public void info(String msg, Throwable thrown) {
-    LOGGER.info(msg, thrown);
+    DELEGATE.info(() -> msg, thrown);
   }
 
   public boolean isDebugEnabled() {
@@ -44,19 +48,19 @@ public class JettyMonitor implements Logger {
   }
 
   public void debug(String msg, Object... args) {
-    LOGGER.debug(msg);
+    DELEGATE.debug(() -> msg);
   }
 
   public void debug(String msg, long value) {
-    LOGGER.debug(msg);
+    DELEGATE.debug(() -> msg);
   }
 
   public void debug(Throwable thrown) {
-    LOGGER.debug("Error processing request", thrown);
+    DELEGATE.debug(() -> "Error processing request", thrown);
   }
 
   public void debug(String msg, Throwable thrown) {
-    LOGGER.info(msg, thrown);
+    DELEGATE.info(() -> msg, thrown);
   }
 
   public Logger getLogger(String name) {

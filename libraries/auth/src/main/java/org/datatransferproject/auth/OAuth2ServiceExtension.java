@@ -18,27 +18,27 @@ package org.datatransferproject.auth;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.lang.String.format;
 
 /**
- * General implementation of an {@link AuthServiceExtension} for OAuth2.  Largely exists to provide
+ * General implementation of an {@link AuthServiceExtension} for OAuth2. Largely exists to provide
  * the appropriate {@link OAuth2DataGenerator} upon request.
  */
 public class OAuth2ServiceExtension implements AuthServiceExtension {
-
-  private static final Logger logger = LoggerFactory.getLogger(OAuth2ServiceExtension.class);
 
   private final OAuth2Config oAuth2Config;
 
@@ -82,12 +82,20 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
 
     String serviceName = oAuth2Config.getServiceName().toUpperCase();
 
+    String keyName = serviceName + "_KEY";
+    String secretName = serviceName + "_SECRET";
     try {
-      appCredentials = context.getService(AppCredentialStore.class)
-          .getAppCredentials(serviceName + "_KEY", serviceName + "_SECRET");
+      appCredentials =
+          context.getService(AppCredentialStore.class).getAppCredentials(keyName, secretName);
     } catch (IOException e) {
-      logger.warn("Problem getting app credentials: {}.  Did you set {}_KEY and {}_SECRET?", e,
-          serviceName, serviceName);
+      Monitor monitor = context.getMonitor();
+      monitor.info(
+          () ->
+              format(
+                  "Unable to retrieve OAuth1 AppCredentials. Did you set %s and %s?",
+                  keyName, secretName),
+          e);
+
       return;
     }
 
@@ -100,9 +108,10 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
   private synchronized OAuth2DataGenerator getOrCreateAuthDataGenerator(
       String transferType, AuthMode mode) {
     Preconditions.checkState(initialized, "Cannot get OAuth2DataGenerator before initialization");
-    Preconditions.checkArgument(mode == AuthMode.EXPORT
-        ? getExportTypes().contains(transferType)
-        : getImportTypes().contains(transferType));
+    Preconditions.checkArgument(
+        mode == AuthMode.EXPORT
+            ? getExportTypes().contains(transferType)
+            : getImportTypes().contains(transferType));
 
     Map<String, OAuth2DataGenerator> generators =
         mode == AuthMode.EXPORT ? exportAuthDataGenerators : importAuthDataGenerators;
@@ -110,8 +119,7 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
     if (!generators.containsKey(transferType)) {
       generators.put(
           transferType,
-          new OAuth2DataGenerator(oAuth2Config, appCredentials, httpTransport, transferType, mode)
-      );
+          new OAuth2DataGenerator(oAuth2Config, appCredentials, httpTransport, transferType, mode));
     }
 
     return generators.get(transferType);

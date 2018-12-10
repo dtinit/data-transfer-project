@@ -3,31 +3,31 @@ package org.datatransferproject.api.action.transfer;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.StartTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
 import static org.datatransferproject.spi.cloud.types.JobAuthorization.State.CREDS_STORED;
 
 /** Starts a transfer job. */
 public class StartTransferJobAction implements Action<StartTransferJob, TransferJob> {
-  private static final Logger logger = LoggerFactory.getLogger(StartTransferJobAction.class);
-
   private final JobStore jobStore;
+  private final Monitor monitor;
 
   @Inject
-  StartTransferJobAction(JobStore jobStore) {
+  StartTransferJobAction(JobStore jobStore, Monitor monitor) {
     this.jobStore = jobStore;
+    this.monitor = monitor;
   }
 
   @Override
@@ -74,10 +74,11 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
             .setState(CREDS_STORED)
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
-    logger.debug("Updating job {} from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_STORED", jobId);
+    monitor.debug(
+        () -> format("Updating job %s from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_STORED", jobId));
     try {
       jobStore.updateJob(jobId, job);
-      logger.debug("Updated job {} to CREDS_STORED", jobId);
+      monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId));
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }

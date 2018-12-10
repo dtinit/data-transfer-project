@@ -16,6 +16,7 @@
 package org.datatransferproject.cloud.local;
 
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -23,9 +24,11 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 /** */
 public class LocalCloudExtension implements CloudExtension {
 
+  private Monitor monitor;
+
   @Override
   public JobStore getJobStore() {
-    return new LocalJobStore();
+    return new LocalJobStore(monitor);
   }
 
   @Override
@@ -35,5 +38,7 @@ public class LocalCloudExtension implements CloudExtension {
   }
 
   @Override
-  public void initialize(ExtensionContext context) {}
+  public void initialize(ExtensionContext context) {
+    monitor = context.getMonitor();
+  }
 }

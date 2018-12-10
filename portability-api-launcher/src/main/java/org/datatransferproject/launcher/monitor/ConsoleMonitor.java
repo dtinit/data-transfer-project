@@ -49,34 +49,36 @@ public class ConsoleMonitor implements Monitor {
     ansi = !System.getProperty("os.name").contains("Windows");
   }
 
-  public void severe(Supplier<String> supplier, Throwable... errors) {
-    output("SEVERE", supplier, ANSI_RED, errors);
+  public void severe(Supplier<String> supplier, Object... data) {
+    output("SEVERE", supplier, ANSI_RED, data);
   }
 
-  public void info(Supplier<String> supplier, Throwable... errors) {
+  public void info(Supplier<String> supplier, Object... data) {
     if (Level.INFO.value < level.value) {
       return;
     }
-    output("INFO", supplier, ANSI_BLUE, errors);
+    output("INFO", supplier, ANSI_BLUE, data);
   }
 
-  public void debug(Supplier<String> supplier, Throwable... errors) {
+  public void debug(Supplier<String> supplier, Object... data) {
     if (Level.DEBUG.value < level.value) {
       return;
     }
-    output("DEBUG", supplier, ANSI_BLACK, errors);
+    output("DEBUG", supplier, ANSI_BLACK, data);
   }
 
-  private void output(String level, Supplier<String> supplier, String color, Throwable... errors) {
+  private void output(String level, Supplier<String> supplier, String color, Object... data) {
     color = ansi ? color : "";
     String reset = ansi ? ANSI_RESET : "";
 
     String time = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     System.out.println(color + level + " " + time + " " + supplier.get() + reset);
-    if (errors != null) {
-      for (Throwable error : errors) {
-        if (error != null) {
-          error.printStackTrace(System.out);
+    if (data != null) {
+      for (Object datum : data) {
+        if (datum instanceof Throwable) {
+          ((Throwable) datum).printStackTrace(System.out);
+        } else if (datum != null) {
+          System.out.println(datum);
         }
       }
     }

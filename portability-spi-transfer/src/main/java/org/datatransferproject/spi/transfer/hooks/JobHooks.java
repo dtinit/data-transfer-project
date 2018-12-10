@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.datatransferproject.spi.transfer.hooks;
 
-plugins {
-    id 'maven-publish'
-    id 'io.spring.bintray'
+import java.util.UUID;
+
+/** A default implementation of the job hooks. */
+public interface JobHooks {
+
+  /** Called when a job starts processing on a worker. */
+  default void jobStarted(UUID jobId) {}
+
+  /**
+   * Called when a job finishes processing on a worker. The {@code success} parameter indicates
+   * whether the transfer was succesful or not.
+   */
+  default void jobFinished(UUID jobId, boolean success) {}
 }
-
-dependencies {
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-}
-
-configurePublication(project)

@@ -16,8 +16,10 @@
 package org.datatransferproject.transport.jettyrest;
 
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.TransportBinder;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
+import org.datatransferproject.transport.jettyrest.http.JettyMonitor;
 import org.datatransferproject.transport.jettyrest.http.JettyTransport;
 import org.datatransferproject.transport.jettyrest.rest.JerseyTransportBinder;
 
@@ -35,9 +37,11 @@ public class JettyRestExtension implements ServiceExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
+    Monitor monitor = context.getMonitor();
+    JettyMonitor.setDelegate(monitor);
     KeyStore keyStore = context.getService(KeyStore.class);
     boolean useHttps = context.getSetting("useHttps", true);
-    transport = new JettyTransport(keyStore, useHttps);
+    transport = new JettyTransport(keyStore, useHttps, monitor);
     binder = new JerseyTransportBinder(transport);
     context.registerService(TransportBinder.class, binder);
   }

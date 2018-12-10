@@ -38,8 +38,6 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
@@ -56,8 +54,6 @@ import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.g
  * state is held in {@link JobMetadata}.
  */
 public class WorkerMain {
-
-  private static final Logger logger = LoggerFactory.getLogger(WorkerMain.class);
 
   private Worker worker;
 
@@ -90,7 +86,7 @@ public class WorkerMain {
     // TODO: verify that this is the cloud extension that is specified in the configuration
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
-    logger.info("Using CloudExtension: {} ", cloudExtension.getClass().getName());
+    monitor.info(() -> "Using CloudExtension: " + cloudExtension.getClass().getName());
 
     JobStore jobStore = cloudExtension.getJobStore();
     extensionContext.registerService(JobStore.class, jobStore);
@@ -116,8 +112,8 @@ public class WorkerMain {
         securityExtensions.stream().flatMap(e -> e.getDecryptServices().stream()).collect(toSet());
 
     // TODO: make configurable
-    SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator();
-    AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator();
+    SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
+    AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator(monitor);
 
     Injector injector =
         Guice.createInjector(

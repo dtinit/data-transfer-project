@@ -16,11 +16,6 @@
 
 package org.datatransferproject.cloud.google;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -36,17 +31,22 @@ import com.google.common.base.Strings;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import java.io.IOException;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import org.datatransferproject.api.launcher.Constants.Environment;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.extension.CloudExtensionModule;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 
-/**
- * Bindings for cloud platform components using Google Cloud Platform. *
- */
+import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+/** Bindings for cloud platform components using Google Cloud Platform. * */
 final class GoogleCloudExtensionModule extends CloudExtensionModule {
 
   // The value for the 'cloud' flag when hosting on Google Cloud Platform.
@@ -64,6 +64,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
   private final ObjectMapper objectMapper;
+  private final Monitor monitor;
   private final String cloud;
   private final Environment environment;
 
@@ -72,12 +73,14 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
       JsonFactory jsonFactory,
       ObjectMapper objectMapper,
       String cloud,
-      Environment environment) {
+      Environment environment,
+      Monitor monitor) {
     this.httpTransport = httpTransport;
     this.jsonFactory = jsonFactory;
     this.objectMapper = objectMapper;
     this.cloud = cloud;
     this.environment = environment;
+    this.monitor = monitor;
   }
 
   /**
@@ -108,8 +111,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Provides
   @Singleton
   Datastore getDatastore(@ProjectId String projectId, GoogleCredentials credentials) {
-    return DatastoreOptions
-        .newBuilder()
+    return DatastoreOptions.newBuilder()
         .setProjectId(projectId)
         .setCredentials(credentials)
         .build()
@@ -211,6 +213,12 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
     return objectMapper;
   }
 
+  @Provides
+  @Singleton
+  Monitor getMonitor() {
+    return monitor;
+  }
+
   /**
    * Validate we are using Google Cloud. Should be called in all Providers in this module.
    *
@@ -222,8 +230,8 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
    */
   private void validateUsingGoogle(String cloud) {
     if (!cloud.equals(GOOGLE_CLOUD_NAME)) {
-      throw new IllegalStateException("Injecting Google objects when cloud != Google! (cloud was "
-          + cloud);
+      throw new IllegalStateException(
+          "Injecting Google objects when cloud != Google! (cloud was " + cloud);
     }
   }
 

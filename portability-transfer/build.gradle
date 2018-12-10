@@ -58,7 +58,6 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
     compile project(':libraries:config')
-    compile project(':libraries:logging')
     compile project(':libraries:security')
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")
@@ -79,11 +78,6 @@ dependencies {
     compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
     compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
-    // Logging
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-    compile("org.apache.logging.log4j:log4j-api:${log4jVersion}")
-    compile("org.apache.logging.log4j:log4j-core:${log4jVersion}")
 
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")

@@ -16,22 +16,17 @@
 
 package org.datatransferproject.transfer.twitter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.IntPaginationToken;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import twitter4j.MediaEntity;
 import twitter4j.Paging;
 import twitter4j.ResponseList;
@@ -39,19 +34,27 @@ import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
-final class TwitterPhotosExporter implements
-    Exporter<TokenSecretAuthData, PhotosContainerResource> {
-  private static final int PAGE_SIZE = 5;
-  private final Logger logger = LoggerFactory.getLogger(TwitterPhotosExporter.class);
-  private final AppCredentials appCredentials;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-  public TwitterPhotosExporter(AppCredentials appCredentials) {
+import static java.lang.String.format;
+
+final class TwitterPhotosExporter
+    implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
+  private static final int PAGE_SIZE = 5;
+  private final AppCredentials appCredentials;
+  private final Monitor monitor;
+
+  public TwitterPhotosExporter(AppCredentials appCredentials, Monitor monitor) {
     this.appCredentials = appCredentials;
+    this.monitor = monitor;
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokenSecretAuthData authData,
-      Optional<ExportInformation> exportInformation) {
+  public ExportResult<PhotosContainerResource> export(
+      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation) {
     Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
     int pageNumber = 1;
     if (exportInformation.isPresent()) {
@@ -63,34 +66,33 @@ final class TwitterPhotosExporter implements
     }
     Paging paging = new Paging(pageNumber, PAGE_SIZE);
     try {
-      logger.debug("Getting tweets for {} (page {})", twitterApi.getId(), pageNumber);
-      ResponseList<Status> statuses = twitterApi.getUserTimeline(twitterApi.getId(), paging);
+      String page = "" + pageNumber;
+      long id = twitterApi.getId();
+      monitor.debug(() -> format("Getting tweets for %s (page %s)", id, page));
+      ResponseList<Status> statuses = twitterApi.getUserTimeline(id, paging);
       List<PhotoModel> photos = new ArrayList<>();
       for (Status status : statuses) {
         boolean hasMedia = status.getMediaEntities().length > 0;
         if (hasMedia && !status.isRetweet()) {
           for (MediaEntity mediaEntity : status.getMediaEntities()) {
-            photos.add(new PhotoModel(
-                "Twitter Photo " + mediaEntity.getId(),
-                mediaEntity.getMediaURL(),
-                status.getText(),
-                null,
-                Long.toString(status.getId()),
-                null,
-                false));
+            photos.add(
+                new PhotoModel(
+                    "Twitter Photo " + mediaEntity.getId(),
+                    mediaEntity.getMediaURL(),
+                    status.getText(),
+                    null,
+                    Long.toString(status.getId()),
+                    null,
+                    false));
           }
         }
       }
       boolean moreData = statuses.size() == PAGE_SIZE;
       return new ExportResult<>(
           moreData ? ResultType.CONTINUE : ResultType.END,
-          new PhotosContainerResource(
-              null,
-              photos
-          ),
+          new PhotosContainerResource(null, photos),
           moreData ? new ContinuationData(new IntPaginationToken(pageNumber + 1)) : null);
-    }
-    catch (TwitterException e) {
+    } catch (TwitterException e) {
       return new ExportResult<>(e);
     }
   }
