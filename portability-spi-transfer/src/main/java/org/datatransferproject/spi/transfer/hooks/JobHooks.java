@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.spi.cloud.hooks;
+package org.datatransferproject.spi.transfer.hooks;
 
 import java.util.UUID;
 
 /** A default implementation of the job hooks. */
 public interface JobHooks {
 
+  /** Called when a job starts processing on a worker. */
+  default void jobStarted(UUID jobId) {}
   /**
-   * Called when a job starts processing on a worker.
+   * Called when a job finishes processing on a worker. The {@code success} parameter indicates
+   * whether the transfer was succesful or not.
    */
-  void jobStarted(UUID jobId);
-
-  /**
-   * Called when a job finishes processing on a worker. The {@code success} parameter
-   * indicates whether the transfer was succesful or not.
-   */
-  void jobFinished(UUID jobId, boolean success);
+  default void jobFinished(UUID jobId, boolean success) {}
 }

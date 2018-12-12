@@ -18,7 +18,7 @@ package org.datatransferproject.transfer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.datatransferproject.spi.cloud.hooks.JobHooks;
+import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;

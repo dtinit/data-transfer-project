@@ -37,6 +37,8 @@ import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.hooks.EmptyJobHooks;
+import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
@@ -96,6 +98,7 @@ final class WorkerModule extends FlagBindingModule {
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
+    bind(JobHooks.class).to(EmptyJobHooks.class);
   }
 
   @Provides
