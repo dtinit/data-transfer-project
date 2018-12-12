@@ -63,7 +63,6 @@ dependencies {
     compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile("com.google.inject:guice:${guiceVersion}")
     compile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
-    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
     compile("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
 
     testCompile("com.google.truth:truth:${truthVersion}")
