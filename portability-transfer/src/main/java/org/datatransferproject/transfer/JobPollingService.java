@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -31,6 +32,7 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
@@ -40,11 +42,14 @@ import static java.lang.String.format;
  * (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
+  private static final int CREDS_TIMEOUT_SECONDS = 300;
+
   private final JobStore store;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
   private final Set<PublicKeySerializer> publicKeySerializers;
   private final Scheduler scheduler;
   private final Monitor monitor;
+  private final Stopwatch stopwatch = Stopwatch.createUnstarted();
 
   @Inject
   JobPollingService(
@@ -63,6 +68,11 @@ class JobPollingService extends AbstractScheduledService {
   @Override
   protected void runOneIteration() {
     if (JobMetadata.isInitialized()) {
+      if (stopwatch.elapsed(TimeUnit.SECONDS) > CREDS_TIMEOUT_SECONDS)
+        throw new RuntimeException(
+            String.format(
+                "Waited over %d seconds for the creds to be provided on the claimed job: %s",
+                CREDS_TIMEOUT_SECONDS, JobMetadata.getJobId()));
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this transfer worker instance.
@@ -72,8 +82,6 @@ class JobPollingService extends AbstractScheduledService {
     }
   }
 
-  // TODO: the delay should be more easily configurable
-  // https://github.com/google/data-transfer-project/issues/400
   @Override
   protected Scheduler scheduler() {
     return scheduler;
@@ -107,6 +115,7 @@ class JobPollingService extends AbstractScheduledService {
               format(
                   "Updated job %s to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: %s",
                   jobId, publicKey.getEncoded().length));
+      stopwatch.start();
     }
   }
 
