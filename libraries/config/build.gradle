@@ -20,7 +20,6 @@ plugins {
 
 dependencies {
     compile project(":portability-api-launcher")
-    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
     compile("com.google.inject:guice:${guiceVersion}")
     // Logging
     compile("org.slf4j:slf4j-api:${slf4jVersion}")
