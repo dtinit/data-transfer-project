@@ -19,8 +19,6 @@ plugins {
 }
 
 dependencies {
-    compile project(':portability-api-launcher')
-    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
     testCompile("org.mockito:mockito-all:${mockitoVersion}")
 }
 
