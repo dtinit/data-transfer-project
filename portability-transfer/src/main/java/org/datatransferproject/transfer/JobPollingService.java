@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -42,14 +43,13 @@ import static java.lang.String.format;
  * (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
-  private static final int CREDS_TIMEOUT_SECONDS = 300;
-
   private final JobStore store;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
   private final Set<PublicKeySerializer> publicKeySerializers;
   private final Scheduler scheduler;
   private final Monitor monitor;
   private final Stopwatch stopwatch = Stopwatch.createUnstarted();
+  private final int credsTimeoutSeconds;
 
   @Inject
   JobPollingService(
@@ -57,22 +57,24 @@ class JobPollingService extends AbstractScheduledService {
       AsymmetricKeyGenerator asymmetricKeyGenerator,
       Set<PublicKeySerializer> publicKeySerializers,
       Scheduler scheduler,
-      Monitor monitor) {
+      Monitor monitor,
+      ExtensionContext context) {
     this.store = store;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     this.publicKeySerializers = publicKeySerializers;
     this.scheduler = scheduler;
     this.monitor = monitor;
+    this.credsTimeoutSeconds = context.getSetting("credTimeoutSeconds", 300);
   }
 
   @Override
   protected void runOneIteration() {
     if (JobMetadata.isInitialized()) {
-      if (stopwatch.elapsed(TimeUnit.SECONDS) > CREDS_TIMEOUT_SECONDS)
+      if (stopwatch.elapsed(TimeUnit.SECONDS) > credsTimeoutSeconds)
         throw new RuntimeException(
             String.format(
                 "Waited over %d seconds for the creds to be provided on the claimed job: %s",
-                CREDS_TIMEOUT_SECONDS, JobMetadata.getJobId()));
+                    credsTimeoutSeconds, JobMetadata.getJobId()));
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this transfer worker instance.

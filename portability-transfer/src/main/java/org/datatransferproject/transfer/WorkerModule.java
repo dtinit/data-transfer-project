@@ -172,4 +172,10 @@ final class WorkerModule extends FlagBindingModule {
   Monitor getMonitor() {
     return context.getMonitor();
   }
+
+  @Provides
+  @Singleton
+  ExtensionContext getContext() {
+    return context;
+  }
 }
