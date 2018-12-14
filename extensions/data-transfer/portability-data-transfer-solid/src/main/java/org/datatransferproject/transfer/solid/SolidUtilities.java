@@ -26,8 +26,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
+import org.datatransferproject.transfer.solid.contacts.SolidContactsExport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SolidUtilities {
+  private static final Logger logger = LoggerFactory.getLogger(SolidContactsExport.class);
   private static final Pattern PROBLEMATIC_TURTLE = Pattern.compile("(\\s\\d+\\.)\n");
   private static final HttpTransport TRANSPORT = new NetHttpTransport();
   private final String authCookie;
@@ -39,7 +43,7 @@ public class SolidUtilities {
   }
 
   public void explore(String url, Consumer<Resource> resourceConsumer) throws IOException {
-    System.out.println("Exploring: " + url);
+    logger.debug("Exploring: {}", url);
     Model model = getModel(url);
 
     Resource selfResource = getResource(url, model);
@@ -107,10 +111,7 @@ public class SolidUtilities {
       deleteRequest.setHeaders(headers);
 
       validateResponse(deleteRequest.execute(), 200);
-      System.out.println("Deleted: " + url);
-    } catch (HttpResponseException e) {
-      System.out.println("Response Headers: " + e.getHeaders());
-      throw new IllegalStateException("Couldn't delete: " + url, e);
+      logger.debug("Deleted: {}", url);
     } catch (IOException e) {
       throw new IllegalStateException("Couldn't delete: " + url, e);
     }
@@ -143,16 +144,11 @@ public class SolidUtilities {
     headers.set("Slug", slug);
     postRequest.setHeaders(headers);
 
-    System.out.println(url);
     HttpResponse response = postRequest.execute();
 
     validateResponse(response, 201);
     String location = response.getHeaders().getLocation();
 
-    System.out.println("\tLocation: " + location);
-    StringWriter writer = new StringWriter();
-    IOUtils.copy(response.getContent(), writer, "UTF-8");
-    System.out.println("\t" + writer);
     return location;
   }
 
@@ -217,13 +213,15 @@ public class SolidUtilities {
     return PROBLEMATIC_TURTLE.matcher(source).replaceAll("$10.\n");
   }
 
+  /** Utility method for debugging model problems. **/
+  @SuppressWarnings("unused")
   public static void describeModel(Model model) {
     model.listSubjects().forEachRemaining(
         r -> {
-          System.out.println(r.toString());
+          logger.info(r.toString());
           StmtIterator props = r.listProperties();
           props.forEachRemaining(p -> {
-            System.out.println("\t" + p.getPredicate() + " " + p.getObject());
+            logger.info("\t" + p.getPredicate() + " " + p.getObject());
           });
         }
     );
