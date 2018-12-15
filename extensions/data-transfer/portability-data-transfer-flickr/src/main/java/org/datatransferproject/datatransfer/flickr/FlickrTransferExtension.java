@@ -18,8 +18,8 @@ package org.datatransferproject.datatransfer.flickr;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import java.util.Set;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosExporter;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -28,15 +28,16 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.Set;
+
+import static java.lang.String.format;
 
 public class FlickrTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "flickr";
   private static final String FLICKR_KEY = "FLICKR_KEY";
-  private static final String FLICKER_SECRET = "FLICKR_SECRET";
+  private static final String FLICKR_SECRET = "FLICKR_SECRET";
 
-  private final Logger logger = LoggerFactory.getLogger(FlickrTransferExtension.class);
   private final Set<String> supportedServices = ImmutableSet.of("PHOTOS");
 
   private Importer importer;
@@ -71,15 +72,15 @@ public class FlickrTransferExtension implements TransferExtension {
 
     try {
       appCredentials =
-          context
-              .getService(AppCredentialStore.class)
-              .getAppCredentials(FLICKR_KEY, FLICKER_SECRET);
+          context.getService(AppCredentialStore.class).getAppCredentials(FLICKR_KEY, FLICKR_SECRET);
     } catch (Exception e) {
-      logger.warn(
-          "Problem getting AppCredentials: {} Did you set {} and {}?",
-          e.getMessage(),
-          FLICKR_KEY,
-          FLICKER_SECRET);
+      Monitor monitor = context.getMonitor();
+      monitor.info(
+          () ->
+              format(
+                  "Unable to retrieve Flickr AppCredentials. Did you set %s and %s?",
+                  FLICKR_KEY, FLICKR_SECRET),
+          e);
       initialized = false;
       return;
     }

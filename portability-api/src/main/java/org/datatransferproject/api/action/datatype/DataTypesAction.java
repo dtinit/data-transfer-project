@@ -17,11 +17,10 @@ package org.datatransferproject.api.action.datatype;
 
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
-import org.datatransferproject.types.client.datatype.GetDataTypes;
 import org.datatransferproject.types.client.datatype.DataTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.datatransferproject.types.client.datatype.GetDataTypes;
 
 import java.util.Set;
 
@@ -29,14 +28,14 @@ import java.util.Set;
  * An {@link Action} that handles listing data types available for export and import for a given
  * data type.
  */
-public final class DataTypesAction
-    implements Action<GetDataTypes, DataTypes> {
-  private static final Logger logger = LoggerFactory.getLogger(DataTypesAction.class);
+public final class DataTypesAction implements Action<GetDataTypes, DataTypes> {
   private final AuthServiceProviderRegistry registry;
+  private final Monitor monitor;
 
   @Inject
-  DataTypesAction(AuthServiceProviderRegistry registry) {
+  DataTypesAction(AuthServiceProviderRegistry registry, Monitor monitor) {
     this.registry = registry;
+    this.monitor = monitor;
   }
 
   @Override
@@ -49,7 +48,10 @@ public final class DataTypesAction
   public DataTypes handle(GetDataTypes request) {
     Set<String> transferDataTypes = registry.getTransferDataTypes();
     if (transferDataTypes.isEmpty()) {
-      logger.warn("Empty data type list found");
+      monitor.severe(
+          () ->
+              "No transfer data types were registered in "
+                  + AuthServiceProviderRegistry.class.getName());
     }
     return new DataTypes(transferDataTypes);
   }

@@ -16,7 +16,7 @@
 package org.datatransferproject.api.launcher;
 
 /** Implementations provide an extension to the system. */
-public interface AbstractExtension {
+public interface AbstractExtension extends SystemExtension{
   /**
    * Initializes the extension. Implementations prepare provided services.
    *
@@ -24,12 +24,4 @@ public interface AbstractExtension {
    */
   void initialize(ExtensionContext context);
 
-  /**
-   * Signals to the extension to prepare for receiving requests. For example, implementations may
-   * open sockets or other resources.
-   */
-  default void start() {}
-
-  /** Signals the extension to terminate and cleanup resources. */
-  default void shutdown() {}
 }

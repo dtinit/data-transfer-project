@@ -17,29 +17,31 @@ package org.datatransferproject.security;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import org.datatransferproject.api.launcher.Monitor;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
+import static java.lang.String.format;
 
 /**
  * Provides AES and RSA-based encryption implementations. See {@link EncrypterFactory} to create.
  */
 final class EncrypterImpl implements Encrypter {
-
-  private static final Logger logger = LoggerFactory.getLogger(EncrypterImpl.class);
   private final Key key;
   private final String transformation;
+  private final Monitor monitor;
 
-  EncrypterImpl(String transformation, Key key) {
+  EncrypterImpl(String transformation, Key key, Monitor monitor) {
     this.key = key;
     this.transformation = transformation;
+    this.monitor = monitor;
   }
 
   @Override
@@ -58,7 +60,7 @@ final class EncrypterImpl implements Encrypter {
         | InvalidKeyException
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
-      logger.error("Exception encrypting data, length: {}", data.length(), e);
+      monitor.severe(() -> format("Exception encrypting data, length: %s", data.length()), e);
       throw new RuntimeException(e);
     }
   }

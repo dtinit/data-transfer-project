@@ -18,17 +18,16 @@ package org.datatransferproject.transfer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.datatransferproject.spi.cloud.hooks.JobHooks;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.SecurityException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -47,13 +46,12 @@ import static java.lang.String.format;
  */
 final class JobProcessor {
 
-  private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
-
   private final JobStore store;
   private final JobHooks hooks;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final Set<AuthDataDecryptService> decryptServices;
+  private final Monitor monitor;
 
   @Inject
   JobProcessor(
@@ -61,18 +59,21 @@ final class JobProcessor {
       JobHooks hooks,
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
-      Set<AuthDataDecryptService> decryptServices) {
+      Set<AuthDataDecryptService> decryptServices,
+      Monitor monitor) {
     this.store = store;
     this.hooks = hooks;
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.decryptServices = decryptServices;
+    this.monitor = monitor;
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
+    monitor.debug(() -> format("Begin processing jobId: %s", jobId));
     hooks.jobStarted(jobId);
 
     PortabilityJob job = store.findJob(jobId);
@@ -80,18 +81,20 @@ final class JobProcessor {
     Preconditions.checkState(jobAuthorization.state() == JobAuthorization.State.CREDS_STORED);
 
     try {
-      logger.debug(
-          "Starting copy job, id: {}, source: {}, destination: {}",
-          jobId,
-          job.exportService(),
-          job.importService());
+      monitor.debug(
+          () ->
+              format(
+                  "Starting copy job, id: %s, source: %s, destination: %s",
+                  jobId, job.exportService(), job.importService()));
 
       String scheme = jobAuthorization.encryptionScheme();
       AuthDataDecryptService decryptService = getAuthDecryptService(scheme);
       if (decryptService == null) {
-        logger.error(
-            format(
-                "No auth decrypter found for scheme %s while processing job: %s", scheme, jobId));
+        monitor.severe(
+            () ->
+                format(
+                    "No auth decrypter found for scheme %s while processing job: %s",
+                    scheme, jobId));
         return;
       }
 
@@ -105,11 +108,17 @@ final class JobProcessor {
 
       // Copy the data
       copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
-      logger.debug("Finished copy for jobId: " + jobId);
+      monitor.debug(() -> "Finished copy for jobId: " + jobId);
       success = true;
     } catch (IOException | SecurityException | CopyException e) {
-      logger.error("Error processing jobId: " + jobId, e);
+      monitor.severe(() -> "Error processing jobId: " + jobId, e);
     } finally {
+      monitor.debug(() -> "Finished processing jobId: " + jobId);
+      try {
+        store.remove(jobId);
+      } catch (IOException e) {
+        monitor.severe(() -> "Error removing jobId: " + jobId, e);
+      }
       hooks.jobFinished(jobId, success);
       JobMetadata.reset();
     }

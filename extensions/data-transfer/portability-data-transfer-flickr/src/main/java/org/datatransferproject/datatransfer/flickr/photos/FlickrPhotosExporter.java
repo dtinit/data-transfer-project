@@ -45,10 +45,12 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
@@ -61,8 +63,6 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   private final PhotosetsInterface photosetsInterface;
   private final PhotosInterface photosInterface;
   private final Flickr flickr;
-
-  private final Logger logger = LoggerFactory.getLogger(FlickrPhotosExporter.class);
 
   public FlickrPhotosExporter(AppCredentials appCredentials) {
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());

@@ -16,14 +16,14 @@
 
 package org.datatransferproject.types.transfer.retry;
 
-import static java.lang.Thread.currentThread;
+import org.datatransferproject.api.launcher.Monitor;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.Thread.currentThread;
 
 /**
  * Class for retrying a {@link Callable} given a {@link RetryStrategyLibrary}.
@@ -32,21 +32,23 @@ import org.slf4j.LoggerFactory;
  */
 public class RetryingCallable<T> implements Callable<T> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(RetryingCallable.class);
-
   private final Callable<T> callable;
   private final RetryStrategyLibrary retryStrategyLibrary;
   private final Clock clock;
+  private final Monitor monitor;
 
   private volatile int attempts;
   private volatile Exception mostRecentException;
 
-  public RetryingCallable(Callable<T> callable,
+  public RetryingCallable(
+      Callable<T> callable,
       RetryStrategyLibrary retryStrategyLibrary,
-      Clock clock) {
+      Clock clock,
+      Monitor monitor) {
     this.callable = callable;
     this.retryStrategyLibrary = retryStrategyLibrary;
     this.clock = clock;
+    this.monitor = monitor;
     this.attempts = 0;
   }
 
@@ -64,13 +66,14 @@ public class RetryingCallable<T> implements Callable<T> {
         return callable.call();
       } catch (Exception e) {
         mostRecentException = e;
-        LOGGER.error("Caught exception", e);
+        monitor.severe(() -> "Caught exception", e);
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
-        // TODO: do we want to reset anything (eg, number of retries) if we see a different RetryStrategy?
+        // TODO: do we want to reset anything (eg, number of retries) if we see a different
+        // RetryStrategy?
         RetryStrategy strategy = retryStrategyLibrary.checkoutRetryStrategy(e);
         if (strategy.canTryAgain(attempts)) {
-          long nextAttemptIntervalMillis = strategy
-              .getRemainingIntervalMillis(attempts, elapsedMillis);
+          long nextAttemptIntervalMillis =
+              strategy.getRemainingIntervalMillis(attempts, elapsedMillis);
           if (nextAttemptIntervalMillis > 0L) {
             try {
               Thread.sleep(nextAttemptIntervalMillis);

@@ -26,8 +26,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.net.URL;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.auth.rememberthemilk.model.AuthElement;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
@@ -35,8 +34,9 @@ import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URL;
 
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.CUSTOM;
@@ -47,7 +47,6 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  * <p>TODO(#553): Remove code/token exchange as this will be handled by frontends.
  */
 public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
-  private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkAuthDataGenerator.class);
   private static final AuthProtocol AUTH_PROTOCOL = CUSTOM;
   private static final String AUTH_URL = "http://api.rememberthemilk.com/services/auth/";
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
@@ -56,11 +55,14 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
 
   private final RememberTheMilkSignatureGenerator signatureGenerator;
   private final String perms;
+  private final Monitor monitor;
   private final XmlMapper xmlMapper;
 
-  public RememberTheMilkAuthDataGenerator(AppCredentials appCredentials, AuthMode authMode) {
+  public RememberTheMilkAuthDataGenerator(
+      AppCredentials appCredentials, AuthMode authMode, Monitor monitor) {
     signatureGenerator = new RememberTheMilkSignatureGenerator(appCredentials);
     perms = (authMode == AuthMode.IMPORT) ? "write" : "read";
+    this.monitor = monitor;
     this.xmlMapper = new XmlMapper();
   }
 
@@ -73,7 +75,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
     try {
       authUrlSigned = signatureGenerator.getSignature(AUTH_URL, ImmutableMap.of("perms", perms));
     } catch (Exception e) {
-      logger.warn("Error generating Authentication URL: {}", e.getMessage());
+      monitor.severe(() -> "Error generating RememberTheMilk Authentication URL", e);
       return null;
     }
 
@@ -87,7 +89,7 @@ public class RememberTheMilkAuthDataGenerator implements AuthDataGenerator {
     try {
       return new TokenAuthData(getToken(authCode));
     } catch (IOException e) {
-      logger.warn("Error getting AuthToken: " + e.getMessage());
+      monitor.severe(() -> "Error getting RememberTheMilk AuthToken: ", e);
       return null;
     }
   }

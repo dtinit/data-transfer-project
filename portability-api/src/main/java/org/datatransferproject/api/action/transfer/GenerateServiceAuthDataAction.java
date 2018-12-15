@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.security.DecrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -30,17 +31,20 @@ public class GenerateServiceAuthDataAction
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
+  private DecrypterFactory decrypterFactory;
 
   @Inject
   public GenerateServiceAuthDataAction(
-          JobStore jobStore,
-          AuthServiceProviderRegistry registry,
-          SymmetricKeyGenerator symmetricKeyGenerator,
-          TypeManager typeManager) {
+      JobStore jobStore,
+      AuthServiceProviderRegistry registry,
+      SymmetricKeyGenerator symmetricKeyGenerator,
+      TypeManager typeManager,
+      Monitor monitor) {
     this.jobStore = jobStore;
     this.registry = registry;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
+    this.decrypterFactory = new DecrypterFactory(monitor);
   }
 
   @Override
@@ -54,8 +58,10 @@ public class GenerateServiceAuthDataAction
       Preconditions.checkNotNull(id, "transfer job ID required for GenerateServiceAuthDataAction");
       UUID jobId = decodeJobId(id);
 
-      Preconditions.checkNotNull(request.getAuthToken(),
-              "Auth token required for GenerateServiceAuthDataAction, transfer job ID: %s", jobId);
+      Preconditions.checkNotNull(
+          request.getAuthToken(),
+          "Auth token required for GenerateServiceAuthDataAction, transfer job ID: %s",
+          jobId);
       PortabilityJob job = jobStore.findJob(jobId);
       Preconditions.checkNotNull(job, "existing job not found for transfer job ID: %s", jobId);
 
@@ -83,7 +89,7 @@ public class GenerateServiceAuthDataAction
       if (encryptedInitialAuthData != null) {
         // Retrieve and parse the session key from the job
         // Decrypt and deserialize the object
-        String serialized = DecrypterFactory.create(key).decrypt(encryptedInitialAuthData);
+        String serialized = decrypterFactory.create(key).decrypt(encryptedInitialAuthData);
         initialAuthData = objectMapper.readValue(serialized, AuthData.class);
       }
 
@@ -91,7 +97,11 @@ public class GenerateServiceAuthDataAction
       // Generate auth data
       AuthData authData =
           generator.generateAuthData(
-                  request.getCallbackUrl(), request.getAuthToken(), jobId.toString(), initialAuthData, null);
+              request.getCallbackUrl(),
+              request.getAuthToken(),
+              jobId.toString(),
+              initialAuthData,
+              null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       // Serialize and encrypt the auth data
