@@ -19,41 +19,45 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Set;
 import java.util.UUID;
+
+import static java.lang.String.format;
+
 /**
  * A service that polls storage for a job to process in two steps: <br>
  * (1) find an unassigned job for this transfer worker <br>
  * (2) wait until the job is ready to process (i.e. creds are available)
  */
 class JobPollingService extends AbstractScheduledService {
-  private final Logger logger = LoggerFactory.getLogger(JobPollingService.class);
   private final JobStore store;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
   private final Set<PublicKeySerializer> publicKeySerializers;
   private final Scheduler scheduler;
+  private final Monitor monitor;
 
   @Inject
   JobPollingService(
       JobStore store,
       AsymmetricKeyGenerator asymmetricKeyGenerator,
       Set<PublicKeySerializer> publicKeySerializers,
-      Scheduler scheduler) {
+      Scheduler scheduler,
+      Monitor monitor) {
     this.store = store;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     this.publicKeySerializers = publicKeySerializers;
     this.scheduler = scheduler;
+    this.monitor = monitor;
   }
 
   @Override
@@ -81,11 +85,11 @@ class JobPollingService extends AbstractScheduledService {
    */
   private void pollForUnassignedJob() {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
-    logger.debug("Polling for a job in state CREDS_AVAILABLE");
+    monitor.debug(() -> "Polling for a job in state CREDS_AVAILABLE");
     if (jobId == null) {
       return;
     }
-    logger.debug("Polled job {}", jobId);
+    monitor.debug(() -> format("Polled job %s", jobId));
     Preconditions.checkState(!JobMetadata.isInitialized());
     KeyPair keyPair = asymmetricKeyGenerator.generate();
     PublicKey publicKey = keyPair.getPublic();
@@ -98,10 +102,11 @@ class JobPollingService extends AbstractScheduledService {
     // worker will keep polling until it can claim a job.
     boolean claimed = tryToClaimJob(jobId, keyPair);
     if (claimed) {
-      logger.debug(
-          "Updated job {} to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: {}",
-          jobId,
-          publicKey.getEncoded().length);
+      monitor.debug(
+          () ->
+              format(
+                  "Updated job %s to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: %s",
+                  jobId, publicKey.getEncoded().length));
     }
   }
 
@@ -114,16 +119,18 @@ class JobPollingService extends AbstractScheduledService {
     PortabilityJob existingJob = store.findJob(jobId);
     // Verify no transfer worker key
     if (existingJob.jobAuthorization().authPublicKey() != null) {
-      logger.debug("public key cannot be persisted again");
+      monitor.debug(() -> "A public key cannot be persisted again");
       return false;
     }
 
     String scheme = existingJob.jobAuthorization().encryptionScheme();
     PublicKeySerializer keySerializer = getPublicKeySerializer(scheme);
     if (keySerializer == null) {
-      logger.error(
-          String.format(
-              "Public key serializer not found for scheme %s processing job: %s", scheme, jobId));
+      monitor.severe(
+          () ->
+              format(
+                  "Public key serializer not found for scheme %s processing job: %s",
+                  scheme, jobId));
       return false;
     }
     PublicKey publicKey = keyPair.getPublic();
@@ -152,10 +159,11 @@ class JobPollingService extends AbstractScheduledService {
               Preconditions.checkState(
                   previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
     } catch (IllegalStateException | IOException e) {
-      logger.debug(
-          "Could not 'claim' job "
-              + jobId
-              + ". It was probably already claimed by another transfer worker");
+      monitor.debug(
+          () ->
+              format(
+                  "Could not claim job %s. It was probably already claimed by another transfer worker",
+                  jobId));
       return false;
     }
     JobMetadata.init(
@@ -181,24 +189,30 @@ class JobPollingService extends AbstractScheduledService {
     UUID jobId = JobMetadata.getJobId();
     PortabilityJob job = store.findJob(jobId);
     if (job == null) {
-      logger.debug("Could not poll job {}, it was not present in the key-value store", jobId);
+      monitor.debug(
+          () -> format("Could not poll job %s, it was not present in the key-value store", jobId));
     } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_STORED) {
-      logger.debug("Polled job {} in state CREDS_STORED", jobId);
+      monitor.debug(() -> format("Polled job %s in state CREDS_STORED", jobId));
       JobAuthorization jobAuthorization = job.jobAuthorization();
       if (!Strings.isNullOrEmpty(jobAuthorization.encryptedAuthData())) {
-        logger.debug("Polled job {} has auth data as expected. Done polling.", jobId);
+        monitor.debug(
+            () -> format("Polled job %s has auth data as expected. Done polling.", jobId));
       } else {
-        logger.warn(
-            "Polled job {} does not have auth data as expected. "
-                + "Done polling this job since it's in a bad state! Starting over.",
-            jobId);
+        monitor.severe(
+            () ->
+                format(
+                    "Polled job %s does not have auth data as expected. "
+                        + "Done polling this job since it's in a bad state! Starting over.",
+                    jobId));
       }
       this.stopAsync();
     } else {
-      logger.debug(
-          "Polling job {} until it's in state CREDS_STORED. " + "It's currently in state: {}",
-          jobId,
-          job.jobAuthorization().state());
+      monitor.debug(
+          () ->
+              format(
+                  "Polling job %s until it's in state CREDS_STORED. "
+                      + "It's currently in state: %s",
+                  jobId, job.jobAuthorization().state()));
     }
   }
 }

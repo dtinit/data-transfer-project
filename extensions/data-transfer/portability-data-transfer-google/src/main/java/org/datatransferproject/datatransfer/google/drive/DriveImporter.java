@@ -1,16 +1,12 @@
 package org.datatransferproject.datatransfer.google.drive;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -19,37 +15,30 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 /**
  * An {@link Importer} to export data from Google Drive.
  */
 public final class DriveImporter implements
     Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
-  private static final Logger logger = LoggerFactory.getLogger(DriveExporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
+  private final Monitor monitor;
 
   // Don't access this directly, instead access via getDriveInterface.
   private Drive driveInterface;
 
-  public DriveImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory,
-        // Lazily initialized later on
-        null,
-        jobStore);
-  }
-
-  @VisibleForTesting
-  DriveImporter(
-      GoogleCredentialFactory credentialFactory,
-      Drive driveInterface,
-      JobStore jobStore) {
+  public DriveImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Monitor monitor) {
     this.credentialFactory = credentialFactory;
-    this.driveInterface = driveInterface;
     this.jobStore = checkNotNull(jobStore, "Job store can't be null");
+    this.monitor = monitor;
   }
 
   @Override
@@ -69,7 +58,8 @@ public final class DriveImporter implements
     } else {
       DriveFolderMapping mapping = jobStore.findData(jobId, data.getId(), DriveFolderMapping.class);
       checkNotNull(mapping, "No mapping found for %s", data.getId());
-      logger.info("Got parent id {} for old Id {} named: {}", parentId, data.getId(), data.getName());
+      String finalParentId = parentId;
+      monitor.debug(()->format("Got parent id %s for old Id %s named: %s", finalParentId, data.getId(), data.getName()));
       parentId = mapping.getNewId();
     }
 

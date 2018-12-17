@@ -28,6 +28,13 @@ public interface ExtensionContext {
   TypeManager getTypeManager();
 
   /**
+   * Returns the system monitor.
+   *
+   * @return the monitor
+   */
+  Monitor getMonitor();
+
+  /**
    * Returns a system service such as a type mapper extension services may require.
    *
    * @param type the system service type
@@ -51,6 +58,9 @@ public interface ExtensionContext {
   <T> T getSetting(String setting, T defaultValue);
 
   // Required settings
-  @Flag String cloud();
-  @Flag Environment environment();
+  @Flag
+  String cloud();
+
+  @Flag
+  Environment environment();
 }

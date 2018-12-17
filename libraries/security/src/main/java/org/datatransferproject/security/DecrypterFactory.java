@@ -16,39 +16,46 @@
 package org.datatransferproject.security;
 
 import com.google.common.base.Preconditions;
+import org.datatransferproject.api.launcher.Monitor;
+
+import javax.crypto.SecretKey;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import javax.crypto.SecretKey;
 
 /**
  * Methods for creating {@link Decrypter} classes for given types of encryption keys and algorithms.
  */
 public class DecrypterFactory {
+  private Monitor monitor;
+
+  public DecrypterFactory(Monitor monitor) {
+    this.monitor = monitor;
+  }
 
   /**
    * Creates a {@link DecrypterImpl} with the given {@link SecretKey} for use with "AES"-based
    * symmetric encryption.
    */
-  public static Decrypter create(SecretKey key) {
+  public Decrypter create(SecretKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("AES"));
-    return new DecrypterImpl("AES", key);
+    return new DecrypterImpl("AES", key, monitor);
   }
 
   /**
    * Creates a {@link DecrypterImpl} with the given {@link PublicKey} for use with "RSA"-based
    * asymmetric encryption.
    */
-  public static Decrypter create(PublicKey key) {
+  public Decrypter create(PublicKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
-    return new DecrypterImpl("RSA/ECB/PKCS1Padding", key);
+    return new DecrypterImpl("RSA/ECB/PKCS1Padding", key, monitor);
   }
 
   /**
    * Creates a {@link DecrypterImpl} with the given {@link PrivateKey} for use with "RSA"-based
    * asymmetric encryption.
    */
-  public static Decrypter create(PrivateKey key) {
+  public Decrypter create(PrivateKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
-    return new DecrypterImpl("RSA/ECB/PKCS1Padding", key);
+    return new DecrypterImpl("RSA/ECB/PKCS1Padding", key, monitor);
   }
 }

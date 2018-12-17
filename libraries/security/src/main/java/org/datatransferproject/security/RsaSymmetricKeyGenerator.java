@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.security;
 
+import org.datatransferproject.api.launcher.Monitor;
+
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -22,18 +24,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * RSA-based implementation for {@link KeyPair} creation and encoding.
  *
- * TODO: provide a public module to bind KeyGenerators
+ * <p>TODO: provide a public module to bind KeyGenerators
  */
 public class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
 
-  private static final Logger logger = LoggerFactory.getLogger(RsaSymmetricKeyGenerator.class);
   private static final String ALGORITHM = "RSA";
+  private final Monitor monitor;
+
+  public RsaSymmetricKeyGenerator(Monitor monitor) {
+    this.monitor = monitor;
+  }
 
   @Override
   public KeyPair generate() {
@@ -41,7 +45,7 @@ public class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
     try {
       kpg = KeyPairGenerator.getInstance(ALGORITHM);
     } catch (NoSuchAlgorithmException e) {
-      logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
+      monitor.severe(() -> "NoSuchAlgorithmException for: " + ALGORITHM, e);
       throw new RuntimeException("NoSuchAlgorithmException generating key", e);
     }
     kpg.initialize(1024);
@@ -54,8 +58,8 @@ public class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
     try {
       factory = KeyFactory.getInstance(ALGORITHM);
       return factory.generatePublic(new X509EncodedKeySpec(encoded));
-    } catch (NoSuchAlgorithmException|InvalidKeySpecException e) {
-      logger.error("Error parsing public key for: {}", ALGORITHM, e);
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      monitor.severe(() -> "Error parsing public key for: " + ALGORITHM, e);
       throw new RuntimeException("InvalidKeySpecException generating key", e);
     }
   }

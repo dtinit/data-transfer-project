@@ -23,9 +23,6 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':libraries:auth')
 
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-
     compile 'org.twitter4j:twitter4j-core:4.0.3'
 }
 

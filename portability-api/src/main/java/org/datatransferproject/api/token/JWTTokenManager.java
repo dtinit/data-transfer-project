@@ -23,9 +23,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.inject.Inject;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.token.TokenManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
@@ -44,13 +43,14 @@ public class JWTTokenManager implements TokenManager {
   private static final int EXPIRATION_TIME_MILLIS = 1000 * 60; // 1 minute expiration
 
   private final Algorithm algorithm;
-  private final Logger logger = LoggerFactory.getLogger(JWTTokenManager.class);
-  private JWTVerifier verifier;
+  private final JWTVerifier verifier;
+  private final Monitor monitor;
 
   @Inject
-  public JWTTokenManager(String secret) {
+  public JWTTokenManager(String secret, Monitor monitor) {
     this.algorithm = createAlgorithm(secret);
     this.verifier = createVerifier(secret, ISSUER);
+    this.monitor = monitor;
   }
 
   /** Create an instance of the token verifier. */
@@ -73,7 +73,7 @@ public class JWTTokenManager implements TokenManager {
       verifier.verify(token);
       return true;
     } catch (JWTVerificationException exception) {
-      logger.debug("Error verifying token: {}", exception);
+      monitor.debug(() -> "Error verifying token", exception);
       return false;
     }
   }
@@ -89,7 +89,7 @@ public class JWTTokenManager implements TokenManager {
       }
       return claim.isNull() ? null : UUID.fromString(claim.asString());
     } catch (JWTVerificationException exception) {
-      logger.debug("Error verifying token: {}", exception);
+      monitor.debug(() -> "Error verifying token", exception);
       throw new RuntimeException("Error verifying token: " + token);
     }
   }

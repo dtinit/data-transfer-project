@@ -19,18 +19,17 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Types;
 import org.datatransferproject.api.action.Action;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.token.JWTTokenManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.launcher.impl.TypeManagerImpl;
+import org.datatransferproject.launcher.types.TypeManagerImpl;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
@@ -43,8 +42,6 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -56,21 +53,33 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
 
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
+
 /** Starts the api server. */
 public class ApiMain {
-  private static final Logger logger = LoggerFactory.getLogger(ApiMain.class);
 
+  private final Monitor monitor;
   private List<ServiceExtension> serviceExtensions = Collections.emptyList();
 
   /** Starts the api server, currently the reference implementation. */
   public static void main(String[] args) {
-    logger.warn("Starting reference api server.");
-    Thread.setDefaultUncaughtExceptionHandler(
-        (thread, t) -> logger.warn("Uncaught exception in thread: {}", thread.getName(), t));
 
-    ApiMain apiMain = new ApiMain();
+    Monitor monitor = loadMonitor();
+    monitor.info(() -> "Starting API Server.");
+
+    Thread.setDefaultUncaughtExceptionHandler(
+        (thread, t) ->
+            monitor.severe(() -> "Uncaught exception in thread: " + thread.getName(), t));
+
+    ApiMain apiMain = new ApiMain(monitor);
     apiMain.initializeHttp();
     apiMain.start();
+  }
+
+  public ApiMain(Monitor monitor) {
+    this.monitor = monitor;
   }
 
   public void initializeHttp() {
@@ -81,6 +90,7 @@ public class ApiMain {
       TrustManagerFactory trustManagerFactory,
       KeyManagerFactory keyManagerFactory,
       KeyStore keyStore) {
+
     // TODO init with types
     TypeManager typeManager = new TypeManagerImpl();
     typeManager.registerTypes(
@@ -88,8 +98,9 @@ public class ApiMain {
 
     SettingsExtension settingsExtension = getSettingsExtension();
 
-    settingsExtension.initialize(null);
-    ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension);
+    settingsExtension.initialize();
+    ApiExtensionContext extensionContext =
+        new ApiExtensionContext(typeManager, settingsExtension, monitor);
 
     if (trustManagerFactory != null) {
       extensionContext.registerService(TrustManagerFactory.class, trustManagerFactory);
@@ -133,7 +144,7 @@ public class ApiMain {
             });
 
     // TODO: make configurable
-    SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator();
+    SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator(monitor);
     TokenManager tokenManager;
 
     try {
@@ -145,10 +156,12 @@ public class ApiMain {
               cloudExtension
                   .getAppCredentialStore()
                   .getAppCredentials(JWTTokenManager.JWT_KEY_NAME, JWTTokenManager.JWT_SECRET_NAME)
-                  .getSecret());
+                  .getSecret(),
+              monitor);
     } catch (IOException e) {
-      logger.error(
-          "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?");
+      monitor.info(
+          () -> "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?",
+          e);
       throw new RuntimeException(e);
     }
 
@@ -175,30 +188,6 @@ public class ApiMain {
 
   public void stop() {
     serviceExtensions.forEach(ServiceExtension::shutdown);
-  }
-
-  private SettingsExtension getSettingsExtension() {
-    ImmutableList.Builder<SettingsExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(SettingsExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<SettingsExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one SettingsExtension is required, but found " + extensions.size());
-    return extensions.get(0);
-  }
-
-  private CloudExtension getCloudExtension() {
-    List<CloudExtension> cloudExtensions = new ArrayList<>();
-    ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(cloudExtensions::add);
-    if (cloudExtensions.isEmpty()) {
-      throw new IllegalStateException(
-          "A cloud extension is not available. Exactly one is required.");
-    } else if (cloudExtensions.size() > 1) {
-      throw new IllegalStateException(
-          "Multiple cloud extensions were found. Exactly one is required.");
-    }
-
-    return cloudExtensions.get(0);
   }
 
   private void bindActions(Injector injector, ApiExtensionContext context) {

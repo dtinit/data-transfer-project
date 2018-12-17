@@ -16,39 +16,37 @@
 
 package org.datatransferproject.transfer.smugmug.photos;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(SmugMugPhotosImporter.class);
 
   private final JobStore jobStore;
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final ObjectMapper mapper;
+  private final Monitor monitor;
 
   private SmugMugInterface smugMugInterface;
 
@@ -56,8 +54,9 @@ public class SmugMugPhotosImporter
       JobStore jobStore,
       HttpTransport transport,
       AppCredentials appCredentials,
-      ObjectMapper mapper) {
-    this(null, jobStore, transport, appCredentials, mapper);
+      ObjectMapper mapper,
+      Monitor monitor) {
+    this(null, jobStore, transport, appCredentials, mapper, monitor);
   }
 
   @VisibleForTesting
@@ -66,12 +65,14 @@ public class SmugMugPhotosImporter
       JobStore jobStore,
       HttpTransport transport,
       AppCredentials appCredentials,
-      ObjectMapper mapper) {
+      ObjectMapper mapper,
+      Monitor monitor) {
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
     this.transport = transport;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
+    this.monitor = monitor;
   }
 
   @Override
@@ -86,7 +87,7 @@ public class SmugMugPhotosImporter
         importSinglePhoto(jobId, photo, smugMugInterface);
       }
     } catch (IOException e) {
-      LOGGER.warn("Error happened while importing: {}", Throwables.getStackTraceAsString(e));
+      monitor.severe(() -> "Error importing", e);
       return new ImportResult(e);
     }
     return ImportResult.OK;
@@ -99,8 +100,8 @@ public class SmugMugPhotosImporter
 
     // Put new album ID in job store so photos can be assigned to correct album
     // TODO(olsona): thread safety!
-    TempPhotosData tempPhotosData = jobStore
-        .findData(jobId, createCacheKey(), TempPhotosData.class);
+    TempPhotosData tempPhotosData =
+        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(jobId, createCacheKey(), tempPhotosData);
@@ -113,14 +114,16 @@ public class SmugMugPhotosImporter
   void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
       throws IOException {
     // Find album to upload photo to
-    TempPhotosData tempPhotosData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
-    checkState(tempPhotosData != null,
-        "cached temp photos data for %s is null", inputPhoto.getAlbumId());
+    TempPhotosData tempPhotosData =
+        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+    checkState(
+        tempPhotosData != null, "cached temp photos data for %s is null", inputPhoto.getAlbumId());
 
     String newAlbumUri = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
-        "Cached album URI for %s is null", inputPhoto.getAlbumId());
+        "Cached album URI for %s is null",
+        inputPhoto.getAlbumId());
 
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
@@ -128,8 +131,8 @@ public class SmugMugPhotosImporter
     } else {
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
-    SmugMugImageUploadResponse response = smugMugInterface
-        .uploadImage(inputPhoto, newAlbumUri, inputStream);
+    SmugMugImageUploadResponse response =
+        smugMugInterface.uploadImage(inputPhoto, newAlbumUri, inputStream);
   }
 
   // Returns the provided interface, or a new one specific to the authData provided.
@@ -145,7 +148,8 @@ public class SmugMugPhotosImporter
    * grained objects.
    */
   private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    // TODO: store objects containing individual mappings instead of single object containing all
+    // mappings
     return "tempPhotosData";
   }
 }

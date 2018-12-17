@@ -23,9 +23,6 @@ dependencies {
     compile project(':portability-spi-api')
     compile project(':libraries:auth')
 
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-
     compile("com.flickr4java:flickr4java:${flickrVersion}")
 
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")

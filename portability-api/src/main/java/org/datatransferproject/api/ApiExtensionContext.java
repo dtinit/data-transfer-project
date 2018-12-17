@@ -16,13 +16,15 @@
 package org.datatransferproject.api;
 
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
-import java.util.Map;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Provides a context for initializing extensions.
@@ -34,6 +36,7 @@ public class ApiExtensionContext implements ExtensionContext {
   private final Map<Class<?>, Object> registered = new HashMap<>();
   private final TypeManager typeManager;
   private final SettingsExtension settingsExtension;
+  private final Monitor monitor;
 
   // Required settings
   private final String cloud;
@@ -41,9 +44,10 @@ public class ApiExtensionContext implements ExtensionContext {
   private final String baseUrl;
   private final String baseApiUrl;
 
-  public ApiExtensionContext(TypeManager typeManager, SettingsExtension settingsExtension) {
+  public ApiExtensionContext(TypeManager typeManager, SettingsExtension settingsExtension, Monitor monitor) {
     this.typeManager = typeManager;
     this.settingsExtension = settingsExtension;
+    this.monitor = monitor;
     registered.put(TypeManager.class, typeManager);
 
     cloud = settingsExtension.getSetting("cloud", null);
@@ -59,6 +63,11 @@ public class ApiExtensionContext implements ExtensionContext {
   @Override
   public TypeManager getTypeManager() {
     return typeManager;
+  }
+
+  @Override
+  public Monitor getMonitor() {
+    return monitor;
   }
 
   @Override

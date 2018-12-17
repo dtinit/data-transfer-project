@@ -5,29 +5,30 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.action.ActionUtils;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.ReserveWorker;
 import org.datatransferproject.types.client.transfer.ReservedWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
 import static org.datatransferproject.spi.cloud.types.JobAuthorization.State.CREDS_AVAILABLE;
 
 /** Reserves a worker to process a transfer job. */
 public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker> {
-  private static final Logger logger = LoggerFactory.getLogger(ReserveWorkerAction.class);
 
   private final JobStore jobStore;
+  private final Monitor monitor;
 
   @Inject
-  ReserveWorkerAction(JobStore jobStore) {
+  ReserveWorkerAction(JobStore jobStore, Monitor monitor) {
     this.jobStore = jobStore;
+    this.monitor = monitor;
   }
 
   @Override
@@ -41,8 +42,10 @@ public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker
     Preconditions.checkNotNull(id, "transfer job ID required for ReserveWorkerAction");
     UUID jobId = decodeJobId(id);
     updateStateToCredsAvailable(jobId);
-    // Instead of returning an empty string, return a ReservedWorker response with an empty public key.
-    // TODO(seehamrun): consider making this a ReserveWorkerResponse type that contains a status if this was successful
+    // Instead of returning an empty string, return a ReservedWorker response with an empty public
+    // key.
+    // TODO(seehamrun): consider making this a ReserveWorkerResponse type that contains a status if
+    // this was successful
     return new ReservedWorker("");
   }
 
@@ -64,7 +67,7 @@ public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker
           (previous, updated) ->
               Preconditions.checkState(
                   previous.jobAuthorization().state() == JobAuthorization.State.INITIAL));
-      logger.debug("Updated job {} to CREDS_AVAILABLE", jobId);
+      monitor.debug(() -> format("Updated job %s to CREDS_AVAILABLE", jobId));
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }

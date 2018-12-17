@@ -17,7 +17,7 @@ package org.datatransferproject.cloud.local;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.InputStream;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
@@ -25,20 +25,32 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
-  private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
+      new ConcurrentHashMap<>();
   private static LocalTempFileStore localTempFileStore = new LocalTempFileStore();
 
-  private final Logger logger = LoggerFactory.getLogger(LocalJobStore.class);
+  private final Monitor monitor;
+
+  /** Ctor for testing with a null monitor. */
+  public LocalJobStore() {
+    this(new Monitor() {});
+  }
+
+  public LocalJobStore(Monitor monitor) {
+    this.monitor = monitor;
+  }
+
   /**
    * Inserts a new {@link PortabilityJob} keyed by its job ID in the store.
    *
@@ -50,7 +62,7 @@ public final class LocalJobStore implements JobStore {
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
-    logger.debug("creating job {} in local storage", jobId);
+    monitor.debug(() -> format("Creating job %s in local storage", jobId));
     if (JOB_MAP.get(jobId) != null) {
       throw new IOException("An entry already exists for jobId: " + jobId);
     }
@@ -103,7 +115,7 @@ public final class LocalJobStore implements JobStore {
    */
   @Override
   public void remove(UUID jobId) throws IOException {
-    logger.debug("removing job {} from local storage", jobId);
+    monitor.debug(() -> format("Remove job %s from local storage", jobId));
     Map<String, Object> previous = JOB_MAP.remove(jobId);
     if (previous == null) {
       throw new IOException("jobId: " + jobId + " didn't exist in the map");
@@ -132,14 +144,15 @@ public final class LocalJobStore implements JobStore {
     // Mimic an index lookup
     for (Entry<UUID, Map<String, Object>> job : JOB_MAP.entrySet()) {
       Map<String, Object> properties = job.getValue();
-      State state = State.valueOf(
-          properties.get(PortabilityJob.AUTHORIZATION_STATE).toString());
-
-      logger.debug("looking up first job in state {}: found job {} (state {})",
-          jobState, job.getKey(), state);
+      State state = State.valueOf(properties.get(PortabilityJob.AUTHORIZATION_STATE).toString());
+      UUID jobKey = job.getKey();
+      monitor.debug(
+          () ->
+              format(
+                  "Looking up first job in state %s: found job %s (state %s)",
+                  jobState, jobKey, state));
       if (state == jobState) {
-        UUID jobId = job.getKey();
-        return jobId;
+        return jobKey;
       }
     }
     return null;
@@ -184,11 +197,11 @@ public final class LocalJobStore implements JobStore {
 
   private static String createFullKey(UUID jobId, String key) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
-    return String.format("%s-%s", jobId.toString(), key);
+    return format("%s-%s", jobId.toString(), key);
   }
 
   private static String makeFileName(UUID jobId, String inputName) {
-    String replace = inputName.replace("/","_");
+    String replace = inputName.replace("/", "_");
     return createFullKey(jobId, replace);
   }
 }

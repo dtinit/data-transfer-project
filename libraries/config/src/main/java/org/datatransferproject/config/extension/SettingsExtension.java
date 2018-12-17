@@ -15,13 +15,10 @@
  */
 package org.datatransferproject.config.extension;
 
+import org.datatransferproject.api.launcher.BootExtension;
 
-import org.datatransferproject.api.launcher.AbstractExtension;
-
-/**
- * Extension that provides settings.
- */
-public interface SettingsExtension extends AbstractExtension {
+/** Extension that provides settings. */
+public interface SettingsExtension extends BootExtension {
   /**
    * Returns the configuration value for an extension setting or the default value if not found.
    *

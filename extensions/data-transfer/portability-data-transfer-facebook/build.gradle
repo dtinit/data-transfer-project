@@ -18,10 +18,6 @@ dependencies {
     compile project(":portability-spi-cloud")
     compile project(":portability-spi-transfer")
 
-    // logging
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-
     compile("com.restfb:restfb:2.7.0")
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")

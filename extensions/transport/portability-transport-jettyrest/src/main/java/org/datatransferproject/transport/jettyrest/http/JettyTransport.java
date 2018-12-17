@@ -15,11 +15,11 @@
  */
 package org.datatransferproject.transport.jettyrest.http;
 
+import org.datatransferproject.api.launcher.Monitor;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
@@ -29,8 +29,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.Source;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServletRequest;
@@ -42,25 +40,26 @@ import java.util.List;
 
 /** Provides HTTP(s) communication to the system via Jetty. */
 public class JettyTransport {
-  private static final Logger logger = LoggerFactory.getLogger(JettyTransport.class);
 
   private static final String ANNOUNCE = "org.eclipse.jetty.util.log.announce";
   private static final String LOG_CLASS = "org.eclipse.jetty.util.log.class";
 
   private final KeyStore keyStore;
   private final boolean useHttps;
+  private final Monitor monitor;
 
   private int httpPort = 8080; // TODO configure
 
   private Server server;
   private List<Handler> handlers = new ArrayList<>();
 
-  public JettyTransport(KeyStore keyStore, boolean useHttps) {
+  public JettyTransport(KeyStore keyStore, boolean useHttps, Monitor monitor) {
     this.keyStore = keyStore;
     this.useHttps = useHttps;
+    this.monitor = monitor;
     System.setProperty(LOG_CLASS, JettyMonitor.class.getName()); // required by Jetty
     System.setProperty(ANNOUNCE, "false");
-    logger.info("Creating JettyTransport. useHttps=" + useHttps);
+    monitor.info(() -> "Creating JettyTransport. useHttps=" + useHttps);
   }
 
   public void start() {
@@ -73,17 +72,18 @@ public class JettyTransport {
       sslContextFactory.setKeyManagerPassword("password");
       HttpConfiguration https = new HttpConfiguration();
       ServerConnector sslConnector =
-              new ServerConnector(
-                      server,
-                      new SslConnectionFactory(sslContextFactory, "http/1.1"),
-                      new HttpConnectionFactory(https));
+          new ServerConnector(
+              server,
+              new SslConnectionFactory(sslContextFactory, "http/1.1"),
+              new HttpConnectionFactory(https));
       sslConnector.setPort(httpPort);
-      server.setConnectors(new Connector[]{sslConnector});
+      server.setConnectors(new Connector[] {sslConnector});
     } else {
       server = new Server(httpPort);
-      ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+      ServerConnector connector =
+          new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
       connector.setPort(httpPort);
-      server.setConnectors(new Connector[]{connector});
+      server.setConnectors(new Connector[] {connector});
     }
 
     server.setErrorHandler(new JettyErrorHandler());
@@ -93,7 +93,7 @@ public class JettyTransport {
     server.setHandler(contexts);
     try {
       server.start();
-      logger.info("Using Jetty transport");
+      monitor.info(() -> "Using Jetty transport");
     } catch (Exception e) {
       throw new RuntimeException("Error starting Jetty transport", e);
     }

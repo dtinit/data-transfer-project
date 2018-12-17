@@ -40,9 +40,6 @@ dependencies {
     
     compile "org.glassfish.jersey.containers:jersey-container-servlet:${jerseyVersion}"
 
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-
 }
 
 configurePublication(project)

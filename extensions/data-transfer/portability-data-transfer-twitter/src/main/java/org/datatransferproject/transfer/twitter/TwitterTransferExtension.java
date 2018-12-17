@@ -18,16 +18,18 @@ package org.datatransferproject.transfer.twitter;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+
+import static java.lang.String.format;
 
 /**
  * Extension to allow Twitter content to be transferred.
@@ -38,7 +40,6 @@ import org.slf4j.LoggerFactory;
  */
 public class TwitterTransferExtension implements TransferExtension {
   private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
-  private static final Logger LOGGER = LoggerFactory.getLogger(TwitterTransferExtension.class);
   private static final String TWITTER_KEY = "TWITTER_KEY";
   private static final String TWITTER_SECRET = "TWITTER_SECRET";
 
@@ -73,9 +74,10 @@ public class TwitterTransferExtension implements TransferExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    LOGGER.debug("starting twitter initialization");
+    Monitor monitor = context.getMonitor();
+    monitor.debug(() -> "Starting Twitter initialization");
     if (initialized) {
-      LOGGER.warn("TwitterTransferExtension already initialized.");
+      monitor.severe(() -> "TwitterTransferExtension already initialized.");
       return;
     }
 
@@ -86,13 +88,17 @@ public class TwitterTransferExtension implements TransferExtension {
               .getService(AppCredentialStore.class)
               .getAppCredentials(TWITTER_KEY, TWITTER_SECRET);
     } catch (IOException e) {
-      LOGGER.warn(
-          "Unable to retrieve client secrets. Did you set {} and {}?", TWITTER_KEY, TWITTER_SECRET);
+      monitor.info(
+          () ->
+              format(
+                  "Unable to retrieve Twitter AppCredentials. Did you set %s and %s?",
+                  TWITTER_KEY, TWITTER_SECRET),
+          e);
       return;
     }
 
-    exporter = new TwitterPhotosExporter(appCredentials);
-    importer = new TwitterPhotosImporter(appCredentials);
+    exporter = new TwitterPhotosExporter(appCredentials, monitor);
+    importer = new TwitterPhotosImporter(appCredentials, monitor);
     initialized = true;
   }
 }

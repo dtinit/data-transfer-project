@@ -16,8 +16,6 @@
 
 package org.datatransferproject.cloud.google;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -30,14 +28,17 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 
 /**
  * App credential storage using Google Cloud Platform.
@@ -48,7 +49,6 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 final class GoogleAppCredentialStore implements AppCredentialStore {
-  private static final Logger logger = LoggerFactory.getLogger(AppCredentialStore.class);
   private static final Integer CACHE_EXPIRATION_MINUTES = 10;
   private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
   private static final String KEYS_DIR = "keys/";
@@ -57,6 +57,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
   private static final String SECRET_EXTENSION = ".encrypted";
 
   private final GoogleAppSecretDecrypter appSecretDecrypter;
+  private final Monitor monitor;
   private final Storage storage;
   private final String bucketName;
 
@@ -68,14 +69,17 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
    * compromised, we can update them without restarting our servers.
    */
   private final LoadingCache<String, String> keys;
+
   private final LoadingCache<String, String> secrets;
 
   @Inject
   GoogleAppCredentialStore(
       GoogleAppSecretDecrypter appSecretDecrypter,
       GoogleCredentials googleCredentials,
-      @ProjectId String projectId) {
+      @ProjectId String projectId,
+      Monitor monitor) {
     this.appSecretDecrypter = appSecretDecrypter;
+    this.monitor = monitor;
     this.storage =
         StorageOptions.newBuilder()
             .setProjectId(projectId)
@@ -135,16 +139,16 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
 
   private String lookupKey(String keyName) {
     String keyLocation = KEYS_DIR + keyName + KEY_EXTENSION;
-    logger.debug("Getting app key for {} (blob {}) from bucket", keyName, keyLocation);
+    monitor.debug(
+        () -> format("Getting app key for %s (blob %s) from bucket", keyName, keyLocation));
     byte[] rawKeyBytes = getRawBytes(keyLocation);
     checkState(rawKeyBytes != null, "Couldn't look up: " + keyName);
-    String key = new String(rawKeyBytes).trim();
-    return key;
+    return new String(rawKeyBytes).trim();
   }
 
   private String lookupSecret(String secretName) throws IOException {
     String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
-    logger.debug("Getting app secret for {} (blob {})", secretName, secretLocation);
+    monitor.debug(()->format("Getting app secret for %s (blob %s)", secretName, secretLocation));
     byte[] encryptedSecret = getRawBytes(secretLocation);
     checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
     String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret)).trim();

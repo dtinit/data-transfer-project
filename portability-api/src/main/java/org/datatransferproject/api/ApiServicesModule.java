@@ -1,13 +1,22 @@
 package org.datatransferproject.api;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.action.datatype.DataTypesAction;
-import org.datatransferproject.api.action.transfer.*;
+import org.datatransferproject.api.action.transfer.CreateTransferJobAction;
+import org.datatransferproject.api.action.transfer.GenerateServiceAuthDataAction;
+import org.datatransferproject.api.action.transfer.GetReservedWorkerAction;
+import org.datatransferproject.api.action.transfer.GetTransferJobAction;
+import org.datatransferproject.api.action.transfer.GetTransferServicesAction;
+import org.datatransferproject.api.action.transfer.ReserveWorkerAction;
+import org.datatransferproject.api.action.transfer.StartTransferJobAction;
 import org.datatransferproject.api.auth.PortabilityAuthServiceProviderRegistry;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -86,7 +95,7 @@ public class ApiServicesModule extends FlagBindingModule {
       bind(KeyManagerFactory.class).toInstance(keyManagerFactory);
     }
 
-    bind(AsymmetricKeyGenerator.class).to(RsaSymmetricKeyGenerator.class);
+    bind(AsymmetricKeyGenerator.class).toInstance(new RsaSymmetricKeyGenerator(getMonitor()));
 
     Multibinder<Action> actionBinder = Multibinder.newSetBinder(binder(), Action.class);
     actionBinder.addBinding().to(DataTypesAction.class);
@@ -97,5 +106,11 @@ public class ApiServicesModule extends FlagBindingModule {
     actionBinder.addBinding().to(GetReservedWorkerAction.class);
     actionBinder.addBinding().to(StartTransferJobAction.class);
     actionBinder.addBinding().to(GetTransferJobAction.class);
+  }
+
+  @Provides
+  @Singleton
+  Monitor getMonitor() {
+    return context.getMonitor();
   }
 }

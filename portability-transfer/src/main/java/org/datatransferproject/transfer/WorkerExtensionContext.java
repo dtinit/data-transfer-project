@@ -17,21 +17,21 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
-import java.util.Map;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.launcher.impl.TypeManagerImpl;
+import org.datatransferproject.launcher.types.TypeManagerImpl;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * {@link ExtensionContext} used by the transfer worker.
- */
+import java.util.HashMap;
+import java.util.Map;
+
+/** {@link ExtensionContext} used by the transfer worker. */
 public class WorkerExtensionContext implements ExtensionContext {
 
   private final TypeManager typeManager;
@@ -41,8 +41,10 @@ public class WorkerExtensionContext implements ExtensionContext {
   // Required settings
   private final String cloud;
   private final Environment environment;
+  private final Monitor monitor;
 
-  WorkerExtensionContext(SettingsExtension settingsExtension) {
+  WorkerExtensionContext(SettingsExtension settingsExtension, Monitor monitor) {
+    this.monitor = monitor;
     this.typeManager = new TypeManagerImpl();
     typeManager.registerTypes(
         TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
@@ -59,6 +61,11 @@ public class WorkerExtensionContext implements ExtensionContext {
   @Override
   public TypeManager getTypeManager() {
     return typeManager;
+  }
+
+  @Override
+  public Monitor getMonitor() {
+    return monitor;
   }
 
   @Override

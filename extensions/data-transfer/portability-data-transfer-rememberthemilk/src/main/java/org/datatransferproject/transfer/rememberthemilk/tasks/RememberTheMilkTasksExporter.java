@@ -16,34 +16,32 @@
 
 package org.datatransferproject.transfer.rememberthemilk.tasks;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.transfer.rememberthemilk.model.tasks.GetListResponse;
+import org.datatransferproject.transfer.rememberthemilk.model.tasks.ListInfo;
+import org.datatransferproject.transfer.rememberthemilk.model.tasks.Task;
+import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskList;
+import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskListModel;
+import org.datatransferproject.types.common.models.tasks.TaskModel;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.GetListResponse;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.ListInfo;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.Task;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskList;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
-import org.datatransferproject.types.common.models.tasks.TaskListModel;
-import org.datatransferproject.types.common.models.tasks.TaskModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /*
  * Exporter for Tasks data type from Remember The Milk Service.
@@ -51,7 +49,6 @@ import org.slf4j.LoggerFactory;
 public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskContainerResource> {
 
   private final AppCredentials appCredentials;
-  private static final Logger logger = LoggerFactory.getLogger(RememberTheMilkTasksExporter.class);
   private RememberTheMilkService service;
 
   public RememberTheMilkTasksExporter(AppCredentials appCredentials) {
@@ -59,22 +56,16 @@ public class RememberTheMilkTasksExporter implements Exporter<AuthData, TaskCont
     this.service = null;
   }
 
-  @VisibleForTesting
-  public RememberTheMilkTasksExporter(
-      AppCredentials appCredentials, RememberTheMilkService service) {
-    this.appCredentials = appCredentials;
-    this.service = service;
-  }
-
   @Override
   public ExportResult<TaskContainerResource> export(
-      UUID jobId, AuthData authData, Optional<ExportInformation> exportInformation) {
+          UUID jobId, AuthData authData, Optional<ExportInformation> exportInformation) {
     // Create new service for the authorized user
     RememberTheMilkService service = getOrCreateService(authData);
 
     IdOnlyContainerResource resource =
-        exportInformation.isPresent() ? (IdOnlyContainerResource) exportInformation.get()
-            .getContainerResource() : null;
+        exportInformation.isPresent()
+            ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+            : null;
     if (resource != null) {
       return exportTask(service, resource);
     } else {

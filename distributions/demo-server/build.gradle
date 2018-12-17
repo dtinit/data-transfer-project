@@ -63,7 +63,6 @@ dependencies {
 
     compile project(':portability-api')
     compile project(":extensions:transport:portability-transport-${transportType}")
-    compile project(':libraries:logging')
 
     compile project(':extensions:config:portability-config-yaml')
 

@@ -15,24 +15,16 @@
  */
 package org.datatransferproject.transfer;
 
-import static java.util.stream.Collectors.toSet;
-
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -46,16 +38,22 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
  * state is held in {@link JobMetadata}.
  */
 public class WorkerMain {
-
-  private static final Logger logger = LoggerFactory.getLogger(WorkerMain.class);
 
   private Worker worker;
 
@@ -69,43 +67,13 @@ public class WorkerMain {
     System.exit(0);
   }
 
-  private static SettingsExtension getSettingsExtension() {
-    ImmutableList.Builder<SettingsExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(SettingsExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<SettingsExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one SettingsExtension is required, but found " + extensions.size());
-    return extensions.get(0);
-  }
-
-  private static CloudExtension getCloudExtension() {
-    ImmutableList.Builder<CloudExtension> extensionsBuilder = ImmutableList.builder();
-    ServiceLoader.load(CloudExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<CloudExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one CloudExtension is required, but found " + extensions.size());
-    return extensions.get(0);
-  }
-
-  private static List<TransferExtension> getTransferExtensions() {
-    // TODO: Next version should ideally not load every TransferExtension impl, look into
-    // solutions where we selectively invoke class loader.
-    ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
-    // Note that initialization of the TransferExtension is done in the WorkerModule since they're
-    // initialized as they're requested.
-    ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
-    ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
-    return extensions;
-  }
-
   public void initialize() {
+    Monitor monitor = loadMonitor();
+
     SettingsExtension settingsExtension = getSettingsExtension();
-    settingsExtension.initialize(null);
-    WorkerExtensionContext extensionContext = new WorkerExtensionContext(settingsExtension);
+    settingsExtension.initialize();
+    WorkerExtensionContext extensionContext =
+        new WorkerExtensionContext(settingsExtension, monitor);
 
     // TODO this should be moved into a service extension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
@@ -118,7 +86,7 @@ public class WorkerMain {
     // TODO: verify that this is the cloud extension that is specified in the configuration
     CloudExtension cloudExtension = getCloudExtension();
     cloudExtension.initialize(extensionContext);
-    logger.info("Using CloudExtension: {} ", cloudExtension.getClass().getName());
+    monitor.info(() -> "Using CloudExtension: " + cloudExtension.getClass().getName());
 
     JobStore jobStore = cloudExtension.getJobStore();
     extensionContext.registerService(JobStore.class, jobStore);
@@ -144,8 +112,8 @@ public class WorkerMain {
         securityExtensions.stream().flatMap(e -> e.getDecryptServices().stream()).collect(toSet());
 
     // TODO: make configurable
-    SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator();
-    AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator();
+    SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
+    AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator(monitor);
 
     Injector injector =
         Guice.createInjector(
@@ -162,5 +130,18 @@ public class WorkerMain {
 
   public void poll() {
     worker.doWork();
+  }
+
+  private static List<TransferExtension> getTransferExtensions() {
+    // TODO: Next version should ideally not load every TransferExtension impl, look into
+    // solutions where we selectively invoke class loader.
+    ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
+    // Note that initialization of the TransferExtension is done in the WorkerModule since they're
+    // initialized as they're requested.
+    ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
+    ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
+    Preconditions.checkState(
+        !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
+    return extensions;
   }
 }

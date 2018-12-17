@@ -21,14 +21,14 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.datatransferproject.api.launcher.Constants;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 
-/**
- * {@link CloudExtension} for Google Cloud Platform.
- */
+/** {@link CloudExtension} for Google Cloud Platform. */
 public class GoogleCloudExtension implements CloudExtension {
   private Injector injector;
   private boolean initialized = false;
@@ -46,8 +46,13 @@ public class GoogleCloudExtension implements CloudExtension {
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
     ObjectMapper objectMapper = context.getTypeManager().getMapper();
-    injector = Guice.createInjector(new GoogleCloudExtensionModule(httpTransport, jsonFactory,
-        objectMapper, context.cloud(), context.environment()));
+    String cloud = context.cloud();
+    Constants.Environment environment = context.environment();
+    Monitor monitor = context.getMonitor();
+    GoogleCloudExtensionModule module =
+        new GoogleCloudExtensionModule(
+            httpTransport, jsonFactory, objectMapper, cloud, environment, monitor);
+    injector = Guice.createInjector(module);
     initialized = true;
   }
 

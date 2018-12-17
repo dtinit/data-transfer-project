@@ -17,29 +17,32 @@ package org.datatransferproject.security;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
+import org.datatransferproject.api.launcher.Monitor;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+
+import static java.lang.String.format;
 
 /**
  * Provides AES and RSA-based encryption implementations for decryption. See {@link
  * DecrypterFactory} to create.
  */
 final class DecrypterImpl implements Decrypter {
-  private static final Logger logger = LoggerFactory.getLogger(DecrypterImpl.class);
 
   private final Key key;
   private final String transformation;
+  private final Monitor monitor;
 
-  DecrypterImpl(String transformation, Key key) {
+  DecrypterImpl(String transformation, Key key, Monitor monitor) {
     this.key = key;
     this.transformation = transformation;
+    this.monitor = monitor;
   }
 
   @Override
@@ -60,7 +63,7 @@ final class DecrypterImpl implements Decrypter {
         | InvalidKeyException
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
-      logger.error("Error decrypting data, length: {}", encrypted.length(), e);
+      monitor.severe(() -> format("Error decrypting data, length: %s", encrypted.length()), e);
       throw new RuntimeException(e);
     }
   }
