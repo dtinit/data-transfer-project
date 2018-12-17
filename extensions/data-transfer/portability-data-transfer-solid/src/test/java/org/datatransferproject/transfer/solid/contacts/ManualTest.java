@@ -6,8 +6,8 @@ import java.security.GeneralSecurityException;
 import java.util.UUID;
 import org.datatransferproject.transfer.solid.SolidUtilities;
 import org.datatransferproject.transfer.solid.SslHelper;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
 
 public class ManualTest {
   // URL to your POD
