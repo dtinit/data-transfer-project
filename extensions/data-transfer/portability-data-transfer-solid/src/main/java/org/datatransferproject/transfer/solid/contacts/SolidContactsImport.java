@@ -34,8 +34,8 @@ import org.apache.jena.vocabulary.VCARD4;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.solid.SolidUtilities;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
