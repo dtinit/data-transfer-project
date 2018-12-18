@@ -46,6 +46,9 @@ include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 // SmugMug
 include ':extensions:auth:portability-auth-smugmug'
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
+// Solid
+//include ':extensions:auth:portability-auth-solid'
+include ':extensions:data-transfer:portability-data-transfer-solid'
 // Twitter
 include ':extensions:auth:portability-auth-twitter'
 include ':extensions:data-transfer:portability-data-transfer-twitter'
