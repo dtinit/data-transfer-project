@@ -18,8 +18,8 @@ To be clear, **you will only be able to transfer data to/from services you have 
 ## Setup keys
 
 The first time you run the demo image, you need to configure your
-credentials by copying distributions/demo-server/env.secrets.template to
-env.secrets and inserting the API keys and secrets you acquired above.
+credentials by copying `distributions/demo-server/env.secrets.template` to
+`env.secrets` and inserting the API keys and secrets you acquired above.
 
 ## Install Docker
 
@@ -42,13 +42,13 @@ Or, to build it yourself, run:
 
  `./gradlew :distributions:demo-server:dockerize`
 
-This will generate the dockerfile and build an image, copying over local settings (configured in .gradle/properties.gradle) and using the local "cloud hosting" extension.
+This will generate the dockerfile and build an image, copying over local settings (configured in `.gradle/properties.gradle`) and using the local "cloud hosting" extension.
 
 ## Run the Docker image
 
 `docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --env-file distributions/demo-server/env.secrets --name dtp-demo datatransferproject/demo`
 
-will run the demo server image from above on localhost:8080.
+will run the demo server image from above on `localhost:8080`.
 
   - `--rm` tells docker to clean up the file system after it is done running
   - `-p 3000:443 -p 8080:8080` exposes some port from the docker system to your machine
@@ -61,6 +61,6 @@ If everything worked, you'll start to see some log lines scrolling by, like:
 
 You should now be able to access the web application at https://localhost:3000.
 
-The API is accessible via https://localhost:8080/_/listDataTypes. A java debugger can be connected via port 5005.
+The API is accessible via https://localhost:8080/_/listDataTypes. A java debugger can be connected via `port 5005`.
 
 You can interact with the docker image via `docker exec -it dtp-demo <command>`
