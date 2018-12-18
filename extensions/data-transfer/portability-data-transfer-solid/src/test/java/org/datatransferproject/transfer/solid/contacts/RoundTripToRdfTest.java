@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.transfer.solid.contacts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -5,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import java.io.StringReader;
+import java.io.StringWriter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -36,13 +53,18 @@ public class RoundTripToRdfTest {
   @Test
   public void testFromVcard() {
     for (VCard vcardInput : Ezvcard.parse(TestData.VCARD_TEXT).all()) {
-      String rdf = SolidContactsImport.getRdf(vcardInput);
+      Model personModel = SolidContactsImport.getPersonModel(vcardInput);
+
+      StringWriter stringWriter = new StringWriter();
+      personModel.write(stringWriter, "TURTLE");
+      String rdf = stringWriter.toString();
+
       VCard vcardOutput = SolidContactsExport.parsePerson(getPersonResource(rdf));
       checkEquality(vcardInput, vcardOutput);
     }
   }
 
-  Resource getPersonResource(String data) {
+  private Resource getPersonResource(String data) {
     String example = "https://example.com/resource1";
     Model defaultModel = ModelFactory.createDefaultModel();
     Model model = defaultModel.read(

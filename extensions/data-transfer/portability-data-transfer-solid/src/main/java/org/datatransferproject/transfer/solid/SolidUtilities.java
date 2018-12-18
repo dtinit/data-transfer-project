@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.transfer.solid;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -9,7 +25,6 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.collect.ImmutableList;
@@ -23,25 +38,28 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.datatransferproject.transfer.solid.contacts.SolidContactsExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SolidUtilities {
+public final class SolidUtilities {
   private static final Logger logger = LoggerFactory.getLogger(SolidContactsExport.class);
   private static final Pattern PROBLEMATIC_TURTLE = Pattern.compile("(\\s\\d+\\.)\n");
   private static final HttpTransport TRANSPORT = new NetHttpTransport();
   private final String authCookie;
-  final HttpRequestFactory factory;
+  private final HttpRequestFactory factory;
 
   public SolidUtilities(String authCookie) {
     this.authCookie = authCookie;
     this.factory = TRANSPORT.createRequestFactory();
   }
 
+  /**
+   * Does a depth first traversal of a RDF graph, passing each {@link Resource} into the
+   * provided {@link Consumer}
+   */
   public void explore(String url, Consumer<Resource> resourceConsumer) throws IOException {
     logger.debug("Exploring: {}", url);
     Model model = getModel(url);
@@ -62,6 +80,9 @@ public class SolidUtilities {
     resourceConsumer.accept(selfResource);
   }
 
+  /**
+   * Parses the contents of a URL to produce an RDF model.
+   */
   public Model getModel(String url) throws IOException {
     HttpRequestFactory factory = TRANSPORT.createRequestFactory();
 
@@ -90,17 +111,61 @@ public class SolidUtilities {
         "TURTLE");
   }
 
-  public static List<Statement> getProperties(Resource r, String property) {
-    return r.listProperties()
-        .filterKeep(s -> s.getPredicate().toString().equalsIgnoreCase(property))
-        .toList();
-  }
-
+  /** Recursively deletes all sub resources starting at the given url. **/
   public void recursiveDelete(String url) throws IOException{
     explore(url, r-> delete(r.getURI()));
   }
 
-  public void delete(String url)  {
+  /** Posts an RDF model to a Solid server. **/
+  public String postContent(
+      String url,
+      String slug,
+      String type,
+      Model model)
+      throws IOException {
+    StringWriter stringWriter = new StringWriter();
+    model.write(stringWriter, "TURTLE");
+    HttpContent content = new ByteArrayContent("text/turtle", stringWriter.toString().getBytes());
+
+    HttpRequest postRequest = factory.buildPostRequest(
+        new GenericUrl(url), content);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setCookie(authCookie);
+    headers.set("Link", "<" + type + ">; rel=\"type\"");
+    headers.set("Slug", slug);
+    postRequest.setHeaders(headers);
+
+    HttpResponse response = postRequest.execute();
+
+    validateResponse(response, 201);
+    return response.getHeaders().getLocation();
+  }
+
+  /** Checks if a {@link Resource} is a given type. **/
+  public static boolean isType(Resource resource, String type) {
+    return resource.listProperties(RDF.type)
+        .toList()
+        .stream()
+        .anyMatch(s -> s.getResource().getURI().equalsIgnoreCase(type));
+  }
+
+  /** Gets a given resource (including the #this reference) from a model. **/
+  public static Resource getResource(String url, Model model) {
+    List<Resource> matchingSubjects = model.listSubjects()
+        .filterKeep(s -> s.getURI() != null)
+        .filterKeep(s -> s.getURI().equalsIgnoreCase(url)
+            || s.getURI().equalsIgnoreCase(url + "#this")).toList();
+    if (matchingSubjects.isEmpty()) {
+      return null;
+    }
+    checkState(matchingSubjects.size() == 1,
+        "Model %s didn't contain %s",
+        model,
+        url);
+    return matchingSubjects.get(0);
+  }
+
+  private void delete(String url)  {
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept("text/turtle");
     headers.setCookie(authCookie);
@@ -117,42 +182,7 @@ public class SolidUtilities {
     }
   }
 
-  public String postContent(
-      String url,
-      String slug,
-      String type,
-      Resource resource)
-      throws IOException {
-    StringWriter stringWriter = new StringWriter();
-    resource.getModel().write(stringWriter, "TURTLE");
-    return postContent(url, slug, type, stringWriter.toString());
-  }
-
-  public String postContent(
-      String url,
-      String slug,
-      String type,
-      String contentString)
-      throws IOException {
-    HttpContent content = new ByteArrayContent("text/turtle", contentString.getBytes());
-
-    HttpRequest postRequest = factory.buildPostRequest(
-        new GenericUrl(url), content);
-    HttpHeaders headers = new HttpHeaders();
-    headers.setCookie(authCookie);
-    headers.set("Link", "<" + type + ">; rel=\"type\"");
-    headers.set("Slug", slug);
-    postRequest.setHeaders(headers);
-
-    HttpResponse response = postRequest.execute();
-
-    validateResponse(response, 201);
-    String location = response.getHeaders().getLocation();
-
-    return location;
-  }
-
-  static void validateResponse(HttpResponse response, int expectedCode) throws IOException {
+  private static void validateResponse(HttpResponse response, int expectedCode) throws IOException {
     if (response.getStatusCode() != expectedCode) {
       throw new IOException("Unexpected return code: "
           + response.getStatusCode()
@@ -164,7 +194,7 @@ public class SolidUtilities {
     }
   }
 
-  static List<Resource> getContainedResource(Model model, String url) {
+  private static List<Resource> getContainedResource(Model model, String url) {
     ImmutableList.Builder<Resource> results = new ImmutableList.Builder<>();
 
     Resource self = model.getResource(url);
@@ -181,29 +211,7 @@ public class SolidUtilities {
     return results.build();
   }
 
-  public static boolean isType(Resource resource, String type) {
-    return resource.listProperties(RDF.type)
-        .toList()
-        .stream()
-        .anyMatch(s -> s.getResource().getURI().equalsIgnoreCase(type));
-  }
-
-  public static Resource getResource(String url, Model model) {
-    List<Resource> matchingSubjects = model.listSubjects()
-        .filterKeep(s -> s.getURI() != null)
-        .filterKeep(s -> s.getURI().equalsIgnoreCase(url)
-            || s.getURI().equalsIgnoreCase(url + "#this")).toList();
-    if (matchingSubjects.isEmpty()) {
-      return null;
-    }
-    checkState(matchingSubjects.size() == 1,
-        "Model %s didn't contain %s",
-        model,
-        url);
-    return matchingSubjects.get(0);
-  }
-
-  static String fixProblematicPeriods(String source) {
+  private static String fixProblematicPeriods(String source) {
     // SOLID outputs lines like:
     // st:size 4096.
     // And jena thinks the trailing '.' belongs to the number, and not the end of
@@ -220,9 +228,7 @@ public class SolidUtilities {
         r -> {
           logger.info(r.toString());
           StmtIterator props = r.listProperties();
-          props.forEachRemaining(p -> {
-            logger.info("\t" + p.getPredicate() + " " + p.getObject());
-          });
+          props.forEachRemaining(p -> logger.info("\t" + p.getPredicate() + " " + p.getObject()));
         }
     );
   }

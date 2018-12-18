@@ -1,7 +1,24 @@
+/*
+ * Copyright 2018 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.transfer.solid.contacts;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -17,7 +34,6 @@ import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import ezvcard.property.Url;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +61,6 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
   private static final Logger logger = LoggerFactory.getLogger(SolidContactsExport.class);
   private static final String TEST_SLUG_NAME = "ImportedAddressBook";
   private static final String BASE_DIRECTORY = "/inbox/";
-  static final String IMPORTED_ADDRESS_BOOK_PATH = BASE_DIRECTORY + TEST_SLUG_NAME + "/";
   private static final String BASIC_CONTAINER_TYPE = "http://www.w3.org/ns/ldp#BasicContainer";
   private static final String BASIC_RESOURCE_TYPE = "http://www.w3.org/ns/ldp#Resource";
 
@@ -90,6 +105,9 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
         )));
   }
 
+  @VisibleForTesting
+  static final String IMPORTED_ADDRESS_BOOK_PATH = BASE_DIRECTORY + TEST_SLUG_NAME + "/";
+
   @Override
   public ImportResult importItem(UUID jobId, CookiesAndUrlAuthData authData,
       ContactsModelWrapper data) throws Exception {
@@ -106,7 +124,7 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     return ImportResult.OK;
   }
 
-  void createContent(String baseUrl, List<VCard> people, SolidUtilities utilities)
+  private void createContent(String baseUrl, List<VCard> people, SolidUtilities utilities)
       throws Exception {
     String addressBookSlug = TEST_SLUG_NAME;
 
@@ -124,14 +142,15 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     createPeopleFile(baseUrl, containerUrl, insertedPeople, utilities);
   }
 
-  String createContainer(String url, String slug, SolidUtilities utilities) throws Exception {
-    Resource containerResource = ModelFactory.createDefaultModel().createResource("");
+  private String createContainer(String url, String slug, SolidUtilities utilities) throws Exception {
+    Model containerModel = ModelFactory.createDefaultModel();
+    Resource containerResource = containerModel.createResource("");
     containerResource.addProperty(DCTerms.title, slug);
-    return utilities.postContent(url, slug, BASIC_CONTAINER_TYPE, containerResource);
+    return utilities.postContent(url, slug, BASIC_CONTAINER_TYPE, containerModel);
 
   }
 
-  String createIndex(String url, String slug, SolidUtilities utilities) throws Exception {
+  private String createIndex(String url, String slug, SolidUtilities utilities) throws Exception {
     Model model = ModelFactory.createDefaultModel();
     Resource containerResource = model.createResource("#this");
     containerResource.addProperty(RDF.type, model.getResource(VCARD4.NS + "AddressBook"));
@@ -146,40 +165,41 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
         url,
         "index",
         BASIC_RESOURCE_TYPE,
-        containerResource);
+        model);
   }
 
-  String createPersonDirectory(String url, SolidUtilities utilities) throws IOException {
-    Resource resource = ModelFactory.createDefaultModel().createResource("");
+  private String createPersonDirectory(String url, SolidUtilities utilities) throws IOException {
+    Model personDirectoryModel = ModelFactory.createDefaultModel();
+    personDirectoryModel.createResource("");
     return utilities.postContent(
         url,
         "Person",
         BASIC_CONTAINER_TYPE,
-        resource);
+        personDirectoryModel);
   }
 
-  String insertPerson(String baseUrl, String container, VCard person,  SolidUtilities utilities) {
-    Resource resource = ModelFactory.createDefaultModel().createResource("");
+  private String insertPerson(String baseUrl, String container, VCard person,  SolidUtilities utilities) {
+    Model personContainerModel = ModelFactory.createDefaultModel();
+    personContainerModel.createResource("");
     try {
       String directory = utilities.postContent(
           baseUrl + container,
           null,
           BASIC_CONTAINER_TYPE,
-          resource);
+          personContainerModel);
 
-      String rdf = getRdf(person);
       return utilities.postContent(
           baseUrl + directory,
           "index",
           BASIC_RESOURCE_TYPE,
-          rdf);
+          getPersonModel(person));
     } catch (IOException e) {
       throw new IllegalStateException("Couldn't insert: " + person.getFormattedName()
           + " into: " + baseUrl + container, e);
     }
   }
 
-  String createPeopleFile(
+  private String createPeopleFile(
       String baseUrl,
       String containerUrl,
       Map<String, VCard> importedPeople,
@@ -201,19 +221,16 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
           indexResource);
     }
 
-    StringWriter stringWriter = new StringWriter();
-    peopleModel.write(stringWriter, "TURTLE");
-    String content = stringWriter.toString();
-
     return utilities.postContent(
         baseUrl + containerUrl,
         "people",
         BASIC_RESOURCE_TYPE,
-        content);
+        peopleModel);
   }
 
 
-  static String getRdf(VCard vcard) {
+  @VisibleForTesting
+  final static Model getPersonModel(VCard vcard) {
     Model personModel = ModelFactory.createDefaultModel();
     Resource r = personModel.createResource("#this");
     r.addProperty(RDF.type, VCARD4.Individual);
@@ -295,9 +312,7 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
       r.addProperty(VCARD4.hasPhoto, photo.getUrl());
     }
 
-    StringWriter stringWriter = new StringWriter();
-    personModel.write(stringWriter, "TURTLE");
-    return stringWriter.toString();
+    return personModel;
   }
 
   /** Looks up the {@link Resource}s for a given string, that might be comma delimited. **/

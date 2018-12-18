@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.transfer.solid.contacts;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -21,6 +37,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
@@ -40,6 +58,8 @@ import org.slf4j.LoggerFactory;
 public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, ContactsModelWrapper> {
   private static final Pattern MAIL_TO_PATTERN = Pattern.compile("mailto:(.+@.+\\..+)");
   private static final Logger logger = LoggerFactory.getLogger(SolidContactsExport.class);
+  private static final Property NAME_EMAIL_INDEX_PROPERTY = ModelFactory.createDefaultModel()
+      .createProperty(VCARD4.NS, "nameEmailIndex");
 
   @Override
   public ExportResult<ContactsModelWrapper> export(UUID jobId, CookiesAndUrlAuthData authData,
@@ -56,10 +76,10 @@ public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, Cont
 
     String url = authData.getUrl();
 
-    List<List<VCard>> vcards  = explore(url, solidUtilities);
+    List<List<VCard>> vCards  = explore(url, solidUtilities);
     //TODO: This flattens all the address books together, which isn't perfect.
     List<VCard> allCards = new ArrayList<>();
-    vcards.forEach(cards -> allCards.addAll(cards));
+    vCards.forEach(allCards::addAll);
 
     return new ExportResult<>(ResultType.END,
         new ContactsModelWrapper(Ezvcard.write(allCards).go()));
@@ -88,24 +108,22 @@ public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, Cont
       throws IOException {
     if (SolidUtilities.isType(resource, "http://www.w3.org/2006/vcard/ns#AddressBook")) {
       logger.debug("Got Address book at {}", resource.getURI());
-      List<VCard> vcards = parseAddressBook(resource, utilities);
-      return vcards;
+      return parseAddressBook(resource, utilities);
     }
     return null;
   }
 
   private List<VCard> parseAddressBook(Resource selfResource, SolidUtilities utilities)
       throws IOException {
-    String peopleUri = getStatement(selfResource, "http://www.w3.org/2006/vcard/ns#nameEmailIndex")
-        .getResource()
-        .getURI();
+
+    String peopleUri = selfResource.getProperty(NAME_EMAIL_INDEX_PROPERTY).getResource().getURI();
     Model peopleModel = utilities.getModel(peopleUri);
     List<VCard> vcards = new ArrayList<>();
     ResIterator subjects = peopleModel.listSubjects();
     while (subjects.hasNext()) {
       Resource subject = subjects.nextResource();
       Model personModel = utilities.getModel(subject.getURI());
-      Resource personResource = utilities.getResource(subject.getURI(), personModel);
+      Resource personResource = SolidUtilities.getResource(subject.getURI(), personModel);
       if (personResource == null) {
         throw new IllegalStateException(subject.getURI() + " not found in " + subject.toString());
       }
@@ -114,17 +132,7 @@ public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, Cont
     return vcards;
   }
 
-  private static Statement getStatement(Resource r, String property) {
-    List<Statement> statements = SolidUtilities.getProperties(r, property);
-    checkState(statements.size() == 1,
-        "Expected just one item for resource %s, property: %s: %s",
-        r,
-        property,
-        statements);
-    return statements.get(0);
-  }
-
-  static VCard parsePerson(Resource r) {
+  final static VCard parsePerson(Resource r) {
     VCard vcard = new VCard();
 
     if (r.hasProperty(VCARD4.fn)) {
