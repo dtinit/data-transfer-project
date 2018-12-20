@@ -70,17 +70,31 @@ class JobPollingService extends AbstractScheduledService {
   @Override
   protected void runOneIteration() {
     if (JobMetadata.isInitialized()) {
-      if (stopwatch.elapsed(TimeUnit.SECONDS) > credsTimeoutSeconds)
-        throw new RuntimeException(
-            String.format(
+      if (stopwatch.elapsed(TimeUnit.SECONDS) > credsTimeoutSeconds) {
+        UUID jobId = JobMetadata.getJobId();
+        markJobFailed(jobId);
+        String message =
+            format(
                 "Waited over %d seconds for the creds to be provided on the claimed job: %s",
-                    credsTimeoutSeconds, JobMetadata.getJobId()));
+                credsTimeoutSeconds, jobId);
+        monitor.severe(() -> message);
+        throw new CredsTimeoutException(message, jobId);
+      }
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this transfer worker instance.
       // Once a transfer worker instance is assigned, the client will populate storage with
       // auth data encrypted with this instances public key and the copy process can begin
       pollForUnassignedJob();
+    }
+  }
+
+  private void markJobFailed(UUID jobId) {
+    PortabilityJob job = store.findJob(jobId);
+    try {
+      store.updateJob(jobId, job.toBuilder().setState(PortabilityJob.State.ERROR).build());
+    } catch (IOException e) {
+      // Suppress exception so we still pass out the original exception
     }
   }
 
