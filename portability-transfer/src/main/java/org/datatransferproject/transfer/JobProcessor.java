@@ -22,6 +22,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.SecurityException;
@@ -114,11 +115,7 @@ final class JobProcessor {
       monitor.severe(() -> "Error processing jobId: " + jobId, e);
     } finally {
       monitor.debug(() -> "Finished processing jobId: " + jobId);
-      try {
-        store.remove(jobId);
-      } catch (IOException e) {
-        monitor.severe(() -> "Error removing jobId: " + jobId, e);
-      }
+      markJobFinished(jobId, success);
       hooks.jobFinished(jobId, success);
       JobMetadata.reset();
     }
@@ -132,5 +129,17 @@ final class JobProcessor {
       }
     }
     return null;
+  }
+
+  private void markJobFinished(UUID jobId, boolean success) {
+    State state = success ? State.COMPLETE : State.ERROR;
+    PortabilityJob existingJob = store.findJob(jobId);
+    PortabilityJob updatedJob = existingJob.toBuilder().setState(state).build();
+
+    try {
+      store.updateJob(jobId, updatedJob);
+    } catch (IOException e) {
+      monitor.debug(() -> format("Could not mark job %s as finished.", jobId));
+    }
   }
 }
