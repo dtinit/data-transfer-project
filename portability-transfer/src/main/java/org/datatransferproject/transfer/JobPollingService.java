@@ -72,7 +72,7 @@ class JobPollingService extends AbstractScheduledService {
     if (JobMetadata.isInitialized()) {
       if (stopwatch.elapsed(TimeUnit.SECONDS) > credsTimeoutSeconds) {
         UUID jobId = JobMetadata.getJobId();
-        markJobFailed(jobId);
+        markJobTimedOut(jobId);
         String message =
             format(
                 "Waited over %d seconds for the creds to be provided on the claimed job: %s",
@@ -89,10 +89,19 @@ class JobPollingService extends AbstractScheduledService {
     }
   }
 
-  private void markJobFailed(UUID jobId) {
+  private void markJobTimedOut(UUID jobId) {
     PortabilityJob job = store.findJob(jobId);
     try {
-      store.updateJob(jobId, job.toBuilder().setState(PortabilityJob.State.ERROR).build());
+      store.updateJob(
+          jobId,
+          job.toBuilder()
+              .setState(PortabilityJob.State.ERROR)
+              .setAndValidateJobAuthorization(
+                  job.jobAuthorization()
+                      .toBuilder()
+                      .setState(JobAuthorization.State.TIMED_OUT)
+                      .build())
+              .build());
     } catch (IOException e) {
       // Suppress exception so we still pass out the original exception
     }
