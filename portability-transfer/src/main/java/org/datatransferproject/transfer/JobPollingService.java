@@ -104,7 +104,7 @@ class JobPollingService extends AbstractScheduledService {
               .build());
     } catch (IOException e) {
       // Suppress exception so we still pass out the original exception
-      monitor.debug(
+      monitor.severe(
           () ->
               format(
                   "IOException while marking job as timed out. JobId: %s; Exception: %s",
