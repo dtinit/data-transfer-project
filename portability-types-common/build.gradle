@@ -22,6 +22,8 @@ plugins {
 dependencies {
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
 
+    compile fileTree(include: ['*.jar'], dir: 'lib')
+
     testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
 }
