@@ -20,8 +20,8 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -104,6 +104,11 @@ class JobPollingService extends AbstractScheduledService {
               .build());
     } catch (IOException e) {
       // Suppress exception so we still pass out the original exception
+      monitor.debug(
+          () ->
+              format(
+                  "IOException while marking job as timed out. JobId: %s; Exception: %s",
+                  jobId, e));
     }
   }
 
