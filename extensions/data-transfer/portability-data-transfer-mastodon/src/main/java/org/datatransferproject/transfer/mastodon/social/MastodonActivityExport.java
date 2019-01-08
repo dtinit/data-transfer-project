@@ -39,6 +39,10 @@ import org.datatransferproject.types.common.models.social.SocialActivityContaine
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 import com.ibm.common.activitystreams.Makers;
 
+/**
+ * Exports post data from Mastodon.
+ * <p> Currently only supports text and not images.
+ **/
 public class MastodonActivityExport implements
     Exporter<CookiesAndUrlAuthData, SocialActivityContainerResource> {
   private static final Pattern RAW_CONTENT_PATTERN = Pattern.compile("<p>(.*)</p>");
@@ -60,13 +64,13 @@ public class MastodonActivityExport implements
       }
     }
 
-    MastodonUtilities utilities = new MastodonUtilities(
+    MastodonHttpUtilities utilities = new MastodonHttpUtilities(
         authData.getCookies().get(0),
         authData.getUrl());
 
     Account account = utilities.getAccount();
 
-    Status[] statuses = utilities.getStatus(account.getId(), maxId);
+    Status[] statuses = utilities.getStatuses(maxId);
     List<Activity> activityList = new ArrayList<>(statuses.length); 
 
     ContinuationData continuationData = null;
@@ -86,7 +90,7 @@ public class MastodonActivityExport implements
   }
 
   private Activity statusToActivity(Account account,
-      Status status, MastodonUtilities utilities) {
+      Status status, MastodonHttpUtilities utilities) {
     String contentString = status.getContent();
     Matcher matcher = RAW_CONTENT_PATTERN.matcher(contentString);
     if (matcher.matches()) {

@@ -29,6 +29,10 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 
+/**
+ * Imports post data to Mastodon.
+ * <p> Currently only supports text and not images.
+ **/
 public class MastodonActivityImport
     implements Importer<CookiesAndUrlAuthData, SocialActivityContainerResource> {
 
@@ -39,7 +43,7 @@ public class MastodonActivityImport
         "Exactly 1 cookie expected: %s",
         authData.getCookies());
 
-    MastodonUtilities utilities = new MastodonUtilities(
+    MastodonHttpUtilities utilities = new MastodonHttpUtilities(
         authData.getCookies().get(0),
         authData.getUrl());
 
@@ -60,7 +64,7 @@ public class MastodonActivityImport
     return ImportResult.OK;
   }
 
-  private void postNode(ASObject asObject, MastodonUtilities utilities, UUID jobId) throws IOException {
+  private void postNode(ASObject asObject, MastodonHttpUtilities utilities, UUID jobId) throws IOException {
     utilities.postStatus(
         "Duplicated: " + asObject.contentString(),
         jobId + asObject.id());

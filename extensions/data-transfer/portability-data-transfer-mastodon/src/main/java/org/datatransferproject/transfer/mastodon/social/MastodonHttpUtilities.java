@@ -16,6 +16,9 @@
 
 package org.datatransferproject.transfer.mastodon.social;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
@@ -33,7 +36,8 @@ import java.net.URI;
 import org.datatransferproject.transfer.mastodon.model.Account;
 import org.datatransferproject.transfer.mastodon.model.Status;
 
-public class MastodonUtilities {
+/** Helper methods for interacting with the Mastodon API **/
+public class MastodonHttpUtilities {
   private static final String ACCOUNT_VERIFICATION_URL = "/api/v1/accounts/verify_credentials";
   private static final String STATUS_URL_PATTERN = "/api/v1/accounts/%s/statuses";
   private static final String POST_URL = "/api/v1/statuses";
@@ -43,27 +47,36 @@ public class MastodonUtilities {
   private final URI baseUri;
   private final String accessToken;
   private final String baseUrl;
+  private final Account account;
 
-  MastodonUtilities(String accessToken, String baseUrl) {
-    this.accessToken = accessToken;
-    this.baseUrl = baseUrl;
+  /**
+   * Construct a new utility class for a given user.
+   * @param accessToken the access token for a user from the UI or OAuth flow
+   * @param baseUrl the base url of the mastodon instance of the user
+   */
+  MastodonHttpUtilities(String accessToken, String baseUrl) throws IOException {
+    this.accessToken = checkNotNull(accessToken, "accessToken must be provided" );
+    this.baseUrl = checkNotNull(baseUrl, "baseUrl must be provided");
     this.baseUri = URI.create(baseUrl);
+    this.account = fetchAccount();
   }
 
-  public Account getAccount() throws IOException {
-    Account accountInfo = request(ACCOUNT_VERIFICATION_URL, Account.class);
-    return accountInfo;
+  /** Gets the account info via verify_credentials. **/
+  public Account getAccount() {
+    return account;
   }
 
-  public Status[] getStatus(String accountId, String pageToken) throws Exception {
-    String url = String.format(STATUS_URL_PATTERN, accountId);
-    if (!Strings.isNullOrEmpty(pageToken)) {
-      url += "?max_id=" + pageToken;
+  /** Gets the statuses posted by the user. **/
+  public Status[] getStatuses(String maxId) throws Exception {
+    String url = String.format(STATUS_URL_PATTERN, account.getId());
+    if (!Strings.isNullOrEmpty(maxId)) {
+      url += "?max_id=" + maxId;
     }
 
     return request(url, Status[].class);
   }
 
+  /** Posts a new status for the user, initially marked as private.**/
   public void postStatus(String content, String idempotencyKey) throws IOException {
     ImmutableMap<String, String> formParams = ImmutableMap.of(
         "status", content,
@@ -87,6 +100,12 @@ public class MastodonUtilities {
     HttpResponse response = postRequest.execute();
 
     validateResponse(postRequest, response, 200);
+  }
+
+  /** Gets the account info via verify_credentials. **/
+  private Account fetchAccount() throws IOException {
+    Account accountInfo = request(ACCOUNT_VERIFICATION_URL, Account.class);
+    return accountInfo;
   }
 
   private <T> T request(String path, Class<T> clazz) throws IOException {
@@ -128,6 +147,7 @@ public class MastodonUtilities {
     }
   }
 
+  /** Gets the host name of the Mastodon instance for this user. **/
   public String getHostName() {
     return baseUri.getHost();
   }

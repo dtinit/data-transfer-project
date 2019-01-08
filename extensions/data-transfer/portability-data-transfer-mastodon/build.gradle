@@ -33,8 +33,6 @@ dependencies {
 
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
-    // https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client-jetty
-    compile group: 'com.google.oauth-client', name: 'google-oauth-client-jetty', version: '1.22.0'
 
     // Needed for OpenSocial ActivityStreams
     compile group: 'joda-time', name: 'joda-time', version: '2.3'
