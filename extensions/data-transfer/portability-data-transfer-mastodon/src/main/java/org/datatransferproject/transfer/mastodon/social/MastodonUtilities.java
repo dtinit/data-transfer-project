@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.datatransferproject.transfer.mastodon.model.Status;
 
 public class MastodonUtilities {
   private static final String ACCOUNT_VERIFICATION_URL = "/api/v1/accounts/verify_credentials";
-  private static final String STATUS_URL_PATTERN = "/api/v1/accounts/%s/statuses?limit=2";
+  private static final String STATUS_URL_PATTERN = "/api/v1/accounts/%s/statuses";
   private static final String POST_URL = "/api/v1/statuses";
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -58,16 +58,16 @@ public class MastodonUtilities {
   public Status[] getStatus(String accountId, String pageToken) throws Exception {
     String url = String.format(STATUS_URL_PATTERN, accountId);
     if (!Strings.isNullOrEmpty(pageToken)) {
-      url += "&max_id=" + pageToken;
-   }
-    System.out.println("Requesting: " + url);
+      url += "?max_id=" + pageToken;
+    }
+
     return request(url, Status[].class);
   }
 
   public void postStatus(String content, String idempotencyKey) throws IOException {
     ImmutableMap<String, String> formParams = ImmutableMap.of(
         "status", content,
-        // default everything to private to avoid a privacy incident
+        // Default everything to private to avoid a privacy incident
         "visibility", "private"
     );
     UrlEncodedContent urlEncodedContent = new UrlEncodedContent(formParams);
@@ -79,6 +79,7 @@ public class MastodonUtilities {
     HttpHeaders headers = new HttpHeaders();
     headers.setAuthorization("Bearer " + accessToken);
     if (!Strings.isNullOrEmpty(idempotencyKey)) {
+      // This prevents the same post from being posted twice in the case of network errors
       headers.set("Idempotency-Key", idempotencyKey);
     }
     postRequest.setHeaders(headers);
@@ -124,7 +125,6 @@ public class MastodonUtilities {
           + request.getUrl()
           + "\nHeaders:\n"
           + response.getHeaders());
-
     }
   }
 

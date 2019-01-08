@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +102,6 @@ public class MastodonActivityExport implements
         .object(Makers.object("note")
             .id(status.getUri())
             .url("Mastodon", status.getUrl())
-            // The mastodon content has some mastodon specific markup that maybe should be
-            // filtered out.
             .content(contentString))
         .verb("post")
         .get();
