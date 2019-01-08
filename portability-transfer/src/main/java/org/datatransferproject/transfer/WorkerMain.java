@@ -126,6 +126,9 @@ public class WorkerMain {
                 symmetricKeyGenerator,
                 asymmetricKeyGenerator));
     worker = injector.getInstance(Worker.class);
+
+    // Reset the JobMetadata in case set previously when running SingleVMMain
+    JobMetadata.reset();
   }
 
   public void poll() {

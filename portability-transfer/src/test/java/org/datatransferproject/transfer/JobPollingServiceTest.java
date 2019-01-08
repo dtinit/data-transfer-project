@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
+import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -42,6 +43,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -131,8 +133,10 @@ public class JobPollingServiceTest {
     Scheduler scheduler = Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
     Set<PublicKeySerializer> serializers = Collections.singleton(serializer);
     Monitor monitor = new Monitor() {};
+    ExtensionContext extensionContext = mock(ExtensionContext.class);
+    when(extensionContext.getSetting("credTimeoutSeconds", 300)).thenReturn(300);
     jobPollingService =
-        new JobPollingService(store, asymmetricKeyGenerator, serializers, scheduler, monitor);
+        new JobPollingService(store, asymmetricKeyGenerator, serializers, scheduler, monitor, extensionContext);
   }
 
   // TODO(data-transfer-project/issues/43): Make this an integration test which uses both the API
