@@ -9,6 +9,7 @@ This folder contains the extension implementation for the
  - Mail Import & Export
  - Photos Import & Export
  - Tasks Import & Export
+ - Social Posts Export
 
 ## Current State
 
