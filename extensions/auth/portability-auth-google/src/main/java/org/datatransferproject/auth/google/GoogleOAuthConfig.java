@@ -33,7 +33,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
 
   @Override
   public String getServiceName() {
-    return "Google";
+    return "Google Blogger";
   }
 
   // See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
