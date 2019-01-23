@@ -36,6 +36,10 @@ dependencies {
     compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
     compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
+    compile("com.google.apis:google-api-services-blogger:${googleBloggerVersion}")
+
+    // Needed for OpenSocial ActivityStreams
+    compile group: 'joda-time', name: 'joda-time', version: '2.3'
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
