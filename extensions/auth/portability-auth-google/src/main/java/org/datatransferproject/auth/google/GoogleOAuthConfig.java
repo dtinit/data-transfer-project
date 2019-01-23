@@ -33,7 +33,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
 
   @Override
   public String getServiceName() {
-    return "Google";
+    return "Google Blogger";
   }
 
   // See https://developers.google.com/identity/protocols/OAuth2WebServer#creatingclient
@@ -57,6 +57,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts.readonly"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.readonly"))
         .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
+        .put("SOCIAL-POSTS", ImmutableSet.of("https://www.googleapis.com/auth/plus.login"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks.readonly"))
         .build();
   }
