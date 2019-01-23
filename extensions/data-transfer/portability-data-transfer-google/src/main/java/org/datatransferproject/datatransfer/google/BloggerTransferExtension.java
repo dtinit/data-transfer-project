@@ -39,7 +39,7 @@ import java.io.IOException;
  */
 // This needs to be separated out from Google, as there are multiple services that want to handle SOCIAL-POSTS.
 public class BloggerTransferExtension implements TransferExtension {
-  public static final String SERVICE_ID = "blogger";
+  public static final String SERVICE_ID = "GoogleBlogger";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
       ImmutableList.of("SOCIAL-POSTS");
