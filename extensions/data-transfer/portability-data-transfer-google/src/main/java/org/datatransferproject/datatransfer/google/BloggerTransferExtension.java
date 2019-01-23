@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.datatransfer.google;
 
 import com.google.api.client.http.HttpTransport;
@@ -7,20 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.google.calendar.GoogleCalendarExporter;
-import org.datatransferproject.datatransfer.google.calendar.GoogleCalendarImporter;
+import org.datatransferproject.datatransfer.google.blogger.GoogleBloggerImporter;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.contacts.GoogleContactsExporter;
-import org.datatransferproject.datatransfer.google.contacts.GoogleContactsImporter;
-import org.datatransferproject.datatransfer.google.drive.DriveExporter;
-import org.datatransferproject.datatransfer.google.drive.DriveImporter;
-import org.datatransferproject.datatransfer.google.gplus.GooglePlusExporter;
-import org.datatransferproject.datatransfer.google.mail.GoogleMailExporter;
-import org.datatransferproject.datatransfer.google.mail.GoogleMailImporter;
-import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
-import org.datatransferproject.datatransfer.google.photos.GooglePhotosImporter;
-import org.datatransferproject.datatransfer.google.tasks.GoogleTasksExporter;
-import org.datatransferproject.datatransfer.google.tasks.GoogleTasksImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
@@ -31,14 +35,14 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import java.io.IOException;
 
 /*
- * GoogleTransferExtension allows for importers and exporters of data types
- * to be retrieved.
+ * BloggerTransferExtension allows for importers and exporters of Blogger data.
  */
-public class GoogleTransferExtension implements TransferExtension {
-  public static final String SERVICE_ID = "google";
+// This needs to be separated out from Google, as there are multiple services that want to handle SOCIAL-POSTS.
+public class BloggerTransferExtension implements TransferExtension {
+  public static final String SERVICE_ID = "blogger";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS");
+      ImmutableList.of("SOCIAL-POSTS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -94,24 +98,10 @@ public class GoogleTransferExtension implements TransferExtension {
     Monitor monitor = context.getMonitor();
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));
-    importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
-    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory, jobStore));
-    importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, jobStore, monitor));
-    importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
-    importerBuilder.put(
-        "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
+    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
-    exporterBuilder.put("BLOBS", new DriveExporter(credentialFactory, jobStore, monitor));
-    exporterBuilder.put("CONTACTS", new GoogleContactsExporter(credentialFactory));
-    exporterBuilder.put("CALENDAR", new GoogleCalendarExporter(credentialFactory));
-    exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
-    exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
-    exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
-    exporterBuilder.put(
-        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory));
 
     exporterMap = exporterBuilder.build();
 

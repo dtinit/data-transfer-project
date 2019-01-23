@@ -19,6 +19,7 @@ package org.datatransferproject.transfer.mastodon.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.Nullable;
+import java.time.Instant;
 
 /**
  * Partial POJO representation of
@@ -33,6 +34,7 @@ public class Status {
   @Nullable private String inReplyToId;
   @Nullable private String inReplyToAccountId;
   private String content;
+  private String createdAtTime;
 
 
   public Status(
@@ -42,6 +44,7 @@ public class Status {
       @JsonProperty("account") Account account,
       @JsonProperty("in_reply_to_id") @Nullable String inReplyToId,
       @JsonProperty("in_reply_to_account_id") @Nullable String inReplyToAccountId,
+      @JsonProperty("created_at") String createdAtTime,
       @JsonProperty("content") String content) {
     this.id = id;
     this.uri = uri;
@@ -49,6 +52,7 @@ public class Status {
     this.account = account;
     this.inReplyToId = inReplyToId;
     this.inReplyToAccountId = inReplyToAccountId;
+    this.createdAtTime = createdAtTime;
     this.content = content;
   }
 
@@ -77,6 +81,14 @@ public class Status {
   @Nullable
   public String getInReplyToAccountId() {
     return inReplyToAccountId;
+  }
+
+  public String getCreatedAtTime() {
+    return createdAtTime;
+  }
+
+  public Instant getCreatedAt() {
+    return Instant.parse(createdAtTime);
   }
 
   public String getContent() {
