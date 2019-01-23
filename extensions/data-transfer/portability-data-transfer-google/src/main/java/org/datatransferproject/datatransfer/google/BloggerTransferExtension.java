@@ -42,6 +42,7 @@ import java.io.IOException;
 // handle SOCIAL-POSTS.
 public class BloggerTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "GoogleBlogger";
+
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
       ImmutableList.of("SOCIAL-POSTS");
@@ -98,7 +99,8 @@ public class BloggerTransferExtension implements TransferExtension {
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory, jobStore, jsonFactory));
+    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory, jobStore));
+
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();

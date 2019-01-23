@@ -56,7 +56,6 @@ public class GoogleBloggerImporter
   private static final String ALBUM_ID_KEY = "BloggerAlbumId";
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
-  private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
   // Don't access this directly, instead access via getOrCreateBloggerService.
   private Blogger blogger;
@@ -66,11 +65,9 @@ public class GoogleBloggerImporter
 
   public GoogleBloggerImporter(
       GoogleCredentialFactory credentialFactory,
-      JobStore jobStore,
-      JsonFactory jsonFactory) {
+      JobStore jobStore) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
-    this.jsonFactory = jsonFactory;
     this.imageStreamProvider = new ImageStreamProvider();
     // lazily initialized for the given request
     this.blogger = null;
@@ -138,7 +135,7 @@ public class GoogleBloggerImporter
           String newImgSrc = uploadImage((ASObject) image, driveInterface, folderId);
           content += "\n<hr/><img src=\"" + newImgSrc + "\">";
         } catch (IOException | RuntimeException e) {
-            throw new IOException("Couldn't import: " + asObject.image(), e);
+          throw new IOException("Couldn't import: " + asObject.image(), e);
         }
       }
     }
