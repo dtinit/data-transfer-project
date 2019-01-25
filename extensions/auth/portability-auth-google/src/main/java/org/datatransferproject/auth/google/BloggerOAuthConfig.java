@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
 /**
- * Class that supplies Google Blogger-specific OAuth2 info, this is needed so because mutliple
- * services implement the vertical SOCIAL-POSTS
+ * Class that supplies Google Blogger-specific OAuth2 info, this is needed so because multiple
+ * Google services implement the vertical SOCIAL-POSTS
  */
 public class BloggerOAuthConfig extends GoogleOAuthConfig {
 

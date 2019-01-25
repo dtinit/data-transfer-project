@@ -45,12 +45,11 @@ public class GoogleBloggerImporter implements Importer<TokensAndUrlAuthData, Soc
     this.blogger = null; // lazily initialized for the given request
   }
 
-
   @Override
   public ImportResult importItem(UUID jobId,
       TokensAndUrlAuthData authData,
       SocialActivityContainerResource data) throws Exception {
-    Blogger blogger = getOrCreatePeopleService(authData);
+    Blogger blogger = getOrCreateBloggerService(authData);
 
     BlogList blogList = blogger.blogs().listByUser("self").execute();
 
@@ -84,15 +83,14 @@ public class GoogleBloggerImporter implements Importer<TokensAndUrlAuthData, Soc
       }
     }
 
-
     return null;
   }
 
-  private Blogger getOrCreatePeopleService(TokensAndUrlAuthData authData) {
-    return blogger == null ? makePlusService(authData) : blogger;
+  private Blogger getOrCreateBloggerService(TokensAndUrlAuthData authData) {
+    return blogger == null ? makeBloggerService(authData) : blogger;
   }
 
-  private synchronized Blogger makePlusService(TokensAndUrlAuthData authData) {
+  private synchronized Blogger makeBloggerService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Blogger.Builder(
         credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
