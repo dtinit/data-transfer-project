@@ -39,7 +39,7 @@ import java.io.IOException;
  */
 // This needs to be separated out from Google, as there are multiple services that want to handle SOCIAL-POSTS.
 public class BloggerTransferExtension implements TransferExtension {
-  public static final String SERVICE_ID = "GoogleBlogger";
+  private static final String SERVICE_ID = "GoogleBlogger";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
       ImmutableList.of("SOCIAL-POSTS");
@@ -73,7 +73,6 @@ public class BloggerTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
-    JobStore jobStore = context.getService(JobStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
 
@@ -82,20 +81,18 @@ public class BloggerTransferExtension implements TransferExtension {
       appCredentials =
           context
               .getService(AppCredentialStore.class)
-              .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
+              .getAppCredentials("GOOGLEBLOGGER_KEY", "GOOGLEBLOGGER_SECRET");
     } catch (IOException e) {
       Monitor monitor = context.getMonitor();
       monitor.info(
-          () ->
-              "Unable to retrieve Google AppCredentials. Did you set GOOGLE_KEY and GOOGLE_SECRET?");
+          () -> "Unable to retrieve Google AppCredentials. "
+              + "Did you set GOOGLEBLOGGER_KEY and GOOGLEBLOGGER_SECRET?");
       return;
     }
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
-
-    Monitor monitor = context.getMonitor();
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory));
