@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.BlogList;
