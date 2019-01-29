@@ -244,12 +244,14 @@ components:
         - "Facebook"
         - "TWITTER"
         - "GOOGLE"
+        - "IMGUR"
         importServices:
         - "FLICKR"
         - "SMUGMUG"
         - "Facebook"
         - "TWITTER"
         - "GOOGLE"
+        - "IMGUR"
     TransferJob:
       type: "object"
       properties:

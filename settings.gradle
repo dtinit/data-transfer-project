@@ -37,6 +37,8 @@ include ':extensions:data-transfer:portability-data-transfer-google'
 // Instagram
 include ':extensions:auth:portability-auth-instagram'
 include ':extensions:data-transfer:portability-data-transfer-instagram'
+// Imgur
+include ':extensions:auth:portability-auth-imgur'
 // Mastodon
 //include ':extensions:auth:portability-auth-mastodon'
 include ':extensions:data-transfer:portability-data-transfer-mastodon'

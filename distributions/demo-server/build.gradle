@@ -76,6 +76,7 @@ dependencies {
     compile project(':extensions:auth:portability-auth-smugmug')
     compile project(':extensions:auth:portability-auth-spotify')
     compile project(':extensions:auth:portability-auth-twitter')
+    compile project(':extensions:auth:portability-auth-imgur')
 
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
