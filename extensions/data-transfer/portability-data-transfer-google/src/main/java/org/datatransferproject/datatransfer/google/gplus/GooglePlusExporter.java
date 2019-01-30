@@ -168,10 +168,10 @@ public class GooglePlusExporter
     }
 
     com.ibm.common.activitystreams.Activity result = Makers.activity()
-            .actor(actor)
-            .object(object)
-            .verb(verb)
-            .get();
+        .actor(actor)
+        .object(object)
+        .verb(verb)
+        .get();
 
     return result;
   }
