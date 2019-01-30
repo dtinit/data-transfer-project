@@ -21,6 +21,7 @@ import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Activity;
 import com.google.api.services.plus.model.ActivityFeed;
 import com.google.common.annotations.VisibleForTesting;
+import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Makers;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
@@ -92,17 +93,38 @@ public class GooglePlusExporter
   private com.ibm.common.activitystreams.Activity postToActivityStream(Activity activity) {
     String contentString = activity.getObject().getOriginalContent();
 
-    return Makers.activity()
-            .actor(Makers.object("person")
-                    .id("acct:" + activity.getActor().getId())
-                    .link("GPlus", activity.getActor().getUrl())
-                    .displayName(activity.getActor().getDisplayName()))
+    ASObject.Builder actor = Makers.object("person")
+        .id(activity.getActor().getUrl())
+        .link("GPlus", activity.getActor().getUrl())
+        .displayName(activity.getActor().getDisplayName());
+    ASObject.Builder object = null;
+    String verb = activity.getVerb();
 
-            .object(Makers.object("post")
-                    .id(activity.getId())
-                    .url("GPlus", activity.getUrl())
-                    .content(contentString))
-            .verb("post")
+    switch (activity.getVerb()) {
+      case "post":
+        object = Makers.object("post")
+            .id(activity.getId())
+            .url("GPlus", activity.getUrl())
+            .content(contentString);
+        break;
+      case "checkin":
+        object = Makers.object("checkin")
+            .id(activity.getId())
+            // see https://www.w3.org/TR/activitystreams-vocabulary/#dfn-location
+            .location(Makers.object("Place")
+                .displayName(activity.getLocation().getDisplayName())
+                .set("longitude", activity.getLocation().getPosition().getLongitude())
+                .set("latitude", activity.getLocation().getPosition().getLatitude()))
+            .content(contentString);
+        break;
+      default:
+        throw new IllegalArgumentException("Don't know how to export " + activity);
+    }
+
+    return Makers.activity()
+            .actor(actor)
+            .object(object)
+            .verb(verb)
             .get();
   }
 
