@@ -40,6 +40,7 @@ dependencies {
 
     // Needed for OpenSocial ActivityStreams
     compile group: 'joda-time', name: 'joda-time', version: '2.3'
+    implementation 'com.google.code.gson:gson:2.2.4'
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')

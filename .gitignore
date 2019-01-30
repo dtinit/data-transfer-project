@@ -31,6 +31,7 @@ node_modules
 .c9/
 *.launch
 .settings/
+*/src/*/generated/
 *.sublime-workspace
 
 # IDE - VSCode
