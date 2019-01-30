@@ -21,10 +21,14 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.BlogList;
 import com.google.api.services.blogger.model.Post;
+import com.google.api.services.blogger.model.Post.Images;
 import com.google.common.base.Strings;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -59,31 +63,86 @@ public class GoogleBloggerImporter implements Importer<TokensAndUrlAuthData, Soc
     for (Activity activity : data.getActivities()) {
       for (LinkValue object : activity.object()) {
         checkState(object instanceof ASObject, "%s isn't of expected type", object);
-        Activity asObject = (Activity) object;
+        ASObject asObject = (ASObject) object;
         if (asObject.objectTypeString().equals("note")
             || asObject.objectTypeString().equals("post")) {
-          Post content = new Post()
-              .setContent(activity.contentString());
-          if (activity.firstActor() != null) {
-            Post.Author author = new Post.Author();
-            ASObject actorObject = (ASObject) activity.firstActor();
-            if (!Strings.isNullOrEmpty(actorObject.displayNameString())) {
-              author.setDisplayName(actorObject.displayNameString());
-            }
-            if (!Strings.isNullOrEmpty(actorObject.firstUrl().toString())) {
-              author.setUrl(actorObject.firstUrl().toString());
-            }
-            content.setAuthor(author);
+          try {
+            insertActivity(activity, asObject, blogId, authData);
+          } catch (IOException | RuntimeException e) {
+            throw new IOException("Couldn't import: " + activity, e);
           }
-          if (asObject.published() != null) {
-            content.setPublished(new DateTime(asObject.published().getMillis()));
-          }
-          blogger.posts().insert(blogId, content);
         }
       }
     }
 
     return null;
+  }
+
+  private void insertActivity(
+      Activity activity,
+      ASObject asObject,
+      String blogId,
+      TokensAndUrlAuthData authData)
+      throws IOException {
+    System.out.println("Importing: " + activity);
+
+    String content = asObject.content() == null ? "" : asObject.contentString();
+    if ("null".equals(content)) {
+      content = "";
+    }
+    System.out.println("Original Content: " + content);
+
+    for (LinkValue attachmentLinkValue : asObject.attachments()) {
+      ASObject attachment = (ASObject) attachmentLinkValue;
+      content = "<a href=\"" + attachment.firstUrl().toString() +"\">"
+          + attachment.displayNameString() + "</a>\n</hr>\n"
+          + content;
+      System.out.println("New Content: " + content);
+    }
+
+    String title = "";
+
+    String provider = null;
+
+    if (asObject.provider() != null) {
+      provider = asObject.firstProvider().toString();
+    }
+
+    if (asObject.title() != null && !Strings.isNullOrEmpty(asObject.titleString())) {
+      title = asObject.titleString();
+    } if (asObject.displayName() != null && !Strings.isNullOrEmpty(asObject.displayNameString())) {
+      title = asObject.displayNameString();
+    }
+
+    Post post = new Post()
+        .setTitle("Imported " + provider+ " post: " + title)
+        .setContent(content);
+    if (activity.firstActor() != null) {
+      Post.Author author = new Post.Author();
+      ASObject actorObject = (ASObject) activity.firstActor();
+      if (!Strings.isNullOrEmpty(actorObject.displayNameString())) {
+        author.setDisplayName(actorObject.displayNameString());
+      }
+      if (actorObject.firstUrl() != null
+          && !Strings.isNullOrEmpty(actorObject.firstUrl().toString())) {
+        author.setUrl(actorObject.firstUrl().toString());
+      }
+      post.setAuthor(author);
+    }
+    if (asObject.published() != null) {
+      post.setPublished(new DateTime(asObject.published().getMillis()));
+    }
+
+    for (LinkValue image : asObject.image()) {
+      // TODO: upload images to photos and then insert link here..., kind of gooney
+    }
+
+    getOrCreateBloggerService(authData).posts()
+        .insert(blogId, post)
+        // Don't publish directly, ensure that the user explicitly reviews
+        // and approves content first.
+        .setIsDraft(true)
+        .execute();
   }
 
   private Blogger getOrCreateBloggerService(TokensAndUrlAuthData authData) {
