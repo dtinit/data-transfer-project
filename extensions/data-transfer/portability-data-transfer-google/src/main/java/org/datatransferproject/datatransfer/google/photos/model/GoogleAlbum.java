@@ -32,7 +32,13 @@ public class GoogleAlbum {
 
   public String getTitle() { return title; }
 
-  public void setId(String id) { this.id = id; }
+  public GoogleAlbum setId(String id) {
+    this.id = id;
+    return this;
+  }
 
-  public void setTitle(String title) { this.title = title; }
+  public GoogleAlbum setTitle(String title) {
+    this.title = title;
+    return this;
+  }
 }

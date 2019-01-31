@@ -73,9 +73,6 @@ public class BloggerTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
-    HttpTransport httpTransport = context.getService(HttpTransport.class);
-    JsonFactory jsonFactory = context.getService(JsonFactory.class);
-
     AppCredentials appCredentials;
     try {
       appCredentials =
@@ -90,12 +87,16 @@ public class BloggerTransferExtension implements TransferExtension {
       return;
     }
 
+    HttpTransport httpTransport = context.getService(HttpTransport.class);
+    JobStore jobStore = context.getService(JobStore.class);
+    JsonFactory jsonFactory = context.getService(JsonFactory.class);
+
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory));
+    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory, jobStore, jsonFactory));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();

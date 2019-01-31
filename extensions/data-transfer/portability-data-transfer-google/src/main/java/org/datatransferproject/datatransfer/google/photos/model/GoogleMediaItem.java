@@ -40,6 +40,9 @@ public class GoogleMediaItem {
   @JsonProperty("filename")
   private String filename;
 
+  @JsonProperty("productUrl")
+  private String productUrl;
+
   public String getId() { return id; }
 
   public String getDescription() { return description; }
@@ -47,6 +50,23 @@ public class GoogleMediaItem {
   public String getBaseUrl() { return baseUrl; }
 
   public String getMimeType() { return mimeType; }
+
+  public String getProductUrl() {
+    return productUrl;
+  }
+
+  @Override
+  public String toString() {
+    return "GoogleMediaItem{" +
+        "id='" + id + '\'' +
+        ", description='" + description + '\'' +
+        ", baseUrl='" + baseUrl + '\'' +
+        ", mimeType='" + mimeType + '\'' +
+        ", mediaMetadata=" + mediaMetadata +
+        ", filename='" + filename + '\'' +
+        ", productUrl='" + productUrl + '\'' +
+        '}';
+  }
 
   public MediaMetadata getMediaMetadata() { return mediaMetadata; }
 
@@ -59,4 +79,5 @@ public class GoogleMediaItem {
   public void setMimeType(String mimeType) { this.mimeType = mimeType; }
 
   public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }
+
 }
