@@ -99,6 +99,7 @@ public class BloggerTransferExtension implements TransferExtension {
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+
     importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory, jobStore));
 
     importerMap = importerBuilder.build();

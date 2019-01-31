@@ -53,7 +53,6 @@ import org.datatransferproject.datatransfer.google.photos.model.AlbumListRespons
 import org.datatransferproject.datatransfer.google.photos.model.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
 
 public class GooglePhotosInterface {
