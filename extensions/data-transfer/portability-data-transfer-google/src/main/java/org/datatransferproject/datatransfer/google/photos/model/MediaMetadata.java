@@ -38,4 +38,12 @@ public class MediaMetadata {
   }
 
   public void setPhoto(Photo photo) { this.photo = photo; }
+
+  @Override
+  public String toString() {
+    return "MediaMetadata{" +
+        "photo=" + photo +
+        ", video=" + video +
+        '}';
+  }
 }

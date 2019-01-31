@@ -26,6 +26,7 @@ import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
@@ -76,12 +78,12 @@ public class GooglePhotosInterface {
   private final Credential credential;
   private final JsonFactory jsonFactory;
 
-  GooglePhotosInterface(Credential credential, JsonFactory jsonFactory) {
+  public GooglePhotosInterface(Credential credential, JsonFactory jsonFactory) {
     this.credential = credential;
     this.jsonFactory = jsonFactory;
   }
 
-  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  public AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -91,7 +93,7 @@ public class GooglePhotosInterface {
         AlbumListResponse.class);
   }
 
-  MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
+  public MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
       throws IOException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
@@ -108,7 +110,7 @@ public class GooglePhotosInterface {
         MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
+  public GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
@@ -116,7 +118,7 @@ public class GooglePhotosInterface {
     return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream) throws IOException {
+  public String uploadPhotoContent(InputStream inputStream) throws IOException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -124,16 +126,22 @@ public class GooglePhotosInterface {
     byte[] contentBytes = outputStream.toByteArray();
     HttpContent httpContent = new ByteArrayContent(null, contentBytes);
 
-    return makePostRequest(BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent,
-        String.class);
+    try {
+      return makePostRequest(BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent,
+          String.class);
+    } catch (HttpResponseException e) {
+      System.out.println("Http response error: " + e.getHeaders());
+      System.out.println("Http response message: " + e.getStatusMessage());
+      throw new IOException("Problem calling " + BASE_URL + "uploads/ error: " + e.getContent(), e);
+    }
   }
 
-  NewMediaItemResult createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
+  public BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
 
     return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), httpContent,
-        NewMediaItemResult.class);
+        BatchMediaItemResponse.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
@@ -156,9 +164,9 @@ public class GooglePhotosInterface {
       HttpContent httpContent, Class<T> clazz)
       throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest postRequest = requestFactory
-        .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
-            httpContent);
+    GenericUrl genericUrl = new GenericUrl(url + "?" + generateParamsString(parameters));
+    HttpRequest postRequest = requestFactory.buildPostRequest(genericUrl, httpContent);
+    System.out.println("Making request to: " + genericUrl);
     HttpResponse response = postRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
@@ -167,6 +175,7 @@ public class GooglePhotosInterface {
     }
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    System.out.println("\tResponse: " + result);
     if (clazz.isAssignableFrom(String.class)) {
       return (T) result;
     } else {

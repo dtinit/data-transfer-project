@@ -39,4 +39,16 @@ public class Photo {
 
   @JsonProperty("exposureTime")
   private String exposureTime;
+
+  @Override
+  public String toString() {
+    return "Photo{" +
+        "cameraMake='" + cameraMake + '\'' +
+        ", cameraModel='" + cameraModel + '\'' +
+        ", focalLength=" + focalLength +
+        ", apertureFNumber=" + apertureFNumber +
+        ", isoEquivalent=" + isoEquivalent +
+        ", exposureTime='" + exposureTime + '\'' +
+        '}';
+  }
 }

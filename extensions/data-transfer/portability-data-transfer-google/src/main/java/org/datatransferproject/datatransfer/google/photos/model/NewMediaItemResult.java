@@ -31,4 +31,21 @@ public class NewMediaItemResult {
 
   @JsonProperty("mediaItem")
   private GoogleMediaItem mediaItem;
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public GoogleMediaItem getMediaItem() {
+    return mediaItem;
+  }
+
+  @Override
+  public String toString() {
+    return "NewMediaItemResult{" +
+        "uploadToken='" + uploadToken + '\'' +
+        ", status=" + status +
+        ", mediaItem=" + mediaItem +
+        '}';
+  }
 }
