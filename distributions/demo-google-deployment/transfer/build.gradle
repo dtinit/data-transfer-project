@@ -64,6 +64,7 @@ dependencies {
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')
     compile project(':extensions:data-transfer:portability-data-transfer-smugmug')
     compile project(':extensions:data-transfer:portability-data-transfer-spotify')
+    compile project(':extensions:data-transfer:portability-data-transfer-imgur')
     compile project(":extensions:security:portability-security-cleartext")
 }
 

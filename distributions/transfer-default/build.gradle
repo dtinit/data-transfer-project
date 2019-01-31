@@ -32,6 +32,7 @@ dependencies {
     compile project(':extensions:data-transfer:portability-data-transfer-google')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-facebook')
+    compile project(':extensions:data-transfer:portability-data-transfer-imgur')
 }
 
 addCloudExtensionDependency(project)
