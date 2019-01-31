@@ -27,4 +27,16 @@ public class Status {
 
   @JsonProperty("message")
   private String message;
+
+  @Override
+  public String toString() {
+    return "Status{" +
+        "code=" + code +
+        ", message='" + message + '\'' +
+        '}';
+  }
+
+  public int getCode() {
+    return code;
+  }
 }

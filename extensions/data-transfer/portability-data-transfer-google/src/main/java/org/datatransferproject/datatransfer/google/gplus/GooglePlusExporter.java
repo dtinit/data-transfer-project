@@ -110,8 +110,6 @@ public class GooglePlusExporter
     ASObject.Builder object;
     String verb = activity.getVerb();
 
-    System.out.println("Exporting: "+ activity);
-
     switch (activity.getVerb()) {
       case "post":
         object = Makers.object("post")
@@ -127,10 +125,26 @@ public class GooglePlusExporter
                 .content(attachment.getContent())
                 .displayName(attachment.getDisplayName()));
           } else if (attachment.getObjectType().equals("photo")) {
-            object.image(attachment.getUrl());
+            object.image(Makers.object("Image")
+                .url(attachment.getFullImage().getUrl())
+                .displayName(attachment.getDisplayName())
+                .content(attachment.getContent()));
           } else if (attachment.getObjectType().equals("album")) {
+            // For albums we can't really do the right thing,
+            // only the thumbnails and link to the album are provided.
+            // And the Google Photos API doesn't surface G+ photos/Albums
+            // to enumerate all the images in the album.
+            // TODO: see if it is possible to scrape the output from the album to link to
+            // all the images.
             for (Thumbnails image : attachment.getThumbnails()) {
-              object.image(image.getUrl());
+              object.image(Makers.object("Image")
+                  // This is just a thumbnail image
+                  .url(image.getImage().getUrl())
+                  .displayName(image.getDescription())
+                  // The actual image link isn't to the binary bytes
+                  // but instead a hosted page of the image.
+                  .content("Original G+ Image: " + image.getUrl()
+                      + " from album: " + attachment.getUrl()));
             }
 
           } else {
