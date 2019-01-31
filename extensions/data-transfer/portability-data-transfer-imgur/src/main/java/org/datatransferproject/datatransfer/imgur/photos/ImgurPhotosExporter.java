@@ -37,7 +37,7 @@ import okhttp3.ResponseBody;
 
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
-  private final String photosUrlTemplate;
+  private final String albumPhotosUrlTemplate;
   private final String allPhotosUrlTemplate;
   private final String albumsUrlTemplate;
   private final String defaultAlbumId;
@@ -48,7 +48,7 @@ public class ImgurPhotosExporter
   private Monitor monitor;
 
   public ImgurPhotosExporter(Monitor monitor, String baseUrl) {
-    photosUrlTemplate = baseUrl + "/album/%s/images/%s";
+    albumPhotosUrlTemplate = baseUrl + "/album/%s/images";
     albumsUrlTemplate = baseUrl + "/account/me/albums/%s";
     allPhotosUrlTemplate = baseUrl + "/account/me/images/%s";
     defaultAlbumId = "0";
@@ -76,9 +76,8 @@ public class ImgurPhotosExporter
       photoItems.putAll(nonAlbumPhotoItems);
     }
 
-    List<PhotoModel> photoModels = convertToResource(photoItems);
-    monitor.info(
-        () -> "-- albums.size(): %s photoModels.size(): %s", albums.size(), photoModels.size());
+    List<PhotoModel> photoModels = convertPhotos(photoItems);
+    monitor.info(() -> "albums size: %s, photoModels size: %s", albums.size(), photoModels.size());
 
     return new ExportResult<>(
         ExportResult.ResultType.END, new PhotosContainerResource(albums, photoModels));
@@ -90,29 +89,19 @@ public class ImgurPhotosExporter
     int page = 0;
     while (true) {
       String url = String.format(urlTemplate, page);
-      Request.Builder requestBuilder = new Request.Builder().url(url);
-      monitor.info(() -> "getAlbums() url: %s", url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
-      try (Response response = client.newCall(requestBuilder.build()).execute()) {
-        ResponseBody body = response.body();
-        if (body == null) {
-          return albums;
-        }
-        String contentBody = new String(body.bytes());
-        Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
-        List<Map<String, Object>> items = (List<Map<String, Object>>) contentMap.get("data");
-        if (items == null || items.size() == 0) {
-          return albums;
-        }
-        for (Map<String, Object> item : items) {
-          monitor.info(() -> "---- ALBUM id: %s title: %s", item.get("id"), item.get("title"));
-          PhotoAlbum album =
-              new PhotoAlbum(
-                  (String) item.get("id"),
-                  (String) item.get("title"),
-                  (String) item.get("description"));
-          albums.add(album);
-        }
+      List<Map<String, Object>> items = requestData(authData, url);
+
+      if (items == null || items.size() == 0) {
+        return albums;
+      }
+      for (Map<String, Object> item : items) {
+        monitor.info(() -> "---- ALBUM id: %s title: %s", item.get("id"), item.get("title"));
+        PhotoAlbum album =
+            new PhotoAlbum(
+                (String) item.get("id"),
+                (String) item.get("title"),
+                (String) item.get("description"));
+        albums.add(album);
       }
       page++;
     }
@@ -125,34 +114,23 @@ public class ImgurPhotosExporter
       throws IOException {
     monitor.info(() -> "-- requestAlbumPhotos(), folderItems.size(): %s", albums.size());
     for (PhotoAlbum album : albums) {
-      int page = 0;
       String albumId = album.getId();
-      String url = String.format(photosUrlTemplate, albumId, page);
+      String url = String.format(albumPhotosUrlTemplate, albumId);
       monitor.info(
           () -> "-- requestAlbumPhotos(), album id: %s title: %s, urlIm: %s",
           albumId,
           album.getName(),
           url);
-      Request.Builder requestBuilder = new Request.Builder().url(url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
-      try (Response response = client.newCall(requestBuilder.build()).execute()) {
-        ResponseBody body = response.body();
-        if (body == null) {
-          break;
-        }
-        String contentBody = new String(body.bytes());
-        Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
-        List<Map<String, Object>> items = (List<Map<String, Object>>) contentMap.get("data");
-        if (items == null || items.size() == 0) {
-          break;
-        }
-        monitor.info(() -> "-- got Photos, items.size(): %s ", items.size());
-        for (Map<String, Object> item : items) {
-          String photoId = (String) item.get("id");
-          item.put("albumId", albumId);
-          photoItems.put(photoId, item);
-          monitor.info(() -> "-- add Photo, items.size()");
-        }
+
+      List<Map<String, Object>> items = requestData(authData, url);
+
+      monitor.info(() -> "-- got Photos, items.size(): %s ", items.size());
+
+      for (Map<String, Object> item : items) {
+        String photoId = (String) item.get("id");
+        item.put("albumId", albumId);
+        photoItems.put(photoId, item);
+        monitor.info(() -> "-- add Photo, items.size()");
       }
     }
   }
@@ -169,50 +147,57 @@ public class ImgurPhotosExporter
       monitor.info(() -> "-- requestNonAlbumPhotos(), url %s", url);
       monitor.info(() -> "-- albumPhotos.size(): %s", albumPhotos.size());
 
-      Request.Builder requestBuilder = new Request.Builder().url(url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+      List<Map<String, Object>> items = requestData(authData, url);
 
-      try (Response response = client.newCall(requestBuilder.build()).execute()) {
-        ResponseBody body = response.body();
-        if (body == null) {
-          return;
-        }
-        String contentBody = new String(body.bytes());
-        Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
-        List<Map<String, Object>> items = (List<Map<String, Object>>) contentMap.get("data");
-        monitor.info(() -> "-- requestNonAlbumPhotos(), items.size(): %s", items.size());
-        if (items == null || items.size() == 0) {
-          return;
-        }
-
-        for (Map<String, Object> item : items) {
-          String photoId = (String) item.get("id");
-          if (!albumPhotos.containsKey(photoId)) {
-            item.put("albumId", defaultAlbumId);
-            nonAlbumPhotos.put(photoId, item);
-            monitor.info(() -> "-- add to nonAlbumPhotos, Photo: %s", photoId);
-          } else {
-            monitor.info(() -> "didn't add to nonAlbumPhotos, Photo: %s", photoId);
-          }
+      monitor.info(() -> "-- requestNonAlbumPhotos(), items.size(): %s", items.size());
+      if (items == null || items.size() == 0) {
+        monitor.info(() -> "nonAlbumPhotoItems size : %s ", nonAlbumPhotos.size());
+        return;
+      }
+      // Iterate through received photos and add default album id, then save the photo.
+      for (Map<String, Object> item : items) {
+        String photoId = (String) item.get("id");
+        if (!albumPhotos.containsKey(photoId)) {
+          item.put("albumId", defaultAlbumId);
+          nonAlbumPhotos.put(photoId, item);
+          monitor.info(() -> "-- add to nonAlbumPhotos, Photo: %s", photoId);
+        } else {
+          monitor.info(() -> "didn't add to nonAlbumPhotos, Photo: %s", photoId);
         }
       }
       page++;
     }
   }
 
-  private List<PhotoModel> convertToResource(HashMap<String, Map<String, Object>> photoItems) {
-    monitor.info(() -> "convertToResource, size: %s", photoItems.size());
+  private List<Map<String, Object>> requestData(TokensAndUrlAuthData authData, String url)
+      throws IOException {
+    Request.Builder requestBuilder = new Request.Builder().url(url);
+    requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+    try (Response response = client.newCall(requestBuilder.build()).execute()) {
+      ResponseBody body = response.body();
+      if (body == null) {
+        return null;
+      }
+      String contentBody = new String(body.bytes());
+      Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
+      return (List<Map<String, Object>>) contentMap.get("data");
+    }
+  }
+
+  private List<PhotoModel> convertPhotos(HashMap<String, Map<String, Object>> photoItems) {
+    monitor.info(() -> "convertPhotos, size: %s", photoItems.size());
     List<PhotoModel> photoModels = new ArrayList<>();
     for (Map.Entry<String, Map<String, Object>> photoItem : photoItems.entrySet()) {
-      String id = (String) photoItem.getValue().get("id");
-      String name = (String) photoItem.getValue().get("name");
-      String mimeType = (String) photoItem.getValue().get("type");
-      String url = (String) photoItem.getValue().get("link");
-      String description = (String) photoItem.getValue().get("description");
-      String albumId = (String) photoItem.getValue().get("albumId");
-      PhotoModel photoModel = new PhotoModel(name, url, description, mimeType, id, albumId, false);
+      PhotoModel photoModel =
+          new PhotoModel(
+              (String) photoItem.getValue().get("name"),
+              (String) photoItem.getValue().get("link"),
+              (String) photoItem.getValue().get("description"),
+              (String) photoItem.getValue().get("type"),
+              (String) photoItem.getValue().get("id"),
+              (String) photoItem.getValue().get("albumId"),
+              false);
       photoModels.add(photoModel);
-      monitor.info(() -> "add photo, name: %s url: %s albumId: %s", name, url, albumId);
     }
     return photoModels;
   }
