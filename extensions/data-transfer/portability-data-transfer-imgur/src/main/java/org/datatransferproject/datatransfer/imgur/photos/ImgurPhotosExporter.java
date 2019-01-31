@@ -35,6 +35,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+/** Exports Imgur albums and photos using Imgur API */
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
   private final String albumPhotosUrlTemplate;
@@ -44,7 +45,6 @@ public class ImgurPhotosExporter
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
-
   private Monitor monitor;
 
   public ImgurPhotosExporter(Monitor monitor, String baseUrl) {
@@ -57,6 +57,14 @@ public class ImgurPhotosExporter
     this.monitor = monitor;
   }
 
+  /**
+   * Exports albums and photos. Gets albums first, then photos which are contained in albums and
+   * non-album photos
+   *
+   * @param jobId the job id
+   * @param authData authentication data for the operation
+   * @param exportInformation info about what data to export, see {@link ExportInformation} for more
+   */
   @Override
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
@@ -69,24 +77,31 @@ public class ImgurPhotosExporter
     requestAlbumPhotos(authData, albums, photoItems);
     requestNonAlbumPhotos(authData, nonAlbumPhotoItems, photoItems);
 
-    monitor.info(() -> "got nonAlbumPhotoItems.size() : %s ", nonAlbumPhotoItems.size());
-
+    // include non-album photos to the result and create a new album for them
     if (nonAlbumPhotoItems.size() > 0) {
-      albums.add(new PhotoAlbum(defaultAlbumId, "Non-album photos", "Contains Non-album photos"));
+      albums.add(new PhotoAlbum(defaultAlbumId, "Non-album photos", "Contains non-album photos"));
       photoItems.putAll(nonAlbumPhotoItems);
     }
 
-    List<PhotoModel> photoModels = convertPhotos(photoItems);
+    List<PhotoModel> photoModels = convertPhotoItems(photoItems);
     monitor.info(() -> "albums size: %s, photoModels size: %s", albums.size(), photoModels.size());
 
     return new ExportResult<>(
         ExportResult.ResultType.END, new PhotosContainerResource(albums, photoModels));
   }
 
+  /**
+   * Queries for the albums. Iterates through pages until all albums are retrieved.
+   *
+   * @param urlTemplate url for the request
+   * @param authData authentication information
+   * @return albums associated with the account
+   */
   private Set<PhotoAlbum> getAlbums(String urlTemplate, TokensAndUrlAuthData authData)
       throws IOException {
     Set<PhotoAlbum> albums = new HashSet<>();
     int page = 0;
+    // continue processing until there are no albums returned for the next page
     while (true) {
       String url = String.format(urlTemplate, page);
       List<Map<String, Object>> items = requestData(authData, url);
@@ -95,7 +110,6 @@ public class ImgurPhotosExporter
         return albums;
       }
       for (Map<String, Object> item : items) {
-        monitor.info(() -> "---- ALBUM id: %s title: %s", item.get("id"), item.get("title"));
         PhotoAlbum album =
             new PhotoAlbum(
                 (String) item.get("id"),
@@ -107,68 +121,77 @@ public class ImgurPhotosExporter
     }
   }
 
+  /**
+   * Queries for the photos in albums.
+   *
+   * <p>This request doesn't support pages so it retrieves all photos at once for each album.
+   *
+   * @param authData authentication information
+   * @param albums albums to get photos for
+   * @param photoItems items to add retrieved photos to
+   */
   private void requestAlbumPhotos(
       TokensAndUrlAuthData authData,
       Set<PhotoAlbum> albums,
       HashMap<String, Map<String, Object>> photoItems)
       throws IOException {
-    monitor.info(() -> "-- requestAlbumPhotos(), folderItems.size(): %s", albums.size());
+    // get photos for the each album
     for (PhotoAlbum album : albums) {
       String albumId = album.getId();
       String url = String.format(albumPhotosUrlTemplate, albumId);
-      monitor.info(
-          () -> "-- requestAlbumPhotos(), album id: %s title: %s, urlIm: %s",
-          albumId,
-          album.getName(),
-          url);
 
       List<Map<String, Object>> items = requestData(authData, url);
-
-      monitor.info(() -> "-- got Photos, items.size(): %s ", items.size());
-
+      // iterate through received photos, add album id and save the photo
       for (Map<String, Object> item : items) {
         String photoId = (String) item.get("id");
         item.put("albumId", albumId);
         photoItems.put(photoId, item);
-        monitor.info(() -> "-- add Photo, items.size()");
       }
     }
   }
 
+  /**
+   * Queries all photos for the account. Chooses photos which are not included to the collection of
+   * photos from albums. Iterates through pages until all photos are retrieved.
+   *
+   * @param authData authentication information
+   * @param nonAlbumPhotos items to add retrieved non-album photos to
+   * @param albumPhotos collection with photos from albums
+   */
   private void requestNonAlbumPhotos(
       TokensAndUrlAuthData authData,
       HashMap<String, Map<String, Object>> nonAlbumPhotos,
       HashMap<String, Map<String, Object>> albumPhotos)
       throws IOException {
-    monitor.info(() -> "-- requestNonAlbumPhotos()");
     int page = 0;
+    // continue processing until there are no photos returned for the next page
     while (true) {
       String url = String.format(allPhotosUrlTemplate, page);
-      monitor.info(() -> "-- requestNonAlbumPhotos(), url %s", url);
-      monitor.info(() -> "-- albumPhotos.size(): %s", albumPhotos.size());
-
       List<Map<String, Object>> items = requestData(authData, url);
-
-      monitor.info(() -> "-- requestNonAlbumPhotos(), items.size(): %s", items.size());
       if (items == null || items.size() == 0) {
-        monitor.info(() -> "nonAlbumPhotoItems size : %s ", nonAlbumPhotos.size());
         return;
       }
-      // Iterate through received photos and add default album id, then save the photo.
+
+      // iterate through received photos, process with photos not added to any album
       for (Map<String, Object> item : items) {
         String photoId = (String) item.get("id");
         if (!albumPhotos.containsKey(photoId)) {
+          // add default album id and save the photo
           item.put("albumId", defaultAlbumId);
           nonAlbumPhotos.put(photoId, item);
-          monitor.info(() -> "-- add to nonAlbumPhotos, Photo: %s", photoId);
-        } else {
-          monitor.info(() -> "didn't add to nonAlbumPhotos, Photo: %s", photoId);
         }
       }
       page++;
     }
   }
 
+  /**
+   * Performs request to the given endpoint and returns received data
+   *
+   * @param authData authentication data for the operation
+   * @param url query endpoint
+   * @return collection of data
+   */
   private List<Map<String, Object>> requestData(TokensAndUrlAuthData authData, String url)
       throws IOException {
     Request.Builder requestBuilder = new Request.Builder().url(url);
@@ -184,8 +207,13 @@ public class ImgurPhotosExporter
     }
   }
 
-  private List<PhotoModel> convertPhotos(HashMap<String, Map<String, Object>> photoItems) {
-    monitor.info(() -> "convertPhotos, size: %s", photoItems.size());
+  /**
+   * Converts received photos to the list of {@link PhotoModel}
+   *
+   * @param photoItems items to convert
+   * @return converted photos
+   */
+  private List<PhotoModel> convertPhotoItems(HashMap<String, Map<String, Object>> photoItems) {
     List<PhotoModel> photoModels = new ArrayList<>();
     for (Map.Entry<String, Map<String, Object>> photoItem : photoItems.entrySet()) {
       PhotoModel photoModel =
