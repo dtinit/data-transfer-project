@@ -22,29 +22,29 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.BlogList;
 import com.google.api.services.blogger.model.Post;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.Permission;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
+import java.time.LocalDate;
 import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
-import org.datatransferproject.datatransfer.google.photos.model.BatchMediaItemResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.DataModel;
@@ -58,8 +58,10 @@ public class GoogleBloggerImporter
   private final JobStore jobStore;
   private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
+  // Don't access this directly, instead access via getOrCreateBloggerService.
   private Blogger blogger;
-  private GooglePhotosInterface photosInterface;
+  // Don't access this directly, instead access via getOrCreateDriveService.
+  private Drive driveInterface;
 
   public GoogleBloggerImporter(
       GoogleCredentialFactory credentialFactory,
@@ -71,7 +73,7 @@ public class GoogleBloggerImporter
     this.imageStreamProvider = new ImageStreamProvider();
     // lazily initialized for the given request
     this.blogger = null;
-    this.photosInterface = null;
+    this.driveInterface = null;
   }
 
   @Override
@@ -82,7 +84,8 @@ public class GoogleBloggerImporter
 
     BlogList blogList = blogger.blogs().listByUser("self").execute();
 
-    // TODO: we are just publishing everything to the first blog, which is a bit of a hack
+    // TODO: we are just publishing everything to the first blog, which is a bit of a hack,
+    // but there is no API to create a new blog.
     String blogId = blogList.getItems().get(0).getId();
 
     for (Activity activity : data.getActivities()) {
@@ -100,7 +103,7 @@ public class GoogleBloggerImporter
       }
     }
 
-    return null;
+    return new ImportResult(ResultType.OK);
   }
 
   private void insertActivity(
@@ -110,32 +113,31 @@ public class GoogleBloggerImporter
       String blogId,
       TokensAndUrlAuthData authData)
       throws IOException {
-    System.out.println("Importing: " + activity);
-
     String content = asObject.content() == null ? "" : asObject.contentString();
-    System.out.println("asObject.content(): " + asObject.content());
-    if ("null".equals(content)) {
-      System.out.println("Content was null");
+
+    if (content == null) {
       content = "";
     }
-    System.out.println("Original Content: " + content);
 
+    // Just put link attachments at the bottom of the post, as we
+    // don't know how they were laid out in the originating service.
     for (LinkValue attachmentLinkValue : asObject.attachments()) {
       ASObject attachment = (ASObject) attachmentLinkValue;
       content = "<a href=\"" + attachment.firstUrl().toString() +"\">"
           + attachment.displayNameString() + "</a>\n</hr>\n"
           + content;
-      System.out.println("New Content: " + content);
     }
 
     if (asObject.firstImage() != null) {
-      GooglePhotosInterface photosInterface = getOrCreatePhotosInterface(authData);
+      // Store any attached images in Drive in a new folder.
+      Drive driveInterface = getOrCreateDriveService(authData);
+      String folderId = createAlbumFolder(driveInterface, jobId);
       for (LinkValue image : asObject.image()) {
         try {
-          String newImgSrc = uploadImage(jobId, (ASObject) image, photosInterface);
+          String newImgSrc = uploadImage((ASObject) image, driveInterface, folderId);
           content += "\n<hr/><img src=\"" + newImgSrc + "\">";
         } catch (IOException | RuntimeException e) {
-          throw new IOException("Couldn't import: " + asObject.image(), e);
+            throw new IOException("Couldn't import: " + asObject.image(), e);
         }
       }
     }
@@ -181,14 +183,40 @@ public class GoogleBloggerImporter
         .execute();
   }
 
+  private String createAlbumFolder(Drive driveInterface, UUID jobId) throws IOException {
+    BloggerAlbumStore albumData = jobStore.findData(jobId, ALBUM_ID_KEY, BloggerAlbumStore.class);
+    if (albumData != null && !Strings.isNullOrEmpty(albumData.getDriveFolderId())) {
+      return albumData.getDriveFolderId();
+    }
+    File fileMetadata = new File();
+    LocalDate localDate = LocalDate.now();
+    fileMetadata.setName("(Public)Imported Images on: " + localDate.toString());
+    fileMetadata.setMimeType("application/vnd.google-apps.folder");
+    File folder = driveInterface.files().create(fileMetadata)
+        .setFields("id")
+        .execute();
+    driveInterface.permissions()
+        .create(
+            folder.getId(),
+            // Set link sharing on, see:
+            // https://developers.google.com/drive/api/v3/reference/permissions/create
+            new Permission()
+                .setRole("reader")
+                .setType("anyone")
+                .setAllowFileDiscovery(false))
+        .execute();
+    jobStore.create(jobId, ALBUM_ID_KEY, new BloggerAlbumStore(folder.getId()));
+    return folder.getId();
+  }
+
   private String uploadImage(
-      UUID jobId,
       ASObject imageObject,
-      GooglePhotosInterface photosInterface)
+      Drive driveService,
+      String parentFolderId)
       throws IOException {
     String url;
     String description = null;
-    System.out.println("image object: " + imageObject.objectTypeString() + " " + imageObject.getClass().getCanonicalName());
+    // The image property can either be an object, or just a URL, handle both cases.
     if ("Image".equalsIgnoreCase(imageObject.objectTypeString())) {
       url = imageObject.firstUrl().toString();
       if (imageObject.displayName() != null) {
@@ -201,37 +229,15 @@ public class GoogleBloggerImporter
       description = "Imported photo from: " + url;
     }
     InputStream inputStream = imageStreamProvider.get(url);
+    File driveFile = new File()
+        .setName(description)
+        .setParents(ImmutableList.of(parentFolderId));
+    InputStreamContent content = new InputStreamContent(null, inputStream);
+    File newFile = driveService.files().create(driveFile, content)
+        .setFields("id")
+        .execute();
 
-    String uploadToken = photosInterface.uploadPhotoContent(inputStream);
-
-    NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
-
-    BloggerAlbumStore albumId = jobStore.findData(jobId, ALBUM_ID_KEY, BloggerAlbumStore.class);
-    if (albumId == null || Strings.isNullOrEmpty(albumId.getAlbumId())) {
-      GoogleAlbum newAlbum = photosInterface.createAlbum(
-          new GoogleAlbum().setTitle("Imported Photos For Blogger"));
-      albumId = new BloggerAlbumStore(newAlbum.getId());
-      jobStore.create(jobId, ALBUM_ID_KEY, albumId);
-    }
-
-    NewMediaItemUpload uploadItem =
-        new NewMediaItemUpload(albumId.getAlbumId(), Collections.singletonList(newMediaItem));
-
-    BatchMediaItemResponse results = photosInterface.createPhoto(uploadItem);
-    System.out.println("Upload result: " + results);
-    if (results.getResults().length != 1) {
-      throw new IllegalStateException("Didn't get exactly one response to creating a photo: "
-          + results);
-    }
-    NewMediaItemResult result = results.getResults()[0];
-    checkState(result.getStatus().getCode() == 0, "Bad status code for upload %s", results);
-    String uploadedPhotoUrl = result.getMediaItem().getProductUrl();
-    checkState(
-        !Strings.isNullOrEmpty(uploadedPhotoUrl),
-        "No url found for uploaded photo %s",
-        results);
-
-    return uploadedPhotoUrl;
+    return "https://drive.google.com/thumbnail?id=" + newFile.getId();
   }
 
   private Blogger getOrCreateBloggerService(TokensAndUrlAuthData authData) {
@@ -246,29 +252,31 @@ public class GoogleBloggerImporter
         .build();
   }
 
-  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
+  private synchronized Drive getOrCreateDriveService(
       TokensAndUrlAuthData authData) {
-    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+    return driveInterface == null ? (driveInterface = makeDriveService(authData)) : driveInterface;
   }
 
-  private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
+  private synchronized Drive makeDriveService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential, jsonFactory);
-    return photosInterface;
+    return new Drive.Builder(
+        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+        .setApplicationName(GoogleStaticObjects.APP_NAME)
+        .build();
   }
 
-  @JsonTypeName("org.dataportability.google:BloggerData")
+  @JsonTypeName("org.dataportability.google:BloggerAlbumData")
   private static class BloggerAlbumStore extends DataModel {
-    @JsonProperty("albumId")
-    private final String albumId;
+    @JsonProperty("driveFolderId")
+    private final String driveFolderId;
 
     @JsonCreator
-    public BloggerAlbumStore(@JsonProperty("albumId") String albumId) {
-      this.albumId = albumId;
+    BloggerAlbumStore(@JsonProperty("driveFolderId") String driveFolderId) {
+      this.driveFolderId = driveFolderId;
     }
 
-    String getAlbumId() {
-      return albumId;
+    String getDriveFolderId() {
+      return driveFolderId;
     }
   }
 }
