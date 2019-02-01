@@ -80,7 +80,7 @@ public class GoogleBloggerImporter
     Blogger blogger = getOrCreateBloggerService(authData);
 
     BlogList blogList = blogger.blogs().listByUser("self").execute();
-
+    
     // NB: we are just publishing everything to the first blog, which is a bit of a hack,
     // but there is no API to create a new blog.
     String blogId = blogList.getItems().get(0).getId();
@@ -134,7 +134,7 @@ public class GoogleBloggerImporter
           String newImgSrc = uploadImage((ASObject) image, driveInterface, folderId);
           content += "\n<hr/><img src=\"" + newImgSrc + "\">";
         } catch (IOException | RuntimeException e) {
-          throw new IOException("Couldn't import: " + asObject.image(), e);
+            throw new IOException("Couldn't import: " + asObject.image(), e);
         }
       }
     }
