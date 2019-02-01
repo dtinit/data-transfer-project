@@ -130,8 +130,6 @@ public class GooglePhotosInterface {
       return makePostRequest(BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent,
           String.class);
     } catch (HttpResponseException e) {
-      System.out.println("Http response error: " + e.getHeaders());
-      System.out.println("Http response message: " + e.getStatusMessage());
       throw new IOException("Problem calling " + BASE_URL + "uploads/ error: " + e.getContent(), e);
     }
   }
@@ -166,7 +164,6 @@ public class GooglePhotosInterface {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     GenericUrl genericUrl = new GenericUrl(url + "?" + generateParamsString(parameters));
     HttpRequest postRequest = requestFactory.buildPostRequest(genericUrl, httpContent);
-    System.out.println("Making request to: " + genericUrl);
     HttpResponse response = postRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
@@ -175,7 +172,6 @@ public class GooglePhotosInterface {
     }
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
-    System.out.println("\tResponse: " + result);
     if (clazz.isAssignableFrom(String.class)) {
       return (T) result;
     } else {
