@@ -84,7 +84,7 @@ public class GoogleBloggerImporter
 
     BlogList blogList = blogger.blogs().listByUser("self").execute();
 
-    // TODO: we are just publishing everything to the first blog, which is a bit of a hack,
+    // NB: we are just publishing everything to the first blog, which is a bit of a hack,
     // but there is no API to create a new blog.
     String blogId = blogList.getItems().get(0).getId();
 
@@ -92,8 +92,8 @@ public class GoogleBloggerImporter
       for (LinkValue object : activity.object()) {
         checkState(object instanceof ASObject, "%s isn't of expected type", object);
         ASObject asObject = (ASObject) object;
-        if (asObject.objectTypeString().equals("note")
-            || asObject.objectTypeString().equals("post")) {
+        if (asObject.objectTypeString().equalsIgnoreCase("note")
+            || asObject.objectTypeString().equalsIgnoreCase("post")) {
           try {
             insertActivity(jobId, activity, asObject, blogId, authData);
           } catch (IOException | RuntimeException e) {

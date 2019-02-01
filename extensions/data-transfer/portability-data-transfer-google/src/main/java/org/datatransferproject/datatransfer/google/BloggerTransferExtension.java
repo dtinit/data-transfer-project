@@ -35,9 +35,11 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import java.io.IOException;
 
 /*
- * BloggerTransferExtension allows for importers and exporters of Blogger data.
+ * BloggerTransferExtension allows for importers and exporters (not yet implemented) of
+ * Google Blogger data.
  */
-// This needs to be separated out from Google, as there are multiple services that want to handle SOCIAL-POSTS.
+// This needs to be separated out from Google, as there are multiple services that want to
+// handle SOCIAL-POSTS.
 public class BloggerTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "GoogleBlogger";
   // TODO: centralized place, or enum type for these
