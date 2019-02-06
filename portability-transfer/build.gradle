@@ -29,24 +29,6 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-jar {
-    // TODO: consider fatjar plugin
-    // Add dependencies
-    from({
-        (configurations.runtime).collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }) {
-        // Exclude signature files to avoid SecurityException
-        exclude '**/META-INF/*.SF'
-        exclude '**/META-INF/*.DSA'
-        exclude '**/META-INF/*.RSA'
-    }
-    manifest {
-        attributes 'Main-Class': 'org.datatransferproject.transfer.WorkerMain'
-    }
-}
-
 // This is brought in by lower level dependencies, so we remove it globally
 configurations {
     all*.exclude group: 'com.google.guava', module: 'guava-jdk5'
