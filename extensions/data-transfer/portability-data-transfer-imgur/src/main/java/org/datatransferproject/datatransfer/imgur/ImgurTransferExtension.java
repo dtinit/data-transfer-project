@@ -27,7 +27,6 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
-import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 /** Extension for transferring Imgur data */
@@ -39,7 +38,6 @@ public class ImgurTransferExtension implements TransferExtension {
 
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
 
-  private ImgurPhotosImporter importer;
   private ImgurPhotosExporter exporter;
 
   @Override
@@ -64,7 +62,6 @@ public class ImgurTransferExtension implements TransferExtension {
     }
 
     exporter = new ImgurPhotosExporter(monitor, BASE_URL);
-    importer = new ImgurPhotosImporter(appCredentials);
 
     initialized = true;
   }
@@ -88,9 +85,7 @@ public class ImgurTransferExtension implements TransferExtension {
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(
         initialized, "ImgurTransferExtension is not initialized. Unable to get Importer");
-    Preconditions.checkArgument(
-        SUPPORTED_DATA_TYPES.contains(transferDataType),
-        "ImgurTransferExtension doesn't support " + transferDataType);
-    return importer;
+    Preconditions.checkArgument(false, "Imgur importer is not implemented yet");
+    return null;
   }
 }

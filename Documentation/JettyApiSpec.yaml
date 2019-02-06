@@ -251,7 +251,6 @@ components:
         - "Facebook"
         - "TWITTER"
         - "GOOGLE"
-        - "IMGUR"
     TransferJob:
       type: "object"
       properties:
