@@ -18,21 +18,22 @@ package org.datatransferproject.datatransfer.imgur;
 
 import java.io.IOException;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 /** Extension for transferring Imgur data */
 public class ImgurTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Imgur";
-  private static final String BASE_URL = "https://api.imgur.com/3";
+  public static final String BASE_URL = "https://api.imgur.com/3";
 
   private boolean initialized = false;
 
@@ -48,20 +49,11 @@ public class ImgurTransferExtension implements TransferExtension {
       return;
     }
 
-    AppCredentials appCredentials;
-    try {
-      appCredentials =
-          context
-              .getService(AppCredentialStore.class)
-              .getAppCredentials("IMGUR_KEY", "IMGUR_SECRET");
-    } catch (IOException e) {
-      monitor.info(
-          () -> "Unable to retrieve Imgur AppCredentials. Did you set Imgur_KEY and Imgur_SECRET?",
-          e);
-      return;
-    }
+    ObjectMapper mapper =
+        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    OkHttpClient client = context.getService(OkHttpClient.class);
 
-    exporter = new ImgurPhotosExporter(monitor, BASE_URL);
+    exporter = new ImgurPhotosExporter(monitor, client, mapper);
 
     initialized = true;
   }

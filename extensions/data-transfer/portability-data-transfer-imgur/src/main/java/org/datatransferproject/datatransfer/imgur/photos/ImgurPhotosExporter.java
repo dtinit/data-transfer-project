@@ -18,6 +18,7 @@ package org.datatransferproject.datatransfer.imgur.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.types.common.ExportInformation;
@@ -38,22 +39,19 @@ import okhttp3.ResponseBody;
 /** Exports Imgur albums and photos using Imgur API */
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
-  private final String albumPhotosUrlTemplate;
-  private final String allPhotosUrlTemplate;
-  private final String albumsUrlTemplate;
-  private final String defaultAlbumId;
+  private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
+  private static final String ALBUM_PHOTOS_URL_TEMPLATE = BASE_URL + "/album/%s/images";
+  private static final String ALBUMS_URL_TEMPLATE = BASE_URL + "/account/me/albums/%s";
+  private static final String ALL_PHOTOS_URL_TEMPLATE = BASE_URL + "/account/me/images/%s";
+  private static final String DEFAULT_ALBUM_ID = "0";
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
-  private Monitor monitor;
+  private final Monitor monitor;
 
-  public ImgurPhotosExporter(Monitor monitor, String baseUrl) {
-    albumPhotosUrlTemplate = baseUrl + "/album/%s/images";
-    albumsUrlTemplate = baseUrl + "/account/me/albums/%s";
-    allPhotosUrlTemplate = baseUrl + "/account/me/images/%s";
-    defaultAlbumId = "0";
-    this.client = new OkHttpClient.Builder().build();
-    this.objectMapper = new ObjectMapper();
+  public ImgurPhotosExporter(Monitor monitor, OkHttpClient client, ObjectMapper objectMapper) {
+    this.client = client;
+    this.objectMapper = objectMapper;
     this.monitor = monitor;
   }
 
@@ -72,14 +70,14 @@ public class ImgurPhotosExporter
     HashMap photoItems = new HashMap<String, Object>();
     HashMap nonAlbumPhotoItems = new HashMap<String, Object>();
 
-    Set<PhotoAlbum> albums = getAlbums(albumsUrlTemplate, authData);
+    Set<PhotoAlbum> albums = getAlbums(ALBUMS_URL_TEMPLATE, authData);
 
     requestAlbumPhotos(authData, albums, photoItems);
     requestNonAlbumPhotos(authData, nonAlbumPhotoItems, photoItems);
 
     // include non-album photos to the result and create a new album for them
     if (nonAlbumPhotoItems.size() > 0) {
-      albums.add(new PhotoAlbum(defaultAlbumId, "Non-album photos", "Contains non-album photos"));
+      albums.add(new PhotoAlbum(DEFAULT_ALBUM_ID, "Non-album photos", "Contains non-album photos"));
       photoItems.putAll(nonAlbumPhotoItems);
     }
 
@@ -138,7 +136,7 @@ public class ImgurPhotosExporter
     // get photos for the each album
     for (PhotoAlbum album : albums) {
       String albumId = album.getId();
-      String url = String.format(albumPhotosUrlTemplate, albumId);
+      String url = String.format(ALBUM_PHOTOS_URL_TEMPLATE, albumId);
 
       List<Map<String, Object>> items = requestData(authData, url);
       // iterate through received photos, add album id and save the photo
@@ -166,7 +164,7 @@ public class ImgurPhotosExporter
     int page = 0;
     // continue processing until there are no photos returned for the next page
     while (true) {
-      String url = String.format(allPhotosUrlTemplate, page);
+      String url = String.format(ALL_PHOTOS_URL_TEMPLATE, page);
       List<Map<String, Object>> items = requestData(authData, url);
       if (items == null || items.size() == 0) {
         return;
@@ -177,7 +175,7 @@ public class ImgurPhotosExporter
         String photoId = (String) item.get("id");
         if (!albumPhotos.containsKey(photoId)) {
           // add default album id and save the photo
-          item.put("albumId", defaultAlbumId);
+          item.put("albumId", DEFAULT_ALBUM_ID);
           nonAlbumPhotos.put(photoId, item);
         }
       }
