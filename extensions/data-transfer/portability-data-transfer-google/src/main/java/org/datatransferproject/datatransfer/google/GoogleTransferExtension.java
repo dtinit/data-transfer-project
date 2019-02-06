@@ -14,6 +14,7 @@ import org.datatransferproject.datatransfer.google.contacts.GoogleContactsExport
 import org.datatransferproject.datatransfer.google.contacts.GoogleContactsImporter;
 import org.datatransferproject.datatransfer.google.drive.DriveExporter;
 import org.datatransferproject.datatransfer.google.drive.DriveImporter;
+import org.datatransferproject.datatransfer.google.gplus.GooglePlusExporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailExporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailImporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
@@ -107,6 +108,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("CONTACTS", new GoogleContactsExporter(credentialFactory));
     exporterBuilder.put("CALENDAR", new GoogleCalendarExporter(credentialFactory));
     exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
+    exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
         "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory));
