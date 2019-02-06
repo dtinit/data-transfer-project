@@ -55,6 +55,7 @@ final class WorkerModule extends FlagBindingModule {
   private final Set<AuthDataDecryptService> decryptServices;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
+  private final JobHooks jobHooks;
 
   WorkerModule(
       ExtensionContext context,
@@ -63,7 +64,8 @@ final class WorkerModule extends FlagBindingModule {
       Set<PublicKeySerializer> publicKeySerializers,
       Set<AuthDataDecryptService> decryptServices,
       SymmetricKeyGenerator symmetricKeyGenerator,
-      AsymmetricKeyGenerator asymmetricKeyGenerator) {
+      AsymmetricKeyGenerator asymmetricKeyGenerator,
+      JobHooks jobHooks) {
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
@@ -71,6 +73,7 @@ final class WorkerModule extends FlagBindingModule {
     this.decryptServices = decryptServices;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
+    this.jobHooks = jobHooks;
   }
 
   @VisibleForTesting
@@ -95,9 +98,7 @@ final class WorkerModule extends FlagBindingModule {
     // binds flags from ExtensionContext to @Named annotations
     bindFlags(context);
 
-    // TODO make this an extension
-    bind(JobHooks.class).toInstance(new JobHooks() {});
-
+    bind(JobHooks.class).toInstance(jobHooks);
     bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
