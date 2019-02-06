@@ -15,22 +15,11 @@
  */
 package org.datatransferproject.spi.transfer.hooks;
 
-import java.util.UUID;
+import org.datatransferproject.api.launcher.BootExtension;
 
-/**
- * This interface allows implementations to handle certain events in the job
- * life time (e.g. job started, job finished) and take actions accordingly.
- */
-public interface JobHooks {
+/** Job Hooks extensions implement this contract to be loaded in a transfer worker process. */
+public interface JobHooksExtension extends BootExtension {
 
-  /** Called when a job starts processing on a worker. */
-  default void jobStarted(UUID jobId) {
-  }
-
-  /**
-   * Called when a job finishes processing on a worker. The {@code success} parameter indicates
-   * whether the transfer was succesful or not.
-   */
-  default void jobFinished(UUID jobId, boolean success) {
-  }
+  /** Returns a Job Hooks implementation. */
+  JobHooks getJobHooks();
 }
