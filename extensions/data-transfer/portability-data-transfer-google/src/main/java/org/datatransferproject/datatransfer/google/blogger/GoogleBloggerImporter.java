@@ -61,6 +61,7 @@ public class GoogleBloggerImporter
   // Don't access this directly, instead access via getOrCreateBloggerService.
   private Blogger blogger;
   // Don't access this directly, instead access via getOrCreateDriveService.
+  // Used for image upload/hosting.
   private Drive driveInterface;
 
   public GoogleBloggerImporter(
