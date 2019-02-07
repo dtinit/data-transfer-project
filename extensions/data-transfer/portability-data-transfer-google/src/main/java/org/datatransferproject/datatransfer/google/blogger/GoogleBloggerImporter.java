@@ -67,6 +67,7 @@ public class GoogleBloggerImporter
       JobStore jobStore) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+
     this.imageStreamProvider = new ImageStreamProvider();
     // lazily initialized for the given request
     this.blogger = null;
@@ -80,7 +81,7 @@ public class GoogleBloggerImporter
     Blogger blogger = getOrCreateBloggerService(authData);
 
     BlogList blogList = blogger.blogs().listByUser("self").execute();
-    
+
     // NB: we are just publishing everything to the first blog, which is a bit of a hack,
     // but there is no API to create a new blog.
     String blogId = blogList.getItems().get(0).getId();
