@@ -33,11 +33,4 @@ public class BatchMediaItemResponse {
   public NewMediaItemResult[] getResults() {
     return results;
   }
-
-  @Override
-  public String toString() {
-    return "BatchMediaItemResponse{" +
-        "results=" + Arrays.toString(results) +
-        '}';
-  }
 }
