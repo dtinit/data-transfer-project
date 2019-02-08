@@ -17,12 +17,17 @@
 package org.datatransferproject.datatransfer.imgur.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
 
+import org.datatransferproject.types.common.IntPaginationToken;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -36,6 +41,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+import static java.lang.String.format;
+
 /** Exports Imgur albums and photos using Imgur API */
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -43,7 +50,9 @@ public class ImgurPhotosExporter
   private static final String ALBUM_PHOTOS_URL_TEMPLATE = BASE_URL + "/album/%s/images";
   private static final String ALBUMS_URL_TEMPLATE = BASE_URL + "/account/me/albums/%s";
   private static final String ALL_PHOTOS_URL_TEMPLATE = BASE_URL + "/account/me/images/%s";
-  private static final String DEFAULT_ALBUM_ID = "0";
+  private static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
+  private boolean containsNonAlbumPhotos = false;
+  private Set<String> albumPhotos = new HashSet<>();
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -67,120 +76,203 @@ public class ImgurPhotosExporter
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws Exception {
-    HashMap photoItems = new HashMap<String, Object>();
-    HashMap nonAlbumPhotoItems = new HashMap<String, Object>();
 
-    Set<PhotoAlbum> albums = getAlbums(ALBUMS_URL_TEMPLATE, authData);
+    monitor.info(
+        () -> format("export, exportInformation.isPresent(): %s", exportInformation.isPresent()));
 
-    requestAlbumPhotos(authData, albums, photoItems);
-    requestNonAlbumPhotos(authData, nonAlbumPhotoItems, photoItems);
-
-    // include non-album photos to the result and create a new album for them
-    if (nonAlbumPhotoItems.size() > 0) {
-      albums.add(new PhotoAlbum(DEFAULT_ALBUM_ID, "Non-album photos", "Contains non-album photos"));
-      photoItems.putAll(nonAlbumPhotoItems);
+    PaginationData paginationData =
+        exportInformation.isPresent() ? exportInformation.get().getPaginationData() : null;
+    IdOnlyContainerResource resource =
+        exportInformation.isPresent()
+            ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+            : null;
+    if (resource != null) {
+      return requestPhotos(authData, resource, paginationData);
+    } else {
+      return requestAlbums(authData, paginationData);
     }
-
-    List<PhotoModel> photoModels = convertPhotoItems(photoItems);
-    monitor.info(() -> "albums size: %s, photoModels size: %s", albums.size(), photoModels.size());
-
-    return new ExportResult<>(
-        ExportResult.ResultType.END, new PhotosContainerResource(albums, photoModels));
   }
 
   /**
-   * Queries for the albums. Iterates through pages until all albums are retrieved.
+   * Exports albums.
    *
-   * @param urlTemplate url for the request
    * @param authData authentication information
-   * @return albums associated with the account
+   * @param paginationData pagination information to use for subsequent calls
    */
-  private Set<PhotoAlbum> getAlbums(String urlTemplate, TokensAndUrlAuthData authData)
-      throws IOException {
-    Set<PhotoAlbum> albums = new HashSet<>();
-    int page = 0;
-    // continue processing until there are no albums returned for the next page
-    while (true) {
-      String url = String.format(urlTemplate, page);
-      List<Map<String, Object>> items = requestData(authData, url);
+  private ExportResult<PhotosContainerResource> requestAlbums(
+      TokensAndUrlAuthData authData, PaginationData paginationData) throws IOException {
+    ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
+    List<IdOnlyContainerResource> albumIds = new ArrayList<>();
 
-      if (items == null || items.size() == 0) {
-        return albums;
-      }
-      for (Map<String, Object> item : items) {
-        PhotoAlbum album =
-            new PhotoAlbum(
-                (String) item.get("id"),
-                (String) item.get("title"),
-                (String) item.get("description"));
-        albums.add(album);
-      }
-      page++;
+    int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
+    monitor.info(() -> format("requestAlbums, page: %s,", page));
+
+    String url = format(ALBUMS_URL_TEMPLATE, page);
+
+    List<Map<String, Object>> items = requestData(authData, url);
+
+    // Request result doesn't indicate if it's the last page
+    boolean hasMore = items != null && items.size() != 0;
+
+    monitor.info(() -> format("has albums: %s", hasMore));
+
+    for (Map<String, Object> item : items) {
+      monitor.info(() -> format("add album, id: %s", (String) item.get("id")));
+      albumBuilder.add(
+          new PhotoAlbum(
+              (String) item.get("id"),
+              (String) item.get("title"),
+              (String) item.get("description")));
+      // Save album id for recalling export to get all the photos in albums
+      albumIds.add(new IdOnlyContainerResource((String) item.get("id")));
     }
+
+    if (page == 0) {
+      // For checking non-album photos. Their export should be performed after all the others
+      // Album will be created later
+      albumIds.add(new IdOnlyContainerResource(DEFAULT_ALBUM_ID));
+    }
+
+    PaginationData newPage = null;
+    if (hasMore) {
+      newPage = new IntPaginationToken(page + 1);
+      int start = ((IntPaginationToken) newPage).getStart();
+      monitor.info(() -> format("albums size: %s, newPage: %s", items.size(), start));
+    }
+
+    PhotosContainerResource photosContainerResource =
+        new PhotosContainerResource(albumBuilder.build(), null);
+
+    ContinuationData continuationData = new ContinuationData(newPage);
+    albumIds.forEach(continuationData::addContainerResource);
+
+    ExportResult.ResultType resultType = ExportResult.ResultType.CONTINUE;
+    if (newPage == null) {
+      resultType = ExportResult.ResultType.END;
+    }
+    return new ExportResult<>(resultType, photosContainerResource, continuationData);
   }
 
   /**
-   * Queries for the photos in albums.
+   * Exports photos from album.
    *
    * <p>This request doesn't support pages so it retrieves all photos at once for each album.
    *
    * @param authData authentication information
-   * @param albums albums to get photos for
-   * @param photoItems items to add retrieved photos to
+   * @param resource contains album id
+   * @param paginationData pagination information to use for subsequent calls.
    */
-  private void requestAlbumPhotos(
+  private ExportResult<PhotosContainerResource> requestPhotos(
       TokensAndUrlAuthData authData,
-      Set<PhotoAlbum> albums,
-      HashMap<String, Map<String, Object>> photoItems)
+      IdOnlyContainerResource resource,
+      PaginationData paginationData)
       throws IOException {
-    // get photos for the each album
-    for (PhotoAlbum album : albums) {
-      String albumId = album.getId();
-      String url = String.format(ALBUM_PHOTOS_URL_TEMPLATE, albumId);
+    String albumId = resource.getId();
+    monitor.info(() -> format("requestPhotos(), albumId: %s", albumId));
 
-      List<Map<String, Object>> items = requestData(authData, url);
-      // iterate through received photos, add album id and save the photo
-      for (Map<String, Object> item : items) {
-        String photoId = (String) item.get("id");
-        item.put("albumId", albumId);
-        photoItems.put(photoId, item);
-      }
+    // Means all other albums with photos are imported, so non-album photos can be determined
+    if (albumId.equals(DEFAULT_ALBUM_ID)) {
+      return requestNonAlbumPhotos(authData, paginationData);
     }
+
+    String url = format(ALBUM_PHOTOS_URL_TEMPLATE, albumId);
+    List<PhotoModel> photos = new ArrayList<>();
+
+    List<Map<String, Object>> items = requestData(authData, url);
+    for (Map<String, Object> item : items) {
+      monitor.info(() -> format("add photo: %s ", (String) item.get("id")));
+      PhotoModel photoModel =
+          new PhotoModel(
+              (String) item.get("name"),
+              (String) item.get("link"),
+              (String) item.get("description"),
+              (String) item.get("type"),
+              (String) item.get("id"),
+              albumId,
+              false);
+      photos.add(photoModel);
+
+      // Save id of each album photo for finding non-album photos later
+      albumPhotos.add((String) item.get("id"));
+    }
+
+    // This request doesn't support pages
+    ExportResult.ResultType resultType = ExportResult.ResultType.END;
+
+    if (photos.size() > 0) {
+      monitor.info(() -> format("added albumPhotos, size: %s", photos.size()));
+    }
+
+    PhotosContainerResource photosContainerResource = new PhotosContainerResource(null, photos);
+    return new ExportResult<>(resultType, photosContainerResource, new ContinuationData(null));
   }
 
   /**
    * Queries all photos for the account. Chooses photos which are not included to the collection of
-   * photos from albums. Iterates through pages until all photos are retrieved.
+   * photos from albums.
    *
    * @param authData authentication information
-   * @param nonAlbumPhotos items to add retrieved non-album photos to
-   * @param albumPhotos collection with photos from albums
+   * @param paginationData pagination information to use for subsequent calls.
    */
-  private void requestNonAlbumPhotos(
-      TokensAndUrlAuthData authData,
-      HashMap<String, Map<String, Object>> nonAlbumPhotos,
-      HashMap<String, Map<String, Object>> albumPhotos)
-      throws IOException {
-    int page = 0;
-    // continue processing until there are no photos returned for the next page
-    while (true) {
-      String url = String.format(ALL_PHOTOS_URL_TEMPLATE, page);
-      List<Map<String, Object>> items = requestData(authData, url);
-      if (items == null || items.size() == 0) {
-        return;
-      }
+  private ExportResult<PhotosContainerResource> requestNonAlbumPhotos(
+      TokensAndUrlAuthData authData, PaginationData paginationData) throws IOException {
 
-      // iterate through received photos, process with photos not added to any album
-      for (Map<String, Object> item : items) {
-        String photoId = (String) item.get("id");
-        if (!albumPhotos.containsKey(photoId)) {
-          // add default album id and save the photo
-          item.put("albumId", DEFAULT_ALBUM_ID);
-          nonAlbumPhotos.put(photoId, item);
+    int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
+    monitor.info(
+        () ->
+            format(
+                "requestNonAlbumPhotos page: %s, paginationData: %s, albumPhotos.size(): %s",
+                page, paginationData, albumPhotos.size()));
+
+    String url = format(ALL_PHOTOS_URL_TEMPLATE, page);
+    Set<PhotoAlbum> albums = new HashSet<>();
+    List<PhotoModel> photos = new ArrayList<>();
+
+    List<Map<String, Object>> items = requestData(authData, url);
+
+    boolean hasMore = items != null && items.size() != 0;
+
+    for (Map<String, Object> item : items) {
+      String photoId = (String) item.get("id");
+      monitor.info(() -> format("check photo: %s ", (String) item.get("id")));
+
+      // Select photos which are not included to the collection of retrieved album photos
+      if (!albumPhotos.contains(photoId)) {
+        monitor.info(() -> format("add non-album photo: %s ", (String) item.get("id")));
+        PhotoModel photoModel =
+            new PhotoModel(
+                (String) item.get("name"),
+                (String) item.get("link"),
+                (String) item.get("description"),
+                (String) item.get("type"),
+                (String) item.get("id"),
+                DEFAULT_ALBUM_ID,
+                false);
+        photos.add(photoModel);
+        if (!containsNonAlbumPhotos) {
+          // Add album for non-album photos
+          albums.add(
+              new PhotoAlbum(DEFAULT_ALBUM_ID, "Non-album photos", "Contains non-album photos"));
+          // Make sure album will not be added multiply times on subsequent calls
+          containsNonAlbumPhotos = true;
         }
       }
-      page++;
     }
+
+    PaginationData newPage = null;
+    if (hasMore) {
+      newPage = new IntPaginationToken(page + 1);
+      monitor.info(() -> format("added non-album photos, size: %s", photos.size()));
+    }
+
+    PhotosContainerResource photosContainerResource = new PhotosContainerResource(albums, photos);
+    ContinuationData continuationData = new ContinuationData(newPage);
+
+    ExportResult.ResultType resultType = ExportResult.ResultType.CONTINUE;
+    if (newPage == null) {
+      resultType = ExportResult.ResultType.END;
+    }
+    return new ExportResult<>(resultType, photosContainerResource, continuationData);
   }
 
   /**
@@ -203,28 +295,5 @@ public class ImgurPhotosExporter
       Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
       return (List<Map<String, Object>>) contentMap.get("data");
     }
-  }
-
-  /**
-   * Converts received photos to the list of {@link PhotoModel}
-   *
-   * @param photoItems items to convert
-   * @return converted photos
-   */
-  private List<PhotoModel> convertPhotoItems(HashMap<String, Map<String, Object>> photoItems) {
-    List<PhotoModel> photoModels = new ArrayList<>();
-    for (Map.Entry<String, Map<String, Object>> photoItem : photoItems.entrySet()) {
-      PhotoModel photoModel =
-          new PhotoModel(
-              (String) photoItem.getValue().get("name"),
-              (String) photoItem.getValue().get("link"),
-              (String) photoItem.getValue().get("description"),
-              (String) photoItem.getValue().get("type"),
-              (String) photoItem.getValue().get("id"),
-              (String) photoItem.getValue().get("albumId"),
-              false);
-      photoModels.add(photoModel);
-    }
-    return photoModels;
   }
 }
