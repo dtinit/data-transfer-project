@@ -47,9 +47,12 @@ import static java.lang.String.format;
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
   private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
+  private static final String RESULTS_PER_PAGE = "10";
   private static final String ALBUM_PHOTOS_URL_TEMPLATE = BASE_URL + "/album/%s/images";
-  private static final String ALBUMS_URL_TEMPLATE = BASE_URL + "/account/me/albums/%s";
-  private static final String ALL_PHOTOS_URL_TEMPLATE = BASE_URL + "/account/me/images/%s";
+  private static final String ALBUMS_URL_TEMPLATE =
+      BASE_URL + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
+  private static final String ALL_PHOTOS_URL_TEMPLATE =
+      BASE_URL + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
   private static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
   private boolean containsNonAlbumPhotos = false;
   private Set<String> albumPhotos = new HashSet<>();
