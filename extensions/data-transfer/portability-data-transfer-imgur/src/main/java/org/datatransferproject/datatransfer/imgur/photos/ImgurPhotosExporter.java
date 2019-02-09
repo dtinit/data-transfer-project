@@ -80,9 +80,6 @@ public class ImgurPhotosExporter
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws Exception {
 
-    monitor.info(
-        () -> format("export, exportInformation.isPresent(): %s", exportInformation.isPresent()));
-
     PaginationData paginationData =
         exportInformation.isPresent() ? exportInformation.get().getPaginationData() : null;
     IdOnlyContainerResource resource =
@@ -108,7 +105,6 @@ public class ImgurPhotosExporter
     List<IdOnlyContainerResource> albumIds = new ArrayList<>();
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
-    monitor.info(() -> format("requestAlbums, page: %s,", page));
 
     String url = format(ALBUMS_URL_TEMPLATE, page);
 
@@ -117,10 +113,7 @@ public class ImgurPhotosExporter
     // Request result doesn't indicate if it's the last page
     boolean hasMore = items != null && items.size() != 0;
 
-    monitor.info(() -> format("has albums: %s", hasMore));
-
     for (Map<String, Object> item : items) {
-      monitor.info(() -> format("add album, id: %s", (String) item.get("id")));
       albumBuilder.add(
           new PhotoAlbum(
               (String) item.get("id"),
@@ -171,7 +164,6 @@ public class ImgurPhotosExporter
       PaginationData paginationData)
       throws IOException {
     String albumId = resource.getId();
-    monitor.info(() -> format("requestPhotos(), albumId: %s", albumId));
 
     // Means all other albums with photos are imported, so non-album photos can be determined
     if (albumId.equals(DEFAULT_ALBUM_ID)) {
@@ -183,7 +175,6 @@ public class ImgurPhotosExporter
 
     List<Map<String, Object>> items = requestData(authData, url);
     for (Map<String, Object> item : items) {
-      monitor.info(() -> format("add photo: %s ", (String) item.get("id")));
       PhotoModel photoModel =
           new PhotoModel(
               (String) item.get("name"),
@@ -221,11 +212,6 @@ public class ImgurPhotosExporter
       TokensAndUrlAuthData authData, PaginationData paginationData) throws IOException {
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
-    monitor.info(
-        () ->
-            format(
-                "requestNonAlbumPhotos page: %s, paginationData: %s, albumPhotos.size(): %s",
-                page, paginationData, albumPhotos.size()));
 
     String url = format(ALL_PHOTOS_URL_TEMPLATE, page);
     Set<PhotoAlbum> albums = new HashSet<>();
@@ -237,11 +223,9 @@ public class ImgurPhotosExporter
 
     for (Map<String, Object> item : items) {
       String photoId = (String) item.get("id");
-      monitor.info(() -> format("check photo: %s ", (String) item.get("id")));
 
       // Select photos which are not included to the collection of retrieved album photos
       if (!albumPhotos.contains(photoId)) {
-        monitor.info(() -> format("add non-album photo: %s ", (String) item.get("id")));
         PhotoModel photoModel =
             new PhotoModel(
                 (String) item.get("name"),
