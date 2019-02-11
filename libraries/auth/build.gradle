@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
+}
 
 dependencies {
     compile project(':portability-spi-api')
@@ -23,3 +27,5 @@ dependencies {
     compile("org.apache.httpcomponents:httpclient:${apacheHttpVersion}")
 
 }
+
+configurePublication(project)
