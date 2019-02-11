@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.photos.model.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
@@ -128,12 +129,12 @@ public class GooglePhotosInterface {
         String.class);
   }
 
-  NewMediaItemResult createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
+  BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
 
     return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), httpContent,
-        NewMediaItemResult.class);
+        BatchMediaItemResponse.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
