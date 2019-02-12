@@ -17,16 +17,9 @@
 package org.datatransferproject.transfer.mastodon.social;
 
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.common.base.Strings;
 import com.ibm.common.activitystreams.Activity;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.ibm.common.activitystreams.Makers;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -37,7 +30,16 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
-import com.ibm.common.activitystreams.Makers;
+import org.joda.time.DateTime;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Exports post data from Mastodon.
@@ -71,7 +73,7 @@ public class MastodonActivityExport implements
     Account account = utilities.getAccount();
 
     Status[] statuses = utilities.getStatuses(maxId);
-    List<Activity> activityList = new ArrayList<>(statuses.length); 
+    List<Activity> activityList = new ArrayList<>(statuses.length);
 
     ContinuationData continuationData = null;
     if (statuses.length > 0) {
@@ -82,7 +84,7 @@ public class MastodonActivityExport implements
       }
       continuationData = new ContinuationData(new StringPaginationToken(lastId));
     }
-    
+
     return new ExportResult<>(
         continuationData == null ? ResultType.END : ResultType.CONTINUE,
         new SocialActivityContainerResource(account.getId() + maxId, activityList, null),
@@ -108,6 +110,7 @@ public class MastodonActivityExport implements
             .url("Mastodon", status.getUrl())
             .content(contentString))
         .verb("post")
+        .published(new DateTime(status.getCreatedAt().toEpochMilli()))
         .get();
   }
 

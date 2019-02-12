@@ -29,6 +29,7 @@ dependencies {
     }
 
     compile("com.google.api-client:google-api-client:${googleApiClient}")
+    compile("com.google.apis:google-api-services-blogger:${googleBloggerVersion}")
     compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
     compile("com.google.apis:google-api-services-drive:${googleDriveVersion}")
     compile("com.google.apis:google-api-services-gmail:${googleGmailVersion}")
@@ -36,6 +37,11 @@ dependencies {
     compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
     compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
+
+    // Needed for OpenSocial ActivityStreams, which depends on these specific version
+    // so not generifying them.
+    compile group: 'joda-time', name: 'joda-time', version: '2.3'
+    implementation 'com.google.code.gson:gson:2.2.4'
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
