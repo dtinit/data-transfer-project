@@ -37,9 +37,13 @@ public class MonitorLoader {
               extension.initialize();
               monitors.add(extension.getMonitor());
             });
-    return monitors.isEmpty()
-        ? new ConsoleMonitor(DEBUG)
-        : new MultiplexMonitor((Monitor[]) monitors.toArray());
+    if (monitors.isEmpty()) {
+      return new ConsoleMonitor(DEBUG);
+    } else {
+      Monitor[] monitorArray = new Monitor[monitors.size()];
+      monitorArray = monitors.toArray(monitorArray);
+      return new MultiplexMonitor(monitorArray);
+    }
   }
 
   private MonitorLoader() {}
