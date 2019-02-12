@@ -16,9 +16,11 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -31,6 +33,7 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 
@@ -45,6 +48,8 @@ class JobPollingService extends AbstractScheduledService {
   private final Set<PublicKeySerializer> publicKeySerializers;
   private final Scheduler scheduler;
   private final Monitor monitor;
+  private final Stopwatch stopwatch = Stopwatch.createUnstarted();
+  private final int credsTimeoutSeconds;
 
   @Inject
   JobPollingService(
@@ -52,17 +57,29 @@ class JobPollingService extends AbstractScheduledService {
       AsymmetricKeyGenerator asymmetricKeyGenerator,
       Set<PublicKeySerializer> publicKeySerializers,
       Scheduler scheduler,
-      Monitor monitor) {
+      Monitor monitor,
+      ExtensionContext context) {
     this.store = store;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     this.publicKeySerializers = publicKeySerializers;
     this.scheduler = scheduler;
     this.monitor = monitor;
+    this.credsTimeoutSeconds = context.getSetting("credTimeoutSeconds", 300);
   }
 
   @Override
   protected void runOneIteration() {
     if (JobMetadata.isInitialized()) {
+      if (stopwatch.elapsed(TimeUnit.SECONDS) > credsTimeoutSeconds) {
+        UUID jobId = JobMetadata.getJobId();
+        markJobTimedOut(jobId);
+        String message =
+            format(
+                "Waited over %d seconds for the creds to be provided on the claimed job: %s",
+                credsTimeoutSeconds, jobId);
+        monitor.severe(() -> message);
+        throw new CredsTimeoutException(message, jobId);
+      }
       pollUntilJobIsReady();
     } else {
       // Poll for an unassigned job to process with this transfer worker instance.
@@ -72,8 +89,29 @@ class JobPollingService extends AbstractScheduledService {
     }
   }
 
-  // TODO: the delay should be more easily configurable
-  // https://github.com/google/data-transfer-project/issues/400
+  private void markJobTimedOut(UUID jobId) {
+    PortabilityJob job = store.findJob(jobId);
+    try {
+      store.updateJob(
+          jobId,
+          job.toBuilder()
+              .setState(PortabilityJob.State.ERROR)
+              .setAndValidateJobAuthorization(
+                  job.jobAuthorization()
+                      .toBuilder()
+                      .setState(JobAuthorization.State.TIMED_OUT)
+                      .build())
+              .build());
+    } catch (IOException e) {
+      // Suppress exception so we still pass out the original exception
+      monitor.severe(
+          () ->
+              format(
+                  "IOException while marking job as timed out. JobId: %s; Exception: %s",
+                  jobId, e));
+    }
+  }
+
   @Override
   protected Scheduler scheduler() {
     return scheduler;
@@ -107,6 +145,7 @@ class JobPollingService extends AbstractScheduledService {
               format(
                   "Updated job %s to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: %s",
                   jobId, publicKey.getEncoded().length));
+      stopwatch.start();
     }
   }
 

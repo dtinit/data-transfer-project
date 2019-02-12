@@ -35,6 +35,7 @@ import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
@@ -48,6 +49,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
 import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
+import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobHooks;
 
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
@@ -115,6 +117,8 @@ public class WorkerMain {
     SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
     AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator(monitor);
 
+    JobHooks jobHooks = loadJobHooks();
+
     Injector injector =
         Guice.createInjector(
             new WorkerModule(
@@ -124,8 +128,12 @@ public class WorkerMain {
                 publicKeySerializers,
                 decryptServices,
                 symmetricKeyGenerator,
-                asymmetricKeyGenerator));
+                asymmetricKeyGenerator,
+                jobHooks));
     worker = injector.getInstance(Worker.class);
+
+    // Reset the JobMetadata in case set previously when running SingleVMMain
+    JobMetadata.reset();
   }
 
   public void poll() {

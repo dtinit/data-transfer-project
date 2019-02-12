@@ -67,6 +67,8 @@ public abstract class JobAuthorization {
     CREDS_ENCRYPTION_KEY_GENERATED,
     // The api server has encrypted the credentials for the transfer worker to use.
     CREDS_STORED,
+    // The worker has timed out
+    TIMED_OUT,
   }
 
   @AutoValue.Builder

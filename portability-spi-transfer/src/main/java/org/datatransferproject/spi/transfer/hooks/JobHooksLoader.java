@@ -15,22 +15,26 @@
  */
 package org.datatransferproject.spi.transfer.hooks;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 
-/**
- * This interface allows implementations to handle certain events in the job
- * life time (e.g. job started, job finished) and take actions accordingly.
- */
-public interface JobHooks {
+/** Helper for loading job hooks extensions. */
+public class JobHooksLoader {
 
-  /** Called when a job starts processing on a worker. */
-  default void jobStarted(UUID jobId) {
+  public static JobHooks loadJobHooks() {
+    List<JobHooks> jobHooks = new ArrayList<>();
+    ServiceLoader.load(JobHooksExtension.class)
+        .iterator()
+        .forEachRemaining(
+            extension -> {
+              extension.initialize();
+              jobHooks.add(extension.getJobHooks());
+            });
+    return jobHooks.isEmpty()
+        ? new DefaultJobHooks()
+        : new MultiplexJobHooks((JobHooks[]) jobHooks.toArray());
   }
 
-  /**
-   * Called when a job finishes processing on a worker. The {@code success} parameter indicates
-   * whether the transfer was succesful or not.
-   */
-  default void jobFinished(UUID jobId, boolean success) {
-  }
+  private JobHooksLoader() {}
 }

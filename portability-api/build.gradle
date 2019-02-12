@@ -18,24 +18,6 @@ plugins {
     id 'io.spring.bintray'
 }
 
-jar {
-    // TODO: consider using the gradle fatjar plugin rather than this dependency jar building logic
-    // Add dependencies
-    from({
-        (configurations.runtime).collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }) {
-        // Exclude signature files to avoid SecurityException
-        exclude '**/META-INF/*.SF'
-        exclude '**/META-INF/*.DSA'
-        exclude '**/META-INF/*.RSA'
-    }
-    manifest {
-        attributes 'Main-Class': 'org.datatransferproject.api.ApiMain'
-    }
-}
-
 dependencies {
     compile project(':libraries:config')
     compile project(':libraries:security')

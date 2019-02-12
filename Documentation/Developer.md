@@ -115,5 +115,5 @@ The following builds and runs the demo-server (which contains the worker and the
 used with the client-rest UI.
   * `docker network create dataportability`
   * `./gradlew -PtransportType=jettyrest -PapiPort=3000  -PcloudType=local clean check :distributions:demo-server:dockerize`
-  * `docker run --rm -p 8080:8080 -p 5005:5005 -p 3000:3000 --env-file distributions/demo-server/env.secrets --name demoserver --network dataportability dataportability/demo`
+  * `docker run --rm -p 8080:8080 -p 5005:5005 -p 3000:3000 --env-file distributions/demo-server/env.secrets --name demoserver --network dataportability datatransferproject/demo`
 

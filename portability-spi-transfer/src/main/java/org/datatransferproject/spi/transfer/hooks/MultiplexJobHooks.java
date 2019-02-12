@@ -17,20 +17,23 @@ package org.datatransferproject.spi.transfer.hooks;
 
 import java.util.UUID;
 
-/**
- * This interface allows implementations to handle certain events in the job
- * life time (e.g. job started, job finished) and take actions accordingly.
- */
-public interface JobHooks {
+/** Forwards job hook events to a set of delegates. */
+public class MultiplexJobHooks implements JobHooks {
+  private JobHooks[] delegates;
 
-  /** Called when a job starts processing on a worker. */
-  default void jobStarted(UUID jobId) {
+  public MultiplexJobHooks(JobHooks... delegates) {
+    this.delegates = delegates != null ? delegates : new JobHooks[0];
   }
 
-  /**
-   * Called when a job finishes processing on a worker. The {@code success} parameter indicates
-   * whether the transfer was succesful or not.
-   */
-  default void jobFinished(UUID jobId, boolean success) {
+  public void jobStarted(UUID jobId) {
+    for (JobHooks delegate : delegates) {
+      delegate.jobStarted(jobId);
+    }
+  }
+
+  public void jobFinished(UUID jobId, boolean success) {
+    for (JobHooks delegate : delegates) {
+      delegate.jobFinished(jobId, success);
+    }
   }
 }

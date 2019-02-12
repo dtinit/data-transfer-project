@@ -35,6 +35,7 @@ dependencies {
     compile("com.google.apis:google-api-services-people:${googlePeopleVersion}")
     compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
     compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
+    compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
