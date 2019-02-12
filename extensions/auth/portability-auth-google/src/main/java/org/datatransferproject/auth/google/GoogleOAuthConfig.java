@@ -55,6 +55,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts.readonly"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.readonly"))
         .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
+        // For G+
         .put("SOCIAL-POSTS", ImmutableSet.of("https://www.googleapis.com/auth/plus.login"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks.readonly"))
         .build();
