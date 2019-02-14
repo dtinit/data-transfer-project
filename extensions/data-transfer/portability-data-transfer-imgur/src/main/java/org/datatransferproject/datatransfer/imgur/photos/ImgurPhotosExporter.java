@@ -18,28 +18,26 @@ package org.datatransferproject.datatransfer.imgur.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
-
 import org.datatransferproject.types.common.IntPaginationToken;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
 import java.util.*;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 import static java.lang.String.format;
 
@@ -236,14 +234,14 @@ public class ImgurPhotosExporter
                 DEFAULT_ALBUM_ID,
                 false);
         photos.add(photoModel);
-        if (!containsNonAlbumPhotos) {
-          // Add album for non-album photos
-          albums.add(
-              new PhotoAlbum(DEFAULT_ALBUM_ID, "Non-album photos", "Contains non-album photos"));
-          // Make sure album will not be added multiply times on subsequent calls
-          containsNonAlbumPhotos = true;
-        }
       }
+    }
+
+    if (!containsNonAlbumPhotos && photos.size() > 0) {
+      // Add album for non-album photos
+      albums.add(new PhotoAlbum(DEFAULT_ALBUM_ID, "Non-album photos", "Contains non-album photos"));
+      // Make sure album will not be added multiply times on subsequent calls
+      containsNonAlbumPhotos = true;
     }
 
     PaginationData newPage = null;
