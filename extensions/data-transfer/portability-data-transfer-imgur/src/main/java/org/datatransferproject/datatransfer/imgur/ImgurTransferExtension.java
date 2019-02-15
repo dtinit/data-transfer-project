@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -52,8 +53,9 @@ public class ImgurTransferExtension implements TransferExtension {
     ObjectMapper mapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     OkHttpClient client = context.getService(OkHttpClient.class);
+    JobStore jobStore = context.getService(JobStore.class);
 
-    exporter = new ImgurPhotosExporter(monitor, client, mapper);
+    exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore);
 
     initialized = true;
   }

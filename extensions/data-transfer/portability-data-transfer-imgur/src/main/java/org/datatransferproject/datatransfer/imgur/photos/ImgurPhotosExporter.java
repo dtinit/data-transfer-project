@@ -24,6 +24,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -37,6 +38,9 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -58,11 +62,14 @@ public class ImgurPhotosExporter
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final Monitor monitor;
+  private final JobStore jobStore;
 
-  public ImgurPhotosExporter(Monitor monitor, OkHttpClient client, ObjectMapper objectMapper) {
+  public ImgurPhotosExporter(
+      Monitor monitor, OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;
+    this.jobStore = jobStore;
   }
 
   /**
@@ -85,7 +92,7 @@ public class ImgurPhotosExporter
             ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
             : null;
     if (resource != null) {
-      return requestPhotos(authData, resource, paginationData);
+      return requestPhotos(authData, resource, paginationData, jobId);
     } else {
       return requestAlbums(authData, paginationData);
     }
@@ -109,7 +116,7 @@ public class ImgurPhotosExporter
     List<Map<String, Object>> items = requestData(authData, url);
 
     // Request result doesn't indicate if it's the last page
-    boolean hasMore = items != null && items.size() != 0;
+    boolean hasMore = (items != null && items.size() != 0);
 
     for (Map<String, Object> item : items) {
       albumBuilder.add(
@@ -159,13 +166,14 @@ public class ImgurPhotosExporter
   private ExportResult<PhotosContainerResource> requestPhotos(
       TokensAndUrlAuthData authData,
       IdOnlyContainerResource resource,
-      PaginationData paginationData)
+      PaginationData paginationData,
+      UUID jobId)
       throws IOException {
     String albumId = resource.getId();
 
     // Means all other albums with photos are imported, so non-album photos can be determined
     if (albumId.equals(DEFAULT_ALBUM_ID)) {
-      return requestNonAlbumPhotos(authData, paginationData);
+      return requestNonAlbumPhotos(authData, paginationData, jobId);
     }
 
     String url = format(ALBUM_PHOTOS_URL_TEMPLATE, albumId);
@@ -181,8 +189,11 @@ public class ImgurPhotosExporter
               (String) item.get("type"),
               (String) item.get("id"),
               albumId,
-              false);
+              true);
       photos.add(photoModel);
+
+      InputStream inputStream = getImageAsStream(photoModel.getFetchableUrl());
+      jobStore.create(jobId, photoModel.getFetchableUrl(), inputStream);
 
       // Save id of each album photo for finding non-album photos later
       albumPhotos.add((String) item.get("id"));
@@ -207,7 +218,7 @@ public class ImgurPhotosExporter
    * @param paginationData pagination information to use for subsequent calls.
    */
   private ExportResult<PhotosContainerResource> requestNonAlbumPhotos(
-      TokensAndUrlAuthData authData, PaginationData paginationData) throws IOException {
+      TokensAndUrlAuthData authData, PaginationData paginationData, UUID jobId) throws IOException {
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
 
@@ -217,7 +228,7 @@ public class ImgurPhotosExporter
 
     List<Map<String, Object>> items = requestData(authData, url);
 
-    boolean hasMore = items != null && items.size() != 0;
+    boolean hasMore = (items != null && items.size() != 0);
 
     for (Map<String, Object> item : items) {
       String photoId = (String) item.get("id");
@@ -232,8 +243,11 @@ public class ImgurPhotosExporter
                 (String) item.get("type"),
                 (String) item.get("id"),
                 DEFAULT_ALBUM_ID,
-                false);
+                true);
         photos.add(photoModel);
+
+        InputStream inputStream = getImageAsStream(photoModel.getFetchableUrl());
+        jobStore.create(jobId, photoModel.getFetchableUrl(), inputStream);
       }
     }
 
@@ -280,5 +294,12 @@ public class ImgurPhotosExporter
       Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
       return (List<Map<String, Object>>) contentMap.get("data");
     }
+  }
+
+  private InputStream getImageAsStream(String imageUrl) throws IOException {
+    URL url = new URL(imageUrl);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.connect();
+    return conn.getInputStream();
   }
 }
