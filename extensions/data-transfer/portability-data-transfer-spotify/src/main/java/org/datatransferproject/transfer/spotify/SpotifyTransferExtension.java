@@ -78,7 +78,7 @@ public class SpotifyTransferExtension implements TransferExtension {
     } catch (IOException e) {
       Monitor monitor = context.getMonitor();
       monitor.info(
-          () -> "Unable to retrieve Google AppCredentials. "
+          () -> "Unable to retrieve Spotify AppCredentials. "
               + "Did you set SPOTIFY_KEY and SPOTIFY_SECRET?");
       return;
     }

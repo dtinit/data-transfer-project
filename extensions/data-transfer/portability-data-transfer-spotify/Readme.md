@@ -1,31 +1,27 @@
 # Mastodon
 This folder contains the extension implementation for the
-[Mastodon](https://joinmastodon.org/) API.
+[Spotify](https://spotify.com) API.
 
 
 ## Data Supported
 
- - Social Activity streams (notes < 500 chars only)
+ - Playlists
 
 ## Current State
 
- - Proof of concept
+ - Mostly working
  
- Currently the importer and exporter work, and can be exercised via the ManualTest.java
- file.  Just enter your access token from your Mastodon instance UI.
- 
- TODO: implement the auth flow for Mastodon, allowing a user to select an instance
- and then automatically registering an app and going through the OAuth flow.
+ The base cfuncionality for import and export work, there are some rough edges still.
  
  **Known Issues:**
  
- - For data import/export right now this only handles the raw text and not images
- - Imported data is marked as private, ideally a user could mark things as public latter
-   but that doesn't appear to be supported buy the Mastodon UI
+ - Playlist art is not transfered
+ - Playlist order is not preserved
+ - Song matching is only on ISRC
 
 ## Keys & Auth
 
-See above.
+https://developer.spotify.com/documentation/general/guides/app-settings/
 
 ## Maintained By
 

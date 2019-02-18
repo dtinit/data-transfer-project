@@ -79,7 +79,6 @@ public class SpotifyPlaylistExporter implements
     do {
       monitor.debug(() -> "Fetching playlists with offset %s", offset);
       playlists = spotifyApi.getListOfUsersPlaylists(userId)
-          .limit(1) // HACK, make sure we are paging correctly.
           .offset(offset)
           .build()
           .execute();
@@ -99,9 +98,9 @@ public class SpotifyPlaylistExporter implements
     Paging<PlaylistTrack> playlistTrackResults;
     ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>(); 
     do {
-      monitor.debug(() -> "Fetching playlist's %s tracks with offset %s, next: %s", playlistId, offset);
+      monitor.debug(() -> "Fetching playlist's %s tracks with offset %s, next: %s",
+          playlistId, offset);
       playlistTrackResults = spotifyApi.getPlaylistsTracks(playlistId)
-          .limit(1)
           .offset(offset)
           .build()
           .execute();
@@ -123,5 +122,4 @@ public class SpotifyPlaylistExporter implements
         new MusicAlbum(track.getAlbum().getName()),
         new MusicGroup(track.getArtists()[0].getName()));
   }
-
 }
