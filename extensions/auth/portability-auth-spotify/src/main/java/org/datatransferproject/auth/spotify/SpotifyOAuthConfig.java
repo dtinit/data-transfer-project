@@ -44,7 +44,6 @@ public class SpotifyOAuthConfig implements OAuth2Config {
     return "https://accounts.spotify.com/api/token";
   }
 
-  // See https://developers.google.com/identity/protocols/googlescopes
   @Override
   public Map<String, Set<String>> getExportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
@@ -52,7 +51,6 @@ public class SpotifyOAuthConfig implements OAuth2Config {
         .build();
   }
 
-  // See https://developers.google.com/identity/protocols/googlescopes
   @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()

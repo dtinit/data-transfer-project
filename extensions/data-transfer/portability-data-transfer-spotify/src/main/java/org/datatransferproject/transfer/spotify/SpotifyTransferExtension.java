@@ -15,19 +15,20 @@
  */
 package org.datatransferproject.transfer.spotify;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.wrapper.spotify.SpotifyApi;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.transfer.spotify.playlists.SpotifyPlaylistExporter;
 import org.datatransferproject.transfer.spotify.playlists.SpotifyPlaylistImporter;
+import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 
@@ -68,12 +69,30 @@ public class SpotifyTransferExtension implements TransferExtension {
       return;
     }
 
-    ObjectMapper mapper =
-        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    AppCredentials appCredentials;
+    try {
+      appCredentials =
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials("SPOTIFY_KEY", "SPOTIFY_SECRET");
+    } catch (IOException e) {
+      Monitor monitor = context.getMonitor();
+      monitor.info(
+          () -> "Unable to retrieve Google AppCredentials. "
+              + "Did you set SPOTIFY_KEY and SPOTIFY_SECRET?");
+      return;
+    }
 
-    HttpTransport httpTransport = context.getService(HttpTransport.class);
-    exporter = new SpotifyPlaylistExporter();
-    importer = new SpotifyPlaylistImporter();
+
+    Monitor monitor = context.getMonitor();
+
+    SpotifyApi spotifyApi = new SpotifyApi.Builder()
+        .setClientId(appCredentials.getKey())
+        .setClientSecret(appCredentials.getSecret())
+        .build();
+
+    exporter = new SpotifyPlaylistExporter(monitor, spotifyApi);
+    importer = new SpotifyPlaylistImporter(monitor, spotifyApi);
     initialized = true;
   }
 }

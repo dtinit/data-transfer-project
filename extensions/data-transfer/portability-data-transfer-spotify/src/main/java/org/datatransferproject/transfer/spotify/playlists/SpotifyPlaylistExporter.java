@@ -18,23 +18,30 @@ package org.datatransferproject.transfer.spotify.playlists;
 
 
 import com.google.common.base.Strings;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
+import com.google.common.collect.ImmutableList;
+import com.wrapper.spotify.SpotifyApi;
+import com.wrapper.spotify.exceptions.SpotifyWebApiException;
+import com.wrapper.spotify.model_objects.specification.Paging;
+import com.wrapper.spotify.model_objects.specification.PlaylistSimplified;
+import com.wrapper.spotify.model_objects.specification.PlaylistTrack;
+import com.wrapper.spotify.model_objects.specification.Track;
+import com.wrapper.spotify.model_objects.specification.User;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.google.common.base.Preconditions.checkState;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.playlists.MusicAlbum;
+import org.datatransferproject.types.common.models.playlists.MusicGroup;
+import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
+import org.datatransferproject.types.common.models.playlists.MusicRecording;
+import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Exports playlists from Spotify.
@@ -42,10 +49,79 @@ import static com.google.common.base.Preconditions.checkState;
 public class SpotifyPlaylistExporter implements
     Exporter<TokensAndUrlAuthData, PlaylistContainerResource> {
 
+  private final Monitor monitor;
+  private final SpotifyApi spotifyApi;
+
+  public SpotifyPlaylistExporter(Monitor monitor, SpotifyApi spotifyApi) {
+    this.monitor = monitor;
+    this.spotifyApi = spotifyApi;
+  }
+
   @Override
   public ExportResult<PlaylistContainerResource> export(UUID jobId,
       TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws Exception {
-    return null;
+    spotifyApi.setAccessToken(authData.getAccessToken());
+    spotifyApi.setRefreshToken(authData.getRefreshToken());
+
+    User user = spotifyApi.getCurrentUsersProfile().build().execute();
+
+    return new ExportResult<>(
+        ResultType.END,
+        enumeratePlaylists(user.getId()));
   }
+
+  private PlaylistContainerResource enumeratePlaylists(String userId)
+      throws IOException, SpotifyWebApiException {
+    List<MusicPlaylist> results = new ArrayList<>();
+    int offset = 0;
+    Paging<PlaylistSimplified> playlists;
+    do {
+      monitor.debug(() -> "Fetching playlists with offset %s", offset);
+      playlists = spotifyApi.getListOfUsersPlaylists(userId)
+          .limit(1) // HACK, make sure we are paging correctly.
+          .offset(offset)
+          .build()
+          .execute();
+      for (PlaylistSimplified playlist : playlists.getItems()) {
+        results.add(new MusicPlaylist(
+            playlist.getName(),
+            fetchPlaylist(playlist.getId())));
+      }
+      offset += playlists.getItems().length;
+    } while (!Strings.isNullOrEmpty(playlists.getNext()) && playlists.getItems().length > 0);
+    return new PlaylistContainerResource(results);
+  }
+
+  private ImmutableList<MusicRecording> fetchPlaylist(String playlistId)
+      throws IOException, SpotifyWebApiException {
+    int offset = 0;
+    Paging<PlaylistTrack> playlistTrackResults;
+    ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>(); 
+    do {
+      monitor.debug(() -> "Fetching playlist's %s tracks with offset %s, next: %s", playlistId, offset);
+      playlistTrackResults = spotifyApi.getPlaylistsTracks(playlistId)
+          .limit(1)
+          .offset(offset)
+          .build()
+          .execute();
+      for (PlaylistTrack track : playlistTrackResults.getItems()) {
+        results.add(convertTrack(track));
+      }
+      offset += playlistTrackResults.getItems().length;
+    } while (!Strings.isNullOrEmpty(playlistTrackResults.getNext())
+        && playlistTrackResults.getItems().length > 0);
+    return results.build();
+  }
+
+  private MusicRecording convertTrack(PlaylistTrack playlistTrack) {
+    Track track = playlistTrack.getTrack();
+    monitor.debug(() -> "Converting: %s", playlistTrack);
+    return new MusicRecording(
+        track.getName(),
+        track.getExternalIds().getExternalIds().get("isrc"),
+        new MusicAlbum(track.getAlbum().getName()),
+        new MusicGroup(track.getArtists()[0].getName()));
+  }
+
 }
