@@ -1,4 +1,4 @@
-# Mastodon
+# Spotify
 This folder contains the extension implementation for the
 [Spotify](https://spotify.com) API.
 
