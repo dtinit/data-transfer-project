@@ -96,7 +96,7 @@ public class WorkerMain {
     AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
     extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
 
-    List<TransferExtension> transferExtensions = getTransferExtensions();
+    List<TransferExtension> transferExtensions = getTransferExtensions(monitor);
 
     Set<SecurityExtension> securityExtensions = new HashSet<>();
     ServiceLoader.load(SecurityExtension.class)
@@ -140,13 +140,17 @@ public class WorkerMain {
     worker.doWork();
   }
 
-  private static List<TransferExtension> getTransferExtensions() {
+  private static List<TransferExtension> getTransferExtensions(Monitor monitor) {
     // TODO: Next version should ideally not load every TransferExtension impl, look into
     // solutions where we selectively invoke class loader.
     ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
     // Note that initialization of the TransferExtension is done in the WorkerModule since they're
     // initialized as they're requested.
-    ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(extensionsBuilder::add);
+    ServiceLoader.load(TransferExtension.class).iterator()
+        .forEachRemaining(ext -> {
+          monitor.info(() -> "Loading transfer extension: " + ext + " for " + ext.getServiceId());
+          extensionsBuilder.add(ext);
+        });
     ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
     Preconditions.checkState(
         !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
