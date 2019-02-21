@@ -110,8 +110,6 @@ public class FacebookPhotosExporter
       TokensAndUrlAuthData authData, Optional<StringPaginationToken> paginationData) {
     Optional<String> paginationToken = stripTokenPrefix(paginationData, ALBUM_TOKEN_PREFIX);
 
-    ArrayList<PhotoAlbum> exportAlbums = new ArrayList<>();
-
     // Get albums
     Connection<Album> connection = getOrCreatePhotosInterface(authData).getAlbums(paginationToken);
 
@@ -124,6 +122,11 @@ public class FacebookPhotosExporter
 
     List<Album> albums = connection.getData();
 
+    if (albums.isEmpty()) {
+      return new ExportResult<>(ExportResult.ResultType.END, null, null);
+    }
+
+    ArrayList<PhotoAlbum> exportAlbums = new ArrayList<>();
     for (Album album : albums) {
       exportAlbums.add(new PhotoAlbum(album.getId(), album.getName(), album.getDescription()));
       continuationData.addContainerResource(new IdOnlyContainerResource(album.getId()));
@@ -141,12 +144,16 @@ public class FacebookPhotosExporter
       Optional<StringPaginationToken> paginationData) {
     Optional<String> paginationToken = stripTokenPrefix(paginationData, PHOTO_TOKEN_PREFIX);
 
-    ArrayList<PhotoModel> exportPhotos = new ArrayList<>();
-
     String albumId = containerResource.getId();
     Connection<Photo> photoConnection =
         getOrCreatePhotosInterface(authData).getPhotos(albumId, paginationToken);
     List<Photo> photos = photoConnection.getData();
+
+    if (photos.isEmpty()) {
+      return new ExportResult<>(ExportResult.ResultType.END, null);
+    }
+
+    ArrayList<PhotoModel> exportPhotos = new ArrayList<>();
     for (Photo photo : photos) {
       Preconditions.checkNotNull(photo.getImages().get(0).getSource());
       exportPhotos.add(
@@ -167,7 +174,6 @@ public class FacebookPhotosExporter
     } else {
       PaginationData nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX + token);
       ContinuationData continuationData = new ContinuationData(nextPageData);
-      continuationData.addContainerResource(containerResource);
       return new ExportResult<>(
           ExportResult.ResultType.CONTINUE,
           new PhotosContainerResource(null, exportPhotos),
