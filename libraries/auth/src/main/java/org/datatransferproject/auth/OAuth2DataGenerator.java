@@ -108,14 +108,10 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     HttpContent content = new UrlEncodedContent(params);
 
     try {
-      OAuth2TokenResponse tokenResponse = OAuthUtils
-          .makePostRequest(httpTransport, config.getTokenUrl(), content, OAuth2TokenResponse.class);
+      String tokenResponse = OAuthUtils.makeRawPostRequest(
+          httpTransport, config.getTokenUrl(), content);
 
-      return new TokensAndUrlAuthData(
-          tokenResponse.getAccessToken(),
-          tokenResponse.getRefreshToken(),
-          config.getTokenUrl()
-      );
+      return config.getResponseClass(tokenResponse);
     } catch (IOException e) {
       throw new RuntimeException("Error getting token", e); // TODO
     }
