@@ -19,8 +19,12 @@ package org.datatransferproject.datatransfer.google.gplus;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.plus.Plus;
 import com.google.api.services.plus.model.Activity;
+import com.google.api.services.plus.model.Activity.PlusObject.Attachments;
+import com.google.api.services.plus.model.Activity.PlusObject.Attachments.Thumbnails;
 import com.google.api.services.plus.model.ActivityFeed;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Makers;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
@@ -74,36 +78,102 @@ public class GooglePlusExporter
     SocialActivityContainerResource results = null;
     if (activities != null && !activities.isEmpty()) {
       List<com.ibm.common.activitystreams.Activity> parsedActivities = new ArrayList<>();
-      continuationData = new ContinuationData(new StringPaginationToken(activityFeed.getNextPageToken()));
+      if (!Strings.isNullOrEmpty(activityFeed.getNextPageToken())) {
+        continuationData = new ContinuationData(
+            new StringPaginationToken(activityFeed.getNextPageToken()));
+      }
 
       for (Activity activity : activities) {
-        parsedActivities.add(postToActivityStream(activity));
+        try {
+          parsedActivities.add(postToActivityStream(activity));
+        } catch (RuntimeException e) {
+          throw new IOException("Problem exporting: " + activity, e);
+        }
       }
       results = new SocialActivityContainerResource(jobId.toString(), parsedActivities, null);
     }
 
     return new ExportResult<>(
-            ResultType.CONTINUE,
-            results,
-            continuationData);
+        continuationData == null ? ResultType.END : ResultType.CONTINUE,
+        results,
+        continuationData);
 
   }
 
   private com.ibm.common.activitystreams.Activity postToActivityStream(Activity activity) {
     String contentString = activity.getObject().getOriginalContent();
 
-    return Makers.activity()
-            .actor(Makers.object("person")
-                    .id("acct:" + activity.getActor().getId())
-                    .link("GPlus", activity.getActor().getUrl())
-                    .displayName(activity.getActor().getDisplayName()))
+    ASObject.Builder actor = Makers.object("person")
+        .id(activity.getActor().getUrl())
+        .link("GPlus", activity.getActor().getUrl())
+        .displayName(activity.getActor().getDisplayName());
+    ASObject.Builder object;
+    String verb = activity.getVerb();
 
-            .object(Makers.object("post")
-                    .id(activity.getId())
-                    .url("GPlus", activity.getUrl())
-                    .content(contentString))
-            .verb("post")
-            .get();
+    switch (activity.getVerb()) {
+      case "post":
+        object = Makers.object("post")
+            .id(activity.getId())
+            .title(activity.getTitle())
+            .provider("Google+")
+            .url("GPlus", activity.getUrl())
+            .content(contentString);
+        for (Attachments attachment : activity.getObject().getAttachments()) {
+          if (attachment.getObjectType().equals("article")) {
+            object.attachments(Makers.object("Link")
+                .url(attachment.getUrl())
+                .content(attachment.getContent())
+                .displayName(attachment.getDisplayName()));
+          } else if (attachment.getObjectType().equals("photo")) {
+            object.image(Makers.object("Image")
+                .url(attachment.getFullImage().getUrl())
+                .displayName(attachment.getDisplayName())
+                .content(attachment.getContent()));
+          } else if (attachment.getObjectType().equals("album")) {
+            // For albums we can't really do the right thing,
+            // only the thumbnails and link to the album are provided.
+            // And the Google Photos API doesn't surface G+ photos/Albums
+            // to enumerate all the images in the album.
+            // TODO: see if it is possible to scrape the output from the album to link to
+            // all the images.
+            for (Thumbnails image : attachment.getThumbnails()) {
+              object.image(Makers.object("Image")
+                  // This is just a thumbnail image
+                  .url(image.getImage().getUrl())
+                  .displayName(image.getDescription())
+                  // The actual image link isn't to the binary bytes
+                  // but instead a hosted page of the image.
+                  .content("Original G+ Image: " + image.getUrl()
+                      + " from album: " + attachment.getUrl()));
+            }
+
+          } else {
+            throw new IllegalArgumentException("Don't know how to export attachment "
+                + attachment.getObjectType());
+          }
+        }
+        break;
+      case "checkin":
+        object = Makers.object("checkin")
+            .id(activity.getId())
+            // see https://www.w3.org/TR/activitystreams-vocabulary/#dfn-location
+            .location(Makers.object("Place")
+                .displayName(activity.getLocation().getDisplayName())
+                .set("longitude", activity.getLocation().getPosition().getLongitude())
+                .set("latitude", activity.getLocation().getPosition().getLatitude()))
+            .content(contentString);
+        break;
+      default:
+        throw new IllegalArgumentException("Don't know how to export " + activity);
+    }
+
+    com.ibm.common.activitystreams.Activity result = Makers.activity()
+        .actor(actor)
+        .object(object)
+        .verb(verb)
+        .get();
+
+    return result;
   }
 
   private Plus getOrCreatePeopleService(TokensAndUrlAuthData authData) {

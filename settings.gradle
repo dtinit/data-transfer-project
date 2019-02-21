@@ -52,6 +52,9 @@ include ':extensions:data-transfer:portability-data-transfer-smugmug'
 // Solid
 //include ':extensions:auth:portability-auth-solid'
 include ':extensions:data-transfer:portability-data-transfer-solid'
+// Spotify
+include ':extensions:auth:portability-auth-spotify'
+include ':extensions:data-transfer:portability-data-transfer-spotify'
 // Twitter
 include ':extensions:auth:portability-auth-twitter'
 include ':extensions:data-transfer:portability-data-transfer-twitter'
