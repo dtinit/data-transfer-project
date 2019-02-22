@@ -230,18 +230,15 @@ public abstract class PortabilityJob {
       switch (jobAuthorization.state()) {
         case INITIAL:
         case CREDS_AVAILABLE:
-          // SessionKey required to create a job
-          isSet(jobAuthorization.sessionSecretKey());
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_ENCRYPTION_KEY_GENERATED:
           // Expected associated keys from the assigned transfer worker to be present
-          isSet(jobAuthorization.sessionSecretKey(), jobAuthorization.authPublicKey());
+          isSet(jobAuthorization.authPublicKey());
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_STORED:
           isSet(
-              jobAuthorization.sessionSecretKey(),
               jobAuthorization.authPublicKey(),
               jobAuthorization.encryptedAuthData());
           break;
