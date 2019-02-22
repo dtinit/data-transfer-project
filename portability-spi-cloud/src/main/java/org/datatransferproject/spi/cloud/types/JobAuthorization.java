@@ -43,6 +43,7 @@ public abstract class JobAuthorization {
    * for storage.
    */
   @Deprecated
+  @Nullable
   @JsonProperty("sessionSecretKey")
   public abstract String sessionSecretKey();
 
