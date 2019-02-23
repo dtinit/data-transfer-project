@@ -139,8 +139,10 @@ public abstract class PortabilityJob {
             .put(DATA_TYPE_KEY, transferDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
-            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
-            .put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString());
+    if (jobAuthorization().sessionSecretKey() != null) {
+      builder.put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+    }
 
     if (null != exportInformation()) {
       builder.put(EXPORT_INFORMATION_KEY, exportInformation());
