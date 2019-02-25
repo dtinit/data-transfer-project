@@ -1,5 +1,7 @@
 package org.datatransferproject.types.common.models.playlists;
 
+import org.datatransferproject.types.common.models.CreativeWork;
+
 /**
  * POJO for https://schema.org/MusicRecording
  */
@@ -11,10 +13,10 @@ public class MusicRecording extends CreativeWork {
   private MusicGroup byArtist;
 
   public MusicRecording(String headline,
-      String isrcCode,
-      MusicAlbum musicAlbum,
-      MusicGroup byArtist) {
-    super(headline);
+                        String isrcCode,
+                        MusicAlbum musicAlbum,
+                        MusicGroup byArtist) {
+    setHeadline(headline);
     this.isrcCode = isrcCode;
     this.musicAlbum = musicAlbum;
     this.byArtist = byArtist;

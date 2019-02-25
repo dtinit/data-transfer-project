@@ -16,9 +16,12 @@
 
 package org.datatransferproject.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Interface for providing information necessary to run OAuth2 flow
@@ -57,6 +60,18 @@ public interface OAuth2Config {
    */
   default Map<String, String> getAdditionalAuthUrlParameters() {
     return null;
+  }
+
+  /**
+   * Returns the class that can deserialize the OAuth response.
+   */
+  default TokensAndUrlAuthData getResponseClass(String result) throws IOException {
+    OAuth2TokenResponse response = new ObjectMapper().readValue(result, OAuth2TokenResponse.class);
+
+    return new TokensAndUrlAuthData(
+        response.getAccessToken(),
+        response.getRefreshToken(),
+        getTokenUrl());
   }
 
 }

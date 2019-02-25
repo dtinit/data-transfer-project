@@ -65,10 +65,10 @@ public class SpotifyPlaylistImporter
   private void createPlaylist(MusicPlaylist playlist, String userId)
       throws IOException, SpotifyWebApiException {
     Playlist createPlaylistResult = spotifyApi
-        .createPlaylist(userId, playlist.headline())
+        .createPlaylist(userId, playlist.getHeadline())
         .collaborative(false)
         .public_(false)
-        .name("Imported - " + playlist.headline())
+        .name("Imported - " + playlist.getHeadline())
         .build()
         .execute();
     for (MusicRecording track : playlist.getTrack()) {
@@ -91,13 +91,13 @@ public class SpotifyPlaylistImporter
     // TODO: right now this depends on an ISRC being present, we should add fallback
     // logic.
     checkArgument(!Strings.isNullOrEmpty(track.getIsrcCode()), "No ISRC code present for: "
-        + track.headline());
+        + track.getHeadline());
     Paging<Track> searchResponse = spotifyApi
         .searchTracks("isrc:" + track.getIsrcCode())
         .build()
         .execute();
     if (searchResponse.getItems().length == 0) {
-      throw new IOException("Couldn't find track: " + track.headline()
+      throw new IOException("Couldn't find track: " + track.getHeadline()
           + " with code: " + track.getIsrcCode());
     }
     return searchResponse.getItems()[0];

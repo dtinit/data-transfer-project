@@ -28,6 +28,9 @@ include ':extensions:transport:portability-transport-jettyrest'
 include ':extensions:security:portability-security-cleartext', ':extensions:security:portability-security-jwe'
 
 // Service Integrations - Auth and Transfer Extensions
+// Deezer
+include ':extensions:auth:portability-auth-deezer'
+include ':extensions:data-transfer:portability-data-transfer-deezer'
 // Flickr
 include ':extensions:auth:portability-auth-flickr'
 include ':extensions:data-transfer:portability-data-transfer-flickr'
