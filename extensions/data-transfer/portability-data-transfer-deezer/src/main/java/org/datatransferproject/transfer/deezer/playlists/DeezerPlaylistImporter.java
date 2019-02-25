@@ -63,7 +63,7 @@ public class DeezerPlaylistImporter
 
   private void createPlaylist(DeezerApi api, MusicPlaylist playlist)
       throws IOException {
-    InsertResponse createResponse = api.createPlaylist("Imported - " + playlist.headline());
+    InsertResponse createResponse = api.createPlaylist("Imported - " + playlist.getHeadline());
     if (createResponse.getError() != null) {
       throw new IOException("problem creating playlist: " + playlist + " error: "
           + createResponse.getError());
