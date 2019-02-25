@@ -34,7 +34,7 @@ public class RestFbFacebookPhotos implements FacebookPhotosInterface {
   RestFbFacebookPhotos(TokensAndUrlAuthData authData, AppCredentials appCredentials) {
     client =
         new DefaultFacebookClient(
-            authData.getAccessToken(), appCredentials.getSecret(), Version.VERSION_3_0);
+            authData.getAccessToken(), appCredentials.getSecret(), Version.VERSION_3_2);
   }
 
   public Connection<Album> getAlbums(Optional<String> paginationToken) {

@@ -69,7 +69,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar"))
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.modify"))
-        .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
+        .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
         .build();
   }
