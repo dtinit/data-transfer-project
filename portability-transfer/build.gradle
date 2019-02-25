@@ -43,6 +43,7 @@ dependencies {
     compile project(':libraries:security')
     compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile("com.google.inject:guice:${guiceVersion}")
+    compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
 
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")

@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
@@ -79,6 +80,7 @@ public class WorkerMain {
 
     // TODO this should be moved into a service extension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(OkHttpClient.class, new OkHttpClient.Builder().build());
     extensionContext.registerService(JsonFactory.class, new JacksonFactory());
 
     ServiceLoader.load(ServiceExtension.class)

@@ -77,6 +77,7 @@ dependencies {
     compile project(':extensions:auth:portability-auth-smugmug')
     compile project(':extensions:auth:portability-auth-spotify')
     compile project(':extensions:auth:portability-auth-twitter')
+    compile project(':extensions:auth:portability-auth-imgur')
 
     compile project(':extensions:data-transfer:portability-data-transfer-deezer')
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
@@ -88,6 +89,7 @@ dependencies {
     compile project(':extensions:data-transfer:portability-data-transfer-smugmug')
     compile project(':extensions:data-transfer:portability-data-transfer-spotify')
     compile project(':extensions:data-transfer:portability-data-transfer-twitter')
+    compile project(':extensions:data-transfer:portability-data-transfer-imgur')
 
     if (offlineData == 'true') {
         compile project(':extensions:auth:portability-auth-offline-demo')

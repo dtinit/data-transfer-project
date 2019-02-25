@@ -67,13 +67,13 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
-
+    String scope = scopes.isEmpty() ? "" : String.join(" ", scopes);
     URIBuilder builder = new URIBuilder()
         .setPath(config.getAuthUrl())
         .setParameter("response_type", "code")
         .setParameter("client_id", clientId)
         .setParameter("redirect_uri", callbackBaseUrl)
-        .setParameter("scope", String.join(" ", scopes))
+        .setParameter("scope", scope)
         .setParameter("state", encodedJobId);
 
     if (config.getAdditionalAuthUrlParameters() != null) {

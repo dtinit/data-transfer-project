@@ -244,6 +244,7 @@ components:
         - "Facebook"
         - "TWITTER"
         - "GOOGLE"
+        - "IMGUR"
         importServices:
         - "FLICKR"
         - "SMUGMUG"
