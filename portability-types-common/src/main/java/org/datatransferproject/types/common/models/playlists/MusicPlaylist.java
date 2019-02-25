@@ -1,6 +1,7 @@
 package org.datatransferproject.types.common.models.playlists;
 
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.models.CreativeWork;
 
 public class MusicPlaylist extends CreativeWork {
   // NOTE: only a subset of fields are used so far, feel free to add more fields from the spec as
@@ -8,7 +9,7 @@ public class MusicPlaylist extends CreativeWork {
   private ImmutableList<MusicRecording> track;
 
   public MusicPlaylist(String headline, Iterable<MusicRecording> tracks) {
-    super(headline);
+    setHeadline(headline);
     this.track = ImmutableList.copyOf(tracks);
   }
 
