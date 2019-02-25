@@ -22,6 +22,7 @@ public class Artist {
 
   @Override
   public String toString(){
-    return String.format("Artist{id=%s, name=%s}", id, name);
+    return String.format("Artist{id=%s, name=%s, link=%s}",
+        id, name, link);
   }
 }

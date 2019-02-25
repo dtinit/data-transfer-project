@@ -47,9 +47,9 @@ import org.datatransferproject.transfer.deezer.model.User;
  * <p>See: https://developers.deezer.com/api/explorer
  */
 public class DeezerApi {
-  private static ObjectMapper MAPPER =
+  private static final ObjectMapper MAPPER =
       new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  private static String BASE_URL = "https://api.deezer.com";
+  private static final String BASE_URL = "https://api.deezer.com";
 
   private final String accessToken;
   private final HttpTransport httpTransport;

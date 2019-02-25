@@ -11,7 +11,7 @@ This folder contains the extension implementation for the
 
  - Mostly working
  
- The base cfuncionality for import and export work, there are some rough edges still.
+ The base functionality for import and export work, there are some rough edges still.
  
  **Known Issues:**
  
@@ -25,6 +25,6 @@ https://developers.deezer.com/
 
 ## Maintained By
 
-The Google extension was created and maintained by the
+The Deezer extension was created and maintained by the
 [DTP maintainers](mailto:portability-maintainers@googlegroups.com)
 (this includes developers from Google).
