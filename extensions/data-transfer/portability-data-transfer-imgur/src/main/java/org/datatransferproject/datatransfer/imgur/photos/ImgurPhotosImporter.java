@@ -161,6 +161,7 @@ public class ImgurPhotosImporter
 
     if (!Strings.isNullOrEmpty(albumId)) {
       TempPhotosData tempData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+      // Get previously saved id of imported album
       String newAlbumId = tempData.lookupNewAlbumId(albumId);
       builder.add("album", newAlbumId);
     }
