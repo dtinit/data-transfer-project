@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -41,6 +42,7 @@ public class ImgurTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
 
   private ImgurPhotosExporter exporter;
+  private ImgurPhotosImporter importer;
 
   @Override
   public void initialize(ExtensionContext context) {
@@ -56,6 +58,7 @@ public class ImgurTransferExtension implements TransferExtension {
     JobStore jobStore = context.getService(JobStore.class);
 
     exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore);
+    importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore);
 
     initialized = true;
   }
@@ -79,7 +82,9 @@ public class ImgurTransferExtension implements TransferExtension {
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(
         initialized, "ImgurTransferExtension is not initialized. Unable to get Importer");
-    Preconditions.checkArgument(false, "Imgur importer is not implemented yet");
-    return null;
+    Preconditions.checkArgument(
+        SUPPORTED_DATA_TYPES.contains(transferDataType),
+        "ImgurTransferExtension doesn't support " + transferDataType);
+    return importer;
   }
 }
