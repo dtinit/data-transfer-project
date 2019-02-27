@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.auth.audiomack;
+package org.datatransferproject.transfer.audiomack.model;
 
-import org.datatransferproject.auth.OAuth1ServiceExtension;
-import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Audiomack services.
+ * POJO of artist: https://www.audiomack.com/data-api/docs#entity-artist
  */
-public class AudiomackAuthServiceExtension extends OAuth1ServiceExtension {
+public class Artist {
+  @JsonProperty("id")
+  private long id;
 
-  public AudiomackAuthServiceExtension() { super(new AudiomackOAuthConfig()); }
+  @JsonProperty("name")
+  private String name;
+
+  @JsonProperty("url_slug")
+  private String urlSlug;
+
+  public long getId() { return id; }
+
+  public String getName() { return name; }
+
+  public String getUrlSlug() { return urlSlug; }
 }

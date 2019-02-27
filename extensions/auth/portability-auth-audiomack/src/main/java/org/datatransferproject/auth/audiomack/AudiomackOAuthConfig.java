@@ -16,6 +16,45 @@
 
 package org.datatransferproject.auth.audiomack;
 
-public class AudiomackOAuthConfig {
+import java.util.Map;
+import org.datatransferproject.auth.OAuth1Config;
 
+/**
+ * Class that supplies Audiomack-specific OAuth1 info
+ * See https://www.audiomack.com/data-api/docs#authenticated-requests
+ */
+public class AudiomackOAuthConfig implements OAuth1Config {
+
+  @Override
+  public String getServiceName() { return "Audiomack"; }
+
+  @Override
+  public String getRequestTokenUrl() {
+    return "https://api.audiomack.com/v1/request_token";
+  }
+
+  @Override
+  public String getAuthorizationUrl() {
+    return "https://www.audiomack.com/oauth/authenticate";
+  }
+
+  @Override
+  public String getAccessTokenUrl() {
+    return "https://api.audiomack.com/v1/access_token";
+  }
+
+  @Override
+  public Map<String, String> getExportScopes() {
+    return null;
+  }
+
+  @Override
+  public Map<String, String> getImportScopes() {
+    return null;
+  }
+
+  @Override
+  public String getScopeParameterName() {
+    return null;
+  }
 }
