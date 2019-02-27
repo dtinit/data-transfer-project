@@ -29,6 +29,7 @@ include ':extensions:security:portability-security-cleartext', ':extensions:secu
 
 // Service Integrations - Auth and Transfer Extensions
 // Audiomack
+include ':extensions:auth:portability-auth-audiomack'
 include ':extensions:data-transfer:portability-data-transfer-audiomack'
 // Deezer
 include ':extensions:auth:portability-auth-deezer'
