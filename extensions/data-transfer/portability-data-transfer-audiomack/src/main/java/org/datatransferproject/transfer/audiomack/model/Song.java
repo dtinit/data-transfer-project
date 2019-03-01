@@ -16,11 +16,13 @@
 
 package org.datatransferproject.transfer.audiomack.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * POJO of song: https://www.audiomack.com/data-api/docs#entity-music
  */
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class Song {
 
   @JsonProperty("id")

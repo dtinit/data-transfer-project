@@ -16,6 +16,30 @@
 
 package org.datatransferproject.transfer.audiomack.playlists;
 
-public class AudiomackPlaylistExporter {
+import com.google.api.client.http.HttpTransport;
+import java.util.Optional;
+import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+public class AudiomackPlaylistExporter implements
+    Exporter<TokensAndUrlAuthData, PlaylistContainerResource> {
+
+  private final Monitor monitor;
+  private final HttpTransport httpTransport;
+
+  public AudiomackPlaylistExporter(Monitor monitor, HttpTransport httpTransport) {
+    this.monitor = monitor;
+    this.httpTransport = httpTransport;
+  }
+
+  @Override
+  public ExportResult<PlaylistContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
+      Optional<ExportInformation> exportInformation) throws Exception {
+    return null;
+  }
 }

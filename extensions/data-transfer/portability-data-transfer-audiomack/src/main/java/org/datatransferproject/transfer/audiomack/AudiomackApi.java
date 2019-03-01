@@ -16,6 +16,39 @@
 
 package org.datatransferproject.transfer.audiomack;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.http.HttpTransport;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.scribe.builder.ServiceBuilder;
+import org.scribe.model.OAuthRequest;
+import org.scribe.model.Response;
+import org.scribe.model.Token;
+import org.scribe.model.Verb;
+import org.scribe.oauth.OAuthService;
+
 public class AudiomackApi {
 
+  private static final ObjectMapper MAPPER = new ObjectMapper().configure(
+      DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final String BASE_URL = "https://api.audiomack.com/v1/";
+
+  private final OAuthService oAuthService;
+  private final HttpTransport httpTransport;
+  private final Token accessToken;
+
+  AudiomackApi(
+      HttpTransport httpTransport,
+      AppCredentials appCredentials,
+      TokenSecretAuthData authData) {
+    this.httpTransport = httpTransport;
+    this.oAuthService =
+        new ServiceBuilder()
+            .apiKey(appCredentials.getKey())
+            .apiSecret(appCredentials.getSecret())
+            .provider(AudiomackOAuthApi.class)
+            .build();
+    this.accessToken = new Token(authData.getToken(), authData.getSecret());
+  }
 }

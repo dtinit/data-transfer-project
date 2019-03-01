@@ -14,29 +14,25 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.audiomack.model;
+package org.datatransferproject.transfer.audiomack;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.scribe.builder.api.DefaultApi10a;
+import org.scribe.model.Token;
 
-/**
- * POJO of user: https://www.audiomack.com/data-api/docs#entity-user
- */
-@JsonIgnoreProperties(ignoreUnknown=true)
-public class User {
+public class AudiomackOAuthApi extends DefaultApi10a {
 
-  @JsonProperty("id")
-  private long id;
+  @Override
+  public String getRequestTokenEndpoint() {
+    return "https://api.audiomack.com/v1/request_token";
+  }
 
-  @JsonProperty("name")
-  private String name;
+  @Override
+  public String getAccessTokenEndpoint() {
+    return "https://api.audiomack.com/v1/access_token";
+  }
 
-  @JsonProperty("url_slug")
-  private String urlSlug;
-
-  public long getId() { return id; }
-
-  public String getName() { return name; }
-
-  public String getUrlSlug() { return urlSlug; }
+  @Override
+  public String getAuthorizationUrl(Token requestToken) {
+    return "https://www.autdiomack.com/oauth/authenticate?oauth_token=" + requestToken.getToken();
+  }
 }
