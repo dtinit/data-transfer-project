@@ -18,11 +18,16 @@ package org.datatransferproject.transfer.audiomack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 /**
  * POJO of a playlist: https://www.audiomack.com/data-api/docs#playlists
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Playlist {
+  @JsonProperty("id")
+  private long id;
 
+  @JsonProperty("tracks")
+  private List<Song> tracks;
 }

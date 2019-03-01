@@ -19,23 +19,27 @@ package org.datatransferproject.transfer.audiomack.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * POJO of artist: https://www.audiomack.com/data-api/docs#entity-artist
- */
+/** A generic wrapper around Audiomack responses. */
 @JsonIgnoreProperties(ignoreUnknown=true)
-public class Artist {
-  @JsonProperty("id")
-  private long id;
+public class AudiomackResponse<T> {
 
-  @JsonProperty("name")
-  private String name;
+  @JsonProperty("results")
+  private T results;
 
-  @JsonProperty("album")
-  private String album;
+  @JsonProperty("paging_token")
+  private String paginationToken;
 
-  public long getId() { return id; }
+  @JsonProperty("errorcode")
+  private int errorCode;
 
-  public String getName() { return name; }
+  @JsonProperty("message")
+  private String errorMessage;
 
-  public String getAlbum() { return album; }
+  public T getResults() { return results; }
+
+  public String getPaginationToken() { return paginationToken; }
+
+  public int getErrorCode() { return errorCode; }
+
+  public String getErrorMessage() { return errorMessage; }
 }

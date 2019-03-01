@@ -25,7 +25,6 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.audiomack.playlists.AudiomackPlaylistExporter;
-import org.datatransferproject.transfer.audiomack.playlists.AudiomackPlaylistImporter;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -34,7 +33,6 @@ public class AudiomackTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PLAYLISTS");
 
   private Exporter<TokensAndUrlAuthData, PlaylistContainerResource> exporter;
-  private Importer<TokensAndUrlAuthData, PlaylistContainerResource> importer;
 
   private boolean initialized = false;
 
@@ -53,10 +51,10 @@ public class AudiomackTransferExtension implements TransferExtension {
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
-    Preconditions.checkArgument(initialized,
-        "AudiomackTransferExtension not initialized. Unable to get Importer");
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return importer;
+    Preconditions.checkArgument(
+        initialized, "AudiomackTransferExtension not initialized. Unable to get Importer");
+    Preconditions.checkArgument(false, "Audiomack import is not implemented");
+    return null;
   }
 
   @Override
@@ -71,7 +69,6 @@ public class AudiomackTransferExtension implements TransferExtension {
     HttpTransport httpTransport = context.getService(HttpTransport.class);
 
     exporter = new AudiomackPlaylistExporter(monitor, httpTransport);
-    importer = new AudiomackPlaylistImporter(monitor, httpTransport);
     initialized = true;
   }
 }

@@ -16,9 +16,16 @@
 
 package org.datatransferproject.transfer.audiomack;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.annotation.Nullable;
+import org.datatransferproject.transfer.audiomack.model.AudiomackResponse;
+import org.datatransferproject.transfer.audiomack.model.User;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.builder.ServiceBuilder;
@@ -50,5 +57,52 @@ public class AudiomackApi {
             .provider(AudiomackOAuthApi.class)
             .build();
     this.accessToken = new Token(authData.getToken(), authData.getSecret());
+  }
+
+  private <T> T makeRequest(String url, TypeReference<AudiomackResponse<T>> typeReference)
+      throws IOException {
+    String fullUrl;
+    if (!url.contains("https://")) {
+      fullUrl = BASE_URL + url;
+    } else {
+      fullUrl = url;
+    }
+    OAuthRequest request = new OAuthRequest(Verb.GET, fullUrl);
+    oAuthService.signRequest(accessToken, request);
+    final Response response = request.send();
+
+    if (response.getCode() < 200 || response.getCode() >= 300) {
+      throw new IOException(
+          String.format("Error occurred in request for %s : %s", url, response.getMessage()));
+    }
+
+    String result = response.getBody();
+    return MAPPER.readValue(result, typeReference);
+  }
+
+  private <T> T postRequest(
+      String url,
+      Map<String, String> contentParams,
+      TypeReference<T> typeReference) throws IOException {
+
+    String fullUrl = url;
+    if (!fullUrl.contains("://")) {
+      fullUrl = BASE_URL + url;
+    }
+    OAuthRequest request = new OAuthRequest(Verb.POST, fullUrl);
+
+    for (Entry<String, String> param : contentParams.entrySet()) {
+      request.addBodyParameter(param.getKey(), param.getValue());
+    }
+
+    oAuthService.signRequest(accessToken, request);
+
+    Response response = request.send();
+    if (response.getCode() < 200 || response.getCode() >= 300) {
+      throw new IOException(
+          String.format("Error occurred in request for %s : %s", fullUrl, response.getMessage()));
+    }
+
+    return MAPPER.readValue(response.getBody(), typeReference);
   }
 }
