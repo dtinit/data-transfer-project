@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.audiomack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 /**
  * POJO of user: https://www.audiomack.com/data-api/docs#entity-user
@@ -31,12 +32,12 @@ public class User {
   @JsonProperty("name")
   private String name;
 
-  @JsonProperty("url_slug")
-  private String urlSlug;
+  @JsonProperty("playlists")
+  private List<Long> playlists;
 
   public long getId() { return id; }
 
   public String getName() { return name; }
 
-  public String getUrlSlug() { return urlSlug; }
+  public List<Long> getPlaylists() { return playlists; }
 }

@@ -21,10 +21,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.annotation.Nullable;
 import org.datatransferproject.transfer.audiomack.model.AudiomackResponse;
+import org.datatransferproject.transfer.audiomack.model.Playlist;
 import org.datatransferproject.transfer.audiomack.model.User;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -57,6 +58,17 @@ public class AudiomackApi {
             .provider(AudiomackOAuthApi.class)
             .build();
     this.accessToken = new Token(authData.getToken(), authData.getSecret());
+  }
+
+  public List<Long> getUserPlaylistIds() throws IOException {
+    User user = makeRequest("https://api.audiomack.com/v1/user",
+        new TypeReference<AudiomackResponse<User>>() {});
+    return user.getPlaylists();
+  }
+
+  public Playlist getIndividualPlaylist(long id) throws IOException {
+    return makeRequest("https://api.audiomack.com/v1/" + id,
+        new TypeReference<AudiomackResponse<Playlist>>() {});
   }
 
   private <T> T makeRequest(String url, TypeReference<AudiomackResponse<T>> typeReference)
