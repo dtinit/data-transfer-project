@@ -20,14 +20,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.config.ConfigUtils;
+import org.datatransferproject.config.extension.SettingsExtension;
+import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import org.datatransferproject.api.launcher.ExtensionContext;
-import org.datatransferproject.config.ConfigUtils;
-import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /**
  * {@link SettingsExtension} that reads configuration from YAML files on the classpath.
@@ -65,7 +65,7 @@ public class YamlSettingsExtension implements SettingsExtension {
   }
 
   @Override
-  public void initialize(ExtensionContext context) {
+  public void initialize() {
     parseSimple(getSimpleInputStream());
     parseRetryLibrary(getRetryLibraryStream());
   }

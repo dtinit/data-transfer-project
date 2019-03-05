@@ -13,26 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-group = 'org.datatransferproject'
-version = '1.0-SNAPSHOT'
-
-jar {
-    // TODO: consider using the gradle fatjar plugin rather than this dependency jar building logic
-    // Add dependencies
-    from({
-        (configurations.runtime).collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }) {
-        // Exclude signature files to avoid SecurityException
-        exclude '**/META-INF/*.SF'
-        exclude '**/META-INF/*.DSA'
-        exclude '**/META-INF/*.RSA'
-    }
-    manifest {
-        attributes 'Main-Class': 'org.datatransferproject.api.ApiMain'
-    }
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
 }
 
 dependencies {
@@ -56,9 +39,6 @@ dependencies {
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
     compile("org.simpleframework:simple:${simpleFrameworkVersion}")
-    // Logging
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
 
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
@@ -67,3 +47,5 @@ dependencies {
 sourceSets.test {
     resources.srcDirs = ["src/test/resources"]
 }
+
+configurePublication(project)

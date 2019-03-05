@@ -33,13 +33,12 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.PaginationData;
-import org.datatransferproject.spi.transfer.types.StringPaginationToken;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.DataModel;
-import org.datatransferproject.types.transfer.models.mail.MailContainerResource;
-import org.datatransferproject.types.transfer.models.mail.MailMessageModel;
+import org.datatransferproject.types.common.models.mail.MailContainerResource;
+import org.datatransferproject.types.common.models.mail.MailMessageModel;
 
 public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailContainerResource> {
   @VisibleForTesting

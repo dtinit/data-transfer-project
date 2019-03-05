@@ -14,14 +14,13 @@ import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactor
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempCalendarData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 
 public class GoogleCalendarImporter implements
     Importer<TokensAndUrlAuthData, CalendarContainerResource> {

@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

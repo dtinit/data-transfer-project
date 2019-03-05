@@ -36,17 +36,15 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
-import org.datatransferproject.spi.transfer.types.IntPaginationToken;
-import org.datatransferproject.spi.transfer.types.PaginationData;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.IntPaginationToken;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,8 +63,6 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   private final PhotosetsInterface photosetsInterface;
   private final PhotosInterface photosInterface;
   private final Flickr flickr;
-
-  private final Logger logger = LoggerFactory.getLogger(FlickrPhotosExporter.class);
 
   public FlickrPhotosExporter(AppCredentials appCredentials) {
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());

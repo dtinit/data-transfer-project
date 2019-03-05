@@ -22,8 +22,6 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
-import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -31,16 +29,16 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempTasksData;
+import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskListModel;
+import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.tasks.TaskContainerResource;
-import org.datatransferproject.types.transfer.models.tasks.TaskListModel;
-import org.datatransferproject.types.transfer.models.tasks.TaskModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.UUID;
+
 
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
-
-  private final Logger logger = LoggerFactory.getLogger(GoogleTasksImporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -60,7 +58,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) throws IOException {
+          UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) throws IOException {
 
     Tasks tasksService = getOrCreateTasksService(authData);
     TempTasksData tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);

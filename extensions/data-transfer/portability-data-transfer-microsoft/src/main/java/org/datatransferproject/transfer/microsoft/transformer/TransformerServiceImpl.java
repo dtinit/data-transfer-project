@@ -34,9 +34,9 @@ import org.datatransferproject.transfer.microsoft.transformer.contacts.ToGraphAd
 import org.datatransferproject.transfer.microsoft.transformer.contacts.ToGraphContactTransformer;
 import org.datatransferproject.transfer.microsoft.transformer.contacts.ToVCardAddressTransformer;
 import org.datatransferproject.transfer.microsoft.transformer.contacts.ToVCardTransformer;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 
 /** Dispatches to a cached function based on input and result types to perform a transformation. */
 public class TransformerServiceImpl implements TransformerService {

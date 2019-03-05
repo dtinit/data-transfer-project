@@ -16,33 +16,30 @@
 package org.datatransferproject.transfer;
 
 import com.google.inject.Provider;
-import java.io.IOException;
-import java.time.Clock;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.models.ContainerResource;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-/**
- * Implementation of {@link InMemoryDataCopier}.
- */
+import javax.inject.Inject;
+import java.io.IOException;
+import java.time.Clock;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/** Implementation of {@link InMemoryDataCopier}. */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
-  private static final Logger logger = LoggerFactory.getLogger(PortabilityInMemoryDataCopier.class);
 
   /**
    * Lazy evaluate exporter and importer as their providers depend on the polled {@code
@@ -53,26 +50,25 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private final Provider<Importer> importerProvider;
 
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
+  private final Monitor monitor;
 
   @Inject
-  public PortabilityInMemoryDataCopier(Provider<Exporter> exporterProvider,
+  public PortabilityInMemoryDataCopier(
+      Provider<Exporter> exporterProvider,
       Provider<Importer> importerProvider,
-      Provider<RetryStrategyLibrary> retryStrategyLibraryProvider) {
+      Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
+      Monitor monitor) {
     this.exporterProvider = exporterProvider;
     this.importerProvider = importerProvider;
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
+    this.monitor = monitor;
   }
 
-  /**
-   * Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}.
-   */
+  /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-  public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId)
-      throws IOException {
-    // Initial copy, starts off the process with no previous paginationData or containerResource
-    // information
-    Optional<ExportInformation> emptyExportInfo = Optional.empty();
-    copyHelper(jobId, exportAuthData, importAuthData, emptyExportInfo);
+   public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId, Optional<ExportInformation> exportInfo)
+      throws IOException, CopyException {
+    copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
   /**
@@ -89,45 +85,44 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      Optional<ExportInformation> exportInformation) {
+      Optional<ExportInformation> exportInformation) throws CopyException {
 
     String jobIdPrefix = "Job " + jobId + ": ";
-    logger.debug(jobIdPrefix + "copy iteration: {}", COPY_ITERATION_COUNTER.incrementAndGet());
+    monitor.debug(
+        () -> jobIdPrefix + "Copy iteration: " + COPY_ITERATION_COUNTER.incrementAndGet());
 
     RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
 
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    logger.debug(jobIdPrefix + "Starting export");
-    CallableExporter callableExporter = new CallableExporter(exporterProvider, jobId,
-        exportAuthData,
-        exportInformation);
-    RetryingCallable<ExportResult> retryingExporter = new RetryingCallable<>(callableExporter,
-        retryStrategyLibrary, Clock.systemUTC());
+    monitor.debug(() -> jobIdPrefix + "Starting export");
+    CallableExporter callableExporter =
+        new CallableExporter(exporterProvider, jobId, exportAuthData, exportInformation);
+    RetryingCallable<ExportResult> retryingExporter =
+        new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
     ExportResult<?> exportResult;
     try {
       exportResult = retryingExporter.call();
     } catch (RetryException e) {
-      logger.warn(jobIdPrefix + "Error happened during export: {}", e);
-      return;
+      throw new CopyException(jobIdPrefix + "Error happened during export", e);
     }
-    logger.debug(jobIdPrefix + "Finished export");
+    monitor.debug(() -> jobIdPrefix + "Finished export");
 
     if (exportResult.getExportedData() != null) {
-      logger.debug(jobIdPrefix + "Starting import");
-      CallableImporter callableImporter = new CallableImporter(importerProvider, jobId,
-          importAuthData,
-          exportResult.getExportedData());
-      RetryingCallable<ImportResult> retryingImporter = new RetryingCallable<>(callableImporter,
-          retryStrategyLibrary, Clock.systemUTC());
+      monitor.debug(() -> jobIdPrefix + "Starting import");
+      CallableImporter callableImporter =
+          new CallableImporter(
+              importerProvider, jobId, importAuthData, exportResult.getExportedData());
+      RetryingCallable<ImportResult> retryingImporter =
+          new RetryingCallable<>(
+              callableImporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
       try {
         retryingImporter.call();
       } catch (RetryException e) {
-        logger.warn(jobIdPrefix + "Error happened during import: {}", e);
-        return;
+        throw new CopyException(jobIdPrefix + "Error happened during import", e);
       }
-      logger.debug(jobIdPrefix + "Finished import");
+      monitor.debug(() -> jobIdPrefix + "Finished import");
     }
 
     // Import and Export were successful, determine what to do next
@@ -136,7 +131,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     if (null != continuationData) {
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
-        logger.debug(jobIdPrefix + "Starting off a new copy iteration with pagination info");
+        monitor.debug(() -> jobIdPrefix + "Starting off a new copy iteration with pagination info");
         copyHelper(
             jobId,
             exportAuthData,

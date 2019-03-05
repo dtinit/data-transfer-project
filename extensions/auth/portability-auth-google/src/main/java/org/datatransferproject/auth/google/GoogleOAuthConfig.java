@@ -16,10 +16,8 @@
 
 package org.datatransferproject.auth.google;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
@@ -52,10 +50,13 @@ public class GoogleOAuthConfig implements OAuth2Config {
   @Override
   public Map<String, Set<String>> getExportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
+        .put("BLOBS", ImmutableSet.of("https://www.googleapis.com/auth/drive.readonly"))
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar.readonly"))
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts.readonly"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.readonly"))
         .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
+        // For G+
+        .put("SOCIAL-POSTS", ImmutableSet.of("https://www.googleapis.com/auth/plus.login"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks.readonly"))
         .build();
   }
@@ -64,10 +65,11 @@ public class GoogleOAuthConfig implements OAuth2Config {
   @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
+        .put("BLOBS", ImmutableSet.of("https://www.googleapis.com/auth/drive"))
         .put("CALENDAR", ImmutableSet.of("https://www.googleapis.com/auth/calendar"))
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.modify"))
-        .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
+        .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
         .build();
   }

@@ -14,4 +14,18 @@
  * limitations under the License.
  */
 
-dependencies {}
+
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
+}
+dependencies {
+    compile("com.google.auto.value:auto-value:${autoValueVersion}")
+
+    compile fileTree(include: ['*.jar'], dir: 'lib')
+
+    testCompile ("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
+    testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
+}
+
+configurePublication(project);

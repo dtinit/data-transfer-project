@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 
 /**
  * Maps from a transfer event type to a Graph API event resource as defined by:

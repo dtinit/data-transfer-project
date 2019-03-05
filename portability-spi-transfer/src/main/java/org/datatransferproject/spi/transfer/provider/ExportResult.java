@@ -3,7 +3,7 @@ package org.datatransferproject.spi.transfer.provider;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * The result of an item export operation, after retries.

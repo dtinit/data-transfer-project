@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -34,8 +33,8 @@ import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUplo
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

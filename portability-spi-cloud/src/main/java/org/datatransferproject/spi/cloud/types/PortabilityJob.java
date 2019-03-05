@@ -1,15 +1,19 @@
 package org.datatransferproject.spi.cloud.types;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.types.common.ExportInformation;
 
+import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A job that will fulfill a transfer request.
@@ -24,6 +28,7 @@ public abstract class PortabilityJob {
   private static final String DATA_TYPE_KEY = "DATA_TYPE";
   private static final String EXPORT_SERVICE_KEY = "EXPORT_SERVICE";
   private static final String IMPORT_SERVICE_KEY = "IMPORT_SERVICE";
+  private static final String EXPORT_INFORMATION_KEY = "EXPORT_INFORMATION";
   private static final String ENCRYPTED_CREDS_KEY = "ENCRYPTED_CREDS_KEY";
   private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
   private static final String ENCRYPTION_SCHEME = "ENCRYPTION_SCHEME";
@@ -70,6 +75,7 @@ public abstract class PortabilityJob {
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
         .setImportService((String) properties.get(IMPORT_SERVICE_KEY))
         .setTransferDataType((String) properties.get(DATA_TYPE_KEY))
+        .setExportInformation((ExportInformation) properties.get(EXPORT_INFORMATION_KEY))
         .setCreatedTimestamp(now) // TODO: get from DB
         .setLastUpdateTimestamp(now)
         .setJobAuthorization(
@@ -112,6 +118,10 @@ public abstract class PortabilityJob {
   @JsonProperty("transferDataType")
   public abstract String transferDataType();
 
+  @Nullable
+  @JsonProperty(value = "exportInformation")
+  public abstract ExportInformation exportInformation();
+
   @JsonProperty("createdTimestamp")
   public abstract LocalDateTime createdTimestamp(); // ISO 8601 timestamp
 
@@ -129,8 +139,14 @@ public abstract class PortabilityJob {
             .put(DATA_TYPE_KEY, transferDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
-            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
-            .put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString());
+    if (jobAuthorization().sessionSecretKey() != null) {
+      builder.put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+    }
+
+    if (null != exportInformation()) {
+      builder.put(EXPORT_INFORMATION_KEY, exportInformation());
+    }
 
     if (null != jobAuthorization().authPublicKey()) {
       builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
@@ -156,6 +172,21 @@ public abstract class PortabilityJob {
           IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
     }
     return builder.build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PortabilityJob that = (PortabilityJob) o;
+    return Objects.equals(state(), that.state()) &&
+            Objects.equals(exportService(), that.exportService()) &&
+            Objects.equals(importService(), that.importService()) &&
+            Objects.equals(transferDataType(), that.transferDataType()) &&
+            Objects.equals(exportInformation(), that.exportInformation()) &&
+            Objects.equals(createdTimestamp(), that.createdTimestamp()) &&
+            Objects.equals(lastUpdateTimestamp(), that.lastUpdateTimestamp()) &&
+            Objects.equals(jobAuthorization(), that.jobAuthorization());
   }
 
   /** The job states. */
@@ -186,6 +217,10 @@ public abstract class PortabilityJob {
     @JsonProperty("transferDataType")
     public abstract Builder setTransferDataType(String transferDataType);
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("exportInformation")
+    public abstract Builder setExportInformation(ExportInformation exportInformation);
+
     @JsonProperty("createdTimestamp")
     public abstract Builder setCreatedTimestamp(LocalDateTime createdTimestamp);
 
@@ -197,18 +232,15 @@ public abstract class PortabilityJob {
       switch (jobAuthorization.state()) {
         case INITIAL:
         case CREDS_AVAILABLE:
-          // SessionKey required to create a job
-          isSet(jobAuthorization.sessionSecretKey());
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_ENCRYPTION_KEY_GENERATED:
           // Expected associated keys from the assigned transfer worker to be present
-          isSet(jobAuthorization.sessionSecretKey(), jobAuthorization.authPublicKey());
+          isSet(jobAuthorization.authPublicKey());
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_STORED:
           isSet(
-              jobAuthorization.sessionSecretKey(),
               jobAuthorization.authPublicKey(),
               jobAuthorization.encryptedAuthData());
           break;

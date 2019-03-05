@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.UUID;
-import org.datatransferproject.types.transfer.models.DataModel;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 
 /*
  * TempPhotosData used to store album and photos information before they are ready to be uploaded.

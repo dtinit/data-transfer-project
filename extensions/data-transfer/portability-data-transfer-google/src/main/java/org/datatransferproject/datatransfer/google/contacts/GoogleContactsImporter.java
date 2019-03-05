@@ -45,9 +45,8 @@ import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
+
 
 public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, ContactsModelWrapper> {
 
@@ -55,7 +54,6 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
       new FieldMetadata().setPrimary(false);
 
-  private static final Logger logger = LoggerFactory.getLogger(GoogleContactsExporter.class);
   private final GoogleCredentialFactory credentialFactory;
   private volatile PeopleService peopleService;
 

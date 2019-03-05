@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * A store for {@link PortabilityJob}s.

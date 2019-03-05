@@ -28,10 +28,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -39,42 +36,49 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.TempMailData;
+import org.datatransferproject.types.common.models.mail.MailContainerModel;
+import org.datatransferproject.types.common.models.mail.MailContainerResource;
+import org.datatransferproject.types.common.models.mail.MailMessageModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.mail.MailContainerModel;
-import org.datatransferproject.types.transfer.models.mail.MailContainerResource;
-import org.datatransferproject.types.transfer.models.mail.MailMessageModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+
 
 public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailContainerResource> {
-  private final Logger logger = LoggerFactory.getLogger(GoogleMailImporter.class);
 
-  @VisibleForTesting
-  static final long MAX_RESULTS_PER_REQUEST = 10L;
+  @VisibleForTesting static final long MAX_RESULTS_PER_REQUEST = 10L;
+
   @VisibleForTesting
   // The special value me can be used to indicate the authenticated user to the gmail api
   static final String USER = "me";
-  @VisibleForTesting
-  static final String LABEL = "DTP-migrated";
+
+  @VisibleForTesting static final String LABEL = "DTP-migrated";
 
   private GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private final Gmail gmail;
+  private final Monitor monitor;
 
-  public GoogleMailImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory, jobStore, null);
+  public GoogleMailImporter(
+      GoogleCredentialFactory credentialFactory, JobStore jobStore, Monitor monitor) {
+    this(credentialFactory, jobStore, null, monitor);
   }
 
   @VisibleForTesting
-  GoogleMailImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, Gmail gmail) {
+  GoogleMailImporter(
+      GoogleCredentialFactory credentialFactory, JobStore jobStore, Gmail gmail, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.gmail = gmail;
+    this.monitor = monitor;
   }
 
   @Override
   public ImportResult importItem(
-      UUID id, TokensAndUrlAuthData authData, MailContainerResource data) {
+          UUID id, TokensAndUrlAuthData authData, MailContainerResource data) {
 
     // Initialize the temp storage of import folder/label mappings associated with this job
     TempMailData tempMailData;
@@ -93,14 +97,14 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     ImportResult result =
         importLabels(id, authData, tempMailData, allDestinationLabels, data.getFolders());
     if (result != ImportResult.OK) {
-      logger.warn("Error after importing labels");
+      monitor.severe(() -> "Error after importing labels");
       return result;
     }
 
     // Import the special DTP label
     result = importDTPLabel(id, authData, tempMailData, allDestinationLabels);
     if (result != ImportResult.OK) {
-      logger.warn("Error after importing DTP table");
+      monitor.severe(() -> "Error after importing DTP table");
       return result;
     }
 
@@ -109,14 +113,14 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         importLabelsForMessages(
             id, authData, tempMailData, allDestinationLabels, data.getMessages());
     if (result != ImportResult.OK) {
-      logger.warn("Error after importing labels for messages");
+      monitor.severe(() -> "Error after importing labels for messages");
       return result;
     }
 
     // Import messages
     result = importMessages(authData, tempMailData, data.getMessages());
     if (result != ImportResult.OK) {
-      logger.warn("Error after importing messages");
+      monitor.severe(() -> "Error after importing messages");
       return result;
     }
     return result;
@@ -251,8 +255,9 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
         if (importedLabelId != null) {
           importedLabelIds.add(exportedLabelIdOrName);
         } else {
-          logger.warn(
-              "labels should have been added prior to importing messages"); // TODO remove after
+          monitor.debug(
+              () ->
+                  "labels should have been added prior to importing messages"); // TODO remove after
           // testing
         }
         // Always add the migrated id
@@ -322,16 +327,18 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
 
-  /** Key for cache of album mappings.
-   * TODO: Add a method parameter for a {@code key} for fine grained objects.
+  /**
+   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
+   * grained objects.
    */
   private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    // TODO: store objects containing individual mappings instead of single object containing all
+    // mappings
     return "tempMailData";
   }
 }

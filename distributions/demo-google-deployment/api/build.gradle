@@ -53,17 +53,20 @@ repositories {
 
 dependencies {
     compile project(':portability-api')
-    compile project(':libraries:logging')
     compile project(':extensions:transport:portability-transport-jettyrest')
     compile project(':extensions:config:portability-config-yaml')
     // TODO: depend on these based on list in flag values.
+
+    compile project(':extensions:auth:portability-auth-deezer')
     compile project(':extensions:auth:portability-auth-microsoft')
     compile project(':extensions:auth:portability-auth-google')
     compile project(':extensions:auth:portability-auth-flickr')
     compile project(':extensions:auth:portability-auth-rememberthemilk')
     compile project(':extensions:auth:portability-auth-instagram')
     compile project(':extensions:auth:portability-auth-smugmug')
+    compile project(':extensions:auth:portability-auth-spotify')
     compile project(':extensions:auth:portability-auth-facebook')
+    compile project(':extensions:auth:portability-auth-imgur')
 }
 
 
@@ -120,7 +123,7 @@ task createApiServerDockerfile(type: Dockerfile) {
     destFile project.file("${buildDir}/api/Dockerfile")
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the API server is accessed from
-    copyFile("build/libs/api-all.jar", "/app/api.jar")
+    copyFile("build/libs/api-${project.version}-all.jar", "/app/api.jar")
     defaultCommand("java",
             "-Xrunjdwp:transport=dt_socket,server=y,suspend=n",
             "-jar",
@@ -155,7 +158,7 @@ task createApiServerDockerfileLocal(type: Dockerfile) {
     destFile project.file("${buildDir}/api/Dockerfile")
     from "gcr.io/google-appengine/openjdk:8"
     exposePort 8080 // Port the API server is accessed from
-    copyFile("build/libs/api-all.jar", "/app/api.jar")
+    copyFile("build/libs/api-${project.version}-all.jar", "/app/api.jar")
     copyFile("build/libs/service_acct_creds.json", '/service_acct_creds.json')
 
     // Note: Debug port, project ID, and service_acct_creds.json set in the image are for local

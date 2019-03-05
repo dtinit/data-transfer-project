@@ -33,12 +33,11 @@ import okhttp3.ResponseBody;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 
 /**
  * Exports Microsoft OneDrive photos using the Graph API.

@@ -18,19 +18,22 @@ package org.datatransferproject.transfer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
+import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.SecurityException;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.security.PrivateKey;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,69 +47,77 @@ import static java.lang.String.format;
  */
 final class JobProcessor {
 
-  private static final Logger logger = LoggerFactory.getLogger(JobProcessor.class);
-
   private final JobStore store;
+  private final JobHooks hooks;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final Set<AuthDataDecryptService> decryptServices;
+  private final Monitor monitor;
 
   @Inject
   JobProcessor(
       JobStore store,
+      JobHooks hooks,
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
-      Set<AuthDataDecryptService> decryptServices) {
+      Set<AuthDataDecryptService> decryptServices,
+      Monitor monitor) {
     this.store = store;
+    this.hooks = hooks;
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.decryptServices = decryptServices;
+    this.monitor = monitor;
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
   void processJob() {
+    boolean success = false;
     UUID jobId = JobMetadata.getJobId();
-    logger.debug("Begin processing jobId: {}", jobId);
+    monitor.debug(() -> format("Begin processing jobId: %s", jobId));
+    hooks.jobStarted(jobId);
 
     PortabilityJob job = store.findJob(jobId);
     JobAuthorization jobAuthorization = job.jobAuthorization();
     Preconditions.checkState(jobAuthorization.state() == JobAuthorization.State.CREDS_STORED);
 
     try {
-      logger.debug(
-          "Starting copy job, id: {}, source: {}, destination: {}",
-          jobId,
-          job.exportService(),
-          job.importService());
+      monitor.debug(
+          () ->
+              format(
+                  "Starting copy job, id: %s, source: %s, destination: %s",
+                  jobId, job.exportService(), job.importService()));
 
       String scheme = jobAuthorization.encryptionScheme();
       AuthDataDecryptService decryptService = getAuthDecryptService(scheme);
       if (decryptService == null) {
-        logger.error(
-            format(
-                "No auth decrypter found for scheme %s while processing job: %s", scheme, jobId));
+        monitor.severe(
+            () ->
+                format(
+                    "No auth decrypter found for scheme %s while processing job: %s",
+                    scheme, jobId));
         return;
       }
-      
+
       String encrypted = jobAuthorization.encryptedAuthData();
       PrivateKey privateKey = JobMetadata.getKeyPair().getPrivate();
       AuthDataPair pair = decryptService.decrypt(encrypted, privateKey);
       AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
       AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
-      // Copy the data
-      copier.copy(exportAuthData, importAuthData, jobId);
-      logger.debug("Finished copy for jobId: " + jobId);
+      Optional<ExportInformation> exportInfo = Optional.ofNullable(job.exportInformation());
 
-    } catch (IOException | SecurityException e) {
-      logger.error("Error processing jobId: " + jobId, e);
+      // Copy the data
+      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
+      monitor.debug(() -> "Finished copy for jobId: " + jobId);
+      success = true;
+    } catch (IOException | SecurityException | CopyException e) {
+      monitor.severe(() -> "Error processing jobId: " + jobId, e);
     } finally {
-      try {
-        store.remove(jobId);
-        JobMetadata.reset();
-      } catch (IOException e) {
-        logger.error("Error removing jobId: " + jobId, e);
-      }
+      monitor.debug(() -> "Finished processing jobId: " + jobId);
+      markJobFinished(jobId, success);
+      hooks.jobFinished(jobId, success);
+      JobMetadata.reset();
     }
   }
 
@@ -118,5 +129,17 @@ final class JobProcessor {
       }
     }
     return null;
+  }
+
+  private void markJobFinished(UUID jobId, boolean success) {
+    State state = success ? State.COMPLETE : State.ERROR;
+    PortabilityJob existingJob = store.findJob(jobId);
+    PortabilityJob updatedJob = existingJob.toBuilder().setState(state).build();
+
+    try {
+      store.updateJob(jobId, updatedJob);
+    } catch (IOException e) {
+      monitor.debug(() -> format("Could not mark job %s as finished.", jobId));
+    }
   }
 }

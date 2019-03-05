@@ -16,13 +16,6 @@
 
 package org.datatransferproject.datatransfer.google.mail;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
-
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users;
 import com.google.api.services.gmail.Gmail.Users.Labels;
@@ -32,16 +25,13 @@ import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.types.transfer.models.mail.MailContainerResource;
-import org.datatransferproject.types.transfer.models.mail.MailMessageModel;
+import org.datatransferproject.types.common.models.mail.MailContainerResource;
+import org.datatransferproject.types.common.models.mail.MailMessageModel;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +39,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMailImporterTest {
@@ -59,30 +60,21 @@ public class GoogleMailImporterTest {
   private static final String LABEL1 = "label1";
   private static final String LABEL2 = "label2";
   private static final List<String> MESSAGE_LABELS = ImmutableList.of(LABEL1, LABEL2);
-  private static final MailMessageModel MESSAGE_MODEL = new MailMessageModel(MESSAGE_RAW,
-      MESSAGE_LABELS);
+  private static final MailMessageModel MESSAGE_MODEL =
+      new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
 
-  @Mock
-  private Gmail gmail;
-  @Mock
-  private Users users;
-  @Mock
-  private Messages messages;
-  @Mock
-  private Insert insert;
-  @Mock
-  private Labels labels;
-  @Mock
-  private Labels.List labelsList;
-  @Mock
-  private Labels.Create labelsCreate;
-  @Mock
-  private GoogleCredentialFactory googleCredentialFactory;
+  @Mock private Gmail gmail;
+  @Mock private Users users;
+  @Mock private Messages messages;
+  @Mock private Insert insert;
+  @Mock private Labels labels;
+  @Mock private Labels.List labelsList;
+  @Mock private Labels.Create labelsCreate;
+  @Mock private GoogleCredentialFactory googleCredentialFactory;
 
   private JobStore jobStore;
   private ListLabelsResponse labelsListResponse;
   private GoogleMailImporter googleMailImporter;
-
 
   @Before
   public void setUp() throws IOException {
@@ -92,7 +84,8 @@ public class GoogleMailImporterTest {
     labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
 
     jobStore = new LocalJobStore();
-    googleMailImporter = new GoogleMailImporter(googleCredentialFactory, jobStore, gmail);
+    Monitor monitor = new Monitor() {};
+    googleMailImporter = new GoogleMailImporter(googleCredentialFactory, jobStore, gmail, monitor);
 
     when(gmail.users()).thenReturn(users);
     when(users.messages()).thenReturn(messages);
@@ -108,8 +101,8 @@ public class GoogleMailImporterTest {
 
   @Test
   public void importMessage() throws IOException {
-    MailContainerResource resource = new MailContainerResource(null,
-        Collections.singletonList(MESSAGE_MODEL));
+    MailContainerResource resource =
+        new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
 
     ImportResult result = googleMailImporter.importItem(JOB_ID, null, resource);
 

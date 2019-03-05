@@ -30,6 +30,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -37,6 +38,7 @@ import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
@@ -52,6 +54,7 @@ final class WorkerModule extends FlagBindingModule {
   private final Set<AuthDataDecryptService> decryptServices;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final AsymmetricKeyGenerator asymmetricKeyGenerator;
+  private final JobHooks jobHooks;
 
   WorkerModule(
       ExtensionContext context,
@@ -60,7 +63,8 @@ final class WorkerModule extends FlagBindingModule {
       Set<PublicKeySerializer> publicKeySerializers,
       Set<AuthDataDecryptService> decryptServices,
       SymmetricKeyGenerator symmetricKeyGenerator,
-      AsymmetricKeyGenerator asymmetricKeyGenerator) {
+      AsymmetricKeyGenerator asymmetricKeyGenerator,
+      JobHooks jobHooks) {
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
@@ -68,6 +72,7 @@ final class WorkerModule extends FlagBindingModule {
     this.decryptServices = decryptServices;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.asymmetricKeyGenerator = asymmetricKeyGenerator;
+    this.jobHooks = jobHooks;
   }
 
   @VisibleForTesting
@@ -92,6 +97,7 @@ final class WorkerModule extends FlagBindingModule {
     // binds flags from ExtensionContext to @Named annotations
     bindFlags(context);
 
+    bind(JobHooks.class).toInstance(jobHooks);
     bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
@@ -157,7 +163,19 @@ final class WorkerModule extends FlagBindingModule {
   Scheduler getScheduler() {
     // TODO: parse a Duration from the settings
     long interval = context.getSetting("pollInterval", 2000); // Default: poll every 2s
-    return AbstractScheduledService.Scheduler
-        .newFixedDelaySchedule(0, interval, TimeUnit.MILLISECONDS);
+    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(
+        0, interval, TimeUnit.MILLISECONDS);
+  }
+
+  @Provides
+  @Singleton
+  Monitor getMonitor() {
+    return context.getMonitor();
+  }
+
+  @Provides
+  @Singleton
+  ExtensionContext getContext() {
+    return context;
   }
 }

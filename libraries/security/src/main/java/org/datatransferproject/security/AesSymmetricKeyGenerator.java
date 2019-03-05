@@ -15,8 +15,7 @@
  */
 package org.datatransferproject.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.datatransferproject.api.launcher.Monitor;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -25,9 +24,14 @@ import java.security.NoSuchAlgorithmException;
 
 /** AES-based implementation for {@link SecretKey} creation and encoding. */
 public class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
-// TODO change this back to package private when Guice module is created
-  private static final Logger logger = LoggerFactory.getLogger(AesSymmetricKeyGenerator.class);
+  // TODO change this back to package private when Guice module is created
   private static final String ALGORITHM = "AES";
+
+  private final Monitor monitor;
+
+  public AesSymmetricKeyGenerator(Monitor monitor) {
+    this.monitor = monitor;
+  }
 
   @Override
   public SecretKey generate() {
@@ -35,7 +39,7 @@ public class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {
       KeyGenerator generator = KeyGenerator.getInstance(ALGORITHM);
       return generator.generateKey();
     } catch (NoSuchAlgorithmException e) {
-      logger.error("NoSuchAlgorithmException for: {}", ALGORITHM, e);
+      monitor.severe(() -> "NoSuchAlgorithmException for: " + ALGORITHM, e);
       throw new RuntimeException("Error creating key generator", e);
     }
   }

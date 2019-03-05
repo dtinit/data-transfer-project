@@ -33,8 +33,8 @@ import java.io.InputStreamReader;
  */
 class OAuthUtils {
 
-  static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent,
-      Class<T> clazz) throws IOException {
+  static String makeRawPostRequest(HttpTransport httpTransport, String url, HttpContent httpContent)
+      throws IOException {
     HttpRequestFactory factory = httpTransport.createRequestFactory();
     HttpRequest postRequest = factory.buildPostRequest(new GenericUrl(url), httpContent);
     HttpResponse response = postRequest.execute();
@@ -43,8 +43,13 @@ class OAuthUtils {
       throw new IOException(
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    String result = CharStreams
+    return CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+  }
+
+  static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent,
+      Class<T> clazz) throws IOException {
+    String result = makeRawPostRequest(httpTransport, url, httpContent);
 
     return new ObjectMapper().readValue(result, clazz);
   }

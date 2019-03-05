@@ -16,11 +16,6 @@
 
 package org.datatransferproject.datatransfer.google.contacts;
 
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
-
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -39,6 +34,18 @@ import ezvcard.io.json.JCardWriter;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.LinkedList;
@@ -46,24 +53,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.PaginationData;
-import org.datatransferproject.spi.transfer.types.StringPaginationToken;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.contacts.ContactsModelWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
 
 public class GoogleContactsExporter
     implements Exporter<TokensAndUrlAuthData, ContactsModelWrapper> {
 
-  private static final Logger logger = LoggerFactory.getLogger(GoogleContactsExporter.class);
   private final GoogleCredentialFactory credentialFactory;
   private volatile PeopleService peopleService;
 

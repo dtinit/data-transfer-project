@@ -21,17 +21,16 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.instagram.photos.InstagramPhotoExporter;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public class InstagramTransferExtension implements TransferExtension {
-  private final Logger logger = LoggerFactory.getLogger(InstagramTransferExtension.class);
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
 
   private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
@@ -62,7 +61,8 @@ public class InstagramTransferExtension implements TransferExtension {
   @Override
   public void initialize(ExtensionContext context) {
     if (initialized) {
-      logger.warn("InstagramTransferExtension already initialized");
+      Monitor monitor = context.getMonitor();
+      monitor.severe(() -> "InstagramTransferExtension already initialized");
       return;
     }
 

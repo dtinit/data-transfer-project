@@ -20,9 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -32,12 +31,14 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosExporter;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+
+import static java.lang.String.format;
 
 public class SmugMugTransferExtension implements TransferExtension {
   private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
-  private static final Logger LOGGER = LoggerFactory.getLogger(SmugMugTransferExtension.class);
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
 
@@ -72,8 +73,9 @@ public class SmugMugTransferExtension implements TransferExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
+    Monitor monitor = context.getMonitor();
     if (initialized) {
-      LOGGER.warn("SmugMugTransferExtension already initailized.");
+      monitor.severe(() -> "SmugMugTransferExtension already initailized.");
       return;
     }
 
@@ -87,15 +89,19 @@ public class SmugMugTransferExtension implements TransferExtension {
               .getService(AppCredentialStore.class)
               .getAppCredentials(SMUGMUG_KEY, SMUGMUG_SECRET);
     } catch (IOException e) {
-      LOGGER.warn(
-          "Unable to retrieve client secrets. Did you set {} and {}?", SMUGMUG_KEY, SMUGMUG_SECRET);
+      monitor.info(
+          () ->
+              format(
+                  "Unable to retrieve SmugMug AppCredentials. Did you set %s and %s?",
+                  SMUGMUG_KEY, SMUGMUG_SECRET),
+          e);
       return;
     }
 
     ObjectMapper mapper = context.getService(TypeManager.class).getMapper();
 
-    exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper, jobStore);
-    importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper);
+    exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper, jobStore, monitor);
+    importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper, monitor);
     initialized = true;
   }
 }

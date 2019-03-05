@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
+}
 
 dependencies {
     compile project(':portability-spi-api')
     compile project(':portability-spi-cloud')
     compile project(':libraries:auth')
 
-    compile("org.slf4j:slf4j-api:${slf4jVersion}")
-    compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-
     compile 'org.twitter4j:twitter4j-core:4.0.3'
 }
+
+configurePublication(project)

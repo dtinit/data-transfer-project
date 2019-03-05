@@ -28,28 +28,27 @@ import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.AuthData;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoAlbum;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
-  @VisibleForTesting
-  static final String COPY_PREFIX = "Copy of - ";
-  @VisibleForTesting
-  static final String DEFAULT_ALBUM = "Default";
+  @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
+  @VisibleForTesting static final String DEFAULT_ALBUM = "Default";
 
   private final JobStore jobStore;
   private final Flickr flickr;
@@ -85,17 +84,17 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
     RequestContext.getRequestContext().setAuth(auth);
 
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
-    TempPhotosData tempPhotosData = jobStore
-        .findData(jobId, createCacheKey(), TempPhotosData.class);
+    // TODO: store objects containing individual mappings instead of single object containing all
+    // mappings
+    TempPhotosData tempPhotosData =
+        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
     if (tempPhotosData == null) {
       tempPhotosData = new TempPhotosData(jobId);
       jobStore.create(jobId, createCacheKey(), tempPhotosData);
     }
 
     Preconditions.checkArgument(
-        data.getAlbums() != null || data.getPhotos() != null,
-        "Error: There is no data to import");
+        data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
       importAlbums(data.getAlbums(), tempPhotosData);
@@ -129,7 +128,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     String oldAlbumId = photo.getAlbumId();
 
     // If the photo wasn't associated with an album, we don't have to do anything else, since we've
-    // already uploaded it above. This will mean it lives in the user's cameraroll and not in an album.
+    // already uploaded it above. This will mean it lives in the user's cameraroll and not in an
+    // album.
     // If the uploadPhoto() call fails above, an exception will be thrown, so we don't have to worry
     // about the photo not being uploaded here.
     if (Strings.isNullOrEmpty(oldAlbumId)) {
@@ -146,7 +146,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
       // throw them into a default album or add a finalize() step in the Importer which can deal
       // with these (in case the album exists later).
-      Preconditions.checkArgument(album != null, "Album not found: {}", oldAlbumId);
+      Preconditions.checkArgument(album != null, "Album not found: " + oldAlbumId);
 
       Photoset photoset =
           photosetsInterface.create(COPY_PREFIX + album.getName(), album.getDescription(), photoId);
@@ -180,7 +180,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
    * grained objects.
    */
   private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
+    // TODO: store objects containing individual mappings instead of single object containing all
+    // mappings
     return "tempPhotosData";
   }
 

@@ -16,9 +16,9 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
+
 import java.security.KeyPair;
 import java.util.UUID;
-import org.datatransferproject.logging.EncryptingLayout;
 
 /**
  * A class that contains metadata for a transfer worker's job.
@@ -55,7 +55,6 @@ final class JobMetadata {
     dataType = initDataType;
     exportService = initExportService;
     importService = initImportService;
-    EncryptingLayout.setJobId(jobId);
   }
 
   // TODO: remove this

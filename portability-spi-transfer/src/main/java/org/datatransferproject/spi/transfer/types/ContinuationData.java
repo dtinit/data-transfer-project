@@ -5,12 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.ArrayList;
 import java.util.List;
-import org.datatransferproject.types.transfer.EntityType;
-import org.datatransferproject.types.transfer.models.ContainerResource;
+
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.PortableType;
+import org.datatransferproject.types.common.models.ContainerResource;
 
 /** Specifies the starting point and context information for an export operation. */
 @JsonTypeName("org.dataportability:Continuation")
-public class ContinuationData extends EntityType {
+public class ContinuationData extends PortableType {
   private final PaginationData paginationData;
   private List<ContainerResource> containerResources = new ArrayList<>();
 

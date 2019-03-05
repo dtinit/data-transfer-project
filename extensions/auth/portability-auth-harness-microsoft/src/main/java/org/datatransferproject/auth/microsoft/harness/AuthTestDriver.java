@@ -2,7 +2,6 @@ package org.datatransferproject.auth.microsoft.harness;
 
 import static java.lang.System.getProperty;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
@@ -11,13 +10,15 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import org.datatransferproject.auth.microsoft.MicrosoftAuthDataGenerator;
+import org.datatransferproject.auth.microsoft.MicrosoftAuthServiceExtension;
+import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
 /** */
 public class AuthTestDriver {
+
   private String clientId;
   private String secret;
 
@@ -41,20 +42,19 @@ public class AuthTestDriver {
   }
 
   /**
-   * Performs an OAuth flow using the MicrosoftAuthDataGenerator, returning a token.
+   * Performs an OAuth flow using the general AuthDataGenerator, returning a token.
    *
    * @return the token
    */
   public TokenAuthData getOAuthTokenCode() throws Exception {
 
     OkHttpClient client = TestHelper.createTestBuilder(callbackHost).build();
-    ObjectMapper mapper = new ObjectMapper();
 
-    MicrosoftAuthDataGenerator dataGenerator =
-        new MicrosoftAuthDataGenerator(
-                () -> clientId, () -> secret, client, mapper, "CONTACTS", AuthMode.EXPORT);
+    AuthDataGenerator authDataGenerator = new MicrosoftAuthServiceExtension()
+        .getAuthDataGenerator("CONTACTS", AuthMode.EXPORT);
 
-    AuthFlowConfiguration configuration = dataGenerator.generateConfiguration(callbackBase, "1");
+    AuthFlowConfiguration configuration = authDataGenerator
+        .generateConfiguration(callbackBase, "1");
 
     Desktop desktop = Desktop.getDesktop();
 
@@ -64,8 +64,8 @@ public class AuthTestDriver {
     String authCode = retrieveAuthCode(client);
 
     // get the token
-    TokenAuthData tokenData =
-        dataGenerator.generateAuthData(
+    TokenAuthData tokenData = (TokenAuthData)
+        authDataGenerator.generateAuthData(
             callbackBase, authCode, "1", configuration.getInitialAuthData(), null);
 
     // System.out.println("TOKEN: " + tokenData.getToken());

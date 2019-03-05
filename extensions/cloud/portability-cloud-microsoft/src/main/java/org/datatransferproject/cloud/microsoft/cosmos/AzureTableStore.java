@@ -24,7 +24,7 @@ import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.transfer.models.DataModel;
+import org.datatransferproject.types.common.models.DataModel;
 
 /** Uses the Azure Cosmos DB Table Storage API to persist job data. */
 public class AzureTableStore implements JobStore {

@@ -1,1 +1,2 @@
 org.datatransferproject.auth.google.GoogleAuthServiceExtension
+org.datatransferproject.auth.google.BloggerAuthServiceExtension

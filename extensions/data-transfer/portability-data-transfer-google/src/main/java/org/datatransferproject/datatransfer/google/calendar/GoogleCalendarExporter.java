@@ -1,8 +1,5 @@
 package org.datatransferproject.datatransfer.google.calendar;
 
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
-
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
@@ -13,6 +10,23 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.RecurrenceRule;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -22,29 +36,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
-import org.datatransferproject.spi.transfer.types.PaginationData;
-import org.datatransferproject.spi.transfer.types.StringPaginationToken;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
-import org.datatransferproject.types.transfer.models.calendar.RecurrenceRule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
+
 
 public class GoogleCalendarExporter implements
     Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
-
-  private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarExporter.class);
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;

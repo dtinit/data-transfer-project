@@ -18,7 +18,6 @@ package org.datatransferproject.spi.cloud.extension;
 
 import com.google.inject.AbstractModule;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.CryptoKeyStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 
 /**

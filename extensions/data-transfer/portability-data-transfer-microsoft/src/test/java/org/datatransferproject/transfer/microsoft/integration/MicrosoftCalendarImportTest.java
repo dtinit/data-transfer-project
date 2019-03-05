@@ -27,10 +27,10 @@ import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarImpo
 import org.datatransferproject.transfer.microsoft.helper.MockJobStore;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.transfer.models.calendar.CalendarAttendeeModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarContainerResource;
-import org.datatransferproject.types.transfer.models.calendar.CalendarEventModel;
-import org.datatransferproject.types.transfer.models.calendar.CalendarModel;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

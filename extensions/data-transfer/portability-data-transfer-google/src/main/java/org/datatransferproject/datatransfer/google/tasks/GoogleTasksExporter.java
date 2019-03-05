@@ -21,61 +21,64 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
-import org.datatransferproject.spi.transfer.types.IdOnlyContainerResource;
-import org.datatransferproject.spi.transfer.types.PaginationData;
-import org.datatransferproject.spi.transfer.types.StringPaginationToken;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
+import org.datatransferproject.types.common.models.tasks.TaskListModel;
+import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.tasks.TaskContainerResource;
-import org.datatransferproject.types.transfer.models.tasks.TaskListModel;
-import org.datatransferproject.types.transfer.models.tasks.TaskModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 
 public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskContainerResource> {
 
   private static final long PAGE_SIZE = 50; // TODO: configure correct size in production
   private final GoogleCredentialFactory credentialFactory;
-  Logger logger = LoggerFactory.getLogger(GoogleTasksExporter.class);
+  private final Monitor monitor;
+
   private volatile Tasks tasksClient;
 
-  public GoogleTasksExporter(GoogleCredentialFactory credentialFactory) {
-    this(credentialFactory, null);
+  public GoogleTasksExporter(GoogleCredentialFactory credentialFactory, Monitor monitor) {
+    this.credentialFactory = credentialFactory;
+    this.monitor = monitor;
   }
 
   @VisibleForTesting
-  GoogleTasksExporter(GoogleCredentialFactory credentialFactory, Tasks tasksClient) {
-    this.credentialFactory = credentialFactory;
+  GoogleTasksExporter(
+      GoogleCredentialFactory credentialFactory, Tasks tasksClient, Monitor monitor) {
+    this(credentialFactory, monitor);
     this.tasksClient = tasksClient;
   }
 
   @Override
   public ExportResult<TaskContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+          UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     // Create a new tasks service for the authorized user
     Tasks tasksService = getOrCreateTasksService(authData);
 
     IdOnlyContainerResource resource =
-        exportInformation.isPresent() ? (IdOnlyContainerResource) exportInformation.get()
-            .getContainerResource() : null;
+        exportInformation.isPresent()
+            ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+            : null;
 
-    PaginationData paginationData = exportInformation.isPresent()
-        ? exportInformation.get().getPaginationData()
-        : null;
+    PaginationData paginationData =
+        exportInformation.isPresent() ? exportInformation.get().getPaginationData() : null;
 
     try {
       if (resource != null) {
@@ -84,10 +87,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
         return getTasksList(tasksService, Optional.ofNullable(paginationData));
       }
     } catch (Exception e) {
-      logger.warn(
-          "Error occurred trying to retrieve task: {}, {}",
-          e.getMessage(),
-          Throwables.getStackTraceAsString(e));
+      monitor.severe(() -> "Error occurred trying to retrieve task", e);
       return new ExportResult<>(e);
     }
   }
@@ -107,9 +107,16 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
         result
             .getItems()
             .stream()
-            .map(t -> new TaskModel(resource.getId(), t.getTitle(), t.getNotes(),
-                t.getCompleted() != null ? Instant.ofEpochMilli(t.getCompleted().getValue()) : null,
-                t.getDue() != null ? Instant.ofEpochMilli(t.getDue().getValue()) : null))
+            .map(
+                t ->
+                    new TaskModel(
+                        resource.getId(),
+                        t.getTitle(),
+                        t.getNotes(),
+                        t.getCompleted() != null
+                            ? Instant.ofEpochMilli(t.getCompleted().getValue())
+                            : null,
+                        t.getDue() != null ? Instant.ofEpochMilli(t.getDue().getValue()) : null))
             .collect(Collectors.toList());
 
     PaginationData newPage = null;
@@ -165,7 +172,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

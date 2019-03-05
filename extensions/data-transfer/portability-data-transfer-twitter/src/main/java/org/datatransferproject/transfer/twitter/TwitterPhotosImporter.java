@@ -17,36 +17,37 @@
 package org.datatransferproject.transfer.twitter;
 
 import com.google.api.client.http.InputStreamContent;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import twitter4j.StatusUpdate;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.datatransferproject.types.transfer.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.models.photos.PhotosContainerResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import twitter4j.StatusUpdate;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
 
 final class TwitterPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
-  private final Logger logger = LoggerFactory.getLogger(TwitterPhotosImporter.class);
   private final AppCredentials appCredentials;
+  private final Monitor monitor;
 
-  public TwitterPhotosImporter(AppCredentials appCredentials) {
+  public TwitterPhotosImporter(AppCredentials appCredentials, Monitor monitor) {
     this.appCredentials = appCredentials;
+    this.monitor = monitor;
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokenSecretAuthData authData,
-      PhotosContainerResource data) {
+  public ImportResult importItem(
+      UUID jobId, TokenSecretAuthData authData, PhotosContainerResource data) {
     Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
     // Twitter doesn't support an 'Albums' concept, so that information is just lost.
 
@@ -59,7 +60,7 @@ final class TwitterPhotosImporter
 
         twitterApi.tweets().updateStatus(update);
       } catch (IOException | TwitterException e) {
-        logger.warn("problem importing twitter photo", e);
+        monitor.severe(() -> "Error importing twitter photo", e);
         return new ImportResult(e);
       }
     }

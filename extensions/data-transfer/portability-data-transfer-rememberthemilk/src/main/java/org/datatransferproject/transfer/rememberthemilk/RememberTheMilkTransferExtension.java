@@ -18,8 +18,8 @@ package org.datatransferproject.transfer.rememberthemilk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
@@ -28,14 +28,15 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksExporter;
 import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+
+import static java.lang.String.format;
 
 public class RememberTheMilkTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("TASKS");
   private static final String RTM_KEY = "RTM_KEY";
   private static final String RTM_SECRET = "RTM_SECRET";
-  private final Logger logger = LoggerFactory.getLogger(RememberTheMilkTransferExtension.class);
   private RememberTheMilkTasksExporter exporter;
   private RememberTheMilkTasksImporter importer;
   private boolean initialized = false;
@@ -71,15 +72,20 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
       credentials =
           context.getService(AppCredentialStore.class).getAppCredentials(RTM_KEY, RTM_SECRET);
     } catch (IOException e) {
-      logger.warn(
-          "Error retrieving RememberTheMilk Credentials. Did you set {} and {}?",
-          RTM_KEY,
-          RTM_SECRET);
+      Monitor monitor = context.getMonitor();
+      monitor.info(
+          () ->
+              format(
+                  "Unable to retrieve RememberTheMilk AppCredentials. Did you set %s and %s?",
+                  RTM_KEY, RTM_SECRET),
+          e);
       return;
     }
 
+    Monitor monitor = context.getMonitor();
+
     exporter = new RememberTheMilkTasksExporter(credentials);
-    importer = new RememberTheMilkTasksImporter(credentials, jobStore);
+    importer = new RememberTheMilkTasksImporter(credentials, jobStore, monitor);
 
     initialized = true;
   }

@@ -22,7 +22,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ExportInformation;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.transfer.microsoft.spi.types.MicrosoftOfflineData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 

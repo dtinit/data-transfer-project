@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.security.EncrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -17,9 +18,11 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.CreateTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
+import org.datatransferproject.types.common.ExportInformation;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
@@ -35,17 +38,20 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
+  private final EncrypterFactory encrypterFactory;
 
   @Inject
   CreateTransferJobAction(
       JobStore jobStore,
       AuthServiceProviderRegistry registry,
       SymmetricKeyGenerator symmetricKeyGenerator,
-      TypeManager typeManager) {
+      TypeManager typeManager,
+      Monitor monitor) {
     this.jobStore = jobStore;
     this.registry = registry;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
+    this.encrypterFactory = new EncrypterFactory(monitor);
   }
 
   @Override
@@ -58,6 +64,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     String dataType = request.getDataType();
     String exportService = request.getExportService();
     String importService = request.getImportService();
+    Optional<ExportInformation> exportInformation = Optional.ofNullable(request.getExportInformation());
     String exportCallbackUrl = request.getExportCallbackUrl();
     String importCallbackUrl = request.getImportCallbackUrl();
 
@@ -68,7 +75,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
 
     String encryptionScheme = request.getEncryptionScheme();
     PortabilityJob job =
-        createJob(encodedSessionKey, dataType, exportService, importService, encryptionScheme);
+        createJob(encodedSessionKey, dataType, exportService, importService, exportInformation, encryptionScheme);
 
     AuthDataGenerator exportGenerator =
         registry.getAuthDataGenerator(job.exportService(), job.transferDataType(), EXPORT);
@@ -106,7 +113,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
         // Serialize and encrypt the initial auth data
         String serialized =
             objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData());
-        String encryptedInitialAuthData = EncrypterFactory.create(sessionKey).encrypt(serialized);
+        String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
 
         // Add the serialized and encrypted initial auth data to the job authorization
         JobAuthorization updatedJobAuthorization =
@@ -128,7 +135,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
         // Serialize and encrypt the initial auth data
         String serialized =
             objectMapper.writeValueAsString(importConfiguration.getInitialAuthData());
-        String encryptedInitialAuthData = EncrypterFactory.create(sessionKey).encrypt(serialized);
+        String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
 
         // Add the serialized and encrypted initial auth data to the job authorization
         JobAuthorization updatedJobAuthorization =
@@ -166,6 +173,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
       String dataType,
       String exportService,
       String importService,
+      Optional<ExportInformation> exportInformation,
       String encryptionScheme) {
 
     // Job auth data
@@ -176,11 +184,13 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             .setState(JobAuthorization.State.INITIAL)
             .build();
 
-    return PortabilityJob.builder()
-        .setTransferDataType(dataType)
-        .setExportService(exportService)
-        .setImportService(importService)
-        .setAndValidateJobAuthorization(jobAuthorization)
-        .build();
+    PortabilityJob.Builder builder =
+        PortabilityJob.builder()
+            .setTransferDataType(dataType)
+            .setExportService(exportService)
+            .setImportService(importService)
+            .setAndValidateJobAuthorization(jobAuthorization);
+    exportInformation.ifPresent(builder::setExportInformation);
+    return builder.build();
   }
 }

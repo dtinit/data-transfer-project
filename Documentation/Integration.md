@@ -29,7 +29,7 @@ Transfer Extensions are located in the [extensions/data-transfer module](https:/
 
 3. Add the spi and cloud dependencies to your build file along with any sdk or related dependencies specific to your code
 
-  * Common dependencies include logging, see example below
+  * Common dependencies
 
   ```javascript
   /*
@@ -52,10 +52,6 @@ Transfer Extensions are located in the [extensions/data-transfer module](https:/
       compile project(':portability-spi-cloud')
       compile project(':portability-spi-transfer')
       
-     // logging
-      compile("org.slf4j:slf4j-api:${slf4jVersion}")
-      compile("org.slf4j:slf4j-log4j12:${slf4jVersion}")
-     
       compile(YOUR DEPS HERE)
       }
   ```
@@ -74,7 +70,7 @@ include ':extensions:data-transfer:portability-data-transfer-foo'
 
  `$mkdir -p extensions/data-transfer/portability-data-transfer-foo/src/main/java/org/datatransferproject/transfer/foo/`
 
-7. Create FooTransferExtension extending TransferExtension
+7. Create FooTransferExtension implementing TransferExtension
 
   * See class javadoc for [TransferExtension](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/datatransferproject/spi/transfer/extension/TransferExtension.java) for full documentation
 
