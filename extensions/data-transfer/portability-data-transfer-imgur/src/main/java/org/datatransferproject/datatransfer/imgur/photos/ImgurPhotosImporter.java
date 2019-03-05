@@ -17,6 +17,7 @@
 package org.datatransferproject.datatransfer.imgur.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import okhttp3.*;
@@ -114,26 +115,22 @@ public class ImgurPhotosImporter
 
     Response response = client.newCall(requestBuilder.build()).execute();
     int code = response.code();
-    if (code >= 200 && code <= 299) {
-      ResponseBody body = response.body();
-      if (body == null) {
-        throw new IOException("Didn't get response body");
-      }
-      Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
+    Preconditions.checkArgument(
+        code >= 200 && code <= 299,
+        String.format(
+            "Error occurred in request for %s, code: %s, message: %s",
+            CREATE_ALBUM_URL, code, response.message()));
+    ResponseBody body = response.body();
+    Preconditions.checkArgument(body != null, "Didn't get response body!");
+    Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
 
-      String newAlbumId = (String) ((Map<String, Object>) responseData.get("data")).get("id");
-      if (Strings.isNullOrEmpty(newAlbumId)) {
-        throw new IOException("Didn't receive new album id");
-      }
-      // Save new album id so that photos could be added later to this album
-      photoData.addAlbumId(album.getId(), newAlbumId);
-      jobStore.update(jobId, createCacheKey(), photoData);
-    } else {
-      throw new IOException(
-          String.format(
-              "Error occurred in request for %s, code: %s, message: %s",
-              CREATE_ALBUM_URL, code, response.message()));
+    String newAlbumId = (String) ((Map<String, Object>) responseData.get("data")).get("id");
+    if (Strings.isNullOrEmpty(newAlbumId)) {
+      throw new IOException("Didn't receive new album id");
     }
+    // Save new album id so that photos could be added later to this album
+    photoData.addAlbumId(album.getId(), newAlbumId);
+    jobStore.update(jobId, createCacheKey(), photoData);
   }
 
   private void importPhoto(PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData)
@@ -159,12 +156,15 @@ public class ImgurPhotosImporter
 
     FormBody.Builder builder = new FormBody.Builder().add("image", imageData);
 
-    if (!Strings.isNullOrEmpty(albumId)) {
-      TempPhotosData tempData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
-      // Get previously saved id of imported album
-      String newAlbumId = tempData.lookupNewAlbumId(albumId);
+    TempPhotosData tempData = jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
+
+    // Get previously saved id of imported album
+    String newAlbumId = tempData.lookupNewAlbumId(albumId);
+
+    if (!Strings.isNullOrEmpty(newAlbumId)) {
       builder.add("album", newAlbumId);
     }
+
     if (!Strings.isNullOrEmpty(imageDescription)) {
       builder.add("description", imageDescription);
     }
@@ -174,12 +174,11 @@ public class ImgurPhotosImporter
     Response response = client.newCall(requestBuilder.build()).execute();
     int code = response.code();
     // Though sometimes it returns error code for success requests
-    if (code < 200 || code > 299) {
-      throw new IOException(
-          String.format(
-              "Error occurred in request for %s, code: %s, message: %s",
-              UPLOAD_PHOTO_URL, code, response.message()));
-    }
+    Preconditions.checkArgument(
+        code >= 200 && code <= 299,
+        String.format(
+            "Error occurred in request for %s, code: %s, message: %s",
+            UPLOAD_PHOTO_URL, code, response.message()));
   }
 
   /**
