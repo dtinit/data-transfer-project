@@ -150,16 +150,18 @@ public class GooglePhotosExporter
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
-    for (GoogleAlbum googleAlbum : googleAlbums) {
-      // Add album info to list so album can be recreated later
-      albums.add(
-          new PhotoAlbum(
-              googleAlbum.getId(),
-              googleAlbum.getTitle(),
-              null));
+    if (googleAlbums != null && googleAlbums.length > 0) {
+      for (GoogleAlbum googleAlbum : googleAlbums) {
+        // Add album info to list so album can be recreated later
+        albums.add(
+            new PhotoAlbum(
+                googleAlbum.getId(),
+                googleAlbum.getTitle(),
+                null));
 
-      // Add album id to continuation data
-      continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
+        // Add album id to continuation data
+        continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
+      }
     }
 
     ResultType resultType = ResultType.CONTINUE;
