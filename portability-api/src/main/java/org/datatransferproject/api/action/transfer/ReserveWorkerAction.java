@@ -67,7 +67,7 @@ public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker
           (previous, updated) ->
               Preconditions.checkState(
                   previous.jobAuthorization().state() == JobAuthorization.State.INITIAL));
-      monitor.debug(() -> format("Updated job %s to CREDS_AVAILABLE", jobId));
+      monitor.debug(() -> format("Updated job %s to CREDS_AVAILABLE", jobId), jobId);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }
