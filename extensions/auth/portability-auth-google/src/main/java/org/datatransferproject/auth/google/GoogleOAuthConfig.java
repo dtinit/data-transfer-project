@@ -55,9 +55,10 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put("CONTACTS", ImmutableSet.of("https://www.googleapis.com/auth/contacts.readonly"))
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.readonly"))
         .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
-        // For G+
+            // For G+
         .put("SOCIAL-POSTS", ImmutableSet.of("https://www.googleapis.com/auth/plus.login"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks.readonly"))
+        .put("VIDEOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
         .build();
   }
 
@@ -71,6 +72,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put("MAIL", ImmutableSet.of("https://www.googleapis.com/auth/gmail.modify"))
         .put("PHOTOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
         .put("TASKS", ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
+        .put("VIDEOS", ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
         .build();
   }
 
