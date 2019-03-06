@@ -107,7 +107,8 @@ public class GenerateServiceAuthDataAction
               null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
-      monitor.debug(() -> format("Generated auth data for job: %s", jobId), jobId);
+      monitor.debug(
+          () -> format("Generated auth data in mode '%s' for job: %s", authMode, jobId), jobId);
 
       // Serialize and encrypt the auth data
       String serialized = objectMapper.writeValueAsString(authData);
