@@ -28,7 +28,7 @@ import java.util.UUID;
  * <p>This class is completely static to ensure it is a singleton within each transfer worker
  * instance.
  */
-final class JobMetadata {
+public final class JobMetadata {
   private static KeyPair keyPair = null;
   private static UUID jobId = null;
   private static String dataType = null;
