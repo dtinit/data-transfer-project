@@ -21,6 +21,8 @@ import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosImporter;
 import org.datatransferproject.datatransfer.google.tasks.GoogleTasksExporter;
 import org.datatransferproject.datatransfer.google.tasks.GoogleTasksImporter;
+import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
+import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
@@ -38,7 +40,7 @@ public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS");
+      ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS", "VIDEOS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -101,6 +103,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
     importerBuilder.put(
         "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
+    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jobStore));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -112,6 +115,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
         "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory));
+    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory));
 
     exporterMap = exporterBuilder.build();
 
