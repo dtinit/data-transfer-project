@@ -111,7 +111,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
-        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory));
+        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
 
     exporterMap = exporterBuilder.build();
 
