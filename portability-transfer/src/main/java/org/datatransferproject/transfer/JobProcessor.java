@@ -20,6 +20,12 @@ import static java.lang.String.format;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.security.PrivateKey;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -31,14 +37,6 @@ import org.datatransferproject.spi.transfer.security.SecurityException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
-
-import java.io.IOException;
-import java.security.PrivateKey;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 /**
  * Process a job in two steps: <br>
  * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
@@ -80,8 +78,6 @@ final class JobProcessor {
 
     PortabilityJob job = store.findJob(jobId);
     JobAuthorization jobAuthorization = job.jobAuthorization();
-    Preconditions.checkState(jobAuthorization.state() == JobAuthorization.State.CREDS_STORED);
-    Preconditions.checkState(job.state() == State.IN_PROGRESS);
 
     try {
       monitor.debug(
@@ -135,22 +131,26 @@ final class JobProcessor {
 
   private void markJobFinished(UUID jobId, boolean success) {
     State state = success ? State.COMPLETE : State.ERROR;
-    updateJobState(jobId, state);
-
+    updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);
   }
 
   private void markJobStarted(UUID jobId) {
-    updateJobState(jobId, State.IN_PROGRESS);
+    updateJobState(jobId, State.IN_PROGRESS, State.NEW, JobAuthorization.State.CREDS_STORED);
   }
 
-  private void updateJobState(UUID jobId, State state) {
+  private void updateJobState(UUID jobId, State state, State prevState,
+      JobAuthorization.State prevAuthState) {
     PortabilityJob existingJob = store.findJob(jobId);
     PortabilityJob updatedJob = existingJob.toBuilder().setState(state).build();
 
     try {
-      store.updateJob(jobId, updatedJob);
+      store.updateJob(jobId, updatedJob,
+          ((previous, updated) -> {
+            Preconditions.checkState(previous.state() == prevState);
+            Preconditions.checkState(previous.jobAuthorization().state() == prevAuthState);
+          }));
     } catch (IOException e) {
-      monitor.debug(() -> format("Could not mark job %s as %s", jobId, state));
+      monitor.debug(() -> format("Could not mark job %s as %s, %s", jobId, state, e));
     }
   }
 }
