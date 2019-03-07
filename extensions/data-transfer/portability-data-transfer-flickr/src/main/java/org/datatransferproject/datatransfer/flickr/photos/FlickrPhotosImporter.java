@@ -155,8 +155,12 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       // with these (in case the album exists later).
       Preconditions.checkArgument(album != null, "Album not found: " + oldAlbumId);
 
-      Photoset photoset =
-          photosetsInterface.create(COPY_PREFIX + album.getName(), album.getDescription(), photoId);
+      // TODO: do we want to keep the COPY_PREFIX?  I feel like not
+      String albumName =
+          Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
+      String albumDescription = cleanString(album.getDescription());
+
+      Photoset photoset = photosetsInterface.create(albumName, albumDescription, photoId);
       monitor.debug(() -> String.format("%s: Flickr importer created album: %s", id, album));
 
       // Update the temp mapping to reflect that we've created the album
@@ -172,14 +176,20 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
     BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
+
+    // TODO: do we want to keep COPY_PREFIX?  I think not
+    String photoTitle =
+        Strings.isNullOrEmpty(photo.getTitle()) ? "" : COPY_PREFIX + photo.getTitle();
+    String photoDescription = cleanString(photo.getDescription());
+
     UploadMetaData uploadMetaData =
         new UploadMetaData()
             .setAsync(false)
             .setPublicFlag(false)
             .setFriendFlag(false)
             .setFamilyFlag(false)
-            .setTitle(COPY_PREFIX + photo.getTitle())
-            .setDescription(photo.getDescription());
+            .setTitle(photoTitle)
+            .setDescription(photoDescription);
     String uploadResult = uploader.upload(inStream, uploadMetaData);
     monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
@@ -193,6 +203,10 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     // TODO: store objects containing individual mappings instead of single object containing all
     // mappings
     return "tempPhotosData";
+  }
+
+  private String cleanString(String string) {
+    return Strings.isNullOrEmpty(string) ? "" : string;
   }
 
   @VisibleForTesting
