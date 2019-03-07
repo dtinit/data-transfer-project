@@ -127,7 +127,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   private void importSinglePhoto(UUID id, PhotoModel photo) throws FlickrException, IOException {
-    String photoId = uploadPhoto(photo);
+    String photoId = uploadPhoto(photo, id);
 
     String oldAlbumId = photo.getAlbumId();
 
@@ -154,7 +154,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
       Photoset photoset =
           photosetsInterface.create(COPY_PREFIX + album.getName(), album.getDescription(), photoId);
-      monitor.debug(()->"Flickr Importer created album: " + album);
+      monitor.debug(()->String.format("%s: Flickr importer created album: %s", id, album);
 
       // Update the temp mapping to reflect that we've created the album
       tempData.addAlbumId(oldAlbumId, photoset.getId());
@@ -167,7 +167,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     jobStore.update(id, createCacheKey(), tempData);
   }
 
-  private String uploadPhoto(PhotoModel photo) throws IOException, FlickrException {
+  private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
     BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
     UploadMetaData uploadMetaData =
         new UploadMetaData()
@@ -178,7 +178,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setTitle(COPY_PREFIX + photo.getTitle())
             .setDescription(photo.getDescription());
     String uploadResult = uploader.upload(inStream, uploadMetaData);
-    monitor.debug(()->"Flickr Importer uploading photo: " + photo);
+    monitor.debug(()->String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
   }
 

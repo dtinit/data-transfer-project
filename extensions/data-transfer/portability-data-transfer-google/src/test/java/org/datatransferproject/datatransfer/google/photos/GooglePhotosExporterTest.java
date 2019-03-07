@@ -24,7 +24,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +40,6 @@ import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.model.MediaMetadata;
 import org.datatransferproject.datatransfer.google.photos.model.Photo;
-import org.datatransferproject.launcher.monitor.MultiplexMonitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -106,7 +104,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .exportAlbums(null, Optional.empty());
+        .exportAlbums(null, Optional.empty(), uuid);
 
     // Check results
     // Verify correct methods were called
@@ -148,7 +146,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .exportAlbums(null, Optional.of(inputPaginationToken));
+        .exportAlbums(null, Optional.of(inputPaginationToken), uuid);
 
     // Check results
     // Verify correct methods were called
