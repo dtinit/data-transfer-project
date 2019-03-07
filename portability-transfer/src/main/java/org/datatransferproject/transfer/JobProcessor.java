@@ -20,12 +20,6 @@ import static java.lang.String.format;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.security.PrivateKey;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -38,6 +32,13 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 
+import java.io.IOException;
+import java.security.PrivateKey;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
 /**
  * Process a job in two steps: <br>
  * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
