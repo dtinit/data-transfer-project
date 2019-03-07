@@ -48,8 +48,10 @@ import java.util.UUID;
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
-  @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
-  @VisibleForTesting static final String DEFAULT_ALBUM = "Default";
+  @VisibleForTesting
+  static final String COPY_PREFIX = "Copy of - ";
+  @VisibleForTesting
+  static final String DEFAULT_ALBUM = "Default";
 
   private final JobStore jobStore;
   private final Flickr flickr;
@@ -68,7 +70,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @VisibleForTesting
-  FlickrPhotosImporter(Flickr flickr, JobStore jobstore, ImageStreamProvider imageStreamProvider, Monitor monitor) {
+  FlickrPhotosImporter(Flickr flickr, JobStore jobstore, ImageStreamProvider imageStreamProvider,
+      Monitor monitor) {
     this.flickr = flickr;
     this.imageStreamProvider = imageStreamProvider;
     this.jobStore = jobstore;
@@ -154,7 +157,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
       Photoset photoset =
           photosetsInterface.create(COPY_PREFIX + album.getName(), album.getDescription(), photoId);
-      monitor.debug(()->String.format("%s: Flickr importer created album: %s", id, album);
+      monitor.debug(() -> String.format("%s: Flickr importer created album: %s", id, album));
 
       // Update the temp mapping to reflect that we've created the album
       tempData.addAlbumId(oldAlbumId, photoset.getId());
@@ -178,7 +181,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setTitle(COPY_PREFIX + photo.getTitle())
             .setDescription(photo.getDescription());
     String uploadResult = uploader.upload(inStream, uploadMetaData);
-    monitor.debug(()->String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
+    monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
   }
 
