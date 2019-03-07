@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
@@ -64,20 +65,24 @@ public class GooglePhotosExporter
   private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
+  private final Monitor monitor;
+
   public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory) {
+      JsonFactory jsonFactory, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
   }
 
   @VisibleForTesting
   GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory, GooglePhotosInterface photosInterface) {
+      JsonFactory jsonFactory, GooglePhotosInterface photosInterface, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
+    this.monitor = monitor;
   }
 
   @Override
@@ -153,11 +158,13 @@ public class GooglePhotosExporter
     if (googleAlbums != null && googleAlbums.length > 0) {
       for (GoogleAlbum googleAlbum : googleAlbums) {
         // Add album info to list so album can be recreated later
-        albums.add(
-            new PhotoAlbum(
-                googleAlbum.getId(),
-                googleAlbum.getTitle(),
-                null));
+        PhotoAlbum photoAlbum = new PhotoAlbum(
+            googleAlbum.getId(),
+            googleAlbum.getTitle(),
+            null);
+        albums.add(photoAlbum);
+
+        monitor.debug(()->"Google Photos Exporter exporting album: " + photoAlbum);
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -291,7 +298,10 @@ public class GooglePhotosExporter
         }
 
         if (shouldUpload) {
-          photos.add(convertToPhotoModel(albumId, mediaItem));
+          PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
+          photos.add(photoModel);
+
+          monitor.debug(()->"Google Photos Exporter exporting photo: " + photoModel);
         }
       }
     }

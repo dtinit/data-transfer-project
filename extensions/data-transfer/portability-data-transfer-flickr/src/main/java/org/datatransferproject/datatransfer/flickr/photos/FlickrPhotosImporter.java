@@ -28,6 +28,7 @@ import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -55,22 +56,25 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private final Uploader uploader;
   private final ImageStreamProvider imageStreamProvider;
   private final PhotosetsInterface photosetsInterface;
+  private final Monitor monitor;
 
-  public FlickrPhotosImporter(AppCredentials appCredentials, JobStore jobStore) {
+  public FlickrPhotosImporter(AppCredentials appCredentials, JobStore jobStore, Monitor monitor) {
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
     this.imageStreamProvider = new ImageStreamProvider();
     this.photosetsInterface = flickr.getPhotosetsInterface();
+    this.monitor = monitor;
   }
 
   @VisibleForTesting
-  FlickrPhotosImporter(Flickr flickr, JobStore jobstore, ImageStreamProvider imageStreamProvider) {
+  FlickrPhotosImporter(Flickr flickr, JobStore jobstore, ImageStreamProvider imageStreamProvider, Monitor monitor) {
     this.flickr = flickr;
     this.imageStreamProvider = imageStreamProvider;
     this.jobStore = jobstore;
     this.uploader = flickr.getUploader();
     this.photosetsInterface = flickr.getPhotosetsInterface();
+    this.monitor = monitor;
   }
 
   @Override
@@ -150,6 +154,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
       Photoset photoset =
           photosetsInterface.create(COPY_PREFIX + album.getName(), album.getDescription(), photoId);
+      monitor.debug(()->"Flickr Importer created album: " + album);
 
       // Update the temp mapping to reflect that we've created the album
       tempData.addAlbumId(oldAlbumId, photoset.getId());
@@ -172,7 +177,9 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setFamilyFlag(false)
             .setTitle(COPY_PREFIX + photo.getTitle())
             .setDescription(photo.getDescription());
-    return uploader.upload(inStream, uploadMetaData);
+    String uploadResult = uploader.upload(inStream, uploadMetaData);
+    monitor.debug(()->"Flickr Importer uploading photo: " + photo);
+    return uploadResult;
   }
 
   /**
