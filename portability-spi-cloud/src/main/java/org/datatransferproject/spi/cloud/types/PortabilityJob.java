@@ -197,6 +197,7 @@ public abstract class PortabilityJob {
   /** The job states. */
   public enum State {
     NEW,
+    IN_PROGRESS,
     COMPLETE,
     ERROR
   }
