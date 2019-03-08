@@ -26,6 +26,7 @@ import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -79,6 +80,8 @@ public class FlickrPhotosImporterTest {
   private BufferedInputStream bufferedInputStream = mock(BufferedInputStream.class);
   private AuthInterface authInterface = mock(AuthInterface.class);
 
+  private Monitor monitor = mock(Monitor.class);
+
   @Test
   public void importStoresAlbumInJobStore() throws FlickrException, IOException {
     UUID jobId = UUID.randomUUID();
@@ -105,7 +108,7 @@ public class FlickrPhotosImporterTest {
         .thenReturn(photoset);
 
     // Run test
-    FlickrPhotosImporter importer = new FlickrPhotosImporter(flickr, jobStore, imageStreamProvider);
+    FlickrPhotosImporter importer = new FlickrPhotosImporter(flickr, jobStore, imageStreamProvider, monitor);
     ImportResult result = importer.importItem(
         jobId, new TokenSecretAuthData("token", "secret"), photosContainerResource);
 
