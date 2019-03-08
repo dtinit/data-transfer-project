@@ -40,6 +40,9 @@ public class GoogleMediaItem {
   @JsonProperty("filename")
   private String filename;
 
+  @JsonProperty("productUrl")
+  private String productUrl;
+  
   public String getId() { return id; }
 
   public String getDescription() { return description; }
@@ -47,6 +50,10 @@ public class GoogleMediaItem {
   public String getBaseUrl() { return baseUrl; }
 
   public String getMimeType() { return mimeType; }
+
+  public String getProductUrl() {
+    return productUrl;
+  }
 
   public MediaMetadata getMediaMetadata() { return mediaMetadata; }
 

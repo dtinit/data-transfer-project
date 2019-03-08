@@ -30,11 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -64,20 +65,24 @@ public class GooglePhotosExporter
   private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
+  private final Monitor monitor;
+
   public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory) {
+      JsonFactory jsonFactory, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
   }
 
   @VisibleForTesting
   GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory, GooglePhotosInterface photosInterface) {
+      JsonFactory jsonFactory, GooglePhotosInterface photosInterface, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
+    this.monitor = monitor;
   }
 
   @Override
@@ -86,7 +91,7 @@ public class GooglePhotosExporter
     if (!exportInformation.isPresent()) {
       // Make list of photos contained in albums so they are not exported twice later on
       populateContainedPhotosList(jobId, authData);
-      return exportAlbums(authData, Optional.empty());
+      return exportAlbums(authData, Optional.empty(), jobId);
     }
     /* Use the export information to determine whether this export call should export albums or
     photos.
@@ -111,7 +116,7 @@ public class GooglePhotosExporter
 
     if (!containerResourcePresent
         && paginationDataPresent && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
-      return exportAlbums(authData, Optional.of(paginationToken));
+      return exportAlbums(authData, Optional.of(paginationToken), jobId);
     } else {
       return exportPhotos(authData,
           Optional.ofNullable(idOnlyContainerResource),
@@ -125,7 +130,7 @@ public class GooglePhotosExporter
    */
   @VisibleForTesting
   ExportResult<PhotosContainerResource> exportAlbums(TokensAndUrlAuthData authData,
-      Optional<PaginationData> paginationData) throws IOException {
+      Optional<PaginationData> paginationData, UUID jobId) throws IOException {
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
@@ -153,11 +158,13 @@ public class GooglePhotosExporter
     if (googleAlbums != null && googleAlbums.length > 0) {
       for (GoogleAlbum googleAlbum : googleAlbums) {
         // Add album info to list so album can be recreated later
-        albums.add(
-            new PhotoAlbum(
-                googleAlbum.getId(),
-                googleAlbum.getTitle(),
-                null));
+        PhotoAlbum photoAlbum = new PhotoAlbum(
+            googleAlbum.getId(),
+            googleAlbum.getTitle(),
+            null);
+        albums.add(photoAlbum);
+
+        monitor.debug(()->String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -291,7 +298,10 @@ public class GooglePhotosExporter
         }
 
         if (shouldUpload) {
-          photos.add(convertToPhotoModel(albumId, mediaItem));
+          PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
+          photos.add(photoModel);
+
+          monitor.debug(()->String.format("%s: Google exporting photo: %s", jobId, photoModel));
         }
       }
     }

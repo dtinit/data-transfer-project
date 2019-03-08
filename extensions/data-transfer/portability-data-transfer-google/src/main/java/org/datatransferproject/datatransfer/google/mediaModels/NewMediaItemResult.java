@@ -31,4 +31,12 @@ public class NewMediaItemResult {
 
   @JsonProperty("mediaItem")
   private GoogleMediaItem mediaItem;
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public GoogleMediaItem getMediaItem() {
+    return mediaItem;
+  }
 }

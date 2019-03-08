@@ -8,12 +8,11 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import org.datatransferproject.types.common.ExportInformation;
-
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
+import org.datatransferproject.types.common.ExportInformation;
 
 /**
  * A job that will fulfill a transfer request.
@@ -37,6 +36,7 @@ public abstract class PortabilityJob {
       "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
+  private static final String JOB_STATE = "JOB_STATE";
 
   public static PortabilityJob.Builder builder() {
     LocalDateTime now = LocalDateTime.now();
@@ -70,8 +70,12 @@ public abstract class PortabilityJob {
             ? (String) properties.get(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA)
             : null;
 
+    State state =
+        properties.containsKey(JOB_STATE) ? State.valueOf((String) properties.get(JOB_STATE))
+            : State.NEW;
+
     return PortabilityJob.builder()
-        .setState(State.NEW)
+        .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
         .setImportService((String) properties.get(IMPORT_SERVICE_KEY))
         .setTransferDataType((String) properties.get(DATA_TYPE_KEY))
@@ -139,7 +143,8 @@ public abstract class PortabilityJob {
             .put(DATA_TYPE_KEY, transferDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
-            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString());
+            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
+            .put(JOB_STATE, state().toString());
     if (jobAuthorization().sessionSecretKey() != null) {
       builder.put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
     }
@@ -192,6 +197,7 @@ public abstract class PortabilityJob {
   /** The job states. */
   public enum State {
     NEW,
+    IN_PROGRESS,
     COMPLETE,
     ERROR
   }
