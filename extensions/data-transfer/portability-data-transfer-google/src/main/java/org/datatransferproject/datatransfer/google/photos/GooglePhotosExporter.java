@@ -312,7 +312,7 @@ public class GooglePhotosExporter
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
 
     return new PhotoModel(
-        "", // TODO: no title?
+        "", // TODO: no title?  Should we use the description instead?
         mediaItem.getBaseUrl() + "=d",
         mediaItem.getDescription(),
         mediaItem.getMimeType(),
