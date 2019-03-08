@@ -205,7 +205,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     return "tempPhotosData";
   }
 
-  private String cleanString(String string) {
+  private static String cleanString(String string) {
     return Strings.isNullOrEmpty(string) ? "" : string;
   }
 
