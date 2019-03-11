@@ -48,12 +48,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.BatchMediaItemResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 
 public class GooglePhotosInterface {
 

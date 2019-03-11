@@ -69,12 +69,12 @@ public class FlickrTransferExtension implements TransferExtension {
   public void initialize(ExtensionContext context) {
     if (initialized) return;
     jobStore = context.getService(JobStore.class);
+    Monitor monitor = context.getMonitor();
 
     try {
       appCredentials =
           context.getService(AppCredentialStore.class).getAppCredentials(FLICKR_KEY, FLICKR_SECRET);
     } catch (Exception e) {
-      Monitor monitor = context.getMonitor();
       monitor.info(
           () ->
               format(
@@ -85,7 +85,7 @@ public class FlickrTransferExtension implements TransferExtension {
       return;
     }
 
-    importer = new FlickrPhotosImporter(appCredentials, jobStore);
+    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor);
     exporter = new FlickrPhotosExporter(appCredentials);
     initialized = true;
   }

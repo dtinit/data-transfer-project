@@ -21,6 +21,8 @@ import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosImporter;
 import org.datatransferproject.datatransfer.google.tasks.GoogleTasksExporter;
 import org.datatransferproject.datatransfer.google.tasks.GoogleTasksImporter;
+import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
+import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
@@ -38,7 +40,7 @@ public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS");
+          ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS", "VIDEOS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -76,20 +78,20 @@ public class GoogleTransferExtension implements TransferExtension {
     AppCredentials appCredentials;
     try {
       appCredentials =
-          context
-              .getService(AppCredentialStore.class)
-              .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
+              context
+                      .getService(AppCredentialStore.class)
+                      .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
     } catch (IOException e) {
       Monitor monitor = context.getMonitor();
       monitor.info(
-          () ->
-              "Unable to retrieve Google AppCredentials. Did you set GOOGLE_KEY and GOOGLE_SECRET?");
+              () ->
+                      "Unable to retrieve Google AppCredentials. Did you set GOOGLE_KEY and GOOGLE_SECRET?");
       return;
     }
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
-        new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
+            new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
 
     Monitor monitor = context.getMonitor();
 
@@ -100,7 +102,8 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, jobStore, monitor));
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
     importerBuilder.put(
-        "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
+            "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
+    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jobStore, jsonFactory, monitor));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -111,7 +114,8 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
-        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory));
+            "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
+    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory,jsonFactory));
 
     exporterMap = exporterBuilder.build();
 

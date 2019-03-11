@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Video metadata - not the content of the video itself!
+ * Class containing the response from uploading {@code NewMediaItemUpload} to the Google Photos API.
  */
-public class Video {
-  @JsonProperty("cameraMake")
-  private String cameraMake;
+public class NewMediaItemResult {
 
-  @JsonProperty("cameraModel")
-  private String cameraModel;
-
-  @JsonProperty("fps")
-  private double fps;
+  @JsonProperty("uploadToken")
+  private String uploadToken;
 
   @JsonProperty("status")
-  private VideoProcessingStatus status;
+  private Status status;
 
-  public enum VideoProcessingStatus {
-    UNSPECIFIED,
-    PROCESSING,
-    READY,
-    FAILED;
+  @JsonProperty("mediaItem")
+  private GoogleMediaItem mediaItem;
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public GoogleMediaItem getMediaItem() {
+    return mediaItem;
   }
 }
