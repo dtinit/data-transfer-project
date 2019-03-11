@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -79,7 +80,8 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
         jobId);
     try {
       jobStore.updateJob(jobId, job);
-      monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId), jobId);
+      monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId), jobId,
+          EventCode.API_JOB_CREDS_STORED);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }
