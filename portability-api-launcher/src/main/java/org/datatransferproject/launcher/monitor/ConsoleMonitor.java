@@ -15,14 +15,18 @@
  */
 package org.datatransferproject.launcher.monitor;
 
+import org.datatransferproject.api.launcher.Datum;
 import org.datatransferproject.api.launcher.Monitor;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Supplier;
 
-/** Outputs monitor events to the console. Uses ANSI color codes in shells that support them. */
+/**
+ * Outputs monitor events to the console. Uses ANSI color codes in shells that support them.
+ */
 public class ConsoleMonitor implements Monitor {
+
   private Level level;
 
   public enum Level {
@@ -41,6 +45,7 @@ public class ConsoleMonitor implements Monitor {
   private static final String ANSI_BLACK = "\u001B[30m";
   private static final String ANSI_RED = "\u001B[31m";
   private static final String ANSI_BLUE = "\u001B[34m";
+  private static final String ANSI_GREEN = "\u001B[32m";
 
   private boolean ansi;
 
@@ -65,6 +70,13 @@ public class ConsoleMonitor implements Monitor {
       return;
     }
     output("DEBUG", supplier, ANSI_BLACK, data);
+  }
+
+  public void logData(Supplier<String> supplier, Datum datum) {
+    if (Level.INFO.value < level.value) {
+      return;
+    }
+    output("INFO", supplier, ANSI_GREEN, datum);
   }
 
   private void output(String level, Supplier<String> supplier, String color, Object... data) {

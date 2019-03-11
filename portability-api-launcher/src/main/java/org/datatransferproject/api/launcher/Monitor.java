@@ -49,4 +49,12 @@ public interface Monitor {
    * @param data optional data items
    */
   default void debug(Supplier<String> supplier, Object... data) {}
+
+  /**
+   * Records a data logging event.
+   *
+   * @param supplier the event message
+   * @param datum the datum to be logged
+   */
+  default void logData(Supplier<String> supplier, Datum datum) {}
 }

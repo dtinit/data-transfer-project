@@ -17,8 +17,12 @@
 package org.datatransferproject.api.launcher;
 
 /**
- * An interface representing a data point object, such as a timestamp or a timeseries element.
+ * An interface representing a data point object, such as a timestamp or a timeseries element or
+ * interval
  */
 public interface Datum {
 
+  // TODO: consider having all instances of Datum also keep a timestamp
+
+  // TODO: many monitoring systems have cumulative metrics, but how do we represent that here?
 }

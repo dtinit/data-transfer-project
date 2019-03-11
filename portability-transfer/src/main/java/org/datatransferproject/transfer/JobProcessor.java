@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.datum.InstantaneousDatum;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -37,11 +38,10 @@ import org.datatransferproject.spi.transfer.security.SecurityException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
+
 /**
- * Process a job in two steps: <br>
- * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
- * key<br>
- * (2)Run the copy job
+ * Process a job in two steps: <br> (1) Decrypt the stored credentials, which have been encrypted
+ * with this transfer worker's public key<br> (2)Run the copy job
  */
 final class JobProcessor {
 
@@ -68,7 +68,9 @@ final class JobProcessor {
     this.monitor = monitor;
   }
 
-  /** Process our job, whose metadata is available via {@link JobMetadata}. */
+  /**
+   * Process our job, whose metadata is available via {@link JobMetadata}.
+   */
   void processJob() {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
@@ -149,6 +151,10 @@ final class JobProcessor {
             Preconditions.checkState(previous.state() == prevState);
             Preconditions.checkState(previous.jobAuthorization().state() == prevAuthState);
           }));
+      String metricName = "job_" + state.toString().toLowerCase() + "_ms";
+      InstantaneousDatum timestampDatum = new InstantaneousDatum(metricName,
+          System.currentTimeMillis());
+      monitor.logData(() -> "Job status change timestamp", timestampDatum);
     } catch (IOException e) {
       monitor.debug(() -> format("Could not mark job %s as %s, %s", jobId, state, e));
     }

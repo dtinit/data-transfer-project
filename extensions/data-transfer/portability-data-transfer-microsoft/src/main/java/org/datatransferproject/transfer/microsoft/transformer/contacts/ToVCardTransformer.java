@@ -137,7 +137,7 @@ public class ToVCardTransformer
 /*
 TODO Investigate:
 imAddresses	String collection	The contact's instant messaging (IM) addresses.
-createdDateTime	DateTimeOffset	The time the contact was created. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 would look like this: '2014-01-01T00:00:00Z'
+createdDateTime	DateTimeOffset	The time the contact was created. The InstantaneousDatum type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 would look like this: '2014-01-01T00:00:00Z'
 department	String	The contact's department.
 officeLocation	String	The location of the contact's office.
 initials	String	The contact's initials.
@@ -147,7 +147,7 @@ yomiCompanyName	String	The phonetic Japanese company name of the contact.
 yomiGivenName	String	The phonetic Japanese given name (first name) of the contact.
 yomiSurname
 fileAs	String	The name the contact is filed under.
-lastModifiedDateTime	DateTimeOffset	The time the contact was modified. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 would look like this: '2014-01-01T00:00:00Z'
+lastModifiedDateTime	DateTimeOffset	The time the contact was modified. The InstantaneousDatum type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 would look like this: '2014-01-01T00:00:00Z'
 
 
 
