@@ -28,6 +28,8 @@ import java.util.UUID;
  * <p>This class is completely static to ensure it is a singleton within each transfer worker
  * instance.
  */
+@SuppressWarnings("WeakerAccess")
+// We make the class and various methods public so they can be accessed from Monitors
 public final class JobMetadata {
   private static KeyPair keyPair = null;
   private static UUID jobId = null;
@@ -35,7 +37,7 @@ public final class JobMetadata {
   private static String exportService = null;
   private static String importService = null;
 
-  static boolean isInitialized() {
+  public static boolean isInitialized() {
     return (jobId != null
         && keyPair != null
         && dataType != null
@@ -71,22 +73,22 @@ public final class JobMetadata {
     return keyPair;
   }
 
-  static UUID getJobId() {
+  public static UUID getJobId() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return jobId;
   }
 
-  static String getDataType() {
+  public static String getDataType() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return dataType;
   }
 
-  static String getExportService() {
+  public static String getExportService() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return exportService;
   }
 
-  static String getImportService() {
+  public static String getImportService() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return importService;
   }
