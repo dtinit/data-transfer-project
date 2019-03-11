@@ -23,13 +23,14 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import org.datatransferproject.datatransfer.google.mediaModels.*;
+import com.google.api.client.json.JsonFactory;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -55,9 +56,11 @@ public class GoogleVideosInterface {
       new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
+  private JsonFactory jsonFactory;
 
-  GoogleVideosInterface(Credential credential) {
+  GoogleVideosInterface(Credential credential, JsonFactory jsonFactory) {
     this.credential = credential;
+    this.jsonFactory = jsonFactory;
   }
 
   String uploadVideoContent(InputStream inputStream, String filename) throws IOException {
@@ -72,7 +75,7 @@ public class GoogleVideosInterface {
 
   NewMediaItemResult createVideo(NewMediaItemUpload newMediaItemUpload) throws IOException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
-    HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
+    HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
 
     return makePostRequest(
         BASE_URL + "mediaItems:batchCreate",
@@ -93,7 +96,7 @@ public class GoogleVideosInterface {
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
-    HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
+    HttpContent content = new JsonHttpContent(this.jsonFactory, params);
     return makePostRequest(
         BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }

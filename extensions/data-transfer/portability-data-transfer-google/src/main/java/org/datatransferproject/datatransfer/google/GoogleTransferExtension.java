@@ -103,7 +103,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
     importerBuilder.put(
             "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
-    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jobStore));
+    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jobStore, jsonFactory, monitor));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -115,7 +115,7 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
             "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
-    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory));
+    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory,jsonFactory));
     exporterMap = exporterBuilder.build();
 
     initialized = true;

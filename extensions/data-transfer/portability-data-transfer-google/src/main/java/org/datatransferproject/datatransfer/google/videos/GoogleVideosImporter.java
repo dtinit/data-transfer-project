@@ -32,6 +32,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -44,6 +45,8 @@ import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.api.launcher.Monitor;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +54,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 public class GoogleVideosImporter
-    implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
+        implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   // TODO: internationalize copy prefix
   private static final String COPY_PREFIX = "Copy of ";
@@ -60,21 +63,27 @@ public class GoogleVideosImporter
   private final JobStore jobStore;
   private final ImageStreamProvider videoStreamProvider;
   private volatile GoogleVideosInterface videosInterface;
+  private Monitor monitor;
+  private JsonFactory jsonFactory;
 
-  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory, jobStore, null, new ImageStreamProvider());
+  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, JsonFactory jsonFactory, Monitor monitor) {
+    this(credentialFactory, jobStore, null, new ImageStreamProvider(), jsonFactory, monitor);
   }
 
   @VisibleForTesting
   GoogleVideosImporter(
-      GoogleCredentialFactory credentialFactory,
-      JobStore jobStore,
-      GoogleVideosInterface videosInterface,
-      ImageStreamProvider videoStreamProvider) {
+          GoogleCredentialFactory credentialFactory,
+          JobStore jobStore,
+          GoogleVideosInterface videosInterface,
+          ImageStreamProvider videoStreamProvider,
+          JsonFactory jsonFactory,
+          Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.videosInterface = videosInterface;
     this.videoStreamProvider = videoStreamProvider;
+    this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
   }
 
   @Override
@@ -95,38 +104,45 @@ public class GoogleVideosImporter
   }
 
   void importSingleVideo(UUID jobId, TokensAndUrlAuthData authData, VideoObject inputVideo)
-      throws IOException {
+          throws IOException {
 
     // download video and create input stream
     InputStream inputStream;
+    if (inputVideo.getContentUrl() == null) {
+      monitor.info(
+              () ->
+                      "Content Url is empty. Make sure that you provide a valid content Url.");
+      return;
+    }
+    
     inputStream = this.videoStreamProvider.get(inputVideo.getContentUrl().toString());
 
     String filename;
     if (Strings.isNullOrEmpty(inputVideo.getName())) {
-      filename = null;
+      filename = "untitled";
     } else {
       filename = COPY_PREFIX + inputVideo.getName();
     }
 
     String uploadToken =
-        getOrCreateVideosInterface(authData).uploadVideoContent(inputStream, filename);
+            getOrCreateVideosInterface(authData).uploadVideoContent(inputStream, filename);
 
     NewMediaItem newMediaItem = new NewMediaItem(filename, uploadToken);
 
     NewMediaItemUpload uploadItem =
-        new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
+            new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
 
     getOrCreateVideosInterface(authData).createVideo(uploadItem);
   }
 
   private synchronized GoogleVideosInterface getOrCreateVideosInterface(
-      TokensAndUrlAuthData authData) {
+          TokensAndUrlAuthData authData) {
     return videosInterface == null ? makeVideosInterface(authData) : videosInterface;
   }
 
   private synchronized GoogleVideosInterface makeVideosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    GoogleVideosInterface videosInterface = new GoogleVideosInterface(credential);
+    GoogleVideosInterface videosInterface = new GoogleVideosInterface(credential, this.jsonFactory);
     return videosInterface;
   }
 }

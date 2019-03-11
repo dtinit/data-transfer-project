@@ -17,6 +17,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -34,6 +35,7 @@ import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,13 +43,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class GoogleVideosExporter
-    implements Exporter<TokensAndUrlAuthData, VideosContainerResource> {
+        implements Exporter<TokensAndUrlAuthData, VideosContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile GoogleVideosInterface videosInterface;
+  private JsonFactory jsonFactory;
 
-  public GoogleVideosExporter(GoogleCredentialFactory credentialFactory) {
+  public GoogleVideosExporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory) {
     this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
   }
 
   @VisibleForTesting
@@ -60,21 +64,21 @@ public class GoogleVideosExporter
   @Override
   public ExportResult<VideosContainerResource> export(
           UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws IOException {
+          throws IOException {
 
     return exportVideos(
-        authData, exportInformation.map(e -> (StringPaginationToken) e.getPaginationData()));
+            authData, exportInformation.map(e -> (StringPaginationToken) e.getPaginationData()));
   }
 
   @VisibleForTesting
   ExportResult<VideosContainerResource> exportVideos(
           TokensAndUrlAuthData authData, Optional<StringPaginationToken> paginationData)
-      throws IOException {
+          throws IOException {
 
     Optional<String> paginationToken = paginationData.map(StringPaginationToken::getToken);
 
     MediaItemSearchResponse mediaItemSearchResponse =
-        getOrCreateVideosInterface(authData).listVideoItems(paginationToken);
+            getOrCreateVideosInterface(authData).listVideoItems(paginationToken);
 
     PaginationData nextPageData = null;
     if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
@@ -113,23 +117,23 @@ public class GoogleVideosExporter
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
 
     return new VideoObject(
-        "", // TODO: no title?
-        //            dv = download video otherwise you only get a thumbnail
-        mediaItem.getBaseUrl() + "=dv",
-        mediaItem.getDescription(),
-        mediaItem.getMimeType(),
-        mediaItem.getId(),
-        null,
-        false);
+            "", // TODO: no title?
+            //            dv = download video otherwise you only get a thumbnail
+            mediaItem.getBaseUrl() + "=dv",
+            mediaItem.getDescription(),
+            mediaItem.getMimeType(),
+            mediaItem.getId(),
+            null,
+            false);
   }
 
   private synchronized GoogleVideosInterface getOrCreateVideosInterface(
-      TokensAndUrlAuthData authData) {
+          TokensAndUrlAuthData authData) {
     return videosInterface == null ? makeVideosInterface(authData) : videosInterface;
   }
 
   private synchronized GoogleVideosInterface makeVideosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GoogleVideosInterface(credential);
+    return new GoogleVideosInterface(credential, this.jsonFactory);
   }
 }
