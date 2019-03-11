@@ -161,6 +161,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       String albumDescription = cleanString(album.getDescription());
 
       Photoset photoset = photosetsInterface.create(albumName, albumDescription, photoId);
+      
       monitor.debug(() -> String.format("%s: Flickr importer created album: %s", id, album));
 
       // Update the temp mapping to reflect that we've created the album
