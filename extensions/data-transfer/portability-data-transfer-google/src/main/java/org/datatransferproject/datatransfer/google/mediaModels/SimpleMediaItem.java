@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Class representing an album as returned by the Google Photos API.
+ * Wrapper class for an upload token, used by {@link NewMediaItem}.
  */
-public class GoogleAlbum {
-  @JsonProperty("id")
-  private String id;
+public class SimpleMediaItem {
 
-  @JsonProperty("title")
-  private String title;
+  @JsonProperty("uploadToken")
+  private String uploadToken;
 
-  public String getId() { return id; }
+  SimpleMediaItem(String uploadToken) {
+    this.uploadToken = uploadToken;
+  }
 
-  public String getTitle() { return title; }
-
-  public void setId(String id) { this.id = id; }
-
-  public void setTitle(String title) { this.title = title; }
+  public String getUploadToken() {
+    return uploadToken;
+  }
 }

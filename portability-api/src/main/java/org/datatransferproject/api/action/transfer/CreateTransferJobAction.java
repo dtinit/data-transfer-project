@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.security.EncrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
 import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.EXPORT;
 import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.IMPORT;
@@ -39,6 +41,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
   private final EncrypterFactory encrypterFactory;
+  private final Monitor monitor;
 
   @Inject
   CreateTransferJobAction(
@@ -52,6 +55,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
     this.encrypterFactory = new EncrypterFactory(monitor);
+    this.monitor = monitor;
   }
 
   @Override
@@ -150,6 +154,13 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
       if (jobNeedsUpdate) {
         jobStore.updateJob(jobId, job);
       }
+
+      monitor.debug(
+          () ->
+              format(
+                  "Created new transfer of type '%s' from '%s' to '%s' with jobId: %s",
+                  dataType, exportService, importService, jobId),
+          jobId, EventCode.API_JOB_CREATED);
 
       return new TransferJob(
           encodedJobId,

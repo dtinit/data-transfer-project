@@ -32,10 +32,10 @@ import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -254,8 +254,6 @@ public class GooglePhotosExporter
     // should consider putting logic in JobStore itself to handle it
     InputStream stream = convertJsonToInputStream(tempPhotosData);
     jobStore.create(jobId, createCacheKey(), stream);
-
-    jobStore.create(jobId, createCacheKey(), tempPhotosData);
   }
 
   @VisibleForTesting
