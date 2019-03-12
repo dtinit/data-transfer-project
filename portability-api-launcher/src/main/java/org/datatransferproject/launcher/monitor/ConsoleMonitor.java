@@ -21,6 +21,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Supplier;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 
 /** Outputs monitor events to the console. Uses ANSI color codes in shells that support them. */
 public class ConsoleMonitor implements Monitor {
@@ -80,6 +81,8 @@ public class ConsoleMonitor implements Monitor {
           ((Throwable) datum).printStackTrace(System.out);
         } else if (datum instanceof UUID) {
           System.out.println("JobId: " + ((UUID)datum).toString());
+        } else if (datum instanceof EventCode) {
+          System.out.println("EventCode: " + datum.toString());
         } else if (datum != null) {
           System.out.println(datum);
         }

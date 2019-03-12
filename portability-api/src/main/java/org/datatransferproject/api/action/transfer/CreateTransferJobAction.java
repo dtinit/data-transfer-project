@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.security.EncrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -159,7 +160,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
               format(
                   "Created new transfer of type '%s' from '%s' to '%s' with jobId: %s",
                   dataType, exportService, importService, jobId),
-          jobId);
+          jobId, EventCode.API_JOB_CREATED);
 
       return new TransferJob(
           encodedJobId,
