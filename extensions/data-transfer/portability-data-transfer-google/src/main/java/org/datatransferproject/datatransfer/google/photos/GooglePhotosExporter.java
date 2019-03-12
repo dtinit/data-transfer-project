@@ -254,8 +254,6 @@ public class GooglePhotosExporter
     // should consider putting logic in JobStore itself to handle it
     InputStream stream = convertJsonToInputStream(tempPhotosData);
     jobStore.create(jobId, createCacheKey(), stream);
-
-    jobStore.create(jobId, createCacheKey(), tempPhotosData);
   }
 
   @VisibleForTesting
