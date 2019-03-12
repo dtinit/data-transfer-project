@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
 import java.io.InputStream;
@@ -247,11 +248,13 @@ public class GooglePhotosExporterTest {
     googlePhotosExporter.populateContainedPhotosList(uuid, null);
 
     // Check contents of job store
-    ArgumentCaptor<TempPhotosData> tempPhotosDataArgumentCaptor = ArgumentCaptor
-        .forClass(TempPhotosData.class);
-    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"), tempPhotosDataArgumentCaptor.capture());
-    assertThat(tempPhotosDataArgumentCaptor.getValue().lookupContainedPhotoIds())
-        .containsExactly(PHOTO_ID, secondId);
+    ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor
+        .forClass(InputStream.class);
+    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"),
+        inputStreamArgumentCaptor.capture());
+    TempPhotosData tempPhotosData = new ObjectMapper()
+        .readValue(inputStreamArgumentCaptor.getValue(), TempPhotosData.class);
+    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
   @Test
