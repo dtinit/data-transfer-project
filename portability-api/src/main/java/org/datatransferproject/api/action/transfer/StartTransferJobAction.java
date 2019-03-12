@@ -75,10 +75,11 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
             .build();
     job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
     monitor.debug(
-        () -> format("Updating job %s from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_STORED", jobId));
+        () -> format("Updating job %s from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_STORED", jobId),
+        jobId);
     try {
       jobStore.updateJob(jobId, job);
-      monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId));
+      monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId), jobId);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }

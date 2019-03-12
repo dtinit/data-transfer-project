@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.launcher.monitor;
 
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 
 import java.time.ZonedDateTime;
@@ -77,6 +78,8 @@ public class ConsoleMonitor implements Monitor {
       for (Object datum : data) {
         if (datum instanceof Throwable) {
           ((Throwable) datum).printStackTrace(System.out);
+        } else if (datum instanceof UUID) {
+          System.out.println("JobId: " + ((UUID)datum).toString());
         } else if (datum != null) {
           System.out.println(datum);
         }

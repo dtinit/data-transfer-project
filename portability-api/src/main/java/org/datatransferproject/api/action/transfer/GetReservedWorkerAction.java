@@ -42,14 +42,16 @@ public class GetReservedWorkerAction implements Action<GetReservedWorker, Reserv
         job, "Couldn't lookup worker for job " + id + " because the job doesn't exist");
     if (job.jobAuthorization().state() != CREDS_ENCRYPTION_KEY_GENERATED) {
       monitor.debug(
-          () -> format("Job %s has not entered state CREDS_ENCRYPTION_KEY_GENERATED yet", jobId));
+          () -> format("Job %s has not entered state CREDS_ENCRYPTION_KEY_GENERATED yet", jobId),
+          jobId);
       return new ReservedWorker(null);
     }
     monitor.debug(
         () ->
             format(
                 "Got job %s in state CREDS_ENCRYPTION_KEY_GENERATED, returning its public key",
-                jobId));
+                jobId),
+        jobId);
     return new ReservedWorker(job.jobAuthorization().authPublicKey());
   }
 }
