@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.launcher.datum.InstantaneousDatum;
+import org.datatransferproject.launcher.datum.SinglePointLongDatum;
 import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -153,7 +153,7 @@ final class JobProcessor {
             Preconditions.checkState(previous.jobAuthorization().state() == prevAuthState);
           }));
       String metricName = "job_" + state.toString().toLowerCase() + "_ms";
-      InstantaneousDatum timestampDatum = new InstantaneousDatum(metricName,
+      SinglePointLongDatum timestampDatum = new SinglePointLongDatum(metricName,
           System.currentTimeMillis());
       monitor.logData(() -> "Job status change timestamp", timestampDatum);
     } catch (IOException e) {

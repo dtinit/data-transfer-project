@@ -19,13 +19,17 @@ package org.datatransferproject.launcher.datum;
 import com.google.common.base.MoreObjects;
 import org.datatransferproject.api.launcher.Datum;
 
-public class InstantaneousDatum implements Datum {
+public class SinglePointLongDatum extends Datum {
 
-  private final String metricName;
   private final long value;
 
-  public InstantaneousDatum(String metricName, long value) {
-    this.metricName = metricName;
+  public SinglePointLongDatum(String metricName, long value) {
+    super(metricName, Type.GAUGE);
+    this.value = value;
+  }
+
+  public SinglePointLongDatum(String metricName, long value, Type type) {
+    super(metricName, type);
     this.value = value;
   }
 
@@ -33,15 +37,11 @@ public class InstantaneousDatum implements Datum {
     return value;
   }
 
-  public String getMetricName() {
-    return metricName;
-  }
-
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("metric name", metricName)
-        .add("value", value)
+        .add("metric name", super.metricName)
+        .add("value", super.type == Type.GAUGE ? value : "+" + value)
         .toString();
   }
 }

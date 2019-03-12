@@ -20,9 +20,30 @@ package org.datatransferproject.api.launcher;
  * An interface representing a data point object, such as a timestamp or a timeseries element or
  * interval
  */
-public interface Datum {
+public abstract class Datum {
 
   // TODO: consider having all instances of Datum also keep a timestamp
 
   // TODO: many monitoring systems have cumulative metrics, but how do we represent that here?
+
+  public String metricName;
+  public Type type;
+
+  public Datum(String metricName, Type type) {
+    this.metricName = metricName;
+    this.type = type;
+  }
+
+  public String getMetricName() {
+    return metricName;
+  }
+
+  public Type getType() {
+    return type;
+  }
+
+  public enum Type {
+    GAUGE,      // Instantaneous measurement of a varying value, e.g., temperature
+    CUMULATIVE  // Value being accumulated over time, e.g., requests since service started
+  }
 }
