@@ -23,7 +23,7 @@ import java.util.Properties;
 /** Provides versioning information to the runtime. */
 public class Version {
   private static final String UNKNOWN = "unknown";
-  private static String VERSION;
+  private static final String VERSION;
   private static final String HASH;
 
   public static String getVersion() {
