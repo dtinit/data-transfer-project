@@ -31,6 +31,7 @@ authorization technology each providers uses.
  - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys--auth)
  - [SmugMug](../extensions/data-transfer/portability-data-transfer-smugmug#keys--auth)
  - [Twitter](../extensions/data-transfer/portability-data-transfer-twitter#keys--auth)
+ - [Imgur](../extensions/data-transfer/portability-data-transfer-imgur#keys--auth)
 
 
 ## Deploying Keys
