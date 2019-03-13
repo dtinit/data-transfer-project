@@ -41,7 +41,7 @@ public class SinglePointLongDatum extends Datum {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("metric name", super.metricName)
-        .add("value", super.type == Type.CUMULATIVE ? "+" + value : value)
+        .add("value", super.type == Type.GAUGE ? value : "+" + value)
         .toString();
   }
 }
