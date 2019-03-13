@@ -1,3 +1,12 @@
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.RepositoryBuilder
+
+
+buildscript {
+    dependencies {
+        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.2.1.201812262042-r'
+    }
+}
 
 plugins {
     id 'maven-publish'
@@ -5,3 +14,23 @@ plugins {
 }
 
 configurePublication(project)
+
+
+jar {
+    dependsOn "generateGitHash"
+    from "$buildDir/resources/generated"
+}
+
+//noinspection GroovyAssignabilityCheck
+task generateGitHash() {
+    def repo = new RepositoryBuilder().setGitDir(new File(project.rootDir, '/.git')).readEnvironment().build()
+
+    def version = repo.findRef('HEAD').getObjectId().name
+    def clean = Git.wrap(repo).status().call().isClean()
+
+    def dest = new File("${project.buildDir}/resources/generated/META-INF")
+    dest.mkdirs()
+    def propFile = new File(dest, "launcher.properties")
+    propFile.createNewFile();
+    propFile.write("version=${project.version}\nhash=${version + (clean ? '' : '.modified')}")
+}
