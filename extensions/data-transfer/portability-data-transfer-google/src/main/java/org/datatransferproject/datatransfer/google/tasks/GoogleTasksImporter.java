@@ -81,7 +81,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       idempotentImportExecutor.execute(
           oldTask.getTaskListId() + oldTask.getText(),
           oldTask.getText(),
-          () ->tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
+          () -> tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
     }
 
     return new ImportResult(ResultType.OK);

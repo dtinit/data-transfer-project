@@ -47,7 +47,10 @@ import java.util.UUID;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMailImporterTest {
@@ -103,7 +106,7 @@ public class GoogleMailImporterTest {
     MailContainerResource resource =
         new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
 
-    ImportResult result = googleMailImporter.importItem(JOB_ID, executor,null, resource);
+    ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
 
     // Getting list of labels from Google
     verify(labelsList, atLeastOnce()).execute();

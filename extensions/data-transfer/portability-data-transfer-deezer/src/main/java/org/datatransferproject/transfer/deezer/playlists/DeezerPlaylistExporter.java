@@ -28,7 +28,11 @@ import org.datatransferproject.transfer.deezer.model.PlaylistDetails;
 import org.datatransferproject.transfer.deezer.model.PlaylistSummary;
 import org.datatransferproject.transfer.deezer.model.Track;
 import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.playlists.*;
+import org.datatransferproject.types.common.models.playlists.MusicAlbum;
+import org.datatransferproject.types.common.models.playlists.MusicGroup;
+import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
+import org.datatransferproject.types.common.models.playlists.MusicRecording;
+import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;

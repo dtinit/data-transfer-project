@@ -55,8 +55,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private final Gmail gmail;
   private final Monitor monitor;
 
-  public GoogleMailImporter(
-      GoogleCredentialFactory credentialFactory, Monitor monitor) {
+  public GoogleMailImporter(GoogleCredentialFactory credentialFactory, Monitor monitor) {
     this(credentialFactory, null, monitor);
   }
 

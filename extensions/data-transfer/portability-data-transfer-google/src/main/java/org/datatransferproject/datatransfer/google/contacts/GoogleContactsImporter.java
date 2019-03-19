@@ -18,7 +18,12 @@ package org.datatransferproject.datatransfer.google.contacts;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.model.*;
+import com.google.api.services.people.v1.model.EmailAddress;
+import com.google.api.services.people.v1.model.FieldMetadata;
+import com.google.api.services.people.v1.model.Name;
+import com.google.api.services.people.v1.model.Person;
+import com.google.api.services.people.v1.model.PhoneNumber;
+import com.google.api.services.people.v1.model.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import ezvcard.VCard;
@@ -40,7 +45,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.*;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
 
 
 public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, ContactsModelWrapper> {

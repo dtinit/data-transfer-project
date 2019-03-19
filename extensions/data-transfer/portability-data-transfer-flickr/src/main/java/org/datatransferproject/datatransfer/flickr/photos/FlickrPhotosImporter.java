@@ -130,7 +130,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     String photoId = idempotentExecutor.execute(
         photo.getAlbumId() + "-" + photo.getDataId(),
         photo.getTitle(),
-        () ->uploadPhoto(photo, id));
+        () -> uploadPhoto(photo, id));
 
     String oldAlbumId = photo.getAlbumId();
 
@@ -160,7 +160,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
   }
 
-  void createAlbum(
+  private void createAlbum(
       IdempotentImportExecutor idempotentExecutor,
       UUID jobId,
       String oldAlbumId,
@@ -212,16 +212,6 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     String uploadResult = uploader.upload(inStream, uploadMetaData);
     monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all
-    // mappings
-    return "tempPhotosData";
   }
 
   private static String cleanString(String string) {

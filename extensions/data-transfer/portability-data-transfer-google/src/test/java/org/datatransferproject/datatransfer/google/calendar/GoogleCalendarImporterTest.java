@@ -31,7 +31,10 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 public class GoogleCalendarImporterTest {
   private GoogleCalendarImporter calendarService;
@@ -91,7 +94,7 @@ public class GoogleCalendarImporterTest {
             Collections.singleton(calendarModel), Collections.singleton(eventModel));
 
     // Run test
-    calendarService.importItem(jobId, executor,null, calendarContainerResource);
+    calendarService.importItem(jobId, executor, null, calendarContainerResource);
 
     // Check the right methods were called
     verify(calendarCalendars).insert(calendarToInsert);
