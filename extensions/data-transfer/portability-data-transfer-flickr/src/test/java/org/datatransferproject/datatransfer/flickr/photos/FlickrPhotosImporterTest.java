@@ -29,12 +29,13 @@ import com.flickr4java.flickr.uploader.Uploader;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
-import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.scribe.model.Token;
@@ -47,9 +48,7 @@ import java.util.UUID;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class FlickrPhotosImporterTest {
   private static final String ALBUM_ID = "Album ID";
@@ -65,8 +64,9 @@ public class FlickrPhotosImporterTest {
   private static final PhotoAlbum PHOTO_ALBUM =
       new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
   private static final PhotoModel PHOTO_MODEL =
-      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, null, ALBUM_ID,
+      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, "MyId", ALBUM_ID,
           false);
+  private static final IdempotentImportExecutor EXECUTOR = new FakeIdempotentImportExecutor();
 
   private Flickr flickr = mock(Flickr.class);
   private PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
@@ -110,7 +110,10 @@ public class FlickrPhotosImporterTest {
     // Run test
     FlickrPhotosImporter importer = new FlickrPhotosImporter(flickr, jobStore, imageStreamProvider, monitor);
     ImportResult result = importer.importItem(
-        jobId, new TokenSecretAuthData("token", "secret"), photosContainerResource);
+        jobId,
+        EXECUTOR,
+        new TokenSecretAuthData("token", "secret"),
+        photosContainerResource);
 
     // Verify that the image stream provider got the correct URL and that the correct info was uploaded
     verify(imageStreamProvider).get(FETCHABLE_URL);
@@ -124,12 +127,6 @@ public class FlickrPhotosImporterTest {
     // Verify the photosets interface got the command to create the correct album
     verify(photosetsInterface).create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID);
 
-    // Check contents of JobStore
-    TempPhotosData tempPhotosData = jobStore.findData(jobId,"tempPhotosData", TempPhotosData.class);
-    assertThat(tempPhotosData).isNotNull();
-
-    String expectedAlbumKey = ALBUM_ID;
-    assertThat(tempPhotosData.lookupTempAlbum(expectedAlbumKey)).isNull();
-    assertThat(tempPhotosData.lookupNewAlbumId(ALBUM_ID)).isEqualTo(FLICKR_ALBUM_ID);
+    assertThat((String) EXECUTOR.getCachedValue(ALBUM_ID)).isEqualTo(FLICKR_ALBUM_ID);
   }
 }

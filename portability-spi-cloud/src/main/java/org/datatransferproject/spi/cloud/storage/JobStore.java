@@ -1,11 +1,12 @@
 package org.datatransferproject.spi.cloud.storage;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * A store for {@link PortabilityJob}s.
@@ -74,21 +75,21 @@ public interface JobStore {
    */
   UUID findFirst(JobAuthorization.State jobState);
 
-  default <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
+  default <T extends Serializable> void create(UUID jobId, String key, T model) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Updates the given model instance associated with a job.
    */
-  default <T extends DataModel> void update(UUID jobId, String key, T model) {
+  default <T extends Serializable> void update(UUID jobId, String key, T model) {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Returns a model instance for the id of the given type or null if not found.
    */
-  default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type)
+  default <T extends Serializable> T findData(UUID jobId, String key, Class<T> type)
       throws IOException {
     throw new UnsupportedOperationException();
   }

@@ -22,10 +22,10 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -36,8 +36,8 @@ import static java.lang.String.format;
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
-  private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
-      new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<String, Map<Class<? extends Serializable>, Serializable>>
+      DATA_MAP = new ConcurrentHashMap<>();
   private static LocalTempFileStore localTempFileStore = new LocalTempFileStore();
 
   private final Monitor monitor;
@@ -159,7 +159,7 @@ public final class LocalJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, String key, T model) {
+  public <T extends Serializable> void create(UUID jobId, String key, T model) {
     if (!DATA_MAP.containsKey(createFullKey(jobId, key))) {
       DATA_MAP.put(createFullKey(jobId, key), new ConcurrentHashMap<>());
     }
@@ -168,14 +168,14 @@ public final class LocalJobStore implements JobStore {
 
   /** Updates the given model instance associated with a job. */
   @Override
-  public <T extends DataModel> void update(UUID jobId, String key, T model) {
+  public <T extends Serializable> void update(UUID jobId, String key, T model) {
     // TODO: do we want to do any checking here to make sure there's something to update?
     create(jobId, key, model);
   }
 
   /** Returns a model instance for the id of the given type or null if not found. */
   @Override
-  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+  public <T extends Serializable> T findData(UUID jobId, String key, Class<T> type) {
     if (!DATA_MAP.containsKey(createFullKey(jobId, key))) {
       return null;
     }

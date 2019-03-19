@@ -17,17 +17,19 @@
 package org.datatransferproject.transfer.mastodon.social;
 
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
-import java.io.IOException;
-import java.util.UUID;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Imports post data to Mastodon.
@@ -37,7 +39,9 @@ public class MastodonActivityImport
     implements Importer<CookiesAndUrlAuthData, SocialActivityContainerResource> {
 
   @Override
-  public ImportResult importItem(UUID jobId, CookiesAndUrlAuthData authData,
+  public ImportResult importItem(UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      CookiesAndUrlAuthData authData,
       SocialActivityContainerResource data) throws Exception {
     checkState(authData.getCookies().size() == 1,
         "Exactly 1 cookie expected: %s",
@@ -56,7 +60,13 @@ public class MastodonActivityImport
         checkState(object instanceof ASObject, "%s isn't of expected type", object);
         ASObject asObject = (ASObject) object;
         if (asObject.objectTypeString().equals("note")) {
-          postNode(asObject, utilities, jobId);
+          idempotentImportExecutor.execute(
+              asObject.id(),
+              asObject.contentString(),
+              () -> {
+                postNode(asObject, utilities, jobId);
+                return 1;
+              });
         }
       }
     }

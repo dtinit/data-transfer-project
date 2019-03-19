@@ -48,6 +48,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private final Provider<Exporter> exporterProvider;
 
   private final Provider<Importer> importerProvider;
+  private final InMemoryIdempotentImportExecutor inMemoryIdempotentImportExecutor;
 
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   private final Monitor monitor;
@@ -62,6 +63,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     this.importerProvider = importerProvider;
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
     this.monitor = monitor;
+    this.inMemoryIdempotentImportExecutor = new InMemoryIdempotentImportExecutor(monitor);
   }
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
@@ -113,7 +115,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       monitor.debug(() -> jobIdPrefix + "Starting import");
       CallableImporter callableImporter =
           new CallableImporter(
-              importerProvider, jobId, importAuthData, exportResult.getExportedData());
+              importerProvider,
+              jobId,
+              inMemoryIdempotentImportExecutor,
+              importAuthData,
+              exportResult.getExportedData());
       RetryingCallable<ImportResult> retryingImporter =
           new RetryingCallable<>(
               callableImporter, retryStrategyLibrary, Clock.systemUTC(), monitor);

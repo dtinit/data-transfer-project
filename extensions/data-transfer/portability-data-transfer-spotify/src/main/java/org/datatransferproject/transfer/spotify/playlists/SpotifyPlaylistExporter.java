@@ -21,27 +21,20 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.exceptions.SpotifyWebApiException;
-import com.wrapper.spotify.model_objects.specification.Paging;
-import com.wrapper.spotify.model_objects.specification.PlaylistSimplified;
-import com.wrapper.spotify.model_objects.specification.PlaylistTrack;
-import com.wrapper.spotify.model_objects.specification.Track;
-import com.wrapper.spotify.model_objects.specification.User;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.wrapper.spotify.model_objects.specification.*;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.playlists.MusicAlbum;
-import org.datatransferproject.types.common.models.playlists.MusicGroup;
-import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
-import org.datatransferproject.types.common.models.playlists.MusicRecording;
-import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
+import org.datatransferproject.types.common.models.playlists.*;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Exports playlists from Spotify.
@@ -83,7 +76,10 @@ public class SpotifyPlaylistExporter implements
           .build()
           .execute();
       for (PlaylistSimplified playlist : playlists.getItems()) {
+        monitor.debug(() -> "Got playlist %s: %s (id: %s)",
+            playlist.getId(), playlist.getName(), playlist.getHref());
         results.add(new MusicPlaylist(
+            playlist.getHref(),
             playlist.getName(),
             fetchPlaylist(playlist.getId())));
       }
@@ -115,11 +111,12 @@ public class SpotifyPlaylistExporter implements
 
   private MusicRecording convertTrack(PlaylistTrack playlistTrack) {
     Track track = playlistTrack.getTrack();
-    monitor.debug(() -> "Converting: %s", playlistTrack);
+    monitor.debug(() -> "Converting: %s", track);
     return new MusicRecording(
+        track.getHref(),
         track.getName(),
         track.getExternalIds().getExternalIds().get("isrc"),
-        new MusicAlbum(track.getAlbum().getName()),
+        new MusicAlbum(track.getAlbum().getHref(), track.getAlbum().getName()),
         new MusicGroup(track.getArtists()[0].getName()));
   }
 }

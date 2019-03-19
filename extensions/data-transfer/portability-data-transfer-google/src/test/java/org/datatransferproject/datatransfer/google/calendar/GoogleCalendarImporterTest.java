@@ -16,37 +16,25 @@
 
 package org.datatransferproject.datatransfer.google.calendar;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
-
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.UUID;
-import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.transfer.types.TempCalendarData;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.Before;
 import org.junit.Test;
 
-public class GoogleCalendarImporterTest {
-  private static final String CALENDAR_ID = "calendar_id";
-  private static final CalendarListEntry CALENDAR_LIST_ENTRY =
-      new CalendarListEntry().setId(CALENDAR_ID);
-  private static final String EVENT_DESCRIPTION = "event_description";
-  private static final Event EVENT = new Event().setDescription(EVENT_DESCRIPTION);
+import java.io.IOException;
+import java.util.Collections;
+import java.util.UUID;
 
+import static org.mockito.Mockito.*;
+
+public class GoogleCalendarImporterTest {
   private GoogleCalendarImporter calendarService;
-  private JobStore jobStore;
   private GoogleCredentialFactory credentialFactory;
 
   private Calendar calendarClient;
@@ -54,9 +42,10 @@ public class GoogleCalendarImporterTest {
   private Calendar.Calendars.Insert calendarInsertRequest;
   private Calendar.Events calendarEvents;
   private Calendar.Events.Insert eventInsertRequest;
+  private IdempotentImportExecutor executor;
 
   @Before
-  public void setup() throws IOException {
+  public void setup() {
     calendarClient = mock(Calendar.class);
     calendarCalendars = mock(Calendar.Calendars.class);
     calendarInsertRequest = mock(Calendar.Calendars.Insert.class);
@@ -64,9 +53,9 @@ public class GoogleCalendarImporterTest {
     eventInsertRequest = mock(Calendar.Events.Insert.class);
     credentialFactory = mock(GoogleCredentialFactory.class);
 
-    jobStore = new LocalJobStore();
+    executor = new FakeIdempotentImportExecutor();
 
-    calendarService = new GoogleCalendarImporter(credentialFactory, jobStore, calendarClient);
+    calendarService = new GoogleCalendarImporter(credentialFactory, calendarClient);
 
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
     when(calendarClient.events()).thenReturn(calendarEvents);
@@ -102,16 +91,12 @@ public class GoogleCalendarImporterTest {
             Collections.singleton(calendarModel), Collections.singleton(eventModel));
 
     // Run test
-    calendarService.importItem(jobId, null, calendarContainerResource);
+    calendarService.importItem(jobId, executor,null, calendarContainerResource);
 
     // Check the right methods were called
     verify(calendarCalendars).insert(calendarToInsert);
     verify(calendarInsertRequest).execute();
     verify(calendarEvents).insert(googleCalendarId, eventToInsert);
     verify(eventInsertRequest).execute();
-
-    // Check jobStore contents
-    assertThat(jobStore.findData(jobId, "tempCalendarData", TempCalendarData.class).getImportedId(modelCalendarId))
-        .isEqualTo(googleCalendarId);
   }
 }

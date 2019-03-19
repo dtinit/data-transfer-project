@@ -19,19 +19,17 @@ package org.datatransferproject.spi.transfer.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.UUID;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+
+import java.io.Serializable;
+import java.util.*;
 
 /*
  * TempPhotosData used to store album and photos information before they are ready to be uploaded.
  */
 @JsonTypeName("org.dataportability:TempPhotosData")
-public class TempPhotosData extends DataModel {
+public class TempPhotosData extends DataModel implements Serializable {
 
   @JsonProperty("jobId")
   private final UUID jobId;

@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -66,7 +65,6 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
   public void initialize(ExtensionContext context) {
     if (initialized) return;
 
-    JobStore jobStore = context.getService(JobStore.class);
     AppCredentials credentials;
     try {
       credentials =
@@ -85,7 +83,7 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
     Monitor monitor = context.getMonitor();
 
     exporter = new RememberTheMilkTasksExporter(credentials);
-    importer = new RememberTheMilkTasksImporter(credentials, jobStore, monitor);
+    importer = new RememberTheMilkTasksImporter(credentials, monitor);
 
     initialized = true;
   }

@@ -16,18 +16,9 @@
 
 package org.datatransferproject.datatransfer.google.contacts;
 
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
-
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
-import com.google.api.services.people.v1.model.EmailAddress;
-import com.google.api.services.people.v1.model.FieldMetadata;
-import com.google.api.services.people.v1.model.Name;
-import com.google.api.services.people.v1.model.Person;
-import com.google.api.services.people.v1.model.PhoneNumber;
-import com.google.api.services.people.v1.model.Source;
+import com.google.api.services.people.v1.model.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import ezvcard.VCard;
@@ -35,17 +26,21 @@ import ezvcard.io.json.JCardReader;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
+
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.*;
 
 
 public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, ContactsModelWrapper> {
@@ -200,14 +195,20 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData, ContactsModelWrapper data) {
+  public ImportResult importItem(UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokensAndUrlAuthData authData, ContactsModelWrapper data) {
     JCardReader reader = new JCardReader(data.getVCards());
     try {
       // TODO(olsona): address any other problems that might arise in conversion
       List<VCard> vCardList = reader.readAll();
+      PeopleService.People peopleService = getOrCreatePeopleService(authData).people();
       for (VCard vCard : vCardList) {
         Person person = convert(vCard);
-        getOrCreatePeopleService(authData).people().createContact(person).execute();
+        idempotentExecutor.execute(
+            vCard.toString(),
+            vCard.getFormattedName().toString(),
+            () -> peopleService.createContact(person).execute().toPrettyString());
       }
       return ImportResult.OK;
     } catch (IOException e) {

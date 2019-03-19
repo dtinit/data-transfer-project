@@ -17,37 +17,21 @@ package org.datatransferproject.cloud.google;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.Timestamp;
-import com.google.cloud.datastore.Blob;
-import com.google.cloud.datastore.BooleanValue;
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreException;
-import com.google.cloud.datastore.DoubleValue;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.LongValue;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
-import com.google.cloud.datastore.StringValue;
+import com.google.cloud.datastore.*;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
-import com.google.cloud.datastore.TimestampValue;
-import com.google.cloud.datastore.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
+
+import java.io.*;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -237,7 +221,7 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
+  public <T extends Serializable> void create(UUID jobId, String key, T model) throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
     Key fullKey = getDataKey(jobId, key);
@@ -264,7 +248,7 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void update(UUID jobId, String key, T model) {
+  public <T extends Serializable> void update(UUID jobId, String key, T model) {
     Transaction transaction = datastore.newTransaction();
     Key entityKey = getDataKey(jobId, key);
 
@@ -289,7 +273,7 @@ public final class GoogleJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+  public <T extends Serializable> T findData(UUID jobId, String key, Class<T> type) {
     Key entityKey = getDataKey(jobId, key);
     Entity entity = datastore.get(entityKey);
     if (entity == null) {

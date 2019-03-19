@@ -24,15 +24,14 @@ import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItem;
 import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,8 +43,6 @@ public class GooglePhotosImporter
 
   // TODO: internationalize copy prefix
   private static final String COPY_PREFIX = "Copy of ";
-
-  private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -74,7 +71,10 @@ public class GooglePhotosImporter
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokensAndUrlAuthData authData, PhotosContainerResource data) throws IOException {
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokensAndUrlAuthData authData,
+      PhotosContainerResource data) throws IOException {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -83,14 +83,21 @@ public class GooglePhotosImporter
     // Uploads album metadata
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
-        importSingleAlbum(jobId, authData, album);
+        idempotentImportExecutor.execute(
+            album.getId(),
+            album.getName(),
+            () -> importSingleAlbum(authData, album)
+        );
       }
     }
 
     // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(jobId, authData, photo);
+        idempotentImportExecutor.execute(
+            photo.getDataId(),
+            photo.getTitle(),
+            () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
       }
     }
 
@@ -98,24 +105,22 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  void importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
+  String importSingleAlbum(TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
       throws IOException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     googleAlbum.setTitle(COPY_PREFIX + inputAlbum.getName());
 
     GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
-    TempPhotosData tempPhotosData = jobStore.findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
-    if (tempPhotosData == null) {
-      tempPhotosData = new TempPhotosData(jobId);
-      jobStore.create(jobId, TEMP_PHOTOS_KEY, tempPhotosData);
-    }
-    tempPhotosData.addAlbumId(inputAlbum.getId(), responseAlbum.getId());
-    jobStore.update(jobId, TEMP_PHOTOS_KEY, tempPhotosData);
+    return responseAlbum.getId();
   }
 
   @VisibleForTesting
-  void importSinglePhoto(UUID jobId, TokensAndUrlAuthData authData, PhotoModel inputPhoto)
+  String importSinglePhoto(
+      UUID jobId,
+      TokensAndUrlAuthData authData,
+      PhotoModel inputPhoto,
+      IdempotentImportExecutor idempotentImportExecutor)
       throws IOException {
     /*
     TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
@@ -140,20 +145,20 @@ public class GooglePhotosImporter
     }
     NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
 
-    TempPhotosData tempPhotosData = jobStore.findData(jobId, TEMP_PHOTOS_KEY, TempPhotosData.class);
     String albumId;
     if (Strings.isNullOrEmpty(inputPhoto.getAlbumId())) {
       // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
       // upload a NewMediaItem without a corresponding album id.
       albumId = null;
     } else {
-      albumId = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
+      albumId = idempotentImportExecutor.getCachedValue(inputPhoto.getAlbumId());
     }
 
     NewMediaItemUpload uploadItem =
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
 
-    getOrCreatePhotosInterface(authData).createPhoto(uploadItem);
+    return getOrCreatePhotosInterface(authData).createPhoto(uploadItem)
+        .getResults()[0].getMediaItem().getId();
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
@@ -163,7 +168,6 @@ public class GooglePhotosImporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    GooglePhotosInterface photosInterface = new GooglePhotosInterface(credential, jsonFactory);
-    return photosInterface;
+    return new GooglePhotosInterface(credential, jsonFactory);
   }
 }

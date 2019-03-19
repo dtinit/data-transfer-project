@@ -16,8 +16,6 @@
 
 package org.datatransferproject.transfer.solid.contacts;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -26,20 +24,7 @@ import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import ezvcard.parameter.EmailType;
 import ezvcard.parameter.TelephoneType;
-import ezvcard.property.Email;
-import ezvcard.property.Note;
-import ezvcard.property.Organization;
-import ezvcard.property.Photo;
-import ezvcard.property.StructuredName;
-import ezvcard.property.Telephone;
-import ezvcard.property.Url;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import ezvcard.property.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -47,6 +32,7 @@ import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.VCARD4;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.solid.SolidUtilities;
@@ -54,6 +40,16 @@ import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, ContactsModelWrapper> {
   //See https://www.w3.org/TR/vcard-rdf/ for details.
@@ -109,7 +105,10 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
   static final String IMPORTED_ADDRESS_BOOK_PATH = BASE_DIRECTORY + TEST_SLUG_NAME + "/";
 
   @Override
-  public ImportResult importItem(UUID jobId, CookiesAndUrlAuthData authData,
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      CookiesAndUrlAuthData authData,
       ContactsModelWrapper data) throws Exception {
     checkState(authData.getCookies().size() == 1,
         "Exactly 1 cookie expected: %s",
@@ -120,26 +119,53 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     String url = authData.getUrl();
 
     List<VCard> vcards = Ezvcard.parse(data.getVCards()).all();
-    createContent(url, vcards, solidUtilities);
+    createContent(idempotentExecutor, url, vcards, solidUtilities);
     return ImportResult.OK;
   }
 
-  private void createContent(String baseUrl, List<VCard> people, SolidUtilities utilities)
+  private void createContent(
+      IdempotentImportExecutor idempotentExecutor,
+      String baseUrl,
+      List<VCard> people,
+      SolidUtilities utilities)
       throws Exception {
     String addressBookSlug = TEST_SLUG_NAME;
 
-
     String containerUrl = createContainer(baseUrl + BASE_DIRECTORY, addressBookSlug, utilities);
 
-    createIndex(baseUrl + containerUrl, addressBookSlug, utilities);
+    idempotentExecutor.execute(baseUrl + containerUrl,
+        addressBookSlug,
+        () -> createIndex(baseUrl + containerUrl, addressBookSlug, utilities));
 
-    String personDirectory = createPersonDirectory(baseUrl + containerUrl, utilities);
+    String personDirectory = idempotentExecutor.execute(
+        baseUrl + containerUrl + "person",
+        addressBookSlug,
+        () -> createPersonDirectory(baseUrl + containerUrl, utilities));
 
     Map<String, VCard> insertedPeople = people.stream()
         .collect(Collectors.toMap(
-            p -> insertPerson(baseUrl, personDirectory, p, utilities),
+            p -> importPerson(idempotentExecutor, p, baseUrl, personDirectory, utilities),
             Function.identity()));
-    createPeopleFile(baseUrl, containerUrl, insertedPeople, utilities);
+
+    idempotentExecutor.execute(
+        "peopleFile",
+        addressBookSlug,
+        () -> createPeopleFile(baseUrl, containerUrl, insertedPeople, utilities));
+  }
+
+  private String importPerson(IdempotentImportExecutor executor,
+      VCard person,
+      String baseUrl,
+      String personDirectory,
+      SolidUtilities utilities) {
+    try {
+    return executor.execute(
+        Integer.toString(person.hashCode()),
+        person.getFormattedName().getValue(),
+        () -> insertPerson(baseUrl, personDirectory, person, utilities));
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   private String createContainer(String url, String slug, SolidUtilities utilities) throws Exception {
@@ -147,7 +173,6 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     Resource containerResource = containerModel.createResource("");
     containerResource.addProperty(DCTerms.title, slug);
     return utilities.postContent(url, slug, BASIC_CONTAINER_TYPE, containerModel);
-
   }
 
   private String createIndex(String url, String slug, SolidUtilities utilities) throws Exception {

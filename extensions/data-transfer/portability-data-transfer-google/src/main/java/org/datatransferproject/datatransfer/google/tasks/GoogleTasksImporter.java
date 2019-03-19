@@ -24,11 +24,10 @@ import com.google.api.services.tasks.model.TaskList;
 import com.google.common.annotations.VisibleForTesting;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempTasksData;
 import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
 import org.datatransferproject.types.common.models.tasks.TaskListModel;
 import org.datatransferproject.types.common.models.tasks.TaskModel;
@@ -41,46 +40,34 @@ import java.util.UUID;
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
   private Tasks tasksClient;
 
-  public GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
-    this(credentialFactory, jobStore, null);
+  public GoogleTasksImporter(GoogleCredentialFactory credentialFactory) {
+    this(credentialFactory, null);
   }
 
   @VisibleForTesting
-  GoogleTasksImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
+  GoogleTasksImporter(GoogleCredentialFactory credentialFactory,
       Tasks tasksClient) {
     this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
     this.tasksClient = tasksClient;
   }
 
   @Override
   public ImportResult importItem(
-          UUID jobId, TokensAndUrlAuthData authData, TaskContainerResource data) throws IOException {
-
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokensAndUrlAuthData authData,
+      TaskContainerResource data) throws IOException {
     Tasks tasksService = getOrCreateTasksService(authData);
-    TempTasksData tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
-    if (tempTasksData == null) {
-      tempTasksData = new TempTasksData(jobId.toString());
-      jobStore.create(jobId, createCacheKey(), tempTasksData);
-    }
 
     for (TaskListModel oldTasksList : data.getLists()) {
-      // TempTasksData shouldn't be null since we added it.
-      tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
-      TaskList insertedTaskList;
-
-      insertedTaskList = tasksService.tasklists().insert(newTaskList).execute();
-
-      tempTasksData.addTaskListId(oldTasksList.getId(), insertedTaskList.getId());
-
-      jobStore.update(jobId, createCacheKey(), tempTasksData);
+      idempotentImportExecutor.execute(
+          oldTasksList.getId(),
+          oldTasksList.getName(),
+          () -> tasksService.tasklists().insert(newTaskList).execute().getId());
     }
-
-    tempTasksData = jobStore.findData(jobId, createCacheKey(), TempTasksData.class);
 
     for (TaskModel oldTask : data.getTasks()) {
       Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
@@ -90,8 +77,11 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       if (oldTask.getDueTime() != null) {
         newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
       }
-      String newTaskListId = tempTasksData.lookupNewTaskListId(oldTask.getTaskListId());
-      tasksService.tasks().insert(newTaskListId, newTask).execute();
+      String newTaskListId = idempotentImportExecutor.getCachedValue(oldTask.getTaskListId());
+      idempotentImportExecutor.execute(
+          oldTask.getTaskListId() + oldTask.getText(),
+          oldTask.getText(),
+          () ->tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
     }
 
     return new ImportResult(ResultType.OK);
@@ -107,14 +97,5 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
         credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
-    return "tempTaskData";
   }
 }

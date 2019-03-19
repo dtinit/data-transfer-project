@@ -19,11 +19,9 @@ package org.datatransferproject.transfer.rememberthemilk.tasks;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempTasksData;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
 import org.datatransferproject.types.common.models.tasks.TaskListModel;
@@ -41,58 +39,45 @@ import java.util.UUID;
  */
 public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskContainerResource> {
 
-  private final JobStore jobstore;
   private final AppCredentials appCredentials;
   private final Monitor monitor;
   private RememberTheMilkService service;
 
   public RememberTheMilkTasksImporter(
-      AppCredentials appCredentials, JobStore jobStore, Monitor monitor) {
-    this.jobstore = jobStore;
+      AppCredentials appCredentials, Monitor monitor) {
     this.appCredentials = appCredentials;
     this.monitor = monitor;
     this.service = null;
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, TaskContainerResource data)
-      throws IOException {
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      AuthData authData,
+      TaskContainerResource data) {
     String timeline;
-
-    TempTasksData tempTasksData = jobstore.findData(jobId, createCacheKey(), TempTasksData.class);
-    if (tempTasksData == null) {
-      tempTasksData = new TempTasksData(jobId.toString());
-      jobstore.create(jobId, createCacheKey(), tempTasksData);
-    }
-
     try {
       RememberTheMilkService service = getOrCreateService(authData);
 
       timeline = service.createTimeline();
 
       for (TaskListModel taskList : data.getLists()) {
-        ListInfo listInfo = service.createTaskList(taskList.getName(), timeline);
-        tempTasksData.addTaskListId(taskList.getId(), Long.toString(listInfo.id));
+        idempotentExecutor.execute(
+            taskList.getId(),
+            taskList.getName(),
+            () -> service.createTaskList(taskList.getName(), timeline).id
+        );
       }
-      jobstore.update(jobId, createCacheKey(), tempTasksData);
 
       for (TaskModel task : data.getTasks()) {
         // Empty or blank tasks aren't valid in RTM
         if (!Strings.isNullOrEmpty(task.getText())) {
-          String newList = tempTasksData.lookupNewTaskListId(task.getTaskListId());
-          TaskSeries addedTask = service.createTask(task.getText(), timeline, newList);
-          // todo: add notes
-          if (task.getCompletedTime() != null) {
-            // NB: this assumes that only one task was added above, and that the task series
-            // in the response contains only one task.
-            // TODO: Address recurring events where some are completed and some are not
-            service.completeTask(timeline, newList, addedTask.id, addedTask.tasks.get(0).id);
-          }
-          if (task.getDueTime() != null) {
-            // TODO: Address recurring events with different due dates/times
-            service.setDueDate(
-                timeline, newList, addedTask.id, addedTask.tasks.get(0).id, task.getDueTime());
-          }
+          String newList = idempotentExecutor.getCachedValue(task.getTaskListId());
+          idempotentExecutor.execute(
+              Integer.toString(task.hashCode()),
+              task.getText(),
+              () -> insertTask(task, newList, timeline));
         }
       }
     } catch (Exception e) {
@@ -100,6 +85,23 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       return new ImportResult(e);
     }
     return new ImportResult(ImportResult.ResultType.OK);
+  }
+
+  private Integer insertTask(TaskModel task, String newList, String timeline) throws IOException {
+    TaskSeries addedTask = service.createTask(task.getText(), timeline, newList);
+    // todo: add notes
+    if (task.getCompletedTime() != null) {
+      // NB: this assumes that only one task was added above, and that the task series
+      // in the response contains only one task.
+      // TODO: Address recurring events where some are completed and some are not
+      service.completeTask(timeline, newList, addedTask.id, addedTask.tasks.get(0).id);
+    }
+    if (task.getDueTime() != null) {
+      // TODO: Address recurring events with different due dates/times
+      service.setDueDate(
+          timeline, newList, addedTask.id, addedTask.tasks.get(0).id, task.getDueTime());
+    }
+    return addedTask.id;
   }
 
   private RememberTheMilkService getOrCreateService(AuthData authData) {
@@ -110,15 +112,5 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   private RememberTheMilkService createService(TokenAuthData authData) {
     return new RememberTheMilkService(
         new RememberTheMilkSignatureGenerator(appCredentials, authData.getToken()));
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all
-    // mappings
-    return "tempPhotosData";
   }
 }

@@ -21,6 +21,10 @@ import java.net.URISyntaxException;
 
 public class MediaObject extends CreativeWork {
 
+  public MediaObject(String identifier) {
+    super(identifier);
+  }
+
   private URI contentUrl;
   private String encodingFormat;
 

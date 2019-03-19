@@ -17,34 +17,40 @@
 package org.datatransferproject.transfer;
 
 import com.google.inject.Provider;
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.auth.AuthData;
+
+import java.util.UUID;
+import java.util.concurrent.Callable;
 
 /**
  * Callable wrapper around an {@link Importer}.
  */
 public class CallableImporter implements Callable<ImportResult> {
 
-  private Provider<Importer> importerProvider;
-  private UUID jobId;
-  private AuthData authData;
-  private DataModel data;
+  private final Provider<Importer> importerProvider;
+  private final UUID jobId;
+  private final IdempotentImportExecutor idempotentImportExecutor;
+  private final AuthData authData;
+  private final DataModel data;
 
-  public CallableImporter(Provider<Importer> importerProvider, UUID jobId, AuthData authData,
+  public CallableImporter(Provider<Importer> importerProvider,
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      AuthData authData,
       DataModel data) {
     this.importerProvider = importerProvider;
-
     this.jobId = jobId;
+    this.idempotentImportExecutor = idempotentImportExecutor;
     this.authData = authData;
     this.data = data;
   }
 
   @Override
   public ImportResult call() throws Exception {
-    return importerProvider.get().importItem(jobId, authData, data);
+    return importerProvider.get().importItem(jobId, idempotentImportExecutor, authData, data);
   }
 }

@@ -20,21 +20,21 @@ import com.google.common.base.Strings;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /** An implementation for testing. */
 public class MockJobStore implements JobStore {
-  private final Map<String, DataModel> testData = new HashMap<>();
+  private final Map<String, Serializable> testData = new HashMap<>();
   private final Map<String, InputStream> keyedData = new HashMap<>();
 
   @Override
-  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
+  public <T extends Serializable> T findData(UUID jobId, String key, Class<T> type) {
     return type.cast(testData.get(createFullKey(jobId, key)));
   }
 
@@ -62,12 +62,12 @@ public class MockJobStore implements JobStore {
   }
 
   @Override
-  public <T extends DataModel> void create(UUID jobId, String key, T model) {
+  public <T extends Serializable> void create(UUID jobId, String key, T model) {
     testData.put(createFullKey(jobId, key), model);
   }
 
   @Override
-  public <T extends DataModel> void update(UUID jobId, String key, T model) {
+  public <T extends Serializable> void update(UUID jobId, String key, T model) {
     if (!testData.containsKey(createFullKey(jobId, key))) {
       throw new AssertionError("Data does not exist: " + jobId);
     }

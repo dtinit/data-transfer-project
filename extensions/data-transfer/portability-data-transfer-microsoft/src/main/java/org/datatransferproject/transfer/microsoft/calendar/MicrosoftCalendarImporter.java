@@ -15,28 +15,24 @@
  */
 package org.datatransferproject.transfer.microsoft.calendar;
 
-import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempCalendarData;
 import org.datatransferproject.transfer.microsoft.common.RequestHelper;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
+
+import java.io.IOException;
+import java.util.*;
+
+import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
 
 /**
  * Imports Outlook calendar information using the Microsoft Graph API.
@@ -72,80 +68,29 @@ public class MicrosoftCalendarImporter
   @SuppressWarnings("unchecked")
   @Override
   public ImportResult importItem(
-      UUID jobId, TokenAuthData authData, CalendarContainerResource data) throws IOException {
-    TempCalendarData calendarMappings = jobStore
-        .findData(jobId, createCacheKey(), TempCalendarData.class);
-    if (calendarMappings == null) {
-      calendarMappings = new TempCalendarData(jobId);
-      jobStore.create(jobId, createCacheKey(), calendarMappings);
-    }
-
-    Map<String, String> requestIdToExportedId = new HashMap<>();
-
-    List<String> problems = new ArrayList<>();
-
-    int requestId = 1;
-
-    List<Map<String, Object>> calendarRequests = new ArrayList<>();
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokenAuthData authData,
+      CalendarContainerResource data) throws IOException {
 
     for (CalendarModel calendar : data.getCalendars()) {
-      Map<String, Object> request = createRequestItem(calendar, requestId, CALENDAR_SUBPATH,
-          problems);
-      requestIdToExportedId.put(String.valueOf(requestId), calendar.getId());
-      requestId++;
-      calendarRequests.add(request);
+      idempotentImportExecutor.execute(calendar.getId(),
+          calendar.getName(),
+          () -> importCalendar(authData, calendar));
     }
-
-    if (!problems.isEmpty()) {
-      // TODO log problems
-    }
-
-    RequestHelper.BatchResponse calendarResponse =
-        RequestHelper.batchRequest(authData, calendarRequests, baseUrl, client, objectMapper);
-    if (ImportResult.ResultType.OK != calendarResponse.getResult().getType()) {
-      // TODO log problems
-      return calendarResponse.getResult();
-    }
-
-    List<Map<String, Object>> batchResponses = calendarResponse.getBatchResponse();
-    for (Map<String, Object> batchResponse : batchResponses) {
-      String batchRequestId = (String) batchResponse.get("id");
-      if (batchRequestId == null) {
-        problems.add("Null request id returned by batch response");
-        continue;
-      }
-      Integer status = (Integer) batchResponse.get("status");
-      if (status == null || 201 != status) {
-        problems.add("Error creating calendar: " + batchRequestId);
-        continue;
-      }
-      Map<String, Object> body = (Map<String, Object>) batchResponse.get("body");
-      if (body == null) {
-        problems.add("Invalid body returned from batch calendar create: " + batchRequestId);
-        continue;
-      }
-      calendarMappings.addIdMapping(
-          requestIdToExportedId.get(batchRequestId), (String) body.get("id"));
-    }
-    jobStore.update(jobId, createCacheKey(), calendarMappings);
 
     List<Map<String, Object>> eventRequests = new ArrayList<>();
-    requestId = 1;
+    int requestId = 1;
 
     for (CalendarEventModel event : data.getEvents()) {
-      String importedId =
-          calendarMappings.getImportedId(
-              event
-                  .getCalendarId()); // get the imported calendar id for the event from the mappings
+      // get the imported calendar id for the event from the mappings
+      String importedId = idempotentImportExecutor.getCachedValue(event.getCalendarId());
       Map<String, Object> request =
-          createRequestItem(event, requestId, String.format(EVENT_SUBPATH, importedId), problems);
+          createRequestItem(event, requestId, String.format(EVENT_SUBPATH, importedId));
       requestId++;
       eventRequests.add(request);
     }
 
-    if (!problems.isEmpty()) {
-      // TODO log problems
-    }
 
     RequestHelper.BatchResponse eventResponse =
         RequestHelper.batchRequest(authData, eventRequests, baseUrl, client, objectMapper);
@@ -157,20 +102,32 @@ public class MicrosoftCalendarImporter
     return eventResponse.getResult();
   }
 
-  private Map<String, Object> createRequestItem(
-      Object item, int id, String url, List<String> problems) {
-    TransformResult<LinkedHashMap> result = transformerService.transform(LinkedHashMap.class, item);
-    problems.addAll(result.getProblems());
-    LinkedHashMap contact = result.getTransformed();
-    return createRequest(id, url, contact);
+  private String importCalendar(TokenAuthData authData,
+      CalendarModel calendar) throws IOException {
+    List<Map<String, Object>> calendarRequests = new ArrayList<>();
+
+    Map<String, Object> request = createRequestItem(calendar, 1, CALENDAR_SUBPATH);
+    calendarRequests.add(request);
+
+    RequestHelper.BatchResponse calendarResponse =
+        RequestHelper.batchRequest(authData, calendarRequests, baseUrl, client, objectMapper);
+    if (ImportResult.ResultType.OK != calendarResponse.getResult().getType()) {
+      // TODO log problems
+      throw new IOException("Problem importing calendar: " + calendarResponse.getResult());
+    }
+
+    Map<String, Object> body = (Map<String, Object>) calendarResponse.getBatchResponse()
+        .get(0).get("body");
+    return (String) body.get("id");
   }
 
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
-    return "tempCalendarData";
+  private Map<String, Object> createRequestItem(
+      Object item, int id, String url) throws IOException {
+    TransformResult<LinkedHashMap> result = transformerService.transform(LinkedHashMap.class, item);
+    if (result.getProblems() != null && !result.getProblems().isEmpty()) {
+      throw new IOException("Problem transforming request: " + result.getProblems().get(0));
+    }
+    LinkedHashMap contact = result.getTransformed();
+    return createRequest(id, url, contact);
   }
 }

@@ -19,11 +19,6 @@ package org.datatransferproject.transfer.deezer.playlists;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -33,12 +28,14 @@ import org.datatransferproject.transfer.deezer.model.PlaylistDetails;
 import org.datatransferproject.transfer.deezer.model.PlaylistSummary;
 import org.datatransferproject.transfer.deezer.model.Track;
 import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.playlists.MusicAlbum;
-import org.datatransferproject.types.common.models.playlists.MusicGroup;
-import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
-import org.datatransferproject.types.common.models.playlists.MusicRecording;
-import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
+import org.datatransferproject.types.common.models.playlists.*;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Exports playlists from Deezer.
@@ -69,6 +66,7 @@ public class DeezerPlaylistExporter implements
     List<MusicPlaylist> results = new ArrayList<>();
     for (PlaylistSummary playlistSummary : api.getPlaylists()) {
       results.add(new MusicPlaylist(
+          playlistSummary.getLink(),
           playlistSummary.getTitle(),
           fetchPlaylist(api, playlistSummary.getId())));
     }
@@ -91,9 +89,10 @@ public class DeezerPlaylistExporter implements
   private MusicRecording convertTrack(DeezerApi api, long trackId) throws IOException {
     Track track = api.getTrack(trackId);
     return new MusicRecording(
+        track.getLink(),
         track.getTitle(),
         track.getIsrc(),
-        new MusicAlbum(track.getAlbum().getTitle()),
+        new MusicAlbum(track.getAlbum().getLink(), track.getAlbum().getTitle()),
         new MusicGroup(track.getAlbum().getTitle()));
   }
 }

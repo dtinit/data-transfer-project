@@ -26,10 +26,10 @@ import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
 import org.junit.Before;
@@ -47,9 +47,7 @@ import java.util.UUID;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMailImporterTest {
@@ -72,9 +70,9 @@ public class GoogleMailImporterTest {
   @Mock private Labels.Create labelsCreate;
   @Mock private GoogleCredentialFactory googleCredentialFactory;
 
-  private JobStore jobStore;
   private ListLabelsResponse labelsListResponse;
   private GoogleMailImporter googleMailImporter;
+  private IdempotentImportExecutor executor;
 
   @Before
   public void setUp() throws IOException {
@@ -83,13 +81,14 @@ public class GoogleMailImporterTest {
     label.setName(LABEL1);
     labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
 
-    jobStore = new LocalJobStore();
     Monitor monitor = new Monitor() {};
-    googleMailImporter = new GoogleMailImporter(googleCredentialFactory, jobStore, gmail, monitor);
+    googleMailImporter = new GoogleMailImporter(googleCredentialFactory, gmail, monitor);
+    executor = new FakeIdempotentImportExecutor();
 
     when(gmail.users()).thenReturn(users);
     when(users.messages()).thenReturn(messages);
     when(messages.insert(Matchers.anyString(), Matchers.any(Message.class))).thenReturn(insert);
+    when(insert.execute()).thenReturn(new Message().setId("fooBar"));
     when(users.labels()).thenReturn(labels);
     when(labels.list(Matchers.anyString())).thenReturn(labelsList);
     when(labelsList.execute()).thenReturn(labelsListResponse);
@@ -104,10 +103,10 @@ public class GoogleMailImporterTest {
     MailContainerResource resource =
         new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
 
-    ImportResult result = googleMailImporter.importItem(JOB_ID, null, resource);
+    ImportResult result = googleMailImporter.importItem(JOB_ID, executor,null, resource);
 
     // Getting list of labels from Google
-    verify(labelsList).execute();
+    verify(labelsList, atLeastOnce()).execute();
     // Importing message
     ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
     verify(messages).insert(eq(GoogleMailImporter.USER), messageArgumentCaptor.capture());

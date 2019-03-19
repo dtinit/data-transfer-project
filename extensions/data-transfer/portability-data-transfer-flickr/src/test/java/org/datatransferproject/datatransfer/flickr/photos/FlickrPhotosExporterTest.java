@@ -162,7 +162,9 @@ public class FlickrPhotosExporterTest {
     FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
     ExportResult<PhotosContainerResource> result =
         exporter.export(
-            UUID.randomUUID(), new TokenSecretAuthData("token", "secret"), Optional.of(exportInformation));
+            UUID.randomUUID(),
+            new TokenSecretAuthData("token", "secret"),
+            Optional.of(exportInformation));
     assertThat(result.getExportedData().getPhotos().size()).isEqualTo(numPhotos);
     assertThat(result.getExportedData().getAlbums()).isEmpty();
 

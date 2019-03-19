@@ -7,38 +7,36 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempCalendarData;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class GoogleCalendarImporter implements
     Importer<TokensAndUrlAuthData, CalendarContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
   private volatile Calendar calendarInterface;
 
-  public GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore) {
+  public GoogleCalendarImporter(GoogleCredentialFactory credentialFactory) {
     // calendarInterface lazily initialized for each request
-    this(credentialFactory, jobStore, null);
+    this(credentialFactory, null);
   }
 
   @VisibleForTesting
-  GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
+  GoogleCalendarImporter(GoogleCredentialFactory credentialFactory,
       Calendar calendarInterface) {
     this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
     this.calendarInterface = calendarInterface;
   }
 
@@ -94,16 +92,24 @@ public class GoogleCalendarImporter implements
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
-      CalendarContainerResource data) {
+  public ImportResult importItem(UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokensAndUrlAuthData authData,
+      CalendarContainerResource data) throws IOException {
     try {
       for (CalendarModel calendarModel : data.getCalendars()) {
-        importSingleCalendar(jobId, authData, calendarModel);
+        idempotentExecutor.execute(
+            calendarModel.getId(),
+            calendarModel.getName(),
+            () -> importSingleCalendar(authData, calendarModel));
       }
       for (CalendarEventModel eventModel : data.getEvents()) {
-        importSingleEvent(jobId, authData, eventModel);
+        idempotentExecutor.execute(
+            Integer.toString(eventModel.hashCode()),
+            eventModel.getNotes(),
+            () -> importSingleEvent(idempotentExecutor, authData, eventModel));
       }
-    } catch (IOException e) {
+    } catch (RuntimeException e) {
       // TODO(olsona): should consider retrying individual failures
       return new ImportResult(e);
     }
@@ -111,33 +117,27 @@ public class GoogleCalendarImporter implements
   }
 
   @VisibleForTesting
-  void importSingleCalendar(UUID jobId, TokensAndUrlAuthData authData, CalendarModel calendarModel)
+  String importSingleCalendar(TokensAndUrlAuthData authData, CalendarModel calendarModel)
       throws IOException {
     com.google.api.services.calendar.model.Calendar toInsert = convertToGoogleCalendar(
         calendarModel);
     com.google.api.services.calendar.model.Calendar calendarResult =
         getOrCreateCalendarInterface(authData).calendars().insert(toInsert).execute();
-
-    TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
-    if (calendarMappings == null) {
-      calendarMappings = new TempCalendarData(jobId);
-      jobStore.create(jobId, createCacheKey(), calendarMappings);
-    }
-    calendarMappings.addIdMapping(calendarModel.getId(), calendarResult.getId());
-    jobStore.update(jobId, createCacheKey(), calendarMappings);
+    return calendarResult.getId();
   }
 
   @VisibleForTesting
-  void importSingleEvent(UUID jobId, TokensAndUrlAuthData authData, CalendarEventModel eventModel)
+  String importSingleEvent(IdempotentImportExecutor idempotentImportExecutor,
+      TokensAndUrlAuthData authData,
+      CalendarEventModel eventModel)
       throws IOException {
     Event event = convertToGoogleCalendarEvent(eventModel);
-    // calendarMappings better not be null!
-    TempCalendarData calendarMappings = jobStore.findData(jobId, createCacheKey(), TempCalendarData.class);
-    String newCalendarId = calendarMappings.getImportedId(eventModel.getCalendarId());
-    getOrCreateCalendarInterface(authData)
+    String newCalendarId = idempotentImportExecutor.getCachedValue(eventModel.getCalendarId());
+    return getOrCreateCalendarInterface(authData)
         .events()
         .insert(newCalendarId, event)
-        .execute();
+        .execute()
+        .getId();
   }
 
   private Calendar getOrCreateCalendarInterface(TokensAndUrlAuthData authData) {
@@ -151,13 +151,4 @@ public class GoogleCalendarImporter implements
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
-
-  /** Key for cache of album mappings.
-   * TODO: Add a method parameter for a {@code key} for fine grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
-    return "tempCalendarData";
-  }
-
 }

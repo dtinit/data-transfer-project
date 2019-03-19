@@ -12,10 +12,13 @@ public class MusicRecording extends CreativeWork {
   private MusicAlbum musicAlbum;
   private MusicGroup byArtist;
 
-  public MusicRecording(String headline,
-                        String isrcCode,
-                        MusicAlbum musicAlbum,
-                        MusicGroup byArtist) {
+  public MusicRecording(
+      String identifier,
+      String headline,
+      String isrcCode,
+      MusicAlbum musicAlbum,
+      MusicGroup byArtist) {
+    super(identifier);
     setHeadline(headline);
     this.isrcCode = isrcCode;
     this.musicAlbum = musicAlbum;
@@ -33,5 +36,11 @@ public class MusicRecording extends CreativeWork {
 
   public MusicGroup getByArtist() {
     return byArtist;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("MusicRecording{id: %s, headline: %s, isrc: %s}",
+        getIdentifier(), getHeadline(), getIsrcCode());
   }
 }

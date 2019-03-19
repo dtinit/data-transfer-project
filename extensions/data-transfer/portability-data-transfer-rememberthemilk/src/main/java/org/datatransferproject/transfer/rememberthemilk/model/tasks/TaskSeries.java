@@ -18,12 +18,13 @@ package org.datatransferproject.transfer.rememberthemilk.model.tasks;
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.common.base.MoreObjects;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /** A tasks series, see: https://www.rememberthemilk.com/services/api/tasks.rtm */
-public class TaskSeries {
+public class TaskSeries implements Serializable {
 
   @JacksonXmlProperty(isAttribute = true, localName = "id")
   public int id;

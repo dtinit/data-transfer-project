@@ -19,9 +19,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class PhotoAlbum {
+public class PhotoAlbum implements Serializable {
   private final String id;
   private final String name;
   private final String description;

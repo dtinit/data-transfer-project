@@ -96,9 +96,9 @@ public class GoogleTransferExtension implements TransferExtension {
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));
     importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
-    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory, jobStore));
-    importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, jobStore, monitor));
-    importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory, jobStore));
+    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory));
+    importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, monitor));
+    importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
         "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
     importerMap = importerBuilder.build();
