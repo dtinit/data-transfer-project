@@ -16,12 +16,12 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import org.datatransferproject.cloud.local.LocalJobStore;
-import org.datatransferproject.datatransfer.google.photos.model.BatchMediaItemResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemResult;
-import org.datatransferproject.datatransfer.google.photos.model.NewMediaItemUpload;
+import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
