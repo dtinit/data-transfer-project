@@ -42,7 +42,13 @@ public interface IdempotentImportExecutor {
    * Returns a cached result from a previous call to {@code execute}.
    *
    * @param idempotentId a unique ID previously passed into {@code execute}
-   * @return the result of a previously evaluated {@code execute} call.
+   * @return the result of a previously evaluated {@code execute} call
+   * @throws IllegalArgumentException if the key is not found
    */
-  <T extends Serializable> T getCachedValue(String idempotentId);
+  <T extends Serializable> T getCachedValue(String idempotentId) throws IllegalArgumentException;
+
+  /**
+   * Checks if a given key has been cached already.
+   */
+  boolean isKeyCached(String idempotentId);
 }

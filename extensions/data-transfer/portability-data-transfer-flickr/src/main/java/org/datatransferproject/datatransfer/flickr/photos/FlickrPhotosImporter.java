@@ -120,7 +120,9 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   // photo in it, so we have to wait for the first photo to create the album
   private void storeAlbumbs(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
     for (PhotoAlbum album : albums) {
-      jobStore.create(jobId, ORIGINAL_ALBUM_PREFIX + album.getId(), album);
+      jobStore.create(jobId,
+              ORIGINAL_ALBUM_PREFIX + album.getId(),
+              new FlickrTempPhotoData(album.getName(), album.getDescription()));
     }
   }
 
@@ -150,13 +152,12 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       UUID jobId,
       String oldAlbumId,
       String photoId) throws IOException, FlickrException {
-    String newAlbumId = jobStore.findData(jobId, oldAlbumId, String.class);
-
-    if (Strings.isNullOrEmpty(newAlbumId)) {
-      createAlbum(idempotentExecutor, jobId, oldAlbumId, photoId);
-    } else {
+    if (idempotentExecutor.isKeyCached(oldAlbumId)) {
+      String newAlbumId = idempotentExecutor.getCachedValue(oldAlbumId);
       // We've already created the album this photo belongs in, simply add it to the new album
       photosetsInterface.addPhoto(newAlbumId, photoId);
+    } else {
+      createAlbum(idempotentExecutor, jobId, oldAlbumId, photoId);
     }
   }
 
@@ -166,10 +167,10 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       String oldAlbumId,
       String firstPhotoId) throws IOException {
     // This means that we havent created the new album yet, create the photoset
-    PhotoAlbum album = jobStore.findData(
+    FlickrTempPhotoData album = jobStore.findData(
         jobId,
         ORIGINAL_ALBUM_PREFIX + oldAlbumId,
-        PhotoAlbum.class);
+            FlickrTempPhotoData.class);
 
     // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
     // throw them into a default album or add a finalize() step in the Importer which can deal

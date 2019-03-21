@@ -65,4 +65,9 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
     }
     return (T) knownValues.get(idempotentId);
   }
+
+  @Override
+  public boolean isKeyCached(String idempotentId) {
+    return knownValues.containsKey(idempotentId);
+  }
 }

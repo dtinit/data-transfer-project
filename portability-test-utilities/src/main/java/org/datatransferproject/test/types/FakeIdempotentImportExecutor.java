@@ -38,4 +38,9 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
     }
     return (T) knownValues.get(idempotentId);
   }
+
+  @Override
+  public boolean isKeyCached(String idempotentId) {
+    return knownValues.containsKey(idempotentId);
+  }
 }

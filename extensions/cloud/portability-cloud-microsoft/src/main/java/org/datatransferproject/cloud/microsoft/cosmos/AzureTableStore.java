@@ -16,10 +16,10 @@ import com.microsoft.azure.storage.table.TableResult;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.Iterator;
@@ -165,7 +165,7 @@ public class AzureTableStore implements JobStore {
   }
 
   @Override
-  public <T extends Serializable> void create(UUID jobId, String key, T model) {
+  public <T extends DataModel> void create(UUID jobId, String key, T model) {
     try {
       create(createRowKey(jobId, key), JOB_DATA_TABLE, null, model);
     } catch (IOException e) {
@@ -174,13 +174,13 @@ public class AzureTableStore implements JobStore {
   }
 
   @Override
-  public <T extends Serializable> void update(UUID jobId, String key, T model) {
+  public <T extends DataModel> void update(UUID jobId, String key, T model) {
     // TODO: implement update functionality
     throw new UnsupportedOperationException("Implement update functionality. ");
   }
 
   @Override
-  public <T extends Serializable> T findData(UUID jobId, String key, Class<T> type) {
+  public <T extends DataModel> T findData(UUID jobId, String key, Class<T> type) {
     return find(type, createRowKey(jobId, key), JOB_DATA_TABLE);
   }
 
