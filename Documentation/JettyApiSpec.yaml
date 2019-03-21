@@ -250,6 +250,7 @@ components:
         - "SMUGMUG"
         - "Facebook"
         - "TWITTER"
+        - "IMGUR"
         - "GOOGLE"
     TransferJob:
       type: "object"

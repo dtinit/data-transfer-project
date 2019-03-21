@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -72,7 +73,7 @@ final class JobProcessor {
   void processJob() {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
-    monitor.debug(() -> format("Begin processing jobId: %s", jobId));
+    monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
     markJobStarted(jobId);
     hooks.jobStarted(jobId);
 
@@ -110,9 +111,9 @@ final class JobProcessor {
       monitor.debug(() -> "Finished copy for jobId: " + jobId);
       success = true;
     } catch (IOException | SecurityException | CopyException e) {
-      monitor.severe(() -> "Error processing jobId: " + jobId, e);
+      monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
-      monitor.debug(() -> "Finished processing jobId: " + jobId);
+      monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
       markJobFinished(jobId, success);
       hooks.jobFinished(jobId, success);
       JobMetadata.reset();

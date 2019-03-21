@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.action.ActionUtils;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -67,7 +68,8 @@ public class ReserveWorkerAction implements Action<ReserveWorker, ReservedWorker
           (previous, updated) ->
               Preconditions.checkState(
                   previous.jobAuthorization().state() == JobAuthorization.State.INITIAL));
-      monitor.debug(() -> format("Updated job %s to CREDS_AVAILABLE", jobId));
+      monitor.debug(() -> format("Updated job %s to CREDS_AVAILABLE", jobId), jobId,
+          EventCode.API_JOB_CREDS_AVAILABLE);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);
     }

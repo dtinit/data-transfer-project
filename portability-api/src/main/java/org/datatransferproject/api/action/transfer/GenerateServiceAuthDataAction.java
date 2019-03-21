@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.security.DecrypterFactory;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -22,6 +23,7 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
 
 /** Called after an import or export service authentication flow has successfully completed. */
@@ -32,6 +34,7 @@ public class GenerateServiceAuthDataAction
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final ObjectMapper objectMapper;
   private DecrypterFactory decrypterFactory;
+  private final Monitor monitor;
 
   @Inject
   public GenerateServiceAuthDataAction(
@@ -45,6 +48,7 @@ public class GenerateServiceAuthDataAction
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.objectMapper = typeManager.getMapper();
     this.decrypterFactory = new DecrypterFactory(monitor);
+    this.monitor = monitor;
   }
 
   @Override
@@ -103,6 +107,10 @@ public class GenerateServiceAuthDataAction
               initialAuthData,
               null);
       Preconditions.checkNotNull(authData, "Auth data should not be null");
+
+      monitor.debug(
+          () -> format("Generated auth data in mode '%s' for job: %s", authMode, jobId), jobId,
+          EventCode.API_GENERATED_AUTH_DATA);
 
       // Serialize and encrypt the auth data
       String serialized = objectMapper.writeValueAsString(authData);

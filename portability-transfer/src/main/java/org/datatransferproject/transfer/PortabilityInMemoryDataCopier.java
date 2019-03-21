@@ -17,6 +17,7 @@ package org.datatransferproject.transfer;
 
 import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -98,7 +99,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    monitor.debug(() -> jobIdPrefix + "Starting export");
+    monitor.debug(() -> jobIdPrefix + "Starting export", EventCode.COPIER_STARTED_EXPORT);
     CallableExporter callableExporter =
         new CallableExporter(exporterProvider, jobId, exportAuthData, exportInformation);
     RetryingCallable<ExportResult> retryingExporter =
@@ -109,10 +110,10 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     } catch (RetryException e) {
       throw new CopyException(jobIdPrefix + "Error happened during export", e);
     }
-    monitor.debug(() -> jobIdPrefix + "Finished export");
+    monitor.debug(() -> jobIdPrefix + "Finished export", EventCode.COPIER_FINISHED_EXPORT);
 
     if (exportResult.getExportedData() != null) {
-      monitor.debug(() -> jobIdPrefix + "Starting import");
+      monitor.debug(() -> jobIdPrefix + "Starting import", EventCode.COPIER_STARTED_IMPORT);
       CallableImporter callableImporter =
           new CallableImporter(
               importerProvider,
@@ -128,7 +129,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       } catch (RetryException e) {
         throw new CopyException(jobIdPrefix + "Error happened during import", e);
       }
-      monitor.debug(() -> jobIdPrefix + "Finished import");
+      monitor.debug(() -> jobIdPrefix + "Finished import", EventCode.COPIER_FINISHED_IMPORT);
     }
 
     // Import and Export were successful, determine what to do next

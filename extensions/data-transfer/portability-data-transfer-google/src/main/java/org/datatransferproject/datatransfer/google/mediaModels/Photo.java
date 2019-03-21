@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+package org.datatransferproject.datatransfer.google.mediaModels;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Arrays;
 
-public class BatchMediaItemResponse {
-  @JsonProperty("newMediaItemResults")
-  private NewMediaItemResult[] results;
+/**
+ * Photo metadata - not the content of the photo itself!
+ */
+public class Photo {
+  @JsonProperty("cameraMake")
+  private String cameraMake;
 
-  @JsonCreator
-  public BatchMediaItemResponse(
-      @JsonProperty("newMediaItemResults") NewMediaItemResult[] results) {
-    this.results = results;
-  }
+  @JsonProperty("cameraModel")
+  private String cameraModel;
 
-  public NewMediaItemResult[] getResults() {
-    return results;
-  }
+  @JsonProperty("focalLength")
+  private double focalLength;
+
+  @JsonProperty("apertureFNumber")
+  private double apertureFNumber;
+
+  @JsonProperty("isoEquivalent")
+  private double isoEquivalent;
+
+  @JsonProperty("exposureTime")
+  private String exposureTime;
 }

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,12 +35,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.photos.model.MediaMetadata;
-import org.datatransferproject.datatransfer.google.photos.model.Photo;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
+import org.datatransferproject.datatransfer.google.mediaModels.Photo;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -247,11 +248,13 @@ public class GooglePhotosExporterTest {
     googlePhotosExporter.populateContainedPhotosList(uuid, null);
 
     // Check contents of job store
-    ArgumentCaptor<TempPhotosData> tempPhotosDataArgumentCaptor = ArgumentCaptor
-        .forClass(TempPhotosData.class);
-    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"), tempPhotosDataArgumentCaptor.capture());
-    assertThat(tempPhotosDataArgumentCaptor.getValue().lookupContainedPhotoIds())
-        .containsExactly(PHOTO_ID, secondId);
+    ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor
+        .forClass(InputStream.class);
+    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"),
+        inputStreamArgumentCaptor.capture());
+    TempPhotosData tempPhotosData = new ObjectMapper()
+        .readValue(inputStreamArgumentCaptor.getValue(), TempPhotosData.class);
+    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
   @Test

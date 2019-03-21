@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -77,7 +78,7 @@ class JobPollingService extends AbstractScheduledService {
             format(
                 "Waited over %d seconds for the creds to be provided on the claimed job: %s",
                 credsTimeoutSeconds, jobId);
-        monitor.severe(() -> message);
+        monitor.severe(() -> message, EventCode.WORKER_CREDS_TIMEOUT);
         throw new CredsTimeoutException(message, jobId);
       }
       pollUntilJobIsReady();
@@ -235,7 +236,7 @@ class JobPollingService extends AbstractScheduledService {
       JobAuthorization jobAuthorization = job.jobAuthorization();
       if (!Strings.isNullOrEmpty(jobAuthorization.encryptedAuthData())) {
         monitor.debug(
-            () -> format("Polled job %s has auth data as expected. Done polling.", jobId));
+            () -> format("Polled job %s has auth data as expected. Done polling.", jobId), EventCode.WORKER_CREDS_STORED);
       } else {
         monitor.severe(
             () ->
