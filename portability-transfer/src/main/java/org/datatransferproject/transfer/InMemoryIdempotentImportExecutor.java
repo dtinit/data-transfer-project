@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+/**
+ * A {@link IdempotentImportExecutor} that stores known values in memory.
+ */
 public class InMemoryIdempotentImportExecutor implements IdempotentImportExecutor {
   final private Map<String, Serializable> knownValues = new HashMap<>();
   private final Monitor monitor;
