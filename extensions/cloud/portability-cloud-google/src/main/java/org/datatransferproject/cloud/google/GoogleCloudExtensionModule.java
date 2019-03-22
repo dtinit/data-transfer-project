@@ -176,11 +176,11 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
   @Provides
   @Singleton
   @ProjectId
-  String getProjectId() {
+  String provideProjectId() {
     validateUsingGoogle(cloud);
     String projectId;
     try {
-      projectId = System.getenv(GCP_PROJECT_ID_ENV_VAR);
+      projectId = getProjectId();
     } catch (NullPointerException e) {
       throw new IllegalArgumentException(
           "Need to specify a project ID when using Google Cloud. "
@@ -193,6 +193,10 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
             + "ID when using Google Cloud. This should be exposed as an environment variable by "
             + "Kubernetes, see k8s/api-deployment.yaml");
     return projectId;
+  }
+
+  static String getProjectId() {
+    return System.getenv(GCP_PROJECT_ID_ENV_VAR);
   }
 
   @Provides

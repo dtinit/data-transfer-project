@@ -43,13 +43,13 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
       String itemName,
       Callable<T> callable) throws IOException {
     if (knownValues.containsKey(idempotentId)) {
-      monitor.debug(() -> "Using cached key {} from cache for {}", idempotentId, itemName);
+      monitor.debug(() -> "Using cached key %s from cache for %s", idempotentId, itemName);
       return (T) knownValues.get(idempotentId);
     }
     try {
       T result = callable.call();
       knownValues.put(idempotentId, result);
-      monitor.debug(() -> "Storing key {} in cache for {}", idempotentId, itemName);
+      monitor.debug(() -> "Storing key %s in cache for %s", idempotentId, itemName);
       return result;
     } catch (Exception e) {
       throw new IOException("Problem executing callable for: " + idempotentId, e);

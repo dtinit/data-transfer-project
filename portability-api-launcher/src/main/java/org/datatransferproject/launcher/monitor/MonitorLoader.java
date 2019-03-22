@@ -33,7 +33,6 @@ public class MonitorLoader {
         .iterator()
         .forEachRemaining(
             extension -> {
-              extension.getMonitor();
               extension.initialize();
               monitors.add(extension.getMonitor());
             });
