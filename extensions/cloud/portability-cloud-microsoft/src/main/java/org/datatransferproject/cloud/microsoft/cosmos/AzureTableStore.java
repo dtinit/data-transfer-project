@@ -1,5 +1,7 @@
 package org.datatransferproject.cloud.microsoft.cosmos;
 
+import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -13,19 +15,16 @@ import com.microsoft.azure.storage.table.CloudTableClient;
 import com.microsoft.azure.storage.table.TableOperation;
 import com.microsoft.azure.storage.table.TableQuery;
 import com.microsoft.azure.storage.table.TableResult;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.Iterator;
 import java.util.UUID;
-
-import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
 
 /** Uses the Azure Cosmos DB Table Storage API to persist job data. */
 public class AzureTableStore implements JobStore {

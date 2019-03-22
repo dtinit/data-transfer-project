@@ -17,6 +17,8 @@ package org.datatransferproject.types.common;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.Serializable;
+
 /**
  * Base model type that supports language interoperability and extensibility.
  *
@@ -24,4 +26,4 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * key for de/serialization.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "ptype")
-public abstract class PortableType {}
+public abstract class PortableType implements Serializable {}

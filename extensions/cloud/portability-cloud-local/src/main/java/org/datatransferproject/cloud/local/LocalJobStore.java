@@ -36,8 +36,8 @@ import static java.lang.String.format;
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
 public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
-  private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>>
-      DATA_MAP = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
+      new ConcurrentHashMap<>();
   private static LocalTempFileStore localTempFileStore = new LocalTempFileStore();
 
   private final Monitor monitor;
