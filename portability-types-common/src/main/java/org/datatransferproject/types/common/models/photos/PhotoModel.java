@@ -43,6 +43,9 @@ public class PhotoModel {
     this.fetchableUrl = fetchableUrl;
     this.description = description;
     this.mediaType = mediaType;
+    if (dataId == null || dataId.isEmpty()) {
+      throw new IllegalArgumentException("dataID must be set");
+    }
     this.dataId = dataId;
     this.albumId = albumId;
     this.inTempStore = inTempStore;

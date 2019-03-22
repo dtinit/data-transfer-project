@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.types.common;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.io.Serializable;
-
-/**
- * Base model type that supports language interoperability and extensibility.
- *
- * <p>Subtypes use {@link com.fasterxml.jackson.annotation.JsonTypeName} to define the concrete type
- * key for de/serialization.
- */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "ptype")
-public abstract class PortableType implements Serializable {}
+dependencies {
+    compile project(':portability-spi-transfer')
+}

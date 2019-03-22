@@ -18,13 +18,17 @@ package org.datatransferproject.types.common.models;
 
 public class CreativeWork extends Thing {
 
+  public CreativeWork(String identifier) {
+    super(identifier);
+  }
+
   private String headline;
 
   public String getHeadline() {
     return headline;
   }
 
-  public void setHeadline(String headlin) {
+  public void setHeadline(String headline) {
     this.headline = headline;
   }
 }

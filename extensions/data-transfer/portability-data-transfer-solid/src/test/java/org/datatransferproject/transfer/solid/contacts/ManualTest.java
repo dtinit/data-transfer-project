@@ -17,13 +17,16 @@
 package org.datatransferproject.transfer.solid.contacts;
 
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.UUID;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.solid.SolidUtilities;
 import org.datatransferproject.transfer.solid.SslHelper;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.UUID;
 
 public class ManualTest {
   // URL to your POD
@@ -38,6 +41,7 @@ public class ManualTest {
 
   private final CookiesAndUrlAuthData authData;
   private final SolidUtilities solidUtilities;
+  private final IdempotentImportExecutor executor;
 
   public static void main(String[] args) throws Exception {
     new ManualTest()
@@ -50,12 +54,14 @@ public class ManualTest {
         .loginViaCertificate();
     this.authData = new CookiesAndUrlAuthData(ImmutableList.of(authCookie), ROOT_URL);
     this.solidUtilities = new SolidUtilities(authCookie);
+    this.executor = new FakeIdempotentImportExecutor();
   }
 
   ManualTest manualImport() throws Exception {
     SolidContactsImport importer = new SolidContactsImport();
     importer.importItem(
         UUID.randomUUID(),
+        executor,
         this.authData,
         new ContactsModelWrapper(TestData.VCARD_TEXT)
     );

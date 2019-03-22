@@ -18,10 +18,12 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 /**
  * Class containing the response from uploading {@code NewMediaItemUpload} to the Google Photos API.
  */
-public class NewMediaItemResult {
+public class NewMediaItemResult implements Serializable {
 
   @JsonProperty("uploadToken")
   private String uploadToken;

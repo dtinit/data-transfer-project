@@ -22,6 +22,8 @@ import com.google.api.services.people.v1.PeopleService.People.CreateContact;
 import com.google.api.services.people.v1.model.Person;
 import ezvcard.VCard;
 import ezvcard.property.StructuredName;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +47,7 @@ public class GoogleContactsImporterTest {
   private GoogleContactsImporter contactsService;
   private People people;
   private CreateContact createContact;
+  private IdempotentImportExecutor executor;
 
   @Before
   public void setup() throws IOException {
@@ -53,9 +56,13 @@ public class GoogleContactsImporterTest {
     createContact = mock(CreateContact.class);
 
     contactsService = new GoogleContactsImporter(peopleService);
+    executor = new FakeIdempotentImportExecutor();
 
     when(peopleService.people()).thenReturn(people);
     when(people.createContact(any(Person.class))).thenReturn(createContact);
+
+    Person person = new Person();
+    when(createContact.execute()).thenReturn(person);
   }
 
   @Test
@@ -69,13 +76,14 @@ public class GoogleContactsImporterTest {
       structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, CONTACT_SOURCE_TYPE);
       VCard vCard = new VCard();
       vCard.setStructuredName(structuredName);
+      vCard.setFormattedName("First " + structuredName.getFamily());
       vCardList.add(vCard);
     }
     String vCardString = GoogleContactsExporter.makeVCardString(vCardList);
     ContactsModelWrapper wrapper = new ContactsModelWrapper(vCardString);
 
     // Run test
-    contactsService.importItem(UUID.randomUUID(), null, wrapper);
+    contactsService.importItem(UUID.randomUUID(), executor,null, wrapper);
 
     // Check that the right methods were called
     verify(people, times(numberOfVCards)).createContact(any(Person.class));

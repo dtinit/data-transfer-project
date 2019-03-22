@@ -30,9 +30,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -51,7 +51,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   @VisibleForTesting
   static final String COPY_PREFIX = "Copy of - ";
   @VisibleForTesting
-  static final String DEFAULT_ALBUM = "Default";
+  static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
 
   private final JobStore jobStore;
   private final Flickr flickr;
@@ -81,7 +81,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, AuthData authData, PhotosContainerResource data)
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      AuthData authData,
+      PhotosContainerResource data)
       throws IOException {
     Auth auth;
     try {
@@ -91,27 +95,18 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
     RequestContext.getRequestContext().setAuth(auth);
 
-    // TODO: store objects containing individual mappings instead of single object containing all
-    // mappings
-    TempPhotosData tempPhotosData =
-        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
-    if (tempPhotosData == null) {
-      tempPhotosData = new TempPhotosData(jobId);
-      jobStore.create(jobId, createCacheKey(), tempPhotosData);
-    }
 
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
-      importAlbums(data.getAlbums(), tempPhotosData);
-      jobStore.update(jobId, createCacheKey(), tempPhotosData);
+      storeAlbumbs(jobId, data.getAlbums());
     }
 
     if (data.getPhotos() != null) {
       for (PhotoModel photo : data.getPhotos()) {
         try {
-          importSinglePhoto(jobId, photo);
+          importSinglePhoto(idempotentExecutor, jobId, photo);
         } catch (FlickrException e) {
           throw new IOException(e);
         }
@@ -123,14 +118,21 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   // Store any album data in the cache because Flickr only allows you to create an album with a
   // photo in it, so we have to wait for the first photo to create the album
-  private void importAlbums(Collection<PhotoAlbum> albums, TempPhotosData tempPhotosData) {
+  private void storeAlbumbs(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
     for (PhotoAlbum album : albums) {
-      tempPhotosData.addTempAlbumMapping(album.getId(), album);
+      jobStore.create(jobId,
+              ORIGINAL_ALBUM_PREFIX + album.getId(),
+              new FlickrTempPhotoData(album.getName(), album.getDescription()));
     }
   }
 
-  private void importSinglePhoto(UUID id, PhotoModel photo) throws FlickrException, IOException {
-    String photoId = uploadPhoto(photo, id);
+  private void importSinglePhoto(IdempotentImportExecutor idempotentExecutor,
+      UUID id,
+      PhotoModel photo) throws FlickrException, IOException {
+    String photoId = idempotentExecutor.execute(
+        photo.getAlbumId() + "-" + photo.getDataId(),
+        photo.getTitle(),
+        () -> uploadPhoto(photo, id));
 
     String oldAlbumId = photo.getAlbumId();
 
@@ -142,38 +144,55 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     if (Strings.isNullOrEmpty(oldAlbumId)) {
       return;
     }
+    createOrAddToAlbum(idempotentExecutor, id, photo.getAlbumId(), photoId);
+  }
 
-    TempPhotosData tempData = jobStore.findData(id, createCacheKey(), TempPhotosData.class);
-    String newAlbumId = tempData.lookupNewAlbumId(oldAlbumId);
-
-    if (Strings.isNullOrEmpty(newAlbumId)) {
-      // This means that we havent created the new album yet, create the photoset
-      PhotoAlbum album = tempData.lookupTempAlbum(oldAlbumId);
-
-      // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
-      // throw them into a default album or add a finalize() step in the Importer which can deal
-      // with these (in case the album exists later).
-      Preconditions.checkArgument(album != null, "Album not found: " + oldAlbumId);
-
-      // TODO: do we want to keep the COPY_PREFIX?  I feel like not
-      String albumName =
-          Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
-      String albumDescription = cleanString(album.getDescription());
-
-      Photoset photoset = photosetsInterface.create(albumName, albumDescription, photoId);
-      
-      monitor.debug(() -> String.format("%s: Flickr importer created album: %s", id, album));
-
-      // Update the temp mapping to reflect that we've created the album
-      tempData.addAlbumId(oldAlbumId, photoset.getId());
-      tempData.removeTempPhotoAlbum(oldAlbumId);
-    } else {
+  private void createOrAddToAlbum(
+      IdempotentImportExecutor idempotentExecutor,
+      UUID jobId,
+      String oldAlbumId,
+      String photoId) throws IOException, FlickrException {
+    if (idempotentExecutor.isKeyCached(oldAlbumId)) {
+      String newAlbumId = idempotentExecutor.getCachedValue(oldAlbumId);
       // We've already created the album this photo belongs in, simply add it to the new album
       photosetsInterface.addPhoto(newAlbumId, photoId);
+    } else {
+      createAlbum(idempotentExecutor, jobId, oldAlbumId, photoId);
     }
-
-    jobStore.update(id, createCacheKey(), tempData);
   }
+
+  private void createAlbum(
+      IdempotentImportExecutor idempotentExecutor,
+      UUID jobId,
+      String oldAlbumId,
+      String firstPhotoId) throws IOException {
+    // This means that we havent created the new album yet, create the photoset
+    FlickrTempPhotoData album = jobStore.findData(
+        jobId,
+        ORIGINAL_ALBUM_PREFIX + oldAlbumId,
+            FlickrTempPhotoData.class);
+
+    // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
+    // throw them into a default album or add a finalize() step in the Importer which can deal
+    // with these (in case the album exists later).
+    Preconditions.checkNotNull(album, "Album not found: " + oldAlbumId);
+
+    idempotentExecutor.execute(
+        oldAlbumId,
+        album.getName(),
+        () -> {
+          // TODO: do we want to keep the COPY_PREFIX?  I feel like not
+          String albumName =
+              Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
+          String albumDescription = cleanString(album.getDescription());
+
+          Photoset photoset = photosetsInterface.create(albumName, albumDescription, firstPhotoId);
+          monitor.debug(() -> String.format("Flickr importer created album: %s", album));
+          return photoset.getId();
+        }
+    );
+  }
+
 
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
     BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
@@ -194,16 +213,6 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     String uploadResult = uploader.upload(inStream, uploadMetaData);
     monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all
-    // mappings
-    return "tempPhotosData";
   }
 
   private static String cleanString(String string) {

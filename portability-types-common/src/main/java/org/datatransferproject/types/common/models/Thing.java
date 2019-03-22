@@ -18,9 +18,22 @@ package org.datatransferproject.types.common.models;
 
 public class Thing {
 
+  private final String identifier;
+
   private String name;
 
   private String description;
+
+  public Thing(String identifier) {
+    if (identifier == null || identifier.isEmpty()) {
+      throw new IllegalArgumentException("identifier must be set");
+    }
+    this.identifier = identifier;
+  }
+
+  public String getIdentifier() {
+    return identifier;
+  }
 
   public String getName() {
     return name;

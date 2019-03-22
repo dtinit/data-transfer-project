@@ -21,6 +21,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.junit.Before;
@@ -31,10 +32,11 @@ import org.mockito.Matchers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class GoogleVideosImporterTest {
 
@@ -43,8 +45,9 @@ public class GoogleVideosImporterTest {
   private String VIDEO_URI = "https://www.example.com/video.mp4";
   private String MP4_MEDIA_TYPE = "video/mp4";
   private String UPLOAD_TOKEN = "uploadToken";
+  private String VIDEO_ID = "myId";
 
-  private UUID uuid = UUID.randomUUID();
+  private FakeIdempotentImportExecutor executor = new FakeIdempotentImportExecutor();
 
   private GoogleVideosImporter googleVideosImporter;
   private GoogleVideosInterface googleVideosInterface;
@@ -82,10 +85,10 @@ public class GoogleVideosImporterTest {
     // Set up
     VideoObject videoModel =
         new VideoObject(
-            VIDEO_TITLE, VIDEO_URI, VIDEO_DESCRIPTION, MP4_MEDIA_TYPE, null, null, false);
+            VIDEO_TITLE, VIDEO_URI, VIDEO_DESCRIPTION, MP4_MEDIA_TYPE, VIDEO_ID, null, false);
 
     // Run test
-    googleVideosImporter.importSingleVideo(uuid, null, videoModel);
+    googleVideosImporter.importSingleVideo(null, videoModel, executor);
 
     // Check results
     verify(googleVideosInterface).uploadVideoContent(inputStream, "Copy of " + VIDEO_TITLE);

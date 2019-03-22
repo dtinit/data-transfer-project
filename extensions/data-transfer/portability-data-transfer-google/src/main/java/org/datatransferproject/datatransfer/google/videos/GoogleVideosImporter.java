@@ -39,6 +39,7 @@ import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactor
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
@@ -88,7 +89,10 @@ public class GoogleVideosImporter
 
   @Override
   public ImportResult importItem(
-          UUID jobId, TokensAndUrlAuthData authData, VideosContainerResource data) throws IOException {
+          UUID jobId,
+          IdempotentImportExecutor executor,
+          TokensAndUrlAuthData authData,
+          VideosContainerResource data) throws IOException {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -97,13 +101,16 @@ public class GoogleVideosImporter
     //     Uploads videos
     if (data.getVideos() != null && data.getVideos().size() > 0) {
       for (VideoObject video : data.getVideos()) {
-        importSingleVideo(jobId, authData, video);
+        importSingleVideo(authData, video, executor);
       }
     }
     return ImportResult.OK;
   }
 
-  void importSingleVideo(UUID jobId, TokensAndUrlAuthData authData, VideoObject inputVideo)
+  void importSingleVideo(
+          TokensAndUrlAuthData authData,
+          VideoObject inputVideo,
+          IdempotentImportExecutor executor)
           throws IOException {
 
     // download video and create input stream
@@ -132,7 +139,10 @@ public class GoogleVideosImporter
     NewMediaItemUpload uploadItem =
             new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
 
-    getOrCreateVideosInterface(authData).createVideo(uploadItem);
+    executor.execute(
+            inputVideo.getDataId(),
+            inputVideo.getName(),
+            () -> getOrCreateVideosInterface(authData).createVideo(uploadItem));
   }
 
   private synchronized GoogleVideosInterface getOrCreateVideosInterface(

@@ -22,15 +22,15 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.TempCalendarData;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.datatransferproject.transfer.microsoft.helper.MockJobStore;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -219,7 +219,9 @@ public class MicrosoftCalendarImportTest {
     CalendarContainerResource resource =
         new CalendarContainerResource(singleton(calendarModel), singleton(eventModel));
 
-    ImportResult result = importer.importItem(JOB_ID, token, resource);
+    FakeIdempotentImportExecutor executor = new FakeIdempotentImportExecutor();
+
+    ImportResult result = importer.importItem(JOB_ID, executor, token, resource);
 
     Assert.assertEquals(ImportResult.ResultType.OK, result.getType());
 
@@ -245,8 +247,7 @@ public class MicrosoftCalendarImportTest {
     Assert.assertEquals("name", calendarRequestBody.get("name"));
 
     // verify the calendar id mapping from old id to new id was saved
-    Assert.assertEquals(
-        "NewId1", jobStore.findData(JOB_ID, "tempCalendarData", TempCalendarData.class).getImportedId("OldId1"));
+    Assert.assertEquals("NewId1", executor.getCachedValue("OldId1"));
 
     // verify the batch event request
     RecordedRequest eventBatch = server.takeRequest();

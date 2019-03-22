@@ -17,24 +17,25 @@
 package org.datatransferproject.transfer.spotify.playlists;
 
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.common.base.Strings;
 import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.exceptions.SpotifyWebApiException;
 import com.wrapper.spotify.model_objects.specification.Paging;
-import com.wrapper.spotify.model_objects.specification.Playlist;
 import com.wrapper.spotify.model_objects.specification.Track;
 import com.wrapper.spotify.model_objects.specification.User;
-import java.io.IOException;
-import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
 import org.datatransferproject.types.common.models.playlists.MusicRecording;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Imports playlists into Spotify.
@@ -50,40 +51,61 @@ public class SpotifyPlaylistImporter
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokensAndUrlAuthData authData,
       PlaylistContainerResource data) throws Exception {
     spotifyApi.setAccessToken(authData.getAccessToken());
     spotifyApi.setRefreshToken(authData.getRefreshToken());
 
     User user = spotifyApi.getCurrentUsersProfile().build().execute();
     for (MusicPlaylist playlist : data.getLists()) {
-      createPlaylist(playlist, user.getId());
+      createPlaylist(idempotentExecutor, playlist, user.getId());
     }
     return ImportResult.OK;
   }
 
-  private void createPlaylist(MusicPlaylist playlist, String userId)
+  private void createPlaylist(IdempotentImportExecutor idempotentExecutor,
+      MusicPlaylist playlist,
+      String userId)
       throws IOException, SpotifyWebApiException {
-    Playlist createPlaylistResult = spotifyApi
-        .createPlaylist(userId, playlist.getHeadline())
-        .collaborative(false)
-        .public_(false)
-        .name("Imported - " + playlist.getHeadline())
-        .build()
-        .execute();
+    String playlistId = idempotentExecutor.execute(
+        playlist.getIdentifier(),
+        "Playlist: " + playlist.getHeadline(),
+        () -> spotifyApi
+            .createPlaylist(userId, playlist.getHeadline())
+            .collaborative(false)
+            .public_(false)
+            .name("Imported - " + playlist.getHeadline())
+            .build()
+            .execute()
+            .getId());
+     ;
     for (MusicRecording track : playlist.getTrack()) {
-      addTrack(createPlaylistResult.getId(), track);
+      addTrack(idempotentExecutor, playlistId, playlist.getHeadline(), track);
     }
   }
 
-  private void addTrack(String playlistId, MusicRecording track)
+  private void addTrack(
+      IdempotentImportExecutor idempotentExecutor,
+      String playlistId,
+      String playlistName,
+      MusicRecording track)
       throws IOException, SpotifyWebApiException {
-    Track spotifyTrack = searchForSong(track);
-    spotifyApi
-        .addTracksToPlaylist(playlistId, new String[] {spotifyTrack.getUri()})
-        .position(0)
-        .build()
-        .execute();
+    idempotentExecutor.execute(
+        playlistId + "-" + track.hashCode(),
+        playlistName + " - " + track.getHeadline(),
+        () -> {
+          Track spotifyTrack = searchForSong(track);
+          spotifyApi
+              .addTracksToPlaylist(playlistId, new String[] {spotifyTrack.getUri()})
+              .position(0)
+              .build()
+              .execute();
+          return null;
+        }
+    );
   }
 
   private Track searchForSong(MusicRecording track)

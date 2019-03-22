@@ -87,7 +87,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         p.getOriginalSize().getSource(),
         p.getDescription(),
         toMimeType(p.getOriginalFormat()),
-        null, // TODO this needs to be provided
+        p.getId(),
         albumId, false);
   }
 

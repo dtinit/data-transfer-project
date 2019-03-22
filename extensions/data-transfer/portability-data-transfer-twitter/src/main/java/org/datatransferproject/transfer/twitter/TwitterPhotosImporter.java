@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.twitter;
 
 import com.google.api.client.http.InputStreamContent;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -27,7 +28,6 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
-import twitter4j.TwitterException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +47,10 @@ final class TwitterPhotosImporter
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokenSecretAuthData authData, PhotosContainerResource data) {
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokenSecretAuthData authData,
+      PhotosContainerResource data) {
     Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
     // Twitter doesn't support an 'Albums' concept, so that information is just lost.
 
@@ -58,8 +61,11 @@ final class TwitterPhotosImporter
             new InputStreamContent(null, getImageAsStream(image.getFetchableUrl()));
         update.media(image.getTitle(), content.getInputStream());
 
-        twitterApi.tweets().updateStatus(update);
-      } catch (IOException | TwitterException e) {
+        idempotentExecutor.execute(
+            image.getDataId(),
+            image.getTitle(),
+            () -> twitterApi.tweets().updateStatus(update));
+      } catch (IOException e) {
         monitor.severe(() -> "Error importing twitter photo", e);
         return new ImportResult(e);
       }
