@@ -15,8 +15,8 @@
  */
 package org.datatransferproject.spi.transfer.provider;
 
-import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.auth.AuthData;
 
 import java.util.UUID;
 
@@ -25,11 +25,17 @@ public interface Importer<A extends AuthData, T extends DataModel> {
   /**
    * Imports data.
    *
-   * @param jobId the current job id
+   * @param jobId the ID for the job
+   * @param idempotentExecutor an executor to wrap any import calls in
    * @param authData authentication information
    * @param data the data
    * @return the operation result
    */
   // We need to be able throw exceptions that can be caught by RetryingCallable.
-  ImportResult importItem(UUID jobId, A authData, T data) throws Exception;
+  ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      A authData,
+      T data)
+      throws Exception;
 }

@@ -37,6 +37,7 @@ public class VideoObject extends MediaObject {
           @JsonProperty("dataId") String dataId,
           @JsonProperty("albumId") String albumId,
           @JsonProperty("inTempStore") boolean inTempStore) {
+    super(dataId);
     setName(name);
     setContentUrl(contentUrl);
     setDescription(description);

@@ -17,15 +17,10 @@
 package org.datatransferproject.transfer.deezer.playlists;
 
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Strings;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.deezer.DeezerApi;
@@ -36,6 +31,13 @@ import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
 import org.datatransferproject.types.common.models.playlists.MusicRecording;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Imports playlists into Deezer.
@@ -51,31 +53,70 @@ public class DeezerPlaylistImporter
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokensAndUrlAuthData authData,
       PlaylistContainerResource data) throws IOException {
     DeezerApi api = new DeezerApi(authData.getAccessToken(), httpTransport);
     for (MusicPlaylist playlist : data.getLists()) {
-      createPlaylist(api, playlist);
+      createPlaylist(idempotentExecutor, api, playlist);
     }
 
     return ImportResult.OK;
   }
 
-  private void createPlaylist(DeezerApi api, MusicPlaylist playlist)
+  private void createPlaylist(
+      IdempotentImportExecutor idempotentExecutor,
+      DeezerApi api,
+      MusicPlaylist playlist)
       throws IOException {
-    InsertResponse createResponse = api.createPlaylist("Imported - " + playlist.getHeadline());
-    if (createResponse.getError() != null) {
-      throw new IOException("problem creating playlist: " + playlist + " error: "
-          + createResponse.getError());
+    Long newPlaylistId = idempotentExecutor.execute(
+        playlist.getIdentifier(),
+        playlist.getHeadline(),
+        () -> createPlaylist(api, playlist));
+    if (null == newPlaylistId) {
+      monitor.severe(() ->"Couldn't create playlist: %s", playlist);
+      // Playlist couldn't be created error will be reported to user.
+      return;
     }
     List<Long> ids = new ArrayList<>();
     for (MusicRecording track : playlist.getTrack()) {
-      ids.add(lookupTrack(api, track));
+      Long newSongId = idempotentExecutor.execute(
+          newPlaylistId + "-" + track.hashCode(),
+          "Track: " + track + " in " + playlist.getHeadline(),
+          () -> lookupTrack(api, track));
+      ids.add(newSongId);
     }
-    Error insertResponse = api.insertTracksInPlaylist(createResponse.getId(), ids);
-    if (insertResponse != null) {
-      throw new IOException("problem inserting tracks into playlist: " + playlist + " error: "
-          + insertResponse);
+    idempotentExecutor.execute(
+        newPlaylistId + "-tracks",
+        "Playlist: " + playlist.getHeadline(),
+        () -> {
+          Error insertResponse = api.insertTracksInPlaylist(newPlaylistId, ids);
+          if (insertResponse != null) {
+            throw new IOException("problem inserting tracks into playlist: " + playlist + " error: "
+                + insertResponse);
+          }
+          return null;
+        }
+    );
+  }
+
+  private Long createPlaylist(DeezerApi api, MusicPlaylist playlist) {
+    try {
+      InsertResponse createResponse = api.createPlaylist("Imported - " + playlist.getHeadline());
+      if (createResponse.getError() != null) {
+        throw new IOException("problem creating playlist: " + playlist + " error: "
+            + createResponse.getError());
+      }
+      if (createResponse.getError() != null) {
+        throw new IOException("Problem creating playlist: "
+            + playlist + ": " + createResponse.getError());
+      }
+
+      return createResponse.getId();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     }
   }
 

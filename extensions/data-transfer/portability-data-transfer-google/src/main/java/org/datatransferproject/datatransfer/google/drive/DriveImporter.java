@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -20,13 +21,13 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
 
 /**
  * An {@link Importer} to export data from Google Drive.
  */
 public final class DriveImporter implements
     Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
+  private static final String ROOT_FOLDER_ID = "root-id";
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
@@ -42,38 +43,48 @@ public final class DriveImporter implements
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, TokensAndUrlAuthData authData,
+  public ImportResult importItem(UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokensAndUrlAuthData authData,
       BlobbyStorageContainerResource data) throws Exception {
-    String parentId = null;
+    String parentId;
     Drive driveInterface = getDriveInterface(authData);
 
     // Let the parent ID be empty for the root level
     if (Strings.isNullOrEmpty(data.getId()) || "root".equals(data.getId())) {
-      parentId = importSingleFolder(
-          jobId,
-          driveInterface,
-          "MigratedContent",
-          "root",
-          null);
+      parentId =
+          idempotentExecutor.execute(
+              ROOT_FOLDER_ID,
+              data.getName(),
+              () ->importSingleFolder(
+                  driveInterface,
+                  "MigratedContent",
+                  null));
     } else {
-      DriveFolderMapping mapping = jobStore.findData(jobId, data.getId(), DriveFolderMapping.class);
-      checkNotNull(mapping, "No mapping found for %s", data.getId());
-      String finalParentId = parentId;
-      monitor.debug(()->format("Got parent id %s for old Id %s named: %s", finalParentId, data.getId(), data.getName()));
-      parentId = mapping.getNewId();
+      parentId = idempotentExecutor.getCachedValue(ROOT_FOLDER_ID);
     }
+
 
     // Uploads album metadata
     if (data.getFolders() != null && data.getFolders().size() > 0) {
       for (BlobbyStorageContainerResource folder : data.getFolders()) {
-        importSingleFolder(jobId, driveInterface, folder.getName(), folder.getId(), parentId);
+        idempotentExecutor.execute(
+            folder.getId(),
+            folder.getName(),
+            () -> importSingleFolder(
+                driveInterface,
+                folder.getName(),
+                parentId));
       }
     }
 
     // Uploads photos
     if (data.getFiles() != null && data.getFiles().size() > 0) {
       for (DigitalDocumentWrapper file : data.getFiles()) {
-        importSingleFile(jobId, driveInterface, file, parentId);
+        idempotentExecutor.execute(
+            Integer.toString(file.hashCode()),
+            file.getDtpDigitalDocument().getName(),
+            () -> importSingleFile(jobId, driveInterface, file, parentId));
       }
     }
 
@@ -81,10 +92,8 @@ public final class DriveImporter implements
   }
 
   private String importSingleFolder(
-      UUID jobId,
       Drive driveInterface,
       String folderName,
-      String folderId,
       String parentId) throws IOException {
     File newFolder = new File()
         .setName(folderName)
@@ -93,12 +102,10 @@ public final class DriveImporter implements
       newFolder.setParents(ImmutableList.of(parentId));
     }
     File resultFolder = driveInterface.files().create(newFolder).execute();
-    DriveFolderMapping mapping = new DriveFolderMapping(folderId, resultFolder.getId());
-    jobStore.update(jobId, folderId, mapping);
     return resultFolder.getId();
   }
 
-  private void importSingleFile(
+  private String importSingleFile(
       UUID jobId,
       Drive driveInterface,
       DigitalDocumentWrapper file,
@@ -119,10 +126,11 @@ public final class DriveImporter implements
         && file.getOriginalEncodingFormat().startsWith("application/vnd.google-apps.")) {
       driveFile.setMimeType(file.getOriginalEncodingFormat());
     }
-    driveInterface.files().create(
+    return driveInterface.files().create(
         driveFile,
-        content
-    ).execute();
+        content)
+        .execute()
+        .getId();
   }
 
   private synchronized Drive getDriveInterface(TokensAndUrlAuthData authData) {

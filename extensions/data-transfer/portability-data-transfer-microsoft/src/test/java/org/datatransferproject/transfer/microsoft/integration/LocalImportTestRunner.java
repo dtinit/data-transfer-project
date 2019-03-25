@@ -21,6 +21,7 @@ import ezvcard.property.StructuredName;
 import org.datatransferproject.auth.microsoft.harness.AuthTestDriver;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransferExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
@@ -42,7 +43,8 @@ public class LocalImportTestRunner {
         (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter("CONTACTS");
 
     ContactsModelWrapper wrapper = new ContactsModelWrapper(createCards());
-    ImportResult result = contacts.importItem(UUID.randomUUID(), token, wrapper);
+    FakeIdempotentImportExecutor executor = new FakeIdempotentImportExecutor();
+    ImportResult result = contacts.importItem(UUID.randomUUID(), executor, token, wrapper);
   }
 
   private static String createCards() throws IOException {

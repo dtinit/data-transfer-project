@@ -21,6 +21,7 @@ import com.flickr4java.flickr.photos.Size;
 import com.flickr4java.flickr.photosets.Photoset;
 
 import java.util.Collections;
+import java.util.UUID;
 
 class FlickrTestUtils {
 
@@ -35,6 +36,7 @@ class FlickrTestUtils {
   public static Photo initializePhoto(String title, String url, String description, String mediaType) {
     Photo photo = new Photo();
     photo.setTitle(title);
+    photo.setId(UUID.randomUUID().toString());
     photo.setDescription(description);
     photo.setOriginalFormat(mediaType);
     Size size = new Size();

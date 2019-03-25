@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Video metadata - not the content of the video itself!
+ * Class representing an album as returned by the Google Photos API.
  */
-public class Video {
-  @JsonProperty("cameraMake")
-  private String cameraMake;
+public class GoogleAlbum {
+  @JsonProperty("id")
+  private String id;
 
-  @JsonProperty("cameraModel")
-  private String cameraModel;
+  @JsonProperty("title")
+  private String title;
 
-  @JsonProperty("fps")
-  private double fps;
+  public String getId() { return id; }
 
-  @JsonProperty("status")
-  private VideoProcessingStatus status;
+  public String getTitle() { return title; }
 
-  public enum VideoProcessingStatus {
-    UNSPECIFIED,
-    PROCESSING,
-    READY,
-    FAILED;
-  }
+  public void setId(String id) { this.id = id; }
+
+  public void setTitle(String title) { this.title = title; }
 }

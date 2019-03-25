@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.datatransfer.google.photos.model;
+
+package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Information about whether a request was successful, used by {@link NewMediaItemResult}.
+ * Photo metadata - not the content of the photo itself!
  */
-public class Status {
+public class Photo {
+  @JsonProperty("cameraMake")
+  private String cameraMake;
 
-  @JsonProperty("code")
-  private int code;
+  @JsonProperty("cameraModel")
+  private String cameraModel;
 
-  @JsonProperty("message")
-  private String message;
+  @JsonProperty("focalLength")
+  private double focalLength;
 
-  public int getCode() {
-    return code;
-  }
+  @JsonProperty("apertureFNumber")
+  private double apertureFNumber;
 
-  public String getMessage() {
-    return message;
-  }
+  @JsonProperty("isoEquivalent")
+  private double isoEquivalent;
+
+  @JsonProperty("exposureTime")
+  private String exposureTime;
 }

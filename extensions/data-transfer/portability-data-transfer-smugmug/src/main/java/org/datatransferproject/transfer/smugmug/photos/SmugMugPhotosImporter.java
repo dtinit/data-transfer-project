@@ -22,9 +22,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -77,14 +77,23 @@ public class SmugMugPhotosImporter
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokenSecretAuthData authData, PhotosContainerResource data) {
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokenSecretAuthData authData,
+      PhotosContainerResource data) {
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
-        importSingleAlbum(jobId, album, smugMugInterface);
+        idempotentExecutor.execute(
+            album.getId(),
+            album.getName(),
+            () -> importSingleAlbum(album, smugMugInterface));
       }
       for (PhotoModel photo : data.getPhotos()) {
-        importSinglePhoto(jobId, photo, smugMugInterface);
+        idempotentExecutor.execute(
+            photo.getDataId(),
+            photo.getTitle(),
+            () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));
       }
     } catch (IOException e) {
       monitor.severe(() -> "Error importing", e);
@@ -94,32 +103,20 @@ public class SmugMugPhotosImporter
   }
 
   @VisibleForTesting
-  void importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
+  String importSingleAlbum(PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
       throws IOException {
     SmugMugAlbumResponse response = smugMugInterface.createAlbum(inputAlbum.getName());
-
-    // Put new album ID in job store so photos can be assigned to correct album
-    // TODO(olsona): thread safety!
-    TempPhotosData tempPhotosData =
-        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
-    if (tempPhotosData == null) {
-      tempPhotosData = new TempPhotosData(jobId);
-      jobStore.create(jobId, createCacheKey(), tempPhotosData);
-    }
-    tempPhotosData.addAlbumId(inputAlbum.getId(), response.getUri());
-    jobStore.update(jobId, createCacheKey(), tempPhotosData);
+    return response.getUri();
   }
 
   @VisibleForTesting
-  void importSinglePhoto(UUID jobId, PhotoModel inputPhoto, SmugMugInterface smugMugInterface)
+  String importSinglePhoto(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      PhotoModel inputPhoto,
+      SmugMugInterface smugMugInterface)
       throws IOException {
-    // Find album to upload photo to
-    TempPhotosData tempPhotosData =
-        jobStore.findData(jobId, createCacheKey(), TempPhotosData.class);
-    checkState(
-        tempPhotosData != null, "cached temp photos data for %s is null", inputPhoto.getAlbumId());
-
-    String newAlbumUri = tempPhotosData.lookupNewAlbumId(inputPhoto.getAlbumId());
+    String newAlbumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
         "Cached album URI for %s is null",
@@ -133,6 +130,7 @@ public class SmugMugPhotosImporter
     }
     SmugMugImageUploadResponse response =
         smugMugInterface.uploadImage(inputPhoto, newAlbumUri, inputStream);
+    return response.toString();
   }
 
   // Returns the provided interface, or a new one specific to the authData provided.

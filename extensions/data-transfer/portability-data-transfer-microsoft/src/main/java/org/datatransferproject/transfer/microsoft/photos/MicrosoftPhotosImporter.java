@@ -16,12 +16,7 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.google.common.base.Strings;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -32,14 +27,24 @@ import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.microsoft.types.TempPhotoData;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
@@ -53,12 +58,17 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final JobStore jobStore;
+  private final Monitor monitor;
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
 
   public MicrosoftPhotosImporter(
-      String baseUrl, OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      JobStore jobStore,
+      Monitor monitor) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
 
     // first param is the folder id, second param is the file name
@@ -68,70 +78,72 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
     this.client = client;
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
+    this.monitor = monitor;
   }
 
   @Override
   public ImportResult importItem(
-      UUID jobId, TokenAuthData authData, PhotosContainerResource resource) throws IOException {
-    TempPhotoData photoData = jobStore.findData(jobId, createCacheKey(), TempPhotoData.class);
-    if (photoData == null) {
-      photoData = new TempPhotoData(jobId.toString());
-      jobStore.create(jobId, createCacheKey(), photoData);
-    }
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      TokenAuthData authData,
+      PhotosContainerResource resource) throws IOException {
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
-      createOneDriveFolder(album, jobId, authData, photoData);
+      idempotentExecutor.execute(
+          album.getId(),
+          album.getName(),
+          () -> createOneDriveFolder(album, authData));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
-      importPhoto(photoModel, jobId, authData, photoData);
+      String folderId = idempotentExecutor.getCachedValue(photoModel.getAlbumId());
+      idempotentExecutor.execute(
+          Integer.toString(photoModel.hashCode()),
+          photoModel.getTitle(),
+          () -> importPhoto(photoModel, jobId, folderId, authData));
     }
-    return null;
+    return ImportResult.OK;
   }
 
   @SuppressWarnings("unchecked")
-  private void createOneDriveFolder(
-      PhotoAlbum album, UUID jobId, TokenAuthData authData, TempPhotoData photoData) {
+  private String createOneDriveFolder(
+      PhotoAlbum album, TokenAuthData authData) throws IOException {
 
-    try {
-      Map<String, Object> rawFolder = new LinkedHashMap<>();
-      rawFolder.put("name", album.getName());
-      rawFolder.put("folder", new Object());
-      rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
+    Map<String, Object> rawFolder = new LinkedHashMap<>();
+    rawFolder.put("name", album.getName());
+    rawFolder.put("folder", new Object());
+    rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
-      Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
-      requestBuilder.header("Authorization", "Bearer " + authData.getToken());
-      requestBuilder.post(
-          RequestBody.create(
-              MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
-      try (Response response = client.newCall(requestBuilder.build()).execute()) {
-        int code = response.code();
-        if (code >= 200 && code <= 299) {
-          ResponseBody body = response.body();
-          if (body == null) {
-            // FIXME evaluate HTTP response and return whether to retry
-            return;
-          }
-          Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
-          String folderId = (String) responseData.get("id");
-          if (folderId == null) {
-            // this should never happen
-            return;
-          }
-          photoData.addIdMapping(album.getId(), folderId);
-          jobStore.update(jobId, createCacheKey(), photoData);
+    Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
+    requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+    requestBuilder.post(
+        RequestBody.create(
+            MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
+    try (Response response = client.newCall(requestBuilder.build()).execute()) {
+      int code = response.code();
+      if (code >= 200 && code <= 299) {
+        ResponseBody body = response.body();
+        if (body == null) {
+          throw new IOException("Got null body");
         }
-        // FIXME evaluate HTTP response and return whether to retry
+        Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
+        String folderId = (String) responseData.get("id");
+        checkState(!Strings.isNullOrEmpty(folderId),
+            "Expected id value to be present in %s", responseData);
+        return folderId;
+      } else {
+        throw new IOException("Got response code: " + code);
       }
-    } catch (IOException e) {
-      // TODO log
-      e.printStackTrace();
+      // FIXME evaluate HTTP response and return whether to retry
     }
   }
 
-  private void importPhoto(
-      PhotoModel photoModel, UUID jobId, TokenAuthData authData, TempPhotoData photoData) {
+  private String importPhoto(
+      PhotoModel photoModel,
+      UUID jobId,
+      String importedAlbumId,
+      TokenAuthData authData) throws IOException {
     InputStream inputStream = null;
 
     try {
@@ -140,10 +152,9 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
       } else if (photoModel.getFetchableUrl() != null) {
         inputStream = new URL(photoModel.getFetchableUrl()).openStream();
       } else {
-        return;
+        throw new IllegalStateException("Don't know how to get the inputStream for " + photoModel);
       }
 
-      String importedAlbumId = photoData.getImportedId(photoModel.getAlbumId());
       String uploadUrl =
           String.format(uploadPhotoUrlTemplate, importedAlbumId, photoModel.getTitle());
 
@@ -160,29 +171,20 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
         if (code < 200 || code > 299) {
-          // TODO log error
+          throw new IOException("Got error code: " + code + " message " + response.message());
         }
+        // TODO return photo ID
+        return "fakeId";
       }
-    } catch (IOException e) {
-      // TODO log
-      e.printStackTrace();
+    } finally {
       if (inputStream != null) {
         try {
           inputStream.close();
         } catch (IOException e1) {
-          // TODO log
+          monitor.info(() -> "Couldn't close input stream");
         }
       }
     }
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all mappings
-    return "tempPhotosData";
   }
 
   private static class StreamingBody extends RequestBody {

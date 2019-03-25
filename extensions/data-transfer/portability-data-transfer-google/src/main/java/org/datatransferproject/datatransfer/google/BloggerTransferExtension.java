@@ -26,7 +26,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.blogger.GoogleBloggerImporter;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -91,7 +90,6 @@ public class BloggerTransferExtension implements TransferExtension {
     }
 
     HttpTransport httpTransport = context.getService(HttpTransport.class);
-    JobStore jobStore = context.getService(JobStore.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
@@ -100,7 +98,7 @@ public class BloggerTransferExtension implements TransferExtension {
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
 
-    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory, jobStore));
+    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory));
 
     importerMap = importerBuilder.build();
 

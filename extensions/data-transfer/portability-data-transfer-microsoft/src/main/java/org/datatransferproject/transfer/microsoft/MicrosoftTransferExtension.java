@@ -3,6 +3,7 @@ package org.datatransferproject.transfer.microsoft;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -32,6 +33,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private boolean initialized = false;
 
   private JobStore jobStore;
+  private Monitor monitor;
 
   // Needed for ServiceLoader to load this class.
   public MicrosoftTransferExtension() {
@@ -86,7 +88,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     }
 
     if (transferDataType.equals(PHOTOS)) {
-      return new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore);
+      return new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor);
     }
 
     return null;
@@ -99,6 +101,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
     jobStore = context.getService(JobStore.class);
+    monitor = context.getMonitor();
     initialized = true;
   }
 }

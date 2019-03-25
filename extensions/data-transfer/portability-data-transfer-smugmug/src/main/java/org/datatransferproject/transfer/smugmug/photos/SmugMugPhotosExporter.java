@@ -221,7 +221,7 @@ public class SmugMugPhotosExporter
               albumImage.getArchivedUri(),
               albumImage.getCaption(),
               getMimeType(albumImage.getFormat()),
-              null,
+              albumImage.getArchivedUri(),
               containerResource.getId(),
               true);
 

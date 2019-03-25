@@ -85,7 +85,13 @@ public class InstagramPhotoExporter implements
       String photoId = photo.getId();
       String url = photo.getImages().getStandardResolution().getUrl();
       String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
-      photos.add(new PhotoModel("Instagram photo: " + photoId, url, text, null, null, FAKE_ALBUM_ID,
+      photos.add(new PhotoModel(
+          "Instagram photo: " + photoId,
+          url,
+          text,
+          null,
+          photoId,
+          FAKE_ALBUM_ID,
           false));
     }
 

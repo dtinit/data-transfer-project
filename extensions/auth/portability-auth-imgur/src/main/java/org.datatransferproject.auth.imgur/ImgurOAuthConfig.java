@@ -51,7 +51,6 @@ public class ImgurOAuthConfig implements OAuth2Config {
 
   @Override
   public Map<String, Set<String>> getImportScopes() {
-    // Imgur importer is not implemented yet
-    return ImmutableMap.of();
+    return ImmutableMap.of("PHOTOS", ImmutableSet.of(""));
   }
 }

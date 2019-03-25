@@ -33,13 +33,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.photos.model.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.photos.model.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.photos.model.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.photos.model.MediaMetadata;
-import org.datatransferproject.datatransfer.google.photos.model.Photo;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
+import org.datatransferproject.datatransfer.google.mediaModels.Photo;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -82,9 +83,11 @@ public class GooglePhotosExporterTest {
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
+    Monitor monitor = mock(Monitor.class);
+
     googlePhotosExporter =
         new GooglePhotosExporter(credentialFactory, jobStore, new JacksonFactory(),
-            photosInterface);
+            photosInterface, monitor);
 
     when(photosInterface.listAlbums(Matchers.any(Optional.class)))
         .thenReturn(albumListResponse);
@@ -102,7 +105,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .exportAlbums(null, Optional.empty());
+        .exportAlbums(null, Optional.empty(), uuid);
 
     // Check results
     // Verify correct methods were called
@@ -144,7 +147,7 @@ public class GooglePhotosExporterTest {
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter
-        .exportAlbums(null, Optional.of(inputPaginationToken));
+        .exportAlbums(null, Optional.of(inputPaginationToken), uuid);
 
     // Check results
     // Verify correct methods were called
@@ -245,11 +248,13 @@ public class GooglePhotosExporterTest {
     googlePhotosExporter.populateContainedPhotosList(uuid, null);
 
     // Check contents of job store
-    ArgumentCaptor<TempPhotosData> tempPhotosDataArgumentCaptor = ArgumentCaptor
-        .forClass(TempPhotosData.class);
-    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"), tempPhotosDataArgumentCaptor.capture());
-    assertThat(tempPhotosDataArgumentCaptor.getValue().lookupContainedPhotoIds())
-        .containsExactly(PHOTO_ID, secondId);
+    ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor
+        .forClass(InputStream.class);
+    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"),
+        inputStreamArgumentCaptor.capture());
+    TempPhotosData tempPhotosData = new ObjectMapper()
+        .readValue(inputStreamArgumentCaptor.getValue(), TempPhotosData.class);
+    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
   @Test

@@ -36,6 +36,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,10 +49,6 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.

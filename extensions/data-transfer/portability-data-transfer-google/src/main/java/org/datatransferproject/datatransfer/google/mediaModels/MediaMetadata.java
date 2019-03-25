@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,32 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.photos.model;
+package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-/**
- * Response returned by a search for GoogleMediaItems
- */
-public class MediaItemSearchResponse {
-  @JsonProperty("mediaItems")
-  private GoogleMediaItem[] mediaItems;
 
-  @JsonProperty("nextPageToken")
-  private String nextPageToken;
+/** Metadata about a {@code MediaItem}. */
+public class MediaMetadata {
 
-  public GoogleMediaItem[] getMediaItems() { return mediaItems; }
+  @JsonProperty("photo")
+  private Photo photo;
 
-  public String getNextPageToken() {
-    return nextPageToken;
+  @JsonProperty("video")
+  private Video video;
+
+  public Photo getPhoto() {
+    return photo;
+  }
+
+  public Video getVideo() {
+    return video;
+  }
+
+  public void setPhoto(Photo photo) {
+    this.photo = photo;
+  }
+
+  public void setVideo(Video video) {
+    this.video = video;
   }
 }

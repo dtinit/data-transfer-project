@@ -16,11 +16,6 @@
 
 package org.datatransferproject.datatransfer.google.blogger;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
@@ -35,26 +30,26 @@ import com.google.common.collect.ImmutableList;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.LocalDate;
-import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
+
 public class GoogleBloggerImporter
     implements Importer<TokensAndUrlAuthData, SocialActivityContainerResource> {
-  private static final String ALBUM_ID_KEY = "BloggerAlbumId";
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
   private final ImageStreamProvider imageStreamProvider;
   // Don't access this directly, instead access via getOrCreateBloggerService.
   private Blogger blogger;
@@ -63,10 +58,8 @@ public class GoogleBloggerImporter
   private Drive driveInterface;
 
   public GoogleBloggerImporter(
-      GoogleCredentialFactory credentialFactory,
-      JobStore jobStore) {
+      GoogleCredentialFactory credentialFactory) {
     this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
 
     this.imageStreamProvider = new ImageStreamProvider();
     // lazily initialized for the given request
@@ -76,6 +69,7 @@ public class GoogleBloggerImporter
 
   @Override
   public ImportResult importItem(UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
       SocialActivityContainerResource data) throws Exception {
     Blogger blogger = getOrCreateBloggerService(authData);
@@ -93,7 +87,7 @@ public class GoogleBloggerImporter
         if (asObject.objectTypeString().equalsIgnoreCase("note")
             || asObject.objectTypeString().equalsIgnoreCase("post")) {
           try {
-            insertActivity(jobId, activity, asObject, blogId, authData);
+            insertActivity(idempotentExecutor, activity, asObject, blogId, authData);
           } catch (IOException | RuntimeException e) {
             throw new IOException("Couldn't import: " + activity, e);
           }
@@ -105,7 +99,7 @@ public class GoogleBloggerImporter
   }
 
   private void insertActivity(
-      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
       Activity activity,
       ASObject asObject,
       String blogId,
@@ -129,12 +123,19 @@ public class GoogleBloggerImporter
     if (asObject.firstImage() != null) {
       // Store any attached images in Drive in a new folder.
       Drive driveInterface = getOrCreateDriveService(authData);
-      String folderId = createAlbumFolder(driveInterface, jobId);
+      String folderId = idempotentExecutor.execute(
+          "MainAlbum",
+          "Photo Album",
+          () -> createAlbumFolder(driveInterface));
       for (LinkValue image : asObject.image()) {
         try {
-          String newImgSrc = uploadImage((ASObject) image, driveInterface, folderId);
+          String newImgSrc =
+              idempotentExecutor.execute(
+                  image.toString(),
+                  "Image",
+                  () -> uploadImage((ASObject) image, driveInterface, folderId));
           content += "\n<hr/><img src=\"" + newImgSrc + "\">";
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
           throw new IOException("Couldn't import: " + asObject.image(), e);
         }
       }
@@ -173,19 +174,19 @@ public class GoogleBloggerImporter
       post.setPublished(new DateTime(asObject.published().getMillis()));
     }
 
-    getOrCreateBloggerService(authData).posts()
-        .insert(blogId, post)
-        // Don't publish directly, ensure that the user explicitly reviews
-        // and approves content first.
-        .setIsDraft(true)
-        .execute();
+    idempotentExecutor.execute(
+        title,
+        title,
+        () -> getOrCreateBloggerService(authData).posts()
+            .insert(blogId, post)
+            // Don't publish directly, ensure that the user explicitly reviews
+            // and approves content first.
+            .setIsDraft(true)
+            .execute()
+            .getId());
   }
 
-  private String createAlbumFolder(Drive driveInterface, UUID jobId) throws IOException {
-    BloggerAlbumStore albumData = jobStore.findData(jobId, ALBUM_ID_KEY, BloggerAlbumStore.class);
-    if (albumData != null && !Strings.isNullOrEmpty(albumData.getDriveFolderId())) {
-      return albumData.getDriveFolderId();
-    }
+  private String createAlbumFolder(Drive driveInterface) throws IOException {
     File fileMetadata = new File();
     LocalDate localDate = LocalDate.now();
     fileMetadata.setName("(Public)Imported Images on: " + localDate.toString());
@@ -203,7 +204,6 @@ public class GoogleBloggerImporter
                 .setType("anyone")
                 .setAllowFileDiscovery(false))
         .execute();
-    jobStore.create(jobId, ALBUM_ID_KEY, new BloggerAlbumStore(folder.getId()));
     return folder.getId();
   }
 
@@ -261,20 +261,5 @@ public class GoogleBloggerImporter
         credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
-  }
-
-  @JsonTypeName("org.dataportability.google:BloggerAlbumData")
-  private static class BloggerAlbumStore extends DataModel {
-    @JsonProperty("driveFolderId")
-    private final String driveFolderId;
-
-    @JsonCreator
-    BloggerAlbumStore(@JsonProperty("driveFolderId") String driveFolderId) {
-      this.driveFolderId = driveFolderId;
-    }
-
-    String getDriveFolderId() {
-      return driveFolderId;
-    }
   }
 }

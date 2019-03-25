@@ -1,6 +1,8 @@
 package org.datatransferproject.transfer.deezer.model;
 
-public class InsertResponse {
+import java.io.Serializable;
+
+public class InsertResponse implements Serializable {
   private long id;
   private Error error;
 

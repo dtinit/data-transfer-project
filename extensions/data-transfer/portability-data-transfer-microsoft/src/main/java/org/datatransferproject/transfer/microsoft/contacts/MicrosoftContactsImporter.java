@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
 import okhttp3.OkHttpClient;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
@@ -62,7 +63,10 @@ public class MicrosoftContactsImporter implements Importer<TokenAuthData, Contac
 
   @Override
   public ImportResult importItem(
-          UUID jobId, TokenAuthData authData, ContactsModelWrapper wrapper) {
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokenAuthData authData,
+      ContactsModelWrapper wrapper) {
     JCardReader reader = new JCardReader(wrapper.getVCards());
     try {
       List<VCard> cards = reader.readAll();

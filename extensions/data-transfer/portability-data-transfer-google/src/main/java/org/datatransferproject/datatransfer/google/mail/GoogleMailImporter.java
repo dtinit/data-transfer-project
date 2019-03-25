@@ -24,18 +24,14 @@ import com.google.api.services.gmail.model.Message;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.types.TempMailData;
 import org.datatransferproject.types.common.models.mail.MailContainerModel;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
@@ -45,12 +41,10 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 
 public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailContainerResource> {
-
-  @VisibleForTesting static final long MAX_RESULTS_PER_REQUEST = 10L;
-
   @VisibleForTesting
   // The special value me can be used to indicate the authenticated user to the gmail api
   static final String USER = "me";
@@ -58,254 +52,175 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   @VisibleForTesting static final String LABEL = "DTP-migrated";
 
   private GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
   private final Gmail gmail;
   private final Monitor monitor;
 
-  public GoogleMailImporter(
-      GoogleCredentialFactory credentialFactory, JobStore jobStore, Monitor monitor) {
-    this(credentialFactory, jobStore, null, monitor);
+  public GoogleMailImporter(GoogleCredentialFactory credentialFactory, Monitor monitor) {
+    this(credentialFactory, null, monitor);
   }
 
   @VisibleForTesting
   GoogleMailImporter(
-      GoogleCredentialFactory credentialFactory, JobStore jobStore, Gmail gmail, Monitor monitor) {
+      GoogleCredentialFactory credentialFactory, Gmail gmail, Monitor monitor) {
     this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
     this.gmail = gmail;
     this.monitor = monitor;
   }
 
   @Override
   public ImportResult importItem(
-          UUID id, TokensAndUrlAuthData authData, MailContainerResource data) {
-
-    // Initialize the temp storage of import folder/label mappings associated with this job
-    TempMailData tempMailData;
-    try {
-      tempMailData = getOrCreateMailData(id);
-    } catch (IOException e) {
-      return new ImportResult(e);
-    }
+      UUID id,
+      IdempotentImportExecutor idempotentExecutor,
+      TokensAndUrlAuthData authData,
+      MailContainerResource data) throws IOException {
 
     // Lazy init the request for all labels in the destination account, since it may not be needed
     // Mapping of labelName -> destination label id
-    Supplier<Map<String, String>> allDestinationLabels =
-        Suppliers.memoize(allDestinationLabelsSupplier(authData));
+    Supplier<Map<String, String>> allDestinationLabels = allDestinationLabelsSupplier(authData);
 
     // Import folders/labels
-    ImportResult result =
-        importLabels(id, authData, tempMailData, allDestinationLabels, data.getFolders());
-    if (result != ImportResult.OK) {
-      monitor.severe(() -> "Error after importing labels");
-      return result;
-    }
+    importLabels(authData, idempotentExecutor, allDestinationLabels, data.getFolders());
+
 
     // Import the special DTP label
-    result = importDTPLabel(id, authData, tempMailData, allDestinationLabels);
-    if (result != ImportResult.OK) {
-      monitor.severe(() -> "Error after importing DTP table");
-      return result;
-    }
+    importDTPLabel(authData, idempotentExecutor, allDestinationLabels);
 
     // Import labels from the given set of messages
-    result =
-        importLabelsForMessages(
-            id, authData, tempMailData, allDestinationLabels, data.getMessages());
-    if (result != ImportResult.OK) {
-      monitor.severe(() -> "Error after importing labels for messages");
-      return result;
-    }
+    importLabelsForMessages(
+            authData, idempotentExecutor, allDestinationLabels, data.getMessages());
 
-    // Import messages
-    result = importMessages(authData, tempMailData, data.getMessages());
-    if (result != ImportResult.OK) {
-      monitor.severe(() -> "Error after importing messages");
-      return result;
-    }
-    return result;
+    importMessages(authData, idempotentExecutor, data.getMessages());
+
+    return ImportResult.OK;
   }
 
   /**
    * Creates a label in the import account, if it doesn't already exist, for all {@code folders} .
    */
-  private ImportResult importLabels(
-      UUID id,
+  private void importLabels(
       TokensAndUrlAuthData authData,
-      TempMailData tempMailData,
+      IdempotentImportExecutor idempotentExecutor,
       Supplier<Map<String, String>> allDestinationLabels,
-      Collection<MailContainerModel> folders) {
-    boolean newMappingsCreated = false;
+      Collection<MailContainerModel> folders) throws IOException {
     for (MailContainerModel mailContainerModel : folders) {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(mailContainerModel.getName()));
       String exportedLabelName = mailContainerModel.getName();
-      // Check if we have it in temp data
-      String importerLabelId = tempMailData.getImportedId(exportedLabelName);
-      if (importerLabelId == null) {
-        // If a label with the same name already exists in the destination account, use that
-        importerLabelId = allDestinationLabels.get().get(mailContainerModel.getName());
-        // Found no existing map or label named the same, create a new one
-        if (importerLabelId == null) {
-          try {
-            importerLabelId = createImportedLabelId(authData, mailContainerModel.getName());
-          } catch (IOException e) {
-            return new ImportResult(e);
-          }
-        }
-        tempMailData.addFolderIdMapping(exportedLabelName, importerLabelId);
-        newMappingsCreated = true;
+      idempotentExecutor.execute(
+          exportedLabelName,
+          "Label - " + exportedLabelName,
+          () -> {
+            String importerLabelId = allDestinationLabels.get().get(mailContainerModel.getName());
+            if (importerLabelId == null) {
+              importerLabelId = createImportedLabelId(authData, mailContainerModel.getName());
+            }
+            return importerLabelId;
+          });
       }
-    }
-
-    // Persist temp data in case we added mappings along the way
-    if (newMappingsCreated) {
-      jobStore.update(id, createCacheKey(), tempMailData);
-    }
-    return ImportResult.OK;
   }
 
   /** Creates a label in the import account to associate with all imported messages. */
-  private ImportResult importDTPLabel(
-      UUID id,
+  private void importDTPLabel(
       TokensAndUrlAuthData authData,
-      TempMailData tempMailData,
-      Supplier<Map<String, String>> allDestinationLabels) {
-    boolean newMappingsCreated = false;
-    // Retrieve, and optionally create on demand, the migration label id
-    String migratedLabelId = tempMailData.getImportedId(LABEL);
-    if (migratedLabelId == null) {
-      // If a label with the same name already exists in the destination account, use that
-      migratedLabelId = allDestinationLabels.get().get(LABEL);
-      tempMailData.addFolderIdMapping(LABEL, migratedLabelId);
-      newMappingsCreated = true;
-
-      // Found no existing map or label named the same, create a new one
-      if (migratedLabelId == null) {
-        try {
-          migratedLabelId = createImportedLabelId(authData, LABEL);
-        } catch (IOException e) {
-          return new ImportResult(e);
-        }
-        tempMailData.addFolderIdMapping(LABEL, migratedLabelId);
-        newMappingsCreated = true;
-      }
-    }
-
-    // Persist temp data in case we added mappings along the way
-    if (newMappingsCreated) {
-      jobStore.update(id, createCacheKey(), tempMailData);
-    }
-    return ImportResult.OK;
+      IdempotentImportExecutor idempotentExecutor,
+      Supplier<Map<String, String>> allDestinationLabels) throws IOException {
+    idempotentExecutor.execute(
+        LABEL,
+        LABEL,
+        () -> {
+          String migratedLabelId = allDestinationLabels.get().get(LABEL);
+          if (migratedLabelId == null) {
+            migratedLabelId = createImportedLabelId(authData, LABEL);
+          }
+          return migratedLabelId;
+        });
   }
 
   /**
    * Creates a label in the import account, if it doesn't already exist, for all labels associated
    * with the give {@code messages} .
    */
-  private ImportResult importLabelsForMessages(
-      UUID id,
+  private void importLabelsForMessages(
       TokensAndUrlAuthData authData,
-      TempMailData tempMailData,
+      IdempotentImportExecutor idempotentExecutor,
       Supplier<Map<String, String>> allDestinationLabels,
-      Collection<MailMessageModel> messages) {
-    boolean newMappingsCreated = false;
+      Collection<MailMessageModel> messages) throws IOException {
     for (MailMessageModel mailMessageModel : messages) {
       // Get or create label ids associated with this message
       for (String exportedLabelName : mailMessageModel.getContainerIds()) {
-        // Check if we have it in temp data
-        String importerLabelId = tempMailData.getImportedId(exportedLabelName);
-        if (importerLabelId == null) {
-          // If a label with the same name already exists in the destination account, use that
-          importerLabelId = allDestinationLabels.get().get(exportedLabelName);
-          // Found no existing map or label named the same, create a new one
-          if (importerLabelId == null) {
-            try {
-              importerLabelId = createImportedLabelId(authData, exportedLabelName);
-            } catch (IOException e) {
-              return new ImportResult(e);
-            }
-          }
-          tempMailData.addFolderIdMapping(exportedLabelName, importerLabelId);
-          newMappingsCreated = true;
-        }
+        idempotentExecutor.execute(
+            exportedLabelName,
+            exportedLabelName,
+            () -> {
+              String importerLabelId = allDestinationLabels.get().get(exportedLabelName);
+              // Found no existing map or label named the same, create a new one
+              if (importerLabelId == null) {
+                  importerLabelId = createImportedLabelId(authData, exportedLabelName);
+              }
+              return importerLabelId;
+            });
       }
     }
-
-    // Persist temp data in case we added mappings along the way
-    if (newMappingsCreated) {
-      jobStore.update(id, createCacheKey(), tempMailData);
-    }
-    return ImportResult.OK;
   }
 
   /**
    * Import each message in {@code messages} into the import account with it's associated labels.
    */
-  private ImportResult importMessages(
+  private void importMessages(
       TokensAndUrlAuthData authData,
-      TempMailData tempMailData,
-      Collection<MailMessageModel> messages) {
+      IdempotentImportExecutor idempotentExecutor,
+      Collection<MailMessageModel> messages) throws IOException {
     for (MailMessageModel mailMessageModel : messages) {
 
       // Gather the label ids that will be associated with this message
       ImmutableList.Builder<String> importedLabelIds = ImmutableList.builder();
       for (String exportedLabelIdOrName : mailMessageModel.getContainerIds()) {
         // By this time all the label ids have been added to tempdata
-        String importedLabelId = tempMailData.getImportedId(exportedLabelIdOrName);
+        String importedLabelId = idempotentExecutor.getCachedValue(exportedLabelIdOrName);
         if (importedLabelId != null) {
           importedLabelIds.add(exportedLabelIdOrName);
         } else {
+          // TODO remove after testing
           monitor.debug(
-              () ->
-                  "labels should have been added prior to importing messages"); // TODO remove after
-          // testing
+              () -> "labels should have been added prior to importing messages");
         }
-        // Always add the migrated id
-        importedLabelIds.add(tempMailData.getImportedId(LABEL));
       }
       // Create the message to import
       Message newMessage =
           new Message()
               .setRaw(mailMessageModel.getRawString())
               .setLabelIds(importedLabelIds.build());
-      try {
-        getOrCreateGmail(authData).users().messages().insert(USER, newMessage).execute();
-      } catch (IOException e) {
-        return new ImportResult(e);
-      }
+      idempotentExecutor.execute(
+          mailMessageModel.toString(),
+          // Trim the full mail message to try to give some context to the user but not overwhelm
+          // them.
+          "Mail message: " + mailMessageModel.getRawString()
+              .substring(0, Math.min(50, mailMessageModel.getRawString().length())),
+          () -> getOrCreateGmail(authData)
+              .users()
+              .messages()
+              .insert(USER, newMessage)
+              .execute()
+              .getId());
     }
-    return new ImportResult(ResultType.OK);
-  }
-
-  private TempMailData getOrCreateMailData(UUID id) throws IOException {
-    TempMailData tempMailData = jobStore.findData(id, createCacheKey(), TempMailData.class);
-    if (tempMailData == null) {
-      tempMailData = new TempMailData(id.toString());
-      jobStore.create(id, createCacheKey(), tempMailData);
-    }
-    return tempMailData;
   }
 
   /** Supplies a mapping of Label Name -> Label Id (in the import account). */
-  private Supplier<Map<String, String>> allDestinationLabelsSupplier(
+  private java.util.function.Supplier<Map<String, String>> allDestinationLabelsSupplier(
       TokensAndUrlAuthData authData) {
-    return new Supplier<Map<String, String>>() {
-      @Override
-      public Map<String, String> get() {
-        ListLabelsResponse response = null;
-        try {
-          response = getOrCreateGmail(authData).users().labels().list(USER).execute();
-        } catch (IOException e) {
-          throw new RuntimeException("Unable to list labels for user", e);
-        }
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-
-        for (Label label : response.getLabels()) {
-          // TODO: remove system labels
-          builder.put(label.getName(), label.getId());
-        }
-        return builder.build();
+    return () -> {
+      ListLabelsResponse response;
+      try {
+        response = getOrCreateGmail(authData).users().labels().list(USER).execute();
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to list labels for user", e);
       }
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
+      for (Label label : response.getLabels()) {
+        // TODO: remove system labels
+        builder.put(label.getName(), label.getId());
+      }
+      return builder.build();
     };
   }
 
@@ -330,15 +245,5 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
             credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all
-    // mappings
-    return "tempMailData";
   }
 }

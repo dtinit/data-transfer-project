@@ -19,8 +19,7 @@ package org.datatransferproject.cloud.google;
 import static org.junit.Assert.assertEquals;
 
 import java.util.UUID;
-import org.datatransferproject.spi.transfer.types.TempCalendarData;
-import org.datatransferproject.spi.transfer.types.TempTasksData;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
