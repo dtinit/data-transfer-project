@@ -24,7 +24,7 @@ public class JettyMonitor implements Logger {
   }
 
   public void warn(String msg, Throwable thrown) {
-    DELEGATE.info(() -> msg, thrown);
+    DELEGATE.severe(() -> msg, thrown);
   }
 
   public void info(String msg, Object... args) {
@@ -60,7 +60,7 @@ public class JettyMonitor implements Logger {
   }
 
   public void debug(String msg, Throwable thrown) {
-    DELEGATE.info(() -> msg, thrown);
+    DELEGATE.debug(() -> msg, thrown);
   }
 
   public Logger getLogger(String name) {
