@@ -21,11 +21,14 @@ public class StackdriverMonitorExtension implements MonitorExtension {
 
   @Override
   public Monitor getMonitor() {
-      checkState(logging != null, "logging must be initialized first");
-      // Include the console monitor for extra debugging.
-      return new MultiplexMonitor(new StackdriverMonitor(this.logging), new ConsoleMonitor(ConsoleMonitor.Level.INFO));
-    }
-
+    checkState(logging != null, "logging must be initialized first");
+    // Include the console monitor for extra debugging.
+    //return new ConsoleMonitor(ConsoleMonitor.Level.DEBUG);
+    return new MultiplexMonitor(new StackdriverMonitor(
+        this.logging,
+        GoogleCloudExtensionModule.getProjectId()),
+        new ConsoleMonitor(ConsoleMonitor.Level.INFO));
+  }
 
   @Override
   public void initialize() {
