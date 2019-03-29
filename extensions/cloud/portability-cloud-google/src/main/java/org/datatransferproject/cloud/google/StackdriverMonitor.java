@@ -5,7 +5,6 @@ import com.google.cloud.logging.LogEntry;
 import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
 import com.google.cloud.logging.Severity;
-import com.google.cloud.logging.Synchronicity;
 import org.datatransferproject.api.launcher.JobAwareMonitor;
 
 import java.net.InetAddress;
@@ -61,10 +60,8 @@ class StackdriverMonitor implements JobAwareMonitor {
         .build();
 
     try {
-    logging.setWriteSynchronicity(Synchronicity.SYNC);
-
-    // Writes the log entry asynchronously
-    logging.write(Collections.singleton(entry));
+      // Writes the log entry asynchronously
+      logging.write(Collections.singleton(entry));
     } catch (Throwable t) {
       System.out.println("Problem logging: " + t.getMessage());
       t.printStackTrace(System.out);
