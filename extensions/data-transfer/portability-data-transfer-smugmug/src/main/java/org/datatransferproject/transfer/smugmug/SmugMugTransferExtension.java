@@ -24,7 +24,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -80,7 +80,7 @@ public class SmugMugTransferExtension implements TransferExtension {
     }
 
     HttpTransport transport = context.getService(HttpTransport.class);
-    PersistentPerJobStorage jobStore = context.getService(PersistentPerJobStorage.class);
+    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
     AppCredentials appCredentials;
     try {

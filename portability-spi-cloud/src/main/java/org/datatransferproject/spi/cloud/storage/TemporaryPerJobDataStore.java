@@ -12,7 +12,7 @@ import java.util.UUID;
  * <p>This class is intended to be implemented by extensions that support storage in various
  * back-end services.
  */
-public interface PersistentPerJobStorage {
+public interface TemporaryPerJobDataStore {
   default <T extends DataModel> void create(UUID jobId, String key, T model) throws IOException {
     throw new UnsupportedOperationException();
   }

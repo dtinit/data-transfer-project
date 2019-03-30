@@ -28,7 +28,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -62,7 +62,7 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final PersistentPerJobStorage jobStore;
+  private final TemporaryPerJobDataStore jobStore;
   private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
@@ -70,7 +70,7 @@ public class GooglePhotosExporter
 
   public GooglePhotosExporter(
       GoogleCredentialFactory credentialFactory,
-      PersistentPerJobStorage jobStore,
+      TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor) {
     this.credentialFactory = credentialFactory;
@@ -82,7 +82,7 @@ public class GooglePhotosExporter
   @VisibleForTesting
   GooglePhotosExporter(
       GoogleCredentialFactory credentialFactory,
-      PersistentPerJobStorage jobStore,
+      TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       Monitor monitor) {

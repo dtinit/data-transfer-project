@@ -25,7 +25,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosImporter;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -53,7 +53,7 @@ public class ImgurTransferExtension implements TransferExtension {
     ObjectMapper mapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     OkHttpClient client = context.getService(OkHttpClient.class);
-    PersistentPerJobStorage jobStore = context.getService(PersistentPerJobStorage.class);
+    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
     exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore);
     importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore);

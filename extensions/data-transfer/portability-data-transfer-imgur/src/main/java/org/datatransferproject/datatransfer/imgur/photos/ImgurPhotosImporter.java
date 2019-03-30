@@ -28,7 +28,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -50,7 +50,7 @@ public class ImgurPhotosImporter
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
-  private final PersistentPerJobStorage jobStore;
+  private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
   private static final String CREATE_ALBUM_URL = BASE_URL + "/album";
@@ -61,7 +61,7 @@ public class ImgurPhotosImporter
       Monitor monitor,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      PersistentPerJobStorage jobStore) {
+      TemporaryPerJobDataStore jobStore) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;

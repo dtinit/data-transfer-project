@@ -28,7 +28,7 @@ import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
@@ -73,7 +73,7 @@ public class FlickrPhotosImporterTest {
   private Flickr flickr = mock(Flickr.class);
   private PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
   private Uploader uploader = mock(Uploader.class);
-  private PersistentPerJobStorage jobStore = new LocalJobStore();
+  private TemporaryPerJobDataStore jobStore = new LocalJobStore();
   private FlickrPhotosImporter.ImageStreamProvider imageStreamProvider =
       mock(FlickrPhotosImporter.ImageStreamProvider.class);
 

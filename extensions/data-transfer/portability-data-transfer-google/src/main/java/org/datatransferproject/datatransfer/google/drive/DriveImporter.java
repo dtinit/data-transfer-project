@@ -8,7 +8,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -30,7 +30,7 @@ public final class DriveImporter implements
   private static final String ROOT_FOLDER_ID = "root-id";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final PersistentPerJobStorage jobStore;
+  private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
 
   // Don't access this directly, instead access via getDriveInterface.
@@ -38,7 +38,7 @@ public final class DriveImporter implements
 
   public DriveImporter(
       GoogleCredentialFactory credentialFactory,
-      PersistentPerJobStorage jobStore,
+      TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = checkNotNull(jobStore, "Job store can't be null");

@@ -23,7 +23,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosExporter;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -42,7 +42,7 @@ public class FlickrTransferExtension implements TransferExtension {
 
   private Importer importer;
   private Exporter exporter;
-  private PersistentPerJobStorage jobStore;
+  private TemporaryPerJobDataStore jobStore;
   private boolean initialized = false;
   private AppCredentials appCredentials;
 
@@ -68,7 +68,7 @@ public class FlickrTransferExtension implements TransferExtension {
   @Override
   public void initialize(ExtensionContext context) {
     if (initialized) return;
-    jobStore = context.getService(PersistentPerJobStorage.class);
+    jobStore = context.getService(TemporaryPerJobDataStore.class);
     Monitor monitor = context.getMonitor();
 
     try {

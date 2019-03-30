@@ -20,7 +20,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.types.common.ExportInformation;
@@ -55,13 +55,13 @@ public class MicrosoftPhotosExporter implements
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
-  private final PersistentPerJobStorage jobStore;
+  private final TemporaryPerJobDataStore jobStore;
 
   public MicrosoftPhotosExporter(
       String baseUrl,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      PersistentPerJobStorage jobStore) {
+      TemporaryPerJobDataStore jobStore) {
     photosRootUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     photosFolderTemplate = baseUrl + "/v1.0/me/drive/items/%s/children";
     photosContentTemplate = baseUrl + "/v1.0/me/drive/items/%s/content";

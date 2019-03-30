@@ -5,7 +5,7 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -33,7 +33,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
   private boolean initialized = false;
 
-  private PersistentPerJobStorage jobStore;
+  private TemporaryPerJobDataStore jobStore;
   private Monitor monitor;
 
   // Needed for ServiceLoader to load this class.

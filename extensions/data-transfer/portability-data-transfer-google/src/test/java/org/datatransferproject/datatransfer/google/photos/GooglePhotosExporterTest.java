@@ -25,7 +25,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Photo;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
@@ -69,7 +69,7 @@ public class GooglePhotosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GooglePhotosExporter googlePhotosExporter;
-  private PersistentPerJobStorage jobStore;
+  private TemporaryPerJobDataStore jobStore;
   private GooglePhotosInterface photosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
@@ -78,7 +78,7 @@ public class GooglePhotosExporterTest {
   @Before
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(PersistentPerJobStorage.class);
+    jobStore = mock(TemporaryPerJobDataStore.class);
     photosInterface = mock(GooglePhotosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);

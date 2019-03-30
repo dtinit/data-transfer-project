@@ -22,7 +22,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Video;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -55,7 +55,7 @@ public class GoogleVideosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GoogleVideosExporter googleVideosExporter;
-  private PersistentPerJobStorage jobStore;
+  private TemporaryPerJobDataStore jobStore;
   private GoogleVideosInterface videosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
@@ -64,7 +64,7 @@ public class GoogleVideosExporterTest {
   @Before
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(PersistentPerJobStorage.class);
+    jobStore = mock(TemporaryPerJobDataStore.class);
     videosInterface = mock(GoogleVideosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);

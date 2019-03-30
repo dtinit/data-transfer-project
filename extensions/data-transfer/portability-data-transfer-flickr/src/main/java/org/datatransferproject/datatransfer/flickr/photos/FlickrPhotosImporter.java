@@ -29,7 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -53,7 +53,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   @VisibleForTesting
   static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
 
-  private final PersistentPerJobStorage jobStore;
+  private final TemporaryPerJobDataStore jobStore;
   private final Flickr flickr;
   private final Uploader uploader;
   private final ImageStreamProvider imageStreamProvider;
@@ -62,7 +62,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   public FlickrPhotosImporter(
       AppCredentials appCredentials,
-      PersistentPerJobStorage jobStore,
+      TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
@@ -75,7 +75,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   @VisibleForTesting
   FlickrPhotosImporter(
       Flickr flickr,
-      PersistentPerJobStorage jobstore,
+      TemporaryPerJobDataStore jobstore,
       ImageStreamProvider imageStreamProvider,
       Monitor monitor) {
     this.flickr = flickr;
