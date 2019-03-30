@@ -17,7 +17,6 @@ package org.datatransferproject.transfer.microsoft.calendar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -54,19 +53,16 @@ public class MicrosoftCalendarImporter
   private final TransformerService transformerService;
 
   private final String baseUrl;
-  private final JobStore jobStore;
 
   public MicrosoftCalendarImporter(
       String baseUrl,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      TransformerService transformerService,
-      JobStore jobStore) {
+      TransformerService transformerService) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.transformerService = transformerService;
     this.baseUrl = baseUrl;
-    this.jobStore = jobStore;
   }
 
   @SuppressWarnings("unchecked")

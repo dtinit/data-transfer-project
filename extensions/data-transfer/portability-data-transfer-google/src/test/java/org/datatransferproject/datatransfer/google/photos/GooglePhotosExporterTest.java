@@ -15,24 +15,8 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.ALBUM_TOKEN_PREFIX;
-import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
@@ -41,14 +25,14 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Photo;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -56,6 +40,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.ALBUM_TOKEN_PREFIX;
+import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 public class GooglePhotosExporterTest {
 
@@ -68,7 +69,7 @@ public class GooglePhotosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GooglePhotosExporter googlePhotosExporter;
-  private JobStore jobStore;
+  private PersistentPerJobStorage jobStore;
   private GooglePhotosInterface photosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
@@ -77,7 +78,7 @@ public class GooglePhotosExporterTest {
   @Before
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(JobStore.class);
+    jobStore = mock(PersistentPerJobStorage.class);
     photosInterface = mock(GooglePhotosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);

@@ -17,8 +17,12 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.mediaModels.*;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
+import org.datatransferproject.datatransfer.google.mediaModels.Video;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -37,7 +41,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 public class GoogleVideosExporterTest {
 
@@ -48,7 +55,7 @@ public class GoogleVideosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GoogleVideosExporter googleVideosExporter;
-  private JobStore jobStore;
+  private PersistentPerJobStorage jobStore;
   private GoogleVideosInterface videosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
@@ -57,7 +64,7 @@ public class GoogleVideosExporterTest {
   @Before
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(JobStore.class);
+    jobStore = mock(PersistentPerJobStorage.class);
     videosInterface = mock(GoogleVideosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);

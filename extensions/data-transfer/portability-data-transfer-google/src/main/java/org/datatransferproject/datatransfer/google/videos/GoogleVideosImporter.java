@@ -35,10 +35,10 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -46,8 +46,6 @@ import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.api.launcher.Monitor;
-
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,26 +59,23 @@ public class GoogleVideosImporter
   private static final String COPY_PREFIX = "Copy of ";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
   private final ImageStreamProvider videoStreamProvider;
   private volatile GoogleVideosInterface videosInterface;
   private Monitor monitor;
   private JsonFactory jsonFactory;
 
-  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JobStore jobStore, JsonFactory jsonFactory, Monitor monitor) {
-    this(credentialFactory, jobStore, null, new ImageStreamProvider(), jsonFactory, monitor);
+  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
+    this(credentialFactory, null, new ImageStreamProvider(), jsonFactory, monitor);
   }
 
   @VisibleForTesting
   GoogleVideosImporter(
           GoogleCredentialFactory credentialFactory,
-          JobStore jobStore,
           GoogleVideosInterface videosInterface,
           ImageStreamProvider videoStreamProvider,
           JsonFactory jsonFactory,
           Monitor monitor) {
     this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
     this.videosInterface = videosInterface;
     this.videoStreamProvider = videoStreamProvider;
     this.jsonFactory = jsonFactory;

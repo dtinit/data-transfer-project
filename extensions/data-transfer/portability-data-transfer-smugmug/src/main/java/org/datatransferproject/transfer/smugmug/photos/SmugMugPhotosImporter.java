@@ -21,7 +21,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
-  private final JobStore jobStore;
+  private final PersistentPerJobStorage jobStore;
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final ObjectMapper mapper;
@@ -51,7 +51,7 @@ public class SmugMugPhotosImporter
   private SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosImporter(
-      JobStore jobStore,
+      PersistentPerJobStorage jobStore,
       HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
@@ -62,7 +62,7 @@ public class SmugMugPhotosImporter
   @VisibleForTesting
   SmugMugPhotosImporter(
       SmugMugInterface smugMugInterface,
-      JobStore jobStore,
+      PersistentPerJobStorage jobStore,
       HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,

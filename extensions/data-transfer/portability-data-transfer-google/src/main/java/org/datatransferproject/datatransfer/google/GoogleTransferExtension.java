@@ -24,7 +24,7 @@ import org.datatransferproject.datatransfer.google.tasks.GoogleTasksImporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -71,7 +71,7 @@ public class GoogleTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
-    JobStore jobStore = context.getService(JobStore.class);
+    PersistentPerJobStorage jobStore = context.getService(PersistentPerJobStorage.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
 
@@ -103,7 +103,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
             "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
-    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jobStore, jsonFactory, monitor));
+    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();

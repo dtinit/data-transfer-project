@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -64,14 +64,16 @@ public final class DriveExporter
           .build();
 
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
+  private final PersistentPerJobStorage jobStore;
   private final Monitor monitor;
 
   // Don't access this directly, instead access via getDriveInterface.
   private Drive driveInterface;
 
   public DriveExporter(
-      GoogleCredentialFactory credentialFactory, JobStore jobStore, Monitor monitor) {
+      GoogleCredentialFactory credentialFactory,
+      PersistentPerJobStorage jobStore,
+      Monitor monitor) {
     this.credentialFactory = checkNotNull(credentialFactory, "Credential Factory can't be null");
     this.jobStore = checkNotNull(jobStore, "Job store can't be null");
     this.monitor = monitor;

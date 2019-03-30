@@ -22,6 +22,27 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,26 +51,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
-import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
-import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
-import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.types.common.PaginationData;
-import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 
 // Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
@@ -61,14 +62,17 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
+  private final PersistentPerJobStorage jobStore;
   private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
   private final Monitor monitor;
 
-  public GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory, Monitor monitor) {
+  public GooglePhotosExporter(
+      GoogleCredentialFactory credentialFactory,
+      PersistentPerJobStorage jobStore,
+      JsonFactory jsonFactory,
+      Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
@@ -76,8 +80,12 @@ public class GooglePhotosExporter
   }
 
   @VisibleForTesting
-  GooglePhotosExporter(GoogleCredentialFactory credentialFactory, JobStore jobStore,
-      JsonFactory jsonFactory, GooglePhotosInterface photosInterface, Monitor monitor) {
+  GooglePhotosExporter(
+      GoogleCredentialFactory credentialFactory,
+      PersistentPerJobStorage jobStore,
+      JsonFactory jsonFactory,
+      GooglePhotosInterface photosInterface,
+      Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;

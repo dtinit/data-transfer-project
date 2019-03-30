@@ -23,7 +23,7 @@ import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactor
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.PersistentPerJobStorage;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -45,20 +45,22 @@ public class GooglePhotosImporter
   private static final String COPY_PREFIX = "Copy of ";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final JobStore jobStore;
+  private final PersistentPerJobStorage jobStore;
   private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
   private volatile GooglePhotosInterface photosInterface;
 
   public GooglePhotosImporter(
-      GoogleCredentialFactory credentialFactory, JobStore jobStore, JsonFactory jsonFactory) {
+      GoogleCredentialFactory credentialFactory,
+      PersistentPerJobStorage jobStore,
+      JsonFactory jsonFactory) {
     this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider());
   }
 
   @VisibleForTesting
   GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
-      JobStore jobStore,
+      PersistentPerJobStorage jobStore,
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       ImageStreamProvider imageStreamProvider) {
