@@ -15,12 +15,13 @@
  */
 package org.datatransferproject.launcher.monitor;
 
+import org.datatransferproject.api.launcher.JobAwareMonitor;
 import org.datatransferproject.api.launcher.Monitor;
 
 import java.util.function.Supplier;
 
 /** Forwards monitor events to a set of delegates. */
-public class MultiplexMonitor implements Monitor {
+public class MultiplexMonitor implements JobAwareMonitor {
   private Monitor[] delegates;
 
   public MultiplexMonitor(Monitor... delegates) {
@@ -45,6 +46,15 @@ public class MultiplexMonitor implements Monitor {
   public void debug(Supplier<String> supplier, Object... data) {
     for (Monitor delegate : delegates) {
       delegate.debug(supplier, data);
+    }
+  }
+
+  @Override
+  public void setJobId(String jobId) {
+    for (Monitor delegate : delegates) {
+      if (delegate instanceof JobAwareMonitor) {
+        ((JobAwareMonitor) delegate).setJobId(jobId);
+      }
     }
   }
 }

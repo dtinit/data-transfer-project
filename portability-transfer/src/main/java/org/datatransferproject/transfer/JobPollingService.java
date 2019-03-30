@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.JobAwareMonitor;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
@@ -205,6 +206,10 @@ class JobPollingService extends AbstractScheduledService {
                   "Could not claim job %s. It was probably already claimed by another transfer worker",
                   jobId));
       return false;
+    }
+
+    if (monitor instanceof JobAwareMonitor) {
+      ((JobAwareMonitor) monitor).setJobId(jobId.toString());
     }
     JobMetadata.init(
         jobId,

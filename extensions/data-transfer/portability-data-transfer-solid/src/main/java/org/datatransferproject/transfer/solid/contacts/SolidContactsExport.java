@@ -16,8 +16,6 @@
 
 package org.datatransferproject.transfer.solid.contacts;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
 import ezvcard.Ezvcard;
@@ -31,11 +29,6 @@ import ezvcard.property.Photo;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import ezvcard.property.Url;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -54,6 +47,14 @@ import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, ContactsModelWrapper> {
   private static final Pattern MAIL_TO_PATTERN = Pattern.compile("mailto:(.+@.+\\..+)");
@@ -86,7 +87,7 @@ public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, Cont
   }
 
   private List<List<VCard>> explore(String url, SolidUtilities utilities) throws IOException {
-    logger.debug("Exploring: {}", url);
+    logger.debug("Exploring: %s", url);
 
     List<List<VCard>> results = new ArrayList<>();
 
@@ -107,7 +108,7 @@ public class SolidContactsExport implements Exporter<CookiesAndUrlAuthData, Cont
   private List<VCard> parseAddressBookIfApplicable(Resource resource, SolidUtilities utilities)
       throws IOException {
     if (SolidUtilities.isType(resource, "http://www.w3.org/2006/vcard/ns#AddressBook")) {
-      logger.debug("Got Address book at {}", resource.getURI());
+      logger.debug("Got Address book at %s", resource.getURI());
       return parseAddressBook(resource, utilities);
     }
     return null;

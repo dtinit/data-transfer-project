@@ -26,24 +26,38 @@ import static org.datatransferproject.launcher.monitor.ConsoleMonitor.Level.DEBU
 
 /** Helper for loading monitor extensions. */
 public class MonitorLoader {
-
-  public static Monitor loadMonitor() {
-    List<Monitor> monitors = new ArrayList<>();
-    ServiceLoader.load(MonitorExtension.class)
-        .iterator()
-        .forEachRemaining(
-            extension -> {
-              extension.getMonitor();
-              extension.initialize();
-              monitors.add(extension.getMonitor());
-            });
-    if (monitors.isEmpty()) {
-      return new ConsoleMonitor(DEBUG);
-    } else {
-      Monitor[] monitorArray = new Monitor[monitors.size()];
-      monitorArray = monitors.toArray(monitorArray);
-      return new MultiplexMonitor(monitorArray);
+  private static Monitor monitor;
+  public static synchronized Monitor loadMonitor() {
+    if (monitor == null) {
+      try {
+        List<Monitor> monitors = new ArrayList<>();
+        ServiceLoader.load(MonitorExtension.class)
+            .iterator()
+            .forEachRemaining(
+                extension -> {
+                  try {
+                  extension.initialize();
+                  monitors.add(extension.getMonitor());
+                  } catch (Throwable e) {
+                    System.out.println("Couldn't initialize: " + extension + ": " + e.getMessage());
+                    e.printStackTrace(System.out);
+                  }
+                });
+        if (monitors.isEmpty()) {
+          monitor = new ConsoleMonitor(DEBUG);
+        } else if (monitors.size() == 1) {
+          monitor = monitors.get(0);
+        } else {
+          Monitor[] monitorArray = new Monitor[monitors.size()];
+          monitorArray = monitors.toArray(monitorArray);
+          monitor = new MultiplexMonitor(monitorArray);
+        }
+      } catch (Throwable t) {
+        t.printStackTrace();
+        throw t;
+      }
     }
+    return monitor;
   }
 
   private MonitorLoader() {}

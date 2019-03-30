@@ -16,8 +16,6 @@
 
 package org.datatransferproject.transfer.solid;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
@@ -29,11 +27,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.re2j.Pattern;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.List;
-import java.util.function.Consumer;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -43,6 +36,14 @@ import org.apache.jena.vocabulary.RDF;
 import org.datatransferproject.transfer.solid.contacts.SolidContactsExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.List;
+import java.util.function.Consumer;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public final class SolidUtilities {
   private static final Logger logger = LoggerFactory.getLogger(SolidContactsExport.class);
@@ -61,7 +62,7 @@ public final class SolidUtilities {
    * provided {@link Consumer}
    */
   public void explore(String url, Consumer<Resource> resourceConsumer) throws IOException {
-    logger.debug("Exploring: {}", url);
+    logger.debug("Exploring: %s", url);
     Model model = getModel(url);
 
     Resource selfResource = getResource(url, model);
@@ -176,7 +177,7 @@ public final class SolidUtilities {
       deleteRequest.setHeaders(headers);
 
       validateResponse(deleteRequest.execute(), 200);
-      logger.debug("Deleted: {}", url);
+      logger.debug("Deleted: %s", url);
     } catch (IOException e) {
       throw new IllegalStateException("Couldn't delete: " + url, e);
     }

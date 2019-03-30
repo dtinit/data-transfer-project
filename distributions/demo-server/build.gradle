@@ -150,7 +150,7 @@ task createDockerfile(type: Dockerfile) {
     // Install supervisor to allow mutliple processes to run
     runCommand("apt-get install -y supervisor")
     runCommand("mkdir -p /var/log/supervisor")
-
+    
     copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
 
     defaultCommand("/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf")

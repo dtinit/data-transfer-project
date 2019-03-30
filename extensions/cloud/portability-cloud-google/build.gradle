@@ -27,6 +27,7 @@ dependencies {
     compile("com.google.cloud:google-cloud-storage:${googleDatastoreVersion}")
     compile("com.google.cloud:google-cloud-datastore:${googleDatastoreVersion}")
     compile("com.google.inject:guice:${guiceVersion}")
+    compile("com.google.cloud:google-cloud-logging:${googleStackdriverVersion}")
 
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")
