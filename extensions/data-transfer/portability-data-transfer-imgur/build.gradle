@@ -28,5 +28,6 @@ dependencies {
     compile("com.google.guava:guava:${guavaVersion}")
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
+    testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.7.5'
 }
 configurePublication(project)
