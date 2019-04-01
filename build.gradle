@@ -118,7 +118,7 @@ def configurePublication(project) {
                     root.appendNode('description', 'The Data Transfer Project')
                     root.appendNode('name', 'DTP')
                     root.appendNode('url', 'https://datatransferproject.dev/')
-                    root.appendNode('properties').appendNode('git-version', project.rootProject.ext.gitVersion)
+                    root.appendNode('properties').appendNode('build-commit', project.rootProject.ext.gitVersion)
                     root.children().last() + getPomConfig();
                 }
             }
