@@ -52,20 +52,24 @@ public class ImgurPhotosImporter
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
-  private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
-  private static final String CREATE_ALBUM_URL = BASE_URL + "/album";
-  private static final String UPLOAD_PHOTO_URL = BASE_URL + "/image";
+
+  private static String createAlbumUrl;
+  private static String uploadPhotoUrl;
   private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
   public ImgurPhotosImporter(
       Monitor monitor,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore) {
+      TemporaryPerJobDataStore jobStore,
+      String baseUrl) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
+
+    createAlbumUrl = baseUrl + "/album";
+    uploadPhotoUrl = baseUrl + "/image";
   }
 
   @Override
@@ -104,7 +108,7 @@ public class ImgurPhotosImporter
       throws IOException {
     String description = album.getDescription();
 
-    Request.Builder requestBuilder = new Request.Builder().url(CREATE_ALBUM_URL);
+    Request.Builder requestBuilder = new Request.Builder().url(createAlbumUrl);
     requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
     FormBody.Builder builder = new FormBody.Builder().add("title", album.getName());
@@ -120,7 +124,7 @@ public class ImgurPhotosImporter
         code >= 200 && code <= 299,
         String.format(
             "Error occurred in request for %s, code: %s, message: %s",
-            CREATE_ALBUM_URL, code, response.message()));
+            createAlbumUrl, code, response.message()));
     ResponseBody body = response.body();
     Preconditions.checkArgument(body != null, "Didn't get response body!");
     Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
@@ -155,7 +159,7 @@ public class ImgurPhotosImporter
     byte[] imageBytes = ByteStreams.toByteArray(inputStream);
     String imageData = Base64.getEncoder().encodeToString(imageBytes);
 
-    Request.Builder requestBuilder = new Request.Builder().url(UPLOAD_PHOTO_URL);
+    Request.Builder requestBuilder = new Request.Builder().url(uploadPhotoUrl);
     requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
     FormBody.Builder builder = new FormBody.Builder().add("image", imageData);
@@ -177,7 +181,7 @@ public class ImgurPhotosImporter
         code >= 200 && code <= 299,
         String.format(
             "Error occurred in request for %s, code: %s, message: %s",
-            UPLOAD_PHOTO_URL, code, response.message()));
+                uploadPhotoUrl, code, response.message()));
     return response.code();
   }
 

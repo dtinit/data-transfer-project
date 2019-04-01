@@ -23,7 +23,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -54,14 +53,12 @@ import static java.lang.String.format;
 /** Exports Imgur albums and photos using Imgur API */
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
-  private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
   private static final String RESULTS_PER_PAGE = "10";
-  private static final String ALBUM_PHOTOS_URL_TEMPLATE = BASE_URL + "/album/%s/images";
-  private static final String ALBUMS_URL_TEMPLATE =
-      BASE_URL + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
-  private static final String ALL_PHOTOS_URL_TEMPLATE =
-      BASE_URL + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
-  private static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
+  private static String albumPhotosUrlTemplate;
+  private static String albumsUrlTemplate;
+  private static String allPhotosUrlTemplate;
+
+  public static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
   private boolean containsNonAlbumPhotos = false;
   private Set<String> albumPhotos = new HashSet<>();
 
@@ -74,11 +71,15 @@ public class ImgurPhotosExporter
       Monitor monitor,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore) {
+      TemporaryPerJobDataStore jobStore,
+      String baseUrl) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;
     this.jobStore = jobStore;
+    albumPhotosUrlTemplate = baseUrl + "/album/%s/images";
+    albumsUrlTemplate = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
+    allPhotosUrlTemplate = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
   }
 
   /**
@@ -120,7 +121,7 @@ public class ImgurPhotosExporter
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
 
-    String url = format(ALBUMS_URL_TEMPLATE, page);
+    String url = format(albumsUrlTemplate, page);
 
     List<Map<String, Object>> items = requestData(authData, url);
 
@@ -185,7 +186,7 @@ public class ImgurPhotosExporter
       return requestNonAlbumPhotos(authData, paginationData, jobId);
     }
 
-    String url = format(ALBUM_PHOTOS_URL_TEMPLATE, albumId);
+    String url = format(albumPhotosUrlTemplate, albumId);
     List<PhotoModel> photos = new ArrayList<>();
 
     List<Map<String, Object>> items = requestData(authData, url);
@@ -231,7 +232,7 @@ public class ImgurPhotosExporter
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
 
-    String url = format(ALL_PHOTOS_URL_TEMPLATE, page);
+    String url = format(allPhotosUrlTemplate, page);
     Set<PhotoAlbum> albums = new HashSet<>();
     List<PhotoModel> photos = new ArrayList<>();
 
