@@ -94,7 +94,13 @@ public class ImgurPhotosImporter
       }
       // Import photos
       for (PhotoModel photo : resource.getPhotos()) {
-        importPhoto(photo, jobId, authData, executor.getCachedValue(photo.getAlbumId()));
+        String albumId;
+        if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+          albumId = null;
+        } else {
+          albumId = executor.getCachedValue(photo.getAlbumId());
+        }
+        importPhoto(photo, jobId, authData, albumId);
       }
     } catch (IOException e) {
       monitor.severe(() -> "Error importing item", e);
@@ -181,7 +187,7 @@ public class ImgurPhotosImporter
         code >= 200 && code <= 299,
         String.format(
             "Error occurred in request for %s, code: %s, message: %s",
-                uploadPhotoUrl, code, response.message()));
+            uploadPhotoUrl, code, response.message()));
     return response.code();
   }
 
