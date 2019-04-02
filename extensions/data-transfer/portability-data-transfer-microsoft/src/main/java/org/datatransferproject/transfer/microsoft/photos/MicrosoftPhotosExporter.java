@@ -16,6 +16,19 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,18 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 
 /**
  * Exports Microsoft OneDrive photos using the Graph API.
@@ -54,10 +55,13 @@ public class MicrosoftPhotosExporter implements
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
-  private final JobStore jobStore;
+  private final TemporaryPerJobDataStore jobStore;
 
   public MicrosoftPhotosExporter(
-      String baseUrl, OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TemporaryPerJobDataStore jobStore) {
     photosRootUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     photosFolderTemplate = baseUrl + "/v1.0/me/drive/items/%s/children";
     photosContentTemplate = baseUrl + "/v1.0/me/drive/items/%s/content";

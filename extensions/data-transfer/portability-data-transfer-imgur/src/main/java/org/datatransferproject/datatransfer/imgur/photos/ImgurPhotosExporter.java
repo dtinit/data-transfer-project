@@ -24,7 +24,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -41,7 +41,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static java.lang.String.format;
 
@@ -62,10 +68,13 @@ public class ImgurPhotosExporter
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final Monitor monitor;
-  private final JobStore jobStore;
+  private final TemporaryPerJobDataStore jobStore;
 
   public ImgurPhotosExporter(
-      Monitor monitor, OkHttpClient client, ObjectMapper objectMapper, JobStore jobStore) {
+      Monitor monitor,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TemporaryPerJobDataStore jobStore) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;

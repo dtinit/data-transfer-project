@@ -16,11 +16,9 @@
 
 package org.datatransferproject.datatransfer.google.videos;
 
-import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
@@ -52,7 +50,6 @@ public class GoogleVideosImporterTest {
   private GoogleVideosImporter googleVideosImporter;
   private GoogleVideosInterface googleVideosInterface;
   private ImageStreamProvider videoStreamProvider;
-  private JobStore jobStore;
   private InputStream inputStream;
 
   @Before
@@ -69,15 +66,13 @@ public class GoogleVideosImporterTest {
             Matchers.eq(NewMediaItemResult.class)))
         .thenReturn(mock(NewMediaItemResult.class));
 
-    jobStore = new LocalJobStore();
-
     inputStream = mock(InputStream.class);
 
     videoStreamProvider = mock(ImageStreamProvider.class);
     when(videoStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
 
     googleVideosImporter =
-        new GoogleVideosImporter(null, jobStore, googleVideosInterface, videoStreamProvider,null,null);
+        new GoogleVideosImporter(null, googleVideosInterface, videoStreamProvider,null,null);
   }
 
   @Test
