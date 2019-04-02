@@ -15,8 +15,6 @@
  */
 package org.datatransferproject.transfer;
 
-import static com.google.common.collect.MoreCollectors.onlyElement;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -25,10 +23,6 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
@@ -45,10 +39,17 @@ import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static com.google.common.collect.MoreCollectors.onlyElement;
+
 final class WorkerModule extends FlagBindingModule {
 
   private final CloudExtension cloudExtension;
-  private final ExtensionContext context;
+  private final WorkerExtensionContextBuilder contextBuilder;
   private final List<TransferExtension> transferExtensions;
   private final Set<PublicKeySerializer> publicKeySerializers;
   private final Set<AuthDataDecryptService> decryptServices;
@@ -57,7 +58,7 @@ final class WorkerModule extends FlagBindingModule {
   private final JobHooks jobHooks;
 
   WorkerModule(
-      ExtensionContext context,
+      WorkerExtensionContextBuilder contextBuilder,
       CloudExtension cloudExtension,
       List<TransferExtension> transferExtensions,
       Set<PublicKeySerializer> publicKeySerializers,
@@ -66,7 +67,7 @@ final class WorkerModule extends FlagBindingModule {
       AsymmetricKeyGenerator asymmetricKeyGenerator,
       JobHooks jobHooks) {
     this.cloudExtension = cloudExtension;
-    this.context = context;
+    this.contextBuilder = contextBuilder;
     this.transferExtensions = transferExtensions;
     this.publicKeySerializers = publicKeySerializers;
     this.decryptServices = decryptServices;
@@ -95,13 +96,13 @@ final class WorkerModule extends FlagBindingModule {
   @Override
   protected void configure() {
     // binds flags from ExtensionContext to @Named annotations
-    bindFlags(context);
+    bindFlags(contextBuilder.getWorkerExtensionContext());
 
     bind(JobHooks.class).toInstance(jobHooks);
     bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
-    bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
+    bind(ObjectMapper.class).toInstance(contextBuilder.getTypeManager().getMapper());
   }
 
   @Provides
@@ -119,18 +120,19 @@ final class WorkerModule extends FlagBindingModule {
   @Provides
   @Singleton
   Exporter getExporter(ImmutableList<TransferExtension> transferExtensions) {
-    TransferExtension extension =
-        findTransferExtension(transferExtensions, JobMetadata.getExportService());
-    extension.initialize(context);
+    String exportService = JobMetadata.getExportService();
+    TransferExtension extension = findTransferExtension(transferExtensions, exportService);
+    extension.initialize(contextBuilder.getWorkerExtensionContextBuilderForService(exportService));
     return extension.getExporter(JobMetadata.getDataType());
   }
 
   @Provides
   @Singleton
   Importer getImporter(ImmutableList<TransferExtension> transferExtensions) {
+    String importService = JobMetadata.getImportService();
     TransferExtension extension =
-        findTransferExtension(transferExtensions, JobMetadata.getImportService());
-    extension.initialize(context);
+        findTransferExtension(transferExtensions, importService);
+    extension.initialize(contextBuilder.getWorkerExtensionContextBuilderForService(importService));
     return extension.getImporter(JobMetadata.getDataType());
   }
 
@@ -155,14 +157,18 @@ final class WorkerModule extends FlagBindingModule {
   @Provides
   @Singleton
   RetryStrategyLibrary getRetryStrategyLibrary() {
-    return context.getSetting("retryLibrary", null);
+    return contextBuilder
+        .getSettingsExtension()
+        .getSetting("retryLibrary", null);
   }
 
   @Provides
   @Singleton
   Scheduler getScheduler() {
     // TODO: parse a Duration from the settings
-    long interval = context.getSetting("pollInterval", 2000); // Default: poll every 2s
+    long interval = contextBuilder
+        .getSettingsExtension()
+        .getSetting("pollInterval", 2000); // Default: poll every 2s
     return AbstractScheduledService.Scheduler.newFixedDelaySchedule(
         0, interval, TimeUnit.MILLISECONDS);
   }
@@ -170,12 +176,12 @@ final class WorkerModule extends FlagBindingModule {
   @Provides
   @Singleton
   Monitor getMonitor() {
-    return context.getMonitor();
+    return contextBuilder.getMonitor();
   }
 
   @Provides
   @Singleton
   ExtensionContext getContext() {
-    return context;
+    return contextBuilder.getWorkerExtensionContext();
   }
 }

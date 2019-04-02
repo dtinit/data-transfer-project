@@ -3,6 +3,7 @@ package org.datatransferproject.bootstrap.vm;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import org.datatransferproject.api.ApiMain;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.metrics.MetricsLoader;
 import org.datatransferproject.transfer.WorkerMain;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -42,7 +43,7 @@ public class SingleVMMain {
 
   public void initializeGateway() {
     Monitor monitor = loadMonitor();
-    ApiMain apiMain = new ApiMain(monitor);
+    ApiMain apiMain = new ApiMain(monitor, MetricsLoader.loadMetrics());
 
     try (InputStream stream =
         ApiMain.class.getClassLoader().getResourceAsStream("demo-selfsigned-keystore.jks")) {
