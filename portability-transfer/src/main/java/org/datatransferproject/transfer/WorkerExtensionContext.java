@@ -25,13 +25,13 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** {@link ExtensionContext} used by the transfer worker. */
 public class WorkerExtensionContext implements ExtensionContext {
 
   private final TypeManager typeManager;
-  private final Map<Class<?>, Object> registered;
+  private final ConcurrentHashMap<Class<?>, Object> registered;
   private final SettingsExtension settingsExtension;
 
   // Required settings
@@ -42,7 +42,7 @@ public class WorkerExtensionContext implements ExtensionContext {
 
   WorkerExtensionContext(
       TypeManager typeManager,
-      Map<Class<?>, Object> registeredServices,
+      ConcurrentHashMap<Class<?>, Object> registeredServices,
       SettingsExtension settingsExtension,
       Monitor monitor,
       MetricRecorder metricRecorder) {

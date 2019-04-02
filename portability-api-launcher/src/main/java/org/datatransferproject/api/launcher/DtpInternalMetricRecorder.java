@@ -17,19 +17,53 @@ package org.datatransferproject.api.launcher;
 
 import java.time.Duration;
 
+/**
+ * Interface to log metrics about a DTP job.
+ *
+ * <p>Note this class is to be used by DTP framework code only, transfer extensions should use:
+ * {@link MetricRecorder} which pipes calls into the recordGeneric* methods.
+ *
+ * <p>Cloud extensions should implement this interface to records stats to their preferred stats
+ * platform.
+ */
 public interface DtpInternalMetricRecorder {
   // Metrics related to DTP internals
-  void startedJob(String dataType, String exportService, String importService);
 
-  void exportPageAttemptFinished(String dataType, String service, boolean success, Duration duration);
+  /** A DTP job started. **/
+  void startedJob(String dataType, String exportService, String importService);
+  /** A DTP job finished **/
+  void finishedJob(
+      String dataType,
+      String exportService,
+      String importService,
+      boolean success,
+      Duration duration);
+
+  /** An single attempt to export a page of data finished. **/
+  void exportPageAttemptFinished(
+      String dataType,
+      String service,
+      boolean success,
+      Duration duration);
+
+  /** An attempt to export a page of data finished including all retires. **/
   void exportPageFinished(String dataType, String service, boolean success, Duration duration);
+
+  /** The export of all data from a service finished. **/
   void exportFinished(String dataType, String service, boolean success, Duration duration);
 
-  void importPageAttemptFinished(String dataType, String service, boolean success, Duration duration);
-  void importPageFinished(String dataType, String service, boolean success, Duration duration);
-  void importFinished(String dataType, String service, boolean success, Duration duration);
+  /** An single attempt to import a page of data finished. **/
+  void importPageAttemptFinished(
+      String dataType,
+      String service,
+      boolean success,
+      Duration duration);
 
-  void finishedJob(String dataType, String exportService, String importService);
+  /** An attempt to import a page of data finished including all retires. **/
+  void importPageFinished(String dataType, String service, boolean success, Duration duration);
+
+  /** The import of all data from a service finished. **/
+  void importFinished(String dataType, String service, boolean success, Duration duration);
 
   // Metrics from {@link MetricRecorder}
   void recordGenericMetric(String dataType, String service, String tag);

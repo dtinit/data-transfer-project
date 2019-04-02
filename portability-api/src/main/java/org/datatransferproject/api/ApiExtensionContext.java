@@ -25,14 +25,14 @@ import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.launcher.metrics.ServiceAwareMetricRecorder;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides a context for initializing extensions.
  */
-public class ApiExtensionContext implements ExtensionContext {
+class ApiExtensionContext implements ExtensionContext {
 
-  private final Map<Class<?>, Object> registered;
+  private final ConcurrentHashMap<Class<?>, Object> registered;
   private final TypeManager typeManager;
   private final SettingsExtension settingsExtension;
   private final Monitor monitor;
@@ -44,9 +44,9 @@ public class ApiExtensionContext implements ExtensionContext {
   private final String baseUrl;
   private final String baseApiUrl;
 
-  public ApiExtensionContext(
+  ApiExtensionContext(
       TypeManager typeManager,
-      Map<Class<?>, Object> registeredTypes,
+      ConcurrentHashMap<Class<?>, Object> registeredTypes,
       SettingsExtension settingsExtension,
       Monitor monitor,
       ServiceAwareMetricRecorder metricRecorder) {

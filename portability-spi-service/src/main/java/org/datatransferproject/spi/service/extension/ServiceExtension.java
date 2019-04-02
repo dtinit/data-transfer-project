@@ -26,6 +26,4 @@ import org.datatransferproject.api.launcher.AbstractExtension;
  *
  * <p>Service extensions are guaranteeed to be loaded prior to other extension types.
  */
-public interface ServiceExtension extends AbstractExtension {
-
-}
+public interface ServiceExtension extends AbstractExtension {}

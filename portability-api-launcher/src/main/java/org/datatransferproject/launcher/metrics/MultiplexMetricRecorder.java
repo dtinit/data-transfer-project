@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2019 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 
 import java.time.Duration;
 
-/** Forwards monitor events to a set of delegates. */
+/** Forwards metric events to a set of delegates. */
 public class MultiplexMetricRecorder implements DtpInternalMetricRecorder {
   private DtpInternalMetricRecorder[] delegates;
 
@@ -35,14 +35,22 @@ public class MultiplexMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void exportPageAttemptFinished(String dataType, String service, boolean success, Duration duration) {
+  public void exportPageAttemptFinished(
+      String dataType,
+      String service,
+      boolean success,
+      Duration duration) {
     for (DtpInternalMetricRecorder metricRecorder : delegates) {
       metricRecorder.exportPageAttemptFinished(dataType, service, success, duration);
     }
   }
 
   @Override
-  public void exportPageFinished(String dataType, String service, boolean success, Duration duration) {
+  public void exportPageFinished(
+      String dataType,
+      String service,
+      boolean success,
+      Duration duration) {
     for (DtpInternalMetricRecorder metricRecorder : delegates) {
       metricRecorder.exportPageFinished(dataType, service, success, duration);
     }
@@ -51,19 +59,27 @@ public class MultiplexMetricRecorder implements DtpInternalMetricRecorder {
   @Override
   public void exportFinished(String dataType, String service, boolean success, Duration duration) {
     for (DtpInternalMetricRecorder metricRecorder : delegates) {
-      metricRecorder.exportPageFinished(dataType, service, success, duration);
+      metricRecorder.exportFinished(dataType, service, success, duration);
     }
   }
 
   @Override
-  public void importPageAttemptFinished(String dataType, String service, boolean success, Duration duration) {
+  public void importPageAttemptFinished(
+      String dataType,
+      String service,
+      boolean success,
+      Duration duration) {
     for (DtpInternalMetricRecorder metricRecorder : delegates) {
       metricRecorder.importPageAttemptFinished(dataType, service, success, duration);
     }
   }
 
   @Override
-  public void importPageFinished(String dataType, String service, boolean success, Duration duration) {
+  public void importPageFinished(
+      String dataType,
+      String service,
+      boolean success,
+      Duration duration) {
     for (DtpInternalMetricRecorder metricRecorder : delegates) {
       metricRecorder.importPageFinished(dataType, service, success, duration);
     }
@@ -77,9 +93,14 @@ public class MultiplexMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void finishedJob(String dataType, String exportService, String importService) {
+  public void finishedJob(
+      String dataType,
+      String exportService,
+      String importService,
+      boolean success,
+      Duration duration) {
     for (DtpInternalMetricRecorder metricRecorder : delegates) {
-      metricRecorder.finishedJob(dataType, exportService, importService);
+      metricRecorder.finishedJob(dataType, exportService, importService, success, duration);
     }
   }
 

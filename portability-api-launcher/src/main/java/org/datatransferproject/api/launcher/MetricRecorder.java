@@ -18,7 +18,7 @@ package org.datatransferproject.api.launcher;
 import java.time.Duration;
 
 /**
- * Interface to allow extensions to record generic metrics/stats about their processing.
+ * Interface to allow transfer extensions to record generic metrics/stats about their processing.
  */
 public interface MetricRecorder {
 
