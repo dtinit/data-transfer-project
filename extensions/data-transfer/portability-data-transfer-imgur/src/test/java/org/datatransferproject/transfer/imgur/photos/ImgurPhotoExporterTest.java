@@ -49,42 +49,57 @@ import static org.mockito.Mockito.mock;
 @RunWith(MockitoJUnitRunner.class)
 public class ImgurPhotoExporterTest {
 
-  String albumsResponse;
-  String album1ImagesResponse;
-  String allImagesResponse;
-  String page1Response;
-  String page2Response;
+  private MockWebServer server;
+  private OkHttpClient client = new OkHttpClient.Builder().build();
+  private ObjectMapper mapper = new ObjectMapper();;
+  private TokensAndUrlAuthData token =
+      new TokensAndUrlAuthData("accessToken", "refreshToken", "tokenUrl");
+  private JobStore jobStore = mock(JobStore.class);
+  private ImgurPhotosExporter exporter;
+  private Monitor monitor = mock(Monitor.class);
+
+  // contains albums
+  private String albumsResponse;
+  // contains photos from the first album
+  private String album1ImagesResponse;
+  // contains both album and non-album photos
+  private String allImagesResponse;
+  // contains photos for paged requests
+  private String page1Response;
+  private String page2Response;
 
   {
     try {
-      albumsResponse = Resources.toString(Resources.getResource("albums.json"), Charsets.UTF_8).trim();
+      albumsResponse =
+          Resources.toString(Resources.getResource("albums.json"), Charsets.UTF_8).trim();
       album1ImagesResponse =
           Resources.toString(Resources.getResource("album_1_images.json"), Charsets.UTF_8).trim();
       allImagesResponse =
           Resources.toString(Resources.getResource("all_images.json"), Charsets.UTF_8).trim();
-      page1Response = Resources.toString(Resources.getResource("page1.json"), Charsets.UTF_8).trim();
-      page2Response = Resources.toString(Resources.getResource("page2.json"), Charsets.UTF_8).trim();
+      page1Response =
+          Resources.toString(Resources.getResource("page1.json"), Charsets.UTF_8).trim();
+      page2Response =
+          Resources.toString(Resources.getResource("page2.json"), Charsets.UTF_8).trim();
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private MockWebServer server;
-  private OkHttpClient client;
-  private ObjectMapper mapper;
-  private TokensAndUrlAuthData token;
-  private JobStore jobStore;
-  private ImgurPhotosExporter exporter;
-
-  Monitor monitor = mock(Monitor.class);
+  @Before
+  public void setUp() throws IOException {
+    server = new MockWebServer();
+    server.start();
+    exporter =
+        new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString());
+  }
 
   @Test
   public void testAlbumsExport() throws Exception {
     server.enqueue(new MockResponse().setBody(albumsResponse));
 
+    // export albums
     ExportResult<PhotosContainerResource> result =
         exporter.export(UUID.randomUUID(), token, Optional.empty());
-
     PhotosContainerResource resource = result.getExportedData();
 
     assertEquals(2, resource.getAlbums().size());
@@ -180,16 +195,16 @@ public class ImgurPhotoExporterTest {
     PhotosContainerResource resource = nonAlbumPhotosResult.getExportedData();
     assertEquals(1, resource.getPhotos().size());
 
-    PhotoModel photo1 =
+    PhotoModel nonAlbumPhoto =
         resource
             .getPhotos()
             .stream()
             .filter(p -> "nonAlbumPhoto1".equals(p.getDataId()))
             .findFirst()
             .get();
-    assertEquals("non-album-photo-name", photo1.getTitle());
-    assertEquals("image/jpeg", photo1.getMediaType());
-    assertEquals(ImgurPhotosExporter.DEFAULT_ALBUM_ID, photo1.getAlbumId());
+    assertEquals("non-album-photo-name", nonAlbumPhoto.getTitle());
+    assertEquals("image/jpeg", nonAlbumPhoto.getMediaType());
+    assertEquals(ImgurPhotosExporter.DEFAULT_ALBUM_ID, nonAlbumPhoto.getAlbumId());
   }
 
   @Test
@@ -211,7 +226,6 @@ public class ImgurPhotoExporterTest {
 
   @Test
   public void testPagination() throws Exception {
-
     server.enqueue(new MockResponse().setBody(page1Response));
     server.enqueue(new MockResponse().setBody(page2Response));
     int page = 0;
@@ -226,6 +240,7 @@ public class ImgurPhotoExporterTest {
                     new IdOnlyContainerResource(ImgurPhotosExporter.DEFAULT_ALBUM_ID))));
     page++;
     PhotosContainerResource page1Resource = page1Result.getExportedData();
+
     // 1th request returns 10 photos
     assertEquals(10, page1Resource.getPhotos().size());
     assertEquals(
@@ -242,23 +257,12 @@ public class ImgurPhotoExporterTest {
                     new IdOnlyContainerResource(ImgurPhotosExporter.DEFAULT_ALBUM_ID))));
     page++;
     PhotosContainerResource page2Resource = page2Result.getExportedData();
+
     // 2th request returns 2 photos
     assertEquals(2, page2Resource.getPhotos().size());
     assertEquals(
         page,
         ((IntPaginationToken) page2Result.getContinuationData().getPaginationData()).getStart());
-  }
-
-  @Before
-  public void setUp() throws IOException {
-    client = new OkHttpClient.Builder().build();
-    mapper = new ObjectMapper();
-    token = new TokensAndUrlAuthData("accessToken", "refreshToken", "tokenUrl");
-    jobStore = mock(JobStore.class);
-    server = new MockWebServer();
-    server.start();
-    exporter =
-        new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString());
   }
 
   @After
