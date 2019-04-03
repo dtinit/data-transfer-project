@@ -28,7 +28,7 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -57,7 +57,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
-  private final JobStore jobStore;
+  private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
 
   private final String createFolderUrl;
@@ -67,7 +67,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
       String baseUrl,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      JobStore jobStore,
+      TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
 

@@ -16,8 +16,6 @@
 
 package org.datatransferproject.datatransfer.imgur;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -25,12 +23,12 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosImporter;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
 
 /** Extension for transferring Imgur data */
 public class ImgurTransferExtension implements TransferExtension {
@@ -55,7 +53,7 @@ public class ImgurTransferExtension implements TransferExtension {
     ObjectMapper mapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     OkHttpClient client = context.getService(OkHttpClient.class);
-    JobStore jobStore = context.getService(JobStore.class);
+    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
     exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore);
     importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore);

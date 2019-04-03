@@ -23,7 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -58,7 +58,7 @@ public class SmugMugPhotosExporter
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final ObjectMapper mapper;
-  private final JobStore jobStore;
+  private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
 
   private SmugMugInterface smugMugInterface;
@@ -67,7 +67,7 @@ public class SmugMugPhotosExporter
       HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
-      JobStore jobStore,
+      TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
     this(null, transport, appCredentials, mapper, jobStore, monitor);
   }
@@ -78,7 +78,7 @@ public class SmugMugPhotosExporter
       HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
-      JobStore jobStore,
+      TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
     this.transport = transport;
     this.appCredentials = appCredentials;

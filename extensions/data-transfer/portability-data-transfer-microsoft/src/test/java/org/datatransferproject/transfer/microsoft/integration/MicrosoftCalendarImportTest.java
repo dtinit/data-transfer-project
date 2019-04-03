@@ -24,7 +24,6 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
-import org.datatransferproject.transfer.microsoft.helper.MockJobStore;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
@@ -183,7 +182,6 @@ public class MicrosoftCalendarImportTest {
   private ObjectMapper mapper;
   private TransformerServiceImpl transformerService;
   private TokenAuthData token;
-  private MockJobStore jobStore;
 
   @Test
   @SuppressWarnings("unchecked")
@@ -195,7 +193,7 @@ public class MicrosoftCalendarImportTest {
     HttpUrl baseUrl = server.url("");
     MicrosoftCalendarImporter importer =
         new MicrosoftCalendarImporter(
-            baseUrl.toString(), client, mapper, transformerService, jobStore);
+            baseUrl.toString(), client, mapper, transformerService);
 
     CalendarModel calendarModel = new CalendarModel("OldId1", "name", "name");
     CalendarAttendeeModel attendeeModel =
@@ -300,7 +298,6 @@ public class MicrosoftCalendarImportTest {
     transformerService = new TransformerServiceImpl();
     token = new TokenAuthData("token456");
     server = new MockWebServer();
-    jobStore = new MockJobStore();
   }
 
   @After
