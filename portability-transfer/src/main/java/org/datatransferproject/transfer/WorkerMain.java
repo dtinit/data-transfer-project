@@ -34,6 +34,7 @@ import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
@@ -94,6 +95,7 @@ public class WorkerMain {
 
     JobStore jobStore = cloudExtension.getJobStore();
     extensionContext.registerService(JobStore.class, jobStore);
+    extensionContext.registerService(TemporaryPerJobDataStore.class, jobStore);
 
     AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
     extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
