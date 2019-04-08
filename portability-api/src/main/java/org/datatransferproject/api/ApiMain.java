@@ -25,12 +25,10 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Types;
 import org.datatransferproject.api.action.Action;
-import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.api.token.JWTTokenManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.launcher.metrics.MetricsLoader;
 import org.datatransferproject.launcher.types.TypeManagerImpl;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -40,6 +38,7 @@ import org.datatransferproject.spi.api.transport.TransportBinder;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -63,7 +62,6 @@ import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.g
 public class ApiMain {
 
   private final Monitor monitor;
-  private final DtpInternalMetricRecorder metricRecorder;
   private List<ServiceExtension> serviceExtensions = Collections.emptyList();
 
   /** Starts the api server, currently the reference implementation. */
@@ -76,14 +74,13 @@ public class ApiMain {
         (thread, t) ->
             monitor.severe(() -> "Uncaught exception in thread: " + thread.getName(), t));
 
-    ApiMain apiMain = new ApiMain(monitor, MetricsLoader.loadMetrics());
+    ApiMain apiMain = new ApiMain(monitor);
     apiMain.initializeHttp();
     apiMain.start();
   }
 
-  public ApiMain(Monitor monitor, DtpInternalMetricRecorder metricRecorder) {
+  public ApiMain(Monitor monitor) {
     this.monitor = monitor;
-    this.metricRecorder = metricRecorder;
   }
 
   public void initializeHttp() {
@@ -103,40 +100,39 @@ public class ApiMain {
     SettingsExtension settingsExtension = getSettingsExtension();
 
     settingsExtension.initialize();
-    ApiExtensionContextBuilder extensionContextBuilder =
-        new ApiExtensionContextBuilder(typeManager, settingsExtension, monitor, metricRecorder);
+    ApiExtensionContext extensionContext =
+        new ApiExtensionContext(typeManager, settingsExtension, monitor);
 
     if (trustManagerFactory != null) {
-      extensionContextBuilder.registerService(TrustManagerFactory.class, trustManagerFactory);
+      extensionContext.registerService(TrustManagerFactory.class, trustManagerFactory);
     }
 
     if (keyManagerFactory != null) {
-      extensionContextBuilder.registerService(KeyManagerFactory.class, keyManagerFactory);
+      extensionContext.registerService(KeyManagerFactory.class, keyManagerFactory);
     }
 
     if (keyStore != null) {
-      extensionContextBuilder.registerService(KeyStore.class, keyStore);
+      extensionContext.registerService(KeyStore.class, keyStore);
     }
 
-    extensionContextBuilder.registerService(HttpTransport.class, new NetHttpTransport());
-    extensionContextBuilder.registerService(JsonFactory.class, new JacksonFactory());
+    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(JsonFactory.class, new JacksonFactory());
 
     // Services that need to be shared between authServiceExtensions or load types in the
     // typemanager get initialized first.
     serviceExtensions = new ArrayList<>();
     ServiceLoader.load(ServiceExtension.class).iterator().forEachRemaining(serviceExtensions::add);
 
-    serviceExtensions.forEach((se) -> se.initialize(
-        extensionContextBuilder.getSharedApiExtensionContext()));
+    serviceExtensions.forEach((se) -> se.initialize(extensionContext));
 
     CloudExtension cloudExtension = getCloudExtension();
-    cloudExtension.initialize(
-        extensionContextBuilder.getSharedApiExtensionContextForService("Cloud"));
+    cloudExtension.initialize(extensionContext);
 
     // Needed for GoogleAuthServiceExtension
-    extensionContextBuilder.registerService(HttpTransport.class, new NetHttpTransport());
-    extensionContextBuilder.registerService(JobStore.class, cloudExtension.getJobStore());
-    extensionContextBuilder.registerService(
+    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
+    extensionContext.registerService(TemporaryPerJobDataStore.class, cloudExtension.getJobStore());
+    extensionContext.registerService(
         AppCredentialStore.class, cloudExtension.getAppCredentialStore());
 
     // TODO: Load up only "enabled" services
@@ -145,8 +141,7 @@ public class ApiMain {
         .iterator()
         .forEachRemaining(
             (authServiceExtension) -> {
-              authServiceExtension.initialize(extensionContextBuilder
-                  .getSharedApiExtensionContextForService(authServiceExtension.getServiceId()));
+              authServiceExtension.initialize(extensionContext);
               authServiceExtensions.add(authServiceExtension);
             });
 
@@ -182,11 +177,11 @@ public class ApiMain {
                 keyManagerFactory,
                 authServiceExtensions,
                 tokenManager,
-                extensionContextBuilder.getSharedApiExtensionContext()));
+                extensionContext));
 
-    extensionContextBuilder.registerService(Injector.class, injector);
+    extensionContext.registerService(Injector.class, injector);
 
-    bindActions(injector, extensionContextBuilder.getSharedApiExtensionContext());
+    bindActions(injector, extensionContext);
   }
 
   public void start() {

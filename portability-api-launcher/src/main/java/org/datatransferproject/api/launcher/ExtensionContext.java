@@ -35,13 +35,6 @@ public interface ExtensionContext {
   Monitor getMonitor();
 
   /**
-   * Returns a object that can be used to record stats/metrics.
-   *
-   * @return the metric recorder
-   */
-  MetricRecorder getMetricRecorder();
-
-  /**
    * Returns a system service such as a type mapper extension services may require.
    *
    * @param type the system service type

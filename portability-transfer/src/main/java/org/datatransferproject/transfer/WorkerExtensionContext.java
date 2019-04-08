@@ -20,39 +20,39 @@ import com.google.common.base.Preconditions;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
-import org.datatransferproject.api.launcher.MetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
+import org.datatransferproject.launcher.types.TypeManagerImpl;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.Map;
 
 /** {@link ExtensionContext} used by the transfer worker. */
 public class WorkerExtensionContext implements ExtensionContext {
 
   private final TypeManager typeManager;
-  private final ConcurrentHashMap<Class<?>, Object> registered;
+  private final Map<Class<?>, Object> registered = new HashMap<>();
   private final SettingsExtension settingsExtension;
 
   // Required settings
   private final String cloud;
-  private final MetricRecorder metricRecorder;
   private final Environment environment;
   private final Monitor monitor;
 
-  WorkerExtensionContext(
-      TypeManager typeManager,
-      ConcurrentHashMap<Class<?>, Object> registeredServices,
-      SettingsExtension settingsExtension,
-      Monitor monitor,
-      MetricRecorder metricRecorder) {
-    this.typeManager = typeManager;
-    this.registered = registeredServices;
+  WorkerExtensionContext(SettingsExtension settingsExtension, Monitor monitor) {
     this.monitor = monitor;
+    this.typeManager = new TypeManagerImpl();
+    typeManager.registerTypes(
+        TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
+
+    registered.put(TypeManager.class, typeManager);
     this.settingsExtension = settingsExtension;
 
     cloud = settingsExtension.getSetting("cloud", null);
-    this.metricRecorder = metricRecorder;
     Preconditions.checkNotNull(cloud, "Required setting 'cloud' is missing");
     environment = Environment.valueOf(settingsExtension.getSetting("environment", null));
     Preconditions.checkNotNull(environment, "Required setting 'environment' is missing");
@@ -66,11 +66,6 @@ public class WorkerExtensionContext implements ExtensionContext {
   @Override
   public Monitor getMonitor() {
     return monitor;
-  }
-
-  @Override
-  public MetricRecorder getMetricRecorder() {
-    return metricRecorder;
   }
 
   @Override

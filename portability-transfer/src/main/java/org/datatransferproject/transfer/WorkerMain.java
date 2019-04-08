@@ -25,10 +25,8 @@ import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import okhttp3.OkHttpClient;
-import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.launcher.metrics.MetricsLoader;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.security.RsaSymmetricKeyGenerator;
@@ -36,6 +34,7 @@ import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
@@ -74,33 +73,32 @@ public class WorkerMain {
 
   public void initialize() {
     Monitor monitor = loadMonitor();
-    DtpInternalMetricRecorder metricRecorder = MetricsLoader.loadMetrics();
 
     SettingsExtension settingsExtension = getSettingsExtension();
     settingsExtension.initialize();
-    WorkerExtensionContextBuilder extensionContextBuilder =
-        new WorkerExtensionContextBuilder(settingsExtension, monitor, metricRecorder);
+    WorkerExtensionContext extensionContext =
+        new WorkerExtensionContext(settingsExtension, monitor);
 
     // TODO this should be moved into a service extension
-    extensionContextBuilder.registerService(HttpTransport.class, new NetHttpTransport());
-    extensionContextBuilder.registerService(OkHttpClient.class, new OkHttpClient.Builder().build());
-    extensionContextBuilder.registerService(JsonFactory.class, new JacksonFactory());
+    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+    extensionContext.registerService(OkHttpClient.class, new OkHttpClient.Builder().build());
+    extensionContext.registerService(JsonFactory.class, new JacksonFactory());
 
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
-        .forEachRemaining(serviceExtension -> serviceExtension.initialize(
-            extensionContextBuilder.getWorkerExtensionContext()));
+        .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
 
     // TODO: verify that this is the cloud extension that is specified in the configuration
     CloudExtension cloudExtension = getCloudExtension();
-    cloudExtension.initialize(extensionContextBuilder.getWorkerExtensionContext());
+    cloudExtension.initialize(extensionContext);
     monitor.info(() -> "Using CloudExtension: " + cloudExtension.getClass().getName());
 
     JobStore jobStore = cloudExtension.getJobStore();
-    extensionContextBuilder.registerService(JobStore.class, jobStore);
+    extensionContext.registerService(JobStore.class, jobStore);
+    extensionContext.registerService(TemporaryPerJobDataStore.class, jobStore);
 
     AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
-    extensionContextBuilder.registerService(AppCredentialStore.class, appCredentialStore);
+    extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
 
     List<TransferExtension> transferExtensions = getTransferExtensions(monitor);
 
@@ -108,8 +106,7 @@ public class WorkerMain {
     ServiceLoader.load(SecurityExtension.class)
         .iterator()
         .forEachRemaining(securityExtensions::add);
-    securityExtensions.forEach(e -> e.initialize(
-        extensionContextBuilder.getWorkerExtensionContext()));
+    securityExtensions.forEach(e -> e.initialize(extensionContext));
 
     Set<PublicKeySerializer> publicKeySerializers =
         securityExtensions
@@ -129,7 +126,7 @@ public class WorkerMain {
     Injector injector =
         Guice.createInjector(
             new WorkerModule(
-                extensionContextBuilder,
+                extensionContext,
                 cloudExtension,
                 transferExtensions,
                 publicKeySerializers,
