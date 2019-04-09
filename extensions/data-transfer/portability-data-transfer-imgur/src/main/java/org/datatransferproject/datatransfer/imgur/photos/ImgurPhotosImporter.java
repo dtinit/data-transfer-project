@@ -20,14 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -53,8 +47,8 @@ public class ImgurPhotosImporter
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
 
-  private static String createAlbumUrl;
-  private static String uploadPhotoUrl;
+  private final String CREATE_ALBUM_URL;
+  private final String UPLOAD_PHOTO_URL;
   private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
   public ImgurPhotosImporter(
@@ -68,8 +62,8 @@ public class ImgurPhotosImporter
     this.jobStore = jobStore;
     this.monitor = monitor;
 
-    createAlbumUrl = baseUrl + "/album";
-    uploadPhotoUrl = baseUrl + "/image";
+    CREATE_ALBUM_URL = baseUrl + "/album";
+    UPLOAD_PHOTO_URL = baseUrl + "/image";
   }
 
   @Override
@@ -87,10 +81,7 @@ public class ImgurPhotosImporter
     try {
       // Import albums
       for (PhotoAlbum album : resource.getAlbums()) {
-        executor.execute(
-                album.getId(),
-                album.getName(),
-                () -> importAlbum(album, authData));
+        executor.execute(album.getId(), album.getName(), () -> importAlbum(album, authData));
       }
       // Import photos
       for (PhotoModel photo : resource.getPhotos()) {
@@ -109,12 +100,10 @@ public class ImgurPhotosImporter
     return new ImportResult(ImportResult.ResultType.OK);
   }
 
-  private String importAlbum(
-      PhotoAlbum album, TokensAndUrlAuthData authData)
-      throws IOException {
+  private String importAlbum(PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
     String description = album.getDescription();
 
-    Request.Builder requestBuilder = new Request.Builder().url(createAlbumUrl);
+    Request.Builder requestBuilder = new Request.Builder().url(CREATE_ALBUM_URL);
     requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
     FormBody.Builder builder = new FormBody.Builder().add("title", album.getName());
@@ -130,7 +119,7 @@ public class ImgurPhotosImporter
         code >= 200 && code <= 299,
         String.format(
             "Error occurred in request for %s, code: %s, message: %s",
-            createAlbumUrl, code, response.message()));
+            CREATE_ALBUM_URL, code, response.message()));
     ResponseBody body = response.body();
     Preconditions.checkArgument(body != null, "Didn't get response body!");
     Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
@@ -144,10 +133,7 @@ public class ImgurPhotosImporter
   }
 
   private int importPhoto(
-          PhotoModel photoModel,
-          UUID jobId,
-          TokensAndUrlAuthData authData,
-          String newAlbumId)
+      PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData, String newAlbumId)
       throws IOException {
     InputStream inputStream = null;
     String albumId = photoModel.getAlbumId();
@@ -165,7 +151,7 @@ public class ImgurPhotosImporter
     byte[] imageBytes = ByteStreams.toByteArray(inputStream);
     String imageData = Base64.getEncoder().encodeToString(imageBytes);
 
-    Request.Builder requestBuilder = new Request.Builder().url(uploadPhotoUrl);
+    Request.Builder requestBuilder = new Request.Builder().url(UPLOAD_PHOTO_URL);
     requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
     FormBody.Builder builder = new FormBody.Builder().add("image", imageData);
@@ -187,7 +173,7 @@ public class ImgurPhotosImporter
         code >= 200 && code <= 299,
         String.format(
             "Error occurred in request for %s, code: %s, message: %s",
-            uploadPhotoUrl, code, response.message()));
+            UPLOAD_PHOTO_URL, code, response.message()));
     return response.code();
   }
 

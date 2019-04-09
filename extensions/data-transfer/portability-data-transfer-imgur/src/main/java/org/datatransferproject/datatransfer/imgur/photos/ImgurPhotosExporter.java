@@ -54,9 +54,9 @@ import static java.lang.String.format;
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
   private static final String RESULTS_PER_PAGE = "10";
-  private static String albumPhotosUrlTemplate;
-  private static String albumsUrlTemplate;
-  private static String allPhotosUrlTemplate;
+  private final String ALBUM_PHOTOS_URL_TEMPLATE;
+  private final String ALBUMS_URL_TEMPLATE;
+  private final String ALL_PHOTOS_URL_TEMPLATE;
 
   public static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
   private boolean containsNonAlbumPhotos = false;
@@ -77,9 +77,9 @@ public class ImgurPhotosExporter
     this.objectMapper = objectMapper;
     this.monitor = monitor;
     this.jobStore = jobStore;
-    albumPhotosUrlTemplate = baseUrl + "/album/%s/images";
-    albumsUrlTemplate = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
-    allPhotosUrlTemplate = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
+    ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
+    ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
+    ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
   }
 
   /**
@@ -121,7 +121,7 @@ public class ImgurPhotosExporter
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
 
-    String url = format(albumsUrlTemplate, page);
+    String url = format(ALBUMS_URL_TEMPLATE, page);
 
     List<Map<String, Object>> items = requestData(authData, url);
 
@@ -186,7 +186,7 @@ public class ImgurPhotosExporter
       return requestNonAlbumPhotos(authData, paginationData, jobId);
     }
 
-    String url = format(albumPhotosUrlTemplate, albumId);
+    String url = format(ALBUM_PHOTOS_URL_TEMPLATE, albumId);
     List<PhotoModel> photos = new ArrayList<>();
 
     List<Map<String, Object>> items = requestData(authData, url);
@@ -232,7 +232,7 @@ public class ImgurPhotosExporter
 
     int page = paginationData == null ? 0 : ((IntPaginationToken) paginationData).getStart();
 
-    String url = format(allPhotosUrlTemplate, page);
+    String url = format(ALL_PHOTOS_URL_TEMPLATE, page);
     Set<PhotoAlbum> albums = new HashSet<>();
     List<PhotoModel> photos = new ArrayList<>();
 
