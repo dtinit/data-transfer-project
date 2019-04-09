@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -57,6 +58,13 @@ public class ImgurPhotoExporterTest {
   private JobStore jobStore = mock(JobStore.class);
   private ImgurPhotosExporter exporter;
   private Monitor monitor = mock(Monitor.class);
+
+  private static final PhotoModel ALBUM_PHOTO_1 = new PhotoModel("photo_1_name", "https://i.imgur.com/scGQp3z.jpg",
+          "Photo 1", "image/jpeg", "album1Photo1", "albumId1", true);
+  private static final PhotoModel ALBUM_PHOTO_2 = new PhotoModel(null, "https://i.imgur.com/HIBJYnE.jpg",
+          null, "image/jpeg", "album1Photo2", "albumId1", true);
+  private static final PhotoModel NON_ALBUM_PHOTO = new PhotoModel("non-album-photo-name", "https://i.imgur.com/eUMxy0R.jpg", null, "image/jpeg",
+          "nonAlbumPhoto1", ImgurPhotosExporter.DEFAULT_ALBUM_ID, true);
 
   // contains albums
   private String albumsResponse;
@@ -102,8 +110,7 @@ public class ImgurPhotoExporterTest {
         exporter.export(UUID.randomUUID(), token, Optional.empty());
     PhotosContainerResource resource = result.getExportedData();
 
-    assertEquals(2, resource.getAlbums().size());
-    assertEquals(0, resource.getPhotos().size());
+    assertThat(resource.getPhotos()).isEmpty();
 
     PhotoAlbum album1 =
         resource
@@ -112,7 +119,8 @@ public class ImgurPhotoExporterTest {
             .filter(album -> "albumId1".equals(album.getId()))
             .findFirst()
             .get();
-    assertEquals("Album 1", album1.getName());
+    assertThat(album1.getName()).isEqualTo("Album 1");
+    assertThat(album1.getDescription()).isEqualTo(null);
 
     PhotoAlbum album2 =
         resource
@@ -121,7 +129,10 @@ public class ImgurPhotoExporterTest {
             .filter(album -> "albumId2".equals(album.getId()))
             .findFirst()
             .get();
-    assertEquals("Album 2", album2.getName());
+    assertThat(album2.getName()).isEqualTo("Album 2");
+    assertThat(album2.getDescription()).isEqualTo("Description for Album 2");
+
+    assertThat(resource.getAlbums()).containsExactly(album1, album2).inOrder();
   }
 
   @Test
@@ -139,31 +150,9 @@ public class ImgurPhotoExporterTest {
             token,
             Optional.of(new ExportInformation(null, new IdOnlyContainerResource("albumId1"))));
 
-    PhotosContainerResource resource = result.getExportedData();
-
-    assertEquals(2, resource.getPhotos().size());
-
-    PhotoModel photo1 =
-        resource
-            .getPhotos()
-            .stream()
-            .filter(p -> "album1Photo1".equals(p.getDataId()))
-            .findFirst()
-            .get();
-    assertEquals("photo_1_name", photo1.getTitle());
-    assertEquals("image/jpeg", photo1.getMediaType());
-    assertEquals("albumId1", photo1.getAlbumId());
-
-    PhotoModel photo2 =
-        resource
-            .getPhotos()
-            .stream()
-            .filter(p -> "album1Photo2".equals(p.getDataId()))
-            .findFirst()
-            .get();
-    assertEquals(null, photo2.getTitle());
-    assertEquals("image/jpeg", photo2.getMediaType());
-    assertEquals("albumId1", photo2.getAlbumId());
+    assertThat(result.getExportedData().getPhotos())
+        .containsExactly(ALBUM_PHOTO_1, ALBUM_PHOTO_2)
+        .inOrder();
   }
 
   @Test
@@ -193,18 +182,8 @@ public class ImgurPhotoExporterTest {
                 new ExportInformation(
                     null, new IdOnlyContainerResource(ImgurPhotosExporter.DEFAULT_ALBUM_ID))));
     PhotosContainerResource resource = nonAlbumPhotosResult.getExportedData();
-    assertEquals(1, resource.getPhotos().size());
 
-    PhotoModel nonAlbumPhoto =
-        resource
-            .getPhotos()
-            .stream()
-            .filter(p -> "nonAlbumPhoto1".equals(p.getDataId()))
-            .findFirst()
-            .get();
-    assertEquals("non-album-photo-name", nonAlbumPhoto.getTitle());
-    assertEquals("image/jpeg", nonAlbumPhoto.getMediaType());
-    assertEquals(ImgurPhotosExporter.DEFAULT_ALBUM_ID, nonAlbumPhoto.getAlbumId());
+    assertThat(resource.getPhotos()).containsExactly(NON_ALBUM_PHOTO);
   }
 
   @Test
