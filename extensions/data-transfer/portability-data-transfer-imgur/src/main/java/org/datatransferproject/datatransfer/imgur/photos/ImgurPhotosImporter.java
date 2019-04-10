@@ -20,14 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -52,20 +46,24 @@ public class ImgurPhotosImporter
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
-  private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
-  private static final String CREATE_ALBUM_URL = BASE_URL + "/album";
-  private static final String UPLOAD_PHOTO_URL = BASE_URL + "/image";
+
+  private final String CREATE_ALBUM_URL;
+  private final String UPLOAD_PHOTO_URL;
   private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
 
   public ImgurPhotosImporter(
       Monitor monitor,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore) {
+      TemporaryPerJobDataStore jobStore,
+      String baseUrl) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
+
+    CREATE_ALBUM_URL = baseUrl + "/album";
+    UPLOAD_PHOTO_URL = baseUrl + "/image";
   }
 
   @Override
@@ -83,14 +81,17 @@ public class ImgurPhotosImporter
     try {
       // Import albums
       for (PhotoAlbum album : resource.getAlbums()) {
-        executor.execute(
-                album.getId(),
-                album.getName(),
-                () -> importAlbum(album, authData));
+        executor.execute(album.getId(), album.getName(), () -> importAlbum(album, authData));
       }
       // Import photos
       for (PhotoModel photo : resource.getPhotos()) {
-        importPhoto(photo, jobId, authData, executor.getCachedValue(photo.getAlbumId()));
+        String albumId;
+        if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+          albumId = null;
+        } else {
+          albumId = executor.getCachedValue(photo.getAlbumId());
+        }
+        importPhoto(photo, jobId, authData, albumId);
       }
     } catch (IOException e) {
       monitor.severe(() -> "Error importing item", e);
@@ -99,9 +100,7 @@ public class ImgurPhotosImporter
     return new ImportResult(ImportResult.ResultType.OK);
   }
 
-  private String importAlbum(
-      PhotoAlbum album, TokensAndUrlAuthData authData)
-      throws IOException {
+  private String importAlbum(PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
     String description = album.getDescription();
 
     Request.Builder requestBuilder = new Request.Builder().url(CREATE_ALBUM_URL);
@@ -134,10 +133,7 @@ public class ImgurPhotosImporter
   }
 
   private int importPhoto(
-          PhotoModel photoModel,
-          UUID jobId,
-          TokensAndUrlAuthData authData,
-          String newAlbumId)
+      PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData, String newAlbumId)
       throws IOException {
     InputStream inputStream = null;
     String albumId = photoModel.getAlbumId();

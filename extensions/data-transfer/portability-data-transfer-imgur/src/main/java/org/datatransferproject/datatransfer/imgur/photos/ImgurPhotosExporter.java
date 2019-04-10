@@ -23,7 +23,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.imgur.ImgurTransferExtension;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -54,14 +53,12 @@ import static java.lang.String.format;
 /** Exports Imgur albums and photos using Imgur API */
 public class ImgurPhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
-  private static final String BASE_URL = ImgurTransferExtension.BASE_URL;
   private static final String RESULTS_PER_PAGE = "10";
-  private static final String ALBUM_PHOTOS_URL_TEMPLATE = BASE_URL + "/album/%s/images";
-  private static final String ALBUMS_URL_TEMPLATE =
-      BASE_URL + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
-  private static final String ALL_PHOTOS_URL_TEMPLATE =
-      BASE_URL + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
-  private static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
+  private final String ALBUM_PHOTOS_URL_TEMPLATE;
+  private final String ALBUMS_URL_TEMPLATE;
+  private final String ALL_PHOTOS_URL_TEMPLATE;
+
+  public static final String DEFAULT_ALBUM_ID = "defaultAlbumId";
   private boolean containsNonAlbumPhotos = false;
   private Set<String> albumPhotos = new HashSet<>();
 
@@ -74,11 +71,15 @@ public class ImgurPhotosExporter
       Monitor monitor,
       OkHttpClient client,
       ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore) {
+      TemporaryPerJobDataStore jobStore,
+      String baseUrl) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;
     this.jobStore = jobStore;
+    ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
+    ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
+    ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
   }
 
   /**
