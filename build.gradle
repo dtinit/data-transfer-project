@@ -36,12 +36,16 @@
  *
  * Note that if you add a submodule and want it published with official releases, add the 'maven-publish' plugin to the submodule configuration.
  */
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.RepositoryBuilder
+
 buildscript {
     repositories {
         jcenter()
     }
     dependencies {
         classpath "io.spring.gradle:spring-bintray-plugin:0.11.1"
+        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.2.1.201812262042-r'
     }
 }
 
@@ -52,6 +56,8 @@ plugins {
 ext.nodeType = hasProperty('nodeType') ? nodeType : 'local'
 ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
 println "Node installation: ${ext.nodeType}, Cloud type: ${ext.cloudType}";
+
+setGitVersion()
 
 def sourceProjects() {
     // define projects containing source code
@@ -112,6 +118,7 @@ def configurePublication(project) {
                     root.appendNode('description', 'The Data Transfer Project')
                     root.appendNode('name', 'DTP')
                     root.appendNode('url', 'https://datatransferproject.dev/')
+                    root.appendNode('properties').appendNode('build-commit', project.rootProject.ext.gitVersion)
                     root.children().last() + getPomConfig();
                 }
             }
@@ -187,4 +194,12 @@ def getPomConfig() {
 
 }
 
+
+def setGitVersion() {
+    def repo = new RepositoryBuilder().setGitDir(new File(project.rootDir, '/.git')).readEnvironment().build()
+
+    def version = repo.findRef('HEAD').getObjectId().name
+    def clean = Git.wrap(repo).status().call().isClean()
+    ext.gitVersion = version + (clean ? '' : '.modified')
+}
 

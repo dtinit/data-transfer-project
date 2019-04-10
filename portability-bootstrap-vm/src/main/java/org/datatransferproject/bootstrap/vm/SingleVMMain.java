@@ -3,6 +3,7 @@ package org.datatransferproject.bootstrap.vm;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import org.datatransferproject.api.ApiMain;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.api.launcher.Version;
 import org.datatransferproject.transfer.WorkerMain;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -13,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
+import static java.lang.String.format;
 import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 
 /**
@@ -42,6 +44,12 @@ public class SingleVMMain {
 
   public void initializeGateway() {
     Monitor monitor = loadMonitor();
+
+    String version = Version.getVersion();
+    String hash = Version.getSourceHash();
+
+    monitor.info(() -> format("Running version %s. Source repository hash %s", version, hash));
+
     ApiMain apiMain = new ApiMain(monitor);
 
     try (InputStream stream =
