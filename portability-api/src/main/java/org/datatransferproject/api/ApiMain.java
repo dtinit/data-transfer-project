@@ -38,6 +38,7 @@ import org.datatransferproject.spi.api.transport.TransportBinder;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -130,6 +131,7 @@ public class ApiMain {
     // Needed for GoogleAuthServiceExtension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
     extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
+    extensionContext.registerService(TemporaryPerJobDataStore.class, cloudExtension.getJobStore());
     extensionContext.registerService(
         AppCredentialStore.class, cloudExtension.getAppCredentialStore());
 
