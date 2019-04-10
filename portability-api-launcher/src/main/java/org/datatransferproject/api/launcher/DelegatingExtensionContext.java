@@ -67,7 +67,14 @@ public class DelegatingExtensionContext implements ExtensionContext {
     return baseExtensionContext.environment();
   }
 
-  public <T> void registerOverrideService(Class<T> type, T service){
+  public <T> void registerOverrideService(Class<T> type, T service) {
+    if (overriddenRegisteredClasses.containsKey(type)) {
+      getMonitor().info(
+          () -> "Re-overriding type %s from %s to %s",
+          type,
+          overriddenRegisteredClasses.get(type),
+          service);
+    }
     overriddenRegisteredClasses.put(type, service);
   }
 }
