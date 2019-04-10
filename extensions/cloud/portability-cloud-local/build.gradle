@@ -20,6 +20,7 @@ plugins {
 
 dependencies {
     compile project(':portability-spi-cloud')
+    compile project(':portability-spi-service')
     compile project(':portability-spi-transfer')
 }
 

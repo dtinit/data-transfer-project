@@ -15,8 +15,6 @@
  */
 package org.datatransferproject.transfer;
 
-import static com.google.common.collect.MoreCollectors.onlyElement;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -25,13 +23,13 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import org.datatransferproject.api.launcher.DelegatingExtensionContext;
+import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.MetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
+import org.datatransferproject.launcher.metrics.ServiceAwareMetricRecorder;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
@@ -44,6 +42,13 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static com.google.common.collect.MoreCollectors.onlyElement;
 
 final class WorkerModule extends FlagBindingModule {
 
@@ -121,7 +126,13 @@ final class WorkerModule extends FlagBindingModule {
   Exporter getExporter(ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
         findTransferExtension(transferExtensions, JobMetadata.getExportService());
-    extension.initialize(context);
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+        MetricRecorder.class,
+        new ServiceAwareMetricRecorder(
+            extension.getServiceId(),
+            context.getService(DtpInternalMetricRecorder.class)));
+    extension.initialize(serviceSpecificContext);
     return extension.getExporter(JobMetadata.getDataType());
   }
 
@@ -130,7 +141,13 @@ final class WorkerModule extends FlagBindingModule {
   Importer getImporter(ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
         findTransferExtension(transferExtensions, JobMetadata.getImportService());
-    extension.initialize(context);
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+        MetricRecorder.class,
+        new ServiceAwareMetricRecorder(
+            extension.getServiceId(),
+            context.getService(DtpInternalMetricRecorder.class)));
+    extension.initialize(serviceSpecificContext);
     return extension.getImporter(JobMetadata.getDataType());
   }
 

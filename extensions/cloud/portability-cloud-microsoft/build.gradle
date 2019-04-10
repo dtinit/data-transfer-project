@@ -21,6 +21,7 @@ plugins {
 dependencies {
     
     compile project(':portability-spi-cloud')
+    compile project(':portability-spi-service')
 
     compile 'com.microsoft.azure:azure-mgmt-keyvault:1.3.0'
     compile 'com.microsoft.azure:azure-keyvault:1.0.0'
