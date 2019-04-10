@@ -33,7 +33,7 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 /** Extension for transferring Imgur data */
 public class ImgurTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Imgur";
-  public static final String BASE_URL = "https://api.imgur.com/3";
+  private static final String BASE_URL = "https://api.imgur.com/3";
 
   private boolean initialized = false;
 
@@ -55,8 +55,8 @@ public class ImgurTransferExtension implements TransferExtension {
     OkHttpClient client = context.getService(OkHttpClient.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
-    exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore);
-    importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore);
+    exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore, BASE_URL);
+    importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore, BASE_URL);
 
     initialized = true;
   }
