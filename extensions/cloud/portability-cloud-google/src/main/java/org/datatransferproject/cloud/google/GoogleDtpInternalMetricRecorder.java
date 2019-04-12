@@ -69,16 +69,6 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void exportFinished(String dataType, String service, boolean success, Duration duration) {
-    monitor.debug(
-        () -> "Metric: exportFinished, data type: %s, service: %s, success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
-  }
-
-  @Override
   public void importPageAttemptFinished(
       String dataType,
       String service,
@@ -101,16 +91,6 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       Duration duration) {
     monitor.debug(
         () -> "Metric: importPageFinished, data type: %s, service: %s, success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
-  }
-
-  @Override
-  public void importFinished(String dataType, String service, boolean success, Duration duration) {
-    monitor.debug(
-        () -> "Metric: importFinished, data type: %s, service: %s, success: %s, duration: %s",
         dataType,
         service,
         success,

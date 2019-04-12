@@ -15,6 +15,7 @@ import org.datatransferproject.api.action.transfer.GetTransferServicesAction;
 import org.datatransferproject.api.action.transfer.ReserveWorkerAction;
 import org.datatransferproject.api.action.transfer.StartTransferJobAction;
 import org.datatransferproject.api.auth.PortabilityAuthServiceProviderRegistry;
+import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -87,6 +88,8 @@ public class ApiServicesModule extends FlagBindingModule {
     bind(TypeManager.class).toInstance(typeManager);
     bind(JobStore.class).toInstance(jobStore);
     bind(TokenManager.class).toInstance(tokenManager);
+    bind(DtpInternalMetricRecorder.class)
+        .toInstance(context.getService(DtpInternalMetricRecorder.class));
 
     if (trustManagerFactory != null) {
       bind(TrustManagerFactory.class).toInstance(trustManagerFactory);

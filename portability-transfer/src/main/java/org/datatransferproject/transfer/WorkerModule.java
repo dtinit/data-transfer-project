@@ -107,6 +107,8 @@ final class WorkerModule extends FlagBindingModule {
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
+    bind(DtpInternalMetricRecorder.class)
+        .toInstance(context.getService(DtpInternalMetricRecorder.class));
   }
 
   @Provides
