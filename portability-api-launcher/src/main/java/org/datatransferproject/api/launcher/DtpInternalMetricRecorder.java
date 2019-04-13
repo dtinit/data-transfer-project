@@ -49,9 +49,6 @@ public interface DtpInternalMetricRecorder {
   /** An attempt to export a page of data finished including all retires. **/
   void exportPageFinished(String dataType, String service, boolean success, Duration duration);
 
-  /** The export of all data from a service finished. **/
-  void exportFinished(String dataType, String service, boolean success, Duration duration);
-
   /** An single attempt to import a page of data finished. **/
   void importPageAttemptFinished(
       String dataType,
@@ -61,9 +58,6 @@ public interface DtpInternalMetricRecorder {
 
   /** An attempt to import a page of data finished including all retires. **/
   void importPageFinished(String dataType, String service, boolean success, Duration duration);
-
-  /** The import of all data from a service finished. **/
-  void importFinished(String dataType, String service, boolean success, Duration duration);
 
   // Metrics from {@link MetricRecorder}
   void recordGenericMetric(String dataType, String service, String tag);

@@ -16,7 +16,9 @@
 
 package org.datatransferproject.transfer;
 
+import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
+import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -36,21 +38,38 @@ public class CallableImporter implements Callable<ImportResult> {
   private final IdempotentImportExecutor idempotentImportExecutor;
   private final AuthData authData;
   private final DataModel data;
+  private final DtpInternalMetricRecorder metricRecorder;
 
-  public CallableImporter(Provider<Importer> importerProvider,
+  public CallableImporter(
+      Provider<Importer> importerProvider,
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       AuthData authData,
-      DataModel data) {
+      DataModel data,
+      DtpInternalMetricRecorder metricRecorder) {
     this.importerProvider = importerProvider;
     this.jobId = jobId;
     this.idempotentImportExecutor = idempotentImportExecutor;
     this.authData = authData;
     this.data = data;
+    this.metricRecorder = metricRecorder;
   }
 
   @Override
   public ImportResult call() throws Exception {
-    return importerProvider.get().importItem(jobId, idempotentImportExecutor, authData, data);
+    boolean success = false;
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    try {
+      ImportResult result =  importerProvider.get()
+          .importItem(jobId, idempotentImportExecutor, authData, data);
+      success = result.getType() == ImportResult.ResultType.OK;
+      return result;
+    } finally{
+      metricRecorder.importPageAttemptFinished(
+          JobMetadata.getDataType(),
+          JobMetadata.getImportService(),
+          success,
+          stopwatch.elapsed());
+    }
   }
 }

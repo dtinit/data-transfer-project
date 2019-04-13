@@ -15,7 +15,9 @@
  */
 package org.datatransferproject.transfer;
 
+import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
+import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -53,6 +55,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   private final Monitor monitor;
+  private final DtpInternalMetricRecorder metricRecorder = null;
 
   @Inject
   public PortabilityInMemoryDataCopier(
@@ -101,14 +104,28 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     // processed.
     monitor.debug(() -> jobIdPrefix + "Starting export", EventCode.COPIER_STARTED_EXPORT);
     CallableExporter callableExporter =
-        new CallableExporter(exporterProvider, jobId, exportAuthData, exportInformation);
+        new CallableExporter(
+            exporterProvider,
+            jobId,
+            exportAuthData,
+            exportInformation,
+            metricRecorder);
     RetryingCallable<ExportResult> retryingExporter =
         new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
     ExportResult<?> exportResult;
+    boolean exportSuccess = false;
+    Stopwatch exportStopwatch = Stopwatch.createStarted();
     try {
       exportResult = retryingExporter.call();
+      exportSuccess = exportResult.getType() != ExportResult.ResultType.ERROR;
     } catch (RetryException e) {
       throw new CopyException(jobIdPrefix + "Error happened during export", e);
+    } finally{
+      metricRecorder.exportPageFinished(
+          JobMetadata.getDataType(),
+          JobMetadata.getExportService(),
+          exportSuccess,
+          exportStopwatch.elapsed());
     }
     monitor.debug(() -> jobIdPrefix + "Finished export", EventCode.COPIER_FINISHED_EXPORT);
 
@@ -120,14 +137,24 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
               jobId,
               inMemoryIdempotentImportExecutor,
               importAuthData,
-              exportResult.getExportedData());
+              exportResult.getExportedData(),
+              metricRecorder);
       RetryingCallable<ImportResult> retryingImporter =
           new RetryingCallable<>(
               callableImporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
+      boolean importSuccess = false;
+      Stopwatch importStopwatch = Stopwatch.createStarted();
       try {
-        retryingImporter.call();
+        ImportResult importResult = retryingImporter.call();
+        importSuccess = importResult.getType() == ImportResult.ResultType.OK;
       } catch (RetryException e) {
         throw new CopyException(jobIdPrefix + "Error happened during import", e);
+      } finally{
+        metricRecorder.importPageFinished(
+            JobMetadata.getDataType(),
+            JobMetadata.getImportService(),
+            importSuccess,
+            importStopwatch.elapsed());
       }
       monitor.debug(() -> jobIdPrefix + "Finished import", EventCode.COPIER_FINISHED_IMPORT);
     }

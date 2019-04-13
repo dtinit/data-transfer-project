@@ -16,14 +16,17 @@
 
 package org.datatransferproject.transfer;
 
+import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
+
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 
 /**
  * Callable around an {@link Exporter}.
@@ -34,19 +37,36 @@ public class CallableExporter implements Callable<ExportResult> {
   private UUID jobId;
   private AuthData authData;
   private Optional<ExportInformation> exportInformation;
+  private final DtpInternalMetricRecorder metricRecorder;
 
-  public CallableExporter(Provider<Exporter> exporterProvider, UUID jobId, AuthData authData,
-      Optional<ExportInformation> exportInformation) {
+  public CallableExporter(
+      Provider<Exporter> exporterProvider,
+      UUID jobId,
+      AuthData authData,
+      Optional<ExportInformation> exportInformation,
+      DtpInternalMetricRecorder metricRecorder) {
     this.exporterProvider = exporterProvider;
 
     this.jobId = jobId;
     this.authData = authData;
     this.exportInformation = exportInformation;
+    this.metricRecorder = metricRecorder;
   }
 
   @Override
   public ExportResult call() throws Exception {
-    return exporterProvider.get()
-        .export(jobId, authData, exportInformation);
+    boolean success = false;
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    try {
+      ExportResult result =  exporterProvider.get().export(jobId, authData, exportInformation);
+      success = result.getType() != ExportResult.ResultType.ERROR;
+      return result;
+    } finally{
+      metricRecorder.exportPageAttemptFinished(
+          JobMetadata.getDataType(),
+          JobMetadata.getExportService(),
+          success,
+          stopwatch.elapsed());
+    }
   }
 }
