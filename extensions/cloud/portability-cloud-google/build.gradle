@@ -30,9 +30,9 @@ dependencies {
     compile("com.google.inject:guice:${guiceVersion}")
     compile("com.google.cloud:google-cloud-logging:${googleStackdriverVersion}")
 
-    compile("io.opencensus:opencensus-api:0.20.0")
-    compile("io.opencensus:opencensus-impl:0.20.0")
-    compile("io.opencensus:opencensus-exporter-stats-stackdriver:0.20.0")
+    compile("io.opencensus:opencensus-api:${openCensusVersion}")
+    compile("io.opencensus:opencensus-impl:${openCensusVersion}")
+    compile("io.opencensus:opencensus-exporter-stats-stackdriver:${openCensusVersion}")
 
     testCompile("com.google.truth:truth:${truthVersion}")
     testCompile("junit:junit:${junitVersion}")
