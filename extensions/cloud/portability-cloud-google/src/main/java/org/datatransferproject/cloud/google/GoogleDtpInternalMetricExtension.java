@@ -19,12 +19,18 @@ import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 
+import java.io.IOException;
+
 public class GoogleDtpInternalMetricExtension implements ServiceExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
+    try {
     context.registerService(
         DtpInternalMetricRecorder.class,
-        new GoogleDtpInternalMetricRecorder(context.getMonitor()));
+        GoogleDtpInternalMetricRecorder.getInstance());
+    } catch (IOException e) {
+      throw new RuntimeException("Couldn't initialize Stackdriver metric recorder", e);
+    }
   }
 }
