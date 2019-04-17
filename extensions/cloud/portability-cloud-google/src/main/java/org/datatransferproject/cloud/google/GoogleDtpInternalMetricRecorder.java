@@ -136,22 +136,27 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   private final ViewManager viewManager;
 
+  // This is needed because Stackdriver can only be initialized once and the
+  // GoogleDtpInternalMetricExtension is call more than once by the framework code.
   static synchronized GoogleDtpInternalMetricRecorder getInstance() throws IOException {
     if (INSTANCE == null) {
-      INSTANCE = new GoogleDtpInternalMetricRecorder();
+      INSTANCE = new GoogleDtpInternalMetricRecorder(
+          GoogleCredentials.getApplicationDefault(),
+          GoogleCloudExtensionModule.getProjectId());
     }
 
     return INSTANCE;
   }
 
-  private GoogleDtpInternalMetricRecorder() throws IOException {
+  private GoogleDtpInternalMetricRecorder(GoogleCredentials credentials, String projectId)
+      throws IOException {
     // Enable OpenCensus exporters to export metrics to Stackdriver Monitoring.
     // Exporters use Application Default Credentials to authenticate.
     // See https://developers.google.com/identity/protocols/application-default-credentials
     // for more details.
     StackdriverStatsConfiguration configuration = StackdriverStatsConfiguration.builder()
-        .setCredentials(GoogleCredentials.getApplicationDefault())
-        .setProjectId(GoogleCloudExtensionModule.getProjectId())
+        .setCredentials(credentials)
+        .setProjectId(projectId)
         .setExportInterval(io.opencensus.common.Duration.create(EXPORT_INTERVAL_SECONDS, 0))
         .build();
     StackdriverStatsExporter.createAndRegister(configuration);
