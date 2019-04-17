@@ -15,28 +15,206 @@
  */
 package org.datatransferproject.cloud.google;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableList;
+import io.opencensus.common.Scope;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
+import io.opencensus.stats.Aggregation;
+import io.opencensus.stats.Measure;
+import io.opencensus.stats.Stats;
+import io.opencensus.stats.StatsRecorder;
+import io.opencensus.stats.View;
+import io.opencensus.stats.ViewManager;
+import io.opencensus.tags.TagContext;
+import io.opencensus.tags.TagKey;
+import io.opencensus.tags.TagMetadata;
+import io.opencensus.tags.TagValue;
+import io.opencensus.tags.Tagger;
+import io.opencensus.tags.Tags;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
-import org.datatransferproject.api.launcher.Monitor;
 
+import java.io.IOException;
 import java.time.Duration;
 
 /**
- * A placeholder {@link DtpInternalMetricRecorder} that simply logs metrics
- * to the default monitor.
+ * A {@link DtpInternalMetricRecorder} that writes metrics to Stackdriver.
  * **/
 class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
-  private final Monitor monitor;
+  private static GoogleDtpInternalMetricRecorder INSTANCE = null;
 
-  // TODO(willard): Replace with a stackdriver based one once the design of the the metrics is
-  //                finalized.
-  GoogleDtpInternalMetricRecorder(Monitor monitor) {
-    this.monitor = monitor;
+  private static final int EXPORT_INTERVAL_SECONDS = 60;
+  private static final String NAME_BASE = "dtp/";
+  private static final StatsRecorder STATS_RECORDER = Stats.getStatsRecorder();
+  private static final Tagger tagger = Tags.getTagger();
+
+  private static final TagKey KEY_DATA_TYPE = TagKey.create("data_type");
+  private static final TagKey KEY_IMPORT_SERVICE = TagKey.create("import_service");
+  private static final TagKey KEY_EXPORT_SERVICE = TagKey.create("export_service");
+  private static final TagKey KEY_SUCCESS = TagKey.create("success");
+
+  private static final TagKey KEY_GENERIC_SERVICE = TagKey.create("generic_service");
+  private static final TagKey KEY_GENERIC_TAG = TagKey.create("generic_tag");
+  private static final TagKey KEY_GENERIC_BOOL = TagKey.create("generic_bool");
+
+  private static final TagMetadata TAG_METADATA =
+      TagMetadata.create(TagMetadata.TagTtl.UNLIMITED_PROPAGATION);
+
+  private static final Measure.MeasureLong JOB_STARTED = Measure.MeasureLong.create(
+      "job_start",
+      "Number of jobs that were started",
+      "count");
+
+  private static final Measure.MeasureLong JOB_FINISHED = Measure.MeasureLong.create(
+      "job_finished",
+      "Num er of jobs that finished",
+      "count");
+
+  private static final Measure.MeasureLong JOB_FINISHED_DURATION = Measure.MeasureLong.create(
+      "job_finished_duration",
+      "Duration of a job",
+      "ms");
+
+  private static final Measure.MeasureLong EXPORT_PAGE_ATTEMPT = Measure.MeasureLong.create(
+      "export_page_attempt",
+      "An single export attempt",
+      "count");
+
+  private static final Measure.MeasureDouble EXPORT_PAGE_ATTEMPT_DURATION =
+      Measure.MeasureDouble.create(
+          "export_page_attempt_duration",
+          "Duration of a single export attempt in MS",
+          "ms");
+
+  private static final Measure.MeasureLong EXPORT_PAGE = Measure.MeasureLong.create(
+      "export_page",
+      "An export attempt including all retries",
+      "count");
+
+  private static final Measure.MeasureDouble EXPORT_PAGE_DURATION =
+      Measure.MeasureDouble.create(
+          "export_page_duration",
+          "Duration of am export page including retries in MS",
+          "ms");
+
+  private static final Measure.MeasureLong IMPORT_PAGE_ATTEMPT = Measure.MeasureLong.create(
+      "import_page_attempt",
+      "An single import attempt",
+      "count");
+
+  private static final Measure.MeasureDouble IMPORT_PAGE_ATTEMPT_DURATION =
+      Measure.MeasureDouble.create(
+          "import_page_attempt_duration",
+          "Duration of a single import attempt in MS",
+          "ms");
+
+  private static final Measure.MeasureLong IMPORT_PAGE = Measure.MeasureLong.create(
+      "import_page",
+      "An import attempt including all retries",
+      "count");
+
+  private static final Measure.MeasureDouble IMPORT_PAGE_DURATION =
+      Measure.MeasureDouble.create(
+          "import_page_duration",
+          "Duration of am imoprt page including retries in MS",
+          "ms");
+
+  private static final Measure.MeasureLong GENERIC_COUNT = Measure.MeasureLong.create(
+      "generic_count",
+      "A generic counter that services can use to hold arbitrary metrics",
+      "count");
+
+  private static final Measure.MeasureLong GENERIC_DURATION = Measure.MeasureLong.create(
+      "generic_duration",
+      "A generic counter that services can use to hold arbitrary duration metrics",
+      "ms");
+
+  private static final Measure.MeasureLong GENERIC_BOOLEAN = Measure.MeasureLong.create(
+      "generic_boolean",
+      "A generic counter that services can use to hold arbitrary boolean metrics",
+      "count");
+
+  private final ViewManager viewManager;
+
+  static synchronized GoogleDtpInternalMetricRecorder getInstance() throws IOException {
+    if (INSTANCE == null) {
+      INSTANCE = new GoogleDtpInternalMetricRecorder();
+    }
+
+    return INSTANCE;
+  }
+
+  private GoogleDtpInternalMetricRecorder() throws IOException {
+    // Enable OpenCensus exporters to export metrics to Stackdriver Monitoring.
+    // Exporters use Application Default Credentials to authenticate.
+    // See https://developers.google.com/identity/protocols/application-default-credentials
+    // for more details.
+    StackdriverStatsConfiguration configuration = StackdriverStatsConfiguration.builder()
+        .setCredentials(GoogleCredentials.getApplicationDefault())
+        .setProjectId(GoogleCloudExtensionModule.getProjectId())
+        .setExportInterval(io.opencensus.common.Duration.create(EXPORT_INTERVAL_SECONDS, 0))
+        .build();
+    StackdriverStatsExporter.createAndRegister(configuration);
+    this.viewManager = Stats.getViewManager();
+    setupViews();
+  }
+
+  private void setupViews() {
+    setupView(JOB_STARTED, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_IMPORT_SERVICE);
+
+    setupView(JOB_FINISHED, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_IMPORT_SERVICE, KEY_SUCCESS);
+    setupView(
+        JOB_FINISHED_DURATION,
+        KEY_DATA_TYPE,
+        KEY_EXPORT_SERVICE,
+        KEY_IMPORT_SERVICE,
+        KEY_SUCCESS);
+
+    setupView(EXPORT_PAGE_ATTEMPT, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+    setupView(EXPORT_PAGE_ATTEMPT_DURATION, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+
+    setupView(EXPORT_PAGE, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+    setupView(EXPORT_PAGE_DURATION, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+
+    setupView(IMPORT_PAGE_ATTEMPT, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+    setupView(IMPORT_PAGE_ATTEMPT_DURATION, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+
+    setupView(IMPORT_PAGE, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+    setupView(IMPORT_PAGE_DURATION, KEY_DATA_TYPE, KEY_EXPORT_SERVICE, KEY_SUCCESS);
+
+    setupView(GENERIC_COUNT, KEY_DATA_TYPE, KEY_GENERIC_SERVICE, KEY_GENERIC_TAG);
+    setupView(
+        GENERIC_BOOLEAN,
+        KEY_DATA_TYPE,
+        KEY_GENERIC_SERVICE,
+        KEY_GENERIC_TAG,
+        KEY_GENERIC_BOOL);
+    setupView(GENERIC_DURATION, KEY_DATA_TYPE, KEY_GENERIC_SERVICE, KEY_GENERIC_TAG);
+  }
+
+  private void setupView(Measure measure, TagKey... keys) {
+    // Register the view. It is imperative that this step exists,
+    // otherwise recorded metrics will be dropped and never exported.
+    View view = View.create(
+        View.Name.create(NAME_BASE + measure.getName()),
+        measure.getDescription(),
+        measure,
+        Aggregation.Count.create(),
+        ImmutableList.copyOf(keys));
+
+    viewManager.registerView(view);
   }
 
   @Override
   public void startedJob(String dataType, String exportService, String importService) {
-    monitor.debug(() -> "Metric: StartedJob, data type: %s, from: %s, to: %s",
-        dataType, exportService, importService);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_EXPORT_SERVICE, TagValue.create(exportService), TAG_METADATA)
+        .put(KEY_IMPORT_SERVICE, TagValue.create(importService), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap().put(JOB_STARTED, 1).record();
+    }
   }
 
   @Override
@@ -45,13 +223,17 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       String service,
       boolean success,
       Duration duration) {
-    monitor.debug(
-        () -> "Metric: exportPageAttemptFinished, data type: %s, service: %s, "
-            + "success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_EXPORT_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(EXPORT_PAGE_ATTEMPT, 1)
+          .put(EXPORT_PAGE_ATTEMPT_DURATION, duration.toMillis())
+          .record();
+    }
   }
 
   @Override
@@ -60,12 +242,17 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       String service,
       boolean success,
       Duration duration) {
-    monitor.debug(
-        () -> "Metric: exportPageFinished, data type: %s, service: %s, success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_EXPORT_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(EXPORT_PAGE, 1)
+          .put(EXPORT_PAGE_DURATION, duration.toMillis())
+          .record();
+    }
   }
 
   @Override
@@ -74,13 +261,17 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       String service,
       boolean success,
       Duration duration) {
-    monitor.debug(
-        () -> "Metric: importPageAttemptFinished, data type: %s, service: %s,"
-            + "success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_IMPORT_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(IMPORT_PAGE_ATTEMPT, 1)
+          .put(IMPORT_PAGE_ATTEMPT_DURATION, duration.toMillis())
+          .record();
+    }
   }
 
   @Override
@@ -89,12 +280,17 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       String service,
       boolean success,
       Duration duration) {
-    monitor.debug(
-        () -> "Metric: importPageFinished, data type: %s, service: %s, success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_IMPORT_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(IMPORT_PAGE, 1)
+          .put(IMPORT_PAGE_DURATION, duration.toMillis())
+          .record();
+    }
   }
 
   @Override
@@ -104,36 +300,65 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       String importService,
       boolean success,
       Duration duration) {
-    monitor.debug(
-        () -> "Metric: finishedJob, data type: %s, from: %s, to: %s, success: %s, duration: %s",
-        dataType,
-        exportService,
-        importService,
-        success,
-        duration);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_EXPORT_SERVICE, TagValue.create(exportService), TAG_METADATA)
+        .put(KEY_IMPORT_SERVICE, TagValue.create(importService), TAG_METADATA)
+        .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(JOB_FINISHED, 1)
+          .put(JOB_FINISHED_DURATION, duration.toMillis())
+          .record();
+    }
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s",
-        dataType, service, tag);
+    recordGenericMetric(dataType, service, tag, 1);
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag, boolean bool) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s, value: %s",
-        dataType, service, tag, bool);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_GENERIC_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_GENERIC_TAG, TagValue.create(tag), TAG_METADATA)
+        .put(KEY_GENERIC_BOOL, TagValue.create(Boolean.toString(bool)), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(GENERIC_BOOLEAN, 1)
+          .record();
+    }
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag, Duration duration) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s, duration: %s",
-        dataType, service, tag, duration);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_GENERIC_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_GENERIC_TAG, TagValue.create(tag), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(GENERIC_DURATION, duration.toMillis())
+          .record();
+    }
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag, int value) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s, value: %s",
-        dataType, service, tag, value);
+    TagContext tctx = tagger.emptyBuilder()
+        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_GENERIC_SERVICE, TagValue.create(service), TAG_METADATA)
+        .put(KEY_GENERIC_TAG, TagValue.create(tag), TAG_METADATA)
+        .build();
+    try (Scope ss = tagger.withTagContext(tctx)) {
+      STATS_RECORDER.newMeasureMap()
+          .put(GENERIC_COUNT, value)
+          .record();
+    }
   }
 }
