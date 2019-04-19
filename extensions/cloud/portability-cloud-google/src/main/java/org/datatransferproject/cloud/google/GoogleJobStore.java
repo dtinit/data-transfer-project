@@ -36,11 +36,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +44,10 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -58,6 +57,7 @@ public final class GoogleJobStore implements JobStore {
 
   private static final String KIND = "persistentKey";
   private static final String CREATED_FIELD = "created";
+  private static final String LAST_UPDATE_FIELD = "lastUpdated";
 
   private final Datastore datastore;
   // TODO: refactor googleTempFileStore into separate interface
@@ -127,7 +127,7 @@ public final class GoogleJobStore implements JobStore {
       throw new IOException(
           "Record already exists for jobID: " + jobId + ". Record: " + shouldNotExist);
     }
-    Entity entity = createEntity(jobId, job.toMap());
+    Entity entity = createNewEntity(jobId, job.toMap());
     try {
       transaction.put(entity);
     } catch (DatastoreException e) {
@@ -173,7 +173,7 @@ public final class GoogleJobStore implements JobStore {
         validator.validate(previousJob, job);
       }
 
-      Entity newEntity = createEntity(key, job.toMap());
+      Entity newEntity = createUpdatedEntity(key, job.toMap());
       transaction.put(newEntity);
       transaction.commit();
     } catch (Throwable t) {
@@ -314,8 +314,8 @@ public final class GoogleJobStore implements JobStore {
     return googleTempFileStore.getStream(jobId, key);
   }
 
-  private Entity createEntity(Key key, Map<String, Object> data) throws IOException {
-    Entity.Builder builder = Entity.newBuilder(key).set(CREATED_FIELD, Timestamp.now());
+  private Entity.Builder createEntityBuilder(Key key, Map<String, Object> data) throws IOException {
+    Entity.Builder builder = Entity.newBuilder(key);
 
     for (Entry<String, Object> entry : data.entrySet()) {
       if (entry.getValue() instanceof String) {
@@ -336,11 +336,19 @@ public final class GoogleJobStore implements JobStore {
         builder.set(entry.getKey(), Blob.copyFrom(bos.toByteArray())); // BlobValue
       }
     }
-    return builder.build();
+    return builder;
   }
 
-  private Entity createEntity(UUID jobId, Map<String, Object> data) throws IOException {
-    return createEntity(getKey(jobId), data);
+  private Entity createNewEntity(UUID jobId, Map<String, Object> data) throws IOException {
+    Timestamp createdTime = Timestamp.now();
+
+    return createEntityBuilder(getKey(jobId), data).set(CREATED_FIELD, createdTime)
+        .set(LAST_UPDATE_FIELD, createdTime).build();
+  }
+
+  private Entity createUpdatedEntity(Key key, Map<String, Object> data)
+      throws IOException {
+    return createEntityBuilder(key, data).set(LAST_UPDATE_FIELD, Timestamp.now()).build();
   }
 
   private Key getKey(UUID jobId) {
