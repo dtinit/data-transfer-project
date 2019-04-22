@@ -26,6 +26,7 @@ dependencies {
     compile project(":portability-types-common")
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
 
+    compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
     
     testCompile("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     testCompile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")

@@ -32,6 +32,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.RateLimiter;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -45,6 +46,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,18 +65,21 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
   private final PhotosetsInterface photosetsInterface;
   private final PhotosInterface photosInterface;
   private final Flickr flickr;
+  private final RateLimiter perUserRateLimiter;
 
-  public FlickrPhotosExporter(AppCredentials appCredentials) {
+  public FlickrPhotosExporter(AppCredentials appCredentials, TransferServiceConfig serviceConfig) {
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.photosInterface = flickr.getPhotosInterface();
+    this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
   }
 
   @VisibleForTesting
-  FlickrPhotosExporter(Flickr flickr) {
+  FlickrPhotosExporter(Flickr flickr, TransferServiceConfig serviceConfig) {
     this.flickr = flickr;
     this.photosInterface = flickr.getPhotosInterface();
     this.photosetsInterface = flickr.getPhotosetsInterface();
+    this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
   }
 
   @VisibleForTesting
@@ -138,9 +143,11 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     try {
       if (photoSetId == null) {
         RequestContext.getRequestContext().setExtras(EXTRAS);
+        perUserRateLimiter.acquire();
         photoSetList = photosInterface.getNotInSet(PHOTO_PER_PAGE, page);
         RequestContext.getRequestContext().setExtras(ImmutableList.of());
       } else {
+        perUserRateLimiter.acquire();
         photoSetList =
             photosetsInterface.getPhotos(
                 photoSetId, ImmutableSet.copyOf(EXTRAS), 0, PHOTO_PER_PAGE, page);
@@ -178,6 +185,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     Photosets photoSetList;
 
     try {
+      perUserRateLimiter.acquire();
       photoSetList =
           photosetsInterface.getList(
               auth.getUser().getId(), PHOTO_SETS_PER_PAGE, page, PHOTOSET_EXTRAS);

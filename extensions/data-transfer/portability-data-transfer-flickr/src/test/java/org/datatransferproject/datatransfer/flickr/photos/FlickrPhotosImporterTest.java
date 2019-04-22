@@ -36,6 +36,7 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.scribe.model.Token;
@@ -110,7 +111,12 @@ public class FlickrPhotosImporterTest {
         .thenReturn(photoset);
 
     // Run test
-    FlickrPhotosImporter importer = new FlickrPhotosImporter(flickr, jobStore, imageStreamProvider, monitor);
+    FlickrPhotosImporter importer = new FlickrPhotosImporter(
+        flickr,
+        jobStore,
+        imageStreamProvider,
+        monitor,
+        TransferServiceConfig.getDefaultInstance());
     ImportResult result = importer.importItem(
         jobId,
         EXECUTOR,

@@ -28,6 +28,7 @@ import com.flickr4java.flickr.uploader.Uploader;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.RateLimiter;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
@@ -38,6 +39,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -59,17 +61,20 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private final ImageStreamProvider imageStreamProvider;
   private final PhotosetsInterface photosetsInterface;
   private final Monitor monitor;
+  private final RateLimiter perUserRateLimiter;
 
   public FlickrPhotosImporter(
       AppCredentials appCredentials,
       TemporaryPerJobDataStore jobStore,
-      Monitor monitor) {
+      Monitor monitor,
+      TransferServiceConfig serviceConfig) {
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
     this.imageStreamProvider = new ImageStreamProvider();
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
+    this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
   }
 
   @VisibleForTesting
@@ -77,13 +82,15 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       Flickr flickr,
       TemporaryPerJobDataStore jobstore,
       ImageStreamProvider imageStreamProvider,
-      Monitor monitor) {
+      Monitor monitor,
+      TransferServiceConfig serviceConfig) {
     this.flickr = flickr;
     this.imageStreamProvider = imageStreamProvider;
     this.jobStore = jobstore;
     this.uploader = flickr.getUploader();
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
+    this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
   }
 
   @Override
@@ -192,6 +199,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
               Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
           String albumDescription = cleanString(album.getDescription());
 
+          perUserRateLimiter.acquire();
           Photoset photoset = photosetsInterface.create(albumName, albumDescription, firstPhotoId);
           monitor.debug(() -> String.format("Flickr importer created album: %s", album));
           return photoset.getId();
@@ -216,6 +224,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setFamilyFlag(false)
             .setTitle(photoTitle)
             .setDescription(photoDescription);
+    perUserRateLimiter.acquire();
     String uploadResult = uploader.upload(inStream, uploadMetaData);
     monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;

@@ -27,12 +27,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Collection;
-import java.util.Map;
+import com.google.common.util.concurrent.RateLimiter;
 import org.datatransferproject.transfer.deezer.model.Error;
 import org.datatransferproject.transfer.deezer.model.InsertResponse;
 import org.datatransferproject.transfer.deezer.model.PlaylistDetails;
@@ -40,6 +35,14 @@ import org.datatransferproject.transfer.deezer.model.PlaylistSummary;
 import org.datatransferproject.transfer.deezer.model.PlaylistsResponse;
 import org.datatransferproject.transfer.deezer.model.Track;
 import org.datatransferproject.transfer.deezer.model.User;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * A utility wrapper for interacting with the Deezer Api.
@@ -53,10 +56,15 @@ public class DeezerApi {
 
   private final String accessToken;
   private final HttpTransport httpTransport;
+  private final RateLimiter perUserRateLimiter;
 
-  public DeezerApi(String accessToken, HttpTransport httpTransport) {
+  public DeezerApi(
+      String accessToken,
+      HttpTransport httpTransport,
+      TransferServiceConfig transferServiceConfig) {
     this.accessToken = accessToken;
     this.httpTransport = httpTransport;
+    this.perUserRateLimiter = transferServiceConfig.getPerUserRateLimiter();
   }
 
   public User getUser() throws IOException {
@@ -124,6 +132,7 @@ public class DeezerApi {
             new GenericUrl(url
                 + "?output=json&request_method=post&access_token=" + accessToken
                 + extraArgs));
+    perUserRateLimiter.acquire();
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
@@ -141,6 +150,7 @@ public class DeezerApi {
     HttpRequest getRequest =
         requestFactory.buildGetRequest(
             new GenericUrl(url + "?output=json&access_token=" + accessToken));
+    perUserRateLimiter.acquire();
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
