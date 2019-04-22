@@ -39,6 +39,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.Test;
 import org.scribe.model.Token;
 
@@ -109,7 +110,9 @@ public class FlickrPhotosExporterTest {
         .thenReturn(photosetsList);
 
     // run test
-    FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
+    FlickrPhotosExporter exporter = new FlickrPhotosExporter(
+        flickr,
+        TransferServiceConfig.getDefaultInstance());
     AuthData authData = new TokenSecretAuthData("token", "secret");
     ExportResult<PhotosContainerResource> result = exporter.export(UUID.randomUUID(), authData, Optional.empty());
 
@@ -159,7 +162,9 @@ public class FlickrPhotosExporterTest {
         .thenReturn(photosList);
 
     // run test
-    FlickrPhotosExporter exporter = new FlickrPhotosExporter(flickr);
+    FlickrPhotosExporter exporter = new FlickrPhotosExporter(
+        flickr,
+        TransferServiceConfig.getDefaultInstance());
     ExportResult<PhotosContainerResource> result =
         exporter.export(
             UUID.randomUUID(),
