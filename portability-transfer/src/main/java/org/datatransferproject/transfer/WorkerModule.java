@@ -42,7 +42,10 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -134,6 +137,9 @@ final class WorkerModule extends FlagBindingModule {
         new ServiceAwareMetricRecorder(
             extension.getServiceId(),
             context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+        TransferServiceConfig.class,
+        getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
     return extension.getExporter(JobMetadata.getDataType());
   }
@@ -149,6 +155,9 @@ final class WorkerModule extends FlagBindingModule {
         new ServiceAwareMetricRecorder(
             extension.getServiceId(),
             context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+        TransferServiceConfig.class,
+        getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
     return extension.getImporter(JobMetadata.getDataType());
   }
@@ -196,5 +205,19 @@ final class WorkerModule extends FlagBindingModule {
   @Singleton
   ExtensionContext getContext() {
     return context;
+  }
+
+  private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
+    String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
+    InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
+    if (inputStream == null) {
+      return null;
+    } else {
+      try {
+        return TransferServiceConfig.create(inputStream);
+      } catch (IOException e) {
+        throw new RuntimeException("Couldn't create config for" + ext.getServiceId(), e);
+      }
+    }
   }
 }

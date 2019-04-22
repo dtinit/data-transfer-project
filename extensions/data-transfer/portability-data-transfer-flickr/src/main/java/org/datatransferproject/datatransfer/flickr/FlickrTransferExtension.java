@@ -28,6 +28,7 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 import java.util.Set;
 
@@ -85,8 +86,10 @@ public class FlickrTransferExtension implements TransferExtension {
       return;
     }
 
-    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor);
-    exporter = new FlickrPhotosExporter(appCredentials);
+    TransferServiceConfig serviceConfig = context.getService(TransferServiceConfig.class);
+
+    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig);
+    exporter = new FlickrPhotosExporter(appCredentials, serviceConfig);
     initialized = true;
   }
 }

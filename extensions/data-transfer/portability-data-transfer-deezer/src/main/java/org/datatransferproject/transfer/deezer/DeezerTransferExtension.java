@@ -18,18 +18,16 @@ package org.datatransferproject.transfer.deezer;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.deezer.playlists.DeezerPlaylistExporter;
 import org.datatransferproject.transfer.deezer.playlists.DeezerPlaylistImporter;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 
 public class DeezerTransferExtension implements TransferExtension {
@@ -71,9 +69,10 @@ public class DeezerTransferExtension implements TransferExtension {
 
     Monitor monitor = context.getMonitor();
     HttpTransport httpTransport = context.getService(HttpTransport.class);
+    TransferServiceConfig transferServiceConfig = context.getService(TransferServiceConfig.class);
 
-    exporter = new DeezerPlaylistExporter(monitor, httpTransport);
-    importer = new DeezerPlaylistImporter(monitor, httpTransport);
+    exporter = new DeezerPlaylistExporter(monitor, httpTransport, transferServiceConfig);
+    importer = new DeezerPlaylistImporter(monitor, httpTransport, transferServiceConfig);
     initialized = true;
   }
 }

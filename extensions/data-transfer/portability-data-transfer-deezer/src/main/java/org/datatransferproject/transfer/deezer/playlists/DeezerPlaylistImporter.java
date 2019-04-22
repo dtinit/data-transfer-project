@@ -31,6 +31,7 @@ import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
 import org.datatransferproject.types.common.models.playlists.MusicRecording;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,10 +47,15 @@ public class DeezerPlaylistImporter
     implements Importer<TokensAndUrlAuthData, PlaylistContainerResource> {
   private final Monitor monitor;
   private final HttpTransport httpTransport;
+  private final TransferServiceConfig transferServiceConfig;
 
-  public DeezerPlaylistImporter(Monitor monitor, HttpTransport httpTransport) {
+  public DeezerPlaylistImporter(
+      Monitor monitor,
+      HttpTransport httpTransport,
+      TransferServiceConfig transferServiceConfig) {
     this.monitor = monitor;
     this.httpTransport = httpTransport;
+    this.transferServiceConfig = transferServiceConfig;
   }
 
   @Override
@@ -58,7 +64,10 @@ public class DeezerPlaylistImporter
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
       PlaylistContainerResource data) throws IOException {
-    DeezerApi api = new DeezerApi(authData.getAccessToken(), httpTransport);
+    DeezerApi api = new DeezerApi(
+        authData.getAccessToken(),
+        httpTransport,
+        transferServiceConfig);
     for (MusicPlaylist playlist : data.getLists()) {
       createPlaylist(idempotentExecutor, api, playlist);
     }
