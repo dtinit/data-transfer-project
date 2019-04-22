@@ -210,8 +210,12 @@ final class WorkerModule extends FlagBindingModule {
   private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
     String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
     InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
+    getMonitor().info(
+        () -> "Service %s has a config file: %s",
+        ext.getServiceId(),
+        (inputStream != null));
     if (inputStream == null) {
-      return null;
+      return TransferServiceConfig.getDefaultInstance();
     } else {
       try {
         return TransferServiceConfig.create(inputStream);

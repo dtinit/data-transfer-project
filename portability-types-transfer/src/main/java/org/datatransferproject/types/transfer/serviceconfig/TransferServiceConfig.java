@@ -26,7 +26,8 @@ import java.io.InputStream;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- *
+ * A wrapper around {@link TransferServiceConfigSpecification} to provide service specific
+ * settings for transfer extensions.
  */
 public final class TransferServiceConfig {
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
@@ -36,6 +37,13 @@ public final class TransferServiceConfig {
   public static TransferServiceConfig create(InputStream s) throws IOException {
     return new TransferServiceConfig(
         YAML_OBJECT_MAPPER.readValue(s, TransferServiceConfigSpecification.class));
+  }
+
+  /** Gets a default instance for services that don't have a specific config. **/
+  public static TransferServiceConfig getDefaultInstance() {
+    return new TransferServiceConfig(
+        new TransferServiceConfigSpecification(
+            Double.MAX_VALUE));
   }
 
   private TransferServiceConfig(TransferServiceConfigSpecification specification) {
