@@ -20,16 +20,22 @@ import com.google.inject.Inject;
 /** Polls and processes a {@code PortabilityJob}. */
 final class Worker {
   private final JobPoller jobPoller;
+  private final JobCancelWatchingService jobCancelWatchingService;
   private final JobProcessor jobProcessor;
 
   @Inject
-  Worker(JobPoller jobPoller, JobProcessor jobProcessor) {
+  Worker(
+      JobPoller jobPoller,
+      JobCancelWatchingService jobCancelWatchingService,
+      JobProcessor jobProcessor) {
     this.jobPoller = jobPoller;
+    this.jobCancelWatchingService = jobCancelWatchingService;
     this.jobProcessor = jobProcessor;
   }
 
   void doWork() {
     jobPoller.pollJob();
+    jobCancelWatchingService.startAsync();
     jobProcessor.processJob();
   }
 }
