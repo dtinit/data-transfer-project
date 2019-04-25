@@ -8,11 +8,12 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.types.common.ExportInformation;
+
+import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
-import org.datatransferproject.types.common.ExportInformation;
 
 /**
  * A job that will fulfill a transfer request.
@@ -199,7 +200,8 @@ public abstract class PortabilityJob {
     NEW,
     IN_PROGRESS,
     COMPLETE,
-    ERROR
+    ERROR,
+    CANCELED
   }
 
   @AutoValue.Builder
