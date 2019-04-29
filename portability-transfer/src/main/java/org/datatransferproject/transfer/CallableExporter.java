@@ -28,6 +28,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Callable around an {@link Exporter}.
  */
@@ -45,12 +47,11 @@ public class CallableExporter implements Callable<ExportResult> {
       AuthData authData,
       Optional<ExportInformation> exportInformation,
       DtpInternalMetricRecorder metricRecorder) {
-    this.exporterProvider = exporterProvider;
-
-    this.jobId = jobId;
-    this.authData = authData;
+    this.exporterProvider = checkNotNull(exporterProvider, "exportProvider can't be null");
+    this.jobId = checkNotNull(jobId, "jobId can't be null");
+    this.authData = checkNotNull(authData, "authData can't be null");
     this.exportInformation = exportInformation;
-    this.metricRecorder = metricRecorder;
+    this.metricRecorder = checkNotNull(metricRecorder, "metric recorder can't be null");
   }
 
   @Override
