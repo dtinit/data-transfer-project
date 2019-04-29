@@ -230,7 +230,7 @@ final class WorkerModule extends FlagBindingModule {
       try {
         return TransferServiceConfig.create(inputStream);
       } catch (IOException e) {
-        throw new RuntimeException("Couldn't create config for" + ext.getServiceId(), e);
+        throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
       }
     }
   }
