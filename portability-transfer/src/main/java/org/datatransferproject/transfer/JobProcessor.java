@@ -28,7 +28,6 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
-import org.datatransferproject.spi.transfer.security.SecurityException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
@@ -122,7 +121,7 @@ final class JobProcessor {
       copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       monitor.debug(() -> "Finished copy for jobId: " + jobId);
       success = true;
-    } catch (IOException | SecurityException | CopyException e) {
+    } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
       monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);

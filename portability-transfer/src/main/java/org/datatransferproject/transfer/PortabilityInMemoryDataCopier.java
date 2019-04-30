@@ -55,19 +55,21 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   private final Monitor monitor;
-  private final DtpInternalMetricRecorder metricRecorder = null;
+  private final DtpInternalMetricRecorder metricRecorder;
 
   @Inject
   public PortabilityInMemoryDataCopier(
       Provider<Exporter> exporterProvider,
       Provider<Importer> importerProvider,
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
-      Monitor monitor) {
+      Monitor monitor,
+      DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.exporterProvider = exporterProvider;
     this.importerProvider = importerProvider;
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
     this.monitor = monitor;
     this.inMemoryIdempotentImportExecutor = new InMemoryIdempotentImportExecutor(monitor);
+    this.metricRecorder = dtpInternalMetricRecorder;
   }
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
