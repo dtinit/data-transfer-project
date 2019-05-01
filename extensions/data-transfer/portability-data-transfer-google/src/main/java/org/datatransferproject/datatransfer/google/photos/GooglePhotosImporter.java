@@ -85,7 +85,7 @@ public class GooglePhotosImporter
     // Uploads album metadata
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
-        idempotentImportExecutor.execute(
+        idempotentImportExecutor.executeAndSwallowExceptions(
             album.getId(),
             album.getName(),
             () -> importSingleAlbum(authData, album)
@@ -96,7 +96,7 @@ public class GooglePhotosImporter
     // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentImportExecutor.execute(
+        idempotentImportExecutor.executeAndSwallowExceptions(
             photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
@@ -153,6 +153,8 @@ public class GooglePhotosImporter
       // upload a NewMediaItem without a corresponding album id.
       albumId = null;
     } else {
+      // Note this will throw if creating the album failed, which is what we want
+      // because that will also mark this photo as being failed.
       albumId = idempotentImportExecutor.getCachedValue(inputPhoto.getAlbumId());
     }
 

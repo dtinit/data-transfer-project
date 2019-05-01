@@ -90,18 +90,21 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
-      idempotentExecutor.execute(
+      idempotentExecutor.executeAndSwallowExceptions(
           album.getId(),
           album.getName(),
           () -> createOneDriveFolder(album, authData));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
-      String folderId = idempotentExecutor.getCachedValue(photoModel.getAlbumId());
-      idempotentExecutor.execute(
+
+      idempotentExecutor.executeAndSwallowExceptions(
           Integer.toString(photoModel.hashCode()),
           photoModel.getTitle(),
-          () -> importPhoto(photoModel, jobId, folderId, authData));
+          () -> {
+            String folderId = idempotentExecutor.getCachedValue(photoModel.getAlbumId());
+            return importPhoto(photoModel, jobId, folderId, authData);
+          });
     }
     return ImportResult.OK;
   }

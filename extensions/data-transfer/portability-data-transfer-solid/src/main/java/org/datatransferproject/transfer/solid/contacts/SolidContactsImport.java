@@ -139,11 +139,11 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
 
     String containerUrl = createContainer(baseUrl + BASE_DIRECTORY, addressBookSlug, utilities);
 
-    idempotentExecutor.execute(baseUrl + containerUrl,
+    idempotentExecutor.executeOrThrowException(baseUrl + containerUrl,
         addressBookSlug,
         () -> createIndex(baseUrl + containerUrl, addressBookSlug, utilities));
 
-    String personDirectory = idempotentExecutor.execute(
+    String personDirectory = idempotentExecutor.executeOrThrowException(
         baseUrl + containerUrl + "person",
         addressBookSlug,
         () -> createPersonDirectory(baseUrl + containerUrl, utilities));
@@ -153,7 +153,7 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
             p -> importPerson(idempotentExecutor, p, baseUrl, personDirectory, utilities),
             Function.identity()));
 
-    idempotentExecutor.execute(
+    idempotentExecutor.executeOrThrowException(
         "peopleFile",
         addressBookSlug,
         () -> createPeopleFile(baseUrl, containerUrl, insertedPeople, utilities));
@@ -165,7 +165,7 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
       String personDirectory,
       SolidUtilities utilities) {
     try {
-    return executor.execute(
+    return executor.executeAndSwallowExceptions(
         Integer.toString(person.hashCode()),
         person.getFormattedName().getValue(),
         () -> insertPerson(baseUrl, personDirectory, person, utilities));

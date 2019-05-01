@@ -81,17 +81,26 @@ public class ImgurPhotosImporter
     try {
       // Import albums
       for (PhotoAlbum album : resource.getAlbums()) {
-        executor.execute(album.getId(), album.getName(), () -> importAlbum(album, authData));
+        executor.executeAndSwallowExceptions(
+            album.getId(),
+            album.getName(),
+            () -> importAlbum(album, authData));
       }
       // Import photos
       for (PhotoModel photo : resource.getPhotos()) {
-        String albumId;
-        if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-          albumId = null;
-        } else {
-          albumId = executor.getCachedValue(photo.getAlbumId());
-        }
-        importPhoto(photo, jobId, authData, albumId);
+        executor.executeAndSwallowExceptions(
+            photo.getDataId(),
+            photo.getTitle(),
+            () -> {
+              String albumId;
+              if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+                albumId = null;
+              } else {
+                albumId = executor.getCachedValue(photo.getAlbumId());
+              }
+              return importPhoto(photo, jobId, authData, albumId);
+            }
+        );
       }
     } catch (IOException e) {
       monitor.severe(() -> "Error importing item", e);

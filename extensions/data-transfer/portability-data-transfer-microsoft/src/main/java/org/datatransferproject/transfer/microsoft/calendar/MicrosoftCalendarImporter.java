@@ -74,7 +74,7 @@ public class MicrosoftCalendarImporter
       CalendarContainerResource data) throws IOException {
 
     for (CalendarModel calendar : data.getCalendars()) {
-      idempotentImportExecutor.execute(calendar.getId(),
+      idempotentImportExecutor.executeAndSwallowExceptions(calendar.getId(),
           calendar.getName(),
           () -> importCalendar(authData, calendar));
     }

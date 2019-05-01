@@ -21,9 +21,11 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +49,9 @@ public class MockJobStore implements JobStore {
   @Override
   public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {}
+
+  @Override
+  public void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException {}
 
   @Override
   public void remove(UUID jobId) throws IOException {}

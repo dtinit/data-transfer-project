@@ -84,13 +84,13 @@ public class SmugMugPhotosImporter
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             album.getId(),
             album.getName(),
             () -> importSingleAlbum(album, smugMugInterface));
       }
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));

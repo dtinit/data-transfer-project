@@ -17,20 +17,22 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-/**
- * A {@link IdempotentImportExecutor} that stores known values in memory.
- */
+/** A {@link IdempotentImportExecutor} that stores known values in memory. */
 public class InMemoryIdempotentImportExecutor implements IdempotentImportExecutor {
-  final private Map<String, Serializable> knownValues = new HashMap<>();
+  private final Map<String, Serializable> knownValues = new HashMap<>();
+  private final Map<String, ErrorDetail> errors = new HashMap<>();
   private final Monitor monitor;
 
   public InMemoryIdempotentImportExecutor(Monitor monitor) {
@@ -38,10 +40,18 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   }
 
   @Override
-  public <T extends Serializable> T execute(
-      String idempotentId,
-      String itemName,
-      Callable<T> callable) throws IOException {
+  public <T extends Serializable> T executeAndSwallowExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws IOException {
+    try {
+      return executeOrThrowException(idempotentId, itemName, callable);
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  @Override
+  public <T extends Serializable> T executeOrThrowException(
+      String idempotentId, String itemName, Callable<T> callable) throws IOException {
     if (knownValues.containsKey(idempotentId)) {
       monitor.debug(() -> "Using cached key %s from cache for %s", idempotentId, itemName);
       return (T) knownValues.get(idempotentId);
@@ -50,8 +60,13 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
       T result = callable.call();
       knownValues.put(idempotentId, result);
       monitor.debug(() -> "Storing key %s in cache for %s", idempotentId, itemName);
+      errors.remove(idempotentId);
       return result;
     } catch (Exception e) {
+      ErrorDetail errorDetail =
+          ErrorDetail.builder().setId(idempotentId).setTitle(itemName).setException(e).build();
+      errors.put(idempotentId, errorDetail);
+      monitor.severe(() -> "Problem with importing item: " + errorDetail);
       throw new IOException("Problem executing callable for: " + idempotentId, e);
     }
   }
@@ -60,7 +75,8 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   public <T extends Serializable> T getCachedValue(String idempotentId) {
     if (!knownValues.containsKey(idempotentId)) {
       throw new IllegalArgumentException(
-          idempotentId + " is not a known key, known keys: "
+          idempotentId
+              + " is not a known key, known keys: "
               + Joiner.on(", ").join(knownValues.keySet()));
     }
     return (T) knownValues.get(idempotentId);
@@ -69,5 +85,10 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   public boolean isKeyCached(String idempotentId) {
     return knownValues.containsKey(idempotentId);
+  }
+
+  @Override
+  public Collection<ErrorDetail> getErrors() {
+    return ImmutableList.copyOf(errors.values());
   }
 }

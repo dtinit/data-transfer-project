@@ -70,7 +70,7 @@ public class SpotifyPlaylistImporter
       MusicPlaylist playlist,
       String userId)
       throws IOException, SpotifyWebApiException {
-    String playlistId = idempotentExecutor.execute(
+    String playlistId = idempotentExecutor.executeAndSwallowExceptions(
         playlist.getIdentifier(),
         "Playlist: " + playlist.getHeadline(),
         () -> spotifyApi
@@ -81,9 +81,10 @@ public class SpotifyPlaylistImporter
             .build()
             .execute()
             .getId());
-     ;
-    for (MusicRecording track : playlist.getTrack()) {
-      addTrack(idempotentExecutor, playlistId, playlist.getHeadline(), track);
+    if (playlistId != null) {
+      for (MusicRecording track : playlist.getTrack()) {
+        addTrack(idempotentExecutor, playlistId, playlist.getHeadline(), track);
+      }
     }
   }
 
@@ -92,8 +93,8 @@ public class SpotifyPlaylistImporter
       String playlistId,
       String playlistName,
       MusicRecording track)
-      throws IOException, SpotifyWebApiException {
-    idempotentExecutor.execute(
+      throws IOException {
+    idempotentExecutor.executeAndSwallowExceptions(
         playlistId + "-" + track.hashCode(),
         playlistName + " - " + track.getHeadline(),
         () -> {

@@ -63,7 +63,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       timeline = service.createTimeline();
 
       for (TaskListModel taskList : data.getLists()) {
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             taskList.getId(),
             taskList.getName(),
             () -> service.createTaskList(taskList.getName(), timeline).id
@@ -73,11 +73,13 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       for (TaskModel task : data.getTasks()) {
         // Empty or blank tasks aren't valid in RTM
         if (!Strings.isNullOrEmpty(task.getText())) {
-          String newList = idempotentExecutor.getCachedValue(task.getTaskListId());
-          idempotentExecutor.execute(
+          idempotentExecutor.executeAndSwallowExceptions(
               Integer.toString(task.hashCode()),
               task.getText(),
-              () -> insertTask(task, newList, timeline));
+              () -> {
+                String newList = idempotentExecutor.getCachedValue(task.getTaskListId());
+                return insertTask(task, newList, timeline);
+              });
         }
       }
     } catch (Exception e) {

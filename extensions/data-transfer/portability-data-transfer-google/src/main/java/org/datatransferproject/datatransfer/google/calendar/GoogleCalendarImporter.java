@@ -96,22 +96,17 @@ public class GoogleCalendarImporter implements
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
       CalendarContainerResource data) throws IOException {
-    try {
-      for (CalendarModel calendarModel : data.getCalendars()) {
-        idempotentExecutor.execute(
-            calendarModel.getId(),
-            calendarModel.getName(),
-            () -> importSingleCalendar(authData, calendarModel));
-      }
-      for (CalendarEventModel eventModel : data.getEvents()) {
-        idempotentExecutor.execute(
-            Integer.toString(eventModel.hashCode()),
-            eventModel.getNotes(),
-            () -> importSingleEvent(idempotentExecutor, authData, eventModel));
-      }
-    } catch (RuntimeException e) {
-      // TODO(olsona): should consider retrying individual failures
-      return new ImportResult(e);
+    for (CalendarModel calendarModel : data.getCalendars()) {
+      idempotentExecutor.executeAndSwallowExceptions(
+          calendarModel.getId(),
+          calendarModel.getName(),
+          () -> importSingleCalendar(authData, calendarModel));
+    }
+    for (CalendarEventModel eventModel : data.getEvents()) {
+      idempotentExecutor.executeAndSwallowExceptions(
+          Integer.toString(eventModel.hashCode()),
+          eventModel.getNotes(),
+          () -> importSingleEvent(idempotentExecutor, authData, eventModel));
     }
     return ImportResult.OK;
   }

@@ -105,7 +105,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     for (MailContainerModel mailContainerModel : folders) {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(mailContainerModel.getName()));
       String exportedLabelName = mailContainerModel.getName();
-      idempotentExecutor.execute(
+      idempotentExecutor.executeAndSwallowExceptions(
           exportedLabelName,
           "Label - " + exportedLabelName,
           () -> {
@@ -123,7 +123,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       TokensAndUrlAuthData authData,
       IdempotentImportExecutor idempotentExecutor,
       Supplier<Map<String, String>> allDestinationLabels) throws IOException {
-    idempotentExecutor.execute(
+    idempotentExecutor.executeAndSwallowExceptions(
         LABEL,
         LABEL,
         () -> {
@@ -147,7 +147,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
     for (MailMessageModel mailMessageModel : messages) {
       // Get or create label ids associated with this message
       for (String exportedLabelName : mailMessageModel.getContainerIds()) {
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             exportedLabelName,
             exportedLabelName,
             () -> {
@@ -170,37 +170,38 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       IdempotentImportExecutor idempotentExecutor,
       Collection<MailMessageModel> messages) throws IOException {
     for (MailMessageModel mailMessageModel : messages) {
-
-      // Gather the label ids that will be associated with this message
-      ImmutableList.Builder<String> importedLabelIds = ImmutableList.builder();
-      for (String exportedLabelIdOrName : mailMessageModel.getContainerIds()) {
-        // By this time all the label ids have been added to tempdata
-        String importedLabelId = idempotentExecutor.getCachedValue(exportedLabelIdOrName);
-        if (importedLabelId != null) {
-          importedLabelIds.add(exportedLabelIdOrName);
-        } else {
-          // TODO remove after testing
-          monitor.debug(
-              () -> "labels should have been added prior to importing messages");
-        }
-      }
-      // Create the message to import
-      Message newMessage =
-          new Message()
-              .setRaw(mailMessageModel.getRawString())
-              .setLabelIds(importedLabelIds.build());
-      idempotentExecutor.execute(
+      idempotentExecutor.executeAndSwallowExceptions(
           mailMessageModel.toString(),
           // Trim the full mail message to try to give some context to the user but not overwhelm
           // them.
           "Mail message: " + mailMessageModel.getRawString()
               .substring(0, Math.min(50, mailMessageModel.getRawString().length())),
-          () -> getOrCreateGmail(authData)
-              .users()
-              .messages()
-              .insert(USER, newMessage)
-              .execute()
-              .getId());
+          () -> {
+            // Gather the label ids that will be associated with this message
+            ImmutableList.Builder<String> importedLabelIds = ImmutableList.builder();
+            for (String exportedLabelIdOrName : mailMessageModel.getContainerIds()) {
+              // By this time all the label ids have been added to tempdata
+              String importedLabelId = idempotentExecutor.getCachedValue(exportedLabelIdOrName);
+              if (importedLabelId != null) {
+                importedLabelIds.add(exportedLabelIdOrName);
+              } else {
+                // TODO remove after testing
+                monitor.debug(
+                    () -> "labels should have been added prior to importing messages");
+              }
+            }
+            // Create the message to import
+            Message newMessage =
+                new Message()
+                    .setRaw(mailMessageModel.getRawString())
+                    .setLabelIds(importedLabelIds.build());
+            return getOrCreateGmail(authData)
+                .users()
+                .messages()
+                .insert(USER, newMessage)
+                .execute()
+                .getId();
+          });
     }
   }
 

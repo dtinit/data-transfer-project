@@ -38,6 +38,7 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String JOB_STATE = "JOB_STATE";
+  private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
 
   public static PortabilityJob.Builder builder() {
     LocalDateTime now = LocalDateTime.now();

@@ -2,8 +2,10 @@ package org.datatransferproject.spi.cloud.storage;
 
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -52,6 +54,14 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * @throws IllegalStateException if validator.validate() failed
    */
   void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator) throws IOException;
+
+  /**
+   * Stores errors related to a transfer job.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   */
+  void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException;
 
   /**
    * Removes the {@link PortabilityJob} in the store keyed by {@code jobId}.

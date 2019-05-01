@@ -123,14 +123,14 @@ public class GoogleBloggerImporter
     if (asObject.firstImage() != null) {
       // Store any attached images in Drive in a new folder.
       Drive driveInterface = getOrCreateDriveService(authData);
-      String folderId = idempotentExecutor.execute(
+      String folderId = idempotentExecutor.executeOrThrowException(
           "MainAlbum",
           "Photo Album",
           () -> createAlbumFolder(driveInterface));
       for (LinkValue image : asObject.image()) {
         try {
           String newImgSrc =
-              idempotentExecutor.execute(
+              idempotentExecutor.executeAndSwallowExceptions(
                   image.toString(),
                   "Image",
                   () -> uploadImage((ASObject) image, driveInterface, folderId));
@@ -174,7 +174,7 @@ public class GoogleBloggerImporter
       post.setPublished(new DateTime(asObject.published().getMillis()));
     }
 
-    idempotentExecutor.execute(
+    idempotentExecutor.executeAndSwallowExceptions(
         title,
         title,
         () -> getOrCreateBloggerService(authData).posts()
