@@ -134,7 +134,7 @@ public class GoogleVideosImporter
     NewMediaItemUpload uploadItem =
             new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
 
-    executor.execute(
+    executor.executeAndSwallowExceptions(
             inputVideo.getDataId(),
             inputVideo.getName(),
             () -> getOrCreateVideosInterface(authData).createVideo(uploadItem));

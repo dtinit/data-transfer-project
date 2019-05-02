@@ -61,7 +61,7 @@ final class TwitterPhotosImporter
             new InputStreamContent(null, getImageAsStream(image.getFetchableUrl()));
         update.media(image.getTitle(), content.getInputStream());
 
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             image.getDataId(),
             image.getTitle(),
             () -> twitterApi.tweets().updateStatus(update));

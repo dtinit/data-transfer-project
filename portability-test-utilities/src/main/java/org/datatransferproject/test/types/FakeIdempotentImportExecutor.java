@@ -1,20 +1,32 @@
 package org.datatransferproject.test.types;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   private HashMap<String, Serializable> knownValues = new HashMap<>();
+
   @Override
-  public <T extends Serializable> T execute(
-      String idempotentId,
-      String itemName,
-      Callable<T> callable) throws IOException {
+  public <T extends Serializable> T executeAndSwallowExceptions(
+      String idempotentId, String itemName, Callable<T> callable) {
+    try {
+      return executeOrThrowException(idempotentId, itemName, callable);
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public <T extends Serializable> T executeOrThrowException(
+      String idempotentId, String itemName, Callable<T> callable) throws IOException {
     if (knownValues.containsKey(idempotentId)) {
       System.out.println("Using cached key " + idempotentId + " from cache");
       return (T) knownValues.get(idempotentId);
@@ -33,7 +45,8 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   public <T extends Serializable> T getCachedValue(String idempotentId) {
     if (!knownValues.containsKey(idempotentId)) {
       throw new IllegalArgumentException(
-          idempotentId + " is not a known key, known keys: "
+          idempotentId
+              + " is not a known key, known keys: "
               + Joiner.on(", ").join(knownValues.keySet()));
     }
     return (T) knownValues.get(idempotentId);
@@ -42,5 +55,10 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   @Override
   public boolean isKeyCached(String idempotentId) {
     return knownValues.containsKey(idempotentId);
+  }
+
+  @Override
+  public Collection<ErrorDetail> getErrors() {
+    return ImmutableList.of();
   }
 }

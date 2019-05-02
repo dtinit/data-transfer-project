@@ -142,10 +142,13 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private void importSinglePhoto(IdempotentImportExecutor idempotentExecutor,
       UUID id,
       PhotoModel photo) throws FlickrException, IOException {
-    String photoId = idempotentExecutor.execute(
+    String photoId = idempotentExecutor.executeAndSwallowExceptions(
         photo.getAlbumId() + "-" + photo.getDataId(),
         photo.getTitle(),
         () -> uploadPhoto(photo, id));
+    if (photoId == null) {
+      return;
+    }
 
     String oldAlbumId = photo.getAlbumId();
 
@@ -190,7 +193,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     // with these (in case the album exists later).
     Preconditions.checkNotNull(album, "Album not found: " + oldAlbumId);
 
-    idempotentExecutor.execute(
+    idempotentExecutor.executeAndSwallowExceptions(
         oldAlbumId,
         album.getName(),
         () -> {

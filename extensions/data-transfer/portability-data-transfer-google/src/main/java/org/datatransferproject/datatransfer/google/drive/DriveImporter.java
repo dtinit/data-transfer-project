@@ -56,7 +56,7 @@ public final class DriveImporter implements
     // Let the parent ID be empty for the root level
     if (Strings.isNullOrEmpty(data.getId()) || "root".equals(data.getId())) {
       parentId =
-          idempotentExecutor.execute(
+          idempotentExecutor.executeOrThrowException(
               ROOT_FOLDER_ID,
               data.getName(),
               () ->importSingleFolder(
@@ -71,7 +71,7 @@ public final class DriveImporter implements
     // Uploads album metadata
     if (data.getFolders() != null && data.getFolders().size() > 0) {
       for (BlobbyStorageContainerResource folder : data.getFolders()) {
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             folder.getId(),
             folder.getName(),
             () -> importSingleFolder(
@@ -84,7 +84,7 @@ public final class DriveImporter implements
     // Uploads photos
     if (data.getFiles() != null && data.getFiles().size() > 0) {
       for (DigitalDocumentWrapper file : data.getFiles()) {
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             Integer.toString(file.hashCode()),
             file.getDtpDigitalDocument().getName(),
             () -> importSingleFile(jobId, driveInterface, file, parentId));

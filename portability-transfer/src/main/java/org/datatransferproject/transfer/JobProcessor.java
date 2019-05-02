@@ -31,10 +31,12 @@ import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.security.PrivateKey;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -85,6 +87,7 @@ final class JobProcessor {
     PortabilityJob job = store.findJob(jobId);
     JobAuthorization jobAuthorization = job.jobAuthorization();
     Stopwatch stopwatch = Stopwatch.createUnstarted();
+    Collection<ErrorDetail> errors = null;
 
     try {
       monitor.debug(
@@ -118,14 +121,18 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       stopwatch.start();
-      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
+      errors = copier.copy(
+          exportAuthData,
+          importAuthData,
+          jobId,
+          exportInfo);
       monitor.debug(() -> "Finished copy for jobId: " + jobId);
       success = true;
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
       monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
-      markJobFinished(jobId, success);
+      markJobFinished(jobId, success, errors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
@@ -147,7 +154,13 @@ final class JobProcessor {
     return null;
   }
 
-  private void markJobFinished(UUID jobId, boolean success) {
+  private void markJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
+    try {
+      store.addErrorsToJob(jobId, errors);
+    } catch (IOException | RuntimeException e) {
+      success = false;
+      monitor.severe(() -> "Problem adding errors to JobStore: %s", e);
+    }
     State state = success ? State.COMPLETE : State.ERROR;
     updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);
   }

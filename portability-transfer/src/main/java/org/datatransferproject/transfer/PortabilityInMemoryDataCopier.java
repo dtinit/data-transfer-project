@@ -28,6 +28,7 @@ import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
@@ -35,6 +36,7 @@ import org.datatransferproject.types.transfer.retry.RetryingCallable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Clock;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,9 +76,13 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-   public void copy(AuthData exportAuthData, AuthData importAuthData, UUID jobId, Optional<ExportInformation> exportInfo)
+   public Collection<ErrorDetail> copy(
+       AuthData exportAuthData,
+       AuthData importAuthData,
+       UUID jobId,
+       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
-    copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
+    return copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
   /**
@@ -89,7 +95,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
    * @param importAuthData The auth data for the import
    * @param exportInformation Any pagination or resource information to use for subsequent calls.
    */
-  private void copyHelper(
+  private Collection<ErrorDetail> copyHelper(
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
@@ -120,7 +126,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     try {
       exportResult = retryingExporter.call();
       exportSuccess = exportResult.getType() != ExportResult.ResultType.ERROR;
-    } catch (RetryException e) {
+    } catch (RetryException | RuntimeException e) {
       throw new CopyException(jobIdPrefix + "Error happened during export", e);
     } finally{
       metricRecorder.exportPageFinished(
@@ -149,8 +155,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       try {
         ImportResult importResult = retryingImporter.call();
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
-      } catch (RetryException e) {
-        throw new CopyException(jobIdPrefix + "Error happened during import", e);
+      } catch (RetryException | RuntimeException e) {
+        monitor.severe(() -> "Got error importing data: %s", e);
       } finally{
         metricRecorder.importPageFinished(
             JobMetadata.getDataType(),
@@ -188,5 +194,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         }
       }
     }
+    return inMemoryIdempotentImportExecutor.getErrors();
   }
 }

@@ -23,9 +23,12 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -105,6 +108,14 @@ public final class LocalJobStore implements JobStore {
       }
     } catch (NullPointerException | IllegalStateException e) {
       throw new IOException("Couldn't update jobId: " + jobId, e);
+    }
+  }
+
+  @Override
+  public void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException {
+    // This is a no-op currently as nothing in DTP reads the errors currently.
+    if (errors != null && !errors.isEmpty()) {
+      monitor.info(() -> "Added errors: %s", Arrays.toString(errors.toArray()));
     }
   }
 

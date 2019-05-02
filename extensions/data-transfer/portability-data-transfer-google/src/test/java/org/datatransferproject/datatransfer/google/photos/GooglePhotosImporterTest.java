@@ -110,7 +110,7 @@ public class GooglePhotosImporterTest {
     PhotoModel photoModel = new PhotoModel(PHOTO_TITLE, IMG_URI, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE,
         "oldPhotoID", OLD_ALBUM_ID, false);
 
-    executor.execute(OLD_ALBUM_ID, OLD_ALBUM_ID, () -> NEW_ALBUM_ID);
+    executor.executeOrThrowException(OLD_ALBUM_ID, OLD_ALBUM_ID, () -> NEW_ALBUM_ID);
 
     NewMediaItemResult newMediaItemResult = Mockito.mock(NewMediaItemResult.class);
     GoogleMediaItem googleMediaItem = new GoogleMediaItem();

@@ -71,7 +71,6 @@ public class DeezerPlaylistImporter
     for (MusicPlaylist playlist : data.getLists()) {
       createPlaylist(idempotentExecutor, api, playlist);
     }
-
     return ImportResult.OK;
   }
 
@@ -80,7 +79,7 @@ public class DeezerPlaylistImporter
       DeezerApi api,
       MusicPlaylist playlist)
       throws IOException {
-    Long newPlaylistId = idempotentExecutor.execute(
+    Long newPlaylistId = idempotentExecutor.executeAndSwallowExceptions(
         playlist.getIdentifier(),
         playlist.getHeadline(),
         () -> createPlaylist(api, playlist));
@@ -91,13 +90,13 @@ public class DeezerPlaylistImporter
     }
     List<Long> ids = new ArrayList<>();
     for (MusicRecording track : playlist.getTrack()) {
-      Long newSongId = idempotentExecutor.execute(
+      Long newSongId = idempotentExecutor.executeAndSwallowExceptions(
           newPlaylistId + "-" + track.hashCode(),
           "Track: " + track + " in " + playlist.getHeadline(),
           () -> lookupTrack(api, track));
       ids.add(newSongId);
     }
-    idempotentExecutor.execute(
+    idempotentExecutor.executeAndSwallowExceptions(
         newPlaylistId + "-tracks",
         "Playlist: " + playlist.getHeadline(),
         () -> {

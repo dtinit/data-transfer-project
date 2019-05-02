@@ -60,7 +60,7 @@ public class MastodonActivityImport
         checkState(object instanceof ASObject, "%s isn't of expected type", object);
         ASObject asObject = (ASObject) object;
         if (asObject.objectTypeString().equals("note")) {
-          idempotentImportExecutor.execute(
+          idempotentImportExecutor.executeAndSwallowExceptions(
               asObject.id(),
               asObject.contentString(),
               () -> {

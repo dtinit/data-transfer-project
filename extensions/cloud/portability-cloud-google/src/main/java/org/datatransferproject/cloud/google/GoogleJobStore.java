@@ -25,6 +25,7 @@ import com.google.cloud.datastore.DoubleValue;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.LongValue;
+import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
@@ -36,18 +37,23 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -55,9 +61,12 @@ import org.datatransferproject.types.common.models.DataModel;
 @Singleton
 public final class GoogleJobStore implements JobStore {
 
-  private static final String KIND = "persistentKey";
+  private static final String JOB_KIND = "persistentKey";
+  private static final String ERROR_KIND = "error";
   private static final String CREATED_FIELD = "created";
   private static final String LAST_UPDATE_FIELD = "lastUpdated";
+  // Field name for entities to store generic json data.
+  private static final String JSON_DATA_FIELD = "jsonData";
 
   private final Datastore datastore;
   // TODO: refactor googleTempFileStore into separate interface
@@ -121,7 +130,7 @@ public final class GoogleJobStore implements JobStore {
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
-    Entity shouldNotExist = transaction.get(getKey(jobId));
+    Entity shouldNotExist = transaction.get(getJobKey(jobId));
     if (shouldNotExist != null) {
       transaction.rollback();
       throw new IOException(
@@ -160,7 +169,7 @@ public final class GoogleJobStore implements JobStore {
       throws IOException {
     Preconditions.checkNotNull(jobId);
     Transaction transaction = datastore.newTransaction();
-    Key key = getKey(jobId);
+    Key key = getJobKey(jobId);
 
     try {
       Entity previousEntity = transaction.get(key);
@@ -182,6 +191,24 @@ public final class GoogleJobStore implements JobStore {
     }
   }
 
+  @Override
+  public void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException {
+    if (errors == null || errors.isEmpty()) {
+      return;
+    }
+    List<Entity> entities = new ArrayList<>();
+    for (ErrorDetail errorDetail : errors) {
+      Key key = getErrorKey(jobId, errorDetail.id());
+      entities.add(createEntityBuilder(
+          key,
+          ImmutableMap.of(
+              JSON_DATA_FIELD,
+              objectMapper.writeValueAsString(errorDetail)))
+          .build());
+    }
+    datastore.add(entities.toArray(new Entity[entities.size()]));
+  }
+
   /**
    * Removes the {@link PortabilityJob} keyed by {@code jobId} in Datastore.
    *
@@ -190,7 +217,7 @@ public final class GoogleJobStore implements JobStore {
   @Override
   public void remove(UUID jobId) throws IOException {
     try {
-      datastore.delete(getKey(jobId));
+      datastore.delete(getJobKey(jobId));
     } catch (DatastoreException e) {
       throw new IOException("Could not remove jobId: " + jobId, e);
     }
@@ -201,7 +228,7 @@ public final class GoogleJobStore implements JobStore {
    */
   @Override
   public PortabilityJob findJob(UUID jobId) {
-    Entity entity = datastore.get(getKey(jobId));
+    Entity entity = datastore.get(getJobKey(jobId));
     if (entity == null) {
       return null;
     }
@@ -224,7 +251,7 @@ public final class GoogleJobStore implements JobStore {
   public UUID findFirst(JobAuthorization.State jobState) {
     Query<Key> query =
         Query.newKeyQueryBuilder()
-            .setKind(KIND)
+            .setKind(JOB_KIND)
             .setFilter(PropertyFilter.eq(PortabilityJob.AUTHORIZATION_STATE, jobState.name()))
             // .setOrderBy(OrderBy.asc("created"))
             .setLimit(1)
@@ -342,7 +369,7 @@ public final class GoogleJobStore implements JobStore {
   private Entity createNewEntity(UUID jobId, Map<String, Object> data) throws IOException {
     Timestamp createdTime = Timestamp.now();
 
-    return createEntityBuilder(getKey(jobId), data).set(CREATED_FIELD, createdTime)
+    return createEntityBuilder(getJobKey(jobId), data).set(CREATED_FIELD, createdTime)
         .set(LAST_UPDATE_FIELD, createdTime).build();
   }
 
@@ -351,12 +378,21 @@ public final class GoogleJobStore implements JobStore {
     return createEntityBuilder(key, data).set(LAST_UPDATE_FIELD, Timestamp.now()).build();
   }
 
-  private Key getKey(UUID jobId) {
-    return datastore.newKeyFactory().setKind(KIND).newKey(jobId.toString());
+  private Key getJobKey(UUID jobId) {
+    return datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId.toString());
+  }
+
+  private Key getErrorKey(UUID jobId, String errorId) {
+    // Use the main job as the ancestor to all the errors, see:
+    // https://cloud.google.com/datastore/docs/concepts/entities#ancestor_paths
+    return datastore.newKeyFactory()
+        .setKind(ERROR_KIND)
+        .addAncestor(PathElement.of(JOB_KIND, jobId.toString()))
+        .newKey(errorId);
   }
 
   private Key getDataKey(UUID jobId, String key) {
-    return datastore.newKeyFactory().setKind(KIND).newKey(getDataKeyName(jobId, key));
+    return datastore.newKeyFactory().setKind(JOB_KIND).newKey(getDataKeyName(jobId, key));
   }
 
 }

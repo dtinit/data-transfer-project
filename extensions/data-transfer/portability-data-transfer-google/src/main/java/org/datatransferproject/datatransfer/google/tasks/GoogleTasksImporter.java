@@ -63,7 +63,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
 
     for (TaskListModel oldTasksList : data.getLists()) {
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
-      idempotentImportExecutor.execute(
+      idempotentImportExecutor.executeAndSwallowExceptions(
           oldTasksList.getId(),
           oldTasksList.getName(),
           () -> tasksService.tasklists().insert(newTaskList).execute().getId());
@@ -77,11 +77,14 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       if (oldTask.getDueTime() != null) {
         newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
       }
-      String newTaskListId = idempotentImportExecutor.getCachedValue(oldTask.getTaskListId());
-      idempotentImportExecutor.execute(
-          oldTask.getTaskListId() + oldTask.getText(),
-          oldTask.getText(),
-          () -> tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
+      // If its not cached that means the task list create failed.
+      if (idempotentImportExecutor.isKeyCached(oldTask.getTaskListId())) {
+        String newTaskListId = idempotentImportExecutor.getCachedValue(oldTask.getTaskListId());
+        idempotentImportExecutor.executeAndSwallowExceptions(
+            oldTask.getTaskListId() + oldTask.getText(),
+            oldTask.getText(),
+            () -> tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
+      }
     }
 
     return new ImportResult(ResultType.OK);

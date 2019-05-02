@@ -24,7 +24,10 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -63,6 +66,11 @@ public class CallableImporter implements Callable<ImportResult> {
       ImportResult result =  importerProvider.get()
           .importItem(jobId, idempotentImportExecutor, authData, data);
       success = result.getType() == ImportResult.ResultType.OK;
+      Collection<ErrorDetail> errors = idempotentImportExecutor.getErrors();
+      if (!success || !errors.isEmpty()) {
+        throw new IOException("Problem with importer, forcing a retry, "
+            + errors.size() + " errors, first one: " + errors.iterator().next());
+      }
       return result;
     } finally{
       metricRecorder.importPageAttemptFinished(

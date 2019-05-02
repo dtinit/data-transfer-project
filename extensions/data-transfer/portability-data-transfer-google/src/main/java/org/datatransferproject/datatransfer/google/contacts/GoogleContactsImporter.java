@@ -212,7 +212,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
       PeopleService.People peopleService = getOrCreatePeopleService(authData).people();
       for (VCard vCard : vCardList) {
         Person person = convert(vCard);
-        idempotentExecutor.execute(
+        idempotentExecutor.executeAndSwallowExceptions(
             vCard.toString(),
             vCard.getFormattedName().toString(),
             () -> peopleService.createContact(person).execute().toPrettyString());
