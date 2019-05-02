@@ -16,10 +16,10 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
 
   @Override
   public <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException {
+      String idempotentId, String itemName, Callable<T> callable) {
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
-    } catch (Exception e) {
+    } catch (IOException e) {
       return null;
     }
   }
