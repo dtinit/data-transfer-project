@@ -20,6 +20,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.FlagBindingModule;
+import org.datatransferproject.launcher.metrics.LoggingDtpInternalMetricRecorder;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.security.RsaSymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -88,6 +89,9 @@ public class ApiServicesModule extends FlagBindingModule {
     bind(TypeManager.class).toInstance(typeManager);
     bind(JobStore.class).toInstance(jobStore);
     bind(TokenManager.class).toInstance(tokenManager);
+
+    // Ensure a DtpInternalMetricRecorder exists
+    LoggingDtpInternalMetricRecorder.registerRecorderIfNeeded(context);
     bind(DtpInternalMetricRecorder.class)
         .toInstance(context.getService(DtpInternalMetricRecorder.class));
 

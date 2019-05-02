@@ -29,6 +29,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.MetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
+import org.datatransferproject.launcher.metrics.LoggingDtpInternalMetricRecorder;
 import org.datatransferproject.launcher.metrics.ServiceAwareMetricRecorder;
 import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
@@ -110,6 +111,9 @@ final class WorkerModule extends FlagBindingModule {
     bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
+
+    // Ensure a DtpInternalMetricRecorder exists
+    LoggingDtpInternalMetricRecorder.registerRecorderIfNeeded(context);
     bind(DtpInternalMetricRecorder.class)
         .toInstance(context.getService(DtpInternalMetricRecorder.class));
   }

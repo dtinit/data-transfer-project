@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.cloud.local;
+package org.datatransferproject.launcher.metrics;
 
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
+import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 
 import java.time.Duration;
@@ -24,10 +25,22 @@ import java.time.Duration;
  * A default {@link DtpInternalMetricRecorder} that simply logs metrics
  * to the default monitor.
  * **/
-class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
+public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   private final Monitor monitor;
 
-  LoggingDtpInternalMetricRecorder(Monitor monitor) {
+  /**
+   * Registers a LoggingDtpInternalMetricRecorder in the {@link ExtensionContext} if there is not
+   * another {@link DtpInternalMetricRecorder} registered.
+   **/
+  public static void registerRecorderIfNeeded(ExtensionContext context) {
+    if (context.getService(DtpInternalMetricRecorder.class) == null) {
+      context.registerService(
+          DtpInternalMetricRecorder.class,
+          new LoggingDtpInternalMetricRecorder(context.getMonitor()));
+    }
+  }
+
+  private LoggingDtpInternalMetricRecorder(Monitor monitor) {
     this.monitor = monitor;
   }
 
