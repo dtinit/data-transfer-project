@@ -47,7 +47,7 @@ public interface IdempotentImportExecutor {
    * @return the result of executing the callable.
    */
   <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException;
+      String idempotentId, String itemName, Callable<T> callable);
 
   /**
    * Executes a callable, a callable will only be executed once for a given idempotentId, subsequent

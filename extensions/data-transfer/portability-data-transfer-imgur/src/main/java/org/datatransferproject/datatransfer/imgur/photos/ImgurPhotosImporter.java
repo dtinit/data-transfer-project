@@ -78,34 +78,30 @@ public class ImgurPhotosImporter
       return ImportResult.OK;
     }
 
-    try {
-      // Import albums
-      for (PhotoAlbum album : resource.getAlbums()) {
-        executor.executeAndSwallowExceptions(
-            album.getId(),
-            album.getName(),
-            () -> importAlbum(album, authData));
-      }
-      // Import photos
-      for (PhotoModel photo : resource.getPhotos()) {
-        executor.executeAndSwallowExceptions(
-            photo.getDataId(),
-            photo.getTitle(),
-            () -> {
-              String albumId;
-              if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-                albumId = null;
-              } else {
-                albumId = executor.getCachedValue(photo.getAlbumId());
-              }
-              return importPhoto(photo, jobId, authData, albumId);
-            }
-        );
-      }
-    } catch (IOException e) {
-      monitor.severe(() -> "Error importing item", e);
-      return new ImportResult(e);
+    // Import albums
+    for (PhotoAlbum album : resource.getAlbums()) {
+      executor.executeAndSwallowExceptions(
+          album.getId(),
+          album.getName(),
+          () -> importAlbum(album, authData));
     }
+    // Import photos
+    for (PhotoModel photo : resource.getPhotos()) {
+      executor.executeAndSwallowExceptions(
+          photo.getDataId(),
+          photo.getTitle(),
+          () -> {
+            String albumId;
+            if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+              albumId = null;
+            } else {
+              albumId = executor.getCachedValue(photo.getAlbumId());
+            }
+            return importPhoto(photo, jobId, authData, albumId);
+          }
+      );
+    }
+
     return new ImportResult(ImportResult.ResultType.OK);
   }
 
