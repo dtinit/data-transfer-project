@@ -44,7 +44,8 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
       String idempotentId, String itemName, Callable<T> callable) throws IOException {
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
-    } catch (Exception e) {
+    } catch (IOException | RuntimeException e) {
+      // Note all errors are logged in executeOrThrowException so no need to re-log them here.
       return null;
     }
   }

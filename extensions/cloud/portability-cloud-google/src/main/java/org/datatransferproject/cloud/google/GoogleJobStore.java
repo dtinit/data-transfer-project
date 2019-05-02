@@ -65,6 +65,8 @@ public final class GoogleJobStore implements JobStore {
   private static final String ERROR_KIND = "error";
   private static final String CREATED_FIELD = "created";
   private static final String LAST_UPDATE_FIELD = "lastUpdated";
+  // Field name for entities to store generic json data.
+  private static final String JSON_DATA_FIELD = "jsonData";
 
   private final Datastore datastore;
   // TODO: refactor googleTempFileStore into separate interface
@@ -191,13 +193,18 @@ public final class GoogleJobStore implements JobStore {
 
   @Override
   public void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException {
-    if (errors == null) {
+    if (errors == null || errors.isEmpty()) {
       return;
     }
     List<Entity> entities = new ArrayList<>();
     for (ErrorDetail errorDetail : errors) {
       Key key = getErrorKey(jobId, errorDetail.id());
-      entities.add(createEntityBuilder(key, errorDetail.toMap()).build());
+      entities.add(createEntityBuilder(
+          key,
+          ImmutableMap.of(
+              JSON_DATA_FIELD,
+              objectMapper.writeValueAsString(errorDetail)))
+          .build());
     }
     datastore.add(entities.toArray(new Entity[entities.size()]));
   }
@@ -376,6 +383,8 @@ public final class GoogleJobStore implements JobStore {
   }
 
   private Key getErrorKey(UUID jobId, String errorId) {
+    // Use the main job as the ancestor to all the errors, see:
+    // https://cloud.google.com/datastore/docs/concepts/entities#ancestor_paths
     return datastore.newKeyFactory()
         .setKind(ERROR_KIND)
         .addAncestor(PathElement.of(JOB_KIND, jobId.toString()))

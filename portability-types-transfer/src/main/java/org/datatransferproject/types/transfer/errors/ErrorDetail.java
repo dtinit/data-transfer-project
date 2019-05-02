@@ -33,9 +33,7 @@ import java.util.Map;
 @AutoValue
 @JsonDeserialize(builder = ErrorDetail.Builder.class)
 public abstract class ErrorDetail {
-  private static final String ID_KEY = "Id";
-  private static final String TITLE_KEY = "Title";
-  private static final String EXCEPTION_KEY = "Exception";
+  private static final String DATA_KEY = "Data";
 
   public static ErrorDetail.Builder builder() {
     return new org.datatransferproject.types.transfer.errors.AutoValue_ErrorDetail.Builder();
@@ -49,15 +47,6 @@ public abstract class ErrorDetail {
 
   @JsonProperty("exception")
   public abstract Exception exception();
-
-  public Map<String, Object> toMap() {
-    ImmutableMap.Builder<String, Object> builder =
-        ImmutableMap.<String, Object>builder()
-            .put(ID_KEY, id())
-            .put(TITLE_KEY, title())
-            .put(EXCEPTION_KEY, Throwables.getStackTraceAsString(exception()));
-    return builder.build();
-  }
 
   @AutoValue.Builder
   public abstract static class Builder {
