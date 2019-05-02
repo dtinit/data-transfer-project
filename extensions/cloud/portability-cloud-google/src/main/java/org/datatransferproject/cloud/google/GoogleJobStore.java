@@ -203,6 +203,7 @@ public final class GoogleJobStore implements JobStore {
           key,
           ImmutableMap.of(
               JSON_DATA_FIELD,
+              // TODO: encrypt this data
               objectMapper.writeValueAsString(errorDetail)))
           .build());
     }

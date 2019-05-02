@@ -46,7 +46,7 @@ public abstract class ErrorDetail {
   public abstract String title();
 
   @JsonProperty("exception")
-  public abstract Exception exception();
+  public abstract String exception();
 
   @AutoValue.Builder
   public abstract static class Builder {
@@ -64,6 +64,6 @@ public abstract class ErrorDetail {
     public abstract Builder setTitle(String title);
 
     @JsonProperty("exception")
-    public abstract Builder setException(Exception e);
+    public abstract Builder setException(String exception);
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.cloud.local;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
@@ -27,7 +28,6 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,6 +42,7 @@ public final class LocalJobStore implements JobStore {
   private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
       new ConcurrentHashMap<>();
   private static LocalTempFileStore localTempFileStore = new LocalTempFileStore();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final Monitor monitor;
 
@@ -115,7 +116,9 @@ public final class LocalJobStore implements JobStore {
   public void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException {
     // This is a no-op currently as nothing in DTP reads the errors currently.
     if (errors != null && !errors.isEmpty()) {
-      monitor.info(() -> "Added errors: %s", Arrays.toString(errors.toArray()));
+      for (ErrorDetail error : errors) {
+        monitor.info(() -> "Added error: %s", OBJECT_MAPPER.writeValueAsString(error));
+      }
     }
   }
 

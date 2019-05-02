@@ -17,6 +17,7 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
@@ -69,7 +70,11 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
       return result;
     } catch (Exception e) {
       ErrorDetail errorDetail =
-          ErrorDetail.builder().setId(idempotentId).setTitle(itemName).setException(e).build();
+          ErrorDetail.builder()
+              .setId(idempotentId)
+              .setTitle(itemName)
+              .setException(Throwables.getStackTraceAsString(e))
+              .build();
       errors.put(idempotentId, errorDetail);
       monitor.severe(() -> "Problem with importing item: " + errorDetail);
       throw new IOException("Problem executing callable for: " + idempotentId, e);
