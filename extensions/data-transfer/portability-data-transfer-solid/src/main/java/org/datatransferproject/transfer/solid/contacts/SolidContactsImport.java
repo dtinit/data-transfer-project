@@ -164,14 +164,10 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
       String baseUrl,
       String personDirectory,
       SolidUtilities utilities) {
-    try {
     return executor.executeAndSwallowExceptions(
         Integer.toString(person.hashCode()),
         person.getFormattedName().getValue(),
         () -> insertPerson(baseUrl, personDirectory, person, utilities));
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
   }
 
   private String createContainer(String url, String slug, SolidUtilities utilities) throws Exception {
