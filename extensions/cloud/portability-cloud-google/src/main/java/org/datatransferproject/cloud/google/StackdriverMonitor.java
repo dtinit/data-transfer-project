@@ -1,19 +1,20 @@
 package org.datatransferproject.cloud.google;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.cloud.MonitoredResource;
 import com.google.cloud.logging.LogEntry;
 import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
 import com.google.cloud.logging.Severity;
 import com.google.common.base.Throwables;
+import org.datatransferproject.api.launcher.JobAwareMonitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
+
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Supplier;
-import org.datatransferproject.api.launcher.JobAwareMonitor;
-import org.datatransferproject.launcher.monitor.events.EventCode;
+
+import static com.google.common.base.Preconditions.checkState;
 
 class StackdriverMonitor implements JobAwareMonitor {
 
