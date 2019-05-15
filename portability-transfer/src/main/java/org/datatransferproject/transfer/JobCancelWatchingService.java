@@ -48,7 +48,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
     monitor.debug(() -> "polling for job to check cancellation");
     PortabilityJob currentJob = store.findJob(JobMetadata.getJobId());
     boolean isCanceled = currentJob.state() == PortabilityJob.State.CANCELED;
-    monitor.debug(() -> "Job %s is canceled: %s", JobMetadata.getJobId(), isCanceled);
+    monitor.debug(() -> String.format("Job %s is canceled: %s", JobMetadata.getJobId(), isCanceled));
     if (isCanceled) {
       System.exit(-1);
     }
