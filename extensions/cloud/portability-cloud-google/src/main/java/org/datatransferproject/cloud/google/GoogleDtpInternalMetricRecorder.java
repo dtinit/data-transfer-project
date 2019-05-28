@@ -67,21 +67,21 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   private static final Measure.MeasureLong JOB_FINISHED = Measure.MeasureLong.create(
       "job_finished",
-      "Num er of jobs that finished",
+      "Number of jobs that finished",
       "count");
 
   private static final Measure.MeasureLong JOB_FINISHED_DURATION = Measure.MeasureLong.create(
       "job_finished_duration",
-      "Duration of a job",
+      "Duration of a job in MS",
       "ms");
 
   private static final Measure.MeasureLong EXPORT_PAGE_ATTEMPT = Measure.MeasureLong.create(
       "export_page_attempt",
-      "An single export attempt",
+      "A single export attempt",
       "count");
 
-  private static final Measure.MeasureDouble EXPORT_PAGE_ATTEMPT_DURATION =
-      Measure.MeasureDouble.create(
+  private static final Measure.MeasureLong EXPORT_PAGE_ATTEMPT_DURATION =
+      Measure.MeasureLong.create(
           "export_page_attempt_duration",
           "Duration of a single export attempt in MS",
           "ms");
@@ -91,19 +91,19 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       "An export attempt including all retries",
       "count");
 
-  private static final Measure.MeasureDouble EXPORT_PAGE_DURATION =
-      Measure.MeasureDouble.create(
+  private static final Measure.MeasureLong EXPORT_PAGE_DURATION =
+      Measure.MeasureLong.create(
           "export_page_duration",
-          "Duration of am export page including retries in MS",
+          "Duration of an export page including retries in MS",
           "ms");
 
   private static final Measure.MeasureLong IMPORT_PAGE_ATTEMPT = Measure.MeasureLong.create(
       "import_page_attempt",
-      "An single import attempt",
+      "A single import attempt",
       "count");
 
-  private static final Measure.MeasureDouble IMPORT_PAGE_ATTEMPT_DURATION =
-      Measure.MeasureDouble.create(
+  private static final Measure.MeasureLong IMPORT_PAGE_ATTEMPT_DURATION =
+      Measure.MeasureLong.create(
           "import_page_attempt_duration",
           "Duration of a single import attempt in MS",
           "ms");
@@ -113,10 +113,10 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       "An import attempt including all retries",
       "count");
 
-  private static final Measure.MeasureDouble IMPORT_PAGE_DURATION =
-      Measure.MeasureDouble.create(
+  private static final Measure.MeasureLong IMPORT_PAGE_DURATION =
+      Measure.MeasureLong.create(
           "import_page_duration",
-          "Duration of am imoprt page including retries in MS",
+          "Duration of an import page including retries in MS",
           "ms");
 
   private static final Measure.MeasureLong GENERIC_COUNT = Measure.MeasureLong.create(
