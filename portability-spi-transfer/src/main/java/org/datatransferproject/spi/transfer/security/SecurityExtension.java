@@ -17,12 +17,12 @@ package org.datatransferproject.spi.transfer.security;
 
 import org.datatransferproject.api.launcher.AbstractExtension;
 
-import java.util.Set;
-
 /** Provides security-related services to the worker runtime */
 public interface SecurityExtension extends AbstractExtension {
 
-  Set<PublicKeySerializer> getPublicKeySerializers();
+  TransferKeyGenerator getTransferKeyGenerator();
 
-  Set<AuthDataDecryptService> getDecryptServices();
+  PublicKeySerializer getPublicKeySerializer();
+
+  AuthDataDecryptService getDecryptService();
 }

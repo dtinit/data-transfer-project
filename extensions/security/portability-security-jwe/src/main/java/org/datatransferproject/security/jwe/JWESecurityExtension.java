@@ -17,33 +17,37 @@ package org.datatransferproject.security.jwe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-
-import java.util.Set;
-
-import static java.util.Collections.singleton;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
 /** Handles auth data transfer between the client UI and server using JWE messages. */
 public class JWESecurityExtension implements SecurityExtension {
   private TypeManager typeManager;
+  private Monitor monitor;
 
   @Override
   public void initialize(ExtensionContext context) {
     typeManager = context.getTypeManager();
-  }
-
-
-  @Override
-  public Set<PublicKeySerializer> getPublicKeySerializers() {
-    return singleton(new JWEPublicKeySerializer());
+    monitor = context.getMonitor();
   }
 
   @Override
-  public Set<AuthDataDecryptService> getDecryptServices() {
+  public PublicKeySerializer getPublicKeySerializer() {
+    return new JWEPublicKeySerializer();
+  }
+
+  @Override
+  public AuthDataDecryptService getDecryptService() {
     ObjectMapper objectMapper = typeManager.getMapper();
-    return singleton(new JWEAuthDataDecryptService(objectMapper));
+    return new JWEAuthDataDecryptService(objectMapper);
+  }
+
+  @Override
+  public TransferKeyGenerator getTransferKeyGenerator() {
+    return null;
   }
 }

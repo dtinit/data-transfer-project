@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.security;
+package org.datatransferproject.spi.transfer.security;
 
 import java.security.KeyPair;
-import java.security.PublicKey;
 
-/** Creates and encodes keys for asymmetric encryption. */
-public interface AsymmetricKeyGenerator {
+/** Creates asymmetric encryption key pair unique to each worker instance. */
+public interface TransferKeyGenerator {
 
   /** Generates a {@link KeyPair} */
   KeyPair generate();
-
-  /** Parses an encoded {@link PublicKey}. */
-  PublicKey parse(byte[] encoded);
 }

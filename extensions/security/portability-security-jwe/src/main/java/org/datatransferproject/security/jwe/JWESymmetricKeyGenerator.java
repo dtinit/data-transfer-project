@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.security;
+package org.datatransferproject.security.jwe;
 
-import org.datatransferproject.api.launcher.Monitor;
-
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
 /**
- * RSA-based implementation for {@link KeyPair} creation and encoding.
- *
- * <p>TODO: provide a public module to bind KeyGenerators
+ * RSA-based implementation for {@link KeyPair} creation.
  */
-public class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
+public class JWESymmetricKeyGenerator implements TransferKeyGenerator {
 
   private static final String ALGORITHM = "RSA";
   private final Monitor monitor;
 
-  public RsaSymmetricKeyGenerator(Monitor monitor) {
+  public JWESymmetricKeyGenerator(Monitor monitor) {
     this.monitor = monitor;
   }
 
@@ -50,17 +44,5 @@ public class RsaSymmetricKeyGenerator implements AsymmetricKeyGenerator {
     }
     kpg.initialize(1024);
     return kpg.genKeyPair();
-  }
-
-  @Override
-  public PublicKey parse(byte[] encoded) {
-    KeyFactory factory;
-    try {
-      factory = KeyFactory.getInstance(ALGORITHM);
-      return factory.generatePublic(new X509EncodedKeySpec(encoded));
-    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-      monitor.severe(() -> "Error parsing public key for: " + ALGORITHM, e);
-      throw new RuntimeException("InvalidKeySpecException generating key", e);
-    }
   }
 }

@@ -21,10 +21,7 @@ import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-
-import java.util.Set;
-
-import static java.util.Collections.singleton;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
 /** Handles auth data transfer between the client UI and the server using cleartext */
 public class ClearTextSecurityExtension implements SecurityExtension {
@@ -36,13 +33,18 @@ public class ClearTextSecurityExtension implements SecurityExtension {
   }
 
   @Override
-  public Set<PublicKeySerializer> getPublicKeySerializers() {
-    return singleton(new ClearTextPublicKeySerializer());
+  public TransferKeyGenerator getTransferKeyGenerator() {
+    return null;
   }
 
   @Override
-  public Set<AuthDataDecryptService> getDecryptServices() {
+  public PublicKeySerializer getPublicKeySerializer() {
+    return new ClearTextPublicKeySerializer();
+  }
+
+  @Override
+  public AuthDataDecryptService getDecryptService() {
     ObjectMapper objectMapper = typeManager.getMapper();
-    return singleton(new ClearTextAuthDataDecryptService(objectMapper));
+    return new ClearTextAuthDataDecryptService(objectMapper);
   }
 }

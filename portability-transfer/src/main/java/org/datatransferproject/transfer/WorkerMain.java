@@ -15,6 +15,11 @@
  */
 package org.datatransferproject.transfer;
 
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
+import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobHooks;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -24,12 +29,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.util.List;
+import java.util.ServiceLoader;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.extension.SettingsExtension;
 import org.datatransferproject.security.AesSymmetricKeyGenerator;
-import org.datatransferproject.security.AsymmetricKeyGenerator;
-import org.datatransferproject.security.RsaSymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -38,20 +43,8 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
-import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
-import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
-
-import static java.util.stream.Collectors.toSet;
-import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
-import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
-import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
-import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobHooks;
+import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
 
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
@@ -102,24 +95,12 @@ public class WorkerMain {
 
     List<TransferExtension> transferExtensions = getTransferExtensions(monitor);
 
-    Set<SecurityExtension> securityExtensions = new HashSet<>();
-    ServiceLoader.load(SecurityExtension.class)
-        .iterator()
-        .forEachRemaining(securityExtensions::add);
-    securityExtensions.forEach(e -> e.initialize(extensionContext));
-
-    Set<PublicKeySerializer> publicKeySerializers =
-        securityExtensions
-            .stream()
-            .flatMap(e -> e.getPublicKeySerializers().stream())
-            .collect(toSet());
-
-    Set<AuthDataDecryptService> decryptServices =
-        securityExtensions.stream().flatMap(e -> e.getDecryptServices().stream()).collect(toSet());
+    // Load security extension and services
+    SecurityExtension securityExtension =
+        SecurityExtensionLoader.getSecurityExtension(extensionContext);
 
     // TODO: make configurable
     SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
-    AsymmetricKeyGenerator asymmetricKeyGenerator = new RsaSymmetricKeyGenerator(monitor);
 
     JobHooks jobHooks = loadJobHooks();
 
@@ -129,10 +110,8 @@ public class WorkerMain {
                 extensionContext,
                 cloudExtension,
                 transferExtensions,
-                publicKeySerializers,
-                decryptServices,
+                securityExtension,
                 symmetricKeyGenerator,
-                asymmetricKeyGenerator,
                 jobHooks));
     worker = injector.getInstance(Worker.class);
 
