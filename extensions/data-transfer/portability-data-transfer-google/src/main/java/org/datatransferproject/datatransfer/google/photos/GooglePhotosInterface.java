@@ -180,6 +180,7 @@ public class GooglePhotosInterface {
       updatedParams.putAll(params.get());
     }
 
+    // getAccessToken will return null when the token needs to be refreshed
     if (credential.getAccessToken() == null) {
       credential.refreshToken();
     }
