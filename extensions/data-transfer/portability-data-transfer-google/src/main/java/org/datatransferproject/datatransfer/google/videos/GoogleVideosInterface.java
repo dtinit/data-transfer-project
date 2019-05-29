@@ -20,26 +20,42 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.*;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import org.datatransferproject.datatransfer.google.mediaModels.*;
-import com.google.api.client.json.JsonFactory;
-
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 
 public class GoogleVideosInterface {
+
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
   private static final int MEDIA_PAGE_SIZE = 50; // TODO
 
@@ -131,14 +147,18 @@ public class GoogleVideosInterface {
     }
   }
 
-  private String generateParamsString(Optional<Map<String, String>> params) {
+  private String generateParamsString(Optional<Map<String, String>> params) throws IOException {
     Map<String, String> updatedParams = new ArrayMap<>();
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
     }
-    if (!updatedParams.containsKey(ACCESS_TOKEN_KEY)) {
-      updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
+
+    // getAccessToken will return null when the token needs to be refreshed
+    if (credential.getAccessToken() == null) {
+      credential.refreshToken();
     }
+
+    updatedParams.put(ACCESS_TOKEN_KEY, Preconditions.checkNotNull(credential.getAccessToken()));
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
     Collections.sort(orderedKeys);
@@ -157,7 +177,8 @@ public class GoogleVideosInterface {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
     TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {};
+        new TypeReference<HashMap<String, Object>>() {
+        };
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 }

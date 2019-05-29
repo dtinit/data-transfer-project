@@ -34,6 +34,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;
@@ -52,7 +53,6 @@ import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 
 public class GooglePhotosInterface {
@@ -175,14 +175,18 @@ public class GooglePhotosInterface {
     }
   }
 
-  private String generateParamsString(Optional<Map<String, String>> params) {
+  private String generateParamsString(Optional<Map<String, String>> params) throws IOException {
     Map<String, String> updatedParams = new ArrayMap<>();
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
     }
-    if (!updatedParams.containsKey(ACCESS_TOKEN_KEY)) {
-      updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
+
+    // getAccessToken will return null when the token needs to be refreshed
+    if (credential.getAccessToken() == null) {
+      credential.refreshToken();
     }
+
+    updatedParams.put(ACCESS_TOKEN_KEY, Preconditions.checkNotNull(credential.getAccessToken()));
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
     Collections.sort(orderedKeys);
