@@ -131,14 +131,17 @@ public class GoogleVideosInterface {
     }
   }
 
-  private String generateParamsString(Optional<Map<String, String>> params) {
+  private String generateParamsString(Optional<Map<String, String>> params) throws IOException {
     Map<String, String> updatedParams = new ArrayMap<>();
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
     }
-    if (!updatedParams.containsKey(ACCESS_TOKEN_KEY)) {
-      updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
+
+    if (credential.getAccessToken() == null) {
+      credential.refreshToken();
     }
+
+    updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
     Collections.sort(orderedKeys);
