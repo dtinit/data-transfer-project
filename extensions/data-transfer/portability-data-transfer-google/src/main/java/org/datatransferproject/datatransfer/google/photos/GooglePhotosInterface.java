@@ -34,6 +34,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;
@@ -185,6 +186,7 @@ public class GooglePhotosInterface {
       credential.refreshToken();
     }
 
+    Preconditions.checkNotNull(credential.getAccessToken(), "Unable to refresh access token");
     updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
