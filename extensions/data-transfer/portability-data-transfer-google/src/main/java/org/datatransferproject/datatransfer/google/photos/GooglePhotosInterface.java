@@ -186,8 +186,7 @@ public class GooglePhotosInterface {
       credential.refreshToken();
     }
 
-    Preconditions.checkNotNull(credential.getAccessToken(), "Unable to refresh access token");
-    updatedParams.put(ACCESS_TOKEN_KEY, credential.getAccessToken());
+    updatedParams.put(ACCESS_TOKEN_KEY, Preconditions.checkNotNull(credential.getAccessToken()));
 
     List<String> orderedKeys = updatedParams.keySet().stream().collect(Collectors.toList());
     Collections.sort(orderedKeys);
