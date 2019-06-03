@@ -1,21 +1,20 @@
 package org.datatransferproject.bootstrap.vm;
 
-import com.google.common.util.concurrent.UncaughtExceptionHandlers;
-import org.datatransferproject.api.ApiMain;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.api.launcher.Version;
-import org.datatransferproject.transfer.WorkerMain;
+import static java.lang.String.format;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
+import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-
-import static java.lang.String.format;
-import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import org.datatransferproject.api.ApiMain;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.api.launcher.Version;
+import org.datatransferproject.transfer.WorkerMain;
 
 /**
  * Bootstraps all services (Gateway and 1..N Workers) in a single VM.
@@ -24,12 +23,13 @@ import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor
  */
 public class SingleVMMain {
   private final Consumer<Exception> errorCallback;
+  private final Monitor monitor;
   private ExecutorService executorService;
 
   public static void main(String[] args) {
     Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
 
-    SingleVMMain singleVMMain = new SingleVMMain(SingleVMMain::exitError);
+    SingleVMMain singleVMMain = new SingleVMMain();
 
     Runtime.getRuntime().addShutdownHook(new Thread(singleVMMain::shutdown));
 
@@ -38,13 +38,16 @@ public class SingleVMMain {
     singleVMMain.initializeGateway();
   }
 
-  public SingleVMMain(Consumer<Exception> errorCallback) {
-    this.errorCallback = errorCallback;
+  public SingleVMMain() {
+    this.monitor = loadMonitor();
+    this.errorCallback =
+        (e) -> {
+          monitor.severe(() -> format("Exiting abnormally, exception:%n%n" + e));
+          System.exit(-1);
+        };
   }
 
   public void initializeGateway() {
-    Monitor monitor = loadMonitor();
-
     String version = Version.getVersion();
     String hash = Version.getSourceHash();
 
@@ -97,27 +100,16 @@ public class SingleVMMain {
     }
   }
 
-  private static void exitError(Exception exception) {
-    exception.printStackTrace();
-    System.err.println("Exiting abnormally");
-    System.exit(-1);
-  }
-
   private class WorkerRunner implements Runnable {
     public void run() {
       //noinspection InfiniteLoopStatement
       while (true) {
-        WorkerMain workerMain = new WorkerMain();
         try {
+          WorkerMain workerMain = new WorkerMain();
           workerMain.initialize();
-        } catch (Exception e) {
-          errorCallback.accept(e);
-        }
-        try {
           workerMain.poll();
         } catch (Exception e) {
-          // TODO Logger
-          e.printStackTrace();
+          errorCallback.accept(e);
         }
       }
     }
