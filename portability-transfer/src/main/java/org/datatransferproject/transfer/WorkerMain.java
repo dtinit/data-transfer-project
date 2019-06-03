@@ -15,6 +15,12 @@
  */
 package org.datatransferproject.transfer;
 
+import static java.util.stream.Collectors.toSet;
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
+import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobHooks;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -24,6 +30,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.extension.SettingsExtension;
@@ -41,17 +51,6 @@ import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
-
-import static java.util.stream.Collectors.toSet;
-import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
-import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
-import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
-import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobHooks;
 
 /**
  * Main class to bootstrap a portability transfer worker that will operate on a single job whose
@@ -123,17 +122,23 @@ public class WorkerMain {
 
     JobHooks jobHooks = loadJobHooks();
 
-    Injector injector =
-        Guice.createInjector(
-            new WorkerModule(
-                extensionContext,
-                cloudExtension,
-                transferExtensions,
-                publicKeySerializers,
-                decryptServices,
-                symmetricKeyGenerator,
-                asymmetricKeyGenerator,
-                jobHooks));
+    Injector injector = null;
+    try {
+      injector =
+          Guice.createInjector(
+              new WorkerModule(
+                  extensionContext,
+                  cloudExtension,
+                  transferExtensions,
+                  publicKeySerializers,
+                  decryptServices,
+                  symmetricKeyGenerator,
+                  asymmetricKeyGenerator,
+                  jobHooks));
+    } catch (Exception e) {
+      monitor.severe(() -> "Unable to initialize Guice in worker", e);
+      throw e;
+    }
     worker = injector.getInstance(Worker.class);
 
     // Reset the JobMetadata in case set previously when running SingleVMMain
