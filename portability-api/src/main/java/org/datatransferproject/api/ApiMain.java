@@ -180,7 +180,8 @@ public class ApiMain {
                   tokenManager,
                   extensionContext));
     } catch (Exception e) {
-      monitor.info(() -> "Unable to initialize Guice in Apia", e);
+      monitor.severe(() -> "Unable to initialize Guice in Api", e);
+      throw e;
     }
 
     extensionContext.registerService(Injector.class, injector);

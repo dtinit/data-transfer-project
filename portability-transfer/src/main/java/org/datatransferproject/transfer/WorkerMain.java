@@ -136,7 +136,8 @@ public class WorkerMain {
                   asymmetricKeyGenerator,
                   jobHooks));
     } catch (Exception e) {
-      monitor.info(() -> "Unable to initialize Guice in Apia", e);
+      monitor.severe(() -> "Unable to initialize Guice in worker", e);
+      throw e;
     }
     worker = injector.getInstance(Worker.class);
 
