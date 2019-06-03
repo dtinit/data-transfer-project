@@ -15,10 +15,18 @@
  */
 package org.datatransferproject.transfer;
 
+import static java.lang.String.format;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.security.PrivateKey;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
@@ -32,16 +40,6 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.security.PrivateKey;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import static java.lang.String.format;
 /**
  * Process a job in two steps: <br>
  * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
@@ -54,7 +52,7 @@ final class JobProcessor {
   private final JobHooks hooks;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
-  private final Set<AuthDataDecryptService> decryptServices;
+  private final AuthDataDecryptService decryptService;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
 
@@ -64,14 +62,14 @@ final class JobProcessor {
       JobHooks hooks,
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
-      Set<AuthDataDecryptService> decryptServices,
+      AuthDataDecryptService decryptService,
       Monitor monitor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.store = store;
     this.hooks = hooks;
     this.objectMapper = objectMapper;
     this.copier = copier;
-    this.decryptServices = decryptServices;
+    this.decryptService = decryptService;
     this.monitor = monitor;
     this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
   }
@@ -108,7 +106,7 @@ final class JobProcessor {
       }
 
       String encrypted = jobAuthorization.encryptedAuthData();
-      PrivateKey privateKey = JobMetadata.getKeyPair().getPrivate();
+      PrivateKey privateKey = JobMetadata.getPrivateKey();
       AuthDataPair pair = decryptService.decrypt(encrypted, privateKey);
       AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
       AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
@@ -146,10 +144,8 @@ final class JobProcessor {
 
   @Nullable
   private AuthDataDecryptService getAuthDecryptService(String scheme) {
-    for (AuthDataDecryptService decryptService : decryptServices) {
-      if (decryptService.canHandle(scheme)) {
-        return decryptService;
-      }
+    if (decryptService.canHandle(scheme)) {
+      return decryptService;
     }
     return null;
   }

@@ -24,7 +24,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.JobAwareMonitor;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
-import org.datatransferproject.security.AsymmetricKeyGenerator;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -46,8 +46,8 @@ import static java.lang.String.format;
  */
 class JobPollingService extends AbstractScheduledService {
   private final JobStore store;
-  private final AsymmetricKeyGenerator asymmetricKeyGenerator;
-  private final Set<PublicKeySerializer> publicKeySerializers;
+  private final TransferKeyGenerator transferKeyGenerator;
+  private final PublicKeySerializer publicKeySerializer;
   private final Scheduler scheduler;
   private final Monitor monitor;
   private final Stopwatch stopwatch = Stopwatch.createUnstarted();
@@ -56,14 +56,14 @@ class JobPollingService extends AbstractScheduledService {
   @Inject
   JobPollingService(
       JobStore store,
-      AsymmetricKeyGenerator asymmetricKeyGenerator,
-      Set<PublicKeySerializer> publicKeySerializers,
+      TransferKeyGenerator transferKeyGenerator,
+      PublicKeySerializer publicKeySerializer,
       Scheduler scheduler,
       Monitor monitor,
       ExtensionContext context) {
     this.store = store;
-    this.asymmetricKeyGenerator = asymmetricKeyGenerator;
-    this.publicKeySerializers = publicKeySerializers;
+    this.transferKeyGenerator = transferKeyGenerator;
+    this.publicKeySerializer = publicKeySerializer;
     this.scheduler = scheduler;
     this.monitor = monitor;
     this.credsTimeoutSeconds = context.getSetting("credTimeoutSeconds", 300);
@@ -131,7 +131,7 @@ class JobPollingService extends AbstractScheduledService {
     }
     monitor.debug(() -> format("Polled job %s", jobId));
     Preconditions.checkState(!JobMetadata.isInitialized());
-    KeyPair keyPair = asymmetricKeyGenerator.generate();
+    KeyPair keyPair = transferKeyGenerator.generate();
     PublicKey publicKey = keyPair.getPublic();
     // TODO: Back up private key (keyPair.getPrivate()) in case this transfer worker dies mid-copy,
     // so we don't have to make the user start from scratch. Some options are to manage this key
@@ -164,9 +164,9 @@ class JobPollingService extends AbstractScheduledService {
       return false;
     }
 
+    // TODO: Consider moving this check earlier in the flow
     String scheme = existingJob.jobAuthorization().encryptionScheme();
-    PublicKeySerializer keySerializer = getPublicKeySerializer(scheme);
-    if (keySerializer == null) {
+    if (publicKeySerializer == null) {
       monitor.severe(
           () ->
               format(
@@ -175,7 +175,7 @@ class JobPollingService extends AbstractScheduledService {
       return false;
     }
     PublicKey publicKey = keyPair.getPublic();
-    String serializedKey = keySerializer.serialize(publicKey);
+    String serializedKey = publicKeySerializer.serialize(publicKey);
 
     PortabilityJob updatedJob =
         existingJob
@@ -213,23 +213,14 @@ class JobPollingService extends AbstractScheduledService {
     }
     JobMetadata.init(
         jobId,
-        keyPair,
+        keyPair.getPrivate(),
         existingJob.transferDataType(),
         existingJob.exportService(),
         existingJob.importService());
     return true;
   }
 
-  private PublicKeySerializer getPublicKeySerializer(String scheme) {
-    for (PublicKeySerializer keySerializer : publicKeySerializers) {
-      if (keySerializer.canHandle(scheme)) {
-        return keySerializer;
-      }
-    }
-    return null;
-  }
-
-  /** Polls for job with populated auth data and stops this service when found. */
+   /** Polls for job with populated auth data and stops this service when found. */
   private void pollUntilJobIsReady() {
     UUID jobId = JobMetadata.getJobId();
     PortabilityJob job = store.findJob(jobId);

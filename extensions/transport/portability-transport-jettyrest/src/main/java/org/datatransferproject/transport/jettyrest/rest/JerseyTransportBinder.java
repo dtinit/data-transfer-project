@@ -51,26 +51,33 @@ public class JerseyTransportBinder implements TransportBinder {
 
   @SuppressWarnings("unchecked")
   public void start() {
-    Set<Object> controllers = new HashSet<>();
-    controllers.add(new DataTypesController(actions.get(GetDataTypes.class)));
-    controllers.add(new TransferServicesController(actions.get(GetTransferServices.class)));
-    controllers.add(
-        new TransferController(
-            actions.get(CreateTransferJob.class),
-            actions.get(GenerateServiceAuthData.class),
-            actions.get(ReserveWorker.class),
-            actions.get(GetReservedWorker.class),
-            actions.get(StartTransferJob.class),
-            actions.get(GetTransferJob.class)));
 
-    // Create a Jersey JAX-RS Application (resourceConfig), add the actions, and register it with
-    // the Jetty transport.
-    ResourceConfig resourceConfig = new ResourceConfig();
+    try {
 
-    // resourceConfig.register(JacksonFeature.class)
-    resourceConfig.registerInstances(controllers);
+      Set<Object> controllers = new HashSet<>();
+      controllers.add(new DataTypesController(actions.get(GetDataTypes.class)));
+      controllers.add(new TransferServicesController(actions.get(GetTransferServices.class)));
+      controllers.add(
+          new TransferController(
+              actions.get(CreateTransferJob.class),
+              actions.get(GenerateServiceAuthData.class),
+              actions.get(ReserveWorker.class),
+              actions.get(GetReservedWorker.class),
+              actions.get(StartTransferJob.class),
+              actions.get(GetTransferJob.class)));
 
-    ServletContainer servletContainer = new ServletContainer(resourceConfig);
-    jettyTransport.registerServlet("/api/*", servletContainer);
+      // Create a Jersey JAX-RS Application (resourceConfig), add the actions, and register it with
+      // the Jetty transport.
+      ResourceConfig resourceConfig = new ResourceConfig();
+
+      // resourceConfig.register(JacksonFeature.class)
+      resourceConfig.registerInstances(controllers);
+
+      ServletContainer servletContainer = new ServletContainer(resourceConfig);
+      jettyTransport.registerServlet("/api/*", servletContainer);
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

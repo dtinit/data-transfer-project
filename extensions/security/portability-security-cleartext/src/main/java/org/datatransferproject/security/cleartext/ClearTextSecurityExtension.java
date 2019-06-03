@@ -17,32 +17,37 @@ package org.datatransferproject.security.cleartext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
-
-import java.util.Set;
-
-import static java.util.Collections.singleton;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
 /** Handles auth data transfer between the client UI and the server using cleartext */
 public class ClearTextSecurityExtension implements SecurityExtension {
   private TypeManager typeManager;
+  private Monitor monitor;
 
   @Override
   public void initialize(ExtensionContext context) {
     typeManager = context.getTypeManager();
+    monitor = context.getMonitor();
   }
 
   @Override
-  public Set<PublicKeySerializer> getPublicKeySerializers() {
-    return singleton(new ClearTextPublicKeySerializer());
+  public TransferKeyGenerator getTransferKeyGenerator() {
+    return new ClearTextSymmetricKeyGenerator(monitor);
   }
 
   @Override
-  public Set<AuthDataDecryptService> getDecryptServices() {
+  public PublicKeySerializer getPublicKeySerializer() {
+    return new ClearTextPublicKeySerializer();
+  }
+
+  @Override
+  public AuthDataDecryptService getDecryptService() {
     ObjectMapper objectMapper = typeManager.getMapper();
-    return singleton(new ClearTextAuthDataDecryptService(objectMapper));
+    return new ClearTextAuthDataDecryptService(objectMapper);
   }
 }
