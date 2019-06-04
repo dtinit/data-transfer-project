@@ -63,6 +63,7 @@ public class JettyTransport {
   }
 
   public void start() {
+    try {
     if (useHttps) {
       server = new Server();
       SslContextFactory sslContextFactory = new SslContextFactory();
@@ -91,7 +92,7 @@ public class JettyTransport {
     ContextHandlerCollection contexts = new ContextHandlerCollection();
     contexts.setHandlers(handlers.toArray(new Handler[0]));
     server.setHandler(contexts);
-    try {
+
       server.start();
       monitor.info(() -> "Using Jetty transport");
     } catch (Exception e) {

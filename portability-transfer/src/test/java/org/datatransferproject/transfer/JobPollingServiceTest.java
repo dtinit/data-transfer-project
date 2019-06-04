@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
-import org.datatransferproject.security.AsymmetricKeyGenerator;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
@@ -52,7 +52,7 @@ public class JobPollingServiceTest {
   private static final UUID TEST_ID = UUID.randomUUID();
   private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
 
-  @Mock private AsymmetricKeyGenerator asymmetricKeyGenerator;
+  @Mock private TransferKeyGenerator asymmetricKeyGenerator;
 
   private JobStore store;
   private JobPollingService jobPollingService;

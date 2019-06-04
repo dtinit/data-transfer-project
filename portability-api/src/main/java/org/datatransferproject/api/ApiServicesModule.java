@@ -21,8 +21,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.launcher.metrics.LoggingDtpInternalMetricRecorder;
-import org.datatransferproject.security.AsymmetricKeyGenerator;
-import org.datatransferproject.security.RsaSymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
@@ -101,8 +99,6 @@ public class ApiServicesModule extends FlagBindingModule {
     if (keyManagerFactory != null) {
       bind(KeyManagerFactory.class).toInstance(keyManagerFactory);
     }
-
-    bind(AsymmetricKeyGenerator.class).toInstance(new RsaSymmetricKeyGenerator(getMonitor()));
 
     Multibinder<Action> actionBinder = Multibinder.newSetBinder(binder(), Action.class);
     actionBinder.addBinding().to(DataTypesAction.class);

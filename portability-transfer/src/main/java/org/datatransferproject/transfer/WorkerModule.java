@@ -15,14 +15,20 @@
  */
 package org.datatransferproject.transfer;
 
+import static com.google.common.collect.MoreCollectors.onlyElement;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.DelegatingExtensionContext;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
@@ -31,7 +37,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
 import org.datatransferproject.launcher.metrics.LoggingDtpInternalMetricRecorder;
 import org.datatransferproject.launcher.metrics.ServiceAwareMetricRecorder;
-import org.datatransferproject.security.AsymmetricKeyGenerator;
 import org.datatransferproject.security.SymmetricKeyGenerator;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -42,45 +47,32 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
+import org.datatransferproject.spi.transfer.security.SecurityExtension;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import static com.google.common.collect.MoreCollectors.onlyElement;
 
 final class WorkerModule extends FlagBindingModule {
 
   private final CloudExtension cloudExtension;
   private final ExtensionContext context;
   private final List<TransferExtension> transferExtensions;
-  private final Set<PublicKeySerializer> publicKeySerializers;
-  private final Set<AuthDataDecryptService> decryptServices;
+  private final SecurityExtension securityExtension;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
-  private final AsymmetricKeyGenerator asymmetricKeyGenerator;
   private final JobHooks jobHooks;
 
   WorkerModule(
       ExtensionContext context,
       CloudExtension cloudExtension,
       List<TransferExtension> transferExtensions,
-      Set<PublicKeySerializer> publicKeySerializers,
-      Set<AuthDataDecryptService> decryptServices,
+      SecurityExtension securityExtension,
       SymmetricKeyGenerator symmetricKeyGenerator,
-      AsymmetricKeyGenerator asymmetricKeyGenerator,
       JobHooks jobHooks) {
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
-    this.publicKeySerializers = publicKeySerializers;
-    this.decryptServices = decryptServices;
+    this.securityExtension = securityExtension;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
-    this.asymmetricKeyGenerator = asymmetricKeyGenerator;
     this.jobHooks = jobHooks;
   }
 
@@ -107,8 +99,6 @@ final class WorkerModule extends FlagBindingModule {
     bindFlags(context);
 
     bind(JobHooks.class).toInstance(jobHooks);
-    bind(SymmetricKeyGenerator.class).toInstance(symmetricKeyGenerator);
-    bind(AsymmetricKeyGenerator.class).toInstance(asymmetricKeyGenerator);
     bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
 
@@ -116,6 +106,30 @@ final class WorkerModule extends FlagBindingModule {
     LoggingDtpInternalMetricRecorder.registerRecorderIfNeeded(context);
     bind(DtpInternalMetricRecorder.class)
         .toInstance(context.getService(DtpInternalMetricRecorder.class));
+  }
+
+  @Provides
+  @Singleton
+  SymmetricKeyGenerator getSymmetricKeyGenerator() {
+    return symmetricKeyGenerator;
+  }
+
+  @Provides
+  @Singleton
+  PublicKeySerializer getPublicKeySerializer() {
+    return securityExtension.getPublicKeySerializer();
+  }
+
+  @Provides
+  @Singleton
+  AuthDataDecryptService getAuthDataDecryptService() {
+    return securityExtension.getDecryptService();
+  }
+
+  @Provides
+  @Singleton
+  TransferKeyGenerator getTransferKeyGenerator() {
+    return securityExtension.getTransferKeyGenerator();
   }
 
   @Provides
@@ -172,17 +186,6 @@ final class WorkerModule extends FlagBindingModule {
     return ImmutableList.copyOf(transferExtensions);
   }
 
-  @Provides
-  @Singleton
-  Set<PublicKeySerializer> getPublicKeySerializers() {
-    return ImmutableSet.copyOf(publicKeySerializers);
-  }
-
-  @Provides
-  @Singleton
-  Set<AuthDataDecryptService> getDecryptServices() {
-    return ImmutableSet.copyOf(decryptServices);
-  }
 
   @Provides
   @Singleton
