@@ -113,7 +113,6 @@ def configurePublication(project) {
                 from project.components.java
                 artifact project.sourcesJar
                 artifact project.javadocJar
-                version = '0.2.5'
                 pom.withXml {
                     def root = asNode()
                     root.appendNode('description', 'The Data Transfer Project')
@@ -147,8 +146,8 @@ def configBinTray(project) {
         gpgPassphrase = gpgPhrase
         publication = 'mavenJava'
 
-        org = 'data-transfer-project'   // TODO currently publish to a test org and repo - these will be changed when permanents ones are established
-        repo = 'data-transfer-project'
+        org = 'test-dtp'   // TODO currently publish to a test org and repo - these will be changed when permanents ones are established
+        repo = 'DTP'
         labels = ['data transfer']
         licenses = ['Apache-2.0']
         overrideOnUpload = false // upload task should not override existing artifacts
@@ -158,9 +157,8 @@ def configBinTray(project) {
         vcsUrl = 'https://github.com/google/data-transfer-project'
 
         // if syncing to Maven Central
-        ossrhUser = 'BXdL38kq'
-        ossrhPassword = 'ka1viBhZAYNTXxslRTkmwD4m/eU2nP/c0WFRup1YCR+m'
-        // Use bintrays public keys
+        // ossrhUser =
+        // ossrhPassword =
         // gpgPassphrase =
     }
 
@@ -204,3 +202,4 @@ def setGitVersion() {
     def clean = Git.wrap(repo).status().call().isClean()
     ext.gitVersion = version + (clean ? '' : '.modified')
 }
+
