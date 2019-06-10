@@ -131,12 +131,11 @@ public class JobPollingServiceTest {
           }
         };
     Scheduler scheduler = Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
-    Set<PublicKeySerializer> serializers = Collections.singleton(serializer);
     Monitor monitor = new Monitor() {};
     ExtensionContext extensionContext = mock(ExtensionContext.class);
     when(extensionContext.getSetting("credTimeoutSeconds", 300)).thenReturn(300);
     jobPollingService =
-        new JobPollingService(store, asymmetricKeyGenerator, serializers, scheduler, monitor, extensionContext);
+        new JobPollingService(store, asymmetricKeyGenerator, serializer, scheduler, monitor, extensionContext);
   }
 
   // TODO(data-transfer-project/issues/43): Make this an integration test which uses both the API
