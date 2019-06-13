@@ -232,24 +232,25 @@ class JobPollingService extends AbstractScheduledService {
     UUID jobId = JobMetadata.getJobId();
     PortabilityJob job = store.findJob(jobId);
     if (job == null) {
-      monitor.debug(
-          () -> format("Could not poll job %s, it was not present in the key-value store", jobId));
+      monitor.severe(
+          () -> format("Could not poll job %s, it was not present in the key-value store", jobId),
+          EventCode.WORKER_JOB_ERRORED);
+      this.stopAsync();
     } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_STORED) {
       monitor.debug(() -> format("Polled job %s in state CREDS_STORED", jobId));
       JobAuthorization jobAuthorization = job.jobAuthorization();
       if (!Strings.isNullOrEmpty(jobAuthorization.encryptedAuthData())) {
         monitor.debug(
-            () -> format("Polled job %s has auth data as"
-                             + " expected."
-                             + " Done"
-                             + " polling.", jobId), EventCode.WORKER_CREDS_STORED);
+            () -> format("Polled job %s has auth data as expected. Done polling.", jobId),
+            EventCode.WORKER_CREDS_STORED);
+
       } else {
         monitor.severe(
             () ->
                 format(
                     "Polled job %s does not have auth data as expected. "
                         + "Done polling this job since it's in a bad state! Starting over.",
-                    jobId));
+                    jobId), EventCode.WORKER_JOB_ERRORED);
       }
       this.stopAsync();
     } else {
