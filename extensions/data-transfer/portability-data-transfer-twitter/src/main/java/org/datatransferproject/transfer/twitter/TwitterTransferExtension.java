@@ -65,10 +65,10 @@ public class TwitterTransferExtension implements TransferExtension {
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(
-        initialized, "Trying to call getExporter before initalizing TwitterTransferExtension");
+        initialized, "Trying to call getImporter before initalizing TwitterTransferExtension");
     Preconditions.checkArgument(
         SUPPORTED_TYPES.contains(transferDataType),
-        "Export of " + transferDataType + " not supported by Twitter");
+        "Import of " + transferDataType + " not supported by Twitter");
     return importer;
   }
 
