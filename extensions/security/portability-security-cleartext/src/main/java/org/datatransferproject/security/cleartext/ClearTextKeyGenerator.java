@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.security.jwe;
+package org.datatransferproject.security.cleartext;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -21,19 +21,21 @@ import java.security.NoSuchAlgorithmException;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
-/** RSA-based implementation for {@link KeyPair} creation. */
-public class JWESymmetricKeyGenerator implements TransferKeyGenerator {
+/**
+ * RSA-based implementation for {@link KeyPair} creation. This will go unused in the clear text
+ * flow. TODO: Move to a common location and reconcile with JWE RsaSymmetricKeyGenerator
+ */
+public class ClearTextKeyGenerator implements TransferKeyGenerator {
 
-  static final String ALGORITHM = "RSA";
+  private static final String ALGORITHM = "RSA";
   private final Monitor monitor;
 
-  public JWESymmetricKeyGenerator(Monitor monitor) {
+  public ClearTextKeyGenerator(Monitor monitor) {
     this.monitor = monitor;
   }
 
   @Override
   public WorkerKeyPair generate() {
-    monitor.debug(() -> "JWESymmetricKeyGenerator generate");
     KeyPairGenerator kpg = null;
     try {
       kpg = KeyPairGenerator.getInstance(ALGORITHM);
@@ -43,7 +45,6 @@ public class JWESymmetricKeyGenerator implements TransferKeyGenerator {
     }
     kpg.initialize(1024);
     KeyPair keyPair = kpg.genKeyPair();
-    monitor.debug(() -> "JWESymmetricKeyGenerator generated WorkerKeyPair");
     return new WorkerKeyPair() {
       @Override
       public byte[] getEncodedPublicKey() {

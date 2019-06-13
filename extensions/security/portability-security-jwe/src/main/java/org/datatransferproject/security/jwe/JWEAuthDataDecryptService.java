@@ -62,7 +62,7 @@ public class JWEAuthDataDecryptService implements AuthDataDecryptService {
     }
   }
 
-  /** Decrypts the encoded PrivateKey */
+  /** Creates a PrivateKey from the encoded form. */
   private static PrivateKey parse(byte[] encoded) {
     KeyFactory factory;
     try {

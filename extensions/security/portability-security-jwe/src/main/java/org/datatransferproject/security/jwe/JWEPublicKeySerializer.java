@@ -47,11 +47,11 @@ public class JWEPublicKeySerializer implements PublicKeySerializer {
     return jwk.toString();
   }
 
-  /** Decrypts the encoded PrivateKey */
+  /** Creates a PublicKey from the encoded form. */
   private static PublicKey parse(byte[] encoded) {
     KeyFactory factory;
     try {
-      factory = KeyFactory.getInstance(JWESymmetricKeyGenerator.ALGORITHM);
+      factory = KeyFactory.getInstance(JWEKeyGenerator.ALGORITHM);
       return factory.generatePublic(new X509EncodedKeySpec(encoded));
     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
       throw new RuntimeException(
