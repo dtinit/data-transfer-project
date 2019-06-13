@@ -45,13 +45,13 @@ public final class JobMetadata {
 
   static void init(
       UUID initJobId,
-      byte[] encodedPrivateKey,
+      byte[] initEncodedPrivateKey,
       String initDataType,
       String initExportService,
       String initImportService) {
     Preconditions.checkState(!isInitialized(), "JobMetadata cannot be initialized twice");
     jobId = initJobId;
-    encodedPrivateKey = encodedPrivateKey;
+    encodedPrivateKey = initEncodedPrivateKey;
     dataType = initDataType;
     exportService = initExportService;
     importService = initImportService;
