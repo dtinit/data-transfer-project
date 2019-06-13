@@ -15,8 +15,6 @@
  */
 package org.datatransferproject.security.jwe;
 
-import static sun.security.x509.CertificateAlgorithmId.ALGORITHM;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEObject;
@@ -27,7 +25,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.text.ParseException;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
@@ -66,7 +63,7 @@ public class JWEAuthDataDecryptService implements AuthDataDecryptService {
   private static PrivateKey parse(byte[] encoded) {
     KeyFactory factory;
     try {
-      factory = KeyFactory.getInstance(ALGORITHM);
+      factory = KeyFactory.getInstance(JWEKeyGenerator.ALGORITHM);
       return factory.generatePrivate(new PKCS8EncodedKeySpec(encoded));
     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
       throw new RuntimeException(
