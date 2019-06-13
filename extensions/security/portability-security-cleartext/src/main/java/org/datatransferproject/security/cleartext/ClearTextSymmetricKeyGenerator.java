@@ -22,8 +22,8 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
 /**
- * RSA-based implementation for {@link KeyPair} creation. This will go unused in the clear text flow.
- * TODO: Move to a common location and reconcile with JWE RsaSymmetricKeyGenerator
+ * RSA-based implementation for {@link KeyPair} creation. This will go unused in the clear text
+ * flow. TODO: Move to a common location and reconcile with JWE RsaSymmetricKeyGenerator
  */
 public class ClearTextSymmetricKeyGenerator implements TransferKeyGenerator {
 
@@ -35,7 +35,7 @@ public class ClearTextSymmetricKeyGenerator implements TransferKeyGenerator {
   }
 
   @Override
-  public KeyPair generate() {
+  public WorkerKeyPair generate() {
     KeyPairGenerator kpg = null;
     try {
       kpg = KeyPairGenerator.getInstance(ALGORITHM);
@@ -44,6 +44,17 @@ public class ClearTextSymmetricKeyGenerator implements TransferKeyGenerator {
       throw new RuntimeException("NoSuchAlgorithmException generating key", e);
     }
     kpg.initialize(1024);
-    return kpg.genKeyPair();
+    KeyPair keyPair = kpg.genKeyPair();
+    return new WorkerKeyPair() {
+      @Override
+      public byte[] getEncodedPublicKey() {
+        return keyPair.getPublic().getEncoded();
+      }
+
+      @Override
+      public byte[] getEncodedPrivateKey() {
+        return keyPair.getPrivate().getEncoded();
+      }
+    };
   }
 }

@@ -106,8 +106,8 @@ final class JobProcessor {
       }
 
       String encrypted = jobAuthorization.encryptedAuthData();
-      PrivateKey privateKey = JobMetadata.getPrivateKey();
-      AuthDataPair pair = decryptService.decrypt(encrypted, privateKey);
+      byte[] encodedPrivateKey = JobMetadata.getPrivateKey();
+      AuthDataPair pair = decryptService.decrypt(encrypted, encodedPrivateKey);
       AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
       AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 

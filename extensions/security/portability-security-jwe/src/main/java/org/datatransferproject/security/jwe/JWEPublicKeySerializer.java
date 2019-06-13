@@ -17,12 +17,15 @@ package org.datatransferproject.security.jwe;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
-import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
-import org.datatransferproject.spi.transfer.security.SecurityException;
-
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.UUID;
+import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
+import org.datatransferproject.spi.transfer.security.SecurityException;
 
 /** */
 public class JWEPublicKeySerializer implements PublicKeySerializer {
@@ -33,9 +36,25 @@ public class JWEPublicKeySerializer implements PublicKeySerializer {
   }
 
   @Override
-  public String serialize(PublicKey publicKey) throws SecurityException {
+  public String serialize(byte[] encodedPublicKey) throws SecurityException {
+    PublicKey publicKey = parse(encodedPublicKey);
+    return serialize(publicKey);
+  }
+
+  private String serialize(PublicKey publicKey) throws SecurityException {
     String kid = UUID.randomUUID().toString();
     JWK jwk = new RSAKey.Builder((RSAPublicKey) publicKey).keyID(kid).build();
     return jwk.toString();
+  }
+
+  /** Decrypts the encoded PrivateKey */
+  private static PublicKey parse(byte[] encoded) {
+    KeyFactory factory;
+    try {
+      factory = KeyFactory.getInstance(JWESymmetricKeyGenerator.ALGORITHM);
+      return factory.generatePublic(new X509EncodedKeySpec(encoded));
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      throw new RuntimeException(
+          "InvalidKeySpecException generating PublicKey, encoded: " + encoded, e);    }
   }
 }

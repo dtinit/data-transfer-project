@@ -22,5 +22,5 @@ public interface PublicKeySerializer {
 
   boolean canHandle(String scheme);
 
-  String serialize(PublicKey publicKey) throws SecurityException;
+  String serialize(byte[] encodedPublicKey) throws SecurityException;
 }

@@ -15,16 +15,22 @@
  */
 package org.datatransferproject.security.jwe;
 
+import static sun.security.x509.CertificateAlgorithmId.ALGORITHM;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.RSADecrypter;
+import java.io.IOException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.text.ParseException;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
-
-import java.io.IOException;
-import java.security.PrivateKey;
-import java.text.ParseException;
 
 /** */
 public class JWEAuthDataDecryptService implements AuthDataDecryptService {
@@ -40,7 +46,12 @@ public class JWEAuthDataDecryptService implements AuthDataDecryptService {
   }
 
   @Override
-  public AuthDataPair decrypt(String encrypted, PrivateKey privateKey) {
+  public AuthDataPair decrypt(String encrypted, byte[] encodedPrivateKey) {
+    PrivateKey privateKey = parse(encodedPrivateKey);
+    return decrypt(encrypted, privateKey);
+  }
+
+  private AuthDataPair decrypt(String encrypted, PrivateKey privateKey) {
     try {
       RSADecrypter decrypter = new RSADecrypter(privateKey);
       JWEObject object = JWEObject.parse(encrypted);
@@ -48,6 +59,18 @@ public class JWEAuthDataDecryptService implements AuthDataDecryptService {
       return objectMapper.readValue(object.getPayload().toString(), AuthDataPair.class);
     } catch (IOException | ParseException | JOSEException e) {
       throw new SecurityException("Error decrypting auth tokens", e);
+    }
+  }
+
+  /** Decrypts the encoded PrivateKey */
+  private static PrivateKey parse(byte[] encoded) {
+    KeyFactory factory;
+    try {
+      factory = KeyFactory.getInstance(ALGORITHM);
+      return factory.generatePrivate(new PKCS8EncodedKeySpec(encoded));
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      throw new RuntimeException(
+          "InvalidKeySpecException generating PrivateKey, encoded: " + encoded, e);
     }
   }
 }
