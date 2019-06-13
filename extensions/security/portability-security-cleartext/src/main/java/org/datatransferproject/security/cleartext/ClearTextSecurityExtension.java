@@ -37,7 +37,7 @@ public class ClearTextSecurityExtension implements SecurityExtension {
 
   @Override
   public TransferKeyGenerator getTransferKeyGenerator() {
-    return new ClearTextSymmetricKeyGenerator(monitor);
+    return new ClearTextKeyGenerator(monitor);
   }
 
   @Override

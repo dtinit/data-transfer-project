@@ -15,29 +15,26 @@
  */
 package org.datatransferproject.transfer;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.JobAwareMonitor;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
-import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
-
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator.WorkerKeyPair;
 
 /**
  * A service that polls storage for a job to process in two steps: <br>
@@ -61,16 +58,19 @@ class JobPollingService extends AbstractScheduledService {
       Scheduler scheduler,
       Monitor monitor,
       ExtensionContext context) {
+    monitor.debug(() -> "initializing JobPollingService");
     this.store = store;
     this.transferKeyGenerator = transferKeyGenerator;
     this.publicKeySerializer = publicKeySerializer;
     this.scheduler = scheduler;
     this.monitor = monitor;
     this.credsTimeoutSeconds = context.getSetting("credTimeoutSeconds", 300);
+    monitor.debug(() -> "initialized JobPollingService");
   }
 
   @Override
   protected void runOneIteration() {
+    monitor.debug(() -> "JobMetadata.isInitialized(): " + JobMetadata.isInitialized());
     if (JobMetadata.isInitialized()) {
       if (stopwatch.elapsed(TimeUnit.SECONDS) > credsTimeoutSeconds) {
         UUID jobId = JobMetadata.getJobId();
@@ -127,12 +127,12 @@ class JobPollingService extends AbstractScheduledService {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
     monitor.debug(() -> "Polling for a job in state CREDS_AVAILABLE");
     if (jobId == null) {
+      monitor.debug(() -> format("Did not find job after polling"));
       return;
     }
-    monitor.debug(() -> format("Polled job %s", jobId));
+    monitor.debug(() -> format("Found job %s", jobId));
     Preconditions.checkState(!JobMetadata.isInitialized());
-    KeyPair keyPair = transferKeyGenerator.generate();
-    PublicKey publicKey = keyPair.getPublic();
+    WorkerKeyPair keyPair = transferKeyGenerator.generate();
     // TODO: Back up private key (keyPair.getPrivate()) in case this transfer worker dies mid-copy,
     // so we don't have to make the user start from scratch. Some options are to manage this key
     // pair within our hosting platform's key management system rather than generating here, or to
@@ -146,7 +146,7 @@ class JobPollingService extends AbstractScheduledService {
           () ->
               format(
                   "Updated job %s to CREDS_ENCRYPTION_KEY_GENERATED, publicKey length: %s",
-                  jobId, publicKey.getEncoded().length));
+                  jobId, keyPair.getEncodedPublicKey().length));
       stopwatch.start();
     }
   }
@@ -155,9 +155,10 @@ class JobPollingService extends AbstractScheduledService {
    * Claims {@link PortabilityJob} {@code jobId} and updates it with our public key in storage.
    * Returns true if the claim was successful; otherwise it returns false.
    */
-  private boolean tryToClaimJob(UUID jobId, KeyPair keyPair) {
+  private boolean tryToClaimJob(UUID jobId, WorkerKeyPair keyPair) {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
+    monitor.debug(() -> format("JobPollingService: tryToClaimJob: jobId: %s", existingJob));
     // Verify no transfer worker key
     if (existingJob.jobAuthorization().authPublicKey() != null) {
       monitor.debug(() -> "A public key cannot be persisted again");
@@ -174,8 +175,7 @@ class JobPollingService extends AbstractScheduledService {
                   scheme, jobId));
       return false;
     }
-    PublicKey publicKey = keyPair.getPublic();
-    String serializedKey = publicKeySerializer.serialize(publicKey);
+    String serializedKey = publicKeySerializer.serialize(keyPair.getEncodedPublicKey());
 
     PortabilityJob updatedJob =
         existingJob
@@ -199,11 +199,14 @@ class JobPollingService extends AbstractScheduledService {
           (previous, updated) ->
               Preconditions.checkState(
                   previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
+
+      monitor.debug(() -> format("Stored updated job: tryToClaimJob: jobId: %s", existingJob));
     } catch (IllegalStateException | IOException e) {
       monitor.debug(
           () ->
               format(
-                  "Could not claim job %s. It was probably already claimed by another transfer worker",
+                  "Could not claim job %s. It was probably already claimed by another transfer"
+                      + " worker",
                   jobId));
       return false;
     }
@@ -213,15 +216,19 @@ class JobPollingService extends AbstractScheduledService {
     }
     JobMetadata.init(
         jobId,
-        keyPair.getPrivate(),
+        keyPair.getEncodedPrivateKey(),
         existingJob.transferDataType(),
         existingJob.exportService(),
         existingJob.importService());
+    monitor.debug(
+        () -> format("Stored updated job: tryToClaimJob: JobMetadata initialized: %s", jobId));
+
     return true;
   }
 
-   /** Polls for job with populated auth data and stops this service when found. */
+  /** Polls for job with populated auth data and stops this service when found. */
   private void pollUntilJobIsReady() {
+    monitor.debug(() -> "pollUntilJobIsReady");
     UUID jobId = JobMetadata.getJobId();
     PortabilityJob job = store.findJob(jobId);
     if (job == null) {
@@ -236,6 +243,7 @@ class JobPollingService extends AbstractScheduledService {
         monitor.debug(
             () -> format("Polled job %s has auth data as expected. Done polling.", jobId),
             EventCode.WORKER_CREDS_STORED);
+
       } else {
         monitor.severe(
             () ->

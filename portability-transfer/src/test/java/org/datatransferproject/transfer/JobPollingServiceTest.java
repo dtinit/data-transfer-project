@@ -26,6 +26,7 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityException;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator.WorkerKeyPair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,69 +51,25 @@ import static org.mockito.Mockito.when;
 public class JobPollingServiceTest {
 
   private static final UUID TEST_ID = UUID.randomUUID();
-  private static final KeyPair TEST_KEY_PAIR = createTestKeyPair();
+  private static final WorkerKeyPair TEST_KEY_PAIR = createTestKeyPair();
 
   @Mock private TransferKeyGenerator asymmetricKeyGenerator;
 
   private JobStore store;
   private JobPollingService jobPollingService;
 
-  private static KeyPair createTestKeyPair() {
-    RSAPublicKey publicKey =
-        new RSAPublicKey() {
-          @Override
-          public BigInteger getModulus() {
-            return BigInteger.ZERO;
-          }
+  private static WorkerKeyPair createTestKeyPair() {
+    return new WorkerKeyPair(){
+      @Override
+      public byte[] getEncodedPublicKey() {
+        return "TestPublicKey".getBytes();
+      }
 
-          @Override
-          public BigInteger getPublicExponent() {
-            return BigInteger.ZERO;
-          }
-
-          @Override
-          public String getAlgorithm() {
-            return "RSA";
-          }
-
-          @Override
-          public String getFormat() {
-            return "";
-          }
-
-          @Override
-          public byte[] getEncoded() {
-            return "DummyPublicKey".getBytes();
-          }
-        };
-    RSAPrivateKey privateKey =
-        new RSAPrivateKey() {
-          @Override
-          public BigInteger getModulus() {
-            return BigInteger.ZERO;
-          }
-
-          @Override
-          public BigInteger getPrivateExponent() {
-            return BigInteger.ZERO;
-          }
-
-          @Override
-          public String getAlgorithm() {
-            return "RSA";
-          }
-
-          @Override
-          public String getFormat() {
-            return "";
-          }
-
-          @Override
-          public byte[] getEncoded() {
-            return "DummyPrivateKey".getBytes();
-          }
-        };
-    return new KeyPair(publicKey, privateKey);
+      @Override
+      public byte[] getEncodedPrivateKey() {
+        return "TestPrivateKey".getBytes();
+      }
+    };
   }
 
   @Before
@@ -126,7 +83,7 @@ public class JobPollingServiceTest {
           }
 
           @Override
-          public String serialize(PublicKey publicKey) throws SecurityException {
+          public String serialize(byte[] encodedPublicKey) throws SecurityException {
             return "key";
           }
         };

@@ -21,20 +21,19 @@ import java.security.NoSuchAlgorithmException;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
-/**
- * RSA-based implementation for {@link KeyPair} creation.
- */
-public class JWESymmetricKeyGenerator implements TransferKeyGenerator {
+/** RSA-based implementation for {@link KeyPair} creation. */
+public class JWEKeyGenerator implements TransferKeyGenerator {
 
-  private static final String ALGORITHM = "RSA";
+  static final String ALGORITHM = "RSA";
   private final Monitor monitor;
 
-  public JWESymmetricKeyGenerator(Monitor monitor) {
+  public JWEKeyGenerator(Monitor monitor) {
     this.monitor = monitor;
   }
 
   @Override
-  public KeyPair generate() {
+  public WorkerKeyPair generate() {
+    monitor.debug(() -> "JWEKeyGenerator generate");
     KeyPairGenerator kpg = null;
     try {
       kpg = KeyPairGenerator.getInstance(ALGORITHM);
@@ -43,6 +42,18 @@ public class JWESymmetricKeyGenerator implements TransferKeyGenerator {
       throw new RuntimeException("NoSuchAlgorithmException generating key", e);
     }
     kpg.initialize(1024);
-    return kpg.genKeyPair();
+    KeyPair keyPair = kpg.genKeyPair();
+    monitor.debug(() -> "JWEKeyGenerator generated WorkerKeyPair");
+    return new WorkerKeyPair() {
+      @Override
+      public byte[] getEncodedPublicKey() {
+        return keyPair.getPublic().getEncoded();
+      }
+
+      @Override
+      public byte[] getEncodedPrivateKey() {
+        return keyPair.getPrivate().getEncoded();
+      }
+    };
   }
 }

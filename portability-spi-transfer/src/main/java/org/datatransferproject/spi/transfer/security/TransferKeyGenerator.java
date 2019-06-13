@@ -20,6 +20,11 @@ import java.security.KeyPair;
 /** Creates asymmetric encryption key pair unique to each worker instance. */
 public interface TransferKeyGenerator {
 
-  /** Generates a {@link KeyPair} */
-  KeyPair generate();
+  interface WorkerKeyPair {
+    byte[] getEncodedPublicKey();
+    byte[] getEncodedPrivateKey();
+  }
+
+  /** Generates a {@link WorkerKeyPair} representing encoded private key and associated privatekey */
+  WorkerKeyPair generate();
 }

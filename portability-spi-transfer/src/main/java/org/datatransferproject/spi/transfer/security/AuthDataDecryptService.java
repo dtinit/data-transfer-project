@@ -26,5 +26,5 @@ public interface AuthDataDecryptService {
   boolean canHandle(String scheme);
 
   /** Decrypts the data using the provided private key. */
-  AuthDataPair decrypt(String encrypted, PrivateKey privateKey) throws SecurityException;
+  AuthDataPair decrypt(String encrypted, byte[] encodedPrivateKey) throws SecurityException;
 }

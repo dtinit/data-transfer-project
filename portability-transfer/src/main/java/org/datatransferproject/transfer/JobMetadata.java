@@ -16,9 +16,6 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.util.UUID;
 
 /**
@@ -32,7 +29,7 @@ import java.util.UUID;
 @SuppressWarnings("WeakerAccess")
 // We make the class and various methods public so they can be accessed from Monitors
 public final class JobMetadata {
-  private static PrivateKey privateKey = null;
+  private static byte[] encodedPrivateKey = null;
   private static UUID jobId = null;
   private static String dataType = null;
   private static String exportService = null;
@@ -40,7 +37,7 @@ public final class JobMetadata {
 
   public static boolean isInitialized() {
     return (jobId != null
-        && privateKey != null
+        && encodedPrivateKey != null
         && dataType != null
         && exportService != null
         && importService != null);
@@ -48,13 +45,13 @@ public final class JobMetadata {
 
   static void init(
       UUID initJobId,
-      PrivateKey initPrivateKey,
+      byte[] initEncodedPrivateKey,
       String initDataType,
       String initExportService,
       String initImportService) {
     Preconditions.checkState(!isInitialized(), "JobMetadata cannot be initialized twice");
     jobId = initJobId;
-    privateKey = initPrivateKey;
+    encodedPrivateKey = initEncodedPrivateKey;
     dataType = initDataType;
     exportService = initExportService;
     importService = initImportService;
@@ -63,15 +60,15 @@ public final class JobMetadata {
   // TODO: remove this
   static synchronized void reset() {
     jobId = null;
-    privateKey = null;
+    encodedPrivateKey = null;
     dataType = null;
     exportService = null;
     importService = null;
   }
 
-  static PrivateKey getPrivateKey() {
+  static byte[] getPrivateKey() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
-    return privateKey;
+    return encodedPrivateKey;
   }
 
   public static UUID getJobId() {

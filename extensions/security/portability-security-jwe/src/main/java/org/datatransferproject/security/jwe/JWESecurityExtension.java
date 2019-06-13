@@ -48,6 +48,6 @@ public class JWESecurityExtension implements SecurityExtension {
 
   @Override
   public TransferKeyGenerator getTransferKeyGenerator() {
-    return new JWESymmetricKeyGenerator(monitor);
+    return new JWEKeyGenerator(monitor);
   }
 }

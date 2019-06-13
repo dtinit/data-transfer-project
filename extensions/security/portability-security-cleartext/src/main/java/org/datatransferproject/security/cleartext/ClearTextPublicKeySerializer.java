@@ -30,7 +30,7 @@ public class ClearTextPublicKeySerializer implements PublicKeySerializer {
   }
 
   @Override
-  public String serialize(PublicKey publicKey) throws SecurityException {
-    return BaseEncoding.base64().encode(publicKey.getEncoded());
+  public String serialize(byte[] encodedPublicKey) throws SecurityException {
+    return BaseEncoding.base64().encode(encodedPublicKey);
   }
 }

@@ -36,7 +36,7 @@ public class ClearTextAuthDataDecryptService implements AuthDataDecryptService {
   }
 
   @Override
-  public AuthDataPair decrypt(String encrypted, PrivateKey privateKey) {
+  public AuthDataPair decrypt(String encrypted, /* unused */ byte[] encodedPrivateKey) {
     try {
       return objectMapper.readValue(encrypted, AuthDataPair.class);
     } catch (IOException e) {
