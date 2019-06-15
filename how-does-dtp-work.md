@@ -4,9 +4,11 @@
 
 DTP comprises three main components:
 
-Data Models are the canonical formats that establish a common understanding of how to transfer data.
-Adapters provide a method for converting each Provider’s proprietary data and authentication formats into a form that is usable by the system.
-Task Management Library provides the plumbing to power the system.
+- Data Models are the canonical formats that establish a common understanding of how to transfer data.
+- Adapters provide a method for converting each Provider’s proprietary data and authentication formats into a form that is usable by the system.
+- Task Management Library provides the plumbing to power the system.
+
+### Data Models
 
 Data Models represent the data when being transferred between two different companies. Ideally each company would use interoperable APIs (e.g. ActivityPub) to allow data to flow between them. However in many cases that is not the case. In those cases there needs to be a way to transfer the data from one companies representation to another companies representation.
 
