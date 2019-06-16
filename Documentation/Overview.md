@@ -110,25 +110,31 @@ Where standards exist, the model will encapsulate the standard.
 
 Example model for data type "Photo" vertical:
 
-> class PhotosModelWrapper implements DataModel {  
-  Collection<PhotoAlbum> albums;  
-  Collection<PhotoModel> photos;  
-  ContinuationInformation continuationInformation;  
+```java
+class PhotosModelWrapper implements DataModel {
+  Collection<PhotoAlbum> albums;
+  Collection<PhotoModel> photos;
+  ContinuationInformation continuationInformation;
 }
+```
 
-> class PhotoAlbum {  
-  String id;  
-  String name;  
-  String description;  
+```java
+class PhotoAlbum {
+  String id;
+  String name;
+  String description;
 }
+```
 
-> class PhotoModel {  
-  String title;  
-  String fetchableUrl;  
-  String description;  
-  String mediaType;  
-  String albumId  
+```java
+class PhotoModel {
+  String title;
+  String fetchableUrl;
+  String description;
+  String mediaType;
+  String albumId;
 }
+```
 
 For a given vertical there doesn't need to be only one data specification, but there should be no more than a handful.
 
@@ -139,7 +145,7 @@ Each adapter needs to provide 3 pieces of functionality: authorization, export, 
 Authorization is ideally provided by OAuth, in which case a common auth code can be reused, but adapters are free to define arbitrary auth protocols as needed.
 
 The [export interface](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/datatransferproject/spi/transfer/provider/Exporter.java) can be implemented to allow each service's adapter code to retrieve data and return it in a common data model format.  It also allows for continuation and pagination of data:
-```
+```java
 public interface Exporter<A extends AuthData, T extends DataModel> {
   ExportResult<T> export(UUID jobId, A authData, Optional<ExportInformation> exportInformation)
       throws Exception;
@@ -148,7 +154,7 @@ public interface Exporter<A extends AuthData, T extends DataModel> {
 ExportInformation contains a ContainerResource and PaginationData.  A ContainerResource represents a collection (such as an album or playlist) so that it is clear which collection subsequent data should be added to.  PaginationData contains information about what the next page is - for example, if the job is currently looking at page 2 of a collection, then PaginationData should direct to page 3.
 
 The [import interface](https://github.com/google/data-transfer-project/blob/master/portability-spi-transfer/src/main/java/org/datatransferproject/spi/transfer/provider/Importer.java) allows for implementations to import or upload the data stored in a common data model format, which may include a collection of data or single data item:
-```
+```java
 public interface Importer<A extends AuthData, T extends DataModel> {
   ImportResult importItem(UUID jobId, A authData, T data) throws Exception;
 }
