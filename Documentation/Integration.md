@@ -57,7 +57,7 @@ Transfer Extensions are located in the [extensions/data-transfer module](https:/
   ```
   
 4. Add an entry for your extension in root settings.gradle
-``` javascript
+```javascript
 // Foo transfer extension
 include ':extensions:data-transfer:portability-data-transfer-foo'
 ```
