@@ -15,7 +15,7 @@ with a URI pointing to your profile in the certificate.
 The first thing to do is create a configuration file to tell openssl that you want to define a
 Subject Alternative Name.  It should look something like:
 
-````
+```
 [ req ]
 default_bits        = 2048
 default_keyfile     = server-key.pem
@@ -63,7 +63,7 @@ nsComment           = "OpenSSL Generated Certificate"
 [ alternate_names ]
 # Customize this
 URI   = "https://example.inrupt.net/profile/card#me"
-````
+```
 
 Next run (assuming your config file is named san.cnf):
 
@@ -86,7 +86,7 @@ modulus and exponent from your key.  You can get those by running:
 Then you need to make a post request to `https://example.inrupt.net/profile/card` with something
 like:
 
- ````
+ ```
  @prefix : <#>.
  @prefix solid: <http://www.w3.org/ns/solid/terms#>.
  @prefix pro: <./>.
@@ -125,7 +125,7 @@ like:
      solid:publicTypeIndex </settings/publicTypeIndex.ttl>;
      n0:name "My Name";
      cert:key :mycert.
- ````
+ ```
 
 ## Configuring DTP
 
