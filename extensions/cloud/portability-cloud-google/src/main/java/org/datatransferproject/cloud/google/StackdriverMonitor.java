@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 
 class StackdriverMonitor implements JobAwareMonitor {
 
@@ -62,13 +63,13 @@ class StackdriverMonitor implements JobAwareMonitor {
       for (Object datum : data) {
         if (datum instanceof Throwable) {
           logMessage.append(
-              String.format("\n%s", Throwables.getStackTraceAsString(((Throwable) datum))));
+              format("\n%s", Throwables.getStackTraceAsString(((Throwable) datum))));
         } else if (datum instanceof UUID) {
-          logMessage.append(String.format("\nJobId: %s", ((UUID) datum)));
+          logMessage.append(format("\nJobId: %s", ((UUID) datum)));
         } else if (datum instanceof EventCode) {
-          logMessage.append(String.format("\nEventCode: %s", (EventCode) datum));
+          logMessage.append(format("\nEventCode: %s", (EventCode) datum));
         } else if (datum != null) {
-          logMessage.append(String.format("\n%s", datum));
+          logMessage.append(format("\n%s", datum));
         }
       }
     }
@@ -100,6 +101,6 @@ class StackdriverMonitor implements JobAwareMonitor {
   public void setJobId(String jobId) {
     checkState(this.jobId == null, "JobId can only be set once.");
     this.jobId = jobId;
-    debug(() -> "Set job id to: %s", jobId);
+    debug(() -> format("Set job id to: %s", jobId));
   }
 }

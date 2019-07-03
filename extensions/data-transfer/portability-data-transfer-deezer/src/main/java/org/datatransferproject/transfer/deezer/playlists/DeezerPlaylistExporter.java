@@ -17,6 +17,8 @@
 package org.datatransferproject.transfer.deezer.playlists;
 
 
+import static java.lang.String.format;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
@@ -88,7 +90,7 @@ public class DeezerPlaylistExporter implements
 
     ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>();
 
-      monitor.debug(() -> "Fetching playlist's %s tracks", playlistId);
+      monitor.debug(() -> format("Fetching playlist's %s tracks", playlistId));
       PlaylistDetails playlistDetails = api.getPlaylistDetails(playlistId);
       for (Track track : playlistDetails.getTrackCollection().getTracks()) {
         results.add(convertTrack(api, track.getId()));

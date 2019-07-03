@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.transfer;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
@@ -156,7 +158,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         ImportResult importResult = retryingImporter.call();
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
       } catch (RetryException | RuntimeException e) {
-        monitor.severe(() -> "Got error importing data: %s", e);
+        monitor.severe(() -> format("Got error importing data: %s", e), e);
       } finally{
         metricRecorder.importPageFinished(
             JobMetadata.getDataType(),

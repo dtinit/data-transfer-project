@@ -117,7 +117,8 @@ public final class LocalJobStore implements JobStore {
     // This is a no-op currently as nothing in DTP reads the errors currently.
     if (errors != null && !errors.isEmpty()) {
       for (ErrorDetail error : errors) {
-        monitor.info(() -> "Added error: %s", OBJECT_MAPPER.writeValueAsString(error));
+        String errorString = OBJECT_MAPPER.writeValueAsString(error);
+        monitor.info(() -> "Added error: " + errorString);
       }
     }
   }
