@@ -16,6 +16,8 @@
 
 package org.datatransferproject.transfer;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -59,13 +61,13 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   public <T extends Serializable> T executeOrThrowException(
       String idempotentId, String itemName, Callable<T> callable) throws IOException {
     if (knownValues.containsKey(idempotentId)) {
-      monitor.debug(() -> "Using cached key %s from cache for %s", idempotentId, itemName);
+      monitor.debug(() -> format("Using cached key %s from cache for %s", idempotentId, itemName));
       return (T) knownValues.get(idempotentId);
     }
     try {
       T result = callable.call();
       knownValues.put(idempotentId, result);
-      monitor.debug(() -> "Storing key %s in cache for %s", idempotentId, itemName);
+      monitor.debug(() -> format("Storing key %s in cache for %s", idempotentId, itemName));
       errors.remove(idempotentId);
       return result;
     } catch (Exception e) {
