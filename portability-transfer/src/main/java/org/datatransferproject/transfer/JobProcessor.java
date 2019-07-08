@@ -124,8 +124,10 @@ final class JobProcessor {
           importAuthData,
           jobId,
           exportInfo);
-      monitor.debug(() -> "Finished copy for jobId: " + jobId);
-      success = true;
+      final int numErrors = errors.size();
+      monitor.debug(
+          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
+      success = errors.isEmpty();
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
