@@ -155,7 +155,7 @@ final class JobProcessor {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
       success = false;
-      monitor.severe(() -> "Problem adding errors to JobStore: %s", e);
+      monitor.severe(() -> format("Problem adding errors to JobStore: %s", e), e);
     }
     State state = success ? State.COMPLETE : State.ERROR;
     updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);

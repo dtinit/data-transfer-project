@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
 
 /**
  * Imports playlists into Deezer.
@@ -84,7 +85,7 @@ public class DeezerPlaylistImporter
         playlist.getHeadline(),
         () -> createPlaylist(api, playlist));
     if (null == newPlaylistId) {
-      monitor.severe(() ->"Couldn't create playlist: %s", playlist);
+      monitor.severe(() -> format("Couldn't create playlist: %s", playlist));
       // Playlist couldn't be created error will be reported to user.
       return;
     }

@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.cloud.microsoft.cosmos;
 
+import static java.lang.String.format;
+
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 
@@ -34,8 +36,11 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void startedJob(String dataType, String exportService, String importService) {
-    monitor.debug(() -> "Metric: StartedJob, data type: %s, from: %s, to: %s",
-        dataType, exportService, importService);
+    monitor.debug(
+        () ->
+            format(
+                "Metric: StartedJob, data type: %s, from: %s, to: %s",
+                dataType, exportService, importService));
   }
 
   @Override
@@ -45,12 +50,11 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       boolean success,
       Duration duration) {
     monitor.debug(
-        () -> "Metric: exportPageAttemptFinished, data type: %s, service: %s, "
-            + "success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+        () ->
+            format(
+                "Metric: exportPageAttemptFinished, data type: %s, service: %s, "
+                    + "success: %s, duration: %s",
+                dataType, service, success, duration));
   }
 
   @Override
@@ -60,11 +64,10 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       boolean success,
       Duration duration) {
     monitor.debug(
-        () -> "Metric: exportPageFinished, data type: %s, service: %s, success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+        () ->
+            format(
+                "Metric: exportPageFinished, data type: %s, service: %s, success: %s, duration: %s",
+                dataType, service, success, duration));
   }
 
   @Override
@@ -74,12 +77,11 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       boolean success,
       Duration duration) {
     monitor.debug(
-        () -> "Metric: importPageAttemptFinished, data type: %s, service: %s,"
-            + "success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+        () ->
+            format(
+                "Metric: importPageAttemptFinished, data type: %s, service: %s,"
+                    + "success: %s, duration: %s",
+                dataType, service, success, duration));
   }
 
   @Override
@@ -89,11 +91,10 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       boolean success,
       Duration duration) {
     monitor.debug(
-        () -> "Metric: importPageFinished, data type: %s, service: %s, success: %s, duration: %s",
-        dataType,
-        service,
-        success,
-        duration);
+        () ->
+            format(
+                "Metric: importPageFinished, data type: %s, service: %s, success: %s, duration: %s",
+                dataType, service, success, duration));
   }
 
   @Override
@@ -104,35 +105,43 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
       boolean success,
       Duration duration) {
     monitor.debug(
-        () -> "Metric: finishedJob, data type: %s, from: %s, to: %s, success: %s, duration: %s",
-        dataType,
-        exportService,
-        importService,
-        success,
-        duration);
+        () ->
+            format(
+                "Metric: finishedJob, data type: %s, from: %s, to: %s, success: %s, duration: %s",
+                dataType, exportService, importService, success, duration));
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s",
-        dataType, service, tag);
+    monitor.debug(
+        () ->
+            format("Metric: Generic, data type: %s, service: %s, tag: %s", dataType, service, tag));
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag, boolean bool) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s, value: %s",
-        dataType, service, tag, bool);
+    monitor.debug(
+        () ->
+            format(
+                "Metric: Generic, data type: %s, service: %s, tag: %s, value: %s",
+                dataType, service, tag, bool));
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag, Duration duration) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s, duration: %s",
-        dataType, service, tag, duration);
+    monitor.debug(
+        () ->
+            format(
+                "Metric: Generic, data type: %s, service: %s, tag: %s, duration: %s",
+                dataType, service, tag, duration));
   }
 
   @Override
   public void recordGenericMetric(String dataType, String service, String tag, int value) {
-    monitor.debug(() -> "Metric: Generic, data type: %s, service: %s, tag: %s, value: %s",
-        dataType, service, tag, value);
+    monitor.debug(
+        () ->
+            format(
+                "Metric: Generic, data type: %s, service: %s, tag: %s, value: %s",
+                dataType, service, tag, value));
   }
 }
