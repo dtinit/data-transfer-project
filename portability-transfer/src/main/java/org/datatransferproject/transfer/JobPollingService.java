@@ -127,7 +127,7 @@ class JobPollingService extends AbstractScheduledService {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
     monitor.debug(() -> "Polling for a job in state CREDS_AVAILABLE");
     if (jobId == null) {
-      monitor.debug(() -> format("Did not find job after polling"));
+      monitor.debug(() -> "Did not find job after polling");
       return;
     }
     monitor.debug(() -> format("Found job %s", jobId));

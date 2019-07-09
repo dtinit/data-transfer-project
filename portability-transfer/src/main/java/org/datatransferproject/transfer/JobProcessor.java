@@ -124,8 +124,10 @@ final class JobProcessor {
           importAuthData,
           jobId,
           exportInfo);
-      monitor.debug(() -> "Finished copy for jobId: " + jobId);
-      success = true;
+      final int numErrors = errors.size();
+      monitor.debug(
+          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
+      success = errors.isEmpty();
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
@@ -155,7 +157,7 @@ final class JobProcessor {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
       success = false;
-      monitor.severe(() -> "Problem adding errors to JobStore: %s", e);
+      monitor.severe(() -> format("Problem adding errors to JobStore: %s", e), e);
     }
     State state = success ? State.COMPLETE : State.ERROR;
     updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);

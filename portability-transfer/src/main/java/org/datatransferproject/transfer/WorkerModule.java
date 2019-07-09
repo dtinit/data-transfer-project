@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer;
 
 import static com.google.common.collect.MoreCollectors.onlyElement;
+import static java.lang.String.format;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -227,10 +228,11 @@ final class WorkerModule extends FlagBindingModule {
   private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
     String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
     InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
-    getMonitor().info(
-        () -> "Service %s has a config file: %s",
-        ext.getServiceId(),
-        (inputStream != null));
+    getMonitor()
+        .info(
+            () ->
+                format(
+                    "Service %s has a config file: %s", ext.getServiceId(), (inputStream != null)));
     if (inputStream == null) {
       return TransferServiceConfig.getDefaultInstance();
     } else {
