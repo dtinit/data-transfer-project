@@ -208,6 +208,7 @@ class JobPollingService extends AbstractScheduledService {
                   "Could not claim job %s. It was probably already claimed by another transfer"
                       + " worker",
                   jobId));
+      monitor.severe(() -> "Could not claim job, error:", e);
       return false;
     }
 
