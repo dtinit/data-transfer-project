@@ -61,6 +61,8 @@ public class JobPollingServiceTest {
   private static WorkerKeyPair createTestKeyPair() {
     return new WorkerKeyPair(){
       @Override
+      public String getInstanceId() { return UUID.randomUUID().toString(); }
+      @Override
       public byte[] getEncodedPublicKey() {
         return "TestPublicKey".getBytes();
       }
