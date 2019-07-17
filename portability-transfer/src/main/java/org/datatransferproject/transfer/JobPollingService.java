@@ -206,9 +206,10 @@ class JobPollingService extends AbstractScheduledService {
       monitor.debug(
           () ->
               format(
-                  "Could not claim job %s. It was probably already claimed by another transfer"
-                      + " worker. Error msg: %s",
-                  jobId, e.getMessage()), e);
+                  "Could not claim job %s. It was probably already claimed by"
+                      + " another transfer worker. Error msg: %s",
+                  jobId, e.getMessage()),
+          e);
       return false;
     }
 
