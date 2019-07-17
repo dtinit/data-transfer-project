@@ -18,6 +18,7 @@ package org.datatransferproject.security.cleartext;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
@@ -46,6 +47,11 @@ public class ClearTextKeyGenerator implements TransferKeyGenerator {
     kpg.initialize(1024);
     KeyPair keyPair = kpg.genKeyPair();
     return new WorkerKeyPair() {
+      @Override
+      public String getInstanceId() {
+        return UUID.randomUUID().toString();
+      }
+
       @Override
       public byte[] getEncodedPublicKey() {
         return keyPair.getPublic().getEncoded();

@@ -18,6 +18,7 @@ package org.datatransferproject.security.jwe;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 
@@ -45,6 +46,11 @@ public class JWEKeyGenerator implements TransferKeyGenerator {
     KeyPair keyPair = kpg.genKeyPair();
     monitor.debug(() -> "JWEKeyGenerator generated WorkerKeyPair");
     return new WorkerKeyPair() {
+      @Override
+      public String getInstanceId() {
+        return UUID.randomUUID().toString();
+      }
+
       @Override
       public byte[] getEncodedPublicKey() {
         return keyPair.getPublic().getEncoded();
