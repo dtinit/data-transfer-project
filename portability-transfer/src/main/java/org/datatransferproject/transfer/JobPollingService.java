@@ -184,6 +184,7 @@ class JobPollingService extends AbstractScheduledService {
                 existingJob
                     .jobAuthorization()
                     .toBuilder()
+                    .setInstanceId(keyPair.getInstanceId())
                     .setAuthPublicKey(serializedKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                     .build())
@@ -206,9 +207,8 @@ class JobPollingService extends AbstractScheduledService {
           () ->
               format(
                   "Could not claim job %s. It was probably already claimed by another transfer"
-                      + " worker",
-                  jobId));
-      monitor.severe(() -> "Could not claim job, error:", e);
+                      + " worker. Error msg: %s",
+                  jobId, e.getMessage()), e);
       return false;
     }
 

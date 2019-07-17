@@ -33,7 +33,7 @@ public abstract class PortabilityJob {
   private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
   private static final String ENCRYPTION_SCHEME = "ENCRYPTION_SCHEME";
   private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
-  private static final String WORKER_INSTANCE_ID= "INSTANCE_ID";
+  private static final String WORKER_INSTANCE_ID = "INSTANCE_ID";
   private static final String IMPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
