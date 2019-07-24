@@ -1,5 +1,6 @@
 package org.datatransferproject.api.action.transfer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -98,7 +99,6 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
         job.importService());
 
     try {
-      jobStore.createJob(jobId, job);
       String encodedJobId = encodeJobId(jobId);
 
       AuthFlowConfiguration exportConfiguration =
@@ -106,54 +106,9 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
       AuthFlowConfiguration importConfiguration =
           importGenerator.generateConfiguration(importCallbackUrl, encodedJobId);
 
-      boolean jobNeedsUpdate = false;
-      // If present, store initial auth data for export services, e.g. used for oauth1
-      if (exportConfiguration.getInitialAuthData() != null) {
-        jobNeedsUpdate = true;
-        // Ensure initial auth data for export has not already been set
-        Preconditions.checkState(
-            Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
+      job = setInitialAuthDataOnJob(sessionKey, job, exportConfiguration, importConfiguration);
 
-        // Serialize and encrypt the initial auth data
-        String serialized =
-            objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData());
-        String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
-
-        // Add the serialized and encrypted initial auth data to the job authorization
-        JobAuthorization updatedJobAuthorization =
-            job.jobAuthorization()
-                .toBuilder()
-                .setEncryptedInitialExportAuthData(encryptedInitialAuthData)
-                .build();
-
-        // Persist the updated PortabilityJob with the updated JobAuthorization
-        job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
-      }
-      if (importConfiguration.getInitialAuthData() != null) {
-        jobNeedsUpdate = true;
-
-        // Ensure initial auth data for import has not already been set
-        Preconditions.checkState(
-            Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialImportAuthData()));
-
-        // Serialize and encrypt the initial auth data
-        String serialized =
-            objectMapper.writeValueAsString(importConfiguration.getInitialAuthData());
-        String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
-
-        // Add the serialized and encrypted initial auth data to the job authorization
-        JobAuthorization updatedJobAuthorization =
-            job.jobAuthorization()
-                .toBuilder()
-                .setEncryptedInitialImportAuthData(encryptedInitialAuthData)
-                .build();
-
-        // Persist the updated PortabilityJob with the updated JobAuthorization
-        job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
-      }
-      if (jobNeedsUpdate) {
-        jobStore.updateJob(jobId, job);
-      }
+      jobStore.createJob(jobId, job);
 
       monitor.debug(
           () ->
@@ -176,6 +131,53 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private PortabilityJob setInitialAuthDataOnJob(SecretKey sessionKey, PortabilityJob job,
+      AuthFlowConfiguration exportConfiguration, AuthFlowConfiguration importConfiguration)
+      throws JsonProcessingException {
+    // If present, store initial auth data for export services, e.g. used for oauth1
+    if (exportConfiguration.getInitialAuthData() != null) {
+      // Ensure initial auth data for export has not already been set
+      Preconditions.checkState(
+          Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
+
+      // Serialize and encrypt the initial auth data
+      String serialized =
+          objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData());
+      String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
+
+      // Add the serialized and encrypted initial auth data to the job authorization
+      JobAuthorization updatedJobAuthorization =
+          job.jobAuthorization()
+              .toBuilder()
+              .setEncryptedInitialExportAuthData(encryptedInitialAuthData)
+              .build();
+
+      // Persist the updated PortabilityJob with the updated JobAuthorization
+      job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
+    }
+    if (importConfiguration.getInitialAuthData() != null) {
+      // Ensure initial auth data for import has not already been set
+      Preconditions.checkState(
+          Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialImportAuthData()));
+
+      // Serialize and encrypt the initial auth data
+      String serialized =
+          objectMapper.writeValueAsString(importConfiguration.getInitialAuthData());
+      String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
+
+      // Add the serialized and encrypted initial auth data to the job authorization
+      JobAuthorization updatedJobAuthorization =
+          job.jobAuthorization()
+              .toBuilder()
+              .setEncryptedInitialImportAuthData(encryptedInitialAuthData)
+              .build();
+
+      // Persist the updated PortabilityJob with the updated JobAuthorization
+      job = job.toBuilder().setAndValidateJobAuthorization(updatedJobAuthorization).build();
+    }
+    return job;
   }
 
   /** Populates the initial state of the {@link PortabilityJob} instance. */

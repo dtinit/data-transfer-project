@@ -130,7 +130,7 @@ final class JobProcessor {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
       monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
-      markJobFinished(jobId, success, errors);
+      addErrorsAndMarkJobFinished(jobId, success, errors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
@@ -150,16 +150,15 @@ final class JobProcessor {
     return null;
   }
 
-  private void markJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
+  private void addErrorsAndMarkJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
     try {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
       success = false;
       monitor.severe(() -> format("Problem adding errors to JobStore: %s", e), e);
     }
-    State state = success ? State.COMPLETE : State.ERROR;
     try {
-      store.updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);
+      store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
     } catch (IOException e) {
       monitor.severe(() -> format("Could not mark job %s as finished.", jobId));
     }
@@ -167,7 +166,7 @@ final class JobProcessor {
 
   private void markJobStarted(UUID jobId) {
     try {
-      store.updateJobState(jobId, State.IN_PROGRESS, State.NEW, JobAuthorization.State.CREDS_STORED);
+      store.markJobAsStarted(jobId);
     } catch (IOException e) {
       monitor.severe(() -> format("Could not mark job %s as %s, %s", jobId, State.IN_PROGRESS, e));
     }

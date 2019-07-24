@@ -79,7 +79,7 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
         () -> format("Updating job %s from CREDS_ENCRYPTION_KEY_GENERATED to CREDS_STORED", jobId),
         jobId);
     try {
-      jobStore.updateJob(jobId, job);
+      jobStore.updateJobWithCredentials(jobId, job);
       monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId), jobId,
           EventCode.API_JOB_CREDS_STORED);
     } catch (IOException e) {

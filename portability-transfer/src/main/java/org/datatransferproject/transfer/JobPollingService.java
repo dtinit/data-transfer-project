@@ -92,18 +92,8 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   private void markJobTimedOut(UUID jobId) {
-    PortabilityJob job = store.findJob(jobId);
     try {
-      store.updateJob(
-          jobId,
-          job.toBuilder()
-              .setState(PortabilityJob.State.ERROR)
-              .setAndValidateJobAuthorization(
-                  job.jobAuthorization()
-                      .toBuilder()
-                      .setState(JobAuthorization.State.TIMED_OUT)
-                      .build())
-              .build());
+      store.markJobAsTimedOut(jobId);
     } catch (IOException e) {
       // Suppress exception so we still pass out the original exception
       monitor.severe(

@@ -27,15 +27,6 @@ public interface JobStore extends TemporaryPerJobDataStore {
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}.
-   *
-   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
-   */
-  void updateJob(UUID jobId, PortabilityJob job) throws IOException;
-
-  /**
    * Called by a transfer worker to claim the job matching {@code jobId}, and updates the entry to
    * {@code job} to set the new state and auth public key. This should be atomic and not allow
    * multiple workers to claim the same job.
@@ -47,23 +38,16 @@ public interface JobStore extends TemporaryPerJobDataStore {
   void claimJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Called to update the state of a job with id {@code jobId} to {@code state} (e.g. marking as in
-   * progress or finished). The job store will check the {@code prevState} and {@code prevAuthState}
-   * before updating.
-   *
-   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   *     updating it.
-   * @throws IllegalStateException if the prevState or prevAuthState does not match on the job.
-   */
-  void updateJobState(
-      UUID jobId, State state, State prevState, JobAuthorization.State prevAuthState)
-      throws IOException;
-
-  /**
    * Update the jobs auth state to {@code JobAuthorization.State.CREDS_AVAILABLE} in the store. This
    * indicates to the pool of workers that this job is available for processing.
    */
   void updateJobAuthStateToCredsAvailable(UUID jobId) throws IOException;
+
+  /**
+   * Updates the job to the new version with keys added and the auth state to {@link
+   * JobAuthorization.State#CREDS_STORED} state.
+   */
+  void updateJobWithCredentials(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
    * Stores errors related to a transfer job.
@@ -72,6 +56,28 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * updating it
    */
   void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException;
+
+  /**
+   * Updates a job to mark as finished.
+   * @param state The new state of the job. Can be {@code State.ERROR} or {@code State.COMPLETE}.
+   * @throws IOException if unable to update the job
+   */
+  void markJobAsFinished(UUID jobId, State state) throws IOException;
+
+  /**
+   * Updates a job to mark as in progress.
+   * @throws IOException if unable to update the job
+   */
+  void markJobAsStarted(UUID jobId) throws IOException;
+
+  /**
+   * Called when a worker has been waiting for credentials for a job but has not received them and
+   * timed out. The job should be set to {@code State.Error} and {@code
+   * JobAuthorization.State.TIMED_OUT}.
+   *
+   * @throws IOException if unable to update the job
+   */
+  void markJobAsTimedOut(UUID jobId) throws IOException;
 
   /**
    * Removes the {@link PortabilityJob} in the store keyed by {@code jobId}.
