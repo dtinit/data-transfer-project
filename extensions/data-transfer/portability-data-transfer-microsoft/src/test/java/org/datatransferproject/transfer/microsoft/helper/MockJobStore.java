@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.microsoft.helper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
@@ -31,7 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /** An implementation for testing. */
-public class MockJobStore implements JobStore {
+public class MockJobStore extends JobStoreWithValidator {
   private final Map<String, DataModel> testData = new HashMap<>();
   private final Map<String, InputStream> keyedData = new HashMap<>();
 
@@ -47,7 +48,7 @@ public class MockJobStore implements JobStore {
   public void updateJob(UUID jobId, PortabilityJob job) throws IOException {}
 
   @Override
-  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+  protected void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {}
 
   @Override

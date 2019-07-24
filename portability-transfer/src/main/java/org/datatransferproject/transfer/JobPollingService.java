@@ -194,12 +194,9 @@ class JobPollingService extends AbstractScheduledService {
     // instance polled the same job, and already claimed it, it will have updated the job's state
     // to CREDS_ENCRYPTION_KEY_GENERATED.
     try {
-      store.updateJob(
+      store.claimJob(
           jobId,
-          updatedJob,
-          (previous, updated) ->
-              Preconditions.checkState(
-                  previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
+          updatedJob);
 
       monitor.debug(() -> format("Stored updated job: tryToClaimJob: jobId: %s", existingJob));
     } catch (IllegalStateException | IOException e) {

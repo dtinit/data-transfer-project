@@ -2,6 +2,7 @@ package org.datatransferproject.spi.cloud.storage;
 
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
@@ -15,16 +16,6 @@ import java.util.UUID;
  * back-end services.
  */
 public interface JobStore extends TemporaryPerJobDataStore {
-
-  interface JobUpdateValidator {
-
-    /**
-     * Validation to do as part of an atomic update. Implementers should throw an {@code
-     * IllegalStateException} if the validation fails.
-     */
-    void validate(PortabilityJob previous, PortabilityJob updated);
-  }
-
   /**
    * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
@@ -45,15 +36,34 @@ public interface JobStore extends TemporaryPerJobDataStore {
   void updateJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}. If {@code validator} is non-null, validator.validate() is called first, as part of
-   * the atomic update.
+   * Called by a transfer worker to claim the job matching {@code jobId}, and updates the entry to
+   * {@code job} to set the new state and auth public key. This should be atomic and not allow
+   * multiple workers to claim the same job.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
-   * @throws IllegalStateException if validator.validate() failed
+   *     updating it
+   * @throws IllegalStateException if fails to successfully claim the job.
    */
-  void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator) throws IOException;
+  void claimJob(UUID jobId, PortabilityJob job) throws IOException;
+
+  /**
+   * Called to update the state of a job with id {@code jobId} to {@code state} (e.g. marking as in
+   * progress or finished). The job store will check the {@code prevState} and {@code prevAuthState}
+   * before updating.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   *     updating it.
+   * @throws IllegalStateException if the prevState or prevAuthState does not match on the job.
+   */
+  void updateJobState(
+      UUID jobId, State state, State prevState, JobAuthorization.State prevAuthState)
+      throws IOException;
+
+  /**
+   * Update the jobs auth state to {@code JobAuthorization.State.CREDS_AVAILABLE} in the store. This
+   * indicates to the pool of workers that this job is available for processing.
+   */
+  void updateJobAuthStateToCredsAvailable(UUID jobId) throws IOException;
 
   /**
    * Stores errors related to a transfer job.
