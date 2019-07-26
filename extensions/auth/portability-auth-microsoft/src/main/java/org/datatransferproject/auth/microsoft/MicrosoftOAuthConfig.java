@@ -45,6 +45,7 @@ public class MicrosoftOAuthConfig implements OAuth2Config {
         .put("MAIL", ImmutableSet.of("user.read", "Mail.Read"))
         .put("CONTACTS", ImmutableSet.of("user.read", "Contacts.Read"))
         .put("CALENDAR", ImmutableSet.of("user.read", "Calendars.Read"))
+        .put("PHOTOS", ImmutableSet.of("user.read", "Files.Read"))
         .build();
   }
 
@@ -54,6 +55,7 @@ public class MicrosoftOAuthConfig implements OAuth2Config {
         .put("MAIL", ImmutableSet.of("user.read", "Mail.ReadWrite"))
         .put("CONTACTS", ImmutableSet.of("user.read", "Contacts.ReadWrite"))
         .put("CALENDAR", ImmutableSet.of("user.read", "Calendars.ReadWrite"))
+        .put("PHOTOS", ImmutableSet.of("user.read", "Files.ReadWrite"))
         .build();
   }
 }
