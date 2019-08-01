@@ -35,7 +35,7 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +53,7 @@ import static com.google.common.base.Preconditions.checkState;
  * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
-public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -85,7 +85,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
   public ImportResult importItem(
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      TokenAuthData authData,
+      TokensAndUrlAuthData authData,
       PhotosContainerResource resource) throws IOException {
 
     for (PhotoAlbum album : resource.getAlbums()) {
@@ -111,15 +111,15 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
   @SuppressWarnings("unchecked")
   private String createOneDriveFolder(
-      PhotoAlbum album, TokenAuthData authData) throws IOException {
+      PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", album.getName());
-    rawFolder.put("folder", new Object());
+    rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
-    requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+    requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
     requestBuilder.post(
         RequestBody.create(
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
@@ -146,12 +146,12 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
       PhotoModel photoModel,
       UUID jobId,
       String importedAlbumId,
-      TokenAuthData authData) throws IOException {
+      TokensAndUrlAuthData authData) throws IOException {
     InputStream inputStream = null;
 
     try {
-      if (photoModel.getDataId() != null) {
-        inputStream = jobStore.getStream(jobId, photoModel.getDataId());
+      if (photoModel.isInTempStore()) {
+        inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl());
       } else if (photoModel.getFetchableUrl() != null) {
         inputStream = new URL(photoModel.getFetchableUrl()).openStream();
       } else {
@@ -162,7 +162,7 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
           String.format(uploadPhotoUrlTemplate, importedAlbumId, photoModel.getTitle());
 
       Request.Builder requestBuilder = new Request.Builder().url(uploadUrl);
-      requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
       MediaType contentType = MediaType.parse(photoModel.getMediaType());
 
