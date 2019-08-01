@@ -109,7 +109,7 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
 
 ## Integrate a new Data Model
 
-* The shared model classes for supported Transfer Data Types are located in the [portability-types-transfer](https://github.com/google/data-transfer-project/tree/master/portability-types-transfer) module
+* The shared model classes for supported Transfer Data Types are located in the [portability-types-common](https://github.com/google/data-transfer-project/tree/master/portability-types-common) and [portability-types-transfer](https://github.com/google/data-transfer-project/tree/master/portability-types-transfer) modules
 
 * The first thing to do is look for any existing model classes that may support your use case or that can be extended to support your use case
 

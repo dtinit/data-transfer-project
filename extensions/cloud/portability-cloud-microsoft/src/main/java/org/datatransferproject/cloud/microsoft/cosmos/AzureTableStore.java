@@ -13,7 +13,7 @@ import com.microsoft.azure.storage.table.CloudTableClient;
 import com.microsoft.azure.storage.table.TableOperation;
 import com.microsoft.azure.storage.table.TableQuery;
 import com.microsoft.azure.storage.table.TableResult;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
@@ -30,7 +30,7 @@ import java.util.UUID;
 import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
 
 /** Uses the Azure Cosmos DB Table Storage API to persist job data. */
-public class AzureTableStore implements JobStore {
+public class AzureTableStore extends JobStoreWithValidator {
   private static final String COSMOS_CONNECTION_TEMPLATE =
       "DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s;TableEndpoint=%s;";
   private static final String ENDPOINT_TEMPLATE = "https://%s.table.cosmosdb.azure.com:443/";
@@ -106,7 +106,7 @@ public class AzureTableStore implements JobStore {
   }
 
   @Override
-  public void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+  protected void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {
 
     Preconditions.checkNotNull(jobId, "Job is null");

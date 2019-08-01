@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.api.launcher;
 
+import static java.lang.String.format;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,11 +71,12 @@ public class DelegatingExtensionContext implements ExtensionContext {
 
   public <T> void registerOverrideService(Class<T> type, T service) {
     if (overriddenRegisteredClasses.containsKey(type)) {
-      getMonitor().info(
-          () -> "Re-overriding type %s from %s to %s",
-          type,
-          overriddenRegisteredClasses.get(type),
-          service);
+      getMonitor()
+          .info(
+              () ->
+                  format(
+                      "Re-overriding type %s from %s to %s",
+                      type, overriddenRegisteredClasses.get(type), service));
     }
     overriddenRegisteredClasses.put(type, service);
   }

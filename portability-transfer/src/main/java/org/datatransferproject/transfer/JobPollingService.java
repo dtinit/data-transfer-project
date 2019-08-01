@@ -92,18 +92,8 @@ class JobPollingService extends AbstractScheduledService {
   }
 
   private void markJobTimedOut(UUID jobId) {
-    PortabilityJob job = store.findJob(jobId);
     try {
-      store.updateJob(
-          jobId,
-          job.toBuilder()
-              .setState(PortabilityJob.State.ERROR)
-              .setAndValidateJobAuthorization(
-                  job.jobAuthorization()
-                      .toBuilder()
-                      .setState(JobAuthorization.State.TIMED_OUT)
-                      .build())
-              .build());
+      store.markJobAsTimedOut(jobId);
     } catch (IOException e) {
       // Suppress exception so we still pass out the original exception
       monitor.severe(
@@ -127,7 +117,7 @@ class JobPollingService extends AbstractScheduledService {
     UUID jobId = store.findFirst(JobAuthorization.State.CREDS_AVAILABLE);
     monitor.debug(() -> "Polling for a job in state CREDS_AVAILABLE");
     if (jobId == null) {
-      monitor.debug(() -> format("Did not find job after polling"));
+      monitor.debug(() -> "Did not find job after polling");
       return;
     }
     monitor.debug(() -> format("Found job %s", jobId));
@@ -184,6 +174,7 @@ class JobPollingService extends AbstractScheduledService {
                 existingJob
                     .jobAuthorization()
                     .toBuilder()
+                    .setInstanceId(keyPair.getInstanceId())
                     .setAuthPublicKey(serializedKey)
                     .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
                     .build())
@@ -193,12 +184,9 @@ class JobPollingService extends AbstractScheduledService {
     // instance polled the same job, and already claimed it, it will have updated the job's state
     // to CREDS_ENCRYPTION_KEY_GENERATED.
     try {
-      store.updateJob(
+      store.claimJob(
           jobId,
-          updatedJob,
-          (previous, updated) ->
-              Preconditions.checkState(
-                  previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
+          updatedJob);
 
       monitor.debug(() -> format("Stored updated job: tryToClaimJob: jobId: %s", existingJob));
     } catch (IllegalStateException | IOException e) {
@@ -206,8 +194,10 @@ class JobPollingService extends AbstractScheduledService {
           () ->
               format(
                   "Could not claim job %s. It was probably already claimed by another transfer"
-                      + " worker",
-                  jobId));
+                      + " worker. Error msg: %s",
+                  jobId, e.getMessage()),
+          e);
+
       return false;
     }
 

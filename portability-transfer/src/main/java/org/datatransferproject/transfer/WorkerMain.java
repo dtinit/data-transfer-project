@@ -98,6 +98,7 @@ public class WorkerMain {
     // Load security extension and services
     SecurityExtension securityExtension =
         SecurityExtensionLoader.getSecurityExtension(extensionContext);
+    monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
 
     // TODO: make configurable
     SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
