@@ -140,7 +140,7 @@ public class JobPollingServiceTest {
             .setAndValidateJobAuthorization(
                 job.jobAuthorization().toBuilder().setState(State.CREDS_AVAILABLE).build())
             .build();
-    store.updateJob(TEST_ID, job);
+    store.updateJobAuthStateToCredsAvailable(TEST_ID);
 
     // Verify 'creds available' state
     job = store.findJob(TEST_ID);
@@ -169,7 +169,7 @@ public class JobPollingServiceTest {
                     .setState(State.CREDS_STORED)
                     .build())
             .build();
-    store.updateJob(TEST_ID, job);
+    store.updateJobWithCredentials(TEST_ID, job);
 
     // Run another iteration of the polling service
     // Worker should pick up encrypted data and update job

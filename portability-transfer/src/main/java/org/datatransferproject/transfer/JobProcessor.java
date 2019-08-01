@@ -18,11 +18,9 @@ package org.datatransferproject.transfer;
 import static java.lang.String.format;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Inject;
 import java.io.IOException;
-import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
@@ -132,7 +130,7 @@ final class JobProcessor {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
       monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
-      markJobFinished(jobId, success, errors);
+      addErrorsAndMarkJobFinished(jobId, success, errors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
@@ -152,34 +150,25 @@ final class JobProcessor {
     return null;
   }
 
-  private void markJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
+  private void addErrorsAndMarkJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
     try {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
       success = false;
       monitor.severe(() -> format("Problem adding errors to JobStore: %s", e), e);
     }
-    State state = success ? State.COMPLETE : State.ERROR;
-    updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);
+    try {
+      store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
+    } catch (IOException e) {
+      monitor.severe(() -> format("Could not mark job %s as finished.", jobId));
+    }
   }
 
   private void markJobStarted(UUID jobId) {
-    updateJobState(jobId, State.IN_PROGRESS, State.NEW, JobAuthorization.State.CREDS_STORED);
-  }
-
-  private void updateJobState(UUID jobId, State state, State prevState,
-      JobAuthorization.State prevAuthState) {
-    PortabilityJob existingJob = store.findJob(jobId);
-    PortabilityJob updatedJob = existingJob.toBuilder().setState(state).build();
-
     try {
-      store.updateJob(jobId, updatedJob,
-          ((previous, updated) -> {
-            Preconditions.checkState(previous.state() == prevState);
-            Preconditions.checkState(previous.jobAuthorization().state() == prevAuthState);
-          }));
+      store.markJobAsStarted(jobId);
     } catch (IOException e) {
-      monitor.debug(() -> format("Could not mark job %s as %s, %s", jobId, state, e));
+      monitor.severe(() -> format("Could not mark job %s as %s, %s", jobId, State.IN_PROGRESS, e));
     }
   }
 }

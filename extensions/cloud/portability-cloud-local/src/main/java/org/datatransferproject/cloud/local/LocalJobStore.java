@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.lang.String.format;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
-public final class LocalJobStore implements JobStore {
+public final class LocalJobStore extends JobStoreWithValidator {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
       new ConcurrentHashMap<>();
@@ -95,7 +96,7 @@ public final class LocalJobStore implements JobStore {
    * @throws IllegalStateException if validator.validate() failed
    */
   @Override
-  public synchronized void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+  protected synchronized void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {
     Preconditions.checkNotNull(jobId);
     try {

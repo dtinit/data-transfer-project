@@ -36,16 +36,6 @@ public final class ActionUtils {
         Charsets.UTF_8));
   }
 
-  /** Determines whether the current service is a valid service for export. */
-  public static boolean isValidExportService(String serviceName) {
-    return !Strings.isNullOrEmpty(serviceName);
-  }
-
-  /** Determines whether the current service is a valid service for import. */
-  public static boolean isValidImportService(String serviceName) {
-    return !Strings.isNullOrEmpty(serviceName);
-  }
-
   /** Determines whether the current service is a valid service for import. */
   public static boolean isValidTransferDataType(String transferDataType) {
     return !Strings.isNullOrEmpty(transferDataType);
