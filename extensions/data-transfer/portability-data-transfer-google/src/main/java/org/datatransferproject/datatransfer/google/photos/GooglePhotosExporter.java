@@ -94,8 +94,9 @@ public class GooglePhotosExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      Optional<ExportInformation> exportInformation) throws IOException {
+  public ExportResult<PhotosContainerResource> export(
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
+      throws IOException {
     if (!exportInformation.isPresent()) {
       // Make list of photos contained in albums so they are not exported twice later on
       populateContainedPhotosList(jobId, authData);
@@ -123,22 +124,26 @@ public class GooglePhotosExporter
     boolean paginationDataPresent = paginationToken != null;
 
     if (!containerResourcePresent
-        && paginationDataPresent && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
+        && paginationDataPresent
+        && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
       return exportAlbums(authData, Optional.of(paginationToken), jobId);
     } else {
-      return exportPhotos(authData,
+      return exportPhotos(
+          authData,
           Optional.ofNullable(idOnlyContainerResource),
-          Optional.ofNullable(paginationToken), jobId);
+          Optional.ofNullable(paginationToken),
+          jobId);
     }
   }
 
   /**
-   * Note: not all accounts have albums to return.  In that case, we just return an empty list of
+   * Note: not all accounts have albums to return. In that case, we just return an empty list of
    * albums instead of trying to iterate through a null list.
    */
   @VisibleForTesting
-  ExportResult<PhotosContainerResource> exportAlbums(TokensAndUrlAuthData authData,
-      Optional<PaginationData> paginationData, UUID jobId) throws IOException {
+  ExportResult<PhotosContainerResource> exportAlbums(
+      TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId)
+      throws IOException {
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
@@ -166,13 +171,11 @@ public class GooglePhotosExporter
     if (googleAlbums != null && googleAlbums.length > 0) {
       for (GoogleAlbum googleAlbum : googleAlbums) {
         // Add album info to list so album can be recreated later
-        PhotoAlbum photoAlbum = new PhotoAlbum(
-            googleAlbum.getId(),
-            googleAlbum.getTitle(),
-            null);
+        PhotoAlbum photoAlbum = new PhotoAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null);
         albums.add(photoAlbum);
 
-        monitor.debug(()->String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
+        monitor.debug(
+            () -> String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -182,28 +185,30 @@ public class GooglePhotosExporter
     ResultType resultType = ResultType.CONTINUE;
 
     PhotosContainerResource containerResource = new PhotosContainerResource(albums, null);
-    ExportResult<PhotosContainerResource> exportResult = new ExportResult<>(resultType,
-        containerResource, continuationData);
-    return exportResult;
+    return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
   @VisibleForTesting
-  ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
+  ExportResult<PhotosContainerResource> exportPhotos(
+      TokensAndUrlAuthData authData,
       Optional<IdOnlyContainerResource> albumData,
-      Optional<PaginationData> paginationData, UUID jobId) throws IOException {
+      Optional<PaginationData> paginationData,
+      UUID jobId)
+      throws IOException {
     Optional<String> albumId = Optional.empty();
     if (albumData.isPresent()) {
       albumId = Optional.of(albumData.get().getId());
     }
     Optional<String> paginationToken = getPhotosPaginationToken(paginationData);
 
-    MediaItemSearchResponse mediaItemSearchResponse = getOrCreatePhotosInterface(authData)
-        .listMediaItems(albumId, paginationToken);
+    MediaItemSearchResponse mediaItemSearchResponse =
+        getOrCreatePhotosInterface(authData).listMediaItems(albumId, paginationToken);
 
     PaginationData nextPageData = null;
     if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
-      nextPageData = new StringPaginationToken(
-          PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
+      nextPageData =
+          new StringPaginationToken(
+              PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
@@ -222,13 +227,9 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-
-  /**
-   * Method for storing a list of all photos that are already contained in albums
-   */
+  /** Method for storing a list of all photos that are already contained in albums */
   @VisibleForTesting
-  void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
-      throws IOException {
+  void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData) throws IOException {
     // This method is only called once at the beginning of the transfer, so we can start by
     // initializing a new TempPhotosData to be store in the job store.
     TempPhotosData tempPhotosData = new TempPhotosData(jobId);
@@ -237,15 +238,16 @@ public class GooglePhotosExporter
     AlbumListResponse albumListResponse;
     MediaItemSearchResponse containedMediaSearchResponse;
     do {
-      albumListResponse = getOrCreatePhotosInterface(authData)
-          .listAlbums(Optional.ofNullable(albumToken));
+      albumListResponse =
+          getOrCreatePhotosInterface(authData).listAlbums(Optional.ofNullable(albumToken));
       if (albumListResponse.getAlbums() != null) {
         for (GoogleAlbum album : albumListResponse.getAlbums()) {
           String albumId = album.getId();
           String photoToken = null;
           do {
-            containedMediaSearchResponse = getOrCreatePhotosInterface(authData)
-                .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+            containedMediaSearchResponse =
+                getOrCreatePhotosInterface(authData)
+                    .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
             if (containedMediaSearchResponse.getMediaItems() != null) {
               for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
                 tempPhotosData.addContainedPhotoId(mediaItem.getId());
@@ -274,8 +276,8 @@ public class GooglePhotosExporter
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
-      Preconditions
-          .checkArgument(token.startsWith(PHOTO_TOKEN_PREFIX), "Invalid pagination token " + token);
+      Preconditions.checkArgument(
+          token.startsWith(PHOTO_TOKEN_PREFIX), "Invalid pagination token " + token);
       if (token.length() > PHOTO_TOKEN_PREFIX.length()) {
         paginationToken = Optional.of(token.substring(PHOTO_TOKEN_PREFIX.length()));
       }
@@ -283,8 +285,8 @@ public class GooglePhotosExporter
     return paginationToken;
   }
 
-  private List<PhotoModel> convertPhotosList(Optional<String> albumId,
-      GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
+  private List<PhotoModel> convertPhotosList(
+      Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
 
     TempPhotosData tempPhotosData = null;
@@ -307,7 +309,7 @@ public class GooglePhotosExporter
           PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
-          monitor.debug(()->String.format("%s: Google exporting photo: %s", jobId, photoModel));
+          monitor.debug(() -> String.format("%s: Google exporting photo: %s", jobId, photoModel));
         }
       }
     }
@@ -318,12 +320,12 @@ public class GooglePhotosExporter
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
 
     return new PhotoModel(
-        "", // TODO: no title?  Should we use the description instead?
+        mediaItem.getFilename(),
         mediaItem.getBaseUrl() + "=d",
         mediaItem.getDescription(),
         mediaItem.getMimeType(),
         mediaItem.getId(),
-        albumId.isPresent() ? albumId.get() : null,
+        albumId.orElse(null),
         false);
   }
 

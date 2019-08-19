@@ -49,11 +49,12 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  *
- * <p>The implementation currently uses the Graph Upload API, which has a content size limit of
- * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
+ * <p>The implementation currently uses the Graph Upload API, which has a content size limit of 4MB.
+ * In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
-public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosImporter
+    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -62,6 +63,9 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
+  private final String albumlessPhotoUrlTemplate;
+
+  private String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
 
   public MicrosoftPhotosImporter(
       String baseUrl,
@@ -73,7 +77,9 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
-    uploadPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/content";
+    uploadPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/content%s";
+
+    albumlessPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/root:/Pictures/%s:/content%s";
 
     this.client = client;
     this.objectMapper = objectMapper;
@@ -84,34 +90,32 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   @Override
   public ImportResult importItem(
       UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
+      IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      PhotosContainerResource resource) throws IOException {
+      PhotosContainerResource resource)
+      throws IOException {
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
-      idempotentExecutor.executeAndSwallowExceptions(
-          album.getId(),
-          album.getName(),
-          () -> createOneDriveFolder(album, authData));
+      idempotentImportExecutor.executeAndSwallowExceptions(
+          album.getId(), album.getName(), () -> createOneDriveFolder(album, authData));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
 
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentImportExecutor.executeAndSwallowExceptions(
           Integer.toString(photoModel.hashCode()),
           photoModel.getTitle(),
           () -> {
-            String folderId = idempotentExecutor.getCachedValue(photoModel.getAlbumId());
-            return importPhoto(photoModel, jobId, folderId, authData);
+            return importSinglePhoto(photoModel, jobId, authData, idempotentImportExecutor);
           });
     }
     return ImportResult.OK;
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(
-      PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
+  private String createOneDriveFolder(PhotoAlbum album, TokensAndUrlAuthData authData)
+      throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", album.getName());
@@ -132,8 +136,10 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         }
         Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
         String folderId = (String) responseData.get("id");
-        checkState(!Strings.isNullOrEmpty(folderId),
-            "Expected id value to be present in %s", responseData);
+        checkState(
+            !Strings.isNullOrEmpty(folderId),
+            "Expected id value to be present in %s",
+            responseData);
         return folderId;
       } else {
         throw new IOException("Got response code: " + code);
@@ -142,29 +148,37 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     }
   }
 
-  private String importPhoto(
-      PhotoModel photoModel,
+  private String importSinglePhoto(
+      PhotoModel photo,
       UUID jobId,
-      String importedAlbumId,
-      TokensAndUrlAuthData authData) throws IOException {
+      TokensAndUrlAuthData authData,
+      IdempotentImportExecutor idempotentImportExecutor)
+      throws IOException {
     InputStream inputStream = null;
 
     try {
-      if (photoModel.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl());
-      } else if (photoModel.getFetchableUrl() != null) {
-        inputStream = new URL(photoModel.getFetchableUrl()).openStream();
+      String uploadUrl = null;
+      if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+        uploadUrl = String.format(albumlessPhotoUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
       } else {
-        throw new IllegalStateException("Don't know how to get the inputStream for " + photoModel);
+        String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
+        uploadUrl =
+            String.format(
+                uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
       }
 
-      String uploadUrl =
-          String.format(uploadPhotoUrlTemplate, importedAlbumId, photoModel.getTitle());
+      if (photo.isInTempStore()) {
+        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl());
+      } else if (photo.getFetchableUrl() != null) {
+        inputStream = new URL(photo.getFetchableUrl()).openStream();
+      } else {
+        throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
+      }
 
       Request.Builder requestBuilder = new Request.Builder().url(uploadUrl);
       requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
-      MediaType contentType = MediaType.parse(photoModel.getMediaType());
+      MediaType contentType = MediaType.parse(photo.getMediaType());
 
       StreamingBody body = new StreamingBody(contentType, inputStream);
 
