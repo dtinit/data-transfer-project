@@ -63,7 +63,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
    * updating it
    */
-  void addErrorsToJob(UUID jobId, String failureReason) throws IOException;
+  void addFailureReasonToJob(UUID jobId, String failureReason) throws IOException;
 
   /**
    * Updates a job to mark as finished.
