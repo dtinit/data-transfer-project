@@ -126,6 +126,9 @@ final class JobProcessor {
       monitor.debug(
           () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
       success = errors.isEmpty();
+    } catch (DestinationMemoryFullException e) {
+      monitor.severe(() -> "Destination memory error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
+      store.addFailureReasonToJob(jobId, "DESTINATION_FULL")
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {

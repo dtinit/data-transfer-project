@@ -58,6 +58,14 @@ public interface JobStore extends TemporaryPerJobDataStore {
   void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException;
 
   /**
+   * Stores a FailureReason related to a transfer job.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   */
+  void addErrorsToJob(UUID jobId, String failureReason) throws IOException;
+
+  /**
    * Updates a job to mark as finished.
    * @param state The new state of the job. Can be {@code State.ERROR} or {@code State.COMPLETE}.
    * @throws IOException if unable to update the job

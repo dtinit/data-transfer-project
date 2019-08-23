@@ -121,6 +121,9 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         try {
           importSinglePhoto(idempotentExecutor, jobId, photo);
         } catch (FlickrException e) {
+          if (e.getMessage().contains("Upload limit reached")) {
+            throw new DestinationMemoryFullException("Flickr destination memory reached", e);
+          }
           throw new IOException(e);
         }
       }
