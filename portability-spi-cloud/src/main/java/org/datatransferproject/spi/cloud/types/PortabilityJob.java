@@ -50,7 +50,8 @@ public abstract class PortabilityJob {
     return new org.datatransferproject.spi.cloud.types.AutoValue_PortabilityJob.Builder()
         .setState(State.NEW)
         .setCreatedTimestamp(now)
-        .setLastUpdateTimestamp(now);
+        .setLastUpdateTimestamp(now)
+        .setFailureReason("None");
   }
 
   public static PortabilityJob fromMap(Map<String, Object> properties) {
@@ -151,7 +152,7 @@ public abstract class PortabilityJob {
   @JsonProperty("jobAuthorization")
   public abstract JobAuthorization jobAuthorization();
 
-  @JsonProperty("FailureReason")
+  @JsonProperty("failureReason")
   public abstract String failureReason();
 
   public abstract PortabilityJob.Builder toBuilder();
