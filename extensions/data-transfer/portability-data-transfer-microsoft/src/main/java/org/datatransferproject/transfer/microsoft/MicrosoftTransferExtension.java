@@ -32,7 +32,7 @@ import java.io.IOException;
 /** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
-  // TODO: centralized place, or enum type for these
+  // TODO: centralized place, or enum type for these?
   private static final String CONTACTS = "CONTACTS";
   private static final String CALENDAR = "CALENDAR";
   private static final String PHOTOS = "PHOTOS";
