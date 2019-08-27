@@ -22,6 +22,9 @@ import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
+import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -55,7 +58,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private final Provider<Exporter> exporterProvider;
 
   private final Provider<Importer> importerProvider;
-  private final InMemoryIdempotentImportExecutor inMemoryIdempotentImportExecutor;
+  private final IdempotentImportExecutor idempotentImportExecutor;
 
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   private final Monitor monitor;
@@ -72,7 +75,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     this.importerProvider = importerProvider;
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
     this.monitor = monitor;
-    this.inMemoryIdempotentImportExecutor = new InMemoryIdempotentImportExecutor(monitor);
+    this.idempotentImportExecutor = IdempotentImportExecutorLoader.load(monitor);
     this.metricRecorder = dtpInternalMetricRecorder;
   }
 
@@ -84,6 +87,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
        UUID jobId,
        Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
+    idempotentImportExecutor.setJobId(jobId);
     return copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
@@ -145,7 +149,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
           new CallableImporter(
               importerProvider,
               jobId,
-              inMemoryIdempotentImportExecutor,
+              idempotentImportExecutor,
               importAuthData,
               exportResult.getExportedData(),
               metricRecorder);
@@ -196,6 +200,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         }
       }
     }
-    return inMemoryIdempotentImportExecutor.getErrors();
+    return idempotentImportExecutor.getErrors();
   }
 }

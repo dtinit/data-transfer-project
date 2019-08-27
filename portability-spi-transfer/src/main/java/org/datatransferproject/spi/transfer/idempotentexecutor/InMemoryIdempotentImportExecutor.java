@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer;
+package org.datatransferproject.spi.transfer.idempotentexecutor;
 
 import static java.lang.String.format;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
@@ -103,5 +103,10 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   public Collection<ErrorDetail> getErrors() {
     return ImmutableList.copyOf(errors.values());
+  }
+
+  @Override
+  public void setJobId(UUID jobId) {
+    // This runs in memory so the job will always be the same. This means we do not use the jobId.
   }
 }
