@@ -46,7 +46,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  */
 final class JobProcessor {
   // TODO(cnnorris): add failure reason enums once there are more failure reasons
-  public static final DESTINATION_FULL_ENUM = "DESTINATION_FULL"
+  public static final DESTINATION_FULL_ENUM = "DESTINATION_FULL";
 
   private final JobStore store;
   private final JobHooks hooks;
@@ -130,7 +130,7 @@ final class JobProcessor {
       success = errors.isEmpty();
     } catch (DestinationMemoryFullException e) {
       monitor.severe(() -> "Destination memory error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
-      store.addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM)
+      store.addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM);
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
