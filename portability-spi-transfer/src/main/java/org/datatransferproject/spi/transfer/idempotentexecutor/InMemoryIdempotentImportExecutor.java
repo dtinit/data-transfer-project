@@ -37,6 +37,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   private final Map<String, Serializable> knownValues = new HashMap<>();
   private final Map<String, ErrorDetail> errors = new HashMap<>();
   private final Monitor monitor;
+  private UUID jobId;
 
   public InMemoryIdempotentImportExecutor(Monitor monitor) {
     this.monitor = monitor;
@@ -60,14 +61,20 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @SuppressWarnings("unchecked")
   public <T extends Serializable> T executeOrThrowException(
       String idempotentId, String itemName, Callable<T> callable) throws IOException {
+    String jobIdPrefix = "Job " + jobId + ": ";
+
     if (knownValues.containsKey(idempotentId)) {
-      monitor.debug(() -> format("Using cached key %s from cache for %s", idempotentId, itemName));
+      monitor.debug(
+          () ->
+              jobIdPrefix
+                  + format("Using cached key %s from cache for %s", idempotentId, itemName));
       return (T) knownValues.get(idempotentId);
     }
     try {
       T result = callable.call();
       knownValues.put(idempotentId, result);
-      monitor.debug(() -> format("Storing key %s in cache for %s", idempotentId, itemName));
+      monitor.debug(
+          () -> jobIdPrefix + format("Storing key %s in cache for %s", idempotentId, itemName));
       errors.remove(idempotentId);
       return result;
     } catch (Exception e) {
@@ -78,7 +85,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
               .setException(Throwables.getStackTraceAsString(e))
               .build();
       errors.put(idempotentId, errorDetail);
-      monitor.severe(() -> "Problem with importing item: " + errorDetail);
+      monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
       throw new IOException("Problem executing callable for: " + idempotentId, e);
     }
   }
@@ -107,6 +114,6 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
 
   @Override
   public void setJobId(UUID jobId) {
-    // This runs in memory so the job will always be the same. This means we do not use the jobId.
+    this.jobId = jobId;
   }
 }

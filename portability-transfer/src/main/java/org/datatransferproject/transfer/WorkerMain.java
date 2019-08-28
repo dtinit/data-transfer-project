@@ -43,6 +43,8 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
 
@@ -100,6 +102,11 @@ public class WorkerMain {
         SecurityExtensionLoader.getSecurityExtension(extensionContext);
     monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
 
+    IdempotentImportExecutor idempotentImportExecutor =
+        IdempotentImportExecutorLoader.load(monitor);
+    monitor.info(
+        () -> "Using IdempotentImportExecutor: " + idempotentImportExecutor.getClass().getName());
+
     // TODO: make configurable
     SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
 
@@ -114,6 +121,7 @@ public class WorkerMain {
                   cloudExtension,
                   transferExtensions,
                   securityExtension,
+                  idempotentImportExecutor,
                   symmetricKeyGenerator,
                   jobHooks));
     } catch (Exception e) {
