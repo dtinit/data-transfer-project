@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 package org.datatransferproject.transfer;
+import java.io.IOException;	
 
-public class DestinationMemoryFullException extends CopyException {
+public class DestinationMemoryFullException extends IOException {
   public DestinationMemoryFullException(String message, Throwable cause) {
     super(message, cause);
   }
