@@ -19,7 +19,7 @@ package org.datatransferproject.transfer;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.DataModel;

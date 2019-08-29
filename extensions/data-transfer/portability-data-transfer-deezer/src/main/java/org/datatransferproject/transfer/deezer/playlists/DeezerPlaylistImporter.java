@@ -20,7 +20,7 @@ package org.datatransferproject.transfer.deezer.playlists;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.deezer.DeezerApi;

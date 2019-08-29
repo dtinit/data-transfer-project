@@ -27,7 +27,7 @@ import com.google.api.services.gmail.model.Message;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;

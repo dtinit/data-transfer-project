@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
 import okhttp3.OkHttpClient;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
