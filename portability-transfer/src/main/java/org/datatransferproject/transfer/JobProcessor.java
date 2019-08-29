@@ -46,7 +46,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  */
 final class JobProcessor {
   // TODO(cnnorris): add failure reason enums once there are more failure reasons
-  public static final DESTINATION_FULL_ENUM = "DESTINATION_FULL";
+  public static final String DESTINATION_FULL_ENUM = "DESTINATION_FULL";
 
   private final JobStore store;
   private final JobHooks hooks;
