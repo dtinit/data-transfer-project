@@ -21,6 +21,7 @@ plugins {
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
+    compile project(':portability-transfer')
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")
 
