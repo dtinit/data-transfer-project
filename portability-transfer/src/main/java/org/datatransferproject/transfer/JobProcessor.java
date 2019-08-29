@@ -130,7 +130,7 @@ final class JobProcessor {
       success = errors.isEmpty();
     } catch (DestinationMemoryFullException e) {
       monitor.severe(() -> "Destination memory error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
-      store.addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM);
+      addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM);
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
@@ -166,6 +166,14 @@ final class JobProcessor {
       store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
     } catch (IOException e) {
       monitor.severe(() -> format("Could not mark job %s as finished.", jobId));
+    }
+  }
+
+  private void addFailureReasonToJob(UUID jobId, String failureReason) {
+    try {
+      store.addFailureReasonToJob(jobId, failureReason);
+    } catch (IOException e) {
+      monitor.severe(() -> format("Problem adding failure reason to JobStore: %s", e), e);
     }
   }
 
