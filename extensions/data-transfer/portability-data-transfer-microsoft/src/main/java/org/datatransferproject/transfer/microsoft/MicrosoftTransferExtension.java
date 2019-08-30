@@ -62,7 +62,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
-    Preconditions.checkArgument(initialized);
+    Preconditions.checkState(initialized);
 
     if (!offlineData && transferDataType.equals(OFFLINE_DATA)) {
       // only enable if derived data explicitly set as a configuration value
@@ -77,7 +77,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
-    Preconditions.checkArgument(initialized);
+    Preconditions.checkState(initialized);
     Preconditions.checkArgument(SUPPORTED_IMPORT_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
   }
