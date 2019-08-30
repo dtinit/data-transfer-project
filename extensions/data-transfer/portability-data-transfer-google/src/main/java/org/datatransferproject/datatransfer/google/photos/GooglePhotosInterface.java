@@ -156,15 +156,11 @@ public class GooglePhotosInterface {
             .execute();
       } else {
         // something else is wrong, bubble up the error
-        throw e;
+        throw new IOException(
+            "Bad status code: " + e.getStatusCode() + " error: " + e.getStatusMessage());
       }
     }
 
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-    }
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return objectMapper.readValue(result, clazz);
@@ -191,15 +187,11 @@ public class GooglePhotosInterface {
                 httpContent).execute();
       } else {
         // something else is wrong, bubble up the error
-        throw e;
+        throw new IOException(
+            "Bad status code: " + e.getStatusCode() + " error: " + e.getStatusMessage());
       }
     }
 
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
-    }
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
