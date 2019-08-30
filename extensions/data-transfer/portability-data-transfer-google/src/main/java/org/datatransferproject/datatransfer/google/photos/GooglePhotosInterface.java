@@ -161,6 +161,7 @@ public class GooglePhotosInterface {
       }
     }
 
+    Preconditions.checkState(response.getStatusCode() == 200);
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return objectMapper.readValue(result, clazz);
@@ -192,6 +193,7 @@ public class GooglePhotosInterface {
       }
     }
 
+    Preconditions.checkState(response.getStatusCode() == 200);
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
