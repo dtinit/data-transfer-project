@@ -26,6 +26,7 @@ import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -142,12 +143,25 @@ public class GooglePhotosInterface {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest = requestFactory
         .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)));
-    HttpResponse response = getRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+
+    HttpResponse response;
+    try {
+      response = getRequest.execute();
+    } catch (HttpResponseException e) {
+      // if the response is "unauthorized" and we've successfully refreshed the token, try the request again
+      if (e.getStatusCode() == 401 && credential.refreshToken()) {
+        // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
+        response = requestFactory
+            .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)))
+            .execute();
+      } else {
+        // something else is wrong, bubble up the error
+        throw new IOException(
+            "Bad status code: " + e.getStatusCode() + " error: " + e.getStatusMessage());
+      }
     }
+
+    Preconditions.checkState(response.getStatusCode() == 200);
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return objectMapper.readValue(result, clazz);
@@ -160,12 +174,26 @@ public class GooglePhotosInterface {
     HttpRequest postRequest = requestFactory
         .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
             httpContent);
-    HttpResponse response = postRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+
+    HttpResponse response;
+
+    try {
+      response = postRequest.execute();
+    } catch (HttpResponseException e) {
+      // if the response is "unauthorized" and we've successfully refreshed the token, try the request again
+      if (e.getStatusCode() == 401 && credential.refreshToken()) {
+        // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
+        response = requestFactory
+            .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
+                httpContent).execute();
+      } else {
+        // something else is wrong, bubble up the error
+        throw new IOException(
+            "Bad status code: " + e.getStatusCode() + " error: " + e.getStatusMessage());
+      }
     }
+
+    Preconditions.checkState(response.getStatusCode() == 200);
     String result = CharStreams
         .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
@@ -179,11 +207,6 @@ public class GooglePhotosInterface {
     Map<String, String> updatedParams = new ArrayMap<>();
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
-    }
-
-    // getAccessToken will return null when the token needs to be refreshed
-    if (credential.getAccessToken() == null) {
-      credential.refreshToken();
     }
 
     updatedParams.put(ACCESS_TOKEN_KEY, Preconditions.checkNotNull(credential.getAccessToken()));
