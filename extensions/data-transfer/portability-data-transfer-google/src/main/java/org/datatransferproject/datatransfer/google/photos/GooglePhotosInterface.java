@@ -26,6 +26,7 @@ import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -142,7 +143,23 @@ public class GooglePhotosInterface {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest = requestFactory
         .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)));
-    HttpResponse response = getRequest.execute();
+
+    HttpResponse response;
+    try {
+      response = getRequest.execute();
+    } catch (HttpResponseException e) {
+      // if the response is "unauthorized" and we've successfully refreshed the token, try the request again
+      if (e.getStatusCode() == 401 && credential.refreshToken()) {
+        // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
+        response = requestFactory
+            .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)))
+            .execute();
+      } else {
+        // something else is wrong, bubble up the error
+        throw e;
+      }
+    }
+
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
       throw new IOException(
@@ -160,7 +177,24 @@ public class GooglePhotosInterface {
     HttpRequest postRequest = requestFactory
         .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
             httpContent);
-    HttpResponse response = postRequest.execute();
+
+    HttpResponse response;
+
+    try {
+      response = postRequest.execute();
+    } catch (HttpResponseException e) {
+      // if the response is "unauthorized" and we've successfully refreshed the token, try the request again
+      if (e.getStatusCode() == 401 && credential.refreshToken()) {
+        // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
+        response = requestFactory
+            .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
+                httpContent).execute();
+      } else {
+        // something else is wrong, bubble up the error
+        throw e;
+      }
+    }
+
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
       throw new IOException(
