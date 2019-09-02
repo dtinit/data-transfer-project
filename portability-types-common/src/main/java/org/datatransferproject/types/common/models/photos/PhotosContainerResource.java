@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 import java.util.Collection;
@@ -27,6 +29,10 @@ import java.util.Objects;
 /** A Wrapper for all the possible objects that can be returned by a photos exporter. */
 @JsonTypeName("PhotosContainerResource")
 public class PhotosContainerResource extends ContainerResource {
+
+  public static final String PHOTOS_COUNT_DATA_NAME = "photosCount";
+  public static final String ALBUMS_COUNT_DATA_NAME = "albumsCount";
+
   private final Collection<PhotoAlbum> albums;
   private final Collection<PhotoModel> photos;
 
@@ -44,6 +50,14 @@ public class PhotosContainerResource extends ContainerResource {
 
   public Collection<PhotoModel> getPhotos() {
     return photos;
+  }
+
+  @Override
+  public Map<String, Integer> getCounts() {
+    return new ImmutableMap.Builder<String, Integer>()
+        .put(PHOTOS_COUNT_DATA_NAME, photos.size())
+        .put(ALBUMS_COUNT_DATA_NAME, albums.size())
+        .build();
   }
 
   @Override
