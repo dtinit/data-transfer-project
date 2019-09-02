@@ -62,6 +62,7 @@ public class GooglePhotosExporterTest {
 
   private String IMG_URI = "image uri";
   private String PHOTO_ID = "photo id";
+  private String FILENAME = "filename";
   private String ALBUM_ID = "GoogleAlbum id";
   private String ALBUM_TOKEN = "album_token";
   private String PHOTO_TOKEN = "photo_token";
@@ -196,6 +197,8 @@ public class GooglePhotosExporterTest {
         .containsExactly(IMG_URI + "=d"); // for download
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
+    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
+        .containsExactly(FILENAME);
   }
 
   @Test
@@ -314,6 +317,7 @@ public class GooglePhotosExporterTest {
     photoEntry.setMimeType("image/jpeg");
     photoEntry.setBaseUrl(imageUri);
     photoEntry.setId(photoId);
+    photoEntry.setFilename(FILENAME);
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
     photoEntry.setMediaMetadata(mediaMetadata);
