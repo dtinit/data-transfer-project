@@ -17,7 +17,7 @@
 package org.datatransferproject.transfer.solid.contacts;
 
 import com.google.common.collect.ImmutableList;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.solid.SolidUtilities;
 import org.datatransferproject.transfer.solid.SslHelper;

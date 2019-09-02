@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.spi.transfer.provider;
 
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.auth.AuthData;
 

@@ -39,6 +39,7 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String JOB_STATE = "JOB_STATE";
+  private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
 
   public static PortabilityJob.Builder builder() {
@@ -49,7 +50,8 @@ public abstract class PortabilityJob {
     return new org.datatransferproject.spi.cloud.types.AutoValue_PortabilityJob.Builder()
         .setState(State.NEW)
         .setCreatedTimestamp(now)
-        .setLastUpdateTimestamp(now);
+        .setLastUpdateTimestamp(now)
+        .setFailureReason("None");
   }
 
   public static PortabilityJob fromMap(Map<String, Object> properties) {
@@ -82,6 +84,11 @@ public abstract class PortabilityJob {
         properties.containsKey(JOB_STATE) ? State.valueOf((String) properties.get(JOB_STATE))
             : State.NEW;
 
+
+    String failureReason =
+        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON)
+            : null;
+
     return PortabilityJob.builder()
         .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
@@ -90,6 +97,7 @@ public abstract class PortabilityJob {
         .setExportInformation((ExportInformation) properties.get(EXPORT_INFORMATION_KEY))
         .setCreatedTimestamp(now) // TODO: get from DB
         .setLastUpdateTimestamp(now)
+        .setFailureReason(failureReason)
         .setJobAuthorization(
             JobAuthorization.builder()
                 .setState(
@@ -144,6 +152,9 @@ public abstract class PortabilityJob {
   @JsonProperty("jobAuthorization")
   public abstract JobAuthorization jobAuthorization();
 
+  @JsonProperty("failureReason")
+  public abstract String failureReason();
+
   public abstract PortabilityJob.Builder toBuilder();
 
   public Map<String, Object> toMap() {
@@ -152,6 +163,7 @@ public abstract class PortabilityJob {
             .put(DATA_TYPE_KEY, transferDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
+            .put(FAILURE_REASON, failureReason())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
             .put(JOB_STATE, state().toString());
     if (jobAuthorization().sessionSecretKey() != null) {
@@ -246,6 +258,9 @@ public abstract class PortabilityJob {
 
     @JsonProperty("lastUpdateTimestamp")
     public abstract Builder setLastUpdateTimestamp(LocalDateTime lastUpdateTimestamp);
+
+    @JsonProperty("failureReason")
+    public abstract Builder setFailureReason(String failureReason);
 
     @JsonProperty("jobAuthorization")
     public Builder setAndValidateJobAuthorization(JobAuthorization jobAuthorization) {
