@@ -2,7 +2,8 @@ package org.datatransferproject.test.types;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import java.util.UUID;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
@@ -60,5 +61,10 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   @Override
   public Collection<ErrorDetail> getErrors() {
     return ImmutableList.of();
+  }
+
+  @Override
+  public void setJobId(UUID jobId) {
+    // We deliberately do nothing here as this class is Fake and not behaviour which needs to be faked
   }
 }

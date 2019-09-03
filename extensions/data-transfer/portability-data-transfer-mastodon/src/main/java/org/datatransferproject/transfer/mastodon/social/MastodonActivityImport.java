@@ -20,7 +20,7 @@ package org.datatransferproject.transfer.mastodon.social;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
