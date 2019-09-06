@@ -123,6 +123,14 @@ public abstract class JobStoreWithValidator implements JobStore {
         }));
   }
 
+  public void addFailureReasonToJob(
+      UUID jobId, String failureReason)
+      throws IOException {
+    PortabilityJob existingJob = findJob(jobId);
+    PortabilityJob updatedJob = existingJob.toBuilder().setFailureReason(failureReason).build();
+    updateJob(jobId, updatedJob);
+  }
+
   public interface JobUpdateValidator {
 
     /**
