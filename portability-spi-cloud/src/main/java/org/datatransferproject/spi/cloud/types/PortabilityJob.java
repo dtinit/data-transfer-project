@@ -51,7 +51,7 @@ public abstract class PortabilityJob {
         .setState(State.NEW)
         .setCreatedTimestamp(now)
         .setLastUpdateTimestamp(now)
-        .setFailureReason("UNSPECIFIED");
+        .setFailureReason(null);
   }
 
   public static PortabilityJob fromMap(Map<String, Object> properties) {
@@ -87,7 +87,7 @@ public abstract class PortabilityJob {
 
     String failureReason =
         properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON)
-            : "UNSPECIFIED";
+            : null;
 
     return PortabilityJob.builder()
         .setState(state)
@@ -152,6 +152,7 @@ public abstract class PortabilityJob {
   @JsonProperty("jobAuthorization")
   public abstract JobAuthorization jobAuthorization();
 
+  @Nullable
   @JsonProperty("failureReason")
   public abstract String failureReason();
 
