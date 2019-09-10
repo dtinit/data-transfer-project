@@ -51,7 +51,7 @@ public abstract class PortabilityJob {
         .setState(State.NEW)
         .setCreatedTimestamp(now)
         .setLastUpdateTimestamp(now)
-        .setFailureReason("None");
+        .setFailureReason(null);
   }
 
   public static PortabilityJob fromMap(Map<String, Object> properties) {
@@ -140,7 +140,7 @@ public abstract class PortabilityJob {
   public abstract String transferDataType();
 
   @Nullable
-  @JsonProperty(value = "exportInformation")
+  @JsonProperty("exportInformation")
   public abstract ExportInformation exportInformation();
 
   @JsonProperty("createdTimestamp")
@@ -152,6 +152,7 @@ public abstract class PortabilityJob {
   @JsonProperty("jobAuthorization")
   public abstract JobAuthorization jobAuthorization();
 
+  @Nullable
   @JsonProperty("failureReason")
   public abstract String failureReason();
 
@@ -163,7 +164,6 @@ public abstract class PortabilityJob {
             .put(DATA_TYPE_KEY, transferDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
-            .put(FAILURE_REASON, failureReason())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
             .put(JOB_STATE, state().toString());
     if (jobAuthorization().sessionSecretKey() != null) {
@@ -184,6 +184,10 @@ public abstract class PortabilityJob {
 
     if (null != jobAuthorization().encryptedAuthData()) {
       builder.put(ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedAuthData());
+    }
+
+    if (null != failureReason()) {
+      builder.put(FAILURE_REASON, failureReason());
     }
 
     builder.put(
@@ -259,6 +263,7 @@ public abstract class PortabilityJob {
     @JsonProperty("lastUpdateTimestamp")
     public abstract Builder setLastUpdateTimestamp(LocalDateTime lastUpdateTimestamp);
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("failureReason")
     public abstract Builder setFailureReason(String failureReason);
 
