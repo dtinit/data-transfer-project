@@ -140,7 +140,7 @@ public abstract class PortabilityJob {
   public abstract String transferDataType();
 
   @Nullable
-  @JsonProperty(value = "exportInformation")
+  @JsonProperty("exportInformation")
   public abstract ExportInformation exportInformation();
 
   @JsonProperty("createdTimestamp")
@@ -153,7 +153,7 @@ public abstract class PortabilityJob {
   public abstract JobAuthorization jobAuthorization();
 
   @Nullable
-  @JsonProperty(value = "failureReason")
+  @JsonProperty("failureReason")
   public abstract String failureReason();
 
   public abstract PortabilityJob.Builder toBuilder();
