@@ -92,17 +92,17 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
       PhotosContainerResource resource)
-      throws IOException {
+      throws Exception {
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
-      idempotentImportExecutor.executeAndSwallowExceptions(
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> createOneDriveFolder(album, authData));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
 
-      idempotentImportExecutor.executeAndSwallowExceptions(
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
           Integer.toString(photoModel.hashCode()),
           photoModel.getTitle(),
           () -> {

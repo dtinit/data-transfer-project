@@ -80,17 +80,17 @@ public class SmugMugPhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
-      PhotosContainerResource data) {
+      PhotosContainerResource data) throws Exception {
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             album.getId(),
             album.getName(),
             () -> importSingleAlbum(album, smugMugInterface));
       }
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));
