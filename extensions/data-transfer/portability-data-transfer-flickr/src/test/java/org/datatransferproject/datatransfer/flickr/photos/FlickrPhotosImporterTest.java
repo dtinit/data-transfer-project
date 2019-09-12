@@ -86,7 +86,7 @@ public class FlickrPhotosImporterTest {
   private Monitor monitor = mock(Monitor.class);
 
   @Test
-  public void importStoresAlbumInJobStore() throws FlickrException, IOException {
+  public void importStoresAlbumInJobStore() throws FlickrException, Exception {
     UUID jobId = UUID.randomUUID();
 
     PhotosContainerResource photosContainerResource =

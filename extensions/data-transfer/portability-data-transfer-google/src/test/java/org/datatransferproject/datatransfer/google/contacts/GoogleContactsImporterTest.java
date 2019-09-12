@@ -66,7 +66,7 @@ public class GoogleContactsImporterTest {
   }
 
   @Test
-  public void importFirstResources() throws IOException {
+  public void importFirstResources() throws Exception {
     // Set up: small number of VCards to be imported
     int numberOfVCards = 5;
     List<VCard> vCardList = new LinkedList<>();

@@ -100,7 +100,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       IdempotentImportExecutor idempotentExecutor,
       AuthData authData,
       PhotosContainerResource data)
-      throws IOException {
+      throws Exception, IOException {
     Auth auth;
     try {
       auth = FlickrUtils.getAuth(authData, flickr);
@@ -145,8 +145,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   private void importSinglePhoto(IdempotentImportExecutor idempotentExecutor,
       UUID id,
-      PhotoModel photo) throws FlickrException, IOException {
-    String photoId = idempotentExecutor.executeAndSwallowExceptions(
+      PhotoModel photo) throws Exception {
+    String photoId = idempotentExecutor.executeAndSwallowIOExceptions(
         photo.getAlbumId() + "-" + photo.getDataId(),
         photo.getTitle(),
         () -> uploadPhoto(photo, id));
@@ -171,7 +171,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       IdempotentImportExecutor idempotentExecutor,
       UUID jobId,
       String oldAlbumId,
-      String photoId) throws IOException, FlickrException {
+      String photoId) throws Exception {
     if (idempotentExecutor.isKeyCached(oldAlbumId)) {
       String newAlbumId = idempotentExecutor.getCachedValue(oldAlbumId);
       // We've already created the album this photo belongs in, simply add it to the new album
@@ -185,7 +185,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       IdempotentImportExecutor idempotentExecutor,
       UUID jobId,
       String oldAlbumId,
-      String firstPhotoId) throws IOException {
+      String firstPhotoId) throws Exception {
     // This means that we havent created the new album yet, create the photoset
     FlickrTempPhotoData album = jobStore.findData(
         jobId,
@@ -197,7 +197,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     // with these (in case the album exists later).
     Preconditions.checkNotNull(album, "Album not found: " + oldAlbumId);
 
-    idempotentExecutor.executeAndSwallowExceptions(
+    idempotentExecutor.executeAndSwallowIOExceptions(
         oldAlbumId,
         album.getName(),
         () -> {

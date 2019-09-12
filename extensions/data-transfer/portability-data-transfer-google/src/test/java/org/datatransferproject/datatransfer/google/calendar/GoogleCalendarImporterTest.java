@@ -67,7 +67,7 @@ public class GoogleCalendarImporterTest {
   }
 
   @Test
-  public void importCalendarAndEvent() throws IOException {
+  public void importCalendarAndEvent() throws Exception {
     String modelCalendarId = "modelCalendarId";
     String googleCalendarId = "googleCalendarId";
     UUID jobId = UUID.randomUUID();
