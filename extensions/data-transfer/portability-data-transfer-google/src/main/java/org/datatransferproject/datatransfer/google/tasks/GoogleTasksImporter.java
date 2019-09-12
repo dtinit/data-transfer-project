@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.tasks;
 
 import com.google.api.client.auth.oauth2.Credential;
@@ -58,12 +57,12 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      TaskContainerResource data) throws IOException {
+      TaskContainerResource data) throws Exception {
     Tasks tasksService = getOrCreateTasksService(authData);
 
     for (TaskListModel oldTasksList : data.getLists()) {
       TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
-      idempotentImportExecutor.executeAndSwallowExceptions(
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
           oldTasksList.getId(),
           oldTasksList.getName(),
           () -> tasksService.tasklists().insert(newTaskList).execute().getId());
@@ -80,7 +79,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       // If its not cached that means the task list create failed.
       if (idempotentImportExecutor.isKeyCached(oldTask.getTaskListId())) {
         String newTaskListId = idempotentImportExecutor.getCachedValue(oldTask.getTaskListId());
-        idempotentImportExecutor.executeAndSwallowExceptions(
+        idempotentImportExecutor.executeAndSwallowIOExceptions(
             oldTask.getTaskListId() + oldTask.getText(),
             oldTask.getText(),
             () -> tasksService.tasks().insert(newTaskListId, newTask).execute().getId());

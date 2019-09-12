@@ -76,7 +76,7 @@ public class GooglePhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      PhotosContainerResource data) throws IOException {
+      PhotosContainerResource data) throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -85,7 +85,7 @@ public class GooglePhotosImporter
     // Uploads album metadata
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
-        idempotentImportExecutor.executeAndSwallowExceptions(
+        idempotentImportExecutor.executeAndSwallowIOExceptions(
             album.getId(),
             album.getName(),
             () -> importSingleAlbum(authData, album)
@@ -96,7 +96,7 @@ public class GooglePhotosImporter
     // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentImportExecutor.executeAndSwallowExceptions(
+        idempotentImportExecutor.executeAndSwallowIOExceptions(
             photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));

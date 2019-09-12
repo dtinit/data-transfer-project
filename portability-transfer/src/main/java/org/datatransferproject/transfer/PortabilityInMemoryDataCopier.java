@@ -37,6 +37,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
+import org.datatransferproject.transfer.DestinationMemoryFullException;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -164,6 +165,10 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
       } catch (RetryException | RuntimeException e) {
         monitor.severe(() -> format("Got error importing data: %s", e), e);
+        if (e.getClass() == RetryException.class &&
+            e.getCause().getClass() == DestinationMemoryFullException.class){
+          throw (DestinationMemoryFullException) e.getCause();
+        }
       } finally{
         metricRecorder.importPageFinished(
             JobMetadata.getDataType(),

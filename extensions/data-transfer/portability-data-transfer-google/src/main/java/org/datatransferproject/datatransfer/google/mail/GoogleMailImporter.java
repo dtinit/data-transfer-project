@@ -72,7 +72,7 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       UUID id,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      MailContainerResource data) throws IOException {
+      MailContainerResource data) throws Exception {
 
     // Lazy init the request for all labels in the destination account, since it may not be needed
     // Mapping of labelName -> destination label id
@@ -101,11 +101,11 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       TokensAndUrlAuthData authData,
       IdempotentImportExecutor idempotentExecutor,
       Supplier<Map<String, String>> allDestinationLabels,
-      Collection<MailContainerModel> folders) throws IOException {
+      Collection<MailContainerModel> folders) throws Exception {
     for (MailContainerModel mailContainerModel : folders) {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(mailContainerModel.getName()));
       String exportedLabelName = mailContainerModel.getName();
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentExecutor.executeAndSwallowIOExceptions(
           exportedLabelName,
           "Label - " + exportedLabelName,
           () -> {
@@ -122,8 +122,8 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private void importDTPLabel(
       TokensAndUrlAuthData authData,
       IdempotentImportExecutor idempotentExecutor,
-      Supplier<Map<String, String>> allDestinationLabels) throws IOException {
-    idempotentExecutor.executeAndSwallowExceptions(
+      Supplier<Map<String, String>> allDestinationLabels) throws Exception {
+    idempotentExecutor.executeAndSwallowIOExceptions(
         LABEL,
         LABEL,
         () -> {
@@ -143,11 +143,11 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
       TokensAndUrlAuthData authData,
       IdempotentImportExecutor idempotentExecutor,
       Supplier<Map<String, String>> allDestinationLabels,
-      Collection<MailMessageModel> messages) throws IOException {
+      Collection<MailMessageModel> messages) throws Exception {
     for (MailMessageModel mailMessageModel : messages) {
       // Get or create label ids associated with this message
       for (String exportedLabelName : mailMessageModel.getContainerIds()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             exportedLabelName,
             exportedLabelName,
             () -> {
@@ -168,9 +168,9 @@ public class GoogleMailImporter implements Importer<TokensAndUrlAuthData, MailCo
   private void importMessages(
       TokensAndUrlAuthData authData,
       IdempotentImportExecutor idempotentExecutor,
-      Collection<MailMessageModel> messages) throws IOException {
+      Collection<MailMessageModel> messages) throws Exception {
     for (MailMessageModel mailMessageModel : messages) {
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentExecutor.executeAndSwallowIOExceptions(
           mailMessageModel.toString(),
           // Trim the full mail message to try to give some context to the user but not overwhelm
           // them.

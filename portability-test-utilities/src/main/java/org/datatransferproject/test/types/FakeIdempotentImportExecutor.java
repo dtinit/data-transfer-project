@@ -16,8 +16,8 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   private HashMap<String, Serializable> knownValues = new HashMap<>();
 
   @Override
-  public <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable) {
+  public <T extends Serializable> T executeAndSwallowIOExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
     } catch (IOException e) {
@@ -27,7 +27,7 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
 
   @Override
   public <T extends Serializable> T executeOrThrowException(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException {
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     if (knownValues.containsKey(idempotentId)) {
       System.out.println("Using cached key " + idempotentId + " from cache");
       return (T) knownValues.get(idempotentId);
