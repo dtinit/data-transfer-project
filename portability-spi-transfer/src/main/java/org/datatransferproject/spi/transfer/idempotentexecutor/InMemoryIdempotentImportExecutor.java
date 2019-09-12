@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-import org.datatransferproject.transfer.TerminalImportException;
 
 
 import java.io.IOException;
