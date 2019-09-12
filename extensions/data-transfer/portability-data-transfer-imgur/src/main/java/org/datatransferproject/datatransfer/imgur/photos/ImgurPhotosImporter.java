@@ -80,14 +80,14 @@ public class ImgurPhotosImporter
 
     // Import albums
     for (PhotoAlbum album : resource.getAlbums()) {
-      executor.executeAndSwallowExceptions(
+      executor.executeAndSwallowIOExceptions(
           album.getId(),
           album.getName(),
           () -> importAlbum(album, authData));
     }
     // Import photos
     for (PhotoModel photo : resource.getPhotos()) {
-      executor.executeAndSwallowExceptions(
+      executor.executeAndSwallowIOExceptions(
           photo.getDataId(),
           photo.getTitle(),
           () -> {

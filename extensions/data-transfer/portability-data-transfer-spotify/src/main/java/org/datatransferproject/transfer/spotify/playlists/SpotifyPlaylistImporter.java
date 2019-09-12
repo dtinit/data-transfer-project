@@ -69,8 +69,8 @@ public class SpotifyPlaylistImporter
   private void createPlaylist(IdempotentImportExecutor idempotentExecutor,
       MusicPlaylist playlist,
       String userId)
-      throws IOException, SpotifyWebApiException {
-    String playlistId = idempotentExecutor.executeAndSwallowExceptions(
+      throws Exception, SpotifyWebApiException {
+    String playlistId = idempotentExecutor.executeAndSwallowIOExceptions(
         playlist.getIdentifier(),
         "Playlist: " + playlist.getHeadline(),
         () -> spotifyApi
@@ -93,8 +93,8 @@ public class SpotifyPlaylistImporter
       String playlistId,
       String playlistName,
       MusicRecording track)
-      throws IOException {
-    idempotentExecutor.executeAndSwallowExceptions(
+      throws Exception {
+    idempotentExecutor.executeAndSwallowIOExceptions(
         playlistId + "-" + track.hashCode(),
         playlistName + " - " + track.getHeadline(),
         () -> {

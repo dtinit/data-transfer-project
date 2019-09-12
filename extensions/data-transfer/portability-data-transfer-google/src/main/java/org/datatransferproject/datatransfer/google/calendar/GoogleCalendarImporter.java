@@ -95,15 +95,15 @@ public class GoogleCalendarImporter implements
   public ImportResult importItem(UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      CalendarContainerResource data) throws IOException {
+      CalendarContainerResource data) throws Exception {
     for (CalendarModel calendarModel : data.getCalendars()) {
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentExecutor.executeAndSwallowIOExceptions(
           calendarModel.getId(),
           calendarModel.getName(),
           () -> importSingleCalendar(authData, calendarModel));
     }
     for (CalendarEventModel eventModel : data.getEvents()) {
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentExecutor.executeAndSwallowIOExceptions(
           Integer.toString(eventModel.hashCode()),
           eventModel.getNotes(),
           () -> importSingleEvent(idempotentExecutor, authData, eventModel));

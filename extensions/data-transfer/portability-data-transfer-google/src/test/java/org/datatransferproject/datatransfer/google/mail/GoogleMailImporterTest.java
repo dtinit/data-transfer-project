@@ -102,7 +102,7 @@ public class GoogleMailImporterTest {
   }
 
   @Test
-  public void importMessage() throws IOException {
+  public void importMessage() throws Exception {
     MailContainerResource resource =
         new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
 

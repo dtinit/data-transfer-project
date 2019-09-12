@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -44,14 +45,11 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   }
 
   @Override
-  public <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable) {
+  public <T extends Serializable> T executeAndSwallowIOExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception{
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
     } catch (IOException e) {
-      // Only catching IOException to allow any RuntimeExceptions in the the catch block of
-      // executeOrThrowException bubble up and get noticed.
-
       // Note all errors are logged in executeOrThrowException so no need to re-log them here.
       return null;
     }
@@ -60,7 +58,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   @SuppressWarnings("unchecked")
   public <T extends Serializable> T executeOrThrowException(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException {
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     String jobIdPrefix = "Job " + jobId + ": ";
 
     if (knownValues.containsKey(idempotentId)) {
@@ -86,7 +84,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
               .build();
       errors.put(idempotentId, errorDetail);
       monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
-      throw new IOException("Problem executing callable for: " + idempotentId, e);
+      throw e;
     }
   }
 
