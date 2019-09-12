@@ -1,5 +1,6 @@
 package org.datatransferproject.spi.cloud.storage;
 
+import java.util.Map;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
@@ -106,4 +107,18 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * if none found.
    */
   UUID findFirst(JobAuthorization.State jobState);
+
+  /**
+   * Updates the counter data.
+   *
+   * @param newCounts the new items counted
+   */
+  default void addCounts(Map<String, Integer> newCounts) {}
+
+  /**
+   * Provides the total number of items recorded.
+   *
+   * @return mapping from items names to items counts or null if none exist
+   */
+  default Map<String, Integer> getCounts() {return null;}
 }
