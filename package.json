@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "pree2e": "webdriver-manager update --versions.chrome=77.0.3865.40",
-    "e2e": "ng e2e --webdriver-update false",
-  }
-}
