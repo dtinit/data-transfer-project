@@ -58,4 +58,13 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
     Preconditions.checkArgument(tries <= maxAttempts, "Too many attempts");
     return getNextIntervalMillis(tries) - elapsedMillis;
   }
+
+  @Override
+  public String toString() {
+    return "ExponentialBackoffStrategy{" +
+        "maxAttempts=" + maxAttempts +
+        ", initialIntervalMillis=" + initialIntervalMillis +
+        ", multiplier=" + multiplier +
+        '}';
+  }
 }

@@ -68,4 +68,12 @@ public class RetryStrategyLibrary {
   public RetryStrategy getDefaultRetryStrategy() {
     return defaultRetryStrategy;
   }
+
+  @Override
+  public String toString() {
+    return "RetryStrategyLibrary{" +
+        "retryMappings=" + retryMappings +
+        ", defaultRetryStrategy=" + defaultRetryStrategy +
+        '}';
+  }
 }
