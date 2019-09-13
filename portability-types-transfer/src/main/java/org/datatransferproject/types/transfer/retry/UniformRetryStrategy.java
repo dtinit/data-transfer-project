@@ -53,4 +53,12 @@ public class UniformRetryStrategy implements RetryStrategy {
     Preconditions.checkArgument(tries <= maxAttempts, "No retries left");
     return intervalMillis - elapsedMillis;
   }
+
+  @Override
+  public String toString() {
+    return "UniformRetryStrategy{" +
+        "maxAttempts=" + maxAttempts +
+        ", intervalMillis=" + intervalMillis +
+        '}';
+  }
 }
