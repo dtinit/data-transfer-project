@@ -71,7 +71,7 @@ public class RetryingCallable<T> implements Callable<T> {
         // TODO: do we want to reset anything (eg, number of retries) if we see a different
         // RetryStrategy?
         RetryStrategy strategy = retryStrategyLibrary.checkoutRetryStrategy(e);
-        monitor.info(
+        monitor.debug(
             () ->
                 String.format(
                     "Attempt %d failed, using retry strategy: %s",
