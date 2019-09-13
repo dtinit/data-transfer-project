@@ -15,7 +15,12 @@
  */
 package org.datatransferproject.types.common.models;
 
+import java.util.Map;
 import org.datatransferproject.types.common.PortableType;
 
 /** The base data model type. */
-public abstract class DataModel extends PortableType {}
+public abstract class DataModel extends PortableType {
+  public Map<String, Integer> getCounts() {
+    return null;
+  }
+}

@@ -63,9 +63,12 @@ public class CallableImporter implements Callable<ImportResult> {
     boolean success = false;
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      ImportResult result =  importerProvider.get()
+      ImportResult result = importerProvider.get()
           .importItem(jobId, idempotentImportExecutor, authData, data);
       success = result.getType() == ImportResult.ResultType.OK;
+      if (success) {
+        result = result.copyWithCounts(data.getCounts());
+      }
       Collection<ErrorDetail> errors = idempotentImportExecutor.getErrors();
       if (!success || !errors.isEmpty()) {
         throw new IOException("Problem with importer, forcing a retry, "

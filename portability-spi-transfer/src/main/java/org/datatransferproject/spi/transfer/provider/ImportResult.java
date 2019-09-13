@@ -1,6 +1,6 @@
 package org.datatransferproject.spi.transfer.provider;
 
-import com.google.common.base.Preconditions;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -13,6 +13,7 @@ public class ImportResult {
   private ResultType type;
   // Throwable should be absent unless an error was thrown during export
   private Optional<Throwable> throwable = Optional.empty();
+  private Optional<Map<String, Integer>> counts = Optional.empty();
 
   /**
    * Ctor used to return error or retry results.
@@ -34,6 +35,19 @@ public class ImportResult {
   }
 
   /**
+   * Ctor.
+   *
+   * @param type the result type
+   * @param throwable the exception thrown
+   * @param counts mapping representing the number of imported items
+   */
+  public ImportResult(ResultType type, Optional<Throwable> throwable, Map<String, Integer> counts) {
+    this.type = type;
+    this.throwable = throwable;
+    this.counts = Optional.of(counts);
+  }
+
+  /**
    * Returns the type of result.
    */
   public ResultType getType() {
@@ -41,10 +55,25 @@ public class ImportResult {
   }
 
   /**
-   * Returns the throwable or null if no throwable is present.
+   * Returns the throwable or an empty optional if no throwable is present.
    */
   public Optional<Throwable> getThrowable() {
     return throwable;
+  }
+
+  /**
+   * Returns the number of imported items or an empty optional if no mapping is present.
+   */
+  public Optional<Map<String, Integer>> getCounts() {
+    return counts;
+  }
+
+  /**
+   * Creates a shallow copy of the current ImportResult but with the counts field set to the value
+   * of the mapping given as an argument
+   */
+  public ImportResult copyWithCounts(Map<String, Integer> newCounts) {
+    return new ImportResult(type, throwable, newCounts);
   }
 
   /**
