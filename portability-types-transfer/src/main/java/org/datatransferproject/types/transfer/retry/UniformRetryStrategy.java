@@ -40,7 +40,7 @@ public class UniformRetryStrategy implements RetryStrategy {
 
   @Override
   public boolean canTryAgain(int tries) {
-    return tries >= maxAttempts;
+    return tries <= maxAttempts;
   }
 
   @Override
