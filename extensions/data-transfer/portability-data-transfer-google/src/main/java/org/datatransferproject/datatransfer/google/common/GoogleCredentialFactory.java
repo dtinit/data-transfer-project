@@ -68,7 +68,8 @@ public class GoogleCredentialFactory {
         .setJsonFactory(jsonFactory)
         .setClientAuthentication(
             new ClientParametersAuthentication(appCredentials.getKey(), appCredentials.getSecret()))
-        .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl()).addRefreshListener(
+        .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
+        .addRefreshListener(
             new CredentialRefreshListener() {
               @Override
               public void onTokenResponse(Credential credential, TokenResponse tokenResponse)
@@ -81,7 +82,6 @@ public class GoogleCredentialFactory {
                   TokenErrorResponse tokenErrorResponse) throws IOException {
                 monitor
                     .info(() -> "Error while refreshing token: " + tokenErrorResponse.getError());
-
               }
             })
         .build()
