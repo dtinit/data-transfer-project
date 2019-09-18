@@ -18,12 +18,19 @@ package org.datatransferproject.datatransfer.google.common;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.CredentialRefreshListener;
+import com.google.api.client.auth.oauth2.TokenErrorResponse;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
+import java.io.IOException;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** Factory for creating {@link Credential} objects from {@link TokensAndUrlAuthData}. */
+/**
+ * Factory for creating {@link Credential} objects from {@link TokensAndUrlAuthData}.
+ */
 public class GoogleCredentialFactory {
 
   // TODO: Determine correct duration in production
@@ -32,12 +39,15 @@ public class GoogleCredentialFactory {
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
   private final AppCredentials appCredentials;
+  private final Monitor monitor;
 
   public GoogleCredentialFactory(
-      HttpTransport httpTransport, JsonFactory jsonFactory, AppCredentials appCredentials) {
+      HttpTransport httpTransport, JsonFactory jsonFactory, AppCredentials appCredentials,
+      Monitor monitor) {
     this.httpTransport = httpTransport;
     this.jsonFactory = jsonFactory;
     this.appCredentials = appCredentials;
+    this.monitor = monitor;
   }
 
   public HttpTransport getHttpTransport() {
@@ -59,6 +69,21 @@ public class GoogleCredentialFactory {
         .setClientAuthentication(
             new ClientParametersAuthentication(appCredentials.getKey(), appCredentials.getSecret()))
         .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
+        .addRefreshListener(
+            new CredentialRefreshListener() {
+              @Override
+              public void onTokenResponse(Credential credential, TokenResponse tokenResponse)
+                  throws IOException {
+                monitor.info(() -> "Successfully refreshed token");
+              }
+
+              @Override
+              public void onTokenErrorResponse(Credential credential,
+                  TokenErrorResponse tokenErrorResponse) throws IOException {
+                monitor
+                    .info(() -> "Error while refreshing token: " + tokenErrorResponse.getError());
+              }
+            })
         .build()
         .setAccessToken(authData.getAccessToken())
         .setRefreshToken(authData.getRefreshToken())
