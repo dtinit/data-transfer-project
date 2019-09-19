@@ -116,11 +116,14 @@ public class SmugMugPhotosImporter
       PhotoModel inputPhoto,
       SmugMugInterface smugMugInterface)
       throws IOException {
-    String newAlbumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
-    checkState(
-        !Strings.isNullOrEmpty(newAlbumUri),
-        "Cached album URI for %s is null",
-        inputPhoto.getAlbumId());
+    try {
+        String newAlbumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    } catch (IllegalArgumentException) {
+        String newAlbumUri = idempotentExecutor.executeAndSwallowIOExceptions(
+            album.getId(),
+            album.getName(),
+            () -> importSingleAlbum(inputPhoto.getAlbumId(), smugMugInterface));
+    }
 
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
