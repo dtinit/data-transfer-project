@@ -227,7 +227,7 @@ public class SmugMugInterface {
 
     // Add body params
     for (Entry<String, String> param : contentParams.entrySet()) {
-      request.addBodyParameter(param.getValue());
+      request.addBodyParameter(param.getKey(), param.getValue());
     }
 
     // sign request before adding any of the headers since those shouldn't be included in the
