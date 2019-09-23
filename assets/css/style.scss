@@ -57,7 +57,7 @@ body {
 }
 
 .logo-image {
-    width: 20%;
+    width: 19%;
     vertical-align: middle;
 }
 
@@ -79,6 +79,8 @@ body {
 
 .contributors-container {
     text-align: center;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .main-content {
