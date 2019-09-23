@@ -44,6 +44,7 @@ import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
@@ -59,6 +60,7 @@ final class WorkerModule extends FlagBindingModule {
   private final ExtensionContext context;
   private final List<TransferExtension> transferExtensions;
   private final SecurityExtension securityExtension;
+  private final IdempotentImportExecutor idempotentImportExecutor;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final JobHooks jobHooks;
 
@@ -67,12 +69,14 @@ final class WorkerModule extends FlagBindingModule {
       CloudExtension cloudExtension,
       List<TransferExtension> transferExtensions,
       SecurityExtension securityExtension,
+      IdempotentImportExecutor idempotentImportExecutor,
       SymmetricKeyGenerator symmetricKeyGenerator,
       JobHooks jobHooks) {
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
     this.securityExtension = securityExtension;
+    this.idempotentImportExecutor = idempotentImportExecutor;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.jobHooks = jobHooks;
   }
@@ -242,5 +246,11 @@ final class WorkerModule extends FlagBindingModule {
         throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
       }
     }
+  }
+
+  @Provides
+  @Singleton
+  public IdempotentImportExecutor getIdempotentImportExecutor() {
+    return idempotentImportExecutor;
   }
 }

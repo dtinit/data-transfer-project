@@ -2,7 +2,8 @@ package org.datatransferproject.test.types;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import java.util.UUID;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
@@ -15,8 +16,8 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   private HashMap<String, Serializable> knownValues = new HashMap<>();
 
   @Override
-  public <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable) {
+  public <T extends Serializable> T executeAndSwallowIOExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
     } catch (IOException e) {
@@ -26,7 +27,7 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
 
   @Override
   public <T extends Serializable> T executeOrThrowException(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException {
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     if (knownValues.containsKey(idempotentId)) {
       System.out.println("Using cached key " + idempotentId + " from cache");
       return (T) knownValues.get(idempotentId);
@@ -60,5 +61,10 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   @Override
   public Collection<ErrorDetail> getErrors() {
     return ImmutableList.of();
+  }
+
+  @Override
+  public void setJobId(UUID jobId) {
+    // We deliberately do nothing here as this class is Fake and not behaviour which needs to be faked
   }
 }

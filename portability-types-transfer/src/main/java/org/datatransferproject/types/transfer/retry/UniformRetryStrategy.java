@@ -40,7 +40,7 @@ public class UniformRetryStrategy implements RetryStrategy {
 
   @Override
   public boolean canTryAgain(int tries) {
-    return tries >= maxAttempts;
+    return tries <= maxAttempts;
   }
 
   @Override
@@ -52,5 +52,13 @@ public class UniformRetryStrategy implements RetryStrategy {
   public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
     Preconditions.checkArgument(tries <= maxAttempts, "No retries left");
     return intervalMillis - elapsedMillis;
+  }
+
+  @Override
+  public String toString() {
+    return "UniformRetryStrategy{" +
+        "maxAttempts=" + maxAttempts +
+        ", intervalMillis=" + intervalMillis +
+        '}';
   }
 }

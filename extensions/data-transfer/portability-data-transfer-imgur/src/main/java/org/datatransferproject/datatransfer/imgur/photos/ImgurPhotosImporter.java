@@ -23,7 +23,7 @@ import com.google.common.io.ByteStreams;
 import okhttp3.*;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -80,14 +80,14 @@ public class ImgurPhotosImporter
 
     // Import albums
     for (PhotoAlbum album : resource.getAlbums()) {
-      executor.executeAndSwallowExceptions(
+      executor.executeAndSwallowIOExceptions(
           album.getId(),
           album.getName(),
           () -> importAlbum(album, authData));
     }
     // Import photos
     for (PhotoModel photo : resource.getPhotos()) {
-      executor.executeAndSwallowExceptions(
+      executor.executeAndSwallowIOExceptions(
           photo.getDataId(),
           photo.getTitle(),
           () -> {

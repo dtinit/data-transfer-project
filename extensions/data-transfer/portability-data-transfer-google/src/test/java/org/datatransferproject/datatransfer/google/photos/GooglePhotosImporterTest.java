@@ -23,7 +23,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -83,7 +83,7 @@ public class GooglePhotosImporterTest {
   }
 
   @Test
-  public void exportAlbum() throws IOException {
+  public void exportAlbum() throws Exception {
     // Set up
     String albumName = "Album Name";
     String albumDescription = "Album description";
@@ -105,7 +105,7 @@ public class GooglePhotosImporterTest {
   }
 
   @Test
-  public void exportPhoto() throws IOException {
+  public void exportPhoto() throws Exception {
     // Set up
     PhotoModel photoModel = new PhotoModel(PHOTO_TITLE, IMG_URI, PHOTO_DESCRIPTION, JPEG_MEDIA_TYPE,
         "oldPhotoID", OLD_ALBUM_ID, false);

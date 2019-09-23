@@ -1,5 +1,6 @@
 package org.datatransferproject.spi.cloud.storage;
 
+import java.util.Map;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
@@ -58,6 +59,14 @@ public interface JobStore extends TemporaryPerJobDataStore {
   void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException;
 
   /**
+   * Stores a FailureReason related to a transfer job.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   */
+  void addFailureReasonToJob(UUID jobId, String failureReason) throws IOException;
+
+  /**
    * Updates a job to mark as finished.
    * @param state The new state of the job. Can be {@code State.ERROR} or {@code State.COMPLETE}.
    * @throws IOException if unable to update the job
@@ -98,4 +107,18 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * if none found.
    */
   UUID findFirst(JobAuthorization.State jobState);
+
+  /**
+   * Updates the counter data.
+   *
+   * @param newCounts the new items counted
+   */
+  default void addCounts(Map<String, Integer> newCounts) {}
+
+  /**
+   * Provides the total number of items recorded.
+   *
+   * @return mapping from items names to items counts or null if none exist
+   */
+  default Map<String, Integer> getCounts() {return null;}
 }

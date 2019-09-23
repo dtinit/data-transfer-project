@@ -53,7 +53,7 @@ public class GoogleVideosImporterTest {
   private InputStream inputStream;
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws Exception {
     googleVideosInterface = mock(GoogleVideosInterface.class);
 
     when(googleVideosInterface.uploadVideoContent(
@@ -76,7 +76,7 @@ public class GoogleVideosImporterTest {
   }
 
   @Test
-  public void exportVideo() throws IOException {
+  public void exportVideo() throws Exception {
     // Set up
     VideoObject videoModel =
         new VideoObject(

@@ -89,11 +89,12 @@ public class GoogleTransferExtension implements TransferExtension {
       return;
     }
 
+    Monitor monitor = context.getMonitor();
+
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
-            new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
+            new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
-    Monitor monitor = context.getMonitor();
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));

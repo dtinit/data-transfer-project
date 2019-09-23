@@ -38,7 +38,7 @@ import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.VCARD4;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.solid.SolidUtilities;
@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -148,10 +149,17 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
         addressBookSlug,
         () -> createPersonDirectory(baseUrl + containerUrl, utilities));
 
-    Map<String, VCard> insertedPeople = people.stream()
-        .collect(Collectors.toMap(
-            p -> importPerson(idempotentExecutor, p, baseUrl, personDirectory, utilities),
-            Function.identity()));
+    Map<String, VCard> insertedPeople = new HashMap<>();
+    for (VCard person : people ){
+      insertedPeople.put(
+        importPerson(idempotentExecutor, person, baseUrl, personDirectory, utilities),
+        person);
+    }
+
+    // people.stream()
+    //     .collect(Collectors.toMap(
+    //         p -> importPerson(idempotentExecutor, p, baseUrl, personDirectory, utilities),
+    //         Function.identity()));
 
     idempotentExecutor.executeOrThrowException(
         "peopleFile",
@@ -163,8 +171,8 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
       VCard person,
       String baseUrl,
       String personDirectory,
-      SolidUtilities utilities) {
-    return executor.executeAndSwallowExceptions(
+      SolidUtilities utilities) throws Exception {
+    return executor.executeAndSwallowIOExceptions(
         Integer.toString(person.hashCode()),
         person.getFormattedName().getValue(),
         () -> insertPerson(baseUrl, personDirectory, person, utilities));

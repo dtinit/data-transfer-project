@@ -19,7 +19,7 @@ package org.datatransferproject.transfer.rememberthemilk.tasks;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
@@ -63,7 +63,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       timeline = service.createTimeline();
 
       for (TaskListModel taskList : data.getLists()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             taskList.getId(),
             taskList.getName(),
             () -> service.createTaskList(taskList.getName(), timeline).id
@@ -73,7 +73,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
       for (TaskModel task : data.getTasks()) {
         // Empty or blank tasks aren't valid in RTM
         if (!Strings.isNullOrEmpty(task.getText())) {
-          idempotentExecutor.executeAndSwallowExceptions(
+          idempotentExecutor.executeAndSwallowIOExceptions(
               Integer.toString(task.hashCode()),
               task.getText(),
               () -> {

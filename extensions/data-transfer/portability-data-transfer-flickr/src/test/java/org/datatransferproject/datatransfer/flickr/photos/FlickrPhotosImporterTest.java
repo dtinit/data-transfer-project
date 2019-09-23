@@ -29,7 +29,7 @@ import com.flickr4java.flickr.uploader.Uploader;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -86,7 +86,7 @@ public class FlickrPhotosImporterTest {
   private Monitor monitor = mock(Monitor.class);
 
   @Test
-  public void importStoresAlbumInJobStore() throws FlickrException, IOException {
+  public void importStoresAlbumInJobStore() throws FlickrException, Exception {
     UUID jobId = UUID.randomUUID();
 
     PhotosContainerResource photosContainerResource =

@@ -33,7 +33,7 @@ import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
@@ -204,7 +204,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   @Override
   public ImportResult importItem(UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      TokensAndUrlAuthData authData, ContactsModelWrapper data) {
+      TokensAndUrlAuthData authData, ContactsModelWrapper data) throws Exception{
     JCardReader reader = new JCardReader(data.getVCards());
     try {
       // TODO(olsona): address any other problems that might arise in conversion
@@ -212,7 +212,7 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
       PeopleService.People peopleService = getOrCreatePeopleService(authData).people();
       for (VCard vCard : vCardList) {
         Person person = convert(vCard);
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             vCard.toString(),
             vCard.getFormattedName().toString(),
             () -> peopleService.createContact(person).execute().toPrettyString());

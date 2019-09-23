@@ -37,4 +37,10 @@ public class NoRetryStrategy implements RetryStrategy {
   public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
     return -1L;
   }
+
+  @Override
+  public String toString() {
+    return "NoRetryStrategy{}";
+  }
+
 }

@@ -22,7 +22,7 @@ import com.google.api.services.people.v1.PeopleService.People.CreateContact;
 import com.google.api.services.people.v1.model.Person;
 import ezvcard.VCard;
 import ezvcard.property.StructuredName;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.junit.Before;
@@ -66,7 +66,7 @@ public class GoogleContactsImporterTest {
   }
 
   @Test
-  public void importFirstResources() throws IOException {
+  public void importFirstResources() throws Exception {
     // Set up: small number of VCards to be imported
     int numberOfVCards = 5;
     List<VCard> vCardList = new LinkedList<>();

@@ -46,6 +46,7 @@ public final class LocalJobStore extends JobStoreWithValidator {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final Monitor monitor;
+  private final ConcurrentHashMap<String, Integer> counts;
 
   /** Ctor for testing with a null monitor. */
   public LocalJobStore() {
@@ -54,6 +55,7 @@ public final class LocalJobStore extends JobStoreWithValidator {
 
   public LocalJobStore(Monitor monitor) {
     this.monitor = monitor;
+    counts = new ConcurrentHashMap<>();
   }
 
   /**
@@ -172,6 +174,19 @@ public final class LocalJobStore extends JobStoreWithValidator {
       }
     }
     return null;
+  }
+
+  @Override
+  public void addCounts(Map<String, Integer> newCounts) {
+    if (newCounts == null) {
+      return;
+    }
+    newCounts.forEach((dataName, dataCount) -> counts.merge(dataName, dataCount, Integer::sum));
+  }
+
+  @Override
+  public Map<String, Integer> getCounts() {
+    return counts;
   }
 
   @Override
