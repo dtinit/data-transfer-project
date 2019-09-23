@@ -22,7 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
@@ -80,17 +80,17 @@ public class SmugMugPhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
-      PhotosContainerResource data) {
+      PhotosContainerResource data) throws Exception {
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             album.getId(),
             album.getName(),
             () -> importSingleAlbum(album, smugMugInterface));
       }
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));

@@ -15,29 +15,32 @@
  */
 package org.datatransferproject.transfer.microsoft.photos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.json.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftDriveItem;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftDriveItemsResponse;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFolder;
 import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -45,195 +48,176 @@ import java.util.UUID;
  *
  * <p>Converts folders to albums.
  */
-public class MicrosoftPhotosExporter implements
-    Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosExporter
+    implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  private static final String ODATA_NEXT = "@odata.nextLink";
-  private final String photosRootUrl;
-  private final String photosFolderTemplate;
-  private final String photosContentTemplate;
+  static final String DRIVE_TOKEN_PREFIX = "drive:";
 
-  private final OkHttpClient client;
-  private final ObjectMapper objectMapper;
-  private final TemporaryPerJobDataStore jobStore;
+  private final MicrosoftCredentialFactory credentialFactory;
+  private final JsonFactory jsonFactory;
+  private final Monitor monitor;
+  private volatile MicrosoftPhotosInterface photosInterface;
 
   public MicrosoftPhotosExporter(
-      String baseUrl,
-      OkHttpClient client,
-      ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore) {
-    photosRootUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
-    photosFolderTemplate = baseUrl + "/v1.0/me/drive/items/%s/children";
-    photosContentTemplate = baseUrl + "/v1.0/me/drive/items/%s/content";
-    this.client = client;
-    this.objectMapper = objectMapper;
-    this.jobStore = jobStore;
+      MicrosoftCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
+    this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
+  }
+
+  @VisibleForTesting
+  public MicrosoftPhotosExporter(
+      MicrosoftCredentialFactory credentialFactory,
+      JsonFactory jsonFactory,
+      MicrosoftPhotosInterface photosInterface,
+      Monitor monitor) {
+    this.credentialFactory = credentialFactory;
+    this.jsonFactory = jsonFactory;
+    this.photosInterface = photosInterface;
+    this.monitor = monitor;
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      Optional<ExportInformation> exportInformation) {
-
-    try {
-
-      List<Map<String, Object>> photoItems = requestAllPhotoItems(authData);
-
-      downloadAndCachePhotos(jobId, authData, photoItems);
-
-      PhotosContainerResource containerResource = convertToResource(photoItems);
-
-      return new ExportResult<>(ExportResult.ResultType.END, containerResource);
-
-    } catch (IOException e) {
-      e.printStackTrace(); // FIXME log error
-      return new ExportResult<>(e);
-    }
-  }
-
-  /**
-   * Recursively scans OneDrive folders starting with the special root photo folder. Returns all
-   * photo items, i.e. items with an image MIME type.
-   *
-   * <p>Folders are recursively processed using a deque of folder items. The deque is iterated, a
-   * dequeue folder item is popped, its contained items are requested, and any contained folders are
-   * added to the end of the dequeue. Processing completes when the dequeue has been exhausted.
-   *
-   * <p>All contained photo items are returned.
-   *
-   * @param authData the authorization data
-   */
-  private List<Map<String, Object>> requestAllPhotoItems(TokensAndUrlAuthData authData)
+  public ExportResult<PhotosContainerResource> export(
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException {
-    List<Map<String, Object>> photoItems = new ArrayList<>();
-
-    Deque<Map<String, Object>> folderItems = new ArrayDeque<>();
-
-    requestItems(photosRootUrl, authData, folderItems, photoItems);
-
-    // request items for all folders recursively until the collection is exhausted, adding contained
-    // folders to the end of the deque for processing
-    while (!folderItems.isEmpty()) {
-      Map<String, Object> folderItem = folderItems.removeLast();
-      String id = (String) folderItem.get("id");
-      String url = String.format(photosFolderTemplate, id);
-
-      requestItems(url, authData, folderItems, photoItems);
+    if (!exportInformation.isPresent()) {
+      return exportOneDrivePhotos(authData, Optional.empty(), Optional.empty(), jobId);
     }
 
-    return photoItems;
+    IdOnlyContainerResource idOnlyContainerResource =
+        (IdOnlyContainerResource) exportInformation.get().getContainerResource();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) exportInformation.get().getPaginationData();
+
+    return exportOneDrivePhotos(
+        authData,
+        Optional.ofNullable(idOnlyContainerResource),
+        Optional.ofNullable(paginationToken),
+        jobId);
   }
 
-  /**
-   * Scans a OneDrive folder for items, adding folders and photos to the provided collections.
-   *
-   * @param url the folder URL
-   * @param authData auth data
-   * @param folderItems the folder collection to add contained folders to
-   * @param photoItems the photo collection to add contained photos to
-   */
-  @SuppressWarnings("unchecked")
-  private void requestItems(
-      String url,
+  @VisibleForTesting
+  ExportResult<PhotosContainerResource> exportOneDrivePhotos(
       TokensAndUrlAuthData authData,
-      Deque<Map<String, Object>> folderItems,
-      List<Map<String, Object>> photoItems)
+      Optional<IdOnlyContainerResource> albumData,
+      Optional<PaginationData> paginationData,
+      UUID jobId)
       throws IOException {
-    // continue processing paginated results until there is no next url to request from
-    while (url != null) {
-      Request.Builder requestBuilder = new Request.Builder().url(url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+    Optional<String> albumId = Optional.empty();
+    if (albumData.isPresent()) {
+      albumId = Optional.of(albumData.get().getId());
+    }
+    Optional<String> paginationUrl = getDrivePaginationToken(paginationData);
 
-      try (Response graphResponse = client.newCall(requestBuilder.build()).execute()) {
-        ResponseBody body = graphResponse.body();
-        if (body == null) {
-          return;
+    MicrosoftDriveItemsResponse driveItemsResponse;
+    if (paginationData.isPresent() || albumData.isPresent()) {
+      driveItemsResponse =
+          getOrCreatePhotosInterface(authData).getDriveItems(albumId, paginationUrl);
+    } else {
+      driveItemsResponse =
+          getOrCreatePhotosInterface(authData)
+              .getDriveItemsFromSpecialFolder(MicrosoftSpecialFolder.FolderType.photos);
+    }
+
+    PaginationData nextPageData = SetNextPageToken(driveItemsResponse);
+    ContinuationData continuationData = new ContinuationData(nextPageData);
+    PhotosContainerResource containerResource;
+    MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
+    List<PhotoAlbum> albums = new ArrayList<>();
+    List<PhotoModel> photos = new ArrayList<>();
+
+    if (driveItems != null && driveItems.length > 0) {
+      for (MicrosoftDriveItem driveItem : driveItems) {
+        PhotoAlbum album = tryConvertDriveItemToPhotoAlbum(driveItem, jobId);
+        if (album != null) {
+          albums.add(album);
+          continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
         }
 
-        String contentBody = new String(body.bytes());
-
-        Map contentMap = objectMapper.reader().forType(Map.class).readValue(contentBody);
-
-        url = (String) contentMap.get(ODATA_NEXT);
-
-        List<Map<String, Object>> items = (List<Map<String, Object>>) contentMap.get("value");
-        if (items == null) {
-          return;
-        }
-        for (Map<String, Object> item : items) {
-          if (item.containsKey("folder")) {
-            folderItems.add(item);
-          } else {
-            Map<String, Object> fileData = (Map<String, Object>) item.get("file");
-            if (fileData != null) {
-              String mimeType = (String) fileData.get("mimeType");
-              if (mimeType != null && mimeType.startsWith("image/")) {
-                photoItems.add(item);
-              }
-            }
-          }
+        PhotoModel photo = tryConvertDriveItemToPhotoModel(albumId, driveItem, jobId);
+        if (photo != null) {
+          photos.add(photo);
         }
       }
     }
+
+    ExportResult.ResultType result =
+        nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
+    containerResource = new PhotosContainerResource(albums, photos);
+    return new ExportResult<>(result, containerResource, continuationData);
   }
 
-  /**
-   * Downloads the photo items to the job store.
-   */
-  private void downloadAndCachePhotos(
-      UUID jobId, TokensAndUrlAuthData authData, List<Map<String, Object>> photoItems) {
-    for (Map<String, Object> photoItem : photoItems) {
+  private PhotoAlbum tryConvertDriveItemToPhotoAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
 
-      String id = (String) photoItem.get("id");
-      String url = String.format(photosContentTemplate, id);
-
-      Request.Builder requestBuilder = new Request.Builder().url(url);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
-
-      try (Response graphResponse = client.newCall(requestBuilder.build()).execute()) {
-        ResponseBody body = graphResponse.body();
-        if (body == null) {
-          continue;
-        }
-        // TODO Encrypt this!
-        jobStore.create(jobId, id, body.byteStream());
-
-      } catch (IOException e) {
-        // skip the photo
-        e.printStackTrace(); // FIXME log error
-      }
+    if (driveItem.folder != null) {
+      PhotoAlbum photoAlbum = new PhotoAlbum(driveItem.id, driveItem.name, driveItem.description);
+      monitor.debug(
+          () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, photoAlbum));
+      return photoAlbum;
     }
+
+    return null;
   }
 
-  @SuppressWarnings("unchecked")
-  private PhotosContainerResource convertToResource(List<Map<String, Object>> photoItems) {
+  private PhotoModel tryConvertDriveItemToPhotoModel(
+      Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
 
-    Set<PhotoAlbum> albums = new HashSet<>();
-    List<PhotoModel> photoModels = new ArrayList<>();
-
-    for (Map<String, Object> photoItem : photoItems) {
-      String id = (String) photoItem.get("id");
-      String name = (String) photoItem.get("name");
-
-      // Note file and MIME type data are guaranteed to be present
-      Map<String, Object> fileData = (Map<String, Object>) photoItem.get("file");
-      String mimeType = (String) fileData.get("mimeType");
-
-      // NB: descriptions are not available in OneDrive
-
-      String albumId = null;
-      // convert the parent folder to an album
-      Map<String, Object> parentReference = (Map<String, Object>) photoItem.get("parentReference");
-      if (parentReference != null) {
-        albumId = (String) parentReference.get("id");
-        String parentName = (String) parentReference.get("name");
-        PhotoAlbum album = new PhotoAlbum(albumId, parentName, "");
-        albums.add(album);
-      }
-      PhotoModel photoModel = new PhotoModel(name, null, "", mimeType, id, albumId, false);
-
-      photoModels.add(photoModel);
+    if (driveItem.file != null
+        && driveItem.file.mimeType != null
+        && driveItem.file.mimeType.startsWith("image/")) {
+      PhotoModel photo =
+          new PhotoModel(
+              driveItem.name,
+              driveItem.downloadUrl,
+              driveItem.description,
+              driveItem.file.mimeType,
+              driveItem.id,
+              albumId.orElse(null),
+              false);
+      monitor.debug(
+          () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
+      return photo;
     }
 
-    return new PhotosContainerResource(albums, photoModels);
+    return null;
+  }
+
+  private PaginationData SetNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
+    String url = driveItemsResponse.getNextPageLink();
+
+    if (!Strings.isNullOrEmpty(url)) {
+      return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
+    }
+
+    return null;
+  }
+
+  private Optional<String> getDrivePaginationToken(Optional<PaginationData> paginationData) {
+    return getPaginationToken(paginationData, DRIVE_TOKEN_PREFIX);
+  }
+
+  private Optional<String> getPaginationToken(
+      Optional<PaginationData> paginationData, String tokenPrefix) {
+    Optional<String> paginationToken = Optional.empty();
+    if (paginationData.isPresent()) {
+      String token = ((StringPaginationToken) paginationData.get()).getToken();
+      Preconditions.checkArgument(
+          token.startsWith(tokenPrefix), "Invalid pagination token " + token);
+      if (token.length() > tokenPrefix.length()) {
+        paginationToken = Optional.of(token.substring(tokenPrefix.length()));
+      }
+    }
+    return paginationToken;
+  }
+
+  private synchronized MicrosoftPhotosInterface getOrCreatePhotosInterface(
+      TokensAndUrlAuthData authData) {
+    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+  }
+
+  private synchronized MicrosoftPhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
+    Credential credential = credentialFactory.createCredential(authData);
+    return new MicrosoftPhotosInterface(credential, jsonFactory);
   }
 }

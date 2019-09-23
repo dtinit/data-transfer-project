@@ -17,7 +17,7 @@ package org.datatransferproject.transfer.microsoft.calendar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.common.RequestHelper;
@@ -71,10 +71,10 @@ public class MicrosoftCalendarImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokenAuthData authData,
-      CalendarContainerResource data) throws IOException {
+      CalendarContainerResource data) throws Exception {
 
     for (CalendarModel calendar : data.getCalendars()) {
-      idempotentImportExecutor.executeAndSwallowExceptions(calendar.getId(),
+      idempotentImportExecutor.executeAndSwallowIOExceptions(calendar.getId(),
           calendar.getName(),
           () -> importCalendar(authData, calendar));
     }
@@ -103,7 +103,7 @@ public class MicrosoftCalendarImporter
   }
 
   private String importCalendar(TokenAuthData authData,
-      CalendarModel calendar) throws IOException {
+      CalendarModel calendar) throws Exception {
     List<Map<String, Object>> calendarRequests = new ArrayList<>();
 
     Map<String, Object> request = createRequestItem(calendar, 1, CALENDAR_SUBPATH);
@@ -122,7 +122,7 @@ public class MicrosoftCalendarImporter
   }
 
   private Map<String, Object> createRequestItem(
-      Object item, int id, String url) throws IOException {
+      Object item, int id, String url) throws Exception {
     TransformResult<LinkedHashMap> result = transformerService.transform(LinkedHashMap.class, item);
     if (result.getProblems() != null && !result.getProblems().isEmpty()) {
       throw new IOException("Problem transforming request: " + result.getProblems().get(0));

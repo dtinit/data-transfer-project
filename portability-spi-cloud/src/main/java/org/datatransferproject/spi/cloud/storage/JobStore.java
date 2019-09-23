@@ -1,7 +1,9 @@
 package org.datatransferproject.spi.cloud.storage;
 
+import java.util.Map;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
@@ -15,16 +17,6 @@ import java.util.UUID;
  * back-end services.
  */
 public interface JobStore extends TemporaryPerJobDataStore {
-
-  interface JobUpdateValidator {
-
-    /**
-     * Validation to do as part of an atomic update. Implementers should throw an {@code
-     * IllegalStateException} if the validation fails.
-     */
-    void validate(PortabilityJob previous, PortabilityJob updated);
-  }
-
   /**
    * Inserts a new {@link PortabilityJob} keyed by {@code jobId} in the store.
    *
@@ -36,24 +28,27 @@ public interface JobStore extends TemporaryPerJobDataStore {
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}.
+   * Called by a transfer worker to claim the job matching {@code jobId}, and updates the entry to
+   * {@code job} to set the new state and auth public key. This should be atomic and not allow
+   * multiple workers to claim the same job.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
+   * @throws IllegalStateException if fails to successfully claim the job.
    */
-  void updateJob(UUID jobId, PortabilityJob job) throws IOException;
+  void claimJob(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
-   * Verifies a {@code PortabilityJob} already exists for {@code jobId}, and updates the entry to
-   * {@code job}. If {@code validator} is non-null, validator.validate() is called first, as part of
-   * the atomic update.
-   *
-   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
-   * @throws IllegalStateException if validator.validate() failed
+   * Update the jobs auth state to {@code JobAuthorization.State.CREDS_AVAILABLE} in the store. This
+   * indicates to the pool of workers that this job is available for processing.
    */
-  void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator) throws IOException;
+  void updateJobAuthStateToCredsAvailable(UUID jobId) throws IOException;
+
+  /**
+   * Updates the job to the new version with keys added and the auth state to {@link
+   * JobAuthorization.State#CREDS_STORED} state.
+   */
+  void updateJobWithCredentials(UUID jobId, PortabilityJob job) throws IOException;
 
   /**
    * Stores errors related to a transfer job.
@@ -62,6 +57,36 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * updating it
    */
   void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException;
+
+  /**
+   * Stores a FailureReason related to a transfer job.
+   *
+   * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
+   * updating it
+   */
+  void addFailureReasonToJob(UUID jobId, String failureReason) throws IOException;
+
+  /**
+   * Updates a job to mark as finished.
+   * @param state The new state of the job. Can be {@code State.ERROR} or {@code State.COMPLETE}.
+   * @throws IOException if unable to update the job
+   */
+  void markJobAsFinished(UUID jobId, State state) throws IOException;
+
+  /**
+   * Updates a job to mark as in progress.
+   * @throws IOException if unable to update the job
+   */
+  void markJobAsStarted(UUID jobId) throws IOException;
+
+  /**
+   * Called when a worker has been waiting for credentials for a job but has not received them and
+   * timed out. The job should be set to {@code State.Error} and {@code
+   * JobAuthorization.State.TIMED_OUT}.
+   *
+   * @throws IOException if unable to update the job
+   */
+  void markJobAsTimedOut(UUID jobId) throws IOException;
 
   /**
    * Removes the {@link PortabilityJob} in the store keyed by {@code jobId}.
@@ -82,4 +107,18 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * if none found.
    */
   UUID findFirst(JobAuthorization.State jobState);
+
+  /**
+   * Updates the counter data.
+   *
+   * @param newCounts the new items counted
+   */
+  default void addCounts(Map<String, Integer> newCounts) {}
+
+  /**
+   * Provides the total number of items recorded.
+   *
+   * @return mapping from items names to items counts or null if none exist
+   */
+  default Map<String, Integer> getCounts() {return null;}
 }

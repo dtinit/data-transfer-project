@@ -29,13 +29,13 @@ import okio.Okio;
 import okio.Source;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +53,7 @@ import static com.google.common.base.Preconditions.checkState;
  * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
-public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -62,6 +62,9 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
+  private final String albumlessPhotoUrlTemplate;
+
+  private String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
 
   public MicrosoftPhotosImporter(
       String baseUrl,
@@ -73,7 +76,9 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
-    uploadPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/content";
+    uploadPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/content%s";
+
+    albumlessPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/root:/Pictures/%s:/content%s";
 
     this.client = client;
     this.objectMapper = objectMapper;
@@ -84,26 +89,24 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
   @Override
   public ImportResult importItem(
       UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      TokenAuthData authData,
-      PhotosContainerResource resource) throws IOException {
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokensAndUrlAuthData authData,
+      PhotosContainerResource resource)
+      throws Exception {
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
-      idempotentExecutor.executeAndSwallowExceptions(
-          album.getId(),
-          album.getName(),
-          () -> createOneDriveFolder(album, authData));
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          album.getId(), album.getName(), () -> createOneDriveFolder(album, authData));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
 
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
           Integer.toString(photoModel.hashCode()),
           photoModel.getTitle(),
           () -> {
-            String folderId = idempotentExecutor.getCachedValue(photoModel.getAlbumId());
-            return importPhoto(photoModel, jobId, folderId, authData);
+            return importSinglePhoto(photoModel, jobId, authData, idempotentImportExecutor);
           });
     }
     return ImportResult.OK;
@@ -111,15 +114,15 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
 
   @SuppressWarnings("unchecked")
   private String createOneDriveFolder(
-      PhotoAlbum album, TokenAuthData authData) throws IOException {
+      PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", album.getName());
-    rawFolder.put("folder", new Object());
+    rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
-    requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+    requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
     requestBuilder.post(
         RequestBody.create(
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
@@ -142,29 +145,37 @@ public class MicrosoftPhotosImporter implements Importer<TokenAuthData, PhotosCo
     }
   }
 
-  private String importPhoto(
-      PhotoModel photoModel,
+  private String importSinglePhoto(
+      PhotoModel photo,
       UUID jobId,
-      String importedAlbumId,
-      TokenAuthData authData) throws IOException {
+      TokensAndUrlAuthData authData,
+      IdempotentImportExecutor idempotentImportExecutor)
+      throws IOException {
     InputStream inputStream = null;
 
     try {
-      if (photoModel.getDataId() != null) {
-        inputStream = jobStore.getStream(jobId, photoModel.getDataId());
-      } else if (photoModel.getFetchableUrl() != null) {
-        inputStream = new URL(photoModel.getFetchableUrl()).openStream();
+      String uploadUrl = null;
+      if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+        uploadUrl = String.format(albumlessPhotoUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
       } else {
-        throw new IllegalStateException("Don't know how to get the inputStream for " + photoModel);
+        String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
+        uploadUrl =
+            String.format(
+                uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
       }
 
-      String uploadUrl =
-          String.format(uploadPhotoUrlTemplate, importedAlbumId, photoModel.getTitle());
+      if (photo.isInTempStore()) {
+        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl());
+      } else if (photo.getFetchableUrl() != null) {
+        inputStream = new URL(photo.getFetchableUrl()).openStream();
+      } else {
+        throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
+      }
 
       Request.Builder requestBuilder = new Request.Builder().url(uploadUrl);
-      requestBuilder.header("Authorization", "Bearer " + authData.getToken());
+      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
 
-      MediaType contentType = MediaType.parse(photoModel.getMediaType());
+      MediaType contentType = MediaType.parse(photo.getMediaType());
 
       StreamingBody body = new StreamingBody(contentType, inputStream);
 

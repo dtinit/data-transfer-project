@@ -52,6 +52,11 @@ public abstract class JobAuthorization {
   @JsonProperty("authPublicKey")
   public abstract String authPublicKey();
 
+  /** The id of the 'transfer worker' instance assigned to this job */
+  @Nullable
+  @JsonProperty("instanceId")
+  public abstract String instanceId();
+
   public abstract Builder toBuilder();
 
   /** The current authorization state of the job. */
@@ -111,6 +116,12 @@ public abstract class JobAuthorization {
      */
     @JsonProperty("authPublicKey")
     public abstract Builder setAuthPublicKey(String authPublicKey);
+
+    /**
+     * The id of the 'transfer worker' instance assigned to this job.
+     */
+    @JsonProperty("instanceId")
+    public abstract Builder setInstanceId(String instanceId);
 
     public abstract JobAuthorization build();
   }

@@ -9,7 +9,7 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.annotations.VisibleForTesting;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
@@ -95,15 +95,15 @@ public class GoogleCalendarImporter implements
   public ImportResult importItem(UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      CalendarContainerResource data) throws IOException {
+      CalendarContainerResource data) throws Exception {
     for (CalendarModel calendarModel : data.getCalendars()) {
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentExecutor.executeAndSwallowIOExceptions(
           calendarModel.getId(),
           calendarModel.getName(),
           () -> importSingleCalendar(authData, calendarModel));
     }
     for (CalendarEventModel eventModel : data.getEvents()) {
-      idempotentExecutor.executeAndSwallowExceptions(
+      idempotentExecutor.executeAndSwallowIOExceptions(
           Integer.toString(eventModel.hashCode()),
           eventModel.getNotes(),
           () -> importSingleEvent(idempotentExecutor, authData, eventModel));

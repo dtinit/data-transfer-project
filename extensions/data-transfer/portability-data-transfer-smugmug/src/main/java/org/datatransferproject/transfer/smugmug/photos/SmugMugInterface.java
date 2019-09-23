@@ -31,6 +31,8 @@ import com.google.common.net.HttpHeaders;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -108,14 +110,11 @@ public class SmugMugInterface {
   SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
-    String niceName = "Copy-of-" + albumName.replace(' ', '-');
-    json.put("NiceName", niceName);
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
     json.put("Title", "Copy of " + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
-    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
 
     // Upload album
     String folder = user.getUris().get(FOLDER_KEY).getUri();
@@ -245,7 +244,7 @@ public class SmugMugInterface {
     Response response = request.send();
     if (response.getCode() < 200 || response.getCode() >= 300) {
       throw new IOException(
-          String.format("Error occurred in request for %s : %s", fullUrl, response.getMessage()));
+          String.format("Error occurred in request for %s : %s \n %s", fullUrl, response.getMessage(), contentParams.toString()));
     }
 
     return mapper.readValue(response.getBody(), typeReference);

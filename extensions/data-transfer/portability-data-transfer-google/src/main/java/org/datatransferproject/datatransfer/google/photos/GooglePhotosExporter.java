@@ -182,9 +182,7 @@ public class GooglePhotosExporter
     ResultType resultType = ResultType.CONTINUE;
 
     PhotosContainerResource containerResource = new PhotosContainerResource(albums, null);
-    ExportResult<PhotosContainerResource> exportResult = new ExportResult<>(resultType,
-        containerResource, continuationData);
-    return exportResult;
+    return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
   @VisibleForTesting
@@ -318,12 +316,12 @@ public class GooglePhotosExporter
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
 
     return new PhotoModel(
-        "", // TODO: no title?  Should we use the description instead?
+        mediaItem.getFilename(),
         mediaItem.getBaseUrl() + "=d",
         mediaItem.getDescription(),
         mediaItem.getMimeType(),
         mediaItem.getId(),
-        albumId.isPresent() ? albumId.get() : null,
+        albumId.orElse(null),
         false);
   }
 

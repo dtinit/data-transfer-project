@@ -19,7 +19,7 @@ package org.datatransferproject.transfer;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.DataModel;
@@ -63,9 +63,12 @@ public class CallableImporter implements Callable<ImportResult> {
     boolean success = false;
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      ImportResult result =  importerProvider.get()
+      ImportResult result = importerProvider.get()
           .importItem(jobId, idempotentImportExecutor, authData, data);
       success = result.getType() == ImportResult.ResultType.OK;
+      if (success) {
+        result = result.copyWithCounts(data.getCounts());
+      }
       Collection<ErrorDetail> errors = idempotentImportExecutor.getErrors();
       if (!success || !errors.isEmpty()) {
         throw new IOException("Problem with importer, forcing a retry, "

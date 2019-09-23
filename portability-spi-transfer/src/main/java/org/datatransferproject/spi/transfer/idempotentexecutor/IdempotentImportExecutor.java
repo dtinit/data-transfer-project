@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.spi.transfer.provider;
+package org.datatransferproject.spi.transfer.idempotentexecutor;
 
+import java.util.UUID;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
@@ -33,7 +34,8 @@ public interface IdempotentImportExecutor {
    * Executes a callable, a callable will only be executed once for a given idempotentId, subsequent
    * calls will return the same result as the first invocation if it was successful.
    *
-   * <p>If the provided callable throws an exception if is logged and ignored and null is returned.
+   * <p>If the provided callable throws an IO exception if is logged and ignored and null is
+   * returned. All other exceptions are passed through
    *
    * <p>This is useful for leaf level imports where the importer should continue if a single item
    * can't be imported.
@@ -46,8 +48,8 @@ public interface IdempotentImportExecutor {
    * @param callable the callable to execute
    * @return the result of executing the callable.
    */
-  <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable);
+  <T extends Serializable> T executeAndSwallowIOExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception;
 
   /**
    * Executes a callable, a callable will only be executed once for a given idempotentId, subsequent
@@ -67,7 +69,7 @@ public interface IdempotentImportExecutor {
    * @return the result of executing the callable.
    */
   <T extends Serializable> T executeOrThrowException(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException;
+      String idempotentId, String itemName, Callable<T> callable) throws Exception;
 
   /**
    * Returns a cached result from a previous call to {@code execute}.
@@ -83,4 +85,13 @@ public interface IdempotentImportExecutor {
 
   /** Get the set of all errors that occurred, and weren't subsequently successful. */
   Collection<ErrorDetail> getErrors();
+
+  /**
+   * Sets the jobId for the IdempotentImportExecutor sot that any values can be linked to the job.
+   * This can enable resuming a job even in the situation that a transfer worker crashed without
+   * creating duplicate items. Some IdempotentImportExecutors may require this to be called before
+   * execution.
+   * @param jobId The jobId of the job that this IdempotentImportExecutor is being used for
+   */
+  void setJobId(UUID jobId);
 }

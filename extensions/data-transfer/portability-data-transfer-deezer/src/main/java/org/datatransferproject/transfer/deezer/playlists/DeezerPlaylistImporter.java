@@ -20,7 +20,7 @@ package org.datatransferproject.transfer.deezer.playlists;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.deezer.DeezerApi;
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
 
 /**
  * Imports playlists into Deezer.
@@ -63,7 +64,7 @@ public class DeezerPlaylistImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      PlaylistContainerResource data) throws IOException {
+      PlaylistContainerResource data) throws Exception {
     DeezerApi api = new DeezerApi(
         authData.getAccessToken(),
         httpTransport,
@@ -78,25 +79,25 @@ public class DeezerPlaylistImporter
       IdempotentImportExecutor idempotentExecutor,
       DeezerApi api,
       MusicPlaylist playlist)
-      throws IOException {
-    Long newPlaylistId = idempotentExecutor.executeAndSwallowExceptions(
+      throws Exception {
+    Long newPlaylistId = idempotentExecutor.executeAndSwallowIOExceptions(
         playlist.getIdentifier(),
         playlist.getHeadline(),
         () -> createPlaylist(api, playlist));
     if (null == newPlaylistId) {
-      monitor.severe(() ->"Couldn't create playlist: %s", playlist);
+      monitor.severe(() -> format("Couldn't create playlist: %s", playlist));
       // Playlist couldn't be created error will be reported to user.
       return;
     }
     List<Long> ids = new ArrayList<>();
     for (MusicRecording track : playlist.getTrack()) {
-      Long newSongId = idempotentExecutor.executeAndSwallowExceptions(
+      Long newSongId = idempotentExecutor.executeAndSwallowIOExceptions(
           newPlaylistId + "-" + track.hashCode(),
           "Track: " + track + " in " + playlist.getHeadline(),
           () -> lookupTrack(api, track));
       ids.add(newSongId);
     }
-    idempotentExecutor.executeAndSwallowExceptions(
+    idempotentExecutor.executeAndSwallowIOExceptions(
         newPlaylistId + "-tracks",
         "Playlist: " + playlist.getHeadline(),
         () -> {

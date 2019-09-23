@@ -24,7 +24,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
@@ -76,7 +76,7 @@ public class GooglePhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      PhotosContainerResource data) throws IOException {
+      PhotosContainerResource data) throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -85,7 +85,7 @@ public class GooglePhotosImporter
     // Uploads album metadata
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
-        idempotentImportExecutor.executeAndSwallowExceptions(
+        idempotentImportExecutor.executeAndSwallowIOExceptions(
             album.getId(),
             album.getName(),
             () -> importSingleAlbum(authData, album)
@@ -96,7 +96,7 @@ public class GooglePhotosImporter
     // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentImportExecutor.executeAndSwallowExceptions(
+        idempotentImportExecutor.executeAndSwallowIOExceptions(
             photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));

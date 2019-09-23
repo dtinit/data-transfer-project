@@ -31,7 +31,7 @@ public class SecurityExtensionLoader {
     ImmutableList<SecurityExtension> extensions = builder.build();
     Preconditions.checkState(
         extensions.size() == 1,
-        "Exactly one CloudExtension is required, but found " + extensions.size());
+        "Exactly one SecurityExtension is required, but found " + extensions.size());
     extensions.forEach(e -> e.initialize(context));
     return extensions.get(0);
   }

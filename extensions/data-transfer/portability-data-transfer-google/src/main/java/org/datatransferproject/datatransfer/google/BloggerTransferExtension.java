@@ -21,6 +21,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.blogger.GoogleBloggerImporter;
@@ -31,8 +32,6 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
-import java.io.IOException;
-
 /*
  * BloggerTransferExtension allows for importers and exporters (not yet implemented) of
  * Google Blogger data.
@@ -40,6 +39,7 @@ import java.io.IOException;
 // This needs to be separated out from Google, as there are multiple services that want to
 // handle SOCIAL-POSTS.
 public class BloggerTransferExtension implements TransferExtension {
+
   private static final String SERVICE_ID = "GoogleBlogger";
 
   // TODO: centralized place, or enum type for these
@@ -73,7 +73,10 @@ public class BloggerTransferExtension implements TransferExtension {
     // Note: initialize could be called twice in an account migration scenario where we import and
     // export to the same service provider. So just return rather than throwing if called multiple
     // times.
-    if (initialized) return;
+    if (initialized) {
+      return;
+    }
+    Monitor monitor = context.getMonitor();
 
     AppCredentials appCredentials;
     try {
@@ -82,7 +85,6 @@ public class BloggerTransferExtension implements TransferExtension {
               .getService(AppCredentialStore.class)
               .getAppCredentials("GOOGLEBLOGGER_KEY", "GOOGLEBLOGGER_SECRET");
     } catch (IOException e) {
-      Monitor monitor = context.getMonitor();
       monitor.info(
           () -> "Unable to retrieve Google AppCredentials. "
               + "Did you set GOOGLEBLOGGER_KEY and GOOGLEBLOGGER_SECRET?");
@@ -94,7 +96,7 @@ public class BloggerTransferExtension implements TransferExtension {
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
-        new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials);
+        new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
 

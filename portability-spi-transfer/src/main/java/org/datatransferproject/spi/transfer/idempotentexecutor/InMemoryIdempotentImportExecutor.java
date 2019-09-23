@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer;
+package org.datatransferproject.spi.transfer.idempotentexecutor;
+
+import static java.lang.String.format;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -35,20 +38,18 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   private final Map<String, Serializable> knownValues = new HashMap<>();
   private final Map<String, ErrorDetail> errors = new HashMap<>();
   private final Monitor monitor;
+  private UUID jobId;
 
   public InMemoryIdempotentImportExecutor(Monitor monitor) {
     this.monitor = monitor;
   }
 
   @Override
-  public <T extends Serializable> T executeAndSwallowExceptions(
-      String idempotentId, String itemName, Callable<T> callable) {
+  public <T extends Serializable> T executeAndSwallowIOExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception{
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
     } catch (IOException e) {
-      // Only catching IOException to allow any RuntimeExceptions in the the catch block of
-      // executeOrThrowException bubble up and get noticed.
-
       // Note all errors are logged in executeOrThrowException so no need to re-log them here.
       return null;
     }
@@ -57,15 +58,21 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   @SuppressWarnings("unchecked")
   public <T extends Serializable> T executeOrThrowException(
-      String idempotentId, String itemName, Callable<T> callable) throws IOException {
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
+    String jobIdPrefix = "Job " + jobId + ": ";
+
     if (knownValues.containsKey(idempotentId)) {
-      monitor.debug(() -> "Using cached key %s from cache for %s", idempotentId, itemName);
+      monitor.debug(
+          () ->
+              jobIdPrefix
+                  + format("Using cached key %s from cache for %s", idempotentId, itemName));
       return (T) knownValues.get(idempotentId);
     }
     try {
       T result = callable.call();
       knownValues.put(idempotentId, result);
-      monitor.debug(() -> "Storing key %s in cache for %s", idempotentId, itemName);
+      monitor.debug(
+          () -> jobIdPrefix + format("Storing key %s in cache for %s", idempotentId, itemName));
       errors.remove(idempotentId);
       return result;
     } catch (Exception e) {
@@ -76,8 +83,8 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
               .setException(Throwables.getStackTraceAsString(e))
               .build();
       errors.put(idempotentId, errorDetail);
-      monitor.severe(() -> "Problem with importing item: " + errorDetail);
-      throw new IOException("Problem executing callable for: " + idempotentId, e);
+      monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
+      throw e;
     }
   }
 
@@ -101,5 +108,10 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   public Collection<ErrorDetail> getErrors() {
     return ImmutableList.copyOf(errors.values());
+  }
+
+  @Override
+  public void setJobId(UUID jobId) {
+    this.jobId = jobId;
   }
 }

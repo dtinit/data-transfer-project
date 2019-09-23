@@ -18,7 +18,7 @@ package org.datatransferproject.transfer.twitter;
 
 import com.google.api.client.http.InputStreamContent;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -50,7 +50,7 @@ final class TwitterPhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
-      PhotosContainerResource data) {
+      PhotosContainerResource data) throws Exception {
     Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
     // Twitter doesn't support an 'Albums' concept, so that information is just lost.
 
@@ -61,7 +61,7 @@ final class TwitterPhotosImporter
             new InputStreamContent(null, getImageAsStream(image.getFetchableUrl()));
         update.media(image.getTitle(), content.getInputStream());
 
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             image.getDataId(),
             image.getTitle(),
             () -> twitterApi.tweets().updateStatus(update));

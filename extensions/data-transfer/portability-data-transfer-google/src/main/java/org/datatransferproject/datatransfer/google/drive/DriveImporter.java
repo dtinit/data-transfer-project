@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -71,7 +71,7 @@ public final class DriveImporter implements
     // Uploads album metadata
     if (data.getFolders() != null && data.getFolders().size() > 0) {
       for (BlobbyStorageContainerResource folder : data.getFolders()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             folder.getId(),
             folder.getName(),
             () -> importSingleFolder(
@@ -84,7 +84,7 @@ public final class DriveImporter implements
     // Uploads photos
     if (data.getFiles() != null && data.getFiles().size() > 0) {
       for (DigitalDocumentWrapper file : data.getFiles()) {
-        idempotentExecutor.executeAndSwallowExceptions(
+        idempotentExecutor.executeAndSwallowIOExceptions(
             Integer.toString(file.hashCode()),
             file.getDtpDigitalDocument().getName(),
             () -> importSingleFile(jobId, driveInterface, file, parentId));

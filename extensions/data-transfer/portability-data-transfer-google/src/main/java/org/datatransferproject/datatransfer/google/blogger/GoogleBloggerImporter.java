@@ -32,7 +32,7 @@ import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -104,7 +104,7 @@ public class GoogleBloggerImporter
       ASObject asObject,
       String blogId,
       TokensAndUrlAuthData authData)
-      throws IOException {
+      throws Exception {
     String content = asObject.content() == null ? "" : asObject.contentString();
 
     if (content == null) {
@@ -130,7 +130,7 @@ public class GoogleBloggerImporter
       for (LinkValue image : asObject.image()) {
         try {
           String newImgSrc =
-              idempotentExecutor.executeAndSwallowExceptions(
+              idempotentExecutor.executeAndSwallowIOExceptions(
                   image.toString(),
                   "Image",
                   () -> uploadImage((ASObject) image, driveInterface, folderId));
@@ -174,7 +174,7 @@ public class GoogleBloggerImporter
       post.setPublished(new DateTime(asObject.published().getMillis()));
     }
 
-    idempotentExecutor.executeAndSwallowExceptions(
+    idempotentExecutor.executeAndSwallowIOExceptions(
         title,
         title,
         () -> getOrCreateBloggerService(authData).posts()

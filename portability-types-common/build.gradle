@@ -21,6 +21,7 @@ plugins {
 }
 dependencies {
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
+    compile("com.google.auto.value:auto-value-annotations:${autoValueVersion}")
 
     compile fileTree(include: ['*.jar'], dir: 'lib')
 

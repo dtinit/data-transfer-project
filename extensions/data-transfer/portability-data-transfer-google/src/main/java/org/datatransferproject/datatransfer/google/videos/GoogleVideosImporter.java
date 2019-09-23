@@ -39,7 +39,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
@@ -87,7 +87,7 @@ public class GoogleVideosImporter
           UUID jobId,
           IdempotentImportExecutor executor,
           TokensAndUrlAuthData authData,
-          VideosContainerResource data) throws IOException {
+          VideosContainerResource data) throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -106,7 +106,7 @@ public class GoogleVideosImporter
           TokensAndUrlAuthData authData,
           VideoObject inputVideo,
           IdempotentImportExecutor executor)
-          throws IOException {
+          throws Exception {
 
     // download video and create input stream
     InputStream inputStream;
@@ -116,7 +116,7 @@ public class GoogleVideosImporter
                       "Content Url is empty. Make sure that you provide a valid content Url.");
       return;
     }
-    
+
     inputStream = this.videoStreamProvider.get(inputVideo.getContentUrl().toString());
 
     String filename;
@@ -134,7 +134,7 @@ public class GoogleVideosImporter
     NewMediaItemUpload uploadItem =
             new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
 
-    executor.executeAndSwallowExceptions(
+    executor.executeAndSwallowIOExceptions(
             inputVideo.getDataId(),
             inputVideo.getName(),
             () -> getOrCreateVideosInterface(authData).createVideo(uploadItem));

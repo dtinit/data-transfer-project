@@ -18,11 +18,9 @@ package org.datatransferproject.transfer;
 import static java.lang.String.format;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Inject;
 import java.io.IOException;
-import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,6 +45,8 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * (2)Run the copy job
  */
 final class JobProcessor {
+  // TODO(cnnorris): add failure reason enums once there are more failure reasons
+  public static final String DESTINATION_FULL_ENUM = "DESTINATION_FULL";
 
   private final JobStore store;
   private final JobHooks hooks;
@@ -124,13 +124,18 @@ final class JobProcessor {
           importAuthData,
           jobId,
           exportInfo);
-      monitor.debug(() -> "Finished copy for jobId: " + jobId);
-      success = true;
+      final int numErrors = errors.size();
+      monitor.debug(
+          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
+      success = errors.isEmpty();
+    } catch (DestinationMemoryFullException e) {
+      monitor.severe(() -> "Destination memory error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
+      addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM);
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
       monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
-      markJobFinished(jobId, success, errors);
+      addErrorsAndMarkJobFinished(jobId, success, errors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
@@ -150,34 +155,33 @@ final class JobProcessor {
     return null;
   }
 
-  private void markJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
+  private void addErrorsAndMarkJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
     try {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
       success = false;
-      monitor.severe(() -> "Problem adding errors to JobStore: %s", e);
+      monitor.severe(() -> format("Problem adding errors to JobStore: %s", e), e);
     }
-    State state = success ? State.COMPLETE : State.ERROR;
-    updateJobState(jobId, state, State.IN_PROGRESS, JobAuthorization.State.CREDS_STORED);
+    try {
+      store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
+    } catch (IOException e) {
+      monitor.severe(() -> format("Could not mark job %s as finished.", jobId));
+    }
+  }
+
+  private void addFailureReasonToJob(UUID jobId, String failureReason) {
+    try {
+      store.addFailureReasonToJob(jobId, failureReason);
+    } catch (IOException e) {
+      monitor.severe(() -> format("Problem adding failure reason to JobStore: %s", e), e);
+    }
   }
 
   private void markJobStarted(UUID jobId) {
-    updateJobState(jobId, State.IN_PROGRESS, State.NEW, JobAuthorization.State.CREDS_STORED);
-  }
-
-  private void updateJobState(UUID jobId, State state, State prevState,
-      JobAuthorization.State prevAuthState) {
-    PortabilityJob existingJob = store.findJob(jobId);
-    PortabilityJob updatedJob = existingJob.toBuilder().setState(state).build();
-
     try {
-      store.updateJob(jobId, updatedJob,
-          ((previous, updated) -> {
-            Preconditions.checkState(previous.state() == prevState);
-            Preconditions.checkState(previous.jobAuthorization().state() == prevAuthState);
-          }));
+      store.markJobAsStarted(jobId);
     } catch (IOException e) {
-      monitor.debug(() -> format("Could not mark job %s as %s, %s", jobId, state, e));
+      monitor.severe(() -> format("Could not mark job %s as %s, %s", jobId, State.IN_PROGRESS, e));
     }
   }
 }

@@ -17,6 +17,7 @@
 package org.datatransferproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Arrays;
 
 /**
  * Class that determines whether a given {@link Throwable} is a match for its {@link RetryStrategy}.
@@ -55,5 +56,13 @@ public class RetryMapping {
       }
     }
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return "RetryMapping{" +
+        "regexes=" + Arrays.toString(regexes) +
+        ", strategy=" + strategy +
+        '}';
   }
 }

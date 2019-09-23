@@ -71,9 +71,17 @@ public class RetryingCallable<T> implements Callable<T> {
         // TODO: do we want to reset anything (eg, number of retries) if we see a different
         // RetryStrategy?
         RetryStrategy strategy = retryStrategyLibrary.checkoutRetryStrategy(e);
+        monitor.debug(
+            () ->
+                String.format(
+                    "Attempt %d failed, using retry strategy: %s",
+                    attempts, strategy.toString()));
         if (strategy.canTryAgain(attempts)) {
           long nextAttemptIntervalMillis =
               strategy.getRemainingIntervalMillis(attempts, elapsedMillis);
+          monitor.debug(() -> String.format(
+              "Strategy has %d remainingIntervalMillis after %d elapsedMillis",
+              nextAttemptIntervalMillis, elapsedMillis));
           if (nextAttemptIntervalMillis > 0L) {
             try {
               Thread.sleep(nextAttemptIntervalMillis);
@@ -84,6 +92,8 @@ public class RetryingCallable<T> implements Callable<T> {
             }
           }
         } else {
+          monitor.debug(() -> String
+              .format("Strategy canTryAgain returned false after %d retries", attempts));
           throw new RetryException(attempts, mostRecentException);
         }
       }

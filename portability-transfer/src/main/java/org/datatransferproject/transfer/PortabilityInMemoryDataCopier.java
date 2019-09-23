@@ -15,11 +15,15 @@
  */
 package org.datatransferproject.transfer;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -32,6 +36,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
+import org.datatransferproject.transfer.DestinationMemoryFullException;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -53,11 +58,12 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
   private final Provider<Exporter> exporterProvider;
 
   private final Provider<Importer> importerProvider;
-  private final InMemoryIdempotentImportExecutor inMemoryIdempotentImportExecutor;
+  private final IdempotentImportExecutor idempotentImportExecutor;
 
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder metricRecorder;
+  private final JobStore jobStore;
 
   @Inject
   public PortabilityInMemoryDataCopier(
@@ -65,13 +71,16 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       Provider<Importer> importerProvider,
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
       Monitor monitor,
-      DtpInternalMetricRecorder dtpInternalMetricRecorder) {
+      IdempotentImportExecutor idempotentImportExecutor,
+      DtpInternalMetricRecorder dtpInternalMetricRecorder,
+      JobStore jobStore) {
     this.exporterProvider = exporterProvider;
     this.importerProvider = importerProvider;
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
     this.monitor = monitor;
-    this.inMemoryIdempotentImportExecutor = new InMemoryIdempotentImportExecutor(monitor);
+    this.idempotentImportExecutor = idempotentImportExecutor;
     this.metricRecorder = dtpInternalMetricRecorder;
+    this.jobStore = jobStore;
   }
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
@@ -82,6 +91,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
        UUID jobId,
        Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
+    idempotentImportExecutor.setJobId(jobId);
     return copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
   }
 
@@ -143,7 +153,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
           new CallableImporter(
               importerProvider,
               jobId,
-              inMemoryIdempotentImportExecutor,
+              idempotentImportExecutor,
               importAuthData,
               exportResult.getExportedData(),
               metricRecorder);
@@ -155,8 +165,15 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       try {
         ImportResult importResult = retryingImporter.call();
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
+        if (importSuccess) {
+          jobStore.addCounts(importResult.getCounts().orElse(null));
+        }
       } catch (RetryException | RuntimeException e) {
-        monitor.severe(() -> "Got error importing data: %s", e);
+        monitor.severe(() -> format("Got error importing data: %s", e), e);
+        if (e.getClass() == RetryException.class &&
+            e.getCause().getClass() == DestinationMemoryFullException.class){
+          throw (DestinationMemoryFullException) e.getCause();
+        }
       } finally{
         metricRecorder.importPageFinished(
             JobMetadata.getDataType(),
@@ -194,6 +211,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         }
       }
     }
-    return inMemoryIdempotentImportExecutor.getErrors();
+    return idempotentImportExecutor.getErrors();
   }
 }

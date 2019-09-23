@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.lang.String.format;
 
 /** An in-memory {@link JobStore} implementation that uses a concurrent map as its store. */
-public final class LocalJobStore implements JobStore {
+public final class LocalJobStore extends JobStoreWithValidator {
   private static ConcurrentHashMap<UUID, Map<String, Object>> JOB_MAP = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<String, Map<Class<? extends DataModel>, DataModel>> DATA_MAP =
       new ConcurrentHashMap<>();
@@ -45,6 +46,7 @@ public final class LocalJobStore implements JobStore {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final Monitor monitor;
+  private final ConcurrentHashMap<String, Integer> counts;
 
   /** Ctor for testing with a null monitor. */
   public LocalJobStore() {
@@ -53,6 +55,7 @@ public final class LocalJobStore implements JobStore {
 
   public LocalJobStore(Monitor monitor) {
     this.monitor = monitor;
+    counts = new ConcurrentHashMap<>();
   }
 
   /**
@@ -95,7 +98,7 @@ public final class LocalJobStore implements JobStore {
    * @throws IllegalStateException if validator.validate() failed
    */
   @Override
-  public synchronized void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
+  protected synchronized void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
       throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
@@ -117,7 +120,8 @@ public final class LocalJobStore implements JobStore {
     // This is a no-op currently as nothing in DTP reads the errors currently.
     if (errors != null && !errors.isEmpty()) {
       for (ErrorDetail error : errors) {
-        monitor.info(() -> "Added error: %s", OBJECT_MAPPER.writeValueAsString(error));
+        String errorString = OBJECT_MAPPER.writeValueAsString(error);
+        monitor.info(() -> "Added error: " + errorString);
       }
     }
   }
@@ -170,6 +174,19 @@ public final class LocalJobStore implements JobStore {
       }
     }
     return null;
+  }
+
+  @Override
+  public void addCounts(Map<String, Integer> newCounts) {
+    if (newCounts == null) {
+      return;
+    }
+    newCounts.forEach((dataName, dataCount) -> counts.merge(dataName, dataCount, Integer::sum));
+  }
+
+  @Override
+  public Map<String, Integer> getCounts() {
+    return counts;
   }
 
   @Override

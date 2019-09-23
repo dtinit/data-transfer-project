@@ -17,6 +17,8 @@
 package org.datatransferproject.transfer.spotify.playlists;
 
 
+import static java.lang.String.format;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.wrapper.spotify.SpotifyApi;
@@ -78,14 +80,18 @@ public class SpotifyPlaylistExporter implements
     int offset = 0;
     Paging<PlaylistSimplified> playlists;
     do {
-      monitor.debug(() -> "Fetching playlists with offset %s", offset);
+      int finalOffset = offset;
+      monitor.debug(() -> format("Fetching playlists with offset %s", finalOffset));
       playlists = spotifyApi.getListOfUsersPlaylists(userId)
           .offset(offset)
           .build()
           .execute();
       for (PlaylistSimplified playlist : playlists.getItems()) {
-        monitor.debug(() -> "Got playlist %s: %s (id: %s)",
-            playlist.getId(), playlist.getName(), playlist.getHref());
+        monitor.debug(
+            () ->
+                format(
+                    "Got playlist %s: %s (id: %s)",
+                    playlist.getId(), playlist.getName(), playlist.getHref()));
         results.add(new MusicPlaylist(
             playlist.getHref(),
             playlist.getName(),
@@ -102,8 +108,12 @@ public class SpotifyPlaylistExporter implements
     Paging<PlaylistTrack> playlistTrackResults;
     ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>(); 
     do {
-      monitor.debug(() -> "Fetching playlist's %s tracks with offset %s, next: %s",
-          playlistId, offset);
+      int finalOffset = offset;
+      monitor.debug(
+          () ->
+              format(
+                  "Fetching playlist's %s tracks with offset %s, next: %s",
+                  playlistId, finalOffset));
       playlistTrackResults = spotifyApi.getPlaylistsTracks(playlistId)
           .offset(offset)
           .build()
@@ -119,7 +129,7 @@ public class SpotifyPlaylistExporter implements
 
   private MusicRecording convertTrack(PlaylistTrack playlistTrack) {
     Track track = playlistTrack.getTrack();
-    monitor.debug(() -> "Converting: %s", track);
+    monitor.debug(() -> format("Converting: %s", track));
     return new MusicRecording(
         track.getHref(),
         track.getName(),

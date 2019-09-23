@@ -24,7 +24,7 @@ import com.wrapper.spotify.model_objects.specification.Paging;
 import com.wrapper.spotify.model_objects.specification.Track;
 import com.wrapper.spotify.model_objects.specification.User;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.provider.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.playlists.MusicPlaylist;
@@ -69,8 +69,8 @@ public class SpotifyPlaylistImporter
   private void createPlaylist(IdempotentImportExecutor idempotentExecutor,
       MusicPlaylist playlist,
       String userId)
-      throws IOException, SpotifyWebApiException {
-    String playlistId = idempotentExecutor.executeAndSwallowExceptions(
+      throws Exception, SpotifyWebApiException {
+    String playlistId = idempotentExecutor.executeAndSwallowIOExceptions(
         playlist.getIdentifier(),
         "Playlist: " + playlist.getHeadline(),
         () -> spotifyApi
@@ -93,8 +93,8 @@ public class SpotifyPlaylistImporter
       String playlistId,
       String playlistName,
       MusicRecording track)
-      throws IOException {
-    idempotentExecutor.executeAndSwallowExceptions(
+      throws Exception {
+    idempotentExecutor.executeAndSwallowIOExceptions(
         playlistId + "-" + track.hashCode(),
         playlistName + " - " + track.getHeadline(),
         () -> {
