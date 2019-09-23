@@ -182,10 +182,10 @@ public class GooglePhotosInterface {
     } catch (HttpResponseException e) {
       // if the response is "unauthorized", refresh the token and try the request again
       if (e.getStatusCode() == 401) {
-        monitor.atInfo(() => "Attempting to refresh authorization token");
+        monitor.info(() -> "Attempting to refresh authorization token");
         if (credential.refreshToken()) {
           // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
-          monitor.atInfo(() => "Refreshed authorization token successfuly");
+          monitor.info(() -> "Refreshed authorization token successfuly");
           response = requestFactory
               .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
                   httpContent).execute();
