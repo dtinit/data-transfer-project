@@ -191,7 +191,7 @@ public class GooglePhotosInterface {
                   httpContent).execute();
           
         } else {
-          throw new IOException("Couldn't refresh authorization token!");
+          throw new IOException("Couldn't refresh authorization token after retrying");
         }
       } else {
         // something else is wrong, bubble up the error
