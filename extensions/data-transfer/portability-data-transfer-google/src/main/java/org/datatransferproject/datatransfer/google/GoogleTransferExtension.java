@@ -103,7 +103,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, monitor));
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
-            "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory));
+            "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor));
     importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor));
     importerMap = importerBuilder.build();
 

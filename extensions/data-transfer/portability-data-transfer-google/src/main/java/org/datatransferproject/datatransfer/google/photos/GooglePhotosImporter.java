@@ -19,6 +19,7 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -49,12 +50,14 @@ public class GooglePhotosImporter
   private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
   private volatile GooglePhotosInterface photosInterface;
+  private final Monitor monitor;
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
-      JsonFactory jsonFactory) {
-    this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider());
+      JsonFactory jsonFactory,
+      Monitor monitor) {
+    this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider(), monitor);
   }
 
   @VisibleForTesting
@@ -63,12 +66,14 @@ public class GooglePhotosImporter
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
-      ImageStreamProvider imageStreamProvider) {
+      ImageStreamProvider imageStreamProvider,
+      Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
     this.imageStreamProvider = imageStreamProvider;
+    this.monitor = monitor;
   }
 
   @Override
@@ -172,6 +177,6 @@ public class GooglePhotosImporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GooglePhotosInterface(credential, jsonFactory);
+    return new GooglePhotosInterface(credential, jsonFactory, monitor);
   }
 }

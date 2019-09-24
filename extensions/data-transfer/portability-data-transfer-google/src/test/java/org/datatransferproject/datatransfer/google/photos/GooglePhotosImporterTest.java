@@ -58,6 +58,7 @@ public class GooglePhotosImporterTest {
   private ImageStreamProvider imageStreamProvider;
   private InputStream inputStream;
   private IdempotentImportExecutor executor;
+  private Monitor monitor;
 
   private static final String OLD_ALBUM_ID = "OLD_ALBUM_ID";
   private static final String NEW_ALBUM_ID = "NEW_ALBUM_ID";
@@ -66,6 +67,7 @@ public class GooglePhotosImporterTest {
   public void setUp() throws IOException {
     executor = new FakeIdempotentImportExecutor();
     googlePhotosInterface = Mockito.mock(GooglePhotosInterface.class);
+    monitor = mock(Monitor.class);
 
     Mockito.when(googlePhotosInterface.uploadPhotoContent(Matchers.any(InputStream.class)))
         .thenReturn(UPLOAD_TOKEN);
@@ -79,7 +81,7 @@ public class GooglePhotosImporterTest {
     Mockito.when(imageStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
 
     googlePhotosImporter = new GooglePhotosImporter(null, jobStore, null,
-        googlePhotosInterface, imageStreamProvider);
+        googlePhotosInterface, imageStreamProvider, monitor);
   }
 
   @Test
