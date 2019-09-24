@@ -110,7 +110,8 @@ public class GoogleContactsExporter
   }
 
   private static void convertToVCardNamesAndPopulate(VCard vCard, List<Name> personNames) {
-    // TODO(olsona): what if there's more than one primary name in a Google Contact?
+    // If there are multiple primary names, we consider the first one as primary
+    // and add remaining primary names in alternateStructuredNames
     StructuredName primaryStructuredName = null;
     LinkedList<StructuredName> alternateStructuredNames = new LinkedList<>();
     for (Name personName : personNames) {
