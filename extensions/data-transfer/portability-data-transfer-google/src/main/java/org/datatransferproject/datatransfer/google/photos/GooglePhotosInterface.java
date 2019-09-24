@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
@@ -77,10 +78,12 @@ public class GooglePhotosInterface {
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
   private final JsonFactory jsonFactory;
+  private final Monitor monitor;
 
-  GooglePhotosInterface(Credential credential, JsonFactory jsonFactory) {
+  GooglePhotosInterface(Credential credential, JsonFactory jsonFactory, Monitor monitor) {
     this.credential = credential;
     this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
   }
 
   AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
@@ -180,12 +183,19 @@ public class GooglePhotosInterface {
     try {
       response = postRequest.execute();
     } catch (HttpResponseException e) {
-      // if the response is "unauthorized" and we've successfully refreshed the token, try the request again
-      if (e.getStatusCode() == 401 && credential.refreshToken()) {
-        // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
-        response = requestFactory
-            .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
-                httpContent).execute();
+      // if the response is "unauthorized", refresh the token and try the request again
+      if (e.getStatusCode() == 401) {
+        monitor.info(() -> "Attempting to refresh authorization token");
+        if (credential.refreshToken()) {
+          // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
+          monitor.info(() -> "Refreshed authorization token successfuly");
+          response = requestFactory
+              .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
+                  httpContent).execute();
+          
+        } else {
+          throw new IOException("Couldn't refresh authorization token after retrying");
+        }
       } else {
         // something else is wrong, bubble up the error
         throw new IOException(

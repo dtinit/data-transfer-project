@@ -332,7 +332,7 @@ public class GooglePhotosExporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GooglePhotosInterface(credential, jsonFactory);
+    return new GooglePhotosInterface(credential, jsonFactory, monitor);
   }
 
   private static String createCacheKey() {
