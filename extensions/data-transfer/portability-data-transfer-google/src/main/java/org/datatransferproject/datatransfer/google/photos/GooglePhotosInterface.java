@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
@@ -77,10 +78,12 @@ public class GooglePhotosInterface {
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
   private final JsonFactory jsonFactory;
+  private final Monitor monitor;
 
-  GooglePhotosInterface(Credential credential, JsonFactory jsonFactory) {
+  GooglePhotosInterface(Credential credential, JsonFactory jsonFactory, Monitor monitor) {
     this.credential = credential;
     this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
   }
 
   AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
