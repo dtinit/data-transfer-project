@@ -67,7 +67,7 @@ public class GooglePhotosImporterTest {
   public void setUp() throws IOException {
     executor = new FakeIdempotentImportExecutor();
     googlePhotosInterface = Mockito.mock(GooglePhotosInterface.class);
-    monitor = mock(Monitor.class);
+    monitor = Mockito.mock(Monitor.class);
 
     Mockito.when(googlePhotosInterface.uploadPhotoContent(Matchers.any(InputStream.class)))
         .thenReturn(UPLOAD_TOKEN);
