@@ -31,8 +31,6 @@ import com.google.common.net.HttpHeaders;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -230,7 +228,7 @@ public class SmugMugInterface {
 
     // Add body params
     for (Entry<String, String> param : contentParams.entrySet()) {
-      request.addBodyParameter(param.getKey(), URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.toString()));
+      request.addBodyParameter(param.getKey(), param.getValue());
     }
 
     // sign request before adding any of the headers since those shouldn't be included in the
