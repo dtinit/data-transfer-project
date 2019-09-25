@@ -110,11 +110,14 @@ public class SmugMugInterface {
   SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
+    String niceName = "Copy-of-" + albumName.replace(' ', '-');
+    json.put("NiceName", niceName);
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
     json.put("Title", "Copy of " + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
+    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
 
     // Upload album
     String folder = user.getUris().get(FOLDER_KEY).getUri();
@@ -227,7 +230,7 @@ public class SmugMugInterface {
 
     // Add body params
     for (Entry<String, String> param : contentParams.entrySet()) {
-      request.addBodyParameter(param.getKey(), param.getValue());
+      request.addBodyParameter(param.getKey(), URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.toString()));
     }
 
     // sign request before adding any of the headers since those shouldn't be included in the
@@ -244,7 +247,7 @@ public class SmugMugInterface {
     Response response = request.send();
     if (response.getCode() < 200 || response.getCode() >= 300) {
       throw new IOException(
-          String.format("Error occurred in request for %s : %s \n %s", fullUrl, response.getMessage(), contentParams.toString()));
+          String.format("Error occurred in request for %s : %s", fullUrl, response.getMessage()));
     }
 
     return mapper.readValue(response.getBody(), typeReference);
