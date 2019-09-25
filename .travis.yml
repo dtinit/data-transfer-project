@@ -15,6 +15,13 @@
 #
 matrix:
   include:
+    - name: "Google java format validation"
+      # Validate with Google Java Style
+      language: java
+      before_script:
+        - wget https://github.com/google/google-java-format/releases/download/google-java-format-1.7/google-java-format-1.7-all-deps.jar
+      script:
+        - find . -iname "*.java" | xargs java -jar google-java-format-1.7-all-deps.jar --dry-run --set-exit-if-changed
     - name: "Java (Gradle)"
       # Nothing to customize here. Travis knows to use Gradle (including running tests) based on
       # the presence of gradle build file
