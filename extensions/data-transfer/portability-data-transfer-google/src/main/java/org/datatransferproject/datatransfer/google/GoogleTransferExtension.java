@@ -5,6 +5,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.calendar.GoogleCalendarExporter;
@@ -30,8 +31,6 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
-import java.io.IOException;
-
 /*
  * GoogleTransferExtension allows for importers and exporters of data types
  * to be retrieved.
@@ -40,7 +39,8 @@ public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
-          ImmutableList.of("BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS", "VIDEOS");
+      ImmutableList.of(
+          "BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS", "VIDEOS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -78,14 +78,14 @@ public class GoogleTransferExtension implements TransferExtension {
     AppCredentials appCredentials;
     try {
       appCredentials =
-              context
-                      .getService(AppCredentialStore.class)
-                      .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials("GOOGLE_KEY", "GOOGLE_SECRET");
     } catch (IOException e) {
       Monitor monitor = context.getMonitor();
       monitor.info(
-              () ->
-                      "Unable to retrieve Google AppCredentials. Did you set GOOGLE_KEY and GOOGLE_SECRET?");
+          () ->
+              "Unable to retrieve Google AppCredentials. Did you set GOOGLE_KEY and GOOGLE_SECRET?");
       return;
     }
 
@@ -93,8 +93,7 @@ public class GoogleTransferExtension implements TransferExtension {
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
-            new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
-
+        new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));
@@ -103,8 +102,9 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, monitor));
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
-            "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor));
-    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor));
+        "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor));
+    importerBuilder.put(
+        "VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -115,8 +115,8 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
     exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
-            "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
-    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory,jsonFactory));
+        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
+    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory, jsonFactory));
 
     exporterMap = exporterBuilder.build();
 

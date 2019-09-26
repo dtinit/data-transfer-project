@@ -16,6 +16,4 @@
 
 package org.datatransferproject.datatransfer.google.tasks;
 
-public class GoogleTasksExporterTest {
-
-}
+public class GoogleTasksExporterTest {}

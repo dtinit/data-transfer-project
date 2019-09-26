@@ -15,13 +15,13 @@
  */
 package org.datatransferproject.auth.offline;
 
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
+
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-
-import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
-import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 /**
  * Generates authentication data for the offline data demo importer.
@@ -34,7 +34,8 @@ public class OfflineDemoAuthDataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    return new AuthFlowConfiguration(callbackBaseUrl + "/callback/offline-demo?code=123", AUTH_PROTOCOL, getTokenUrl());
+    return new AuthFlowConfiguration(
+        callbackBaseUrl + "/callback/offline-demo?code=123", AUTH_PROTOCOL, getTokenUrl());
   }
 
   @Override

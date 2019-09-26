@@ -16,7 +16,6 @@
 
 package org.datatransferproject.transfer.mastodon.social;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +35,7 @@ import java.net.URI;
 import org.datatransferproject.transfer.mastodon.model.Account;
 import org.datatransferproject.transfer.mastodon.model.Status;
 
-/** Helper methods for interacting with the Mastodon API **/
+/** Helper methods for interacting with the Mastodon API * */
 public class MastodonHttpUtilities {
   private static final String ACCOUNT_VERIFICATION_URL = "/api/v1/accounts/verify_credentials";
   private static final String STATUS_URL_PATTERN = "/api/v1/accounts/%s/statuses";
@@ -51,22 +50,23 @@ public class MastodonHttpUtilities {
 
   /**
    * Construct a new utility class for a given user.
+   *
    * @param accessToken the access token for a user from the UI or OAuth flow
    * @param baseUrl the base url of the mastodon instance of the user
    */
   MastodonHttpUtilities(String accessToken, String baseUrl) throws IOException {
-    this.accessToken = checkNotNull(accessToken, "accessToken must be provided" );
+    this.accessToken = checkNotNull(accessToken, "accessToken must be provided");
     this.baseUrl = checkNotNull(baseUrl, "baseUrl must be provided");
     this.baseUri = URI.create(baseUrl);
     this.account = fetchAccount();
   }
 
-  /** Gets the account info via verify_credentials. **/
+  /** Gets the account info via verify_credentials. * */
   public Account getAccount() {
     return account;
   }
 
-  /** Gets the statuses posted by the user. **/
+  /** Gets the statuses posted by the user. * */
   public Status[] getStatuses(String maxId) throws Exception {
     String url = String.format(STATUS_URL_PATTERN, account.getId());
     if (!Strings.isNullOrEmpty(maxId)) {
@@ -76,19 +76,21 @@ public class MastodonHttpUtilities {
     return request(url, Status[].class);
   }
 
-  /** Posts a new status for the user, initially marked as private.**/
+  /** Posts a new status for the user, initially marked as private.* */
   public void postStatus(String content, String idempotencyKey) throws IOException {
-    ImmutableMap<String, String> formParams = ImmutableMap.of(
-        "status", content,
-        // Default everything to private to avoid a privacy incident
-        "visibility", "private"
-    );
+    ImmutableMap<String, String> formParams =
+        ImmutableMap.of(
+            "status",
+            content,
+            // Default everything to private to avoid a privacy incident
+            "visibility",
+            "private");
     UrlEncodedContent urlEncodedContent = new UrlEncodedContent(formParams);
-    HttpRequest postRequest = TRANSPORT.createRequestFactory()
-        .buildPostRequest(
-            new GenericUrl(baseUrl + POST_URL),
-            urlEncodedContent)
-        .setThrowExceptionOnExecuteError(false);
+    HttpRequest postRequest =
+        TRANSPORT
+            .createRequestFactory()
+            .buildPostRequest(new GenericUrl(baseUrl + POST_URL), urlEncodedContent)
+            .setThrowExceptionOnExecuteError(false);
     HttpHeaders headers = new HttpHeaders();
     headers.setAuthorization("Bearer " + accessToken);
     if (!Strings.isNullOrEmpty(idempotencyKey)) {
@@ -102,7 +104,7 @@ public class MastodonHttpUtilities {
     validateResponse(postRequest, response, 200);
   }
 
-  /** Gets the account info via verify_credentials. **/
+  /** Gets the account info via verify_credentials. * */
   private Account fetchAccount() throws IOException {
     Account accountInfo = request(ACCOUNT_VERIFICATION_URL, Account.class);
     return accountInfo;
@@ -118,8 +120,8 @@ public class MastodonHttpUtilities {
   }
 
   private String requestRaw(String path) throws IOException {
-    HttpRequest getRequest = TRANSPORT.createRequestFactory().buildGetRequest(
-        new GenericUrl(baseUrl + path));
+    HttpRequest getRequest =
+        TRANSPORT.createRequestFactory().buildGetRequest(new GenericUrl(baseUrl + path));
     HttpHeaders headers = new HttpHeaders();
     headers.setAuthorization("Bearer " + accessToken);
     getRequest.setHeaders(headers);
@@ -133,21 +135,22 @@ public class MastodonHttpUtilities {
     return byteArrayOutputStream.toString();
   }
 
-  private static void validateResponse(
-      HttpRequest request, HttpResponse response, int expectedCode) throws IOException {
+  private static void validateResponse(HttpRequest request, HttpResponse response, int expectedCode)
+      throws IOException {
     if (response.getStatusCode() != expectedCode) {
-      throw new IOException("Unexpected return code: "
-          + response.getStatusCode()
-          + "\nMessage:\n"
-          + response.getStatusMessage()
-          + "\nfrom:\n"
-          + request.getUrl()
-          + "\nHeaders:\n"
-          + response.getHeaders());
+      throw new IOException(
+          "Unexpected return code: "
+              + response.getStatusCode()
+              + "\nMessage:\n"
+              + response.getStatusMessage()
+              + "\nfrom:\n"
+              + request.getUrl()
+              + "\nHeaders:\n"
+              + response.getHeaders());
     }
   }
 
-  /** Gets the host name of the Mastodon instance for this user. **/
+  /** Gets the host name of the Mastodon instance for this user. * */
   public String getHostName() {
     return baseUri.getHost();
   }

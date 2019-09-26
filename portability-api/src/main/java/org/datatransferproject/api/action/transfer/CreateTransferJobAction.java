@@ -1,11 +1,20 @@
 package org.datatransferproject.api.action.transfer;
 
+import static java.lang.String.format;
+import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
+import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.EXPORT;
+import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.IMPORT;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -21,16 +30,6 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.CreateTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
 import org.datatransferproject.types.common.ExportInformation;
-
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import static java.lang.String.format;
-import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
-import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.EXPORT;
-import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.IMPORT;
 
 /**
  * Creates a transfer job and prepares it for both the export and import service authentication
@@ -69,7 +68,8 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     String dataType = request.getDataType();
     String exportService = request.getExportService();
     String importService = request.getImportService();
-    Optional<ExportInformation> exportInformation = Optional.ofNullable(request.getExportInformation());
+    Optional<ExportInformation> exportInformation =
+        Optional.ofNullable(request.getExportInformation());
     String exportCallbackUrl = request.getExportCallbackUrl();
     String importCallbackUrl = request.getImportCallbackUrl();
 
@@ -80,7 +80,13 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
 
     String encryptionScheme = request.getEncryptionScheme();
     PortabilityJob job =
-        createJob(encodedSessionKey, dataType, exportService, importService, exportInformation, encryptionScheme);
+        createJob(
+            encodedSessionKey,
+            dataType,
+            exportService,
+            importService,
+            exportInformation,
+            encryptionScheme);
 
     AuthDataGenerator exportGenerator =
         registry.getAuthDataGenerator(job.exportService(), job.transferDataType(), EXPORT);
@@ -115,7 +121,8 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
               format(
                   "Created new transfer of type '%s' from '%s' to '%s' with jobId: %s",
                   dataType, exportService, importService, jobId),
-          jobId, EventCode.API_JOB_CREATED);
+          jobId,
+          EventCode.API_JOB_CREATED);
 
       return new TransferJob(
           encodedJobId,
@@ -133,8 +140,11 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     }
   }
 
-  private PortabilityJob setInitialAuthDataOnJob(SecretKey sessionKey, PortabilityJob job,
-      AuthFlowConfiguration exportConfiguration, AuthFlowConfiguration importConfiguration)
+  private PortabilityJob setInitialAuthDataOnJob(
+      SecretKey sessionKey,
+      PortabilityJob job,
+      AuthFlowConfiguration exportConfiguration,
+      AuthFlowConfiguration importConfiguration)
       throws JsonProcessingException {
     // If present, store initial auth data for export services, e.g. used for oauth1
     if (exportConfiguration.getInitialAuthData() != null) {
@@ -143,8 +153,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
           Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialExportAuthData()));
 
       // Serialize and encrypt the initial auth data
-      String serialized =
-          objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData());
+      String serialized = objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData());
       String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
 
       // Add the serialized and encrypted initial auth data to the job authorization
@@ -163,8 +172,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
           Strings.isNullOrEmpty(job.jobAuthorization().encryptedInitialImportAuthData()));
 
       // Serialize and encrypt the initial auth data
-      String serialized =
-          objectMapper.writeValueAsString(importConfiguration.getInitialAuthData());
+      String serialized = objectMapper.writeValueAsString(importConfiguration.getInitialAuthData());
       String encryptedInitialAuthData = encrypterFactory.create(sessionKey).encrypt(serialized);
 
       // Add the serialized and encrypted initial auth data to the job authorization

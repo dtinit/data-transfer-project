@@ -18,17 +18,16 @@ package org.datatransferproject.transfer.microsoft.integration;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardWriter;
 import ezvcard.property.StructuredName;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.UUID;
 import org.datatransferproject.auth.microsoft.harness.AuthTestDriver;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransferExtension;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.UUID;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
 /** */
 public class LocalImportTestRunner {

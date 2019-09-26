@@ -8,6 +8,4 @@ import org.datatransferproject.types.common.models.DataModel;
  * <p>Concrete subtypes must use {@link com.fasterxml.jackson.annotation.JsonTypeName} to specify a
  * type descriminator used for deserialization.
  */
-public abstract class ItemResource extends DataModel {
-
-}
+public abstract class ItemResource extends DataModel {}

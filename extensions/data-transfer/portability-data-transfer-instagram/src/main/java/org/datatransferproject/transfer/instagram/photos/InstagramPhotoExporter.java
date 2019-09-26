@@ -24,27 +24,26 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import org.datatransferproject.spi.transfer.provider.ExportResult;
-import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
-import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.PaginationData;
-import org.datatransferproject.transfer.instagram.photos.model.MediaFeedData;
-import org.datatransferproject.transfer.instagram.photos.model.MediaResponse;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
+import org.datatransferproject.spi.transfer.provider.Exporter;
+import org.datatransferproject.transfer.instagram.photos.model.MediaFeedData;
+import org.datatransferproject.transfer.instagram.photos.model.MediaResponse;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-public class InstagramPhotoExporter implements
-    Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+public class InstagramPhotoExporter
+    implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private static final String MEDIA_URL = "https://api.instagram.com/v1/users/self/media/recent";
   private static final String FAKE_ALBUM_ID = "instagramAlbum";
@@ -58,17 +57,18 @@ public class InstagramPhotoExporter implements
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      Optional<ExportInformation> exportInformation) {
+  public ExportResult<PhotosContainerResource> export(
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     if (exportInformation.isPresent()) {
-      return exportPhotos(authData, Optional.ofNullable(exportInformation.get().getPaginationData()));
+      return exportPhotos(
+          authData, Optional.ofNullable(exportInformation.get().getPaginationData()));
     } else {
       return exportPhotos(authData, Optional.empty());
     }
   }
 
-  private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
-      Optional<PaginationData> pageData) {
+  private ExportResult<PhotosContainerResource> exportPhotos(
+      TokensAndUrlAuthData authData, Optional<PaginationData> pageData) {
     Preconditions.checkNotNull(authData);
     MediaResponse response;
     try {
@@ -85,14 +85,9 @@ public class InstagramPhotoExporter implements
       String photoId = photo.getId();
       String url = photo.getImages().getStandardResolution().getUrl();
       String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
-      photos.add(new PhotoModel(
-          "Instagram photo: " + photoId,
-          url,
-          text,
-          null,
-          photoId,
-          FAKE_ALBUM_ID,
-          false));
+      photos.add(
+          new PhotoModel(
+              "Instagram photo: " + photoId, url, text, null, photoId, FAKE_ALBUM_ID, false));
     }
 
     List<PhotoAlbum> albums = new ArrayList<>();

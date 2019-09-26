@@ -16,11 +16,11 @@
 
 package org.datatransferproject.types.client.transfer;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.types.common.PortabilityCommon;
 import org.junit.Test;
-
-import static com.google.common.truth.Truth.assertThat;
 
 /* Test for TransferJob */
 public class TransferJobTest {
@@ -43,8 +43,7 @@ public class TransferJobTest {
             PortabilityCommon.AuthProtocol.OAUTH_2);
     String serialized = objectMapper.writeValueAsString(transfer);
 
-    TransferJob deserialized =
-        objectMapper.readValue(serialized, TransferJob.class);
+    TransferJob deserialized = objectMapper.readValue(serialized, TransferJob.class);
 
     assertThat("1-2-3").isEqualTo(deserialized.getId());
     assertThat("testExportService").isEqualTo(deserialized.getExportService());
@@ -54,7 +53,9 @@ public class TransferJobTest {
     assertThat("importUrl").isEqualTo(deserialized.getImportUrl());
     assertThat("exportTokenUrl").isEqualTo(deserialized.getExportTokenUrl());
     assertThat("importTokenUrl").isEqualTo(deserialized.getImportTokenUrl());
-    assertThat(PortabilityCommon.AuthProtocol.OAUTH_1).isEqualTo(deserialized.getExportAuthProtocol());
-    assertThat(PortabilityCommon.AuthProtocol.OAUTH_2).isEqualTo(deserialized.getImportAuthProtocol());
+    assertThat(PortabilityCommon.AuthProtocol.OAUTH_1)
+        .isEqualTo(deserialized.getExportAuthProtocol());
+    assertThat(PortabilityCommon.AuthProtocol.OAUTH_2)
+        .isEqualTo(deserialized.getImportAuthProtocol());
   }
 }

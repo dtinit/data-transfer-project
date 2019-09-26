@@ -43,8 +43,7 @@ public class BloggerTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "GoogleBlogger";
 
   // TODO: centralized place, or enum type for these
-  private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("SOCIAL-POSTS");
+  private static final ImmutableList<String> SUPPORTED_SERVICES = ImmutableList.of("SOCIAL-POSTS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -86,8 +85,9 @@ public class BloggerTransferExtension implements TransferExtension {
               .getAppCredentials("GOOGLEBLOGGER_KEY", "GOOGLEBLOGGER_SECRET");
     } catch (IOException e) {
       monitor.info(
-          () -> "Unable to retrieve Google AppCredentials. "
-              + "Did you set GOOGLEBLOGGER_KEY and GOOGLEBLOGGER_SECRET?");
+          () ->
+              "Unable to retrieve Google AppCredentials. "
+                  + "Did you set GOOGLEBLOGGER_KEY and GOOGLEBLOGGER_SECRET?");
       return;
     }
 

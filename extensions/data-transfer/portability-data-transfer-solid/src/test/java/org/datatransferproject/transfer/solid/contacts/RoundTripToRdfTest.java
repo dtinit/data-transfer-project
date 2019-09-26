@@ -41,9 +41,7 @@ public class RoundTripToRdfTest {
         .that(vcard.getNotes().get(0).getValue())
         .isEqualTo("This is a note for Cool Kid 1");
 
-    assertWithMessage("One email found")
-        .that(vcard.getEmails())
-        .hasSize(1);
+    assertWithMessage("One email found").that(vcard.getEmails()).hasSize(1);
 
     assertWithMessage("email is correct")
         .that(vcard.getEmails().get(0).getValue())
@@ -67,10 +65,7 @@ public class RoundTripToRdfTest {
   private Resource getPersonResource(String data) {
     String example = "https://example.com/resource1";
     Model defaultModel = ModelFactory.createDefaultModel();
-    Model model = defaultModel.read(
-        new StringReader(data),
-        example,
-        "TURTLE");
+    Model model = defaultModel.read(new StringReader(data), example, "TURTLE");
     return model.getResource(example + "#this");
   }
 

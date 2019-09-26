@@ -2,15 +2,14 @@ package org.datatransferproject.test.types;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.Callable;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
   private HashMap<String, Serializable> knownValues = new HashMap<>();
@@ -65,6 +64,7 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
 
   @Override
   public void setJobId(UUID jobId) {
-    // We deliberately do nothing here as this class is Fake and not behaviour which needs to be faked
+    // We deliberately do nothing here as this class is Fake and not behaviour which needs to be
+    // faked
   }
 }

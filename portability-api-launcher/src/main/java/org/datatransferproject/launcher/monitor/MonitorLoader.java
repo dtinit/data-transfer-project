@@ -15,18 +15,18 @@
  */
 package org.datatransferproject.launcher.monitor;
 
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.api.launcher.MonitorExtension;
+import static org.datatransferproject.launcher.monitor.ConsoleMonitor.Level.DEBUG;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
-
-import static org.datatransferproject.launcher.monitor.ConsoleMonitor.Level.DEBUG;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.api.launcher.MonitorExtension;
 
 /** Helper for loading monitor extensions. */
 public class MonitorLoader {
   private static Monitor monitor;
+
   public static synchronized Monitor loadMonitor() {
     if (monitor == null) {
       try {
@@ -36,8 +36,8 @@ public class MonitorLoader {
             .forEachRemaining(
                 extension -> {
                   try {
-                  extension.initialize();
-                  monitors.add(extension.getMonitor());
+                    extension.initialize();
+                    monitors.add(extension.getMonitor());
                   } catch (Throwable e) {
                     System.out.println("Couldn't initialize: " + extension + ": " + e.getMessage());
                     e.printStackTrace(System.out);

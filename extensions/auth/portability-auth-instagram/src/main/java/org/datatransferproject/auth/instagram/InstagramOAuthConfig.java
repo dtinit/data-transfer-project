@@ -22,9 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
-/**
- * Class that provides Instagram-specific information for OAuth2
- */
+/** Class that provides Instagram-specific information for OAuth2 */
 public class InstagramOAuthConfig implements OAuth2Config {
 
   // https://www.instagram.com/developer/authentication/

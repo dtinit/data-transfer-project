@@ -2,9 +2,7 @@ package org.datatransferproject.types.common.models.playlists;
 
 import org.datatransferproject.types.common.models.CreativeWork;
 
-/**
- * POJO for https://schema.org/MusicRecording
- */
+/** POJO for https://schema.org/MusicRecording */
 public class MusicRecording extends CreativeWork {
   // Note this is only a partial implementation for fields needed so far, feel free to add more
   // from the spec as needed.
@@ -25,7 +23,6 @@ public class MusicRecording extends CreativeWork {
     this.byArtist = byArtist;
   }
 
-
   public String getIsrcCode() {
     return isrcCode;
   }
@@ -40,7 +37,8 @@ public class MusicRecording extends CreativeWork {
 
   @Override
   public String toString() {
-    return String.format("MusicRecording{id: %s, headline: %s, isrc: %s}",
+    return String.format(
+        "MusicRecording{id: %s, headline: %s, isrc: %s}",
         getIdentifier(), getHeadline(), getIsrcCode());
   }
 }

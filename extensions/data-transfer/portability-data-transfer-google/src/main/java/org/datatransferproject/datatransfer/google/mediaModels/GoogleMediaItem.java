@@ -18,9 +18,7 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- Media item returned by queries to the Google Photos API.  Represents what is stored by Google.
- */
+/** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem {
   @JsonProperty("id")
   private String id;
@@ -43,31 +41,55 @@ public class GoogleMediaItem {
   @JsonProperty("productUrl")
   private String productUrl;
 
-  public String getId() { return id; }
+  public String getId() {
+    return id;
+  }
 
-  public String getDescription() { return description; }
+  public String getDescription() {
+    return description;
+  }
 
-  public String getBaseUrl() { return baseUrl; }
+  public String getBaseUrl() {
+    return baseUrl;
+  }
 
-  public String getMimeType() { return mimeType; }
+  public String getMimeType() {
+    return mimeType;
+  }
 
-  public String getFilename() { return filename; }
+  public String getFilename() {
+    return filename;
+  }
 
   public String getProductUrl() {
     return productUrl;
   }
 
-  public MediaMetadata getMediaMetadata() { return mediaMetadata; }
+  public MediaMetadata getMediaMetadata() {
+    return mediaMetadata;
+  }
 
-  public void setDescription(String description) { this.description = description; }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-  public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
+  }
 
-  public void setId(String id) { this.id = id; }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-  public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+  public void setMimeType(String mimeType) {
+    this.mimeType = mimeType;
+  }
 
-  public void setFilename(String filename) { this.filename = filename; }
+  public void setFilename(String filename) {
+    this.filename = filename;
+  }
 
-  public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }
+  public void setMediaMetadata(MediaMetadata mediaMetadata) {
+    this.mediaMetadata = mediaMetadata;
+  }
 }

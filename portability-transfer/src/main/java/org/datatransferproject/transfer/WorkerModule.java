@@ -85,8 +85,7 @@ final class WorkerModule extends FlagBindingModule {
   static TransferExtension findTransferExtension(
       ImmutableList<TransferExtension> transferExtensions, String service) {
     try {
-      return transferExtensions
-          .stream()
+      return transferExtensions.stream()
           .filter(ext -> ext.getServiceId().toLowerCase().equals(service.toLowerCase()))
           .collect(onlyElement());
     } catch (IllegalArgumentException e) {
@@ -158,11 +157,9 @@ final class WorkerModule extends FlagBindingModule {
     serviceSpecificContext.registerOverrideService(
         MetricRecorder.class,
         new ServiceAwareMetricRecorder(
-            extension.getServiceId(),
-            context.getService(DtpInternalMetricRecorder.class)));
+            extension.getServiceId(), context.getService(DtpInternalMetricRecorder.class)));
     serviceSpecificContext.registerOverrideService(
-        TransferServiceConfig.class,
-        getTransferServiceConfig(extension));
+        TransferServiceConfig.class, getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
     return extension.getExporter(JobMetadata.getDataType());
   }
@@ -176,11 +173,9 @@ final class WorkerModule extends FlagBindingModule {
     serviceSpecificContext.registerOverrideService(
         MetricRecorder.class,
         new ServiceAwareMetricRecorder(
-            extension.getServiceId(),
-            context.getService(DtpInternalMetricRecorder.class)));
+            extension.getServiceId(), context.getService(DtpInternalMetricRecorder.class)));
     serviceSpecificContext.registerOverrideService(
-        TransferServiceConfig.class,
-        getTransferServiceConfig(extension));
+        TransferServiceConfig.class, getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
     return extension.getImporter(JobMetadata.getDataType());
   }
@@ -190,7 +185,6 @@ final class WorkerModule extends FlagBindingModule {
   ImmutableList<TransferExtension> getTransferExtensions() {
     return ImmutableList.copyOf(transferExtensions);
   }
-
 
   @Provides
   @Singleton

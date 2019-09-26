@@ -16,9 +16,7 @@
 
 package org.datatransferproject.types.transfer.retry;
 
-/**
- * {@link RetryStrategy} that doesn't allow for any more retries.  Useful for fatal errors.
- */
+/** {@link RetryStrategy} that doesn't allow for any more retries. Useful for fatal errors. */
 public class NoRetryStrategy implements RetryStrategy {
 
   public NoRetryStrategy() {}
@@ -42,5 +40,4 @@ public class NoRetryStrategy implements RetryStrategy {
   public String toString() {
     return "NoRetryStrategy{}";
   }
-
 }

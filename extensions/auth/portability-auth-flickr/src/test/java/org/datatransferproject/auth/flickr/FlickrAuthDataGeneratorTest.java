@@ -16,6 +16,4 @@
 
 package org.datatransferproject.auth.flickr;
 
-class FlickrAuthDataGeneratorTest {
-
-}
+class FlickrAuthDataGeneratorTest {}

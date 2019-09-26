@@ -16,15 +16,13 @@
 
 package org.datatransferproject.auth.flickr;
 
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
-import com.google.api.client.auth.oauth.OAuthSigner;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
 
 /**
- * Class that supplies Flickr-specific OAuth1 info
- * See https://www.flickr.com/services/api/auth.oauth.html
+ * Class that supplies Flickr-specific OAuth1 info See
+ * https://www.flickr.com/services/api/auth.oauth.html
  */
 public class FlickrOAuthConfig implements OAuth1Config {
 

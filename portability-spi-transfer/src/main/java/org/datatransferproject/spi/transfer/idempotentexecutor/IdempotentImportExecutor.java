@@ -16,13 +16,11 @@
 
 package org.datatransferproject.spi.transfer.idempotentexecutor;
 
-import java.util.UUID;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.concurrent.Callable;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /**
  * A utility that will execute a {@link Callable} only once for a given {@code idempotentId}. This
@@ -91,6 +89,7 @@ public interface IdempotentImportExecutor {
    * This can enable resuming a job even in the situation that a transfer worker crashed without
    * creating duplicate items. Some IdempotentImportExecutors may require this to be called before
    * execution.
+   *
    * @param jobId The jobId of the job that this IdempotentImportExecutor is being used for
    */
   void setJobId(UUID jobId);

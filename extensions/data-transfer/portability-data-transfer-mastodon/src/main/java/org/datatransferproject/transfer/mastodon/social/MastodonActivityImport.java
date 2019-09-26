@@ -16,40 +16,39 @@
 
 package org.datatransferproject.transfer.mastodon.social;
 
+import static com.google.common.base.Preconditions.checkState;
 
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
+import java.io.IOException;
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 
-import java.io.IOException;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Imports post data to Mastodon.
- * <p> Currently only supports text and not images.
- **/
+ *
+ * <p>Currently only supports text and not images.
+ */
 public class MastodonActivityImport
     implements Importer<CookiesAndUrlAuthData, SocialActivityContainerResource> {
 
   @Override
-  public ImportResult importItem(UUID jobId,
+  public ImportResult importItem(
+      UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       CookiesAndUrlAuthData authData,
-      SocialActivityContainerResource data) throws Exception {
-    checkState(authData.getCookies().size() == 1,
-        "Exactly 1 cookie expected: %s",
-        authData.getCookies());
+      SocialActivityContainerResource data)
+      throws Exception {
+    checkState(
+        authData.getCookies().size() == 1, "Exactly 1 cookie expected: %s", authData.getCookies());
 
-    MastodonHttpUtilities utilities = new MastodonHttpUtilities(
-        authData.getCookies().get(0),
-        authData.getUrl());
+    MastodonHttpUtilities utilities =
+        new MastodonHttpUtilities(authData.getCookies().get(0), authData.getUrl());
 
     if (!data.getSubContainers().isEmpty()) {
       throw new IllegalStateException("Mastodon doesn't support containers");
@@ -74,9 +73,8 @@ public class MastodonActivityImport
     return ImportResult.OK;
   }
 
-  private void postNode(ASObject asObject, MastodonHttpUtilities utilities, UUID jobId) throws IOException {
-    utilities.postStatus(
-        "Duplicated: " + asObject.contentString(),
-        jobId + asObject.id());
+  private void postNode(ASObject asObject, MastodonHttpUtilities utilities, UUID jobId)
+      throws IOException {
+    utilities.postStatus("Duplicated: " + asObject.contentString(), jobId + asObject.id());
   }
 }

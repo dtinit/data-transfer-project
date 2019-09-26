@@ -16,19 +16,18 @@
 
 package org.datatransferproject.spi.cloud.types;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.test.types.ObjectMapperFactory;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-
-import static com.google.common.truth.Truth.assertThat;
 
 /** Tests serialization and deserialization of a {@link PortabilityJob}. */
 public class PortabilityJobTest {

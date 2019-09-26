@@ -16,16 +16,14 @@
 
 package org.datatransferproject.auth.twitter;
 
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
-import com.google.api.client.auth.oauth.OAuthSigner;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
 
 /**
- * Class that supplies Twitter-specific OAuth1 info
- * See https://developer.twitter.com/en/docs/basics/authentication/overview/3-legged-oauth
- * and https://developer.twitter.com/en/docs/basics/authentication/api-reference
+ * Class that supplies Twitter-specific OAuth1 info See
+ * https://developer.twitter.com/en/docs/basics/authentication/overview/3-legged-oauth and
+ * https://developer.twitter.com/en/docs/basics/authentication/api-reference
  */
 public class TwitterOAuthConfig implements OAuth1Config {
 

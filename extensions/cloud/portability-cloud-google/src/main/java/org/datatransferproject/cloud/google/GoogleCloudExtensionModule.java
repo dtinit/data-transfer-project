@@ -16,6 +16,11 @@
 
 package org.datatransferproject.cloud.google;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -31,20 +36,14 @@ import com.google.common.base.Strings;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.extension.CloudExtensionModule;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-
-import java.io.IOException;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /** Bindings for cloud platform components using Google Cloud Platform. * */
 final class GoogleCloudExtensionModule extends CloudExtensionModule {

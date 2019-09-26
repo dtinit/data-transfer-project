@@ -17,7 +17,6 @@ package org.datatransferproject.types.client.datatype;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Set;
 
 /** The result of a request to list data types available for export and import. */

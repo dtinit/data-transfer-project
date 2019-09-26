@@ -29,6 +29,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.RateLimiter;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collection;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -42,19 +48,10 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Collection;
-import java.util.UUID;
-
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
-  @VisibleForTesting
-  static final String COPY_PREFIX = "Copy of - ";
-  @VisibleForTesting
-  static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
+  @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
+  @VisibleForTesting static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
 
   private final TemporaryPerJobDataStore jobStore;
   private final Flickr flickr;
@@ -109,7 +106,6 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     }
     RequestContext.getRequestContext().setAuth(auth);
 
-
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
 
@@ -137,19 +133,20 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   // photo in it, so we have to wait for the first photo to create the album
   private void storeAlbumbs(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
     for (PhotoAlbum album : albums) {
-      jobStore.create(jobId,
-              ORIGINAL_ALBUM_PREFIX + album.getId(),
-              new FlickrTempPhotoData(album.getName(), album.getDescription()));
+      jobStore.create(
+          jobId,
+          ORIGINAL_ALBUM_PREFIX + album.getId(),
+          new FlickrTempPhotoData(album.getName(), album.getDescription()));
     }
   }
 
-  private void importSinglePhoto(IdempotentImportExecutor idempotentExecutor,
-      UUID id,
-      PhotoModel photo) throws Exception {
-    String photoId = idempotentExecutor.executeAndSwallowIOExceptions(
-        photo.getAlbumId() + "-" + photo.getDataId(),
-        photo.getTitle(),
-        () -> uploadPhoto(photo, id));
+  private void importSinglePhoto(
+      IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
+    String photoId =
+        idempotentExecutor.executeAndSwallowIOExceptions(
+            photo.getAlbumId() + "-" + photo.getDataId(),
+            photo.getTitle(),
+            () -> uploadPhoto(photo, id));
     if (photoId == null) {
       return;
     }
@@ -168,10 +165,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   private void createOrAddToAlbum(
-      IdempotentImportExecutor idempotentExecutor,
-      UUID jobId,
-      String oldAlbumId,
-      String photoId) throws Exception {
+      IdempotentImportExecutor idempotentExecutor, UUID jobId, String oldAlbumId, String photoId)
+      throws Exception {
     if (idempotentExecutor.isKeyCached(oldAlbumId)) {
       String newAlbumId = idempotentExecutor.getCachedValue(oldAlbumId);
       // We've already created the album this photo belongs in, simply add it to the new album
@@ -185,12 +180,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       IdempotentImportExecutor idempotentExecutor,
       UUID jobId,
       String oldAlbumId,
-      String firstPhotoId) throws Exception {
+      String firstPhotoId)
+      throws Exception {
     // This means that we havent created the new album yet, create the photoset
-    FlickrTempPhotoData album = jobStore.findData(
-        jobId,
-        ORIGINAL_ALBUM_PREFIX + oldAlbumId,
-            FlickrTempPhotoData.class);
+    FlickrTempPhotoData album =
+        jobStore.findData(jobId, ORIGINAL_ALBUM_PREFIX + oldAlbumId, FlickrTempPhotoData.class);
 
     // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
     // throw them into a default album or add a finalize() step in the Importer which can deal
@@ -210,10 +204,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
           Photoset photoset = photosetsInterface.create(albumName, albumDescription, firstPhotoId);
           monitor.debug(() -> String.format("Flickr importer created album: %s", album));
           return photoset.getId();
-        }
-    );
+        });
   }
-
 
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
     BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());

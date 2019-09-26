@@ -1,14 +1,13 @@
 package org.datatransferproject.cloud.microsoft.cosmos;
 
+import static java.lang.System.getenv;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Objects;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-
-import java.util.Objects;
-
-import static java.lang.System.getenv;
 
 /**
  * Bootstraps the Microsoft cloud extension. The extension uses Azure Key Vault for storing secrets
@@ -49,8 +48,8 @@ import static java.lang.System.getenv;
  *       portability app registered with Active Directory.
  *   <li>Key Vault: A key {@link #AZURE_COSMOS_ACCOUNT_KEY} must be added, which is the secret used
  *       to access Cosmos DB.
- *   <li>Key Vault: A key {@link #AZURE_BLOB_KEY} must be added, which is the secret used
- *       to access Blob Storage.
+ *   <li>Key Vault: A key {@link #AZURE_BLOB_KEY} must be added, which is the secret used to access
+ *       Blob Storage.
  *   <li>Key Vault: Two secrets must be added for each data transfer extension, in the form
  *       [EXTENSION]KEY and [EXTENSION]SECRET.
  *   <li>Key Vault: JWT secrets JWTKEY and JWTSECRET must be added.

@@ -5,6 +5,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import java.util.List;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.action.datatype.DataTypesAction;
 import org.datatransferproject.api.action.transfer.CreateTransferJobAction;
@@ -26,10 +29,6 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.spi.api.token.TokenManager;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.util.List;
 
 /** */
 public class ApiServicesModule extends FlagBindingModule {

@@ -20,18 +20,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import org.datatransferproject.config.ConfigUtils;
-import org.datatransferproject.config.extension.SettingsExtension;
-import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import org.datatransferproject.config.ConfigUtils;
+import org.datatransferproject.config.extension.SettingsExtension;
+import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
-/**
- * {@link SettingsExtension} that reads configuration from YAML files on the classpath.
- */
+/** {@link SettingsExtension} that reads configuration from YAML files on the classpath. */
 public class YamlSettingsExtension implements SettingsExtension {
 
   // YAML file where custom extension settings may be configured.
@@ -97,15 +94,16 @@ public class YamlSettingsExtension implements SettingsExtension {
   }
 
   private InputStream getSimpleInputStream() {
-    ImmutableList<String> settingsFiles = ImmutableList.<String>builder()
-        .add(COMMON_SETTINGS_PATH)
-        .add(ENV_COMMON_SETTINGS_PATH)
-        .add(API_SETTINGS_PATH)
-        .add(ENV_API_SETTINGS_PATH)
-        .add(EXTENSION_SETTINGS_PATH)
-        .add(TRANSFER_SETTINGS_PATH)
-        .add(ENV_TRANSFER_SETTINGS_PATH)
-        .build();
+    ImmutableList<String> settingsFiles =
+        ImmutableList.<String>builder()
+            .add(COMMON_SETTINGS_PATH)
+            .add(ENV_COMMON_SETTINGS_PATH)
+            .add(API_SETTINGS_PATH)
+            .add(ENV_API_SETTINGS_PATH)
+            .add(EXTENSION_SETTINGS_PATH)
+            .add(TRANSFER_SETTINGS_PATH)
+            .add(ENV_TRANSFER_SETTINGS_PATH)
+            .build();
     return ConfigUtils.getCombinedInputStream(settingsFiles);
   }
 

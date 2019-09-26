@@ -21,17 +21,15 @@ import static java.lang.String.format;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /** A {@link IdempotentImportExecutor} that stores known values in memory. */
 public class InMemoryIdempotentImportExecutor implements IdempotentImportExecutor {
@@ -46,7 +44,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
 
   @Override
   public <T extends Serializable> T executeAndSwallowIOExceptions(
-      String idempotentId, String itemName, Callable<T> callable) throws Exception{
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
     } catch (IOException e) {

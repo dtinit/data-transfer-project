@@ -16,6 +16,12 @@
 
 package org.datatransferproject.transfer.twitter;
 
+import static java.lang.String.format;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -33,13 +39,6 @@ import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static java.lang.String.format;
 
 final class TwitterPhotosExporter
     implements Exporter<TokenSecretAuthData, PhotosContainerResource> {

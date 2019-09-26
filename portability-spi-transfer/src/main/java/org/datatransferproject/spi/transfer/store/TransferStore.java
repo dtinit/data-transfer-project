@@ -4,8 +4,8 @@ import org.datatransferproject.types.common.PortableType;
 
 /**
  * Used by {@link org.datatransferproject.spi.transfer.provider.Importer}s and {@link
- * org.datatransferproject.spi.transfer.provider.Exporter}s to save scratch data needed during
- * the transfer process.
+ * org.datatransferproject.spi.transfer.provider.Exporter}s to save scratch data needed during the
+ * transfer process.
  */
 public interface TransferStore {
 

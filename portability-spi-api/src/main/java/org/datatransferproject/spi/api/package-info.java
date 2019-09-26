@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Defines the api SPI. Extensions use this module to implement custom auth and api
- * functionality for the system.
+ * Defines the api SPI. Extensions use this module to implement custom auth and api functionality
+ * for the system.
  */
 package org.datatransferproject.spi.api;

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.PortableType;
 import org.datatransferproject.types.common.models.ContainerResource;

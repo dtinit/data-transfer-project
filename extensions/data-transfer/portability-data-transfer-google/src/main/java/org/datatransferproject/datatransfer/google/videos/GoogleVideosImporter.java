@@ -35,6 +35,9 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -47,13 +50,8 @@ import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.UUID;
-
 public class GoogleVideosImporter
-        implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
+    implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   // TODO: internationalize copy prefix
   private static final String COPY_PREFIX = "Copy of ";
@@ -64,17 +62,18 @@ public class GoogleVideosImporter
   private Monitor monitor;
   private JsonFactory jsonFactory;
 
-  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
+  public GoogleVideosImporter(
+      GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
     this(credentialFactory, null, new ImageStreamProvider(), jsonFactory, monitor);
   }
 
   @VisibleForTesting
   GoogleVideosImporter(
-          GoogleCredentialFactory credentialFactory,
-          GoogleVideosInterface videosInterface,
-          ImageStreamProvider videoStreamProvider,
-          JsonFactory jsonFactory,
-          Monitor monitor) {
+      GoogleCredentialFactory credentialFactory,
+      GoogleVideosInterface videosInterface,
+      ImageStreamProvider videoStreamProvider,
+      JsonFactory jsonFactory,
+      Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.videosInterface = videosInterface;
     this.videoStreamProvider = videoStreamProvider;
@@ -84,10 +83,11 @@ public class GoogleVideosImporter
 
   @Override
   public ImportResult importItem(
-          UUID jobId,
-          IdempotentImportExecutor executor,
-          TokensAndUrlAuthData authData,
-          VideosContainerResource data) throws Exception {
+      UUID jobId,
+      IdempotentImportExecutor executor,
+      TokensAndUrlAuthData authData,
+      VideosContainerResource data)
+      throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -103,17 +103,13 @@ public class GoogleVideosImporter
   }
 
   void importSingleVideo(
-          TokensAndUrlAuthData authData,
-          VideoObject inputVideo,
-          IdempotentImportExecutor executor)
-          throws Exception {
+      TokensAndUrlAuthData authData, VideoObject inputVideo, IdempotentImportExecutor executor)
+      throws Exception {
 
     // download video and create input stream
     InputStream inputStream;
     if (inputVideo.getContentUrl() == null) {
-      monitor.info(
-              () ->
-                      "Content Url is empty. Make sure that you provide a valid content Url.");
+      monitor.info(() -> "Content Url is empty. Make sure that you provide a valid content Url.");
       return;
     }
 
@@ -127,21 +123,21 @@ public class GoogleVideosImporter
     }
 
     String uploadToken =
-            getOrCreateVideosInterface(authData).uploadVideoContent(inputStream, filename);
+        getOrCreateVideosInterface(authData).uploadVideoContent(inputStream, filename);
 
     NewMediaItem newMediaItem = new NewMediaItem(filename, uploadToken);
 
     NewMediaItemUpload uploadItem =
-            new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
+        new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
 
     executor.executeAndSwallowIOExceptions(
-            inputVideo.getDataId(),
-            inputVideo.getName(),
-            () -> getOrCreateVideosInterface(authData).createVideo(uploadItem));
+        inputVideo.getDataId(),
+        inputVideo.getName(),
+        () -> getOrCreateVideosInterface(authData).createVideo(uploadItem));
   }
 
   private synchronized GoogleVideosInterface getOrCreateVideosInterface(
-          TokensAndUrlAuthData authData) {
+      TokensAndUrlAuthData authData) {
     return videosInterface == null ? makeVideosInterface(authData) : videosInterface;
   }
 

@@ -28,9 +28,7 @@ import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-/**
- * Util class for making OAuth requests and parsing the responses
- */
+/** Util class for making OAuth requests and parsing the responses */
 class OAuthUtils {
 
   static String makeRawPostRequest(HttpTransport httpTransport, String url, HttpContent httpContent)
@@ -43,12 +41,12 @@ class OAuthUtils {
       throw new IOException(
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    return CharStreams
-        .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    return CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
   }
 
-  static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent,
-      Class<T> clazz) throws IOException {
+  static <T> T makePostRequest(
+      HttpTransport httpTransport, String url, HttpContent httpContent, Class<T> clazz)
+      throws IOException {
     String result = makeRawPostRequest(httpTransport, url, httpContent);
 
     return new ObjectMapper().readValue(result, clazz);

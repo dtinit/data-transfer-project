@@ -18,29 +18,20 @@ package org.datatransferproject.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * Interface for providing information necessary to run OAuth2 flow
- */
+/** Interface for providing information necessary to run OAuth2 flow */
 public interface OAuth2Config {
 
-  /**
-  Returns the name of the service, used for display, and client id and secret retrieval
-   */
+  /** Returns the name of the service, used for display, and client id and secret retrieval */
   String getServiceName();
 
-  /**
-   * Returns the authorization URL to be used
-   */
+  /** Returns the authorization URL to be used */
   String getAuthUrl();
 
-  /**
-   * Returns the token URL to be used
-   */
+  /** Returns the token URL to be used */
   String getTokenUrl();
 
   /**
@@ -55,23 +46,16 @@ public interface OAuth2Config {
    */
   Map<String, Set<String>> getImportScopes();
 
-  /**
-   * Returns a map of any additional parameters necessary for this service
-   */
+  /** Returns a map of any additional parameters necessary for this service */
   default Map<String, String> getAdditionalAuthUrlParameters() {
     return null;
   }
 
-  /**
-   * Returns the class that can deserialize the OAuth response.
-   */
+  /** Returns the class that can deserialize the OAuth response. */
   default TokensAndUrlAuthData getResponseClass(String result) throws IOException {
     OAuth2TokenResponse response = new ObjectMapper().readValue(result, OAuth2TokenResponse.class);
 
     return new TokensAndUrlAuthData(
-        response.getAccessToken(),
-        response.getRefreshToken(),
-        getTokenUrl());
+        response.getAccessToken(), response.getRefreshToken(), getTokenUrl());
   }
-
 }

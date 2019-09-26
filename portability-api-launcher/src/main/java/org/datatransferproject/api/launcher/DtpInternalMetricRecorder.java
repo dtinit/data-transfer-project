@@ -29,9 +29,9 @@ import java.time.Duration;
 public interface DtpInternalMetricRecorder {
   // Metrics related to DTP internals
 
-  /** A DTP job started. **/
+  /** A DTP job started. * */
   void startedJob(String dataType, String exportService, String importService);
-  /** A DTP job finished **/
+  /** A DTP job finished * */
   void finishedJob(
       String dataType,
       String exportService,
@@ -39,29 +39,26 @@ public interface DtpInternalMetricRecorder {
       boolean success,
       Duration duration);
 
-  /** An single attempt to export a page of data finished. **/
+  /** An single attempt to export a page of data finished. * */
   void exportPageAttemptFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration);
+      String dataType, String service, boolean success, Duration duration);
 
-  /** An attempt to export a page of data finished including all retires. **/
+  /** An attempt to export a page of data finished including all retires. * */
   void exportPageFinished(String dataType, String service, boolean success, Duration duration);
 
-  /** An single attempt to import a page of data finished. **/
+  /** An single attempt to import a page of data finished. * */
   void importPageAttemptFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration);
+      String dataType, String service, boolean success, Duration duration);
 
-  /** An attempt to import a page of data finished including all retires. **/
+  /** An attempt to import a page of data finished including all retires. * */
   void importPageFinished(String dataType, String service, boolean success, Duration duration);
 
   // Metrics from {@link MetricRecorder}
   void recordGenericMetric(String dataType, String service, String tag);
+
   void recordGenericMetric(String dataType, String service, String tag, boolean bool);
+
   void recordGenericMetric(String dataType, String service, String tag, Duration duration);
+
   void recordGenericMetric(String dataType, String service, String tag, int value);
 }

@@ -15,6 +15,13 @@
  */
 package org.datatransferproject.transport.jettyrest.http;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServletRequest;
 import org.datatransferproject.api.launcher.Monitor;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -29,14 +36,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.Source;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-
-import javax.servlet.Servlet;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.Writer;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.List;
 
 /** Provides HTTP(s) communication to the system via Jetty. */
 public class JettyTransport {
@@ -64,34 +63,34 @@ public class JettyTransport {
 
   public void start() {
     try {
-    if (useHttps) {
-      server = new Server();
-      SslContextFactory sslContextFactory = new SslContextFactory();
-      sslContextFactory.setKeyStore(keyStore);
-      // TODO configure
-      sslContextFactory.setKeyStorePassword("password");
-      sslContextFactory.setKeyManagerPassword("password");
-      HttpConfiguration https = new HttpConfiguration();
-      ServerConnector sslConnector =
-          new ServerConnector(
-              server,
-              new SslConnectionFactory(sslContextFactory, "http/1.1"),
-              new HttpConnectionFactory(https));
-      sslConnector.setPort(httpPort);
-      server.setConnectors(new Connector[] {sslConnector});
-    } else {
-      server = new Server(httpPort);
-      ServerConnector connector =
-          new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
-      connector.setPort(httpPort);
-      server.setConnectors(new Connector[] {connector});
-    }
+      if (useHttps) {
+        server = new Server();
+        SslContextFactory sslContextFactory = new SslContextFactory();
+        sslContextFactory.setKeyStore(keyStore);
+        // TODO configure
+        sslContextFactory.setKeyStorePassword("password");
+        sslContextFactory.setKeyManagerPassword("password");
+        HttpConfiguration https = new HttpConfiguration();
+        ServerConnector sslConnector =
+            new ServerConnector(
+                server,
+                new SslConnectionFactory(sslContextFactory, "http/1.1"),
+                new HttpConnectionFactory(https));
+        sslConnector.setPort(httpPort);
+        server.setConnectors(new Connector[] {sslConnector});
+      } else {
+        server = new Server(httpPort);
+        ServerConnector connector =
+            new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+        connector.setPort(httpPort);
+        server.setConnectors(new Connector[] {connector});
+      }
 
-    server.setErrorHandler(new JettyErrorHandler());
+      server.setErrorHandler(new JettyErrorHandler());
 
-    ContextHandlerCollection contexts = new ContextHandlerCollection();
-    contexts.setHandlers(handlers.toArray(new Handler[0]));
-    server.setHandler(contexts);
+      ContextHandlerCollection contexts = new ContextHandlerCollection();
+      contexts.setHandlers(handlers.toArray(new Handler[0]));
+      server.setHandler(contexts);
 
       server.start();
       monitor.info(() -> "Using Jetty transport");

@@ -20,11 +20,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import org.datatransferproject.types.common.models.ContainerResource;
-
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+import org.datatransferproject.types.common.models.ContainerResource;
 
 /** A Wrapper for all the possible objects that can be returned by a photos exporter. */
 @JsonTypeName("PhotosContainerResource")
@@ -65,8 +64,8 @@ public class PhotosContainerResource extends ContainerResource {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PhotosContainerResource that = (PhotosContainerResource) o;
-    return Objects.equals(getAlbums(), that.getAlbums()) &&
-            Objects.equals(getPhotos(), that.getPhotos());
+    return Objects.equals(getAlbums(), that.getAlbums())
+        && Objects.equals(getPhotos(), that.getPhotos());
   }
 
   @Override

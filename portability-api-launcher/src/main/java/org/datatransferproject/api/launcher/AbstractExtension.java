@@ -16,12 +16,11 @@
 package org.datatransferproject.api.launcher;
 
 /** Implementations provide an extension to the system. */
-public interface AbstractExtension extends SystemExtension{
+public interface AbstractExtension extends SystemExtension {
   /**
    * Initializes the extension. Implementations prepare provided services.
    *
    * @param context the extension context.
    */
   void initialize(ExtensionContext context);
-
 }

@@ -16,10 +16,17 @@
 
 package org.datatransferproject.transfer.mastodon.social;
 
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Strings;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.Makers;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -32,30 +39,21 @@ import org.datatransferproject.types.common.models.social.SocialActivityContaine
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Exports post data from Mastodon.
- * <p> Currently only supports text and not images.
- **/
-public class MastodonActivityExport implements
-    Exporter<CookiesAndUrlAuthData, SocialActivityContainerResource> {
+ *
+ * <p>Currently only supports text and not images.
+ */
+public class MastodonActivityExport
+    implements Exporter<CookiesAndUrlAuthData, SocialActivityContainerResource> {
   private static final Pattern RAW_CONTENT_PATTERN = Pattern.compile("<p>(.*)</p>");
 
   @Override
-  public ExportResult<SocialActivityContainerResource> export(UUID jobId,
-      CookiesAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
+  public ExportResult<SocialActivityContainerResource> export(
+      UUID jobId, CookiesAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws Exception {
-    checkState(authData.getCookies().size() == 1,
-        "Exactly 1 cookie expected: %s",
-        authData.getCookies());
+    checkState(
+        authData.getCookies().size() == 1, "Exactly 1 cookie expected: %s", authData.getCookies());
 
     String maxId = null;
     if (exportInformation.isPresent()) {
@@ -66,9 +64,8 @@ public class MastodonActivityExport implements
       }
     }
 
-    MastodonHttpUtilities utilities = new MastodonHttpUtilities(
-        authData.getCookies().get(0),
-        authData.getUrl());
+    MastodonHttpUtilities utilities =
+        new MastodonHttpUtilities(authData.getCookies().get(0), authData.getUrl());
 
     Account account = utilities.getAccount();
 
@@ -91,8 +88,8 @@ public class MastodonActivityExport implements
         continuationData);
   }
 
-  private Activity statusToActivity(Account account,
-      Status status, MastodonHttpUtilities utilities) {
+  private Activity statusToActivity(
+      Account account, Status status, MastodonHttpUtilities utilities) {
     String contentString = status.getContent();
     Matcher matcher = RAW_CONTENT_PATTERN.matcher(contentString);
     if (matcher.matches()) {
@@ -100,19 +97,18 @@ public class MastodonActivityExport implements
     }
 
     return Makers.activity()
-        .actor(Makers.object("person")
-            .id("acct:" + account.getUsername() + "@" + utilities.getHostName())
-            .link("Mastodon", account.getUrl())
-            .displayName(account.getDisplayName()))
-
-        .object(Makers.object("note")
-            .id(status.getUri())
-            .url("Mastodon", status.getUrl())
-            .content(contentString))
+        .actor(
+            Makers.object("person")
+                .id("acct:" + account.getUsername() + "@" + utilities.getHostName())
+                .link("Mastodon", account.getUrl())
+                .displayName(account.getDisplayName()))
+        .object(
+            Makers.object("note")
+                .id(status.getUri())
+                .url("Mastodon", status.getUrl())
+                .content(contentString))
         .verb("post")
         .published(new DateTime(status.getCreatedAt().toEpochMilli()))
         .get();
   }
-
-
 }

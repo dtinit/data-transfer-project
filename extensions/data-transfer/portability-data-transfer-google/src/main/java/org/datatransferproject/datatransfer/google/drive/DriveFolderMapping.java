@@ -12,9 +12,7 @@ class DriveFolderMapping extends DataModel {
   private final String newId;
 
   @JsonCreator
-  DriveFolderMapping(
-      @JsonProperty("oldId") String oldId,
-      @JsonProperty("newId") String newId) {
+  DriveFolderMapping(@JsonProperty("oldId") String oldId, @JsonProperty("newId") String newId) {
 
     this.oldId = oldId;
     this.newId = newId;

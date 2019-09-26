@@ -16,11 +16,10 @@
 package org.datatransferproject.security;
 
 import com.google.common.base.Preconditions;
-import org.datatransferproject.api.launcher.Monitor;
-
-import javax.crypto.SecretKey;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import javax.crypto.SecretKey;
+import org.datatransferproject.api.launcher.Monitor;
 
 /**
  * Methods for creating {@link Decrypter} classes for given types of encryption keys and algorithms.

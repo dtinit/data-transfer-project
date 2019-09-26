@@ -103,15 +103,13 @@ public class GoogleContactsExportConversionTest {
     List<StructuredName> actualPrimaryNames =
         structuredNames.stream().filter(n -> n.getAltId() == null).collect(Collectors.toList());
     List<Pair<String, String>> actualPrimaryNamesValues =
-        actualPrimaryNames
-            .stream()
+        actualPrimaryNames.stream()
             .map(GoogleContactsExportConversionTest::getGivenAndFamilyNames)
             .collect(Collectors.toList());
     assertThat(actualPrimaryNamesValues)
         .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
     List<String> actualPrimarySourceValues =
-        actualPrimaryNames
-            .stream()
+        actualPrimaryNames.stream()
             .map(a -> a.getParameter(SOURCE_PARAM_NAME_TYPE))
             .collect(Collectors.toList());
     assertThat(actualPrimarySourceValues).containsExactly(DEFAULT_SOURCE_TYPE);
@@ -120,8 +118,7 @@ public class GoogleContactsExportConversionTest {
     List<StructuredName> actualAlternateNames =
         structuredNames.stream().filter(n -> n.getAltId() != null).collect(Collectors.toList());
     List<Pair<String, String>> actualAlternateNamesValues =
-        actualAlternateNames
-            .stream()
+        actualAlternateNames.stream()
             .map(GoogleContactsExportConversionTest::getGivenAndFamilyNames)
             .collect(Collectors.toList());
     assertThat(actualAlternateNamesValues)
@@ -129,8 +126,7 @@ public class GoogleContactsExportConversionTest {
             Pair.of(alternateGivenName1, alternateFamilyName1),
             Pair.of(alternateGivenName2, alternateFamilyName2));
     List<String> actualAlternateSourceValues =
-        actualAlternateNames
-            .stream()
+        actualAlternateNames.stream()
             .map(a -> a.getParameter(SOURCE_PARAM_NAME_TYPE))
             .collect(Collectors.toList());
     assertThat(actualAlternateSourceValues)
@@ -173,10 +169,9 @@ public class GoogleContactsExportConversionTest {
     List<Address> actualPrimaryAddressList =
         getPropertiesWithPreference(vCard, Address.class, VCARD_PRIMARY_PREF);
     assertThat(
-        actualPrimaryAddressList
-            .stream()
-            .map(Address::getStreetAddress)
-            .collect(Collectors.toList()))
+            actualPrimaryAddressList.stream()
+                .map(Address::getStreetAddress)
+                .collect(Collectors.toList()))
         .containsExactly(primaryStreet);
     List<Address> actualAltAddressList =
         getPropertiesWithPreference(vCard, Address.class, VCARD_PRIMARY_PREF + 1);
@@ -261,9 +256,7 @@ public class GoogleContactsExportConversionTest {
 
   private static <T extends VCardProperty> List<T> getPropertiesWithPreference(
       VCard vCard, Class<T> clazz, int preference) {
-    return vCard
-        .getProperties(clazz)
-        .stream()
+    return vCard.getProperties(clazz).stream()
         .filter(p -> p.getParameter(VCardParameters.PREF).equals(Integer.toString(preference)))
         .collect(Collectors.toList());
   }

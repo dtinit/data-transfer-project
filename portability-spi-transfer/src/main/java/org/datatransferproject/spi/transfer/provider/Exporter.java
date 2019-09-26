@@ -16,15 +16,12 @@
 package org.datatransferproject.spi.transfer.provider;
 
 import java.util.Optional;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.common.models.DataModel;
-
 import java.util.UUID;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.auth.AuthData;
 
-/**
- * Exports data from a source service.
- */
+/** Exports data from a source service. */
 public interface Exporter<A extends AuthData, T extends DataModel> {
   // TODO: reconsider this model - can we avoid sending AuthData with every export call?
 

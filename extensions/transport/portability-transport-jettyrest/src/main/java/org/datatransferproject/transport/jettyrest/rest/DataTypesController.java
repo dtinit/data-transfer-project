@@ -15,15 +15,14 @@
  */
 package org.datatransferproject.transport.jettyrest.rest;
 
-import org.datatransferproject.api.action.Action;
-import org.datatransferproject.types.client.datatype.DataTypes;
-import org.datatransferproject.types.client.datatype.GetDataTypes;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.datatransferproject.api.action.Action;
+import org.datatransferproject.types.client.datatype.DataTypes;
+import org.datatransferproject.types.client.datatype.GetDataTypes;
 
 /** Returns the available data types supported by the system, e.g. contacts, photos, etc. */
 @Consumes({MediaType.APPLICATION_JSON})

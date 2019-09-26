@@ -24,17 +24,18 @@ import java.util.Arrays;
  * At the moment, this class only examines the string of the Throwable and determines whether it
  * matches any of its string regular expressions.
  *
- * NOTE: Our core library only supports reading RetryMappings from JSON or YAML format.
+ * <p>NOTE: Our core library only supports reading RetryMappings from JSON or YAML format.
  */
 public class RetryMapping {
 
   @JsonProperty("regexes")
   private String[] regexes;
+
   @JsonProperty("strategy")
   private RetryStrategy strategy;
 
-  public RetryMapping(@JsonProperty("regexes") String[] regexes,
-      @JsonProperty("strategy") RetryStrategy strategy) {
+  public RetryMapping(
+      @JsonProperty("regexes") String[] regexes, @JsonProperty("strategy") RetryStrategy strategy) {
     this.regexes = regexes;
     this.strategy = strategy;
   }
@@ -60,9 +61,6 @@ public class RetryMapping {
 
   @Override
   public String toString() {
-    return "RetryMapping{" +
-        "regexes=" + Arrays.toString(regexes) +
-        ", strategy=" + strategy +
-        '}';
+    return "RetryMapping{" + "regexes=" + Arrays.toString(regexes) + ", strategy=" + strategy + '}';
   }
 }

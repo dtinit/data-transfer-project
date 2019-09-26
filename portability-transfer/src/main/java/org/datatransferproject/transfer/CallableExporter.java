@@ -16,23 +16,20 @@
 
 package org.datatransferproject.transfer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Callable around an {@link Exporter}.
- */
+/** Callable around an {@link Exporter}. */
 public class CallableExporter implements Callable<ExportResult> {
 
   private Provider<Exporter> exporterProvider;
@@ -59,15 +56,12 @@ public class CallableExporter implements Callable<ExportResult> {
     boolean success = false;
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      ExportResult result =  exporterProvider.get().export(jobId, authData, exportInformation);
+      ExportResult result = exporterProvider.get().export(jobId, authData, exportInformation);
       success = result.getType() != ExportResult.ResultType.ERROR;
       return result;
-    } finally{
+    } finally {
       metricRecorder.exportPageAttemptFinished(
-          JobMetadata.getDataType(),
-          JobMetadata.getExportService(),
-          success,
-          stopwatch.elapsed());
+          JobMetadata.getDataType(), JobMetadata.getExportService(), success, stopwatch.elapsed());
     }
   }
 }

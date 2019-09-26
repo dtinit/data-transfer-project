@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Defines the data transfer client model objects. Model objects represent the system data
- * resources a client has access to.
+ * Defines the data transfer client model objects. Model objects represent the system data resources
+ * a client has access to.
  */
 package org.datatransferproject.types.client;

@@ -16,6 +16,13 @@
 
 package org.datatransferproject.datatransfer.google.videos;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.InputStream;
+import java.util.List;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
@@ -26,15 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class GoogleVideosImporterTest {
 
@@ -72,7 +70,7 @@ public class GoogleVideosImporterTest {
     when(videoStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
 
     googleVideosImporter =
-        new GoogleVideosImporter(null, googleVideosInterface, videoStreamProvider,null,null);
+        new GoogleVideosImporter(null, googleVideosInterface, videoStreamProvider, null, null);
   }
 
   @Test

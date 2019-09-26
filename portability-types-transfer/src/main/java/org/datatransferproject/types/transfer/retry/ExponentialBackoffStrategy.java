@@ -19,19 +19,20 @@ package org.datatransferproject.types.transfer.retry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
-/**
- * {@link RetryStrategy} that uses an exponential backoff approach.
- */
+/** {@link RetryStrategy} that uses an exponential backoff approach. */
 public class ExponentialBackoffStrategy implements RetryStrategy {
 
   @JsonProperty("maxAttempts")
   private int maxAttempts;
+
   @JsonProperty("initialIntervalMillis")
   private long initialIntervalMillis;
+
   @JsonProperty("multiplier")
   private double multiplier;
 
-  public ExponentialBackoffStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+  public ExponentialBackoffStrategy(
+      @JsonProperty("maxAttempts") int maxAttempts,
       @JsonProperty("initialIntervalMillis") long initialIntervalMillis,
       @JsonProperty("multiplier") double multiplier) {
     Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
@@ -61,10 +62,13 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
 
   @Override
   public String toString() {
-    return "ExponentialBackoffStrategy{" +
-        "maxAttempts=" + maxAttempts +
-        ", initialIntervalMillis=" + initialIntervalMillis +
-        ", multiplier=" + multiplier +
-        '}';
+    return "ExponentialBackoffStrategy{"
+        + "maxAttempts="
+        + maxAttempts
+        + ", initialIntervalMillis="
+        + initialIntervalMillis
+        + ", multiplier="
+        + multiplier
+        + '}';
   }
 }

@@ -36,13 +36,13 @@ import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailContainerResource> {
-  @VisibleForTesting
-  static final long PAGE_SIZE = 50; // TODO configure this in production
+  @VisibleForTesting static final long PAGE_SIZE = 50; // TODO configure this in production
+
   @VisibleForTesting
   // The special value me can be used to indicate the authenticated user to the gmail api
   static final String USER = "me";
@@ -62,8 +62,8 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailCo
   }
 
   @Override
-  public ExportResult<MailContainerResource> export(UUID id,
-      TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+  public ExportResult<MailContainerResource> export(
+      UUID id, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     // Create a new gmail service for the authorized user
     Gmail gmail = getOrCreateGmail(authData);
 
@@ -119,7 +119,7 @@ public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailCo
   private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Gmail.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

@@ -13,13 +13,11 @@ public class PlaylistContainerResource extends ContainerResource {
   private final Collection<MusicPlaylist> playlists;
 
   @JsonCreator
-  public PlaylistContainerResource(
-      @JsonProperty("playlists") Collection<MusicPlaylist> playlists) {
+  public PlaylistContainerResource(@JsonProperty("playlists") Collection<MusicPlaylist> playlists) {
     this.playlists = playlists == null ? ImmutableList.of() : playlists;
   }
 
   public Collection<MusicPlaylist> getLists() {
     return playlists;
   }
-
 }

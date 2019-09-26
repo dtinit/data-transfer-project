@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.models.DataModel;
 
 /**
- * This is a wrapper around a {@link DtpDigitalDocument} that encodes a blobby file.
- * Data in the {@link DtpDigitalDocument} has a 1:1 relationship with the Schema.org spec, fields
- * this class represent DTP specific data that doesn't fit into the schema.org representation.
+ * This is a wrapper around a {@link DtpDigitalDocument} that encodes a blobby file. Data in the
+ * {@link DtpDigitalDocument} has a 1:1 relationship with the Schema.org spec, fields this class
+ * represent DTP specific data that doesn't fit into the schema.org representation.
  */
 public class DigitalDocumentWrapper extends DataModel {
   private final DtpDigitalDocument dtpDigitalDocument;
@@ -19,8 +19,7 @@ public class DigitalDocumentWrapper extends DataModel {
   public DigitalDocumentWrapper(
       @JsonProperty("DtpDigitalDocument") DtpDigitalDocument dtpDigitalDocument,
       @JsonProperty("originalEncodingFormat") String originalEncodingFormat,
-      @JsonProperty("cachedContentId") String cachedContentId
-  ) {
+      @JsonProperty("cachedContentId") String cachedContentId) {
     this.dtpDigitalDocument = dtpDigitalDocument;
     this.originalEncodingFormat = originalEncodingFormat;
     this.cachedContentId = cachedContentId;

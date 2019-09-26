@@ -37,11 +37,8 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * General implementation of an {@link AuthDataGenerator} for OAuth2.
- */
+/** General implementation of an {@link AuthDataGenerator} for OAuth2. */
 public class OAuth2DataGenerator implements AuthDataGenerator {
 
   private final OAuth2Config config;
@@ -51,30 +48,35 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   private final String clientSecret;
   private final HttpTransport httpTransport;
 
-  OAuth2DataGenerator(OAuth2Config config, AppCredentials appCredentials,
+  OAuth2DataGenerator(
+      OAuth2Config config,
+      AppCredentials appCredentials,
       HttpTransport httpTransport,
-      String dataType, AuthMode authMode) {
+      String dataType,
+      AuthMode authMode) {
     this.config = config;
     validateConfig();
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
-    this.scopes = authMode == AuthMode.EXPORT
-        ? config.getExportScopes().get(dataType)
-        : config.getImportScopes().get(dataType);
+    this.scopes =
+        authMode == AuthMode.EXPORT
+            ? config.getExportScopes().get(dataType)
+            : config.getImportScopes().get(dataType);
   }
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
     String scope = scopes.isEmpty() ? "" : String.join(" ", scopes);
-    URIBuilder builder = new URIBuilder()
-        .setPath(config.getAuthUrl())
-        .setParameter("response_type", "code")
-        .setParameter("client_id", clientId)
-        .setParameter("redirect_uri", callbackBaseUrl)
-        .setParameter("scope", scope)
-        .setParameter("state", encodedJobId);
+    URIBuilder builder =
+        new URIBuilder()
+            .setPath(config.getAuthUrl())
+            .setParameter("response_type", "code")
+            .setParameter("client_id", clientId)
+            .setParameter("redirect_uri", callbackBaseUrl)
+            .setParameter("scope", scope)
+            .setParameter("state", encodedJobId);
 
     if (config.getAdditionalAuthUrlParameters() != null) {
       for (Entry<String, String> entry : config.getAdditionalAuthUrlParameters().entrySet()) {
@@ -91,12 +93,12 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   }
 
   @Override
-  public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id,
-      AuthData initialAuthData, String extra) {
+  public AuthData generateAuthData(
+      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
     Preconditions.checkArgument(
         Strings.isNullOrEmpty(extra), "Extra data not expected for OAuth flow");
-    Preconditions.checkArgument(initialAuthData == null,
-        "Initial auth data not expected for " + config.getServiceName());
+    Preconditions.checkArgument(
+        initialAuthData == null, "Initial auth data not expected for " + config.getServiceName());
 
     Map<String, String> params = new LinkedHashMap<>();
     params.put("client_id", clientId);
@@ -108,8 +110,8 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
     HttpContent content = new UrlEncodedContent(params);
 
     try {
-      String tokenResponse = OAuthUtils.makeRawPostRequest(
-          httpTransport, config.getTokenUrl(), content);
+      String tokenResponse =
+          OAuthUtils.makeRawPostRequest(httpTransport, config.getTokenUrl(), content);
 
       return config.getResponseClass(tokenResponse);
     } catch (IOException e) {
@@ -118,17 +120,17 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   }
 
   private void validateConfig() {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getServiceName()),
-        "Config is missing service name");
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
-    Preconditions
-        .checkArgument(!Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(config.getServiceName()), "Config is missing service name");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(config.getAuthUrl()), "Config is missing auth url");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(config.getTokenUrl()), "Config is missing token url");
 
     // This decision is not OAuth spec, but part of an effort to prevent accidental scope omission
-    Preconditions
-        .checkArgument(config.getExportScopes() != null, "Config is missing export scopes");
-    Preconditions
-        .checkArgument(config.getImportScopes() != null, "Config is missing import scopes");
+    Preconditions.checkArgument(
+        config.getExportScopes() != null, "Config is missing export scopes");
+    Preconditions.checkArgument(
+        config.getImportScopes() != null, "Config is missing import scopes");
   }
 }

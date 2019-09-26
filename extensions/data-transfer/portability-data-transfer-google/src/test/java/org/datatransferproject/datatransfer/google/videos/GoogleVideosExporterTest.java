@@ -16,6 +16,19 @@
 
 package org.datatransferproject.datatransfer.google.videos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
@@ -31,20 +44,6 @@ import org.datatransferproject.types.common.models.videos.VideosContainerResourc
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 public class GoogleVideosExporterTest {
 
@@ -73,7 +72,7 @@ public class GoogleVideosExporterTest {
     googleVideosExporter = new GoogleVideosExporter(credentialFactory, videosInterface);
 
     when(videosInterface.listVideoItems(Matchers.any(Optional.class)))
-            .thenReturn(mediaItemSearchResponse);
+        .thenReturn(mediaItemSearchResponse);
 
     verifyZeroInteractions(credentialFactory);
   }
@@ -82,13 +81,12 @@ public class GoogleVideosExporterTest {
   public void exportSingleVideo() throws IOException {
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSingleVideo(VIDEO_URI, VIDEO_ID);
-    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[]{mediaItem});
+    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(VIDEO_TOKEN);
 
     // Run test
     ExportResult<VideosContainerResource> result =
-            googleVideosExporter.exportVideos(null, Optional.empty());
-
+        googleVideosExporter.exportVideos(null, Optional.empty());
 
     // Verify correct methods were called
     verify(videosInterface).listVideoItems(Optional.empty());
@@ -97,7 +95,7 @@ public class GoogleVideosExporterTest {
     // Check pagination
     ContinuationData continuationData = result.getContinuationData();
     StringPaginationToken paginationToken =
-            (StringPaginationToken) continuationData.getPaginationData();
+        (StringPaginationToken) continuationData.getPaginationData();
     assertThat(paginationToken.getToken()).isEqualTo(VIDEO_TOKEN);
 
     // Check videos field of container
@@ -111,15 +109,13 @@ public class GoogleVideosExporterTest {
     }
 
     assertThat(actualVideos.stream().map(VideoObject::getContentUrl).collect(Collectors.toList()))
-            .containsExactly(video_uri_object);
+        .containsExactly(video_uri_object);
     // Since albums are not supported atm, this should be null
     assertThat(actualVideos.stream().map(VideoObject::getAlbumId).collect(Collectors.toList()))
-            .containsExactly((Object) null);
+        .containsExactly((Object) null);
   }
 
-  /**
-   * Sets up a response for a single video
-   */
+  /** Sets up a response for a single video */
   private GoogleMediaItem setUpSingleVideo(String videoUri, String videoId) {
     GoogleMediaItem videoEntry = new GoogleMediaItem();
     videoEntry.setDescription("Description");

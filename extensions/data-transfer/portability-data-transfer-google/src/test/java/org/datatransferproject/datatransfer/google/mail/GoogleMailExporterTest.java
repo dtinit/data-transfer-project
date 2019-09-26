@@ -64,21 +64,15 @@ public class GoogleMailExporterTest {
   private static final String MESSAGE_RAW = "message contents";
   private static final List<String> MESSAGE_LABELS = ImmutableList.of("label1", "label2");
   private static final Message INITIAL_MESSAGE = new Message().setId(MESSAGE_ID);
-  private static final Message FULL_MESSAGE = new Message().setId(MESSAGE_ID).setRaw(MESSAGE_RAW)
-      .setLabelIds(MESSAGE_LABELS);
+  private static final Message FULL_MESSAGE =
+      new Message().setId(MESSAGE_ID).setRaw(MESSAGE_RAW).setLabelIds(MESSAGE_LABELS);
 
-  @Mock
-  private Users users;
-  @Mock
-  private Messages messages;
-  @Mock
-  private Messages.List messageListRequest;
-  @Mock
-  private Get get;
-  @Mock
-  private Gmail gmail;
-  @Mock
-  private GoogleCredentialFactory googleCredentialFactory;
+  @Mock private Users users;
+  @Mock private Messages messages;
+  @Mock private Messages.List messageListRequest;
+  @Mock private Get get;
+  @Mock private Gmail gmail;
+  @Mock private GoogleCredentialFactory googleCredentialFactory;
 
   private ListMessagesResponse messageListResponse;
 
@@ -132,7 +126,7 @@ public class GoogleMailExporterTest {
     assertThat(actualMail.stream().map(MailMessageModel::getRawString).collect(Collectors.toList()))
         .containsExactly(MESSAGE_RAW);
     assertThat(
-        actualMail.stream().map(MailMessageModel::getContainerIds).collect(Collectors.toList()))
+            actualMail.stream().map(MailMessageModel::getContainerIds).collect(Collectors.toList()))
         .containsExactly(MESSAGE_LABELS);
   }
 
@@ -162,12 +156,10 @@ public class GoogleMailExporterTest {
     assertThat(paginationToken).isNull();
   }
 
-  /**
-   * Sets up a response with a single message
-   */
+  /** Sets up a response with a single message */
   private void setUpSingleMessageResponse() throws IOException {
-    messageListResponse = new ListMessagesResponse()
-        .setMessages(Collections.singletonList(INITIAL_MESSAGE));
+    messageListResponse =
+        new ListMessagesResponse().setMessages(Collections.singletonList(INITIAL_MESSAGE));
     when(messageListRequest.execute()).thenReturn(messageListResponse);
     when(get.execute()).thenReturn(FULL_MESSAGE);
   }

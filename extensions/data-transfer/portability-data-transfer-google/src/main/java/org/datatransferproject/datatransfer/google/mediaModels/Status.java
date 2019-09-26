@@ -17,9 +17,7 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Information about whether a request was successful, used by {@link NewMediaItemResult}.
- */
+/** Information about whether a request was successful, used by {@link NewMediaItemResult}. */
 public class Status {
 
   @JsonProperty("code")

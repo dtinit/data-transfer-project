@@ -17,15 +17,14 @@ package org.datatransferproject.cloud.microsoft.cosmos;
 
 import static java.lang.String.format;
 
+import java.time.Duration;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 
-import java.time.Duration;
-
 /**
- * A placeholder {@link DtpInternalMetricRecorder} that simply logs metrics
- * to the default monitor.
- * **/
+ * A placeholder {@link DtpInternalMetricRecorder} that simply logs metrics to the default monitor.
+ * *
+ */
 class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   private final Monitor monitor;
 
@@ -45,10 +44,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void exportPageAttemptFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -59,10 +55,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void exportPageFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -72,10 +65,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void importPageAttemptFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -86,10 +76,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void importPageFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(

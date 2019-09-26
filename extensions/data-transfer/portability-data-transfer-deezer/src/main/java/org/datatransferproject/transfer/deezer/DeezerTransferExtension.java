@@ -29,7 +29,6 @@ import org.datatransferproject.types.common.models.playlists.PlaylistContainerRe
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
-
 public class DeezerTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PLAYLISTS");
 

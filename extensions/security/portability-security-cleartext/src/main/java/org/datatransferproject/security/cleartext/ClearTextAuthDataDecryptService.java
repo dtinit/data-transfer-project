@@ -16,11 +16,9 @@
 package org.datatransferproject.security.cleartext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
-
-import java.io.IOException;
-import java.security.PrivateKey;
 
 /** */
 public class ClearTextAuthDataDecryptService implements AuthDataDecryptService {

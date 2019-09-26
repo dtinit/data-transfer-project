@@ -23,11 +23,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
-import org.datatransferproject.config.extension.SettingsExtension;
 
 /**
- * {@link AbstractModule} that binds all @Flag-annotated flags from an {@link ExtensionContext}
- * as Named annotations to be injected by Guice.
+ * {@link AbstractModule} that binds all @Flag-annotated flags from an {@link ExtensionContext} as
+ * Named annotations to be injected by Guice.
  */
 public abstract class FlagBindingModule extends AbstractModule {
 

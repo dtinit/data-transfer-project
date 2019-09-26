@@ -16,8 +16,15 @@
 
 package org.datatransferproject.datatransfer.google.calendar;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
+import java.util.Collections;
+import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
@@ -26,15 +33,6 @@ import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.UUID;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 public class GoogleCalendarImporterTest {
   private GoogleCalendarImporter calendarService;

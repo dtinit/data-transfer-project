@@ -19,6 +19,10 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
@@ -33,11 +37,6 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.UUID;
 
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -81,7 +80,8 @@ public class GooglePhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      PhotosContainerResource data) throws Exception {
+      PhotosContainerResource data)
+      throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -91,10 +91,7 @@ public class GooglePhotosImporter
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
         idempotentImportExecutor.executeAndSwallowIOExceptions(
-            album.getId(),
-            album.getName(),
-            () -> importSingleAlbum(authData, album)
-        );
+            album.getId(), album.getName(), () -> importSingleAlbum(authData, album));
       }
     }
 
@@ -166,8 +163,11 @@ public class GooglePhotosImporter
     NewMediaItemUpload uploadItem =
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
 
-    return getOrCreatePhotosInterface(authData).createPhoto(uploadItem)
-        .getResults()[0].getMediaItem().getId();
+    return getOrCreatePhotosInterface(authData)
+        .createPhoto(uploadItem)
+        .getResults()[0]
+        .getMediaItem()
+        .getId();
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(

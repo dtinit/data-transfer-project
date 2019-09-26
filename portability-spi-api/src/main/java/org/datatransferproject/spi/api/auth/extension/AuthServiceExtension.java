@@ -11,7 +11,7 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode
  * <p>REVIEW: There is no distinction between offline and online generators since offline input data
  * collection should be externalized from this layer
  */
-public interface AuthServiceExtension extends AbstractExtension{
+public interface AuthServiceExtension extends AbstractExtension {
 
   /** Returns the id of the service this factory supports. */
   String getServiceId();

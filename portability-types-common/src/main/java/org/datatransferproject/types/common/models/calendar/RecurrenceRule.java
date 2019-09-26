@@ -28,10 +28,10 @@ public class RecurrenceRule {
   static final String WKST = "WKST";
   static final String VALUE = "VALUE";
   static final String TZID = "TZID";
-  static final List<String> byRuleList = Arrays.stream(ByRule.values()).map(Object::toString)
-      .collect(Collectors.toList());
-  static final List<String> dayList = Arrays.stream(Day.values()).map(Object::toString)
-      .collect(Collectors.toList());
+  static final List<String> byRuleList =
+      Arrays.stream(ByRule.values()).map(Object::toString).collect(Collectors.toList());
+  static final List<String> dayList =
+      Arrays.stream(Day.values()).map(Object::toString).collect(Collectors.toList());
   private final RRule rRule;
   private final RDate rDate;
   private final ExDate exDate;
@@ -202,8 +202,8 @@ public class RecurrenceRule {
   @AutoValue
   public abstract static class RRule {
 
-    static RRule create(Freq freq, String until, int count, int interval,
-        Map<ByRule, String> byRuleMap, Day wkst) {
+    static RRule create(
+        Freq freq, String until, int count, int interval, Map<ByRule, String> byRuleMap, Day wkst) {
       return builder()
           .freq(freq)
           .until(until)
@@ -215,13 +215,14 @@ public class RecurrenceRule {
     }
 
     static Builder builder() {
-      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RRule.Builder();
+      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RRule
+          .Builder();
     }
 
     abstract Freq freq();
 
     @Nullable
-    abstract String until();  // represents a date/time
+    abstract String until(); // represents a date/time
 
     @Nullable
     abstract Integer count();
@@ -283,15 +284,12 @@ public class RecurrenceRule {
   public abstract static class RDate {
 
     static RDate create(@Nullable TimeType value, @Nullable String tzidparam, List<String> rdtval) {
-      return builder()
-          .value(value)
-          .tzidparam(tzidparam)
-          .rdtval(rdtval)
-          .build();
+      return builder().value(value).tzidparam(tzidparam).rdtval(rdtval).build();
     }
 
     static Builder builder() {
-      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RDate.Builder();
+      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_RDate
+          .Builder();
     }
 
     @Nullable
@@ -314,8 +312,7 @@ public class RecurrenceRule {
       if (tzidparam() != null) {
         rdtParamList.add(TZID + "=" + tzidparam());
       }
-      builder.append(String.join(";", rdtParamList) + ":" +
-          String.join(",", rdtval()));
+      builder.append(String.join(";", rdtParamList) + ":" + String.join(",", rdtval()));
       return builder.toString();
     }
 
@@ -336,15 +333,12 @@ public class RecurrenceRule {
   public abstract static class ExDate {
 
     public static ExDate create(TimeType value, String tzidparam, List<String> exdtval) {
-      return builder()
-          .value(value)
-          .tzidparam(tzidparam)
-          .exdtval(exdtval)
-          .build();
+      return builder().value(value).tzidparam(tzidparam).exdtval(exdtval).build();
     }
 
     public static Builder builder() {
-      return new org.datatransferproject.types.common.models.calendar.AutoValue_RecurrenceRule_ExDate.Builder();
+      return new org.datatransferproject.types.common.models.calendar
+          .AutoValue_RecurrenceRule_ExDate.Builder();
     }
 
     @Nullable
@@ -367,8 +361,7 @@ public class RecurrenceRule {
       if (tzidparam() != null) {
         exdtParamList.add(TZID + "=" + tzidparam());
       }
-      builder.append(String.join(";", exdtParamList) + ":" +
-          String.join(",", exdtval()));
+      builder.append(String.join(";", exdtParamList) + ":" + String.join(",", exdtval()));
       return builder.toString();
     }
 
@@ -391,8 +384,7 @@ public class RecurrenceRule {
     private RDate rDate;
     private ExDate exDate;
 
-    public Builder() {
-    }
+    public Builder() {}
 
     public Builder setRRule(RRule rRule) {
       this.rRule = rRule;

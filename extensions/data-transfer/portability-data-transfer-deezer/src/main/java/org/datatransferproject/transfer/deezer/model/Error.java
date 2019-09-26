@@ -18,7 +18,6 @@ public class Error {
   }
 
   public String toString() {
-    return String.format("Error{type=%s message=%s code=%s}",
-        type, message, code);
+    return String.format("Error{type=%s message=%s code=%s}", type, message, code);
   }
 }

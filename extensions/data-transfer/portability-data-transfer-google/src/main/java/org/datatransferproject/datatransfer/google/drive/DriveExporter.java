@@ -1,5 +1,7 @@
 package org.datatransferproject.datatransfer.google.drive;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files.List;
@@ -7,6 +9,10 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
@@ -21,13 +27,6 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
-
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An {@link Exporter} to export data from Google Drive.

@@ -16,11 +16,15 @@
 
 package org.datatransferproject.transfer.deezer.playlists;
 
-
 import static java.lang.String.format;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -38,49 +42,38 @@ import org.datatransferproject.types.common.models.playlists.PlaylistContainerRe
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-/**
- * Exports playlists from Deezer.
- **/
-public class DeezerPlaylistExporter implements
-    Exporter<TokensAndUrlAuthData, PlaylistContainerResource> {
+/** Exports playlists from Deezer. */
+public class DeezerPlaylistExporter
+    implements Exporter<TokensAndUrlAuthData, PlaylistContainerResource> {
 
   private final Monitor monitor;
   private final HttpTransport httpTransport;
   private final TransferServiceConfig transferServiceConfig;
 
   public DeezerPlaylistExporter(
-      Monitor monitor,
-      HttpTransport httpTransport,
-      TransferServiceConfig transferServiceConfig) {
+      Monitor monitor, HttpTransport httpTransport, TransferServiceConfig transferServiceConfig) {
     this.monitor = monitor;
     this.httpTransport = httpTransport;
     this.transferServiceConfig = transferServiceConfig;
   }
 
   @Override
-  public ExportResult<PlaylistContainerResource> export(UUID jobId,
-      TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
+  public ExportResult<PlaylistContainerResource> export(
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws Exception {
     DeezerApi api = new DeezerApi(authData.getAccessToken(), httpTransport, transferServiceConfig);
 
-    return new ExportResult<>(
-        ResultType.END, enumeratePlaylists(api));
+    return new ExportResult<>(ResultType.END, enumeratePlaylists(api));
   }
 
-  private PlaylistContainerResource enumeratePlaylists(DeezerApi api)
-      throws IOException {
+  private PlaylistContainerResource enumeratePlaylists(DeezerApi api) throws IOException {
     List<MusicPlaylist> results = new ArrayList<>();
     for (PlaylistSummary playlistSummary : api.getPlaylists()) {
-      results.add(new MusicPlaylist(
-          playlistSummary.getLink(),
-          playlistSummary.getTitle(),
-          fetchPlaylist(api, playlistSummary.getId())));
+      results.add(
+          new MusicPlaylist(
+              playlistSummary.getLink(),
+              playlistSummary.getTitle(),
+              fetchPlaylist(api, playlistSummary.getId())));
     }
     return new PlaylistContainerResource(results);
   }
@@ -90,11 +83,11 @@ public class DeezerPlaylistExporter implements
 
     ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>();
 
-      monitor.debug(() -> format("Fetching playlist's %s tracks", playlistId));
-      PlaylistDetails playlistDetails = api.getPlaylistDetails(playlistId);
-      for (Track track : playlistDetails.getTrackCollection().getTracks()) {
-        results.add(convertTrack(api, track.getId()));
-      }
+    monitor.debug(() -> format("Fetching playlist's %s tracks", playlistId));
+    PlaylistDetails playlistDetails = api.getPlaylistDetails(playlistId);
+    for (Track track : playlistDetails.getTrackCollection().getTracks()) {
+      results.add(convertTrack(api, track.getId()));
+    }
     return results.build();
   }
 

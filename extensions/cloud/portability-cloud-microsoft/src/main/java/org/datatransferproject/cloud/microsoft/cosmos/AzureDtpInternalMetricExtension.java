@@ -24,7 +24,6 @@ public class AzureDtpInternalMetricExtension implements ServiceExtension {
   @Override
   public void initialize(ExtensionContext context) {
     context.registerService(
-        DtpInternalMetricRecorder.class,
-        new AzureDtpInternalMetricRecorder(context.getMonitor()));
+        DtpInternalMetricRecorder.class, new AzureDtpInternalMetricRecorder(context.getMonitor()));
   }
 }

@@ -4,10 +4,9 @@ import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.keyvault.KeyVaultClient;
 import com.microsoft.azure.keyvault.models.SecretBundle;
+import java.io.IOException;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
 
 /** A secrets store backed by Azure Key Vault. */
 public class AzureKeyVaultStore implements AppCredentialStore {

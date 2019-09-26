@@ -15,8 +15,16 @@
  */
 package org.datatransferproject.transfer.microsoft.photos;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,23 +45,15 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  *
- * <p>The implementation currently uses the Graph Upload API, which has a content size limit of
- * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
+ * <p>The implementation currently uses the Graph Upload API, which has a content size limit of 4MB.
+ * In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
-public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosImporter
+    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -113,8 +113,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(
-      PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
+  private String createOneDriveFolder(PhotoAlbum album, TokensAndUrlAuthData authData)
+      throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", album.getName());
@@ -135,8 +135,10 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         }
         Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
         String folderId = (String) responseData.get("id");
-        checkState(!Strings.isNullOrEmpty(folderId),
-            "Expected id value to be present in %s", responseData);
+        checkState(
+            !Strings.isNullOrEmpty(folderId),
+            "Expected id value to be present in %s",
+            responseData);
         return folderId;
       } else {
         throw new IOException("Got response code: " + code);

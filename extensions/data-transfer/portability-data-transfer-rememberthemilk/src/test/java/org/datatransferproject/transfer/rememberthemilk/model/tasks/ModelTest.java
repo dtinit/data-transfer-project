@@ -16,12 +16,11 @@
 
 package org.datatransferproject.transfer.rememberthemilk.model.tasks;
 
-import com.fasterxml.jackson.xml.XmlMapper;
-import org.junit.Test;
-
-import java.io.IOException;
-
 import static com.google.common.truth.Truth.assertThat;
+
+import com.fasterxml.jackson.xml.XmlMapper;
+import java.io.IOException;
+import org.junit.Test;
 
 public class ModelTest {
   private XmlMapper mapper = new XmlMapper();

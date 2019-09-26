@@ -18,8 +18,8 @@ package org.datatransferproject.transfer.mastodon.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import javax.annotation.Nullable;
 import java.time.Instant;
+import javax.annotation.Nullable;
 
 /**
  * Partial POJO representation of
@@ -35,7 +35,6 @@ public class Status {
   @Nullable private String inReplyToAccountId;
   private String content;
   private String createdAtTime;
-
 
   public Status(
       @JsonProperty("id") String id,

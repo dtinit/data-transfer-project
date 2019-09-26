@@ -1,5 +1,7 @@
 package org.datatransferproject.cloud.microsoft.cosmos;
 
+import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -13,12 +15,6 @@ import com.microsoft.azure.storage.table.CloudTableClient;
 import com.microsoft.azure.storage.table.TableOperation;
 import com.microsoft.azure.storage.table.TableQuery;
 import com.microsoft.azure.storage.table.TableResult;
-import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -26,8 +22,11 @@ import java.security.InvalidKeyException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.UUID;
-
-import static com.microsoft.azure.storage.table.TableQuery.generateFilterCondition;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /** Uses the Azure Cosmos DB Table Storage API to persist job data. */
 public class AzureTableStore extends JobStoreWithValidator {
@@ -252,7 +251,8 @@ public class AzureTableStore extends JobStoreWithValidator {
     }
   }
 
-  private void create(String rowKey, String tableName, String state, Object type) throws IOException {
+  private void create(String rowKey, String tableName, String state, Object type)
+      throws IOException {
     try {
 
       CloudTable table = tableClient.getTableReference(tableName);
@@ -260,10 +260,7 @@ public class AzureTableStore extends JobStoreWithValidator {
       String serializedJob = configuration.getMapper().writeValueAsString(type);
       DataWrapper wrapper =
           new DataWrapper(
-              configuration.getPartitionKey(),
-              rowKey,
-              state,
-              serializedJob); // job id used as key
+              configuration.getPartitionKey(), rowKey, state, serializedJob); // job id used as key
       TableOperation insert = TableOperation.insert(wrapper);
       table.execute(insert);
     } catch (JsonProcessingException | StorageException | URISyntaxException e) {
@@ -294,8 +291,7 @@ public class AzureTableStore extends JobStoreWithValidator {
 
       CloudTable table = tableClient.getTableReference(tableName);
       TableOperation retrieve =
-          TableOperation.retrieve(
-              configuration.getPartitionKey(), rowKey, DataWrapper.class);
+          TableOperation.retrieve(configuration.getPartitionKey(), rowKey, DataWrapper.class);
       TableResult result = table.execute(retrieve);
       DataWrapper wrapper = result.getResultAsType();
       return configuration.getMapper().readValue(wrapper.getSerialized(), type);

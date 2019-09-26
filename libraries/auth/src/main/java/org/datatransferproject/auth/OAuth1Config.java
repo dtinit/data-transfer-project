@@ -20,71 +20,57 @@ import com.google.api.client.auth.oauth.OAuthHmacSigner;
 import com.google.api.client.auth.oauth.OAuthSigner;
 import java.util.Map;
 
-/**
- * Interface for providing information necessary to run OAuth1 flow
- */
+/** Interface for providing information necessary to run OAuth1 flow */
 public interface OAuth1Config {
 
-  /**
-   * Returns the name of the service, used for display, and client id and secret retrieval
-   */
+  /** Returns the name of the service, used for display, and client id and secret retrieval */
   String getServiceName();
 
-  /**
-   * Returns the request token url
-   */
+  /** Returns the request token url */
   String getRequestTokenUrl();
 
-  /**
-   * Returns the authorization url
-   */
+  /** Returns the authorization url */
   String getAuthorizationUrl();
 
-  /**
-   * Returns the access token url
-   */
+  /** Returns the access token url */
   String getAccessTokenUrl();
 
   /**
    * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
-   * defined in the auth data generator or elsewhere
-   * Note: this method assumes that scopes are required to use this service
+   * defined in the auth data generator or elsewhere Note: this method assumes that scopes are
+   * required to use this service
    */
   Map<String, String> getExportScopes();
 
   /**
    * Returns a map of scopes needed for import, keyed by data type (e.g., PHOTOS, CALENDAR) as
-   * defined in the auth data generator or elsewhere
-   * Note: this method assumes that scopes are required to use this service
+   * defined in the auth data generator or elsewhere Note: this method assumes that scopes are
+   * required to use this service
    */
   Map<String, String> getImportScopes();
 
   /**
-   * Returns the parameter name for scopes
-   * Note: this method assumes that scopes are required to use this service
+   * Returns the parameter name for scopes Note: this method assumes that scopes are required to use
+   * this service
    */
   String getScopeParameterName();
 
   /**
-   * Shows what step the scopes should be requested in
-   * Note: this method assumes that scopes are required to use this service
+   * Shows what step the scopes should be requested in Note: this method assumes that scopes are
+   * required to use this service
    */
   default OAuth1Step whenAddScopes() {
     return OAuth1Step.AUTHORIZATION;
   }
 
-  /**
-   * Returns the {@link OAuthSigner} for the initial token request
-   */
+  /** Returns the {@link OAuthSigner} for the initial token request */
   default OAuthSigner getRequestTokenSigner(String clientSecret) {
     OAuthHmacSigner signer = new OAuthHmacSigner();
     signer.clientSharedSecret = clientSecret;
     return signer;
   }
 
-  /**
-   * Returns the {@link OAuthSigner} for the access token request
-   */
+  /** Returns the {@link OAuthSigner} for the access token request */
   default OAuthSigner getAccessTokenSigner(String clientSecret, String tokenSecret) {
     OAuthHmacSigner signer = new OAuthHmacSigner();
     signer.clientSharedSecret = clientSecret;

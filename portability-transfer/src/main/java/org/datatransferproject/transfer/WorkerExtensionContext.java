@@ -17,6 +17,8 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
+import java.util.HashMap;
+import java.util.Map;
 import org.datatransferproject.api.launcher.Constants.Environment;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Flag;
@@ -27,9 +29,6 @@ import org.datatransferproject.launcher.types.TypeManagerImpl;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /** {@link ExtensionContext} used by the transfer worker. */
 public class WorkerExtensionContext implements ExtensionContext {

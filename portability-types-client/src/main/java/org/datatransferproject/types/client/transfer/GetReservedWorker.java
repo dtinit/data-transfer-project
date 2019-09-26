@@ -22,14 +22,14 @@ import io.swagger.annotations.ApiModel;
 /** Request to return the worker that was reserved for the given transfer job. */
 @ApiModel(description = "Returns the worker reserved for a given transfer job")
 public class GetReservedWorker {
-    private final String id;
+  private final String id;
 
-    @JsonCreator
-    public GetReservedWorker(@JsonProperty(value = "id", required = true) String id) {
-        this.id = id;
-    }
+  @JsonCreator
+  public GetReservedWorker(@JsonProperty(value = "id", required = true) String id) {
+    this.id = id;
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 }

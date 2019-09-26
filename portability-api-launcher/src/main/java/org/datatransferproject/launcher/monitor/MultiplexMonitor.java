@@ -15,10 +15,9 @@
  */
 package org.datatransferproject.launcher.monitor;
 
+import java.util.function.Supplier;
 import org.datatransferproject.api.launcher.JobAwareMonitor;
 import org.datatransferproject.api.launcher.Monitor;
-
-import java.util.function.Supplier;
 
 /** Forwards monitor events to a set of delegates. */
 public class MultiplexMonitor implements JobAwareMonitor {

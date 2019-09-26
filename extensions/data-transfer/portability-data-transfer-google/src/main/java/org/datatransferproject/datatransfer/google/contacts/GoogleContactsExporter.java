@@ -16,6 +16,11 @@
 
 package org.datatransferproject.datatransfer.google.contacts;
 
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -34,6 +39,13 @@ import ezvcard.io.json.JCardWriter;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -45,19 +57,6 @@ import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
 
 public class GoogleContactsExporter
     implements Exporter<TokensAndUrlAuthData, ContactsModelWrapper> {
@@ -199,8 +198,8 @@ public class GoogleContactsExporter
   public ExportResult<ContactsModelWrapper> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     if (exportInformation.isPresent()) {
-      StringPaginationToken stringPaginationToken = (StringPaginationToken)
-          exportInformation.get().getPaginationData();
+      StringPaginationToken stringPaginationToken =
+          (StringPaginationToken) exportInformation.get().getPaginationData();
       return exportContacts(authData, Optional.ofNullable(stringPaginationToken));
     } else {
       return exportContacts(authData, Optional.empty());
@@ -269,7 +268,7 @@ public class GoogleContactsExporter
   private synchronized PeopleService makePeopleService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new PeopleService.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

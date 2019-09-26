@@ -19,8 +19,6 @@ import com.google.common.io.BaseEncoding;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityException;
 
-import java.security.PublicKey;
-
 /** */
 public class ClearTextPublicKeySerializer implements PublicKeySerializer {
 

@@ -1,8 +1,6 @@
 package org.datatransferproject.transfer.deezer.model;
 
-/**
- * POJO of https://developers.deezer.com/api/user
- */
+/** POJO of https://developers.deezer.com/api/user */
 public class User {
   private long id;
   private String name;

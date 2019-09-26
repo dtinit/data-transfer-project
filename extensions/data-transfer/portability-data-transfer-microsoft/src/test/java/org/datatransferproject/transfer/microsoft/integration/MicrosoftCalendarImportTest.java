@@ -15,11 +15,19 @@
  */
 package org.datatransferproject.transfer.microsoft.integration;
 
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
@@ -34,15 +42,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
 
 /**
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph
@@ -192,8 +191,7 @@ public class MicrosoftCalendarImportTest {
 
     HttpUrl baseUrl = server.url("");
     MicrosoftCalendarImporter importer =
-        new MicrosoftCalendarImporter(
-            baseUrl.toString(), client, mapper, transformerService);
+        new MicrosoftCalendarImporter(baseUrl.toString(), client, mapper, transformerService);
 
     CalendarModel calendarModel = new CalendarModel("OldId1", "name", "name");
     CalendarAttendeeModel attendeeModel =

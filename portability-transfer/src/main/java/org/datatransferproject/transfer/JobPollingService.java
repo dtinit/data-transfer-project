@@ -184,9 +184,7 @@ class JobPollingService extends AbstractScheduledService {
     // instance polled the same job, and already claimed it, it will have updated the job's state
     // to CREDS_ENCRYPTION_KEY_GENERATED.
     try {
-      store.claimJob(
-          jobId,
-          updatedJob);
+      store.claimJob(jobId, updatedJob);
 
       monitor.debug(() -> format("Stored updated job: tryToClaimJob: jobId: %s", existingJob));
     } catch (IllegalStateException | IOException e) {
@@ -240,7 +238,8 @@ class JobPollingService extends AbstractScheduledService {
                 format(
                     "Polled job %s does not have auth data as expected. "
                         + "Done polling this job since it's in a bad state! Starting over.",
-                    jobId), EventCode.WORKER_JOB_ERRORED);
+                    jobId),
+            EventCode.WORKER_JOB_ERRORED);
       }
       this.stopAsync();
     } else {

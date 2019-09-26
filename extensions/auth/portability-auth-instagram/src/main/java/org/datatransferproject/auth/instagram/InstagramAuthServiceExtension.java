@@ -18,13 +18,10 @@ package org.datatransferproject.auth.instagram;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Instagram services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Instagram services. */
 public class InstagramAuthServiceExtension extends OAuth2ServiceExtension {
 
   public InstagramAuthServiceExtension() {
     super(new InstagramOAuthConfig());
   }
-
 }

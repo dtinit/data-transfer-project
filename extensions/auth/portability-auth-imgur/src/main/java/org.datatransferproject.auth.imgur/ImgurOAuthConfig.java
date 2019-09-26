@@ -23,8 +23,8 @@ import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
 /**
- * Class that provides Imgur-specific information for OAuth2
- * See https://apidocs.imgur.com/#authorization-and-oauth
+ * Class that provides Imgur-specific information for OAuth2 See
+ * https://apidocs.imgur.com/#authorization-and-oauth
  */
 public class ImgurOAuthConfig implements OAuth2Config {
 

@@ -19,9 +19,7 @@ package org.datatransferproject.auth.twitter;
 import org.datatransferproject.auth.OAuth1ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Twitter services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Twitter services. */
 public class TwitterAuthServiceExtension extends OAuth1ServiceExtension {
 
   public TwitterAuthServiceExtension() {

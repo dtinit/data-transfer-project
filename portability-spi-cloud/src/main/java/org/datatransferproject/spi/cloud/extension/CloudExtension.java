@@ -19,7 +19,10 @@ import org.datatransferproject.api.launcher.AbstractExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 
-/** Cloud extensions implement this interface to be loaded in either a api or transfer worker process. */
+/**
+ * Cloud extensions implement this interface to be loaded in either a api or transfer worker
+ * process.
+ */
 public interface CloudExtension extends AbstractExtension {
 
   /**

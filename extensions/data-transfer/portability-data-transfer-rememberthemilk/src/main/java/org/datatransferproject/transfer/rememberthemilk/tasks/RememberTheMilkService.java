@@ -29,17 +29,15 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.print.DocFlavor.STRING;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.GetListResponse;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.GetListsResponse;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.ListAddResponse;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.ListInfo;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.RememberTheMilkResponse;
-import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskUpdateResponse;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
+import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskUpdateResponse;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
 
 class RememberTheMilkService {
@@ -106,8 +104,7 @@ class RememberTheMilkService {
             "taskseries_id",
             String.valueOf(seriesId),
             "task_id",
-            String.valueOf(taskId)
-        );
+            String.valueOf(taskId));
     makeRequest(params, TaskUpdateResponse.class);
   }
 

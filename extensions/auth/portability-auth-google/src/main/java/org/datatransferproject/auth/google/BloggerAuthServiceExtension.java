@@ -18,13 +18,10 @@ package org.datatransferproject.auth.google;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Google Blogger.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Google Blogger. */
 public class BloggerAuthServiceExtension extends OAuth2ServiceExtension {
 
   public BloggerAuthServiceExtension() {
     super(new BloggerOAuthConfig());
   }
-
 }

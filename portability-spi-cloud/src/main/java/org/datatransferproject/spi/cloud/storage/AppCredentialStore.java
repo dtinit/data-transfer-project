@@ -16,9 +16,8 @@
 
 package org.datatransferproject.spi.cloud.storage;
 
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-
 import java.io.IOException;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 /**
  * Storage of app credentials, e.g. OAuth client IDs/keys and secrets.

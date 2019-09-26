@@ -16,15 +16,13 @@
 
 package org.datatransferproject.auth.smugmug;
 
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
-import com.google.api.client.auth.oauth.OAuthSigner;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
 
 /**
- * Class that supplies SmugMug-specific OAuth1 info
- * See https://smugmug.atlassian.net/wiki/spaces/API/pages/689052/OAuth
+ * Class that supplies SmugMug-specific OAuth1 info See
+ * https://smugmug.atlassian.net/wiki/spaces/API/pages/689052/OAuth
  */
 public class SmugMugOAuthConfig implements OAuth1Config {
 

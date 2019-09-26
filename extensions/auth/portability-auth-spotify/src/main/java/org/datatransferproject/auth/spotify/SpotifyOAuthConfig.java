@@ -22,9 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
-/**
- * Class that supplies Spotify-specific OAuth2 info
- */
+/** Class that supplies Spotify-specific OAuth2 info */
 public class SpotifyOAuthConfig implements OAuth2Config {
 
   // https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow

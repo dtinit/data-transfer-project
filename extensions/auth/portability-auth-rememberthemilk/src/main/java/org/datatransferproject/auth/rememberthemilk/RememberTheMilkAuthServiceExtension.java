@@ -16,8 +16,12 @@
 
 package org.datatransferproject.auth.rememberthemilk;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -25,11 +29,6 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
-import java.util.List;
-
-import static java.lang.String.format;
 
 public class RememberTheMilkAuthServiceExtension implements AuthServiceExtension {
   private static final String RTM_KEY = "RTM_KEY";

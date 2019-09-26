@@ -16,10 +16,20 @@
 
 package org.datatransferproject.transfer.facebook.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 import com.restfb.Connection;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -32,17 +42,6 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class FacebookPhotosExporterTest {
   private static final String ALBUM_NAME = "My Album";

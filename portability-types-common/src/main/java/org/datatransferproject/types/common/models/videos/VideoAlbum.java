@@ -19,7 +19,6 @@ package org.datatransferproject.types.common.models.videos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
-
 import java.util.Objects;
 
 public class VideoAlbum {
@@ -27,14 +26,12 @@ public class VideoAlbum {
   private final String name;
   private final String description;
 
-  /**
-   * The {@code id} is used to associate videos with this album. *
-   */
+  /** The {@code id} is used to associate videos with this album. * */
   @JsonCreator
   public VideoAlbum(
-          @JsonProperty("id") String id,
-          @JsonProperty("name") String name,
-          @JsonProperty("description") String description) {
+      @JsonProperty("id") String id,
+      @JsonProperty("name") String name,
+      @JsonProperty("description") String description) {
     Preconditions.checkNotNull(id);
     this.id = id;
     this.name = name;

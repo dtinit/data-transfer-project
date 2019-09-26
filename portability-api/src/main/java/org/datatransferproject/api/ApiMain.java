@@ -15,6 +15,10 @@
  */
 package org.datatransferproject.api;
 
+import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
+import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -24,6 +28,15 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Types;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.Set;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -43,20 +56,6 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
-
-import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
-import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
-import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
 /** Starts the api server. */
 public class ApiMain {
@@ -169,7 +168,7 @@ public class ApiMain {
 
     Injector injector;
     try {
-       injector =
+      injector =
           Guice.createInjector(
               new ApiServicesModule(
                   typeManager,
@@ -182,9 +181,7 @@ public class ApiMain {
                   extensionContext));
 
     } catch (Exception e) {
-      monitor.info(
-          () -> "Error initializing Guice",
-          e);
+      monitor.info(() -> "Error initializing Guice", e);
       throw e;
     }
 

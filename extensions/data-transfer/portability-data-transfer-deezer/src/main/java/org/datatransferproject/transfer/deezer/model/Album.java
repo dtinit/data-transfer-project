@@ -1,8 +1,6 @@
 package org.datatransferproject.transfer.deezer.model;
 
-/**
- * POJO of: https://developers.deezer.com/api/album
- */
+/** POJO of: https://developers.deezer.com/api/album */
 public class Album {
   private long id;
   private String title;

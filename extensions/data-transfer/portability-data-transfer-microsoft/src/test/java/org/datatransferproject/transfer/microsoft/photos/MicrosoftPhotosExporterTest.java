@@ -16,35 +16,32 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
-import com.google.api.client.json.jackson2.JacksonFactory;
+import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosExporter.DRIVE_TOKEN_PREFIX;
+import static org.mockito.Mockito.*;
 
+import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.transfer.microsoft.driveModels.*;
-
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.*;
-import static org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosExporter.DRIVE_TOKEN_PREFIX;
 
 /** */
 public class MicrosoftPhotosExporterTest {

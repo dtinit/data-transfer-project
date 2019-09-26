@@ -23,6 +23,7 @@ import com.google.api.client.auth.oauth.OAuthGetTemporaryToken;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.auth.OAuth1Config.OAuth1Step;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -32,8 +33,6 @@ import org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-
-import java.io.IOException;
 
 /** General implementation of an {@link AuthDataGenerator} for OAuth1. */
 public class OAuth1DataGenerator implements AuthDataGenerator {

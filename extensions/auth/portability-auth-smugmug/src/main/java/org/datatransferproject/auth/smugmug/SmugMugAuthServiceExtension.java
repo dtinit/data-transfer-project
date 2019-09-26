@@ -19,9 +19,7 @@ package org.datatransferproject.auth.smugmug;
 import org.datatransferproject.auth.OAuth1ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for SmugMug services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for SmugMug services. */
 public class SmugMugAuthServiceExtension extends OAuth1ServiceExtension {
 
   public SmugMugAuthServiceExtension() {

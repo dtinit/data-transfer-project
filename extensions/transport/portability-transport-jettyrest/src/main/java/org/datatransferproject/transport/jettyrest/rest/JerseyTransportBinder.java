@@ -15,6 +15,10 @@
  */
 package org.datatransferproject.transport.jettyrest.rest;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.spi.api.transport.TransportBinder;
 import org.datatransferproject.transport.jettyrest.http.JettyTransport;
@@ -22,11 +26,6 @@ import org.datatransferproject.types.client.datatype.GetDataTypes;
 import org.datatransferproject.types.client.transfer.*;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Binds {@link Action}s to REST over HTTP

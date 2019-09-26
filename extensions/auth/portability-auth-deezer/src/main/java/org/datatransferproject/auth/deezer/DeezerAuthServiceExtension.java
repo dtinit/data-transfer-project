@@ -18,13 +18,10 @@ package org.datatransferproject.auth.deezer;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Deezer services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Deezer services. */
 public class DeezerAuthServiceExtension extends OAuth2ServiceExtension {
 
   public DeezerAuthServiceExtension() {
     super(new DeezerOAuthConfig());
   }
-
 }

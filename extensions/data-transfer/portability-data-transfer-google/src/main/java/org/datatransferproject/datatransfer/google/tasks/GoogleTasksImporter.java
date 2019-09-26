@@ -21,6 +21,7 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -32,10 +33,6 @@ import org.datatransferproject.types.common.models.tasks.TaskListModel;
 import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.util.UUID;
-
-
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
@@ -46,8 +43,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
   }
 
   @VisibleForTesting
-  GoogleTasksImporter(GoogleCredentialFactory credentialFactory,
-      Tasks tasksClient) {
+  GoogleTasksImporter(GoogleCredentialFactory credentialFactory, Tasks tasksClient) {
     this.credentialFactory = credentialFactory;
     this.tasksClient = tasksClient;
   }
@@ -57,7 +53,8 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      TaskContainerResource data) throws Exception {
+      TaskContainerResource data)
+      throws Exception {
     Tasks tasksService = getOrCreateTasksService(authData);
 
     for (TaskListModel oldTasksList : data.getLists()) {
@@ -96,7 +93,7 @@ public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskC
   private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Tasks.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

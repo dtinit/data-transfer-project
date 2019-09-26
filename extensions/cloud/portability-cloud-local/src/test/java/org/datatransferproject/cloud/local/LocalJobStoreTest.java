@@ -55,8 +55,6 @@ public class LocalJobStoreTest {
   }
 
   private void addItemToJobStoreCounts(final String itemName) {
-    localJobStore.addCounts(new ImmutableMap.Builder<String, Integer>()
-        .put(itemName, 1)
-        .build());
+    localJobStore.addCounts(new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
   }
 }

@@ -22,6 +22,12 @@ import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
@@ -37,14 +43,6 @@ import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
 import org.datatransferproject.types.common.models.tasks.TaskListModel;
 import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 
 public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskContainerResource> {
 
@@ -68,7 +66,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
 
   @Override
   public ExportResult<TaskContainerResource> export(
-          UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     // Create a new tasks service for the authorized user
     Tasks tasksService = getOrCreateTasksService(authData);
 
@@ -104,9 +102,7 @@ public class GoogleTasksExporter implements Exporter<TokensAndUrlAuthData, TaskC
 
     com.google.api.services.tasks.model.Tasks result = query.execute();
     List<TaskModel> newTasks =
-        result
-            .getItems()
-            .stream()
+        result.getItems().stream()
             .map(
                 t ->
                     new TaskModel(

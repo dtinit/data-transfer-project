@@ -16,6 +16,13 @@
 
 package org.datatransferproject.datatransfer.google.contacts;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.Connections;
@@ -29,7 +36,11 @@ import com.google.api.services.people.v1.model.PersonResponse;
 import com.google.api.services.people.v1.model.Source;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
@@ -40,18 +51,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.PERSON_FIELDS;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SELF_RESOURCE;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class GoogleContactsExporterTest {
 
@@ -98,7 +97,8 @@ public class GoogleContactsExporterTest {
     // Looking at first page, with at least one page after it
     listConnectionsResponse.setNextPageToken(NEXT_PAGE_TOKEN);
 
-    ExportResult<ContactsModelWrapper> result = contactsService.export(UUID.randomUUID(), null, Optional.empty());
+    ExportResult<ContactsModelWrapper> result =
+        contactsService.export(UUID.randomUUID(), null, Optional.empty());
 
     // Check that correct methods were called
     verify(connections).list(SELF_RESOURCE);

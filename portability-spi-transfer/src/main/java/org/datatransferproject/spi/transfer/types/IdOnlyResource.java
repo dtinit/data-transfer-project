@@ -16,9 +16,7 @@ public class IdOnlyResource extends ItemResource {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-            .add("id", id)
-            .toString();
+    return MoreObjects.toStringHelper(this).add("id", id).toString();
   }
 
   @Override

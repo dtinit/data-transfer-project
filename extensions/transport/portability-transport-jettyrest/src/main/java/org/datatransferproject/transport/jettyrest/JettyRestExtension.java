@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.transport.jettyrest;
 
+import java.security.KeyStore;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.TransportBinder;
@@ -22,8 +23,6 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.transport.jettyrest.http.JettyMonitor;
 import org.datatransferproject.transport.jettyrest.http.JettyTransport;
 import org.datatransferproject.transport.jettyrest.rest.JerseyTransportBinder;
-
-import java.security.KeyStore;
 
 /**
  * Bootstraps the Jetty REST extension.

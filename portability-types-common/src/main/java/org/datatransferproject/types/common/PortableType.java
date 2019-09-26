@@ -16,7 +16,6 @@
 package org.datatransferproject.types.common;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.io.Serializable;
 
 /**

@@ -25,9 +25,7 @@ public class SecurityExtensionLoader {
 
   public static SecurityExtension getSecurityExtension(ExtensionContext context) {
     ImmutableList.Builder<SecurityExtension> builder = ImmutableList.builder();
-    ServiceLoader.load(SecurityExtension.class)
-        .iterator()
-        .forEachRemaining(builder::add);
+    ServiceLoader.load(SecurityExtension.class).iterator().forEachRemaining(builder::add);
     ImmutableList<SecurityExtension> extensions = builder.build();
     Preconditions.checkState(
         extensions.size() == 1,

@@ -19,10 +19,9 @@ package org.datatransferproject.types.common.models.videos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
-import org.datatransferproject.types.common.models.ContainerResource;
-
 import java.util.Collection;
 import java.util.Objects;
+import org.datatransferproject.types.common.models.ContainerResource;
 
 public class VideosContainerResource extends ContainerResource {
   private final Collection<VideoAlbum> albums;
@@ -30,8 +29,8 @@ public class VideosContainerResource extends ContainerResource {
 
   @JsonCreator
   public VideosContainerResource(
-          @JsonProperty("albums") Collection<VideoAlbum> albums,
-          @JsonProperty("videos") Collection<VideoObject> videos) {
+      @JsonProperty("albums") Collection<VideoAlbum> albums,
+      @JsonProperty("videos") Collection<VideoObject> videos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.videos = videos == null ? ImmutableList.of() : videos;
   }
@@ -49,7 +48,7 @@ public class VideosContainerResource extends ContainerResource {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     VideosContainerResource that = (VideosContainerResource) o;
-    return Objects.equals(getAlbums(), that.getAlbums()) &&
-            Objects.equals(getVideos(), that.getVideos());
+    return Objects.equals(getAlbums(), that.getAlbums())
+        && Objects.equals(getVideos(), that.getVideos());
   }
 }

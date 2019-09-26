@@ -15,11 +15,11 @@
  */
 package org.datatransferproject.transfer;
 
-import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import javax.inject.Qualifier;
 
-/** Package private Guice annotations. **/
+/** Package private Guice annotations. * */
 final class Annotations {
   /** A scheduler for for checking if a job has been canceled. */
   @Qualifier

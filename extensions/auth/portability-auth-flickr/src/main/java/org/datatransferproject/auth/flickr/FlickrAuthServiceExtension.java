@@ -19,9 +19,7 @@ package org.datatransferproject.auth.flickr;
 import org.datatransferproject.auth.OAuth1ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Flickr services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Flickr services. */
 public class FlickrAuthServiceExtension extends OAuth1ServiceExtension {
 
   public FlickrAuthServiceExtension() {

@@ -31,7 +31,7 @@ public class IdOnlyContainerResource extends ContainerResource {
     if (!IdOnlyContainerResource.class.isAssignableFrom(object.getClass())) {
       return false;
     }
-    IdOnlyContainerResource idResource= (IdOnlyContainerResource) object;
+    IdOnlyContainerResource idResource = (IdOnlyContainerResource) object;
     return this.id.equals(idResource.getId());
   }
 }

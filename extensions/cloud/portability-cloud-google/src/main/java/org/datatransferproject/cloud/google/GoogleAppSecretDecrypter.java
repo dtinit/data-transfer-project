@@ -27,7 +27,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
 import org.datatransferproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
-import org.datatransferproject.spi.cloud.storage.CryptoKeyStore;
 
 /** Decrypts app secrets using Google Cloud KMS. */
 @Singleton

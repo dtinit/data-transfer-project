@@ -19,7 +19,6 @@ package org.datatransferproject.cloud.google;
 import static org.junit.Assert.assertEquals;
 
 import java.util.UUID;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -31,11 +30,8 @@ public class GoogleJobStoreTest {
 
   @Test
   public void getDataKeyName() throws Exception {
+    assertEquals(JOB_ID + "-tempTaskData", GoogleJobStore.getDataKeyName(JOB_ID, "tempTaskData"));
     assertEquals(
-        JOB_ID + "-tempTaskData",
-        GoogleJobStore.getDataKeyName(JOB_ID, "tempTaskData"));
-    assertEquals(
-        JOB_ID + "-tempCalendarData",
-        GoogleJobStore.getDataKeyName(JOB_ID, "tempCalendarData"));
+        JOB_ID + "-tempCalendarData", GoogleJobStore.getDataKeyName(JOB_ID, "tempCalendarData"));
   }
 }

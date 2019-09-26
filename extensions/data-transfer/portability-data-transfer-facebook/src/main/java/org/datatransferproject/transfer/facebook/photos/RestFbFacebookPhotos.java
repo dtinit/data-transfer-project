@@ -22,11 +22,10 @@ import com.restfb.Parameter;
 import com.restfb.Version;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
 import java.util.ArrayList;
 import java.util.Optional;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class RestFbFacebookPhotos implements FacebookPhotosInterface {
   private DefaultFacebookClient client;

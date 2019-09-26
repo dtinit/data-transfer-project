@@ -1,17 +1,10 @@
 package org.datatransferproject.cloud.local;
 
+import java.io.IOException;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-/**
- * Implements an {@link AppCredentialStore} that sources secrets from environment variables.
- */
+/** Implements an {@link AppCredentialStore} that sources secrets from environment variables. */
 final class LocalAppCredentialStore implements AppCredentialStore {
   // Why use environment variables and not docker secrets? Because developers run
   // DTP locally both inside of Docker and as a raw JAR.  By just relying on environment

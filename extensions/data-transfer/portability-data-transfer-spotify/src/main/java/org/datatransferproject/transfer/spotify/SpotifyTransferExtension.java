@@ -31,7 +31,6 @@ import org.datatransferproject.types.common.models.playlists.PlaylistContainerRe
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-
 public class SpotifyTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PLAYLISTS");
 
@@ -78,18 +77,19 @@ public class SpotifyTransferExtension implements TransferExtension {
     } catch (IOException e) {
       Monitor monitor = context.getMonitor();
       monitor.info(
-          () -> "Unable to retrieve Spotify AppCredentials. "
-              + "Did you set SPOTIFY_KEY and SPOTIFY_SECRET?");
+          () ->
+              "Unable to retrieve Spotify AppCredentials. "
+                  + "Did you set SPOTIFY_KEY and SPOTIFY_SECRET?");
       return;
     }
 
-
     Monitor monitor = context.getMonitor();
 
-    SpotifyApi spotifyApi = new SpotifyApi.Builder()
-        .setClientId(appCredentials.getKey())
-        .setClientSecret(appCredentials.getSecret())
-        .build();
+    SpotifyApi spotifyApi =
+        new SpotifyApi.Builder()
+            .setClientId(appCredentials.getKey())
+            .setClientSecret(appCredentials.getSecret())
+            .build();
 
     exporter = new SpotifyPlaylistExporter(monitor, spotifyApi);
     importer = new SpotifyPlaylistImporter(monitor, spotifyApi);

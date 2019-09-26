@@ -1,8 +1,6 @@
 package org.datatransferproject.transfer.deezer.model;
 
-/**
- * POJO of: https://developers.deezer.com/api/artist
- */
+/** POJO of: https://developers.deezer.com/api/artist */
 public class Artist {
   private long id;
   private String name;
@@ -21,8 +19,7 @@ public class Artist {
   }
 
   @Override
-  public String toString(){
-    return String.format("Artist{id=%s, name=%s, link=%s}",
-        id, name, link);
+  public String toString() {
+    return String.format("Artist{id=%s, name=%s, link=%s}", id, name, link);
   }
 }

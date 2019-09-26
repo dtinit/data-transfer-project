@@ -19,7 +19,6 @@ package org.datatransferproject.transfer.facebook.photos;
 import com.restfb.Connection;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
-
 import java.util.Optional;
 
 public interface FacebookPhotosInterface {

@@ -18,9 +18,7 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Response returned by a search for GoogleMediaItems
- */
+/** Response returned by a search for GoogleMediaItems */
 public class MediaItemSearchResponse {
   @JsonProperty("mediaItems")
   private GoogleMediaItem[] mediaItems;
@@ -28,7 +26,9 @@ public class MediaItemSearchResponse {
   @JsonProperty("nextPageToken")
   private String nextPageToken;
 
-  public GoogleMediaItem[] getMediaItems() { return mediaItems; }
+  public GoogleMediaItem[] getMediaItems() {
+    return mediaItems;
+  }
 
   public String getNextPageToken() {
     return nextPageToken;

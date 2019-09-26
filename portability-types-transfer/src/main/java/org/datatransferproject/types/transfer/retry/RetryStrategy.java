@@ -24,32 +24,25 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 /**
  * Defines a retry strategy - i.e., how many retry attempts should be made, and at what intervals.
  *
- * NOTE: Our core library only supports reading RetryStrategies from JSON or YAML format.
+ * <p>NOTE: Our core library only supports reading RetryStrategies from JSON or YAML format.
  */
-@JsonTypeInfo(use = Id.NAME,
-    include = As.PROPERTY,
-    property = "type",
-    visible = true)
+@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type", visible = true)
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = UniformRetryStrategy.class, name = "Uniform"),
-    @JsonSubTypes.Type(value = ExponentialBackoffStrategy.class, name = "Exponential"),
-    @JsonSubTypes.Type(value = NoRetryStrategy.class, name = "Fatal")
+  @JsonSubTypes.Type(value = UniformRetryStrategy.class, name = "Uniform"),
+  @JsonSubTypes.Type(value = ExponentialBackoffStrategy.class, name = "Exponential"),
+  @JsonSubTypes.Type(value = NoRetryStrategy.class, name = "Fatal")
 })
 public interface RetryStrategy {
 
-  /**
-   * Shows whether another retry is possible or not, given the number of tries so far
-   */
+  /** Shows whether another retry is possible or not, given the number of tries so far */
   boolean canTryAgain(int tries);
 
   /**
-   * Amount of time (in milliseconds) until next retry.  Should return a negative number if no more
+   * Amount of time (in milliseconds) until next retry. Should return a negative number if no more
    * retries are left.
    */
   long getNextIntervalMillis(int tries);
 
-  /**
-   * Gets milliseconds until the next retry, given elapsed time so far
-   */
+  /** Gets milliseconds until the next retry, given elapsed time so far */
   long getRemainingIntervalMillis(int tries, long elapsedMillis);
 }

@@ -15,19 +15,18 @@
  */
 package org.datatransferproject.security;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
-import org.datatransferproject.api.launcher.Monitor;
-
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-
-import static java.lang.String.format;
+import org.datatransferproject.api.launcher.Monitor;
 
 /**
  * Provides AES and RSA-based encryption implementations for decryption. See {@link

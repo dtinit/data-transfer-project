@@ -30,13 +30,13 @@ public class VideoObject extends MediaObject {
 
   @JsonCreator
   public VideoObject(
-          @JsonProperty("name") String name,
-          @JsonProperty("contentUrl") String contentUrl,
-          @JsonProperty("description") String description,
-          @JsonProperty("encodingFormat") String encodingFormat,
-          @JsonProperty("dataId") String dataId,
-          @JsonProperty("albumId") String albumId,
-          @JsonProperty("inTempStore") boolean inTempStore) {
+      @JsonProperty("name") String name,
+      @JsonProperty("contentUrl") String contentUrl,
+      @JsonProperty("description") String description,
+      @JsonProperty("encodingFormat") String encodingFormat,
+      @JsonProperty("dataId") String dataId,
+      @JsonProperty("albumId") String albumId,
+      @JsonProperty("inTempStore") boolean inTempStore) {
     super(dataId);
     setName(name);
     setContentUrl(contentUrl);
@@ -55,18 +55,17 @@ public class VideoObject extends MediaObject {
     return dataId;
   }
 
-
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-            .add("name", getName())
-            .add("contentUrl", getContentUrl())
-            .add("description", getDescription())
-            .add("encodingFormat", getEncodingFormat())
-            .add("dataId", dataId)
-            .add("albumId", albumId)
-            .add("inTempStore", inTempStore)
-            .toString();
+        .add("name", getName())
+        .add("contentUrl", getContentUrl())
+        .add("description", getDescription())
+        .add("encodingFormat", getEncodingFormat())
+        .add("dataId", dataId)
+        .add("albumId", albumId)
+        .add("inTempStore", inTempStore)
+        .toString();
   }
 
   @Override
@@ -74,11 +73,11 @@ public class VideoObject extends MediaObject {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     VideoObject that = (VideoObject) o;
-    return Objects.equal(getName(), that.getName()) &&
-            Objects.equal(getContentUrl(), that.getContentUrl()) &&
-            Objects.equal(getDescription(), that.getDescription()) &&
-            Objects.equal(getEncodingFormat(), that.getEncodingFormat()) &&
-            Objects.equal(getDataId(), that.getDataId()) &&
-            Objects.equal(getAlbumId(), that.getAlbumId());
+    return Objects.equal(getName(), that.getName())
+        && Objects.equal(getContentUrl(), that.getContentUrl())
+        && Objects.equal(getDescription(), that.getDescription())
+        && Objects.equal(getEncodingFormat(), that.getEncodingFormat())
+        && Objects.equal(getDataId(), that.getDataId())
+        && Objects.equal(getAlbumId(), that.getAlbumId());
   }
 }

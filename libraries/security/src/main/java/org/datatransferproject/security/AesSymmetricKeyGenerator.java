@@ -15,12 +15,11 @@
  */
 package org.datatransferproject.security;
 
-import org.datatransferproject.api.launcher.Monitor;
-
+import java.security.NoSuchAlgorithmException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.NoSuchAlgorithmException;
+import org.datatransferproject.api.launcher.Monitor;
 
 /** AES-based implementation for {@link SecretKey} creation and encoding. */
 public class AesSymmetricKeyGenerator implements SymmetricKeyGenerator {

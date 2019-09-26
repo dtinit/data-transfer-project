@@ -17,7 +17,6 @@ package org.datatransferproject.spi.cloud.extension;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-
 import java.util.ServiceLoader;
 
 /** Helper for loading the cloud extension in a runtime. */

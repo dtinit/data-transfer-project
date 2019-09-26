@@ -35,7 +35,8 @@ public interface AuthDataGenerator {
   /**
    * Return the URL used to exchange an access code for token.
    *
-   * <p>TODO(#553): Implement this for auth extensions. Currently unused by the demo-server frontend.
+   * <p>TODO(#553): Implement this for auth extensions. Currently unused by the demo-server
+   * frontend.
    */
   default String getTokenUrl() {
     return "";

@@ -18,6 +18,10 @@ package org.datatransferproject.transfer;
 
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -26,14 +30,7 @@ import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-
-/**
- * Callable wrapper around an {@link Importer}.
- */
+/** Callable wrapper around an {@link Importer}. */
 public class CallableImporter implements Callable<ImportResult> {
 
   private final Provider<Importer> importerProvider;
@@ -63,24 +60,24 @@ public class CallableImporter implements Callable<ImportResult> {
     boolean success = false;
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      ImportResult result = importerProvider.get()
-          .importItem(jobId, idempotentImportExecutor, authData, data);
+      ImportResult result =
+          importerProvider.get().importItem(jobId, idempotentImportExecutor, authData, data);
       success = result.getType() == ImportResult.ResultType.OK;
       if (success) {
         result = result.copyWithCounts(data.getCounts());
       }
       Collection<ErrorDetail> errors = idempotentImportExecutor.getErrors();
       if (!success || !errors.isEmpty()) {
-        throw new IOException("Problem with importer, forcing a retry, "
-            + errors.size() + " errors, first one: " + errors.iterator().next());
+        throw new IOException(
+            "Problem with importer, forcing a retry, "
+                + errors.size()
+                + " errors, first one: "
+                + errors.iterator().next());
       }
       return result;
-    } finally{
+    } finally {
       metricRecorder.importPageAttemptFinished(
-          JobMetadata.getDataType(),
-          JobMetadata.getImportService(),
-          success,
-          stopwatch.elapsed());
+          JobMetadata.getDataType(), JobMetadata.getImportService(), success, stopwatch.elapsed());
     }
   }
 }

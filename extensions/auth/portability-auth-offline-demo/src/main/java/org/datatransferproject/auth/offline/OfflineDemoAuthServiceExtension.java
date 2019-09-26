@@ -15,13 +15,12 @@
  */
 package org.datatransferproject.auth.offline;
 
+import java.util.Collections;
+import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Provides an extension that demonstrates how import of offline data can be implemented.

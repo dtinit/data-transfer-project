@@ -25,13 +25,11 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftDriveItemsResponse;
-import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFolder;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.stream.Collectors;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftDriveItemsResponse;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFolder;
 
 public class MicrosoftPhotosInterface {
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";

@@ -19,9 +19,7 @@ package org.datatransferproject.types.transfer.serviceconfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
-/**
- * POJO Specification for Transfer Service specific configuration details.
- */
+/** POJO Specification for Transfer Service specific configuration details. */
 public class TransferServiceConfigSpecification {
 
   @JsonProperty("perUserRateLimit")
@@ -29,13 +27,11 @@ public class TransferServiceConfigSpecification {
 
   public TransferServiceConfigSpecification(
       @JsonProperty("perUserRateLimit") double perUserRateLimit) {
-    Preconditions.checkArgument(
-        perUserRateLimit > 0,
-        "perUserRateLimit must be greater than zero");
+    Preconditions.checkArgument(perUserRateLimit > 0, "perUserRateLimit must be greater than zero");
     this.perUserRateLimit = perUserRateLimit;
   }
 
-  /** The number of operations per second allowed for a user. **/
+  /** The number of operations per second allowed for a user. * */
   public double getPerUserRateLimit() {
     return perUserRateLimit;
   }

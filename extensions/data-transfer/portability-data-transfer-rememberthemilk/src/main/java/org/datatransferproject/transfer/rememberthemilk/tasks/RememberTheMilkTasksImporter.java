@@ -18,6 +18,8 @@ package org.datatransferproject.transfer.rememberthemilk.tasks;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -30,10 +32,6 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
-import java.io.IOException;
-import java.util.UUID;
-
-
 /*
  * Importer for Tasks data type to Remember The Milk Service.
  */
@@ -43,8 +41,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   private final Monitor monitor;
   private RememberTheMilkService service;
 
-  public RememberTheMilkTasksImporter(
-      AppCredentials appCredentials, Monitor monitor) {
+  public RememberTheMilkTasksImporter(AppCredentials appCredentials, Monitor monitor) {
     this.appCredentials = appCredentials;
     this.monitor = monitor;
     this.service = null;
@@ -66,8 +63,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
         idempotentExecutor.executeAndSwallowIOExceptions(
             taskList.getId(),
             taskList.getName(),
-            () -> service.createTaskList(taskList.getName(), timeline).id
-        );
+            () -> service.createTaskList(taskList.getName(), timeline).id);
       }
 
       for (TaskModel task : data.getTasks()) {

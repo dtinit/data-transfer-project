@@ -43,5 +43,4 @@ public class LocalTempFileStore {
     File file = new File(TEMP_DIR + filename);
     return new FileInputStream(file);
   }
-
 }

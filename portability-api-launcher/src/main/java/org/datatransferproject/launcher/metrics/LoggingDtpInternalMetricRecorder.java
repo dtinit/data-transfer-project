@@ -17,23 +17,21 @@ package org.datatransferproject.launcher.metrics;
 
 import static java.lang.String.format;
 
+import java.time.Duration;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 
-import java.time.Duration;
-
 /**
- * A default {@link DtpInternalMetricRecorder} that simply logs metrics
- * to the default monitor.
- * **/
+ * A default {@link DtpInternalMetricRecorder} that simply logs metrics to the default monitor. *
+ */
 public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   private final Monitor monitor;
 
   /**
    * Registers a LoggingDtpInternalMetricRecorder in the {@link ExtensionContext} if there is not
    * another {@link DtpInternalMetricRecorder} registered.
-   **/
+   */
   public static void registerRecorderIfNeeded(ExtensionContext context) {
     if (context.getService(DtpInternalMetricRecorder.class) == null) {
       context.registerService(
@@ -57,10 +55,7 @@ public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecord
 
   @Override
   public void exportPageAttemptFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -71,10 +66,7 @@ public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecord
 
   @Override
   public void exportPageFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -84,10 +76,7 @@ public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecord
 
   @Override
   public void importPageAttemptFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -98,10 +87,7 @@ public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecord
 
   @Override
   public void importPageFinished(
-      String dataType,
-      String service,
-      boolean success,
-      Duration duration) {
+      String dataType, String service, boolean success, Duration duration) {
     monitor.debug(
         () ->
             format(

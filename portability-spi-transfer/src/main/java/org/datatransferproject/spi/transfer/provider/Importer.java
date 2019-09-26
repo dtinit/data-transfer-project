@@ -15,11 +15,10 @@
  */
 package org.datatransferproject.spi.transfer.provider;
 
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.auth.AuthData;
-
-import java.util.UUID;
 
 /** Imports data into a destination service. */
 public interface Importer<A extends AuthData, T extends DataModel> {
@@ -34,9 +33,5 @@ public interface Importer<A extends AuthData, T extends DataModel> {
    */
   // We need to be able throw exceptions that can be caught by RetryingCallable.
   ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      A authData,
-      T data)
-      throws Exception;
+      UUID jobId, IdempotentImportExecutor idempotentExecutor, A authData, T data) throws Exception;
 }

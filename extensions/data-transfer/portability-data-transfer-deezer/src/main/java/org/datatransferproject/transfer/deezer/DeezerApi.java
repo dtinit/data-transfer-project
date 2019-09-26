@@ -28,6 +28,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.RateLimiter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Collection;
+import java.util.Map;
 import org.datatransferproject.transfer.deezer.model.Error;
 import org.datatransferproject.transfer.deezer.model.InsertResponse;
 import org.datatransferproject.transfer.deezer.model.PlaylistDetails;
@@ -36,13 +42,6 @@ import org.datatransferproject.transfer.deezer.model.PlaylistsResponse;
 import org.datatransferproject.transfer.deezer.model.Track;
 import org.datatransferproject.transfer.deezer.model.User;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * A utility wrapper for interacting with the Deezer Api.
@@ -73,8 +72,7 @@ public class DeezerApi {
 
   public Collection<PlaylistSummary> getPlaylists() throws IOException {
     return ImmutableList.copyOf(
-        makeRequest(BASE_URL + "/user/me/playlists", PlaylistsResponse.class)
-            .getData());
+        makeRequest(BASE_URL + "/user/me/playlists", PlaylistsResponse.class).getData());
   }
 
   public PlaylistDetails getPlaylistDetails(long playlistId) throws IOException {
@@ -86,21 +84,20 @@ public class DeezerApi {
   }
 
   public InsertResponse createPlaylist(String title) throws IOException {
-    String result = makePostRequest(
-        BASE_URL + "/user/me/playlists",
-        ImmutableMap.of("title", title));
+    String result =
+        makePostRequest(BASE_URL + "/user/me/playlists", ImmutableMap.of("title", title));
     return MAPPER.readValue(result, InsertResponse.class);
   }
 
-  public Error insertTracksInPlaylist(long playlist, Collection<Long> tracks)
-      throws IOException {
+  public Error insertTracksInPlaylist(long playlist, Collection<Long> tracks) throws IOException {
     if (tracks.isEmpty()) {
       return null;
     }
     // Track inserts return true if successful and an Error json object on error....
-    String result = makePostRequest(
-        BASE_URL + "/playlist/" + playlist + "/tracks",
-        ImmutableMap.of("songs", Joiner.on(",").join(tracks)));
+    String result =
+        makePostRequest(
+            BASE_URL + "/playlist/" + playlist + "/tracks",
+            ImmutableMap.of("songs", Joiner.on(",").join(tracks)));
     if ("true".equalsIgnoreCase(result)) {
       return null;
     }
@@ -116,22 +113,24 @@ public class DeezerApi {
   private String makePostRequest(String url, Map<String, String> params) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     StringBuilder extraArgs = new StringBuilder();
-    params.entrySet().forEach(entry -> {
-      try {
-        extraArgs
-            .append("&")
-            .append(entry.getKey())
-            .append("=")
-            .append(URLEncoder.encode(entry.getValue(), "UTF8"));
-      } catch (UnsupportedEncodingException e) {
-        throw new IllegalArgumentException(e);
-      }
-    });
+    params
+        .entrySet()
+        .forEach(
+            entry -> {
+              try {
+                extraArgs
+                    .append("&")
+                    .append(entry.getKey())
+                    .append("=")
+                    .append(URLEncoder.encode(entry.getValue(), "UTF8"));
+              } catch (UnsupportedEncodingException e) {
+                throw new IllegalArgumentException(e);
+              }
+            });
     HttpRequest getRequest =
         requestFactory.buildGetRequest(
-            new GenericUrl(url
-                + "?output=json&request_method=post&access_token=" + accessToken
-                + extraArgs));
+            new GenericUrl(
+                url + "?output=json&request_method=post&access_token=" + accessToken + extraArgs));
     perUserRateLimiter.acquire();
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
@@ -144,8 +143,7 @@ public class DeezerApi {
     return result;
   }
 
-  private <T> T makeRequest(String url, Class<T> clazz)
-      throws IOException {
+  private <T> T makeRequest(String url, Class<T> clazz) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest =
         requestFactory.buildGetRequest(

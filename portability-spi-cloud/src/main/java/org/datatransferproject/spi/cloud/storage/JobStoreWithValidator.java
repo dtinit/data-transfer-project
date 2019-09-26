@@ -16,9 +16,12 @@ public abstract class JobStoreWithValidator implements JobStore {
 
   @Override
   public void claimJob(UUID jobId, PortabilityJob job) throws IOException {
-    updateJob(jobId, job, (previous, updated) ->
-        Preconditions.checkState(
-            previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
+    updateJob(
+        jobId,
+        job,
+        (previous, updated) ->
+            Preconditions.checkState(
+                previous.jobAuthorization().state() == JobAuthorization.State.CREDS_AVAILABLE));
   }
 
   @Override
@@ -28,10 +31,7 @@ public abstract class JobStoreWithValidator implements JobStore {
     JobAuthorization jobAuthorization =
         job.jobAuthorization().toBuilder().setState(CREDS_AVAILABLE).build();
     job = job.toBuilder().setAndValidateJobAuthorization(jobAuthorization).build();
-    updateJob(
-        jobId,
-        job,
-        (previous, updated) -> validateForUpdateStateToCredsAvailable(previous));
+    updateJob(jobId, job, (previous, updated) -> validateForUpdateStateToCredsAvailable(previous));
   }
 
   private static void validateForUpdateStateToCredsAvailable(PortabilityJob job) {
@@ -92,7 +92,7 @@ public abstract class JobStoreWithValidator implements JobStore {
    * {@code job}.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
    */
   protected abstract void updateJob(UUID jobId, PortabilityJob job) throws IOException;
 
@@ -102,7 +102,7 @@ public abstract class JobStoreWithValidator implements JobStore {
    * the atomic update.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
    * @throws IllegalStateException if validator.validate() failed
    */
   protected abstract void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
@@ -123,9 +123,7 @@ public abstract class JobStoreWithValidator implements JobStore {
         }));
   }
 
-  public void addFailureReasonToJob(
-      UUID jobId, String failureReason)
-      throws IOException {
+  public void addFailureReasonToJob(UUID jobId, String failureReason) throws IOException {
     PortabilityJob existingJob = findJob(jobId);
     PortabilityJob updatedJob = existingJob.toBuilder().setFailureReason(failureReason).build();
     updateJob(jobId, updatedJob);

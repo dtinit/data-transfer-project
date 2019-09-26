@@ -5,9 +5,7 @@ import java.util.Optional;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.models.DataModel;
 
-/**
- * The result of an item export operation, after retries.
- */
+/** The result of an item export operation, after retries. */
 public class ExportResult<T extends DataModel> {
 
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
@@ -65,16 +63,12 @@ public class ExportResult<T extends DataModel> {
     this.throwable = Optional.of(throwable);
   }
 
-  /**
-   * Returns the type of result.
-   */
+  /** Returns the type of result. */
   public ResultType getType() {
     return type;
   }
 
-  /**
-   * Returns the exported data.
-   */
+  /** Returns the exported data. */
   public T getExportedData() {
     return exportedData;
   }
@@ -92,22 +86,16 @@ public class ExportResult<T extends DataModel> {
     Preconditions.checkArgument(!type.equals(ResultType.ERROR), mustHaveThrowable);
   }
 
-  /**
-   * Result types.
-   */
+  /** Result types. */
   public enum ResultType {
     /**
      * Indicates the operation was successful and more items are available so the export should
      * continue.
      */
     CONTINUE,
-    /**
-     * Indicates the operation was successful and no more items are available.
-     */
+    /** Indicates the operation was successful and no more items are available. */
     END,
-    /**
-     * Indicates an unrecoverable error was raised.
-     */
+    /** Indicates an unrecoverable error was raised. */
     ERROR
   }
 }

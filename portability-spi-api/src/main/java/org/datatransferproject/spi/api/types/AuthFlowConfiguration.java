@@ -1,12 +1,12 @@
 package org.datatransferproject.spi.api.types;
 
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.datatransferproject.types.common.PortableType;
 import org.datatransferproject.types.transfer.auth.AuthData;
-
-import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 
 /**
  * Configuration for an authorization flow. A flow has an initial URL and optional initial
@@ -32,6 +32,7 @@ public class AuthFlowConfiguration extends PortableType {
 
   /**
    * Ctor.
+   *
    * @param authUrl the initial URL.
    * @param tokenUrl the URL to exchange an access code for token.
    * @param authProtocol the protocol used for authentication.
@@ -39,10 +40,10 @@ public class AuthFlowConfiguration extends PortableType {
    */
   @JsonCreator
   public AuthFlowConfiguration(
-          @JsonProperty("authUrl") String authUrl,
-          @JsonProperty("tokenUrl") String tokenUrl,
-          @JsonProperty("authProtocol") AuthProtocol authProtocol,
-          @JsonProperty("initialAuthData") AuthData initialAuthData) {
+      @JsonProperty("authUrl") String authUrl,
+      @JsonProperty("tokenUrl") String tokenUrl,
+      @JsonProperty("authProtocol") AuthProtocol authProtocol,
+      @JsonProperty("initialAuthData") AuthData initialAuthData) {
     this.authUrl = authUrl;
     this.tokenUrl = tokenUrl;
     this.authProtocol = authProtocol;

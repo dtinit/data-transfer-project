@@ -15,13 +15,12 @@
  */
 package org.datatransferproject.transfer.offline;
 
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.spi.types.MicrosoftOfflineData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-
-import java.util.UUID;
 
 /**
  * Simulates importing offline data. For demo purposes only!
@@ -31,7 +30,8 @@ import java.util.UUID;
 public class OfflineDemoImporter implements Importer<TokenAuthData, MicrosoftOfflineData> {
 
   @Override
-  public ImportResult importItem(UUID jobId,
+  public ImportResult importItem(
+      UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenAuthData authData,
       MicrosoftOfflineData data) {

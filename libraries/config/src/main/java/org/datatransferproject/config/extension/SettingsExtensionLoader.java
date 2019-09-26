@@ -17,7 +17,6 @@ package org.datatransferproject.config.extension;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-
 import java.util.ServiceLoader;
 
 /** Helper for loading the settings extension in a runtime. */

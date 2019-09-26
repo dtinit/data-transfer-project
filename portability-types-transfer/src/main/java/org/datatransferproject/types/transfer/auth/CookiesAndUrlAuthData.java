@@ -13,8 +13,7 @@ public class CookiesAndUrlAuthData extends AuthData {
 
   @JsonCreator
   public CookiesAndUrlAuthData(
-      @JsonProperty("cookies") List<String> cookies,
-      @JsonProperty("url") String url) {
+      @JsonProperty("cookies") List<String> cookies, @JsonProperty("url") String url) {
     this.cookies = cookies;
     this.url = url;
   }

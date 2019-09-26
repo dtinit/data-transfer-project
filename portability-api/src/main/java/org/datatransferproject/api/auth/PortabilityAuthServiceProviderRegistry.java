@@ -21,14 +21,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import org.datatransferproject.spi.api.auth.AuthDataGenerator;
-import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
-import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.datatransferproject.spi.api.auth.AuthDataGenerator;
+import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
   private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
@@ -99,9 +98,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
         supportedImportTypes.contains(transferDataType),
         "TransferDataType [%s] is not valid for import",
         transferDataType);
-    return authServiceProviderMap
-        .values()
-        .stream()
+    return authServiceProviderMap.values().stream()
         .filter(
             sp -> sp.getImportTypes().stream().anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
         .map(AuthServiceExtension::getServiceId)
@@ -114,9 +111,7 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
         supportedExportTypes.contains(transferDataType),
         "TransferDataType [%s] is not valid for export",
         transferDataType);
-    return authServiceProviderMap
-        .values()
-        .stream()
+    return authServiceProviderMap.values().stream()
         .filter(
             sp -> sp.getExportTypes().stream().anyMatch(e -> e.equalsIgnoreCase(transferDataType)))
         .map(AuthServiceExtension::getServiceId)

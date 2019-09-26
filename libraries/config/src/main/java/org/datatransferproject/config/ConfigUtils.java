@@ -20,9 +20,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 
-/**
- * Common utilities for parsing configuration from files on the classpath.
- */
+/** Common utilities for parsing configuration from files on the classpath. */
 public class ConfigUtils {
   /**
    * Concatenates {@link InputStream}s to multiple configuration files on the classpath into a
@@ -34,9 +32,7 @@ public class ConfigUtils {
         .reduce(null, (in1, in2) -> combineStreams(in1, in2));
   }
 
-  /**
-   * Concatenates two {@link InputStream}s.
-   */
+  /** Concatenates two {@link InputStream}s. */
   private static InputStream combineStreams(InputStream in1, InputStream in2) {
     if (in1 != null) {
       if (in2 != null) {

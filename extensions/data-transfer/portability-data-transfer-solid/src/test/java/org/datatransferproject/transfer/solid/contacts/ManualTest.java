@@ -17,16 +17,15 @@
 package org.datatransferproject.transfer.solid.contacts;
 
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.solid.SolidUtilities;
 import org.datatransferproject.transfer.solid.SslHelper;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.UUID;
 
 public class ManualTest {
   // URL to your POD
@@ -38,20 +37,17 @@ public class ManualTest {
   // Password your pkcs12 key is encrypted with.
   private static final String CLIENT_CERT_PASSWORD = "FILL_ME_IN";
 
-
   private final CookiesAndUrlAuthData authData;
   private final SolidUtilities solidUtilities;
   private final IdempotentImportExecutor executor;
 
   public static void main(String[] args) throws Exception {
-    new ManualTest()
-        .reset()
-        .manualImport();
+    new ManualTest().reset().manualImport();
   }
 
   private ManualTest() throws GeneralSecurityException, IOException {
-    String authCookie = new SslHelper(PATH_TO_CLIENT_CERT, CLIENT_CERT_PASSWORD)
-        .loginViaCertificate();
+    String authCookie =
+        new SslHelper(PATH_TO_CLIENT_CERT, CLIENT_CERT_PASSWORD).loginViaCertificate();
     this.authData = new CookiesAndUrlAuthData(ImmutableList.of(authCookie), ROOT_URL);
     this.solidUtilities = new SolidUtilities(authCookie);
     this.executor = new FakeIdempotentImportExecutor();
@@ -60,11 +56,7 @@ public class ManualTest {
   ManualTest manualImport() throws Exception {
     SolidContactsImport importer = new SolidContactsImport();
     importer.importItem(
-        UUID.randomUUID(),
-        executor,
-        this.authData,
-        new ContactsModelWrapper(TestData.VCARD_TEXT)
-    );
+        UUID.randomUUID(), executor, this.authData, new ContactsModelWrapper(TestData.VCARD_TEXT));
     return this;
   }
 

@@ -16,11 +16,18 @@
 
 package org.datatransferproject.transfer.imgur.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
@@ -39,14 +46,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-
 @RunWith(MockitoJUnitRunner.class)
 public class ImgurPhotoExporterTest {
 
@@ -59,12 +58,33 @@ public class ImgurPhotoExporterTest {
   private ImgurPhotosExporter exporter;
   private Monitor monitor = mock(Monitor.class);
 
-  private static final PhotoModel ALBUM_PHOTO_1 = new PhotoModel("photo_1_name", "https://i.imgur.com/scGQp3z.jpg",
-          "Photo 1", "image/jpeg", "album1Photo1", "albumId1", true);
-  private static final PhotoModel ALBUM_PHOTO_2 = new PhotoModel(null, "https://i.imgur.com/HIBJYnE.jpg",
-          null, "image/jpeg", "album1Photo2", "albumId1", true);
-  private static final PhotoModel NON_ALBUM_PHOTO = new PhotoModel("non-album-photo-name", "https://i.imgur.com/eUMxy0R.jpg", null, "image/jpeg",
-          "nonAlbumPhoto1", ImgurPhotosExporter.DEFAULT_ALBUM_ID, true);
+  private static final PhotoModel ALBUM_PHOTO_1 =
+      new PhotoModel(
+          "photo_1_name",
+          "https://i.imgur.com/scGQp3z.jpg",
+          "Photo 1",
+          "image/jpeg",
+          "album1Photo1",
+          "albumId1",
+          true);
+  private static final PhotoModel ALBUM_PHOTO_2 =
+      new PhotoModel(
+          null,
+          "https://i.imgur.com/HIBJYnE.jpg",
+          null,
+          "image/jpeg",
+          "album1Photo2",
+          "albumId1",
+          true);
+  private static final PhotoModel NON_ALBUM_PHOTO =
+      new PhotoModel(
+          "non-album-photo-name",
+          "https://i.imgur.com/eUMxy0R.jpg",
+          null,
+          "image/jpeg",
+          "nonAlbumPhoto1",
+          ImgurPhotosExporter.DEFAULT_ALBUM_ID,
+          true);
 
   // contains albums
   private String albumsResponse;
@@ -113,9 +133,7 @@ public class ImgurPhotoExporterTest {
     assertThat(resource.getPhotos()).isEmpty();
 
     PhotoAlbum album1 =
-        resource
-            .getAlbums()
-            .stream()
+        resource.getAlbums().stream()
             .filter(album -> "albumId1".equals(album.getId()))
             .findFirst()
             .get();
@@ -123,9 +141,7 @@ public class ImgurPhotoExporterTest {
     assertThat(album1.getDescription()).isEqualTo(null);
 
     PhotoAlbum album2 =
-        resource
-            .getAlbums()
-            .stream()
+        resource.getAlbums().stream()
             .filter(album -> "albumId2".equals(album.getId()))
             .findFirst()
             .get();

@@ -1,9 +1,15 @@
 package org.datatransferproject.api.action.transfer;
 
+import static java.lang.String.format;
+import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -18,13 +24,6 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.GenerateServiceAuthData;
 import org.datatransferproject.types.client.transfer.ServiceAuthData;
 import org.datatransferproject.types.transfer.auth.AuthData;
-
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.util.UUID;
-
-import static java.lang.String.format;
-import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
 
 /** Called after an import or export service authentication flow has successfully completed. */
 public class GenerateServiceAuthDataAction
@@ -109,7 +108,8 @@ public class GenerateServiceAuthDataAction
       Preconditions.checkNotNull(authData, "Auth data should not be null");
 
       monitor.debug(
-          () -> format("Generated auth data in mode '%s' for job: %s", authMode, jobId), jobId,
+          () -> format("Generated auth data in mode '%s' for job: %s", authMode, jobId),
+          jobId,
           EventCode.API_GENERATED_AUTH_DATA);
 
       // Serialize and encrypt the auth data

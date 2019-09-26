@@ -19,9 +19,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.datatransferproject.types.common.ExportInformation;
-
 import javax.annotation.Nullable;
+import org.datatransferproject.types.common.ExportInformation;
 
 /** Request to create a transfer job. */
 @ApiModel(description = "A request to create a data transfer job")
@@ -41,7 +40,8 @@ public class CreateTransferJob {
       @JsonProperty(value = "exportCallbackUrl", required = true) String exportCallbackUrl,
       @JsonProperty(value = "importCallbackUrl", required = true) String importCallbackUrl,
       @JsonProperty(value = "dataType", required = true) String dataType,
-      @JsonProperty(value = "exportInformation", required = false) ExportInformation exportInformation,
+      @JsonProperty(value = "exportInformation", required = false)
+          ExportInformation exportInformation,
       @JsonProperty(value = "encryptionScheme", required = true) String encryptionScheme) {
     this.exportService = exportService;
     this.importService = importService;

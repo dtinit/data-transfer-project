@@ -18,9 +18,7 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Photo metadata - not the content of the photo itself!
- */
+/** Photo metadata - not the content of the photo itself! */
 public class Photo {
   @JsonProperty("cameraMake")
   private String cameraMake;

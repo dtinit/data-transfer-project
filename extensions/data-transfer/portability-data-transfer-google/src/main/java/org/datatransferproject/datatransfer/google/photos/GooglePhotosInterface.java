@@ -69,12 +69,13 @@ public class GooglePhotosInterface {
   private static final String ACCESS_TOKEN_KEY = "access_token";
   private static final String FILTERS_KEY = "filters";
   private static final String INCLUDE_ARCHIVED_KEY = "includeArchivedMedia";
-  private static final Map<String, String> PHOTO_UPLOAD_PARAMS = ImmutableMap.of(
-      "Content-type", "application/octet-stream",
-      "X-Goog-Upload-Protocol", "raw");
+  private static final Map<String, String> PHOTO_UPLOAD_PARAMS =
+      ImmutableMap.of(
+          "Content-type", "application/octet-stream",
+          "X-Goog-Upload-Protocol", "raw");
 
-  private final ObjectMapper objectMapper = new ObjectMapper().configure(
-      DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private final ObjectMapper objectMapper =
+      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private final HttpTransport httpTransport = new NetHttpTransport();
   private final Credential credential;
   private final JsonFactory jsonFactory;
@@ -92,8 +93,7 @@ public class GooglePhotosInterface {
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
-    return makeGetRequest(BASE_URL + "albums", Optional.of(params),
-        AlbumListResponse.class);
+    return makeGetRequest(BASE_URL + "albums", Optional.of(params), AlbumListResponse.class);
   }
 
   MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
@@ -109,8 +109,8 @@ public class GooglePhotosInterface {
       params.put(TOKEN_KEY, pageToken.get());
     }
     HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
-    return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), content,
-        MediaItemSearchResponse.class);
+    return makePostRequest(
+        BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }
 
   GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
@@ -129,34 +129,41 @@ public class GooglePhotosInterface {
     byte[] contentBytes = outputStream.toByteArray();
     HttpContent httpContent = new ByteArrayContent(null, contentBytes);
 
-    return makePostRequest(BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent,
-        String.class);
+    return makePostRequest(
+        BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
   }
 
   BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
 
-    return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), httpContent,
+    return makePostRequest(
+        BASE_URL + "mediaItems:batchCreate",
+        Optional.empty(),
+        httpContent,
         BatchMediaItemResponse.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
       throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest getRequest = requestFactory
-        .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)));
+    HttpRequest getRequest =
+        requestFactory.buildGetRequest(
+            new GenericUrl(url + "?" + generateParamsString(parameters)));
 
     HttpResponse response;
     try {
       response = getRequest.execute();
     } catch (HttpResponseException e) {
-      // if the response is "unauthorized" and we've successfully refreshed the token, try the request again
+      // if the response is "unauthorized" and we've successfully refreshed the token, try the
+      // request again
       if (e.getStatusCode() == 401 && credential.refreshToken()) {
-        // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
-        response = requestFactory
-            .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)))
-            .execute();
+        // if the second attempt throws an error, then something else is wrong, and we bubble up the
+        // response errors
+        response =
+            requestFactory
+                .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)))
+                .execute();
       } else {
         // something else is wrong, bubble up the error
         throw new IOException(
@@ -165,18 +172,18 @@ public class GooglePhotosInterface {
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
-    String result = CharStreams
-        .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    String result =
+        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     return objectMapper.readValue(result, clazz);
   }
 
-  <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
-      HttpContent httpContent, Class<T> clazz)
+  <T> T makePostRequest(
+      String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
       throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest postRequest = requestFactory
-        .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
-            httpContent);
+    HttpRequest postRequest =
+        requestFactory.buildPostRequest(
+            new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
 
     HttpResponse response;
 
@@ -187,12 +194,15 @@ public class GooglePhotosInterface {
       if (e.getStatusCode() == 401) {
         monitor.info(() -> "Attempting to refresh authorization token");
         if (credential.refreshToken()) {
-          // if the second attempt throws an error, then something else is wrong, and we bubble up the response errors
+          // if the second attempt throws an error, then something else is wrong, and we bubble up
+          // the response errors
           monitor.info(() -> "Refreshed authorization token successfuly");
-          response = requestFactory
-              .buildPostRequest(new GenericUrl(url + "?" + generateParamsString(parameters)),
-                  httpContent).execute();
-          
+          response =
+              requestFactory
+                  .buildPostRequest(
+                      new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent)
+                  .execute();
+
         } else {
           throw new IOException("Couldn't refresh authorization token after retrying");
         }
@@ -204,8 +214,8 @@ public class GooglePhotosInterface {
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
-    String result = CharStreams
-        .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    String result =
+        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
       return (T) result;
     } else {
@@ -238,8 +248,8 @@ public class GooglePhotosInterface {
   private HashMap<String, Object> createJsonMap(Object object) throws IOException {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
-    TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
-    };
+    TypeReference<HashMap<String, Object>> typeRef =
+        new TypeReference<HashMap<String, Object>>() {};
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 }

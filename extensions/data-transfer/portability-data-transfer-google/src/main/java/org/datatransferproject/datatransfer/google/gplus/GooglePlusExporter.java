@@ -26,6 +26,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Makers;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -36,12 +41,6 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 public class GooglePlusExporter
     implements Exporter<TokensAndUrlAuthData, SocialActivityContainerResource> {
@@ -62,12 +61,14 @@ public class GooglePlusExporter
 
   @Override
   public ExportResult<SocialActivityContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) throws IOException {
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
+      throws IOException {
     Plus plus = getOrCreatePeopleService(authData);
 
     Plus.Activities.List listActivities = plus.activities().list("me", "public");
     if (exportInformation.isPresent()) {
-      StringPaginationToken pageToken = (StringPaginationToken) exportInformation.get().getPaginationData();
+      StringPaginationToken pageToken =
+          (StringPaginationToken) exportInformation.get().getPaginationData();
       listActivities.setPageToken(pageToken.getToken());
     }
 
@@ -79,8 +80,8 @@ public class GooglePlusExporter
     if (activities != null && !activities.isEmpty()) {
       List<com.ibm.common.activitystreams.Activity> parsedActivities = new ArrayList<>();
       if (!Strings.isNullOrEmpty(activityFeed.getNextPageToken())) {
-        continuationData = new ContinuationData(
-            new StringPaginationToken(activityFeed.getNextPageToken()));
+        continuationData =
+            new ContinuationData(new StringPaginationToken(activityFeed.getNextPageToken()));
       }
 
       for (Activity activity : activities) {
@@ -94,41 +95,42 @@ public class GooglePlusExporter
     }
 
     return new ExportResult<>(
-        continuationData == null ? ResultType.END : ResultType.CONTINUE,
-        results,
-        continuationData);
-
+        continuationData == null ? ResultType.END : ResultType.CONTINUE, results, continuationData);
   }
 
   private com.ibm.common.activitystreams.Activity postToActivityStream(Activity activity) {
     String contentString = activity.getObject().getOriginalContent();
 
-    ASObject.Builder actor = Makers.object("person")
-        .id(activity.getActor().getUrl())
-        .link("GPlus", activity.getActor().getUrl())
-        .displayName(activity.getActor().getDisplayName());
+    ASObject.Builder actor =
+        Makers.object("person")
+            .id(activity.getActor().getUrl())
+            .link("GPlus", activity.getActor().getUrl())
+            .displayName(activity.getActor().getDisplayName());
     ASObject.Builder object;
     String verb = activity.getVerb();
 
     switch (activity.getVerb()) {
       case "post":
-        object = Makers.object("post")
-            .id(activity.getId())
-            .title(activity.getTitle())
-            .provider("Google+")
-            .url("GPlus", activity.getUrl())
-            .content(contentString);
+        object =
+            Makers.object("post")
+                .id(activity.getId())
+                .title(activity.getTitle())
+                .provider("Google+")
+                .url("GPlus", activity.getUrl())
+                .content(contentString);
         for (Attachments attachment : activity.getObject().getAttachments()) {
           if (attachment.getObjectType().equals("article")) {
-            object.attachments(Makers.object("Link")
-                .url(attachment.getUrl())
-                .content(attachment.getContent())
-                .displayName(attachment.getDisplayName()));
+            object.attachments(
+                Makers.object("Link")
+                    .url(attachment.getUrl())
+                    .content(attachment.getContent())
+                    .displayName(attachment.getDisplayName()));
           } else if (attachment.getObjectType().equals("photo")) {
-            object.image(Makers.object("Image")
-                .url(attachment.getFullImage().getUrl())
-                .displayName(attachment.getDisplayName())
-                .content(attachment.getContent()));
+            object.image(
+                Makers.object("Image")
+                    .url(attachment.getFullImage().getUrl())
+                    .displayName(attachment.getDisplayName())
+                    .content(attachment.getContent()));
           } else if (attachment.getObjectType().equals("album")) {
             // For albums we can't really do the right thing,
             // only the thumbnails and link to the album are provided.
@@ -137,41 +139,44 @@ public class GooglePlusExporter
             // TODO: see if it is possible to scrape the output from the album to link to
             // all the images.
             for (Thumbnails image : attachment.getThumbnails()) {
-              object.image(Makers.object("Image")
-                  // This is just a thumbnail image
-                  .url(image.getImage().getUrl())
-                  .displayName(image.getDescription())
-                  // The actual image link isn't to the binary bytes
-                  // but instead a hosted page of the image.
-                  .content("Original G+ Image: " + image.getUrl()
-                      + " from album: " + attachment.getUrl()));
+              object.image(
+                  Makers.object("Image")
+                      // This is just a thumbnail image
+                      .url(image.getImage().getUrl())
+                      .displayName(image.getDescription())
+                      // The actual image link isn't to the binary bytes
+                      // but instead a hosted page of the image.
+                      .content(
+                          "Original G+ Image: "
+                              + image.getUrl()
+                              + " from album: "
+                              + attachment.getUrl()));
             }
 
           } else {
-            throw new IllegalArgumentException("Don't know how to export attachment "
-                + attachment.getObjectType());
+            throw new IllegalArgumentException(
+                "Don't know how to export attachment " + attachment.getObjectType());
           }
         }
         break;
       case "checkin":
-        object = Makers.object("checkin")
-            .id(activity.getId())
-            // see https://www.w3.org/TR/activitystreams-vocabulary/#dfn-location
-            .location(Makers.object("Place")
-                .displayName(activity.getLocation().getDisplayName())
-                .set("longitude", activity.getLocation().getPosition().getLongitude())
-                .set("latitude", activity.getLocation().getPosition().getLatitude()))
-            .content(contentString);
+        object =
+            Makers.object("checkin")
+                .id(activity.getId())
+                // see https://www.w3.org/TR/activitystreams-vocabulary/#dfn-location
+                .location(
+                    Makers.object("Place")
+                        .displayName(activity.getLocation().getDisplayName())
+                        .set("longitude", activity.getLocation().getPosition().getLongitude())
+                        .set("latitude", activity.getLocation().getPosition().getLatitude()))
+                .content(contentString);
         break;
       default:
         throw new IllegalArgumentException("Don't know how to export " + activity);
     }
 
-    com.ibm.common.activitystreams.Activity result = Makers.activity()
-        .actor(actor)
-        .object(object)
-        .verb(verb)
-        .get();
+    com.ibm.common.activitystreams.Activity result =
+        Makers.activity().actor(actor).object(object).verb(verb).get();
 
     return result;
   }
@@ -183,7 +188,7 @@ public class GooglePlusExporter
   private synchronized Plus makePlusService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Plus.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

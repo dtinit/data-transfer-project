@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An {@link ExtensionContext} that is able to override registered services
- * to provide job/service specific values.
+ * An {@link ExtensionContext} that is able to override registered services to provide job/service
+ * specific values.
  */
 public class DelegatingExtensionContext implements ExtensionContext {
   private final Map<Class<?>, Object> overriddenRegisteredClasses = new HashMap<>();
@@ -31,6 +31,7 @@ public class DelegatingExtensionContext implements ExtensionContext {
   public DelegatingExtensionContext(ExtensionContext baseExtensionContext) {
     this.baseExtensionContext = baseExtensionContext;
   }
+
   @Override
   public TypeManager getTypeManager() {
     return baseExtensionContext.getTypeManager();

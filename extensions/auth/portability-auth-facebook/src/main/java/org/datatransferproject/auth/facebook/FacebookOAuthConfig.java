@@ -18,45 +18,40 @@ package org.datatransferproject.auth.facebook;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.datatransferproject.auth.OAuth2Config;
-
 import java.util.Map;
 import java.util.Set;
+import org.datatransferproject.auth.OAuth2Config;
 
-/**
- * Class that supplies Facebook-specific OAuth2 info
- */
+/** Class that supplies Facebook-specific OAuth2 info */
 public class FacebookOAuthConfig implements OAuth2Config {
-    private static final String AUTHORIZATION_SERVER_URL =
-            "https://www.facebook.com/v3.2/dialog/oauth";
-    private static final String TOKEN_SERVER_URL =
-            "https://graph.facebook.com/v3.2/oauth/access_token";
-    private static final String SERVICE_NAME =
-            "Facebook";
+  private static final String AUTHORIZATION_SERVER_URL =
+      "https://www.facebook.com/v3.2/dialog/oauth";
+  private static final String TOKEN_SERVER_URL =
+      "https://graph.facebook.com/v3.2/oauth/access_token";
+  private static final String SERVICE_NAME = "Facebook";
 
+  @Override
+  public String getServiceName() {
+    return SERVICE_NAME;
+  }
 
-    @Override
-    public String getServiceName() {
-        return SERVICE_NAME;
-    }
+  @Override
+  public String getAuthUrl() {
+    return AUTHORIZATION_SERVER_URL;
+  }
 
-    @Override
-    public String getAuthUrl() {
-        return AUTHORIZATION_SERVER_URL;
-    }
+  @Override
+  public String getTokenUrl() {
+    return TOKEN_SERVER_URL;
+  }
 
-    @Override
-    public String getTokenUrl() {
-        return TOKEN_SERVER_URL;
-    }
+  @Override
+  public Map<String, Set<String>> getExportScopes() {
+    return ImmutableMap.of("PHOTOS", ImmutableSet.of("user_photos"));
+  }
 
-    @Override
-    public Map<String, Set<String>> getExportScopes() {
-        return ImmutableMap.of("PHOTOS", ImmutableSet.of("user_photos"));
-    }
-
-    @Override
-    public Map<String, Set<String>> getImportScopes() {
-        return ImmutableMap.of("PHOTOS", ImmutableSet.of("user_photos"));
-    }
+  @Override
+  public Map<String, Set<String>> getImportScopes() {
+    return ImmutableMap.of("PHOTOS", ImmutableSet.of("user_photos"));
+  }
 }

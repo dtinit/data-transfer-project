@@ -19,17 +19,17 @@ package org.datatransferproject.types.transfer.retry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
-/**
- * {@link RetryStrategy} that follows a regular retry strategy
- */
+/** {@link RetryStrategy} that follows a regular retry strategy */
 public class UniformRetryStrategy implements RetryStrategy {
 
   @JsonProperty("maxAttempts")
   private int maxAttempts;
+
   @JsonProperty("intervalMillis")
   private long intervalMillis;
 
-  public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+  public UniformRetryStrategy(
+      @JsonProperty("maxAttempts") int maxAttempts,
       @JsonProperty("intervalMillis") long intervalMillis) {
     Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
     Preconditions.checkArgument(intervalMillis > 0L, "Interval should be > 0");
@@ -56,9 +56,11 @@ public class UniformRetryStrategy implements RetryStrategy {
 
   @Override
   public String toString() {
-    return "UniformRetryStrategy{" +
-        "maxAttempts=" + maxAttempts +
-        ", intervalMillis=" + intervalMillis +
-        '}';
+    return "UniformRetryStrategy{"
+        + "maxAttempts="
+        + maxAttempts
+        + ", intervalMillis="
+        + intervalMillis
+        + '}';
   }
 }

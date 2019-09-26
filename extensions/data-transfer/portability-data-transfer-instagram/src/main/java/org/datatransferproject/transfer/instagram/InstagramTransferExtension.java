@@ -29,7 +29,6 @@ import org.datatransferproject.transfer.instagram.photos.InstagramPhotoExporter;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-
 public class InstagramTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
 

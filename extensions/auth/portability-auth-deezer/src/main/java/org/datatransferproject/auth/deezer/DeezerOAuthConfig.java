@@ -16,9 +16,6 @@
 
 package org.datatransferproject.auth.deezer;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -27,12 +24,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.datatransferproject.auth.OAuth2Config;
-import org.datatransferproject.auth.OAuth2TokenResponse;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * Class that supplies Dezzer-specific OAuth2 info
- */
+/** Class that supplies Dezzer-specific OAuth2 info */
 public class DeezerOAuthConfig implements OAuth2Config {
   private static Pattern AUTH_TOKEN_PATTERN = Pattern.compile("access_token=(\\w+)&expires=0");
 
@@ -52,7 +46,6 @@ public class DeezerOAuthConfig implements OAuth2Config {
   public String getTokenUrl() {
     return "https://connect.deezer.com/oauth/access_token.php";
   }
-
 
   // For descriptions of scopes see: https://developers.deezer.com/api/permissions
   @Override
@@ -78,14 +71,10 @@ public class DeezerOAuthConfig implements OAuth2Config {
   public TokensAndUrlAuthData getResponseClass(String result) throws IOException {
     Matcher matcher = AUTH_TOKEN_PATTERN.matcher(result);
     if (!matcher.matches()) {
-      throw new IllegalArgumentException(result + " didn't match expected regex: "
-          + AUTH_TOKEN_PATTERN.pattern());
+      throw new IllegalArgumentException(
+          result + " didn't match expected regex: " + AUTH_TOKEN_PATTERN.pattern());
     }
 
-    return new TokensAndUrlAuthData(
-        matcher.group(1),
-        null,
-        getTokenUrl());
+    return new TokensAndUrlAuthData(matcher.group(1), null, getTokenUrl());
   }
-
 }

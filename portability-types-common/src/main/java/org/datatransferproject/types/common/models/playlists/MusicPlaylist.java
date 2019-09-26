@@ -8,10 +8,7 @@ public class MusicPlaylist extends CreativeWork {
   // needed.
   private ImmutableList<MusicRecording> track;
 
-  public MusicPlaylist(
-      String identifier,
-      String headline,
-      Iterable<MusicRecording> tracks) {
+  public MusicPlaylist(String identifier, String headline, Iterable<MusicRecording> tracks) {
     super(identifier);
     setHeadline(headline);
     this.track = ImmutableList.copyOf(tracks);

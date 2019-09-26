@@ -4,12 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel.CalendarEventTime;
 import org.junit.Test;
-
-import java.time.OffsetDateTime;
-import java.util.List;
 
 public class CalendarContainerResourceTest {
   @Test

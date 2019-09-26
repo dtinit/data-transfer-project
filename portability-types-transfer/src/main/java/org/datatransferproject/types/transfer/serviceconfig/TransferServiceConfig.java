@@ -16,18 +16,17 @@
 
 package org.datatransferproject.types.transfer.serviceconfig;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
-
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * A wrapper around {@link TransferServiceConfigSpecification} to provide service specific
- * settings for transfer extensions.
+ * A wrapper around {@link TransferServiceConfigSpecification} to provide service specific settings
+ * for transfer extensions.
  */
 public final class TransferServiceConfig {
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
@@ -39,11 +38,9 @@ public final class TransferServiceConfig {
         YAML_OBJECT_MAPPER.readValue(s, TransferServiceConfigSpecification.class));
   }
 
-  /** Gets a default instance for services that don't have a specific config. **/
+  /** Gets a default instance for services that don't have a specific config. * */
   public static TransferServiceConfig getDefaultInstance() {
-    return new TransferServiceConfig(
-        new TransferServiceConfigSpecification(
-            Double.MAX_VALUE));
+    return new TransferServiceConfig(new TransferServiceConfigSpecification(Double.MAX_VALUE));
   }
 
   private TransferServiceConfig(TransferServiceConfigSpecification specification) {
@@ -52,9 +49,9 @@ public final class TransferServiceConfig {
   }
 
   /**
-   * A {@link RateLimiter} that enforces the per-user rate limit that is specified in
-   * the config/[service].yaml config file.
-   **/
+   * A {@link RateLimiter} that enforces the per-user rate limit that is specified in the
+   * config/[service].yaml config file.
+   */
   public RateLimiter getPerUserRateLimiter() {
     return rateLimiter;
   }

@@ -15,9 +15,10 @@
  */
 package org.datatransferproject.types.client.transfer;
 
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 
 /**
  * A data transfer job.
@@ -25,86 +26,87 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  * <p>TODO(#553): Refactor String params to make less error-prone.
  */
 public class TransferJob {
-    public enum State {
-        CREATED,
-        SUBMITTED,
-        IN_PROGRESS,
-        COMPLETE
-    }
+  public enum State {
+    CREATED,
+    SUBMITTED,
+    IN_PROGRESS,
+    COMPLETE
+  }
 
-    private final String id;
-    private final String exportService;
-    private final String importService;
-    private final String dataType;
-    private final State state = State.CREATED;
-    private final String exportUrl;
-    private final String importUrl;
-    private final String exportTokenUrl;
-    private final String importTokenUrl;
-    private final AuthProtocol exportAuthProtocol;
-    private final AuthProtocol importAuthProtocol;
+  private final String id;
+  private final String exportService;
+  private final String importService;
+  private final String dataType;
+  private final State state = State.CREATED;
+  private final String exportUrl;
+  private final String importUrl;
+  private final String exportTokenUrl;
+  private final String importTokenUrl;
+  private final AuthProtocol exportAuthProtocol;
+  private final AuthProtocol importAuthProtocol;
 
-    @JsonCreator
-    public TransferJob(
-            @JsonProperty(value = "id", required = true) String id,
-            @JsonProperty(value = "exportService", required = true) String exportService,
-            @JsonProperty(value = "importService", required = true) String importService,
-            @JsonProperty(value = "dataType", required = true) String dataType,
-            @JsonProperty(value = "exportUrl", required = true) String exportUrl,
-            @JsonProperty(value = "importUrl", required = true) String importUrl,
-            @JsonProperty(value = "exportTokenUrl", required = true) String exportTokenUrl,
-            @JsonProperty(value = "importTokenUrl", required = true) String importTokenUrl,
-            @JsonProperty(value = "exportAuthProtocol", required = true) AuthProtocol exportAuthProtocol,
-            @JsonProperty(value = "importAuthProtocol", required = true) AuthProtocol importAuthProtocol) {
-        this.id = id;
-        this.exportService = exportService;
-        this.importService = importService;
-        this.dataType = dataType;
-        this.exportUrl = exportUrl;
-        this.importUrl = importUrl;
-        this.exportTokenUrl = exportTokenUrl;
-        this.importTokenUrl = importTokenUrl;
-        this.exportAuthProtocol = exportAuthProtocol;
-        this.importAuthProtocol = importAuthProtocol;
-    }
+  @JsonCreator
+  public TransferJob(
+      @JsonProperty(value = "id", required = true) String id,
+      @JsonProperty(value = "exportService", required = true) String exportService,
+      @JsonProperty(value = "importService", required = true) String importService,
+      @JsonProperty(value = "dataType", required = true) String dataType,
+      @JsonProperty(value = "exportUrl", required = true) String exportUrl,
+      @JsonProperty(value = "importUrl", required = true) String importUrl,
+      @JsonProperty(value = "exportTokenUrl", required = true) String exportTokenUrl,
+      @JsonProperty(value = "importTokenUrl", required = true) String importTokenUrl,
+      @JsonProperty(value = "exportAuthProtocol", required = true) AuthProtocol exportAuthProtocol,
+      @JsonProperty(value = "importAuthProtocol", required = true)
+          AuthProtocol importAuthProtocol) {
+    this.id = id;
+    this.exportService = exportService;
+    this.importService = importService;
+    this.dataType = dataType;
+    this.exportUrl = exportUrl;
+    this.importUrl = importUrl;
+    this.exportTokenUrl = exportTokenUrl;
+    this.importTokenUrl = importTokenUrl;
+    this.exportAuthProtocol = exportAuthProtocol;
+    this.importAuthProtocol = importAuthProtocol;
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public String getExportService() {
-        return exportService;
-    }
+  public String getExportService() {
+    return exportService;
+  }
 
-    public String getImportService() {
-        return importService;
-    }
+  public String getImportService() {
+    return importService;
+  }
 
-    public String getDataType() {
-        return dataType;
-    }
+  public String getDataType() {
+    return dataType;
+  }
 
-    public String getExportUrl() {
-        return exportUrl;
-    }
+  public String getExportUrl() {
+    return exportUrl;
+  }
 
-    public String getImportUrl() {
-        return importUrl;
-    }
+  public String getImportUrl() {
+    return importUrl;
+  }
 
-    public String getExportTokenUrl() {
-        return exportTokenUrl;
-    }
+  public String getExportTokenUrl() {
+    return exportTokenUrl;
+  }
 
-    public String getImportTokenUrl() {
-        return importTokenUrl;
-    }
+  public String getImportTokenUrl() {
+    return importTokenUrl;
+  }
 
-    public AuthProtocol getExportAuthProtocol() {
-        return exportAuthProtocol;
-    }
+  public AuthProtocol getExportAuthProtocol() {
+    return exportAuthProtocol;
+  }
 
-    public AuthProtocol getImportAuthProtocol() {
-        return importAuthProtocol;
-    }
+  public AuthProtocol getImportAuthProtocol() {
+    return importAuthProtocol;
+  }
 }

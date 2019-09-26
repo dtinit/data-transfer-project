@@ -16,6 +16,8 @@
 
 package org.datatransferproject.transfer.solid.contacts;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +33,14 @@ import ezvcard.property.Photo;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
 import ezvcard.property.Url;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -47,19 +57,8 @@ import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkState;
-
 public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, ContactsModelWrapper> {
-  //See https://www.w3.org/TR/vcard-rdf/ for details.
+  // See https://www.w3.org/TR/vcard-rdf/ for details.
 
   private static final Logger logger = LoggerFactory.getLogger(SolidContactsExport.class);
   private static final String TEST_SLUG_NAME = "ImportedAddressBook";
@@ -67,45 +66,47 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
   private static final String BASIC_CONTAINER_TYPE = "http://www.w3.org/ns/ldp#BasicContainer";
   private static final String BASIC_RESOURCE_TYPE = "http://www.w3.org/ns/ldp#Resource";
 
-
   @SuppressWarnings("deprecation")
-  private static final ImmutableList<Resource> EMAIL_TYPE_RESOURCES = ImmutableList.of(
-      VCARD4.Home,
-      VCARD4.Work,
-      // Deprecated Types:
-      VCARD4.Dom,
-      VCARD4.Internet,
-      VCARD4.ISDN,
-      VCARD4.Pref);
+  private static final ImmutableList<Resource> EMAIL_TYPE_RESOURCES =
+      ImmutableList.of(
+          VCARD4.Home,
+          VCARD4.Work,
+          // Deprecated Types:
+          VCARD4.Dom,
+          VCARD4.Internet,
+          VCARD4.ISDN,
+          VCARD4.Pref);
+
   private static final ImmutableMap<String, Resource> MAP_OF_EMAIL_TYPES;
 
   @SuppressWarnings("deprecation")
-  private static final ImmutableList<Resource> PHONE_TYPE_RESOURCES = ImmutableList.of(
-      VCARD4.Cell,
-      VCARD4.Fax,
-      VCARD4.Home,
-      VCARD4.Pager,
-      VCARD4.Pref,
-      VCARD4.Text,
-      VCARD4.TextPhone,
-      VCARD4.Video,
-      VCARD4.Voice,
-      VCARD4.Work);
+  private static final ImmutableList<Resource> PHONE_TYPE_RESOURCES =
+      ImmutableList.of(
+          VCARD4.Cell,
+          VCARD4.Fax,
+          VCARD4.Home,
+          VCARD4.Pager,
+          VCARD4.Pref,
+          VCARD4.Text,
+          VCARD4.TextPhone,
+          VCARD4.Video,
+          VCARD4.Voice,
+          VCARD4.Work);
+
   private static final ImmutableMap<String, Resource> MAP_OF_PHONE_TYPES;
 
-
   static {
-    MAP_OF_EMAIL_TYPES = ImmutableMap.copyOf(EMAIL_TYPE_RESOURCES.stream()
-        .collect(Collectors.toMap(
-            r -> r.getLocalName().toLowerCase(),
-            Function.identity()
-    )));
+    MAP_OF_EMAIL_TYPES =
+        ImmutableMap.copyOf(
+            EMAIL_TYPE_RESOURCES.stream()
+                .collect(
+                    Collectors.toMap(r -> r.getLocalName().toLowerCase(), Function.identity())));
 
-    MAP_OF_PHONE_TYPES = ImmutableMap.copyOf(PHONE_TYPE_RESOURCES.stream()
-        .collect(Collectors.toMap(
-            r -> r.getLocalName().toLowerCase(),
-            Function.identity()
-        )));
+    MAP_OF_PHONE_TYPES =
+        ImmutableMap.copyOf(
+            PHONE_TYPE_RESOURCES.stream()
+                .collect(
+                    Collectors.toMap(r -> r.getLocalName().toLowerCase(), Function.identity())));
   }
 
   @VisibleForTesting
@@ -116,10 +117,10 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       CookiesAndUrlAuthData authData,
-      ContactsModelWrapper data) throws Exception {
-    checkState(authData.getCookies().size() == 1,
-        "Exactly 1 cookie expected: %s",
-        authData.getCookies());
+      ContactsModelWrapper data)
+      throws Exception {
+    checkState(
+        authData.getCookies().size() == 1, "Exactly 1 cookie expected: %s", authData.getCookies());
 
     SolidUtilities solidUtilities = new SolidUtilities(authData.getCookies().get(0));
 
@@ -140,20 +141,21 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
 
     String containerUrl = createContainer(baseUrl + BASE_DIRECTORY, addressBookSlug, utilities);
 
-    idempotentExecutor.executeOrThrowException(baseUrl + containerUrl,
+    idempotentExecutor.executeOrThrowException(
+        baseUrl + containerUrl,
         addressBookSlug,
         () -> createIndex(baseUrl + containerUrl, addressBookSlug, utilities));
 
-    String personDirectory = idempotentExecutor.executeOrThrowException(
-        baseUrl + containerUrl + "person",
-        addressBookSlug,
-        () -> createPersonDirectory(baseUrl + containerUrl, utilities));
+    String personDirectory =
+        idempotentExecutor.executeOrThrowException(
+            baseUrl + containerUrl + "person",
+            addressBookSlug,
+            () -> createPersonDirectory(baseUrl + containerUrl, utilities));
 
     Map<String, VCard> insertedPeople = new HashMap<>();
-    for (VCard person : people ){
+    for (VCard person : people) {
       insertedPeople.put(
-        importPerson(idempotentExecutor, person, baseUrl, personDirectory, utilities),
-        person);
+          importPerson(idempotentExecutor, person, baseUrl, personDirectory, utilities), person);
     }
 
     // people.stream()
@@ -167,18 +169,21 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
         () -> createPeopleFile(baseUrl, containerUrl, insertedPeople, utilities));
   }
 
-  private String importPerson(IdempotentImportExecutor executor,
+  private String importPerson(
+      IdempotentImportExecutor executor,
       VCard person,
       String baseUrl,
       String personDirectory,
-      SolidUtilities utilities) throws Exception {
+      SolidUtilities utilities)
+      throws Exception {
     return executor.executeAndSwallowIOExceptions(
         Integer.toString(person.hashCode()),
         person.getFormattedName().getValue(),
         () -> insertPerson(baseUrl, personDirectory, person, utilities));
   }
 
-  private String createContainer(String url, String slug, SolidUtilities utilities) throws Exception {
+  private String createContainer(String url, String slug, SolidUtilities utilities)
+      throws Exception {
     Model containerModel = ModelFactory.createDefaultModel();
     Resource containerResource = containerModel.createResource("");
     containerResource.addProperty(DCTerms.title, slug);
@@ -190,47 +195,33 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     Resource containerResource = model.createResource("#this");
     containerResource.addProperty(RDF.type, model.getResource(VCARD4.NS + "AddressBook"));
     containerResource.addProperty(
-        model.createProperty(VCARD4.NS + "nameEmailIndex"),
-        model.createResource("people.ttl"));
+        model.createProperty(VCARD4.NS + "nameEmailIndex"), model.createResource("people.ttl"));
     containerResource.addProperty(
-        model.createProperty(VCARD4.NS + "groupIndex"),
-        model.createResource("groups.ttl"));
+        model.createProperty(VCARD4.NS + "groupIndex"), model.createResource("groups.ttl"));
     containerResource.addProperty(DC_11.title, slug);
-    return utilities.postContent(
-        url,
-        "index",
-        BASIC_RESOURCE_TYPE,
-        model);
+    return utilities.postContent(url, "index", BASIC_RESOURCE_TYPE, model);
   }
 
   private String createPersonDirectory(String url, SolidUtilities utilities) throws IOException {
     Model personDirectoryModel = ModelFactory.createDefaultModel();
     personDirectoryModel.createResource("");
-    return utilities.postContent(
-        url,
-        "Person",
-        BASIC_CONTAINER_TYPE,
-        personDirectoryModel);
+    return utilities.postContent(url, "Person", BASIC_CONTAINER_TYPE, personDirectoryModel);
   }
 
-  private String insertPerson(String baseUrl, String container, VCard person,  SolidUtilities utilities) {
+  private String insertPerson(
+      String baseUrl, String container, VCard person, SolidUtilities utilities) {
     Model personContainerModel = ModelFactory.createDefaultModel();
     personContainerModel.createResource("");
     try {
-      String directory = utilities.postContent(
-          baseUrl + container,
-          null,
-          BASIC_CONTAINER_TYPE,
-          personContainerModel);
+      String directory =
+          utilities.postContent(
+              baseUrl + container, null, BASIC_CONTAINER_TYPE, personContainerModel);
 
       return utilities.postContent(
-          baseUrl + directory,
-          "index",
-          BASIC_RESOURCE_TYPE,
-          getPersonModel(person));
+          baseUrl + directory, "index", BASIC_RESOURCE_TYPE, getPersonModel(person));
     } catch (IOException e) {
-      throw new IllegalStateException("Couldn't insert: " + person.getFormattedName()
-          + " into: " + baseUrl + container, e);
+      throw new IllegalStateException(
+          "Couldn't insert: " + person.getFormattedName() + " into: " + baseUrl + container, e);
     }
   }
 
@@ -238,7 +229,8 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
       String baseUrl,
       String containerUrl,
       Map<String, VCard> importedPeople,
-      SolidUtilities utilities) throws Exception {
+      SolidUtilities utilities)
+      throws Exception {
     Model peopleModel = ModelFactory.createDefaultModel();
     Resource indexResource = peopleModel.createResource("index.ttl#this");
 
@@ -252,20 +244,15 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
         personResource.addProperty(VCARD4.fn, insertedPerson.getFormattedName().getValue());
       }
       personResource.addProperty(
-          peopleModel.createProperty(VCARD4.NS, "inAddressBook"),
-          indexResource);
+          peopleModel.createProperty(VCARD4.NS, "inAddressBook"), indexResource);
     }
 
     return utilities.postContent(
-        baseUrl + containerUrl,
-        "people",
-        BASIC_RESOURCE_TYPE,
-        peopleModel);
+        baseUrl + containerUrl, "people", BASIC_RESOURCE_TYPE, peopleModel);
   }
 
-
   @VisibleForTesting
-  final static Model getPersonModel(VCard vcard) {
+  static final Model getPersonModel(VCard vcard) {
     Model personModel = ModelFactory.createDefaultModel();
     Resource r = personModel.createResource("#this");
     r.addProperty(RDF.type, VCARD4.Individual);
@@ -283,13 +270,16 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
         strucName.addProperty(VCARD4.given_name, structuredName.getGiven());
       }
 
-      structuredName.getPrefixes()
+      structuredName
+          .getPrefixes()
           .forEach(prefix -> strucName.addProperty(VCARD4.hasHonorificPrefix, prefix));
 
-      structuredName.getSuffixes()
+      structuredName
+          .getSuffixes()
           .forEach(suffix -> strucName.addProperty(VCARD4.hasHonorificSuffix, suffix));
 
-      structuredName.getAdditionalNames()
+      structuredName
+          .getAdditionalNames()
           .forEach(additional -> strucName.addProperty(VCARD4.hasAdditionalName, additional));
 
       r.addProperty(VCARD4.hasName, strucName);
@@ -331,8 +321,7 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     }
 
     for (Organization organization : vcard.getOrganizations()) {
-      organization.getValues().stream().forEach(
-          v -> r.addProperty(VCARD4.hasOrganizationName, v));
+      organization.getValues().stream().forEach(v -> r.addProperty(VCARD4.hasOrganizationName, v));
     }
 
     for (Url url : vcard.getUrls()) {
@@ -350,19 +339,20 @@ public class SolidContactsImport implements Importer<CookiesAndUrlAuthData, Cont
     return personModel;
   }
 
-  /** Looks up the {@link Resource}s for a given string, that might be comma delimited. **/
+  /** Looks up the {@link Resource}s for a given string, that might be comma delimited. * */
   private static ImmutableList<Resource> getPhoneOrMailTypes(
-      String type,
-      Map<String, Resource> map) {
+      String type, Map<String, Resource> map) {
     return ImmutableList.copyOf(
-        Arrays.stream(type.split(",")).map(t -> {
-          Resource r = map.get(t.toLowerCase());
-          if (r == null) {
-            logger.warn("%s didn't contain '%s' from %s", map, t.toLowerCase(), type);
-            r = ModelFactory.createDefaultModel().getResource(VCARD4.NS + t);
-          }
-          return  r;
-        })
-    .collect(Collectors.toList()));
+        Arrays.stream(type.split(","))
+            .map(
+                t -> {
+                  Resource r = map.get(t.toLowerCase());
+                  if (r == null) {
+                    logger.warn("%s didn't contain '%s' from %s", map, t.toLowerCase(), type);
+                    r = ModelFactory.createDefaultModel().getResource(VCARD4.NS + t);
+                  }
+                  return r;
+                })
+            .collect(Collectors.toList()));
   }
 }

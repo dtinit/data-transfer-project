@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Encapsulates authorization tokens needed to perform a data transfer. */
-public class AuthDataPair  {
+public class AuthDataPair {
   private String exportAuthData;
   private String importAuthData;
 

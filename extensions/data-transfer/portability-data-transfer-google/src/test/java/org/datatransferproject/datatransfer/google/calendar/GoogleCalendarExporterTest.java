@@ -41,10 +41,10 @@ import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactor
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
@@ -108,8 +108,8 @@ public class GoogleCalendarExporterTest {
     calendarListResponse.setNextPageToken(NEXT_TOKEN);
 
     // Run test
-    ExportResult<CalendarContainerResource> result = googleCalendarExporter.export(JOB_ID, null,
-        Optional.empty());
+    ExportResult<CalendarContainerResource> result =
+        googleCalendarExporter.export(JOB_ID, null, Optional.empty());
 
     // Check results
     // Verify correct methods were called
@@ -134,8 +134,7 @@ public class GoogleCalendarExporterTest {
     // Should be one container in the resource list
     List<ContainerResource> actualResources = continuationData.getContainerResources();
     assertThat(
-            actualResources
-                .stream()
+            actualResources.stream()
                 .map(a -> ((IdOnlyContainerResource) a).getId())
                 .collect(Collectors.toList()))
         .containsExactly(CALENDAR_ID);
@@ -189,8 +188,7 @@ public class GoogleCalendarExporterTest {
     // Check events
     Collection<CalendarEventModel> actualEvents = result.getExportedData().getEvents();
     assertThat(
-            actualEvents
-                .stream()
+            actualEvents.stream()
                 .map(CalendarEventModel::getCalendarId)
                 .collect(Collectors.toList()))
         .containsExactly(CALENDAR_ID);

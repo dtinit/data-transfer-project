@@ -2,20 +2,28 @@ package org.datatransferproject.transfer.deezer.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * POJO of track: https://developers.deezer.com/api/track
- */
+/** POJO of track: https://developers.deezer.com/api/track */
 public class Track {
   private long id;
   private boolean readable;
   private String title;
-  @JsonProperty("short_title") private String shortTitle;
-  @JsonProperty("short_version") private String titleVersion;
+
+  @JsonProperty("short_title")
+  private String shortTitle;
+
+  @JsonProperty("short_version")
+  private String titleVersion;
+
   private String isrc;
   private String link;
   private int duration;
-  @JsonProperty("track_position") private int trackPosition;
-  @JsonProperty("disk_position") private int diskPosition;
+
+  @JsonProperty("track_position")
+  private int trackPosition;
+
+  @JsonProperty("disk_position")
+  private int diskPosition;
+
   private Artist artist;
   private Album album;
 
@@ -69,9 +77,6 @@ public class Track {
 
   @Override
   public String toString() {
-    return String.format("Track{id=%s, title=\"%s\", isrc=%s}",
-        id,
-        title,
-        isrc);
+    return String.format("Track{id=%s, title=\"%s\", isrc=%s}", id, title, isrc);
   }
 }

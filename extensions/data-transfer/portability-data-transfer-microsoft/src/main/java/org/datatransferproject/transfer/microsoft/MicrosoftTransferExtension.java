@@ -1,16 +1,16 @@
 package org.datatransferproject.transfer.microsoft;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -26,8 +26,6 @@ import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosImporter
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
 
 /** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {

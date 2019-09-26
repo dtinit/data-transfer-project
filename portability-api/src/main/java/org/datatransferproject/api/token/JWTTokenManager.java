@@ -23,12 +23,11 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.inject.Inject;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.api.token.TokenManager;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.api.token.TokenManager;
 
 /** Utility methods for token creation and verification. */
 public class JWTTokenManager implements TokenManager {

@@ -19,13 +19,10 @@ package org.datatransferproject.auth.imgur;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Imgur services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Imgur services. */
 public class ImgurAuthServiceExtension extends OAuth2ServiceExtension {
 
-    public ImgurAuthServiceExtension() {
-        super(new ImgurOAuthConfig());
-    }
-
+  public ImgurAuthServiceExtension() {
+    super(new ImgurOAuthConfig());
+  }
 }

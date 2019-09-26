@@ -17,7 +17,6 @@ package org.datatransferproject.transfer.rememberthemilk.model.tasks;
 
 import com.google.api.client.util.Key;
 import com.google.common.base.MoreObjects;
-
 import java.util.List;
 
 /** A collection of notes that exist on a tasks/taskseries */

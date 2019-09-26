@@ -32,7 +32,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
-
 public class SslHelper {
   private static final String INRPUT_LOGIN_SERVER = "https://inrupt.net/login/tls";
   private final String pathToPkcs12File;
@@ -43,13 +42,12 @@ public class SslHelper {
     this.password = password;
   }
 
-  /** Logs in in via WebTls and return the auth cookie to use**/
-  public String loginViaCertificate() throws GeneralSecurityException, IOException  {
+  /** Logs in in via WebTls and return the auth cookie to use* */
+  public String loginViaCertificate() throws GeneralSecurityException, IOException {
     SSLSocketFactory sslSocketFactory = getSocketFactory();
 
-    HttpTransport transport = new NetHttpTransport.Builder()
-        .setSslSocketFactory(sslSocketFactory)
-        .build();
+    HttpTransport transport =
+        new NetHttpTransport.Builder().setSslSocketFactory(sslSocketFactory).build();
     return makeCall(transport);
   }
 
@@ -70,17 +68,19 @@ public class SslHelper {
 
   private String makeCall(HttpTransport transport) throws IOException {
     HttpRequest get =
-        transport.createRequestFactory()
+        transport
+            .createRequestFactory()
             .buildPostRequest(new GenericUrl(INRPUT_LOGIN_SERVER), null)
             .setFollowRedirects(false)
             .setThrowExceptionOnExecuteError(false);
 
     HttpResponse response = get.execute();
     if (response.getStatusCode() != 302) {
-      throw new IOException("Unexpected return code: "
-          + response.getStatusCode()
-          + "\nMessage:\n"
-          + response.getStatusMessage());
+      throw new IOException(
+          "Unexpected return code: "
+              + response.getStatusCode()
+              + "\nMessage:\n"
+              + response.getStatusMessage());
     }
     String cookieValue = response.getHeaders().getFirstHeaderStringValue("set-cookie");
     if (Strings.isNullOrEmpty(cookieValue)) {

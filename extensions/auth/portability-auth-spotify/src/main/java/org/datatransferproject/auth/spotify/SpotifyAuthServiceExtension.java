@@ -18,13 +18,10 @@ package org.datatransferproject.auth.spotify;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Spotify services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Spotify services. */
 public class SpotifyAuthServiceExtension extends OAuth2ServiceExtension {
 
   public SpotifyAuthServiceExtension() {
     super(new SpotifyOAuthConfig());
   }
-
 }

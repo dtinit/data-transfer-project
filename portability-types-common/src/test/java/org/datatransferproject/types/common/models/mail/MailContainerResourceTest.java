@@ -5,9 +5,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.util.List;
 import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.mail.MailContainerModel;
-import org.datatransferproject.types.common.models.mail.MailContainerResource;
-import org.datatransferproject.types.common.models.mail.MailMessageModel;
 import org.junit.Test;
 
 public class MailContainerResourceTest {

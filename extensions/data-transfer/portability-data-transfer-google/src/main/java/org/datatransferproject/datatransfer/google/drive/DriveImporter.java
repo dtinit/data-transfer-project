@@ -1,11 +1,15 @@
 package org.datatransferproject.datatransfer.google.drive;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -17,16 +21,9 @@ import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainer
 import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
 
-import java.io.IOException;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * An {@link Importer} to export data from Google Drive.
- */
-public final class DriveImporter implements
-    Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
+/** An {@link Importer} to export data from Google Drive. */
+public final class DriveImporter
+    implements Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
   private static final String ROOT_FOLDER_ID = "root-id";
 
   private final GoogleCredentialFactory credentialFactory;
@@ -46,10 +43,12 @@ public final class DriveImporter implements
   }
 
   @Override
-  public ImportResult importItem(UUID jobId,
+  public ImportResult importItem(
+      UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      BlobbyStorageContainerResource data) throws Exception {
+      BlobbyStorageContainerResource data)
+      throws Exception {
     String parentId;
     Drive driveInterface = getDriveInterface(authData);
 
@@ -59,14 +58,10 @@ public final class DriveImporter implements
           idempotentExecutor.executeOrThrowException(
               ROOT_FOLDER_ID,
               data.getName(),
-              () ->importSingleFolder(
-                  driveInterface,
-                  "MigratedContent",
-                  null));
+              () -> importSingleFolder(driveInterface, "MigratedContent", null));
     } else {
       parentId = idempotentExecutor.getCachedValue(ROOT_FOLDER_ID);
     }
-
 
     // Uploads album metadata
     if (data.getFolders() != null && data.getFolders().size() > 0) {
@@ -74,10 +69,7 @@ public final class DriveImporter implements
         idempotentExecutor.executeAndSwallowIOExceptions(
             folder.getId(),
             folder.getName(),
-            () -> importSingleFolder(
-                driveInterface,
-                folder.getName(),
-                parentId));
+            () -> importSingleFolder(driveInterface, folder.getName(), parentId));
       }
     }
 
@@ -94,13 +86,9 @@ public final class DriveImporter implements
     return ImportResult.OK;
   }
 
-  private String importSingleFolder(
-      Drive driveInterface,
-      String folderName,
-      String parentId) throws IOException {
-    File newFolder = new File()
-        .setName(folderName)
-        .setMimeType(DriveExporter.FOLDER_MIME_TYPE);
+  private String importSingleFolder(Drive driveInterface, String folderName, String parentId)
+      throws IOException {
+    File newFolder = new File().setName(folderName).setMimeType(DriveExporter.FOLDER_MIME_TYPE);
     if (!Strings.isNullOrEmpty(parentId)) {
       newFolder.setParents(ImmutableList.of(parentId));
     }
@@ -109,14 +97,10 @@ public final class DriveImporter implements
   }
 
   private String importSingleFile(
-      UUID jobId,
-      Drive driveInterface,
-      DigitalDocumentWrapper file,
-      String parentId)
+      UUID jobId, Drive driveInterface, DigitalDocumentWrapper file, String parentId)
       throws IOException {
-    InputStreamContent content = new InputStreamContent(
-        null,
-        jobStore.getStream(jobId, file.getCachedContentId()));
+    InputStreamContent content =
+        new InputStreamContent(null, jobStore.getStream(jobId, file.getCachedContentId()));
     DtpDigitalDocument dtpDigitalDocument = file.getDtpDigitalDocument();
     File driveFile = new File().setName(dtpDigitalDocument.getName());
     if (!Strings.isNullOrEmpty(parentId)) {
@@ -129,11 +113,7 @@ public final class DriveImporter implements
         && file.getOriginalEncodingFormat().startsWith("application/vnd.google-apps.")) {
       driveFile.setMimeType(file.getOriginalEncodingFormat());
     }
-    return driveInterface.files().create(
-        driveFile,
-        content)
-        .execute()
-        .getId();
+    return driveInterface.files().create(driveFile, content).execute().getId();
   }
 
   private synchronized Drive getDriveInterface(TokensAndUrlAuthData authData) {

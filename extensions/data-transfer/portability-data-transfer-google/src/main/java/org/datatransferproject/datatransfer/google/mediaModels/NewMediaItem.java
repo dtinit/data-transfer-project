@@ -22,11 +22,11 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 
 /**
  * Class containing all the information uploaded when creating a new media item through the Google
- * Photos API.  Represents an intermediate step between a {@link PhotoModel}
- * and a {@link GoogleMediaItem} (which is created in response to a {@link NewMediaItemUpload}).
- * Note that this does not contain the content of the media item (photo or video)
- * itself, just the description and a {@code SimpleMediaItem} containing the upload token
- * corresponding to the previously-uploaded content.
+ * Photos API. Represents an intermediate step between a {@link PhotoModel} and a {@link
+ * GoogleMediaItem} (which is created in response to a {@link NewMediaItemUpload}). Note that this
+ * does not contain the content of the media item (photo or video) itself, just the description and
+ * a {@code SimpleMediaItem} containing the upload token corresponding to the previously-uploaded
+ * content.
  */
 public class NewMediaItem {
   @JsonProperty("description")
@@ -53,5 +53,4 @@ public class NewMediaItem {
   public String getDescription() {
     return description;
   }
-
 }

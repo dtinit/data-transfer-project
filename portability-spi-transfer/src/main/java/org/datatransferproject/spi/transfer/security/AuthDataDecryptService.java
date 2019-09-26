@@ -17,8 +17,6 @@ package org.datatransferproject.spi.transfer.security;
 
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 
-import java.security.PrivateKey;
-
 /** Decrypts authentication data for a given scheme. */
 public interface AuthDataDecryptService {
 

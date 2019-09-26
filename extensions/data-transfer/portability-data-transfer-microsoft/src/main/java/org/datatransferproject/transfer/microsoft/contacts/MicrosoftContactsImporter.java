@@ -15,35 +15,35 @@
  */
 package org.datatransferproject.transfer.microsoft.contacts;
 
+import static java.util.stream.Collectors.toList;
+import static org.datatransferproject.transfer.microsoft.common.RequestHelper.batchRequest;
+import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ezvcard.VCard;
 import ezvcard.io.json.JCardReader;
-import okhttp3.OkHttpClient;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
-import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
-import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import static java.util.stream.Collectors.toList;
-import static org.datatransferproject.transfer.microsoft.common.RequestHelper.batchRequest;
-import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
+import okhttp3.OkHttpClient;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
+import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
+import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
+import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
 /**
  * Performs a batch import of contacts using the Microsoft Graph API. For details see:
  * https://developer.microsoft.com/en-us/graph/docs/concepts/json_batching.
  */
 public class MicrosoftContactsImporter implements Importer<TokenAuthData, ContactsModelWrapper> {
-  private static final String CONTACTS_URL = "/me/contacts"; // must be relative for batch operations
+  private static final String CONTACTS_URL =
+      "/me/contacts"; // must be relative for batch operations
 
   private final String baseUrl;
   private final OkHttpClient client;
@@ -75,8 +75,7 @@ public class MicrosoftContactsImporter implements Importer<TokenAuthData, Contac
 
       int[] id = new int[] {1};
       List<Map<String, Object>> requests =
-          cards
-              .stream()
+          cards.stream()
               .map(
                   card -> {
                     TransformResult<LinkedHashMap> result =

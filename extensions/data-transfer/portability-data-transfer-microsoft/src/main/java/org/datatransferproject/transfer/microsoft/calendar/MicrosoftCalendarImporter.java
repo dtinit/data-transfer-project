@@ -15,7 +15,15 @@
  */
 package org.datatransferproject.transfer.microsoft.calendar;
 
+import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -28,18 +36,7 @@ import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
-
-/**
- * Imports Outlook calendar information using the Microsoft Graph API.
- */
+/** Imports Outlook calendar information using the Microsoft Graph API. */
 public class MicrosoftCalendarImporter
     implements Importer<TokenAuthData, CalendarContainerResource> {
 
@@ -71,12 +68,12 @@ public class MicrosoftCalendarImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokenAuthData authData,
-      CalendarContainerResource data) throws Exception {
+      CalendarContainerResource data)
+      throws Exception {
 
     for (CalendarModel calendar : data.getCalendars()) {
-      idempotentImportExecutor.executeAndSwallowIOExceptions(calendar.getId(),
-          calendar.getName(),
-          () -> importCalendar(authData, calendar));
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          calendar.getId(), calendar.getName(), () -> importCalendar(authData, calendar));
     }
 
     List<Map<String, Object>> eventRequests = new ArrayList<>();
@@ -91,7 +88,6 @@ public class MicrosoftCalendarImporter
       eventRequests.add(request);
     }
 
-
     RequestHelper.BatchResponse eventResponse =
         RequestHelper.batchRequest(authData, eventRequests, baseUrl, client, objectMapper);
     if (ImportResult.ResultType.OK != eventResponse.getResult().getType()) {
@@ -102,8 +98,7 @@ public class MicrosoftCalendarImporter
     return eventResponse.getResult();
   }
 
-  private String importCalendar(TokenAuthData authData,
-      CalendarModel calendar) throws Exception {
+  private String importCalendar(TokenAuthData authData, CalendarModel calendar) throws Exception {
     List<Map<String, Object>> calendarRequests = new ArrayList<>();
 
     Map<String, Object> request = createRequestItem(calendar, 1, CALENDAR_SUBPATH);
@@ -116,13 +111,12 @@ public class MicrosoftCalendarImporter
       throw new IOException("Problem importing calendar: " + calendarResponse.getResult());
     }
 
-    Map<String, Object> body = (Map<String, Object>) calendarResponse.getBatchResponse()
-        .get(0).get("body");
+    Map<String, Object> body =
+        (Map<String, Object>) calendarResponse.getBatchResponse().get(0).get("body");
     return (String) body.get("id");
   }
 
-  private Map<String, Object> createRequestItem(
-      Object item, int id, String url) throws Exception {
+  private Map<String, Object> createRequestItem(Object item, int id, String url) throws Exception {
     TransformResult<LinkedHashMap> result = transformerService.transform(LinkedHashMap.class, item);
     if (result.getProblems() != null && !result.getProblems().isEmpty()) {
       throw new IOException("Problem transforming request: " + result.getProblems().get(0));

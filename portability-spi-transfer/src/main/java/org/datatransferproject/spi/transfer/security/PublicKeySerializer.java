@@ -15,7 +15,6 @@
  */
 package org.datatransferproject.spi.transfer.security;
 
-import java.security.PublicKey;
 
 /** Serializes a public key for a given encryption scheme. */
 public interface PublicKeySerializer {

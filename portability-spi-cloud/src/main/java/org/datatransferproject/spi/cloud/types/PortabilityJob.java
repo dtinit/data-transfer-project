@@ -8,12 +8,11 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import org.datatransferproject.types.common.ExportInformation;
-
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
+import org.datatransferproject.types.common.ExportInformation;
 
 /**
  * A job that will fulfill a transfer request.
@@ -81,13 +80,12 @@ public abstract class PortabilityJob {
             : null;
 
     State state =
-        properties.containsKey(JOB_STATE) ? State.valueOf((String) properties.get(JOB_STATE))
+        properties.containsKey(JOB_STATE)
+            ? State.valueOf((String) properties.get(JOB_STATE))
             : State.NEW;
 
-
     String failureReason =
-        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON)
-            : null;
+        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON) : null;
 
     return PortabilityJob.builder()
         .setState(state)
@@ -213,14 +211,14 @@ public abstract class PortabilityJob {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PortabilityJob that = (PortabilityJob) o;
-    return Objects.equals(state(), that.state()) &&
-            Objects.equals(exportService(), that.exportService()) &&
-            Objects.equals(importService(), that.importService()) &&
-            Objects.equals(transferDataType(), that.transferDataType()) &&
-            Objects.equals(exportInformation(), that.exportInformation()) &&
-            Objects.equals(createdTimestamp(), that.createdTimestamp()) &&
-            Objects.equals(lastUpdateTimestamp(), that.lastUpdateTimestamp()) &&
-            Objects.equals(jobAuthorization(), that.jobAuthorization());
+    return Objects.equals(state(), that.state())
+        && Objects.equals(exportService(), that.exportService())
+        && Objects.equals(importService(), that.importService())
+        && Objects.equals(transferDataType(), that.transferDataType())
+        && Objects.equals(exportInformation(), that.exportInformation())
+        && Objects.equals(createdTimestamp(), that.createdTimestamp())
+        && Objects.equals(lastUpdateTimestamp(), that.lastUpdateTimestamp())
+        && Objects.equals(jobAuthorization(), that.jobAuthorization());
   }
 
   /** The job states. */
@@ -280,9 +278,7 @@ public abstract class PortabilityJob {
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_STORED:
-          isSet(
-              jobAuthorization.authPublicKey(),
-              jobAuthorization.encryptedAuthData());
+          isSet(jobAuthorization.authPublicKey(), jobAuthorization.encryptedAuthData());
           break;
       }
       return setJobAuthorization(jobAuthorization);

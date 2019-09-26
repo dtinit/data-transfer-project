@@ -75,7 +75,9 @@ public class PhotoModel {
     return dataId;
   }
 
-  public boolean isInTempStore() { return inTempStore; }
+  public boolean isInTempStore() {
+    return inTempStore;
+  }
 
   @Override
   public String toString() {
@@ -89,17 +91,17 @@ public class PhotoModel {
         .add("inTempStore", inTempStore)
         .toString();
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PhotoModel that = (PhotoModel) o;
-    return Objects.equal(getTitle(), that.getTitle()) &&
-            Objects.equal(getFetchableUrl(), that.getFetchableUrl()) &&
-            Objects.equal(getDescription(), that.getDescription()) &&
-            Objects.equal(getMediaType(), that.getMediaType()) &&
-            Objects.equal(getDataId(), that.getDataId()) &&
-            Objects.equal(getAlbumId(), that.getAlbumId());
+    return Objects.equal(getTitle(), that.getTitle())
+        && Objects.equal(getFetchableUrl(), that.getFetchableUrl())
+        && Objects.equal(getDescription(), that.getDescription())
+        && Objects.equal(getMediaType(), that.getMediaType())
+        && Objects.equal(getDataId(), that.getDataId())
+        && Objects.equal(getAlbumId(), that.getAlbumId());
   }
 }

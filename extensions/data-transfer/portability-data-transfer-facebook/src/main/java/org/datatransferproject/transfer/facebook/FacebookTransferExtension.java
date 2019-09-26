@@ -19,6 +19,7 @@ package org.datatransferproject.transfer.facebook;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -27,8 +28,6 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
 
 public class FacebookTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Facebook";
@@ -70,7 +69,9 @@ public class FacebookTransferExtension implements TransferExtension {
     } catch (IOException e) {
       Monitor monitor = context.getMonitor();
       monitor.info(
-          () -> "Unable to retrieve Facebook AppCredentials. Did you set FACEBOOK_KEY and FACEBOOK_SECRET?", e);
+          () ->
+              "Unable to retrieve Facebook AppCredentials. Did you set FACEBOOK_KEY and FACEBOOK_SECRET?",
+          e);
       return;
     }
 

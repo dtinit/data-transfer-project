@@ -21,8 +21,8 @@ import com.google.api.client.util.Key;
  * Response from rtm.auth.getToken
  *
  * <p>Example: <?xml version='1.0' encoding='UTF-8'?><rsp
- * stat="ok"><auth><token>footoken</token><perms>write</perms><user
- * id="123456" username="username" fullname="User Name"/></auth></rsp>
+ * stat="ok"><auth><token>footoken</token><perms>write</perms><user id="123456" username="username"
+ * fullname="User Name"/></auth></rsp>
  */
 public class AuthElement extends RememberTheMilkResponse {
 

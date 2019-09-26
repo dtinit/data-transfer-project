@@ -22,15 +22,15 @@ import io.swagger.annotations.ApiModel;
 /** The worker that was reserved for a transfer job. */
 @ApiModel(description = "The worker reserved for a transfer job")
 public class ReservedWorker {
-    // null/missing until worker has been reserved
-    private final String publicKey;
+  // null/missing until worker has been reserved
+  private final String publicKey;
 
-    @JsonCreator
-    public ReservedWorker(@JsonProperty(value = "publicKey", required = false) String publicKey) {
-        this.publicKey = publicKey;
-    }
+  @JsonCreator
+  public ReservedWorker(@JsonProperty(value = "publicKey", required = false) String publicKey) {
+    this.publicKey = publicKey;
+  }
 
-    public String getPublicKey() {
-        return publicKey;
-    }
+  public String getPublicKey() {
+    return publicKey;
+  }
 }

@@ -16,6 +16,10 @@
 
 package org.datatransferproject.datatransfer.google.contacts;
 
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.model.EmailAddress;
@@ -31,6 +35,11 @@ import ezvcard.io.json.JCardReader;
 import ezvcard.property.Email;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Telephone;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -39,18 +48,8 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.SOURCE_PARAM_NAME_TYPE;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.VCARD_PRIMARY_PREF;
-
-
-public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, ContactsModelWrapper> {
+public class GoogleContactsImporter
+    implements Importer<TokensAndUrlAuthData, ContactsModelWrapper> {
 
   private static final FieldMetadata PRIMARY_FIELD_METADATA = new FieldMetadata().setPrimary(true);
   private static final FieldMetadata SECONDARY_FIELD_METADATA =
@@ -84,27 +83,21 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
 
     if (vCard.getAddresses() != null) {
       person.setAddresses(
-          vCard
-              .getAddresses()
-              .stream()
+          vCard.getAddresses().stream()
               .map(GoogleContactsImporter::convertToGoogleAddress)
               .collect(Collectors.toList()));
     }
 
     if (vCard.getTelephoneNumbers() != null) {
       person.setPhoneNumbers(
-          vCard
-              .getTelephoneNumbers()
-              .stream()
+          vCard.getTelephoneNumbers().stream()
               .map(GoogleContactsImporter::convertToGooglePhoneNumber)
               .collect(Collectors.toList()));
     }
 
     if (vCard.getEmails() != null) {
       person.setEmailAddresses(
-          vCard
-              .getEmails()
-              .stream()
+          vCard.getEmails().stream()
               .map(GoogleContactsImporter::convertToGoogleEmail)
               .collect(Collectors.toList()));
     }
@@ -202,9 +195,12 @@ public class GoogleContactsImporter implements Importer<TokensAndUrlAuthData, Co
   }
 
   @Override
-  public ImportResult importItem(UUID jobId,
+  public ImportResult importItem(
+      UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      TokensAndUrlAuthData authData, ContactsModelWrapper data) throws Exception{
+      TokensAndUrlAuthData authData,
+      ContactsModelWrapper data)
+      throws Exception {
     JCardReader reader = new JCardReader(data.getVCards());
     try {
       // TODO(olsona): address any other problems that might arise in conversion

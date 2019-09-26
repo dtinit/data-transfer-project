@@ -16,8 +16,12 @@
 
 package org.datatransferproject.transfer.twitter;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -25,11 +29,6 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
-import java.util.List;
-
-import static java.lang.String.format;
 
 /**
  * Extension to allow Twitter content to be transferred.

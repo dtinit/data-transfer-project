@@ -177,8 +177,7 @@ public class GoogleVideosInterface {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
     TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {
-        };
+        new TypeReference<HashMap<String, Object>>() {};
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 }

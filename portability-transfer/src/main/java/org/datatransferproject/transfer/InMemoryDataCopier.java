@@ -15,21 +15,21 @@
  */
 package org.datatransferproject.transfer;
 
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /** In-memory Copier interface */
 public interface InMemoryDataCopier {
   /* Copies the provided dataType from exportService to importService */
   Collection<ErrorDetail> copy(
-          AuthData exportAuthData,
-          AuthData importAuthData,
-          UUID jobId, Optional<ExportInformation> exportInfo)
+      AuthData exportAuthData,
+      AuthData importAuthData,
+      UUID jobId,
+      Optional<ExportInformation> exportInfo)
       throws IOException, CopyException;
 }

@@ -18,13 +18,10 @@ package org.datatransferproject.auth.google;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Google services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Google services. */
 public class GoogleAuthServiceExtension extends OAuth2ServiceExtension {
 
   public GoogleAuthServiceExtension() {
     super(new GoogleOAuthConfig());
   }
-
 }

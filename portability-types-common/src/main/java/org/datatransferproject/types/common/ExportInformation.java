@@ -3,9 +3,8 @@ package org.datatransferproject.types.common;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.datatransferproject.types.common.models.ContainerResource;
-
 import java.util.Objects;
+import org.datatransferproject.types.common.models.ContainerResource;
 
 /** Contains information about how to export data. */
 @JsonTypeName("org.dataportability:ExportInformation")
@@ -50,8 +49,8 @@ public class ExportInformation extends PortableType {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ExportInformation that = (ExportInformation) o;
-    return Objects.equals(getPaginationData(), that.getPaginationData()) &&
-            Objects.equals(getContainerResource(), that.getContainerResource());
+    return Objects.equals(getPaginationData(), that.getPaginationData())
+        && Objects.equals(getContainerResource(), that.getContainerResource());
   }
 
   @Override

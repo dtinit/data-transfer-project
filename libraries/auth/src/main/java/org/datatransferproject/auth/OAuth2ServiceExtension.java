@@ -16,8 +16,15 @@
 
 package org.datatransferproject.auth;
 
+import static java.lang.String.format;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -25,14 +32,6 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static java.lang.String.format;
 
 /**
  * General implementation of an {@link AuthServiceExtension} for OAuth2. Largely exists to provide

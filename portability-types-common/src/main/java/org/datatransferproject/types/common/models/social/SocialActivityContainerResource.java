@@ -18,8 +18,8 @@ package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ibm.common.activitystreams.Activity;
 import com.google.common.collect.ImmutableList;
+import com.ibm.common.activitystreams.Activity;
 import java.util.Collection;
 import org.datatransferproject.types.common.models.ContainerResource;
 
@@ -27,9 +27,9 @@ import org.datatransferproject.types.common.models.ContainerResource;
  * Wrapper class for encoding social activity streams using Activity Stream 2.0
  * (https://www.w3.org/TR/activitystreams-core/)
  *
- * <p>The wrapper is needed to allow DTP to page through large collections of items.  DTP
- * doesn't know how to parse Activity Stream, only extensions that process social data will
- * understand this data, so it needs to by split up to allow DTP to efficiently process it.
+ * <p>The wrapper is needed to allow DTP to page through large collections of items. DTP doesn't
+ * know how to parse Activity Stream, only extensions that process social data will understand this
+ * data, so it needs to by split up to allow DTP to efficiently process it.
  */
 public class SocialActivityContainerResource extends ContainerResource {
   private final String id;

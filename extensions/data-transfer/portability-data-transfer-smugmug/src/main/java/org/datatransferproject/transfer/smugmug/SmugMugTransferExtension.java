@@ -16,10 +16,14 @@
 
 package org.datatransferproject.transfer.smugmug;
 
+import static java.lang.String.format;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -31,11 +35,6 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosExporter;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
-import java.util.List;
-
-import static java.lang.String.format;
 
 public class SmugMugTransferExtension implements TransferExtension {
   private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");

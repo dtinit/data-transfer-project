@@ -19,9 +19,8 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.annotation.Nullable;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Class containing all the information necessary to create new {@link NewMediaItem}s in the Google

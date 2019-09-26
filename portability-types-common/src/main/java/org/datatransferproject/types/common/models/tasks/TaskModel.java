@@ -18,14 +18,13 @@ package org.datatransferproject.types.common.models.tasks;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
-import java.util.List;
 
 public class TaskModel {
   private final String taskListId;
   private final String text;
   private final String notes;
-  private final Instant completedTime;  // null if incomplete
-  private final Instant dueTime;  // null if not due
+  private final Instant completedTime; // null if incomplete
+  private final Instant dueTime; // null if not due
 
   @JsonCreator
   public TaskModel(
@@ -53,7 +52,11 @@ public class TaskModel {
     return taskListId;
   }
 
-  public Instant getCompletedTime() { return completedTime; }
+  public Instant getCompletedTime() {
+    return completedTime;
+  }
 
-  public Instant getDueTime() { return dueTime; }
+  public Instant getDueTime() {
+    return dueTime;
+  }
 }

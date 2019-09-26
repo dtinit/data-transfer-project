@@ -17,7 +17,6 @@ package org.datatransferproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.annotate.JacksonXmlProperty;
 import com.google.common.base.MoreObjects;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

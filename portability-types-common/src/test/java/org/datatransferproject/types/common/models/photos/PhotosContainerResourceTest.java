@@ -3,10 +3,9 @@ package org.datatransferproject.types.common.models.photos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
+import java.util.List;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.junit.Test;
-
-import java.util.List;
 
 public class PhotosContainerResourceTest {
   @Test
@@ -19,8 +18,8 @@ public class PhotosContainerResourceTest {
 
     List<PhotoModel> photos =
         ImmutableList.of(
-            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
-                false),
+            new PhotoModel(
+                "Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", false),
             new PhotoModel(
                 "Pic2", "https://fake.com/pic.png", "fine art", "image/png", "p2", "id1", false));
 

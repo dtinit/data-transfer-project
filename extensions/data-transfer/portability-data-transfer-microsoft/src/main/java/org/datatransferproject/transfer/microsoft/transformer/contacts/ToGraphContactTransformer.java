@@ -78,8 +78,7 @@ public class ToGraphContactTransformer
 
     card.getEmails().stream().filter(v -> v.getValue() != null).forEach(v -> addEmail(v, contact));
 
-    card.getTelephoneNumbers()
-        .stream()
+    card.getTelephoneNumbers().stream()
         .filter(t -> t.getText() != null)
         .forEach(
             telephone -> {

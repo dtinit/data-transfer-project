@@ -16,6 +16,9 @@
 
 package org.datatransferproject.cloud.google;
 
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -28,17 +31,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
 
 /**
  * App credential storage using Google Cloud Platform.
@@ -148,7 +147,7 @@ final class GoogleAppCredentialStore implements AppCredentialStore {
 
   private String lookupSecret(String secretName) throws IOException {
     String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
-    monitor.debug(()->format("Getting app secret for %s (blob %s)", secretName, secretLocation));
+    monitor.debug(() -> format("Getting app secret for %s (blob %s)", secretName, secretLocation));
     byte[] encryptedSecret = getRawBytes(secretLocation);
     checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
     String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret)).trim();

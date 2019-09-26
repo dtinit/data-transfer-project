@@ -19,7 +19,6 @@ package org.datatransferproject.types.client.transfer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
-
 import java.util.Set;
 
 /** Export and import services that support the provided data type. */

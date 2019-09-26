@@ -19,15 +19,12 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Arrays;
-
 public class BatchMediaItemResponse {
   @JsonProperty("newMediaItemResults")
   private NewMediaItemResult[] results;
 
   @JsonCreator
-  public BatchMediaItemResponse(
-      @JsonProperty("newMediaItemResults") NewMediaItemResult[] results) {
+  public BatchMediaItemResponse(@JsonProperty("newMediaItemResults") NewMediaItemResult[] results) {
     this.results = results;
   }
 

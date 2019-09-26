@@ -32,17 +32,15 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * Exports Outlook calendar information using the Microsoft Graph API.
- */
+/** Exports Outlook calendar information using the Microsoft Graph API. */
 public class MicrosoftCalendarExporter
     implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
 
@@ -69,8 +67,8 @@ public class MicrosoftCalendarExporter
   }
 
   @Override
-  public ExportResult<CalendarContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      Optional<ExportInformation> exportInformation) {
+  public ExportResult<CalendarContainerResource> export(
+      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
     if (exportInformation.isPresent()) {
       // TODO support pagination
       throw new UnsupportedOperationException();

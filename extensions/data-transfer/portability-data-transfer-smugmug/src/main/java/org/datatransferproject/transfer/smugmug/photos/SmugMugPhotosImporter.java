@@ -16,10 +16,15 @@
 
 package org.datatransferproject.transfer.smugmug.photos;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -32,12 +37,6 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
@@ -80,14 +79,13 @@ public class SmugMugPhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
-      PhotosContainerResource data) throws Exception {
+      PhotosContainerResource data)
+      throws Exception {
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
-            album.getId(),
-            album.getName(),
-            () -> importSingleAlbum(album, smugMugInterface));
+            album.getId(), album.getName(), () -> importSingleAlbum(album, smugMugInterface));
       }
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(

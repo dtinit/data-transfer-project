@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.auto.value.AutoValue;
-
 import javax.annotation.Nullable;
 
 /** Authorization data related to a job. */
@@ -117,9 +116,7 @@ public abstract class JobAuthorization {
     @JsonProperty("authPublicKey")
     public abstract Builder setAuthPublicKey(String authPublicKey);
 
-    /**
-     * The id of the 'transfer worker' instance assigned to this job.
-     */
+    /** The id of the 'transfer worker' instance assigned to this job. */
     @JsonProperty("instanceId")
     public abstract Builder setInstanceId(String instanceId);
 

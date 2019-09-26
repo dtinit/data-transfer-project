@@ -16,6 +16,11 @@
 package org.datatransferproject.transfer.microsoft.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -24,12 +29,6 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /** Provides request operations. */
 public class RequestHelper {

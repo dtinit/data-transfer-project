@@ -25,8 +25,8 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -234,23 +234,19 @@ public class MicrosoftCalendarExportTest {
     MicrosoftCalendarExporter exporter =
         new MicrosoftCalendarExporter(baseUrl.toString(), client, mapper, transformerService);
 
-    ExportResult<CalendarContainerResource> resource = exporter
-        .export(UUID.randomUUID(), token, Optional.empty());
+    ExportResult<CalendarContainerResource> resource =
+        exporter.export(UUID.randomUUID(), token, Optional.empty());
 
     CalendarContainerResource calendarResource = resource.getExportedData();
 
     Assert.assertEquals(2, calendarResource.getCalendars().size());
     Assert.assertFalse(
-        calendarResource
-            .getCalendars()
-            .stream()
+        calendarResource.getCalendars().stream()
             .anyMatch(c -> "Calendar1".equals(c.getId()) && "Calendar2".equals(c.getId())));
 
     Assert.assertEquals(2, calendarResource.getEvents().size());
     Assert.assertFalse(
-        calendarResource
-            .getEvents()
-            .stream()
+        calendarResource.getEvents().stream()
             .anyMatch(
                 e ->
                     "Test Appointment 1".equals(e.getTitle())

@@ -16,6 +16,9 @@
 
 package org.datatransferproject.auth.rememberthemilk;
 
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.CUSTOM;
+
 import com.fasterxml.jackson.xml.XmlMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -26,6 +29,8 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.net.URL;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.auth.rememberthemilk.model.AuthElement;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -34,12 +39,6 @@ import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-
-import java.io.IOException;
-import java.net.URL;
-
-import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
-import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.CUSTOM;
 
 /*
  * {@link AuthDataGenerator} to obtain auth credentials for the Remember The Milk API.

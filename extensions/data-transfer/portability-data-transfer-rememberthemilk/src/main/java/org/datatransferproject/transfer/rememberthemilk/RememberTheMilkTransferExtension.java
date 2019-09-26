@@ -16,8 +16,11 @@
 
 package org.datatransferproject.transfer.rememberthemilk;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -27,10 +30,6 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksExporter;
 import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
-
-import static java.lang.String.format;
 
 public class RememberTheMilkTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("TASKS");

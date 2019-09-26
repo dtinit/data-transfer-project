@@ -50,11 +50,11 @@ public class AuthTestDriver {
 
     OkHttpClient client = TestHelper.createTestBuilder(callbackHost).build();
 
-    AuthDataGenerator authDataGenerator = new MicrosoftAuthServiceExtension()
-        .getAuthDataGenerator("CONTACTS", AuthMode.EXPORT);
+    AuthDataGenerator authDataGenerator =
+        new MicrosoftAuthServiceExtension().getAuthDataGenerator("CONTACTS", AuthMode.EXPORT);
 
-    AuthFlowConfiguration configuration = authDataGenerator
-        .generateConfiguration(callbackBase, "1");
+    AuthFlowConfiguration configuration =
+        authDataGenerator.generateConfiguration(callbackBase, "1");
 
     Desktop desktop = Desktop.getDesktop();
 
@@ -64,9 +64,10 @@ public class AuthTestDriver {
     String authCode = retrieveAuthCode(client);
 
     // get the token
-    TokenAuthData tokenData = (TokenAuthData)
-        authDataGenerator.generateAuthData(
-            callbackBase, authCode, "1", configuration.getInitialAuthData(), null);
+    TokenAuthData tokenData =
+        (TokenAuthData)
+            authDataGenerator.generateAuthData(
+                callbackBase, authCode, "1", configuration.getInitialAuthData(), null);
 
     // System.out.println("TOKEN: " + tokenData.getToken());
     return tokenData;

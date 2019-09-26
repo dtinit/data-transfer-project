@@ -16,6 +16,7 @@
 
 package org.datatransferproject.transfer.spotify.playlists;
 
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Strings;
 import com.wrapper.spotify.SpotifyApi;
@@ -23,6 +24,8 @@ import com.wrapper.spotify.exceptions.SpotifyWebApiException;
 import com.wrapper.spotify.model_objects.specification.Paging;
 import com.wrapper.spotify.model_objects.specification.Track;
 import com.wrapper.spotify.model_objects.specification.User;
+import java.io.IOException;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -32,14 +35,7 @@ import org.datatransferproject.types.common.models.playlists.MusicRecording;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
-/**
- * Imports playlists into Spotify.
- **/
+/** Imports playlists into Spotify. */
 public class SpotifyPlaylistImporter
     implements Importer<TokensAndUrlAuthData, PlaylistContainerResource> {
   private final Monitor monitor;
@@ -55,7 +51,8 @@ public class SpotifyPlaylistImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      PlaylistContainerResource data) throws Exception {
+      PlaylistContainerResource data)
+      throws Exception {
     spotifyApi.setAccessToken(authData.getAccessToken());
     spotifyApi.setRefreshToken(authData.getRefreshToken());
 
@@ -66,21 +63,22 @@ public class SpotifyPlaylistImporter
     return ImportResult.OK;
   }
 
-  private void createPlaylist(IdempotentImportExecutor idempotentExecutor,
-      MusicPlaylist playlist,
-      String userId)
+  private void createPlaylist(
+      IdempotentImportExecutor idempotentExecutor, MusicPlaylist playlist, String userId)
       throws Exception, SpotifyWebApiException {
-    String playlistId = idempotentExecutor.executeAndSwallowIOExceptions(
-        playlist.getIdentifier(),
-        "Playlist: " + playlist.getHeadline(),
-        () -> spotifyApi
-            .createPlaylist(userId, playlist.getHeadline())
-            .collaborative(false)
-            .public_(false)
-            .name("Imported - " + playlist.getHeadline())
-            .build()
-            .execute()
-            .getId());
+    String playlistId =
+        idempotentExecutor.executeAndSwallowIOExceptions(
+            playlist.getIdentifier(),
+            "Playlist: " + playlist.getHeadline(),
+            () ->
+                spotifyApi
+                    .createPlaylist(userId, playlist.getHeadline())
+                    .collaborative(false)
+                    .public_(false)
+                    .name("Imported - " + playlist.getHeadline())
+                    .build()
+                    .execute()
+                    .getId());
     if (playlistId != null) {
       for (MusicRecording track : playlist.getTrack()) {
         addTrack(idempotentExecutor, playlistId, playlist.getHeadline(), track);
@@ -105,23 +103,20 @@ public class SpotifyPlaylistImporter
               .build()
               .execute();
           return null;
-        }
-    );
+        });
   }
 
-  private Track searchForSong(MusicRecording track)
-      throws IOException, SpotifyWebApiException {
+  private Track searchForSong(MusicRecording track) throws IOException, SpotifyWebApiException {
     // TODO: right now this depends on an ISRC being present, we should add fallback
     // logic.
-    checkArgument(!Strings.isNullOrEmpty(track.getIsrcCode()), "No ISRC code present for: "
-        + track.getHeadline());
-    Paging<Track> searchResponse = spotifyApi
-        .searchTracks("isrc:" + track.getIsrcCode())
-        .build()
-        .execute();
+    checkArgument(
+        !Strings.isNullOrEmpty(track.getIsrcCode()),
+        "No ISRC code present for: " + track.getHeadline());
+    Paging<Track> searchResponse =
+        spotifyApi.searchTracks("isrc:" + track.getIsrcCode()).build().execute();
     if (searchResponse.getItems().length == 0) {
-      throw new IOException("Couldn't find track: " + track.getHeadline()
-          + " with code: " + track.getIsrcCode());
+      throw new IOException(
+          "Couldn't find track: " + track.getHeadline() + " with code: " + track.getIsrcCode());
     }
     return searchResponse.getItems()[0];
   }

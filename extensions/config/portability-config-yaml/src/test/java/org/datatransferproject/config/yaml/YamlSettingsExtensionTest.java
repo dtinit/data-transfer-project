@@ -26,14 +26,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class YamlSettingsExtensionTest {
-  /**
-   * baseUrl: https://localhost:3000
-   * baseApiUrl: https://localhost:8080
-   */
+  /** baseUrl: https://localhost:3000 baseApiUrl: https://localhost:8080 */
   private static String API_SETTINGS_1 = "api-1.yaml";
-  /**
-   * baseUrl: www.aBaseUrl.com
-   */
+  /** baseUrl: www.aBaseUrl.com */
   private static String API_SETTINGS_2 = "api-2.yaml";
 
   @Test

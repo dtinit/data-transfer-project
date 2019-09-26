@@ -15,16 +15,15 @@
  */
 package org.datatransferproject.transport.jettyrest.rest;
 
-import org.datatransferproject.api.action.Action;
-import org.datatransferproject.types.client.transfer.GetTransferServices;
-import org.datatransferproject.types.client.transfer.TransferServices;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.datatransferproject.api.action.Action;
+import org.datatransferproject.types.client.transfer.GetTransferServices;
+import org.datatransferproject.types.client.transfer.TransferServices;
 
 /** Lists services available for export and import for the given type. */
 @Consumes({MediaType.APPLICATION_JSON})

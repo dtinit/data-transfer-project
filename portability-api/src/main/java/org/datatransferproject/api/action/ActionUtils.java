@@ -19,7 +19,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-
 import java.util.UUID;
 
 /** Helper functions for validating action related data. */
@@ -32,8 +31,8 @@ public final class ActionUtils {
 
   public static UUID decodeJobId(String encodedJobId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
-    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),
-        Charsets.UTF_8));
+    return UUID.fromString(
+        new String(BaseEncoding.base64Url().decode(encodedJobId), Charsets.UTF_8));
   }
 
   /** Determines whether the current service is a valid service for import. */

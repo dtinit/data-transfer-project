@@ -15,27 +15,25 @@
  */
 package org.datatransferproject.launcher.metrics;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.time.Duration;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.MetricRecorder;
 
-import java.time.Duration;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * A {@link MetricRecorder} that is aware of the service it is being used in
- * that forwards metric events on to a {@link DtpInternalMetricRecorder}.
- **/
+ * A {@link MetricRecorder} that is aware of the service it is being used in that forwards metric
+ * events on to a {@link DtpInternalMetricRecorder}.
+ */
 public class ServiceAwareMetricRecorder implements MetricRecorder {
   private final String service;
   private final DtpInternalMetricRecorder metricRecorder;
 
-  public ServiceAwareMetricRecorder(
-      String service,
-      DtpInternalMetricRecorder metricRecorder) {
+  public ServiceAwareMetricRecorder(String service, DtpInternalMetricRecorder metricRecorder) {
     this.service = service;
     this.metricRecorder = checkNotNull(metricRecorder, "metricRecorder can't be null");
   }
+
   @Override
   public void recordMetric(String dataType, String tag) {
     metricRecorder.recordGenericMetric(dataType, service, tag);

@@ -2,14 +2,15 @@ package org.datatransferproject.transfer.deezer.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * POJO of: https://developers.deezer.com/api/playlist
- */
+/** POJO of: https://developers.deezer.com/api/playlist */
 public class PlaylistSummary {
   protected long id;
   protected String title;
   protected String description;
-  @JsonProperty("pulbic") protected boolean isPublic;
+
+  @JsonProperty("pulbic")
+  protected boolean isPublic;
+
   protected String link;
 
   public long getId() {
@@ -35,10 +36,6 @@ public class PlaylistSummary {
   public String toString() {
     return String.format(
         "PlaylistSummary{id=%s, title=\"%s\", description=\"%s\", public=%s, link=%s}",
-        id,
-        title,
-        description,
-        isPublic,
-        link);
+        id, title, description, isPublic, link);
   }
 }

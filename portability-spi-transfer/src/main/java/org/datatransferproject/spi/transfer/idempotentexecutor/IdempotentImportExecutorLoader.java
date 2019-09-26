@@ -23,6 +23,5 @@ public class IdempotentImportExecutorLoader {
     }
   }
 
-  private IdempotentImportExecutorLoader() {
-  }
+  private IdempotentImportExecutorLoader() {}
 }

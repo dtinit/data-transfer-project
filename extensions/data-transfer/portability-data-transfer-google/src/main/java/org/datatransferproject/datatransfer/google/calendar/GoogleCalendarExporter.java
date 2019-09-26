@@ -1,5 +1,8 @@
 package org.datatransferproject.datatransfer.google.calendar;
 
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
+import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarList;
@@ -10,6 +13,15 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -27,22 +39,8 @@ import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.datatransferproject.types.common.models.calendar.RecurrenceRule;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CALENDAR_TOKEN_PREFIX;
-import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.EVENT_TOKEN_PREFIX;
-
-
-public class GoogleCalendarExporter implements
-    Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
+public class GoogleCalendarExporter
+    implements Exporter<TokensAndUrlAuthData, CalendarContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;
@@ -85,8 +83,7 @@ public class GoogleCalendarExporter implements
   private static RecurrenceRule getRecurrenceRule(List<String> ruleStrings) {
     RecurrenceRule.Builder ruleBuilder = new RecurrenceRule.Builder();
     for (String st : ruleStrings) {
-      Preconditions.checkArgument(st.contains(":"),
-          "Recurrence entry " + st + " cannot be parsed");
+      Preconditions.checkArgument(st.contains(":"), "Recurrence entry " + st + " cannot be parsed");
       String[] split = st.split("[:;]", 2);
       String type = split[0];
       String value = split[1];
@@ -122,8 +119,7 @@ public class GoogleCalendarExporter implements
         eventData.getSummary(),
         attendees == null
             ? null
-            : attendees
-                .stream()
+            : attendees.stream()
                 .map(GoogleCalendarExporter::transformToModelAttendee)
                 .collect(Collectors.toList()),
         eventData.getLocation(),
@@ -148,9 +144,7 @@ public class GoogleCalendarExporter implements
         IdOnlyContainerResource idOnlyContainerResource =
             (IdOnlyContainerResource) exportInformation.get().getContainerResource();
         Optional<PaginationData> pageData = Optional.ofNullable(paginationToken);
-        return getCalendarEvents(authData,
-            idOnlyContainerResource.getId(),
-            pageData);
+        return getCalendarEvents(authData, idOnlyContainerResource.getId(), pageData);
       }
     }
   }
@@ -265,7 +259,7 @@ public class GoogleCalendarExporter implements
   private synchronized Calendar makeCalendarInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Calendar.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

@@ -94,30 +94,24 @@ public class GoogleContactsImportConversionTest {
 
     // Check primary names
     List<Name> actualPrimaryNames =
-        person
-            .getNames()
-            .stream()
+        person.getNames().stream()
             .filter(a -> a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<Pair<String, String>> actualPrimaryNameValues =
-        actualPrimaryNames
-            .stream()
+        actualPrimaryNames.stream()
             .map(GoogleContactsImportConversionTest::getGivenAndFamilyValues)
             .collect(Collectors.toList());
     assertThat(actualPrimaryNameValues)
         .containsExactly(Pair.of(primaryGivenName, primaryFamilyName));
     List<String> actualPrimaryNameSourceValues =
-        actualPrimaryNames
-            .stream()
+        actualPrimaryNames.stream()
             .map(a -> a.getMetadata().getSource().getType())
             .collect(Collectors.toList());
     assertThat(actualPrimaryNameSourceValues).containsExactly(primarySourceType);
 
     // Check secondary names - there shouldn't be any
     List<Name> actualSecondaryNames =
-        person
-            .getNames()
-            .stream()
+        person.getNames().stream()
             .filter(a -> !a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     assertThat(actualSecondaryNames).isEmpty();
@@ -154,9 +148,7 @@ public class GoogleContactsImportConversionTest {
 
     // Check primary address
     List<Address> actualPrimaryAddresses =
-        person
-            .getAddresses()
-            .stream()
+        person.getAddresses().stream()
             .filter(a -> a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<String> actualPrimaryAddressStreets =
@@ -165,9 +157,7 @@ public class GoogleContactsImportConversionTest {
 
     // Check secondary address
     List<Address> actualSecondaryAddresses =
-        person
-            .getAddresses()
-            .stream()
+        person.getAddresses().stream()
             .filter(a -> !a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<String> actualSecondaryAddressStreets =
@@ -203,9 +193,7 @@ public class GoogleContactsImportConversionTest {
 
     // Check primary phone numbers
     List<PhoneNumber> actualPrimaryNumbers =
-        person
-            .getPhoneNumbers()
-            .stream()
+        person.getPhoneNumbers().stream()
             .filter(a -> a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<String> actualPrimaryNumberStrings =
@@ -214,9 +202,7 @@ public class GoogleContactsImportConversionTest {
 
     // Check secondary phone numbers
     List<PhoneNumber> actualSecondaryNumbers =
-        person
-            .getPhoneNumbers()
-            .stream()
+        person.getPhoneNumbers().stream()
             .filter(a -> !a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<String> actualSecondaryNumberStrings =
@@ -252,9 +238,7 @@ public class GoogleContactsImportConversionTest {
 
     // Check primary email addresses
     List<EmailAddress> actualPrimaryEmails =
-        person
-            .getEmailAddresses()
-            .stream()
+        person.getEmailAddresses().stream()
             .filter(a -> a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<String> actualPrimaryEmailsStrings =
@@ -263,9 +247,7 @@ public class GoogleContactsImportConversionTest {
 
     // Check secondary email addresses
     List<EmailAddress> actualSecondaryEmails =
-        person
-            .getEmailAddresses()
-            .stream()
+        person.getEmailAddresses().stream()
             .filter(a -> !a.getMetadata().getPrimary())
             .collect(Collectors.toList());
     List<String> actualSecondaryEmailsStrings =

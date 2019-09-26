@@ -16,13 +16,12 @@
 package org.datatransferproject.api.action.transfer;
 
 import com.google.inject.Inject;
+import java.util.Set;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.action.ActionUtils;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
-import org.datatransferproject.types.client.transfer.TransferServices;
 import org.datatransferproject.types.client.transfer.GetTransferServices;
-
-import java.util.Set;
+import org.datatransferproject.types.client.transfer.TransferServices;
 
 /** Returns the import and export services available for a given data type. */
 public final class GetTransferServicesAction
@@ -56,6 +55,6 @@ public final class GetTransferServicesAction
       throw new IllegalArgumentException(
           "[" + transferDataType + "] does not have an import and export service");
     }
-    return new TransferServices(transferDataType, exportServices,importServices);
+    return new TransferServices(transferDataType, exportServices, importServices);
   }
 }

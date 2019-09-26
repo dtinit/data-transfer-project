@@ -1,7 +1,15 @@
 package org.datatransferproject.api.action.transfer;
 
+import static java.lang.String.format;
+import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
+import static org.datatransferproject.spi.cloud.types.JobAuthorization.State.CREDS_STORED;
+
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.security.PublicKey;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
@@ -10,15 +18,6 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.client.transfer.StartTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
-
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.security.PublicKey;
-import java.util.UUID;
-
-import static java.lang.String.format;
-import static org.datatransferproject.api.action.ActionUtils.decodeJobId;
-import static org.datatransferproject.spi.cloud.types.JobAuthorization.State.CREDS_STORED;
 
 /** Starts a transfer job. */
 public class StartTransferJobAction implements Action<StartTransferJob, TransferJob> {
@@ -80,7 +79,9 @@ public class StartTransferJobAction implements Action<StartTransferJob, Transfer
         jobId);
     try {
       jobStore.updateJobWithCredentials(jobId, job);
-      monitor.debug(() -> format("Updated job %s to CREDS_STORED", jobId), jobId,
+      monitor.debug(
+          () -> format("Updated job %s to CREDS_STORED", jobId),
+          jobId,
           EventCode.API_JOB_CREDS_STORED);
     } catch (IOException e) {
       throw new RuntimeException("Unable to update job", e);

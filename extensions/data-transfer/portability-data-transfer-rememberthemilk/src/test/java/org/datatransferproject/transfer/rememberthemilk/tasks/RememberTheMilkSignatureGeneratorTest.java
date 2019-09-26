@@ -46,12 +46,13 @@ public class RememberTheMilkSignatureGeneratorTest {
   }
 
   @Test
-  public void signatureTestWhiteSpace() throws Exception{
+  public void signatureTestWhiteSpace() throws Exception {
     String base = "http://example.com";
     Map<String, String> queryParams = ImmutableMap.of("abc", "baz", "foo", "b a r ");
-    URL expected = new URL(base + "?abc=baz&api_key=BANANAS1&auth_token=BANANAS3&foo=b a r&api_sig=204b1dc1abbff7a5e8753d7102d966f4");
+    URL expected =
+        new URL(
+            base
+                + "?abc=baz&api_key=BANANAS1&auth_token=BANANAS3&foo=b a r&api_sig=204b1dc1abbff7a5e8753d7102d966f4");
     assertThat(SIGNATURE_GENERATOR.getSignature(base, queryParams)).isEqualTo(expected);
   }
-
-
 }

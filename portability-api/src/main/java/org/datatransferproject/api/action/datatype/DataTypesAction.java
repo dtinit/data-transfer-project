@@ -16,13 +16,12 @@
 package org.datatransferproject.api.action.datatype;
 
 import com.google.inject.Inject;
+import java.util.Set;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.types.client.datatype.DataTypes;
 import org.datatransferproject.types.client.datatype.GetDataTypes;
-
-import java.util.Set;
 
 /**
  * An {@link Action} that handles listing data types available for export and import for a given

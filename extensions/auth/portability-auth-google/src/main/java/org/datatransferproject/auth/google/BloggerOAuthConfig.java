@@ -46,12 +46,13 @@ public class BloggerOAuthConfig extends GoogleOAuthConfig {
   @Override
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
-        .put("SOCIAL-POSTS", ImmutableSet.of(
-            "https://www.googleapis.com/auth/blogger",
-            // Any photos associated with the blog are stored in Drive.
-            // This permission only grants access to files created by this app
-            "https://www.googleapis.com/auth/drive.file"
-        ))
+        .put(
+            "SOCIAL-POSTS",
+            ImmutableSet.of(
+                "https://www.googleapis.com/auth/blogger",
+                // Any photos associated with the blog are stored in Drive.
+                // This permission only grants access to files created by this app
+                "https://www.googleapis.com/auth/drive.file"))
         .build();
   }
 }

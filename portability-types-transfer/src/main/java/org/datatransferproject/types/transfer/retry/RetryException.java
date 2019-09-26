@@ -16,9 +16,7 @@
 
 package org.datatransferproject.types.transfer.retry;
 
-/**
- * Exception class designed to hold information about why retried calls ultimately failed.
- */
+/** Exception class designed to hold information about why retried calls ultimately failed. */
 public class RetryException extends Exception {
 
   private final int triesSoFar;

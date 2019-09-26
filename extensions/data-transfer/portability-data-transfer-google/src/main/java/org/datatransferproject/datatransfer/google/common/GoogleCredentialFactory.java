@@ -28,9 +28,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * Factory for creating {@link Credential} objects from {@link TokensAndUrlAuthData}.
- */
+/** Factory for creating {@link Credential} objects from {@link TokensAndUrlAuthData}. */
 public class GoogleCredentialFactory {
 
   // TODO: Determine correct duration in production
@@ -42,7 +40,9 @@ public class GoogleCredentialFactory {
   private final Monitor monitor;
 
   public GoogleCredentialFactory(
-      HttpTransport httpTransport, JsonFactory jsonFactory, AppCredentials appCredentials,
+      HttpTransport httpTransport,
+      JsonFactory jsonFactory,
+      AppCredentials appCredentials,
       Monitor monitor) {
     this.httpTransport = httpTransport;
     this.jsonFactory = jsonFactory;
@@ -78,10 +78,10 @@ public class GoogleCredentialFactory {
               }
 
               @Override
-              public void onTokenErrorResponse(Credential credential,
-                  TokenErrorResponse tokenErrorResponse) throws IOException {
-                monitor
-                    .info(() -> "Error while refreshing token: " + tokenErrorResponse.getError());
+              public void onTokenErrorResponse(
+                  Credential credential, TokenErrorResponse tokenErrorResponse) throws IOException {
+                monitor.info(
+                    () -> "Error while refreshing token: " + tokenErrorResponse.getError());
               }
             })
         .build()

@@ -55,6 +55,7 @@ public class JWEPublicKeySerializer implements PublicKeySerializer {
       return factory.generatePublic(new X509EncodedKeySpec(encoded));
     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
       throw new RuntimeException(
-          "InvalidKeySpecException generating PublicKey, encoded: " + encoded, e);    }
+          "InvalidKeySpecException generating PublicKey, encoded: " + encoded, e);
+    }
   }
 }
