@@ -15,7 +15,6 @@
  */
 package org.datatransferproject.datatransfer.google.common;
 
-
 /** Static objects shared with all Google services. */
 public final class GoogleStaticObjects {
 

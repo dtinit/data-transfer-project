@@ -15,7 +15,6 @@
  */
 package org.datatransferproject.transfer;
 
-
 public class DestinationMemoryFullException extends CopyException {
   public DestinationMemoryFullException(String message, Throwable cause) {
     super(message, cause);

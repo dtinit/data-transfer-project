@@ -15,7 +15,6 @@
  */
 package org.datatransferproject.transfer.instagram.photos;
 
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
