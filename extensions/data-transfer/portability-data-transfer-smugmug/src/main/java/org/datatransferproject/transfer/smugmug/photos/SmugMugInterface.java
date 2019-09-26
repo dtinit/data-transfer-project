@@ -103,11 +103,14 @@ public class SmugMugInterface {
   SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
+    String niceName = "Copy-of-" + albumName.replace(' ', '-');
+    json.put("NiceName", niceName);
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
     json.put("Title", "Copy of " + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
+    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
 
     // Upload album
     String folder = user.getUris().get(FOLDER_KEY).getUri();
