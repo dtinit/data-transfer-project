@@ -17,7 +17,7 @@ This has many reasons and benefits:
 
 But this does mean that to run an instance of DTP you need to do some leg work
 to acquire and manage application credentials.  We encourage all providers to
-keep up to date instructions about how acquire application credentials in
+keep up to date instructions about how to acquire application credentials in
 each provider's directory.
 
 API keys usually are just the OAuth App Key and Secret for your app.  But DTP supports
