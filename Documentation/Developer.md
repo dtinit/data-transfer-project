@@ -36,7 +36,7 @@ From the top level data-transfer-project directory:
 * Install Git: `sudo apt-get install git-all`
 * Install Gradle: `sudo apt-get install gradle`
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
- * Install Node: `nvm install node`
+ * Install Node: `nvm install v10.16.3`
  * Install Angular: `npm install -g @angular/cli`
  * [Install Docker](https://docs.docker.com/install/)
  * Install the Angular CLI `./gradlew client-rest:installLocalAngularCli`
