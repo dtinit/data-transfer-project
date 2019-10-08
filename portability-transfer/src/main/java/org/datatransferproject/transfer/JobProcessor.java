@@ -38,6 +38,7 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
 /**
  * Process a job in two steps: <br>
  * (1) Decrypt the stored credentials, which have been encrypted with this transfer worker's public
@@ -119,17 +120,16 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       stopwatch.start();
-      errors = copier.copy(
-          exportAuthData,
-          importAuthData,
-          jobId,
-          exportInfo);
+      errors = copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       final int numErrors = errors.size();
       monitor.debug(
           () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
       success = errors.isEmpty();
     } catch (DestinationMemoryFullException e) {
-      monitor.severe(() -> "Destination memory error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
+      monitor.severe(
+          () -> "Destination memory error processing jobId: " + jobId,
+          e,
+          EventCode.WORKER_JOB_ERRORED);
       addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM);
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
@@ -143,6 +143,7 @@ final class JobProcessor {
           JobMetadata.getImportService(),
           success,
           stopwatch.elapsed());
+      monitor.flushLogs();
       JobMetadata.reset();
     }
   }
@@ -155,7 +156,8 @@ final class JobProcessor {
     return null;
   }
 
-  private void addErrorsAndMarkJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
+  private void addErrorsAndMarkJobFinished(
+      UUID jobId, boolean success, Collection<ErrorDetail> errors) {
     try {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
