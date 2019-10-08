@@ -43,6 +43,7 @@ public class SingleVMMain {
     this.errorCallback =
         (e) -> {
           monitor.severe(() -> format("Exiting abnormally, exception:%n%n" + e));
+          monitor.flushLogs();
           System.exit(-1);
         };
   }
