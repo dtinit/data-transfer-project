@@ -23,50 +23,50 @@ import static org.junit.Assert.assertEquals;
 
 public class SmugMugInterfaceTest {
 
-	@Test
-	public void cleanName_standard() {
-			assertEquals(
-				SmugMugInterface.cleanName("MyAlbum"),
-				"MyAlbum");
-	}
+  @Test
+  public void cleanName_standard() {
+      assertEquals(
+        SmugMugInterface.cleanName("MyAlbum"),
+        "MyAlbum");
+  }
 
-	@Test
-	public void cleanName_punctuation() {
-			assertEquals(
-				SmugMugInterface.cleanName("MyAlbum!"),
-				"MyAlbum");
-	}
+  @Test
+  public void cleanName_punctuation() {
+      assertEquals(
+        SmugMugInterface.cleanName("MyAlbum!"),
+        "MyAlbum");
+  }
 
-	@Test
-	public void cleanName_spaces() {
-			assertEquals(
-				SmugMugInterface.cleanName("My Album"),
-				"My-Album");
-	}
+  @Test
+  public void cleanName_spaces() {
+      assertEquals(
+        SmugMugInterface.cleanName("My Album"),
+        "My-Album");
+  }
 
-	@Test
-	public void cleanName_long() {
-			assertEquals(
-			SmugMugInterface.cleanName(
-				"My Album From That One Time I did an Activity and took several"
-					+" pictures of it"),
-			"My-Album-From-That-One-Time-I-did-an-Act");
-	}
+  @Test
+  public void cleanName_long() {
+      assertEquals(
+      SmugMugInterface.cleanName(
+        "My Album From That One Time I did an Activity and took several"
+          +" pictures of it"),
+      "My-Album-From-That-One-Time-I-did-an-Act");
+  }
 
-	@Test
-	public void cleanName_NonLatin() {
-			assertEquals(
-			SmugMugInterface.cleanName(
-				"ჩემი ფოტოები"),
-			"ჩემი-ფოტოები");
-	}
+  @Test
+  public void cleanName_NonLatin() {
+      assertEquals(
+      SmugMugInterface.cleanName(
+        "ჩემი ფოტოები"),
+      "ჩემი-ფოტოები");
+  }
 
-	@Test
-	public void cleanName_AllWrong() {
-			assertEquals(
-			SmugMugInterface.cleanName(
-				"🔥"),
-			"");
-	}
+  @Test
+  public void cleanName_AllWrong() {
+      assertEquals(
+      SmugMugInterface.cleanName(
+        "🔥"),
+      "");
+  }
 
 }
