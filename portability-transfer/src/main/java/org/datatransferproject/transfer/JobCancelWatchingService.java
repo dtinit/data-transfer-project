@@ -21,10 +21,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 
-/**
- * A service that polls storage to see if a job is canceled, if it is
- * it kills the binary.
- */
+/** A service that polls storage to see if a job is canceled, if it is it kills the binary. */
 class JobCancelWatchingService extends AbstractScheduledService {
   private final JobStore store;
   private final Scheduler scheduler;
@@ -32,9 +29,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
 
   @Inject
   JobCancelWatchingService(
-      JobStore store,
-      @Annotations.CancelScheduler Scheduler scheduler,
-      Monitor monitor) {
+      JobStore store, @Annotations.CancelScheduler Scheduler scheduler, Monitor monitor) {
     this.store = store;
     this.scheduler = scheduler;
     this.monitor = monitor;
@@ -48,7 +43,8 @@ class JobCancelWatchingService extends AbstractScheduledService {
     monitor.debug(() -> "polling for job to check cancellation");
     PortabilityJob currentJob = store.findJob(JobMetadata.getJobId());
     boolean isCanceled = currentJob.state() == PortabilityJob.State.CANCELED;
-    monitor.debug(() -> String.format("Job %s is canceled: %s", JobMetadata.getJobId(), isCanceled));
+    monitor.debug(
+        () -> String.format("Job %s is canceled: %s", JobMetadata.getJobId(), isCanceled));
     if (isCanceled) {
       monitor.flushLogs();
       System.exit(-1);
