@@ -34,6 +34,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
@@ -108,7 +110,7 @@ public class SmugMugInterface {
   SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
-    String niceName = "Copy-of-" + albumName.replace(' ', '-');
+    String niceName = "Copy-of-" + cleanName(albumName);
     json.put("NiceName", niceName);
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
@@ -249,5 +251,18 @@ public class SmugMugInterface {
     }
 
     return mapper.readValue(response.getBody(), typeReference);
+  }
+
+  static String cleanName(String name) {
+      // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
+      return new String(
+        name.chars()
+          .mapToObj(c -> (char)c)
+          .map(c -> Character.isWhitespace(c) ? '-' : c)
+          .filter(c -> Character.isLetterOrDigit(c) || c == '-')
+          .limit(40)
+          .map(Object::toString)
+          .collect(Collectors.joining(""))
+      );
   }
 }
