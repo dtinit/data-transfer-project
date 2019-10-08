@@ -253,12 +253,14 @@ public class SmugMugInterface {
     return mapper.readValue(response.getBody(), typeReference);
   }
 
-  String cleanName(String name) {
+  static String cleanName(String name) {
+      // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
       return new String(
         name.chars()
           .mapToObj(c -> (char)c)
           .map(c -> Character.isWhitespace(c) ? '-' : c)
           .filter(c -> Character.isLetterOrDigit(c) || c == '-')
+          .limit(40)
           .map(Object::toString)
           .collect(Collectors.joining(""))
       );
