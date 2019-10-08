@@ -143,6 +143,7 @@ final class JobProcessor {
           JobMetadata.getImportService(),
           success,
           stopwatch.elapsed());
+      monitor.flushLogs();
       JobMetadata.reset();
     }
   }
