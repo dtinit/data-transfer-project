@@ -80,7 +80,8 @@ public class GooglePhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
-      PhotosContainerResource data) throws Exception {
+      PhotosContainerResource data)
+      throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -90,10 +91,7 @@ public class GooglePhotosImporter
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
         idempotentImportExecutor.executeAndSwallowIOExceptions(
-            album.getId(),
-            album.getName(),
-            () -> importSingleAlbum(authData, album)
-        );
+            album.getId(), album.getName(), () -> importSingleAlbum(authData, album));
       }
     }
 
@@ -165,8 +163,11 @@ public class GooglePhotosImporter
     NewMediaItemUpload uploadItem =
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
 
-    return getOrCreatePhotosInterface(authData).createPhoto(uploadItem)
-        .getResults()[0].getMediaItem().getId();
+    return getOrCreatePhotosInterface(authData)
+        .createPhoto(uploadItem)
+        .getResults()[0]
+        .getMediaItem()
+        .getId();
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
