@@ -103,4 +103,9 @@ class StackdriverMonitor implements JobAwareMonitor {
     this.jobId = jobId;
     debug(() -> format("Set job id to: %s", jobId));
   }
+
+  @Override
+  public void flushLogs() {
+    logging.flush();
+  }
 }

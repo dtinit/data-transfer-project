@@ -57,4 +57,11 @@ public class MultiplexMonitor implements JobAwareMonitor {
       }
     }
   }
+
+  @Override
+  public void flushLogs() {
+    for (Monitor delegate : delegates) {
+      delegate.flushLogs();
+    }
+  }
 }
