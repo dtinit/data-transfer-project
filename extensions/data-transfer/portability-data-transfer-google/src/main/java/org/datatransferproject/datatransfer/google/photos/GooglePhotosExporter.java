@@ -22,6 +22,14 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
@@ -42,15 +50,6 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 // Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
@@ -172,7 +171,8 @@ public class GooglePhotosExporter
             null);
         albums.add(photoAlbum);
 
-        monitor.debug(()->String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
+        monitor
+            .debug(() -> String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -305,7 +305,7 @@ public class GooglePhotosExporter
           PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
-          monitor.debug(()->String.format("%s: Google exporting photo: %s", jobId, photoModel));
+          monitor.debug(() -> String.format("%s: Google exporting photo: %s", jobId, photoModel));
         }
       }
     }
@@ -332,7 +332,7 @@ public class GooglePhotosExporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GooglePhotosInterface(credential, jsonFactory, monitor);
+    return new GooglePhotosInterface(credentialFactory, credential, jsonFactory, monitor);
   }
 
   private static String createCacheKey() {
