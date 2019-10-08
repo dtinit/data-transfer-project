@@ -1,21 +1,20 @@
 package org.datatransferproject.cloud.google;
 
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
 import com.google.cloud.MonitoredResource;
 import com.google.cloud.logging.LogEntry;
 import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
 import com.google.cloud.logging.Severity;
 import com.google.common.base.Throwables;
-import org.datatransferproject.api.launcher.JobAwareMonitor;
-import org.datatransferproject.launcher.monitor.events.EventCode;
-
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Supplier;
-
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
+import org.datatransferproject.api.launcher.JobAwareMonitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 
 class StackdriverMonitor implements JobAwareMonitor {
 
@@ -45,12 +44,13 @@ class StackdriverMonitor implements JobAwareMonitor {
   }
 
   private void log(Severity severity, Supplier<String> supplier, Object... data) {
-    MonitoredResource.Builder resourceBuilder = MonitoredResource.newBuilder("generic_task")
-        .addLabel("project_id", projectId)
-        // This is slightly backwards as in GCP a job can have many tasks
-        // but to line up with the DTP terminology around a job we'll use
-        // GCP's job to line up with DTP's job.
-        .addLabel("task_id", getHostName());
+    MonitoredResource.Builder resourceBuilder =
+        MonitoredResource.newBuilder("generic_task")
+            .addLabel("project_id", projectId)
+            // This is slightly backwards as in GCP a job can have many tasks
+            // but to line up with the DTP terminology around a job we'll use
+            // GCP's job to line up with DTP's job.
+            .addLabel("task_id", getHostName());
 
     if (null != jobId) {
       resourceBuilder.addLabel("job", jobId);
@@ -62,8 +62,7 @@ class StackdriverMonitor implements JobAwareMonitor {
     if (data != null) {
       for (Object datum : data) {
         if (datum instanceof Throwable) {
-          logMessage.append(
-              format("\n%s", Throwables.getStackTraceAsString(((Throwable) datum))));
+          logMessage.append(format("\n%s", Throwables.getStackTraceAsString(((Throwable) datum))));
         } else if (datum instanceof UUID) {
           logMessage.append(format("\nJobId: %s", ((UUID) datum)));
         } else if (datum instanceof EventCode) {
@@ -74,11 +73,12 @@ class StackdriverMonitor implements JobAwareMonitor {
       }
     }
 
-    LogEntry entry = LogEntry.newBuilder(Payload.StringPayload.of(logMessage.toString()))
-        .setSeverity(severity)
-        .setLogName(LOG_NAME)
-        .setResource(resourceBuilder.build())
-        .build();
+    LogEntry entry =
+        LogEntry.newBuilder(Payload.StringPayload.of(logMessage.toString()))
+            .setSeverity(severity)
+            .setLogName(LOG_NAME)
+            .setResource(resourceBuilder.build())
+            .build();
 
     try {
       // Writes the log entry asynchronously
@@ -102,5 +102,10 @@ class StackdriverMonitor implements JobAwareMonitor {
     checkState(this.jobId == null, "JobId can only be set once.");
     this.jobId = jobId;
     debug(() -> format("Set job id to: %s", jobId));
+  }
+
+  @Override
+  public void flushLogs() {
+    logging.flush();
   }
 }

@@ -49,4 +49,9 @@ public interface Monitor {
    * @param data optional data items
    */
   default void debug(Supplier<String> supplier, Object... data) {}
+
+  /**
+   * Makes sure any queued logs are sent. Recommended to be called before exiting the Java process.
+   */
+  default void flushLogs() {}
 }
