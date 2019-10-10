@@ -46,7 +46,7 @@ public final class LocalJobStore extends JobStoreWithValidator {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final Monitor monitor;
-  private final ConcurrentHashMap<String, Integer> counts;
+  private final ConcurrentHashMap<UUID, ConcurrentHashMap<String, Integer>> counts;
 
   /** Ctor for testing with a null monitor. */
   public LocalJobStore() {
@@ -98,8 +98,8 @@ public final class LocalJobStore extends JobStoreWithValidator {
    * @throws IllegalStateException if validator.validate() failed
    */
   @Override
-  protected synchronized void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
-      throws IOException {
+  protected synchronized void updateJob(
+      UUID jobId, PortabilityJob job, JobUpdateValidator validator) throws IOException {
     Preconditions.checkNotNull(jobId);
     try {
       Map<String, Object> previousEntry = JOB_MAP.replace(jobId, job.toMap());
@@ -177,16 +177,21 @@ public final class LocalJobStore extends JobStoreWithValidator {
   }
 
   @Override
-  public void addCounts(Map<String, Integer> newCounts) {
+  public void addCounts(UUID jobId, Map<String, Integer> newCounts) {
     if (newCounts == null) {
       return;
     }
-    newCounts.forEach((dataName, dataCount) -> counts.merge(dataName, dataCount, Integer::sum));
+
+    newCounts.forEach(
+        (dataName, dataCount) ->
+            counts
+                .computeIfAbsent(jobId, k -> new ConcurrentHashMap<>())
+                .merge(dataName, dataCount, Integer::sum));
   }
 
   @Override
-  public Map<String, Integer> getCounts() {
-    return counts;
+  public Map<String, Integer> getCounts(UUID jobId) {
+    return counts.computeIfAbsent(jobId, k -> new ConcurrentHashMap<>());
   }
 
   @Override
