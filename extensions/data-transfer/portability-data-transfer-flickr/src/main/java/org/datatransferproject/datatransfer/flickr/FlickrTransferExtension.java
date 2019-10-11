@@ -72,6 +72,8 @@ public class FlickrTransferExtension implements TransferExtension {
     jobStore = context.getService(TemporaryPerJobDataStore.class);
     Monitor monitor = context.getMonitor();
 
+    String photoPrefix = context.getSetting("imported_photos_photo_prefix", FlickrPhotosImporter.DEFAULT_PHOTO_PREFIX);
+
     try {
       appCredentials =
           context.getService(AppCredentialStore.class).getAppCredentials(FLICKR_KEY, FLICKR_SECRET);
@@ -88,7 +90,7 @@ public class FlickrTransferExtension implements TransferExtension {
 
     TransferServiceConfig serviceConfig = context.getService(TransferServiceConfig.class);
 
-    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig);
+    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig, photoPrefix);
     exporter = new FlickrPhotosExporter(appCredentials, serviceConfig);
     initialized = true;
   }

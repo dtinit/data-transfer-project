@@ -42,12 +42,14 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
   private final AppCredentials appCredentials;
   private final Monitor monitor;
   private RememberTheMilkService service;
+  private final String taskPrefix;
 
   public RememberTheMilkTasksImporter(
-      AppCredentials appCredentials, Monitor monitor) {
+      AppCredentials appCredentials, Monitor monitor, String taskPrefix) {
     this.appCredentials = appCredentials;
     this.monitor = monitor;
     this.service = null;
+    this.taskPrefix = taskPrefix;
   }
 
   @Override
@@ -113,6 +115,7 @@ public class RememberTheMilkTasksImporter implements Importer<AuthData, TaskCont
 
   private RememberTheMilkService createService(TokenAuthData authData) {
     return new RememberTheMilkService(
-        new RememberTheMilkSignatureGenerator(appCredentials, authData.getToken()));
+        new RememberTheMilkSignatureGenerator(appCredentials, authData.getToken()),
+        this.taskPrefix);
   }
 }

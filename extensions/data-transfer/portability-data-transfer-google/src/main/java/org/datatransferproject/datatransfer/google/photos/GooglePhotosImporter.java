@@ -41,8 +41,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  // TODO: internationalize copy prefix
-  private static final String COPY_PREFIX = "Copy of ";
+  public static final String DEFAULT_PHOTO_PREFIX = "Copy of ";
+  public static final String DEFAULT_ALBUM_PREFIX = "Copy of ";
 
   private final GoogleCredentialFactory credentialFactory;
   private final TemporaryPerJobDataStore jobStore;
@@ -50,13 +50,17 @@ public class GooglePhotosImporter
   private final ImageStreamProvider imageStreamProvider;
   private volatile GooglePhotosInterface photosInterface;
   private final Monitor monitor;
+  private final String albumPrefix;
+  private final String photoPrefix;
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
-      Monitor monitor) {
-    this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider(), monitor);
+      Monitor monitor,
+      String albumPrefix,
+      String photoPrefix) {
+    this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider(), monitor, albumPrefix, photoPrefix);
   }
 
   @VisibleForTesting
@@ -66,13 +70,17 @@ public class GooglePhotosImporter
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       ImageStreamProvider imageStreamProvider,
-      Monitor monitor) {
+      Monitor monitor,
+      String albumPrefix,
+      String photoPrefix) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
     this.imageStreamProvider = imageStreamProvider;
     this.monitor = monitor;
+    this.albumPrefix = albumPrefix;
+    this.photoPrefix = photoPrefix;
   }
 
   @Override
@@ -113,7 +121,7 @@ public class GooglePhotosImporter
       throws IOException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    googleAlbum.setTitle(COPY_PREFIX + inputAlbum.getName());
+    googleAlbum.setTitle(this.albumPrefix + inputAlbum.getName());
 
     GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
@@ -145,7 +153,7 @@ public class GooglePhotosImporter
     if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
       description = "";
     } else {
-      description = COPY_PREFIX + inputPhoto.getDescription();
+      description = this.photoPrefix + inputPhoto.getDescription();
     }
     NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
 

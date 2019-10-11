@@ -47,6 +47,8 @@ public class SmugMugPhotosImporter
   private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
+  private final String photoAlbumPrefix;
+  private final String niceNamePrefix;
 
   private SmugMugInterface smugMugInterface;
 
@@ -55,8 +57,10 @@ public class SmugMugPhotosImporter
       HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
-      Monitor monitor) {
-    this(null, jobStore, transport, appCredentials, mapper, monitor);
+      Monitor monitor,
+      String photoAlbumPrefix,
+      String niceNamePrefix) {
+    this(null, jobStore, transport, appCredentials, mapper, monitor, photoAlbumPrefix, niceNamePrefix);
   }
 
   @VisibleForTesting
@@ -66,13 +70,17 @@ public class SmugMugPhotosImporter
       HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
-      Monitor monitor) {
+      Monitor monitor,
+      String photoAlbumPrefix,
+      String niceNamePrefix) {
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
     this.transport = transport;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
     this.monitor = monitor;
+    this.photoAlbumPrefix = photoAlbumPrefix;
+    this.niceNamePrefix = niceNamePrefix;
   }
 
   @Override
@@ -137,7 +145,7 @@ public class SmugMugPhotosImporter
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData)
       throws IOException {
     return smugMugInterface == null
-        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
+        ? new SmugMugInterface(transport, appCredentials, authData, mapper, photoAlbumPrefix, niceNamePrefix)
         : smugMugInterface;
   }
 

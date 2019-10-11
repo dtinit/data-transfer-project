@@ -90,6 +90,10 @@ public class GoogleTransferExtension implements TransferExtension {
     }
 
     Monitor monitor = context.getMonitor();
+    String photoAlbumPrefix = context.getSetting("imported_photos_album_prefix", GooglePhotosImporter.DEFAULT_ALBUM_PREFIX);
+    String photoPrefix = context.getSetting("imported_photos_photo_prefix", GooglePhotosImporter.DEFAULT_PHOTO_PREFIX);
+    String videoPrefix = context.getSetting("imported_videos_video_prefix", GoogleVideosImporter.DEFAULT_VIDEO_PREFIX);
+    String calendarPrefix = context.getSetting("imported_calendars_calendar_prefix", GoogleCalendarImporter.DEFAULT_CALENDAR_PREFIX);
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
@@ -99,12 +103,12 @@ public class GoogleTransferExtension implements TransferExtension {
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));
     importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
-    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory));
+    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory, calendarPrefix));
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, monitor));
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
-            "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor));
-    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor));
+            "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor, photoAlbumPrefix, photoPrefix));
+    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor, videoPrefix));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();

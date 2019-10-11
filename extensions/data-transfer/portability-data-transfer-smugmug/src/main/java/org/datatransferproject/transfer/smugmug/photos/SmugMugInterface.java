@@ -60,18 +60,33 @@ public class SmugMugInterface {
   private static final String USER_URL = "/api/v2!authuser";
   private static final String ALBUMS_KEY = "UserAlbums";
   private static final String FOLDER_KEY = "Folder";
+  public static final String DEFAULT_PHOTO_ALBUM_PREFIX = "Copy of ";
+  public static final String DEFAULT_NICE_NAME_PREFIX = "Copy-of-";
 
   private final OAuthService oAuthService;
   private final HttpTransport httpTransport;
   private final Token accessToken;
   private final ObjectMapper mapper;
   private final SmugMugUser user;
+  private final String photoAlbumPrefix;
+  private final String niceNamePrefix;
 
   SmugMugInterface(
       HttpTransport transport,
       AppCredentials appCredentials,
       TokenSecretAuthData authData,
       ObjectMapper mapper)
+      throws IOException {
+    this(transport, appCredentials, authData, mapper, DEFAULT_PHOTO_ALBUM_PREFIX, DEFAULT_NICE_NAME_PREFIX);
+  }
+
+  SmugMugInterface(
+      HttpTransport transport,
+      AppCredentials appCredentials,
+      TokenSecretAuthData authData,
+      ObjectMapper mapper,
+      String photoAlbumPrefix,
+      String niceNamePrefix)
       throws IOException {
     this.httpTransport = transport;
     this.oAuthService =
@@ -83,6 +98,8 @@ public class SmugMugInterface {
     this.accessToken = new Token(authData.getToken(), authData.getSecret());
     this.mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     this.user = getUserInformation().getUser();
+    this.photoAlbumPrefix = photoAlbumPrefix;
+    this.niceNamePrefix = niceNamePrefix;
   }
 
   SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
@@ -110,11 +127,11 @@ public class SmugMugInterface {
   SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
-    String niceName = "Copy-of-" + cleanName(albumName);
+    String niceName = this.niceNamePrefix + cleanName(albumName);
     json.put("NiceName", niceName);
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
-    json.put("Title", "Copy of " + albumName);
+    json.put("Title", this.photoAlbumPrefix + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
     HttpContent content = new JsonHttpContent(new JacksonFactory(), json);

@@ -82,7 +82,7 @@ public class GooglePhotosImporterTest {
     Mockito.when(imageStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
 
     googlePhotosImporter = new GooglePhotosImporter(null, jobStore, null,
-        googlePhotosInterface, imageStreamProvider, monitor);
+        googlePhotosInterface, imageStreamProvider, monitor, "[Album] copy of ", "[Photo] copy of ");
   }
 
   @Test
@@ -103,7 +103,7 @@ public class GooglePhotosImporterTest {
     // Check results
     ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
     Mockito.verify(googlePhotosInterface).createAlbum(albumArgumentCaptor.capture());
-    assertEquals(albumArgumentCaptor.getValue().getTitle(), "Copy of " + albumName);
+    assertEquals(albumArgumentCaptor.getValue().getTitle(), "[Album] copy of " + albumName);
     assertNull(albumArgumentCaptor.getValue().getId());
   }
 
@@ -140,6 +140,6 @@ public class GooglePhotosImporterTest {
     assertEquals(newMediaItems.size(), 1);
     NewMediaItem mediaItem = newMediaItems.get(0);
     assertEquals(mediaItem.getSimpleMediaItem().getUploadToken(), UPLOAD_TOKEN);
-    assertEquals(mediaItem.getDescription(), "Copy of " + PHOTO_DESCRIPTION);
+    assertEquals(mediaItem.getDescription(), "[Photo] copy of " + PHOTO_DESCRIPTION);
   }
 }

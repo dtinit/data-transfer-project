@@ -24,6 +24,7 @@ import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkService;
 import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksExporter;
 import org.datatransferproject.transfer.rememberthemilk.tasks.RememberTheMilkTasksImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -82,8 +83,10 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
 
     Monitor monitor = context.getMonitor();
 
+    String taskPrefix = context.getSetting("imported_tasks_task_prefix", RememberTheMilkService.DEFAULT_TASK_PREFIX);
+
     exporter = new RememberTheMilkTasksExporter(credentials);
-    importer = new RememberTheMilkTasksImporter(credentials, monitor);
+    importer = new RememberTheMilkTasksImporter(credentials, monitor, taskPrefix);
 
     initialized = true;
   }

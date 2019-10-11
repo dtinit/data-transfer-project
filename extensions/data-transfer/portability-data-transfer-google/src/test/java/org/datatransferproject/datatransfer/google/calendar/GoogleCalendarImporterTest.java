@@ -27,7 +27,6 @@ import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -58,7 +57,8 @@ public class GoogleCalendarImporterTest {
 
     executor = new FakeIdempotentImportExecutor();
 
-    calendarService = new GoogleCalendarImporter(credentialFactory, calendarClient);
+    calendarService =
+        new GoogleCalendarImporter(credentialFactory, calendarClient, GoogleCalendarImporter.DEFAULT_CALENDAR_PREFIX);
 
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
     when(calendarClient.events()).thenReturn(calendarEvents);
@@ -75,13 +75,13 @@ public class GoogleCalendarImporterTest {
     // Set up calendar, events, and mocks
     CalendarModel calendarModel = new CalendarModel(modelCalendarId, null, null);
     com.google.api.services.calendar.model.Calendar calendarToInsert =
-        GoogleCalendarImporter.convertToGoogleCalendar(calendarModel);
+        calendarService.convertToGoogleCalendar(calendarModel);
     com.google.api.services.calendar.model.Calendar responseCalendar =
         new com.google.api.services.calendar.model.Calendar().setId(googleCalendarId);
 
     CalendarEventModel eventModel =
         new CalendarEventModel(modelCalendarId, null, null, null, null, null, null, null);
-    Event eventToInsert = GoogleCalendarImporter.convertToGoogleCalendarEvent(eventModel);
+    Event eventToInsert = calendarService.convertToGoogleCalendarEvent(eventModel);
     Event responseEvent = new Event();
 
     when(eventInsertRequest.execute()).thenReturn(responseEvent);

@@ -52,9 +52,9 @@ import java.util.UUID;
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
   @VisibleForTesting
-  static final String COPY_PREFIX = "Copy of - ";
-  @VisibleForTesting
   static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
+
+  public static final String DEFAULT_PHOTO_PREFIX = "Copy of - ";
 
   private final TemporaryPerJobDataStore jobStore;
   private final Flickr flickr;
@@ -63,12 +63,14 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private final PhotosetsInterface photosetsInterface;
   private final Monitor monitor;
   private final RateLimiter perUserRateLimiter;
+  private final String photoPrefix;
 
   public FlickrPhotosImporter(
       AppCredentials appCredentials,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor,
-      TransferServiceConfig serviceConfig) {
+      TransferServiceConfig serviceConfig,
+      String photoPrefix) {
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
@@ -76,6 +78,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
     this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
+    this.photoPrefix = photoPrefix;
   }
 
   @VisibleForTesting
@@ -84,7 +87,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       TemporaryPerJobDataStore jobstore,
       ImageStreamProvider imageStreamProvider,
       Monitor monitor,
-      TransferServiceConfig serviceConfig) {
+      TransferServiceConfig serviceConfig,
+      String photoPrefix) {
     this.flickr = flickr;
     this.imageStreamProvider = imageStreamProvider;
     this.jobStore = jobstore;
@@ -92,6 +96,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
     this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
+    this.photoPrefix = photoPrefix;
   }
 
   @Override
@@ -114,7 +119,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
-      storeAlbumbs(jobId, data.getAlbums());
+      storeAlbums(jobId, data.getAlbums());
     }
 
     if (data.getPhotos() != null) {
@@ -135,7 +140,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   // Store any album data in the cache because Flickr only allows you to create an album with a
   // photo in it, so we have to wait for the first photo to create the album
-  private void storeAlbumbs(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
+  private void storeAlbums(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
     for (PhotoAlbum album : albums) {
       jobStore.create(jobId,
               ORIGINAL_ALBUM_PREFIX + album.getId(),
@@ -203,7 +208,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         () -> {
           // TODO: do we want to keep the COPY_PREFIX?  I feel like not
           String albumName =
-              Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
+              Strings.isNullOrEmpty(album.getName()) ? "" : this.photoPrefix + album.getName();
           String albumDescription = cleanString(album.getDescription());
 
           perUserRateLimiter.acquire();
@@ -220,7 +225,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
     // TODO: do we want to keep COPY_PREFIX?  I think not
     String photoTitle =
-        Strings.isNullOrEmpty(photo.getTitle()) ? "" : COPY_PREFIX + photo.getTitle();
+        Strings.isNullOrEmpty(photo.getTitle()) ? "" : this.photoPrefix + photo.getTitle();
     String photoDescription = cleanString(photo.getDescription());
 
     UploadMetaData uploadMetaData =

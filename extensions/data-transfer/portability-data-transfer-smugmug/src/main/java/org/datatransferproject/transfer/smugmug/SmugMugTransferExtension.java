@@ -28,6 +28,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.smugmug.photos.SmugMugInterface;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosExporter;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -54,7 +55,7 @@ public class SmugMugTransferExtension implements TransferExtension {
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
     Preconditions.checkArgument(
-        initialized, "Trying to call getExporter before initalizing SmugMugTransferExtension");
+        initialized, "Trying to call getExporter before initializing SmugMugTransferExtension");
     Preconditions.checkArgument(
         SUPPORTED_TYPES.contains(transferDataType),
         "Export of " + transferDataType + " not supported by SmugMug");
@@ -64,7 +65,7 @@ public class SmugMugTransferExtension implements TransferExtension {
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(
-        initialized, "Trying to call getImporter before initalizing SmugMugTransferExtension");
+        initialized, "Trying to call getImporter before initializing SmugMugTransferExtension");
     Preconditions.checkArgument(
         SUPPORTED_TYPES.contains(transferDataType),
         "Import of " + transferDataType + " not supported by SmugMug");
@@ -98,10 +99,13 @@ public class SmugMugTransferExtension implements TransferExtension {
       return;
     }
 
+    String photoAlbumPrefix = context.getSetting("imported_photos_album_prefix", SmugMugInterface.DEFAULT_PHOTO_ALBUM_PREFIX);
+    String niceNameAlbumPrefix = context.getSetting("imported_photos_nicename_prefix", SmugMugInterface.DEFAULT_NICE_NAME_PREFIX);
+
     ObjectMapper mapper = context.getService(TypeManager.class).getMapper();
 
     exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper, jobStore, monitor);
-    importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper, monitor);
+    importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper, monitor, photoAlbumPrefix, niceNameAlbumPrefix);
     initialized = true;
   }
 }

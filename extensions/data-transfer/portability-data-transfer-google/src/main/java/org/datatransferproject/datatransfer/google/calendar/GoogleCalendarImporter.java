@@ -25,29 +25,33 @@ import java.util.stream.Collectors;
 public class GoogleCalendarImporter implements
     Importer<TokensAndUrlAuthData, CalendarContainerResource> {
 
+  public static final String DEFAULT_CALENDAR_PREFIX = "Copy of - ";
+
   private final GoogleCredentialFactory credentialFactory;
   private volatile Calendar calendarInterface;
+  private final String calendarPrefix;
 
-  public GoogleCalendarImporter(GoogleCredentialFactory credentialFactory) {
+  public GoogleCalendarImporter(GoogleCredentialFactory credentialFactory, String calendarPrefix) {
     // calendarInterface lazily initialized for each request
-    this(credentialFactory, null);
+    this(credentialFactory, null, calendarPrefix);
   }
 
   @VisibleForTesting
   GoogleCalendarImporter(GoogleCredentialFactory credentialFactory,
-      Calendar calendarInterface) {
+      Calendar calendarInterface, String calendarPrefix) {
     this.credentialFactory = credentialFactory;
     this.calendarInterface = calendarInterface;
+    this.calendarPrefix = calendarPrefix;
   }
 
-  private static EventAttendee transformToEventAttendee(CalendarAttendeeModel attendee) {
+  private EventAttendee transformToEventAttendee(CalendarAttendeeModel attendee) {
     return new EventAttendee()
         .setDisplayName(attendee.getDisplayName())
         .setEmail(attendee.getEmail())
         .setOptional(attendee.getOptional());
   }
 
-  private static EventDateTime getEventDateTime(CalendarEventModel.CalendarEventTime dateTime) {
+  private EventDateTime getEventDateTime(CalendarEventModel.CalendarEventTime dateTime) {
     if (dateTime == null) {
       return null;
     }
@@ -68,15 +72,15 @@ public class GoogleCalendarImporter implements
     return eventDateTime;
   }
 
-  static com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(
+  public com.google.api.services.calendar.model.Calendar convertToGoogleCalendar(
       CalendarModel
           calendarModel) {
     return new com.google.api.services.calendar.model.Calendar()
-        .setSummary("Copy of - " + calendarModel.getName())
+        .setSummary(this.calendarPrefix + calendarModel.getName())
         .setDescription(calendarModel.getDescription());
   }
 
-  static Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
+  public Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
     Event event = new Event()
         .setLocation(eventModel.getLocation())
         .setDescription(eventModel.getTitle())
@@ -85,7 +89,7 @@ public class GoogleCalendarImporter implements
         .setEnd(getEventDateTime(eventModel.getEndTime()));
     if (eventModel.getAttendees() != null) {
       event.setAttendees(eventModel.getAttendees().stream()
-          .map(GoogleCalendarImporter::transformToEventAttendee)
+          .map(this::transformToEventAttendee)
           .collect(Collectors.toList()));
     }
     return event;

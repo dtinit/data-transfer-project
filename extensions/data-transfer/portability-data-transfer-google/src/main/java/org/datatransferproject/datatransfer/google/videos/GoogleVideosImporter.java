@@ -55,17 +55,17 @@ import java.util.UUID;
 public class GoogleVideosImporter
         implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
-  // TODO: internationalize copy prefix
-  private static final String COPY_PREFIX = "Copy of ";
+  public static final String DEFAULT_VIDEO_PREFIX = "Copy of ";
 
   private final GoogleCredentialFactory credentialFactory;
   private final ImageStreamProvider videoStreamProvider;
   private volatile GoogleVideosInterface videosInterface;
   private Monitor monitor;
   private JsonFactory jsonFactory;
+  private final String videoPrefix;
 
-  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
-    this(credentialFactory, null, new ImageStreamProvider(), jsonFactory, monitor);
+  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor, String videoPrefix) {
+    this(credentialFactory, null, new ImageStreamProvider(), jsonFactory, monitor, videoPrefix);
   }
 
   @VisibleForTesting
@@ -74,12 +74,14 @@ public class GoogleVideosImporter
           GoogleVideosInterface videosInterface,
           ImageStreamProvider videoStreamProvider,
           JsonFactory jsonFactory,
-          Monitor monitor) {
+          Monitor monitor,
+          String videoPrefix) {
     this.credentialFactory = credentialFactory;
     this.videosInterface = videosInterface;
     this.videoStreamProvider = videoStreamProvider;
     this.jsonFactory = jsonFactory;
     this.monitor = monitor;
+    this.videoPrefix = videoPrefix;
   }
 
   @Override
@@ -123,7 +125,7 @@ public class GoogleVideosImporter
     if (Strings.isNullOrEmpty(inputVideo.getName())) {
       filename = "untitled";
     } else {
-      filename = COPY_PREFIX + inputVideo.getName();
+      filename = this.videoPrefix + inputVideo.getName();
     }
 
     String uploadToken =

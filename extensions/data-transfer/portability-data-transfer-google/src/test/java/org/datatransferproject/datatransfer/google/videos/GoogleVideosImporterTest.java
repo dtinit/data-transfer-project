@@ -72,7 +72,7 @@ public class GoogleVideosImporterTest {
     when(videoStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
 
     googleVideosImporter =
-        new GoogleVideosImporter(null, googleVideosInterface, videoStreamProvider,null,null);
+        new GoogleVideosImporter(null, googleVideosInterface, videoStreamProvider,null,null, GoogleVideosImporter.DEFAULT_VIDEO_PREFIX);
   }
 
   @Test

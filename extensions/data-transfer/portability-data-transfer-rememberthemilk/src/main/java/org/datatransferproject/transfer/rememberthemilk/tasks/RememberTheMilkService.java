@@ -42,14 +42,22 @@ import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskUpdateRe
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
 
-class RememberTheMilkService {
+public class RememberTheMilkService {
   private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";
   private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
   private RememberTheMilkSignatureGenerator signatureGenerator;
   private XmlMapper xmlMapper = new XmlMapper();
+  private final String taskPrefix;
+
+  public static final String DEFAULT_TASK_PREFIX = "Copy of: ";
 
   RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
+    this(signatureGenerator, DEFAULT_TASK_PREFIX);
+  }
+
+  RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator, String taskPrefix) {
     this.signatureGenerator = signatureGenerator;
+    this.taskPrefix = taskPrefix;
   }
 
   public String createTimeline() throws IOException {
@@ -69,7 +77,7 @@ class RememberTheMilkService {
             "timeline",
             timeline,
             "name",
-            ("Copy of: " + name));
+            (this.taskPrefix + name));
     ListAddResponse response = makeRequest(params, ListAddResponse.class);
     checkState(response.list != null, "Added list is null");
     checkState(response.list.id != 0, "Added list has id of zero");
