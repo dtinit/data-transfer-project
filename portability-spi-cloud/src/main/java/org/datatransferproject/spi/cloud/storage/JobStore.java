@@ -1,14 +1,13 @@
 package org.datatransferproject.spi.cloud.storage;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.UUID;
 
 /**
  * A store for {@link PortabilityJob}s.
@@ -23,7 +22,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * <p>To update an existing {@link PortabilityJob} instead, use {@link #update}.
    *
    * @throws IOException if a job already exists for {@code job}'s ID, or if there was a different
-   * problem inserting the job.
+   *     problem inserting the job.
    */
   void createJob(UUID jobId, PortabilityJob job) throws IOException;
 
@@ -54,7 +53,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * Stores errors related to a transfer job.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
    */
   void addErrorsToJob(UUID jobId, Collection<ErrorDetail> errors) throws IOException;
 
@@ -62,12 +61,13 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * Stores a FailureReason related to a transfer job.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it
+   *     updating it
    */
   void addFailureReasonToJob(UUID jobId, String failureReason) throws IOException;
 
   /**
    * Updates a job to mark as finished.
+   *
    * @param state The new state of the job. Can be {@code State.ERROR} or {@code State.COMPLETE}.
    * @throws IOException if unable to update the job
    */
@@ -75,6 +75,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
 
   /**
    * Updates a job to mark as in progress.
+   *
    * @throws IOException if unable to update the job
    */
   void markJobAsStarted(UUID jobId) throws IOException;
@@ -113,12 +114,14 @@ public interface JobStore extends TemporaryPerJobDataStore {
    *
    * @param newCounts the new items counted
    */
-  default void addCounts(Map<String, Integer> newCounts) {}
+  default void addCounts(UUID jobId, Map<String, Integer> newCounts) {}
 
   /**
    * Provides the total number of items recorded.
    *
    * @return mapping from items names to items counts or null if none exist
    */
-  default Map<String, Integer> getCounts() {return null;}
+  default Map<String, Integer> getCounts(UUID jobId) {
+    return null;
+  }
 }
