@@ -16,14 +16,13 @@
 
 package org.datatransferproject.cloud.local;
 
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
-import org.junit.Test;
-
 import java.util.Map;
 import java.util.UUID;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class LocalJobStoreTest {
 
@@ -56,6 +55,7 @@ public class LocalJobStoreTest {
   }
 
   private void addItemToJobStoreCounts(final String itemName) {
-    localJobStore.addCounts(jobId, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
+    localJobStore.addCounts(
+        jobId, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
   }
 }
