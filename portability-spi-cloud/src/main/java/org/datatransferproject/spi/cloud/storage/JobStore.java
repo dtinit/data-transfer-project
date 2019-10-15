@@ -114,7 +114,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
    *
    * @param newCounts the new items counted
    */
-  default void addCounts(UUID jobId, Map<String, Integer> newCounts) {}
+  default void addCounts(UUID jobId, Map<String, Integer> newCounts) throws IOException {}
 
   /**
    * Provides the total number of items recorded.
