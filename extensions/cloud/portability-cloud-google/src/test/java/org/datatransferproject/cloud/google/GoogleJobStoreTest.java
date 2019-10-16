@@ -50,6 +50,7 @@ public class GoogleJobStoreTest {
     localDatastoreHelper = LocalDatastoreHelper.create();
     localDatastoreHelper.start();
     System.setProperty("DATASTORE_EMULATOR_HOST", "localhost:" + localDatastoreHelper.getPort());
+    System.setProperty("NO_GCE_CHECK", "true");
 
     datastore = DatastoreOptions.getDefaultInstance().getService();
     googleJobStore = new GoogleJobStore(datastore, tempFileStore, new ObjectMapper());
@@ -93,6 +94,7 @@ public class GoogleJobStoreTest {
   private void addItemToJobStoreCounts(final String itemName) throws IOException {
     googleJobStore.addCounts(
         JOB_ID, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
+    Truth.assertThat(false).isTrue();
   }
 
 }
