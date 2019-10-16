@@ -353,6 +353,8 @@ public final class GoogleJobStore extends JobStoreWithValidator {
       Integer oldCount = 0;
 
       if (current != null && current.getNames().contains(COUNTS_FIELD)) {
+        // Datastore only allows Long properties, but we only ever write Integers through this
+        // interface so the conversion is OK
         oldCount = Math.toIntExact(current.getLong(COUNTS_FIELD));
       }
       transaction.put(
