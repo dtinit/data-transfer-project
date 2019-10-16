@@ -23,9 +23,9 @@ matrix:
       script:
         - find . -iname "*.java" | xargs java -jar google-java-format-1.7-all-deps.jar --dry-run
     - name: "Java (Gradle)"
-      # Nothing to customize here. Travis knows to use Gradle (including running tests) based on
-      # the presence of gradle build file
       language: java
+      script:
+        - ./gradlew check --info
     - name: "AngularJS"
       # The AngularJS flow below is customized. There is some nodejs setup to do as well as
       # configuration to use the version of Chrome that is installed in Travis images.

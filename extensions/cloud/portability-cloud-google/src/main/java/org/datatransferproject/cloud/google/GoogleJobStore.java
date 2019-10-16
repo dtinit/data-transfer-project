@@ -37,13 +37,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +48,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /**
  * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
@@ -64,10 +63,12 @@ public final class GoogleJobStore extends JobStoreWithValidator {
 
   private static final String JOB_KIND = "persistentKey";
   private static final String ERROR_KIND = "error";
+  private static final String COUNTS_KIND = "counts";
   private static final String CREATED_FIELD = "created";
   private static final String LAST_UPDATE_FIELD = "lastUpdated";
   // Field name for entities to store generic json data.
   private static final String JSON_DATA_FIELD = "jsonData";
+  private static final String COUNTS_FIELD = "count";
 
   private final Datastore datastore;
   // TODO: refactor googleTempFileStore into separate interface
@@ -339,6 +340,48 @@ public final class GoogleJobStore extends JobStoreWithValidator {
   }
 
   @Override
+  public void addCounts(UUID jobId, Map<String, Integer> newCounts) throws IOException {
+    if (newCounts == null) {
+      return;
+    }
+
+    Transaction transaction = datastore.newTransaction();
+
+    for (String dataType : newCounts.keySet()) {
+      Key key = getCountsKey(jobId, dataType);
+      Entity current = datastore.get(key);
+      Integer oldCount = 0;
+
+      if (current != null && current.getNames().contains(COUNTS_FIELD)) {
+        // Datastore only allows Long properties, but we only ever write Integers through this
+        // interface so the conversion is OK
+        oldCount = Math.toIntExact(current.getLong(COUNTS_FIELD));
+      }
+      transaction.put(
+          createEntityBuilder(
+                  key, ImmutableMap.of(COUNTS_FIELD, oldCount + newCounts.get(dataType)))
+              .build());
+    }
+    transaction.commit();
+  }
+
+  @Override
+  public Map<String, Integer> getCounts(UUID jobId) {
+    Query<Entity> query = getCountsQuery(jobId);
+    QueryResults<Entity> results = datastore.run(query);
+    ImmutableMap.Builder<String, Integer> countsMapBuilder = ImmutableMap.builder();
+
+    while (results.hasNext()) {
+      Entity result = results.next();
+      String dataType = result.getKey().getName();
+      long count = result.getLong(COUNTS_FIELD);
+      countsMapBuilder.put(dataType, (int) count);
+    }
+
+    return countsMapBuilder.build();
+  }
+
+  @Override
   public InputStream getStream(UUID jobId, String key) {
     return googleTempFileStore.getStream(jobId, key);
   }
@@ -397,4 +440,24 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     return datastore.newKeyFactory().setKind(JOB_KIND).newKey(getDataKeyName(jobId, key));
   }
 
+  private Key getCountsKey(UUID jobId, String dataType) {
+    // Use the main job as the ancestor to all the counts, see:
+    // https://cloud.google.com/datastore/docs/concepts/entities#ancestor_paths
+    return datastore
+        .newKeyFactory()
+        .setKind(COUNTS_KIND)
+        .addAncestor(PathElement.of(JOB_KIND, jobId.toString()))
+        .newKey(dataType);
+  }
+
+  private Query<Entity> getCountsQuery(UUID jobId) {
+    // Use the main job as the ancestor to all the errors, see:
+    // http://cloud/datastore/docs/concepts/queries#ancestor_queries
+    Key ancestorKey = datastore.newKeyFactory().setKind(JOB_KIND).newKey(jobId.toString());
+
+    return Query.newEntityQueryBuilder()
+        .setKind(COUNTS_KIND)
+        .setFilter(PropertyFilter.hasAncestor(ancestorKey))
+        .build();
+  }
 }

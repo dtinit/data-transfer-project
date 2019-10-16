@@ -161,7 +161,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         ImportResult importResult = retryingImporter.call();
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
         if (importSuccess) {
-          jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
+          try {
+            jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
+          } catch (IOException e) {
+            monitor.debug(()-> jobIdPrefix + "Unable to add counts to job: ", e);
+          }
         }
       } catch (RetryException | RuntimeException e) {
         monitor.severe(() -> format("Got error importing data: %s", e), e);
