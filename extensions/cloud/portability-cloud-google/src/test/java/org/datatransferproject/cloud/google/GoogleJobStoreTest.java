@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
@@ -50,9 +49,8 @@ public class GoogleJobStoreTest {
     localDatastoreHelper = LocalDatastoreHelper.create();
     localDatastoreHelper.start();
     System.setProperty("DATASTORE_EMULATOR_HOST", "localhost:" + localDatastoreHelper.getPort());
-    System.setProperty("NO_GCE_CHECK", "true");
 
-    datastore = DatastoreOptions.getDefaultInstance().getService();
+    datastore = localDatastoreHelper.getOptions().getService();
     googleJobStore = new GoogleJobStore(datastore, tempFileStore, new ObjectMapper());
 
   }
@@ -94,7 +92,6 @@ public class GoogleJobStoreTest {
   private void addItemToJobStoreCounts(final String itemName) throws IOException {
     googleJobStore.addCounts(
         JOB_ID, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
-    Truth.assertThat(false).isTrue();
   }
 
 }
