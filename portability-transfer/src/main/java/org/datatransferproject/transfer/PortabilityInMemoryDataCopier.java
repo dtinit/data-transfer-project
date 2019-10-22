@@ -112,8 +112,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
     String jobIdPrefix = "Job " + jobId + ": ";
     final int i = COPY_ITERATION_COUNTER.incrementAndGet();
-    monitor.debug(
-        () -> jobIdPrefix + "Copy iteration: " + i);
+    monitor.debug(() -> jobIdPrefix + "Copy iteration: " + i);
 
     RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
 
@@ -165,7 +164,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
           try {
             jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
           } catch (IOException e) {
-            monitor.debug(()-> jobIdPrefix + "Unable to add counts to job: ", e);
+            monitor.debug(() -> jobIdPrefix + "Unable to add counts to job: ", e);
           }
         }
       } catch (RetryException | RuntimeException e) {
