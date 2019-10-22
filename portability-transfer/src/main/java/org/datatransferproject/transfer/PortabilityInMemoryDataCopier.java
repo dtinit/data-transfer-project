@@ -111,8 +111,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       throws CopyException {
 
     String jobIdPrefix = "Job " + jobId + ": ";
+    final int i = COPY_ITERATION_COUNTER.incrementAndGet();
     monitor.debug(
-        () -> jobIdPrefix + "Copy iteration: " + COPY_ITERATION_COUNTER.incrementAndGet());
+        () -> jobIdPrefix + "Copy iteration: " + i);
 
     RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
 
