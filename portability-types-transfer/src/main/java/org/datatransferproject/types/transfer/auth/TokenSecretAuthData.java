@@ -12,8 +12,7 @@ public class TokenSecretAuthData extends AuthData {
 
   @JsonCreator
   public TokenSecretAuthData(
-      @JsonProperty("token") String token,
-      @JsonProperty("secret") String secret) {
+      @JsonProperty("token") String token, @JsonProperty("secret") String secret) {
     this.token = token;
     this.secret = secret;
   }
