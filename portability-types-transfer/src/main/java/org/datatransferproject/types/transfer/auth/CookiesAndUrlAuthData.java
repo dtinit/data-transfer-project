@@ -26,4 +26,10 @@ public class CookiesAndUrlAuthData extends AuthData {
   public List<String> getCookies() {
     return cookies;
   }
+
+  @Override
+  public String getToken() {
+    // CookiesAndUrlAuthData is the only class not to have a token.
+    return "";
+  }
 }

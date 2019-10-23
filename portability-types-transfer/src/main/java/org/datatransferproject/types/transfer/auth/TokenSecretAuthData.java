@@ -18,6 +18,7 @@ public class TokenSecretAuthData extends AuthData {
     this.secret = secret;
   }
 
+  @Override
   public String getToken() {
     return token;
   }

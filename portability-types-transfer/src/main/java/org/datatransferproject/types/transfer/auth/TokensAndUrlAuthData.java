@@ -32,4 +32,9 @@ public class TokensAndUrlAuthData extends AuthData {
   public String getTokenServerEncodedUrl() {
     return tokenServerEncodedUrl;
   }
+
+  @Override
+  public String getToken() {
+    return getAccessToken();
+  }
 }
