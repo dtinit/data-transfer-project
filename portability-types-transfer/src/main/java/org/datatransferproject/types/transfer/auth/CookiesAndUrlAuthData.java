@@ -29,6 +29,6 @@ public class CookiesAndUrlAuthData extends AuthData {
   @Override
   public String getToken() {
     // CookiesAndUrlAuthData is the only class not to have a token.
-    return "";
+    throw new UnsupportedOperationException("CookiesAndUrlAuthData does not have a token.");
   }
 }
