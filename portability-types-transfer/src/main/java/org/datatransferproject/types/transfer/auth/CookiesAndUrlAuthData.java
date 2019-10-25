@@ -13,8 +13,7 @@ public class CookiesAndUrlAuthData extends AuthData {
 
   @JsonCreator
   public CookiesAndUrlAuthData(
-      @JsonProperty("cookies") List<String> cookies,
-      @JsonProperty("url") String url) {
+      @JsonProperty("cookies") List<String> cookies, @JsonProperty("url") String url) {
     this.cookies = cookies;
     this.url = url;
   }
@@ -25,5 +24,11 @@ public class CookiesAndUrlAuthData extends AuthData {
 
   public List<String> getCookies() {
     return cookies;
+  }
+
+  @Override
+  public String getToken() {
+    // CookiesAndUrlAuthData is the only class not to have a token.
+    throw new UnsupportedOperationException("CookiesAndUrlAuthData does not have a token.");
   }
 }

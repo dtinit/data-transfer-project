@@ -14,6 +14,7 @@ public class TokenAuthData extends AuthData {
     this.token = token;
   }
 
+  @Override
   public String getToken() {
     return token;
   }
