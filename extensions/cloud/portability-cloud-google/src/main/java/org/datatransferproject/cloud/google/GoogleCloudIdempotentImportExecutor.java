@@ -1,23 +1,19 @@
 package org.datatransferproject.cloud.google;
 
-import static java.lang.String.format;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreException;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.*;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
-import com.google.cloud.datastore.Transaction;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -25,9 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
+import static java.lang.String.format;
 
 public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExecutor {
 
@@ -57,8 +52,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   }
 
   @Override
-  public <T extends Serializable> T executeAndSwallowIOExceptions(String idempotentId,
-      String itemName, Callable<T> callable) throws Exception {
+  public <T extends Serializable> T executeAndSwallowIOExceptions(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     try {
       return executeOrThrowException(idempotentId, itemName, callable);
     } catch (IOException e) {
@@ -68,8 +63,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   }
 
   @Override
-  public <T extends Serializable> T executeOrThrowException(String idempotentId, String itemName,
-      Callable<T> callable) throws Exception {
+  public <T extends Serializable> T executeOrThrowException(
+      String idempotentId, String itemName, Callable<T> callable) throws Exception {
     Preconditions.checkNotNull(jobId, "executing a callable before initialization of a job");
 
     if (knownValues.containsKey(idempotentId)) {
@@ -160,14 +155,17 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   private Map<String, Serializable> getKnownValuesForJob(UUID jobId) {
     Map<String, Serializable> dataStoreKnownValues = new HashMap<>();
-    Query<Entity> query = Query.newEntityQueryBuilder().setKind(IDEMPOTENT_RESULTS_KIND).setFilter(
-        CompositeFilter.and(PropertyFilter.eq(JOB_ID_FIELD, String.valueOf(jobId)))).build();
+    Query<Entity> query =
+        Query.newEntityQueryBuilder()
+            .setKind(IDEMPOTENT_RESULTS_KIND)
+            .setFilter(CompositeFilter.and(PropertyFilter.eq(JOB_ID_FIELD, String.valueOf(jobId))))
+            .build();
     QueryResults<Entity> results = datastore.run(query);
 
     while (results.hasNext()) {
       Entity result = results.next();
-      dataStoreKnownValues
-          .put(result.getString(IDEMPOTENT_ID_FIELD), result.getBlob(RESULTS_FIELD));
+      dataStoreKnownValues.put(
+          result.getString(IDEMPOTENT_ID_FIELD), result.getBlob(RESULTS_FIELD));
     }
 
     return dataStoreKnownValues;
@@ -175,14 +173,23 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   private Map<String, ErrorDetail> getErrorDetailsForJob(UUID jobId) {
     Map<String, ErrorDetail> datastoreKnownErrors = new HashMap<>();
-    Query<Entity> query = Query.newEntityQueryBuilder().setKind(IDEMPOTENT_RESULTS_KIND).setFilter(
-        CompositeFilter.and(PropertyFilter.eq(JOB_ID_FIELD, String.valueOf(jobId)))).build();
+    Query<Entity> query =
+        Query.newEntityQueryBuilder()
+            .setKind(IDEMPOTENT_RESULTS_KIND)
+            .setFilter(CompositeFilter.and(PropertyFilter.eq(JOB_ID_FIELD, String.valueOf(jobId))))
+            .build();
     QueryResults<Entity> results = datastore.run(query);
 
     while (results.hasNext()) {
       Entity result = results.next();
-      datastoreKnownErrors
-          .put(result.getString(IDEMPOTENT_ID_FIELD), result.getString(ERROR_FIELD));
+      try {
+        ErrorDetail error =
+            objectMapper.readerFor(ErrorDetail.class).readValue(result.getString(ERROR_FIELD));
+        datastoreKnownErrors.put(result.getString(IDEMPOTENT_ID_FIELD), error);
+      } catch (IOException e) {
+        monitor.severe(() -> jobIdPrefix + "Unable to parse ErrorDetail: " + e);
+        throw new IllegalStateException(e);
+      }
     }
 
     return datastoreKnownErrors;
@@ -190,28 +197,37 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   private <T extends Serializable> Entity createResultEntity(String idempotentId, T result)
       throws IOException {
-    return GoogleCloudUtils
-        .createEntityBuilder(getResultsKey(idempotentId),
-            ImmutableMap
-                .of(RESULTS_FIELD, result, JOB_ID_FIELD, jobId, IDEMPOTENT_ID_FIELD, idempotentId))
+    return GoogleCloudUtils.createEntityBuilder(
+            getResultsKey(idempotentId),
+            ImmutableMap.of(
+                RESULTS_FIELD, result, JOB_ID_FIELD, jobId, IDEMPOTENT_ID_FIELD, idempotentId))
         .build();
   }
 
   private Key getResultsKey(String idempotentId) {
-    return datastore.newKeyFactory().setKind(IDEMPOTENT_RESULTS_KIND)
+    return datastore
+        .newKeyFactory()
+        .setKind(IDEMPOTENT_RESULTS_KIND)
         .newKey(jobId + "_" + idempotentId);
   }
 
   private Entity createErrorEntity(String idempotentId, ErrorDetail error) throws IOException {
-    return GoogleCloudUtils
-        .createEntityBuilder(getResultsKey(idempotentId),
-            ImmutableMap.of(ERROR_FIELD, objectMapper
-                .writeValueAsString(error), JOB_ID_FIELD, jobId, IDEMPOTENT_ID_FIELD, idempotentId))
+    return GoogleCloudUtils.createEntityBuilder(
+            getResultsKey(idempotentId),
+            ImmutableMap.of(
+                ERROR_FIELD,
+                objectMapper.writeValueAsString(error),
+                JOB_ID_FIELD,
+                jobId,
+                IDEMPOTENT_ID_FIELD,
+                idempotentId))
         .build();
   }
 
   private Key getErrorKey(String idempotentId) {
-    return datastore.newKeyFactory().setKind(IDEMPONTENT_ERRORS_KIND)
+    return datastore
+        .newKeyFactory()
+        .setKind(IDEMPONTENT_ERRORS_KIND)
         .newKey(jobId + "_" + idempotentId);
   }
 }
