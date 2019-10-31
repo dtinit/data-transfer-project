@@ -16,6 +16,7 @@ public class GoogleCloudIdempotentImportExecutorExtension implements
   @Override
   public IdempotentImportExecutor getIdempotentImportExecutor(Monitor monitor) throws IOException {
     try {
+
       return new GoogleCloudIdempotentImportExecutor(getDatastore(), monitor);
     } catch (IOException e) {
       monitor.severe(() -> "Error initializing datastore: " + e);
@@ -31,7 +32,7 @@ public class GoogleCloudIdempotentImportExecutorExtension implements
   private synchronized Datastore getDatastore() throws IOException {
     if (datastore == null) {
       datastore = DatastoreOptions.newBuilder()
-          .setProjectId(GoogleCloudExtensionModule.getProjectId())
+          .setProjectId(GoogleCloudUtils.getProjectId())
           .setCredentials(GoogleCredentials.getApplicationDefault())
           .build()
           .getService();

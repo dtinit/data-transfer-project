@@ -26,7 +26,7 @@ public class StackdriverMonitorExtension implements MonitorExtension {
     //return new ConsoleMonitor(ConsoleMonitor.Level.DEBUG);
     return new MultiplexMonitor(new StackdriverMonitor(
         this.logging,
-        GoogleCloudExtensionModule.getProjectId()),
+        GoogleCloudUtils.getProjectId()),
         new ConsoleMonitor(ConsoleMonitor.Level.INFO));
   }
 
@@ -35,7 +35,7 @@ public class StackdriverMonitorExtension implements MonitorExtension {
     try {
       this.logging = LoggingOptions
         .newBuilder()
-        .setProjectId(GoogleCloudExtensionModule.getProjectId())
+        .setProjectId(GoogleCloudUtils.getProjectId())
         .setCredentials(GoogleCredentials.getApplicationDefault())
         .build()
         .getService();

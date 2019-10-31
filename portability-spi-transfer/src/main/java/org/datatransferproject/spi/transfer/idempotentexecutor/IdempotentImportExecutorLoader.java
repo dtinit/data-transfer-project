@@ -21,7 +21,7 @@ public class IdempotentImportExecutorLoader {
       try {
         return extension.getIdempotentImportExecutor(monitor);
       } catch (IOException e) {
-        throw new IllegalArgumentException("Cannot get IdempotentImportExecutor");
+        throw new IllegalStateException("Cannot get IdempotentImportExecutor");
       }
     } else {
       throw new IllegalStateException("Cannot load multiple IdempotentImportExecutors");
