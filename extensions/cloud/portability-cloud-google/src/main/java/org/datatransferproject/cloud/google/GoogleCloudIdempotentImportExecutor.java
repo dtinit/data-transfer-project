@@ -1,19 +1,23 @@
 package org.datatransferproject.cloud.google;
 
+import static java.lang.String.format;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.cloud.datastore.*;
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreException;
+import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
+import com.google.cloud.datastore.Transaction;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -21,8 +25,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-
-import static java.lang.String.format;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExecutor {
 
@@ -36,12 +41,13 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   private final Datastore datastore;
   private final Monitor monitor;
+  private final ObjectMapper objectMapper;
 
+  // These are all variables corresponding to the job state. Only initialized when setJobId() is called
   private Map<String, Serializable> knownValues;
   private Map<String, ErrorDetail> errors;
   private UUID jobId;
   private String jobIdPrefix;
-  private final ObjectMapper objectMapper;
 
   public GoogleCloudIdempotentImportExecutor(Datastore datastore, Monitor monitor) {
     this.datastore = datastore;
@@ -147,6 +153,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   @Override
   public void setJobId(UUID jobId) {
+    Preconditions.checkNotNull(jobId);
     this.jobId = jobId;
     this.knownValues = getKnownValuesForJob(jobId);
     this.errors = getErrorDetailsForJob(jobId);
