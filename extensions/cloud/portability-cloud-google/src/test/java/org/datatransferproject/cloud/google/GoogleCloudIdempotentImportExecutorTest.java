@@ -27,10 +27,11 @@ public class GoogleCloudIdempotentImportExecutorTest {
 
   @Before
   public void setUp() throws IOException, InterruptedException {
-    localDatastoreHelper = LocalDatastoreHelper.create();
+    // create a local datastore with 100% consistency for testing. This is ok to assume for the
+    // purposes of this test because the implementation only reads from datastore after a job has
+    // been restarted
+    localDatastoreHelper = LocalDatastoreHelper.create(1.0);
     localDatastoreHelper.start();
-    System.setProperty("DATASTORE_EMULATOR_HOST", "localhost:" + localDatastoreHelper.getPort());
-
     datastore = localDatastoreHelper.getOptions().getService();
     googleExecutor = new GoogleCloudIdempotentImportExecutor(datastore, monitor);
 
