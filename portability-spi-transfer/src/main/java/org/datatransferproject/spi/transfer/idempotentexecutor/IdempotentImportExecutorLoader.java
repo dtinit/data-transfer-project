@@ -1,13 +1,10 @@
 package org.datatransferproject.spi.transfer.idempotentexecutor;
 
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import java.util.ServiceLoader;
 import org.datatransferproject.api.launcher.Monitor;
 
 public class IdempotentImportExecutorLoader {
-
-  private IdempotentImportExecutorLoader() { }
 
   public static IdempotentImportExecutor load(Monitor monitor) {
     ImmutableList.Builder<IdempotentImportExecutorExtension> builder = ImmutableList.builder();
@@ -24,5 +21,8 @@ public class IdempotentImportExecutorLoader {
     } else {
       throw new IllegalStateException("Cannot load multiple IdempotentImportExecutors");
     }
+  }
+
+  private IdempotentImportExecutorLoader() {
   }
 }
