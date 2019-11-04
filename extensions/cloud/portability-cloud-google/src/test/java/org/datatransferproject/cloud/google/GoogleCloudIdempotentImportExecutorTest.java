@@ -1,20 +1,18 @@
 package org.datatransferproject.cloud.google;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
-import java.io.IOException;
-import java.util.UUID;
-import jdk.nashorn.internal.scripts.JO;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
 
 public class GoogleCloudIdempotentImportExecutorTest {
 
