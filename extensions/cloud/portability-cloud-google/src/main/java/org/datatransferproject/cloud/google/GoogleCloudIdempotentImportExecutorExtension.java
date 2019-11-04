@@ -14,13 +14,12 @@ public class GoogleCloudIdempotentImportExecutorExtension implements
   private Datastore datastore;
 
   @Override
-  public IdempotentImportExecutor getIdempotentImportExecutor(Monitor monitor) throws IOException {
+  public IdempotentImportExecutor getIdempotentImportExecutor(Monitor monitor) {
     try {
-
       return new GoogleCloudIdempotentImportExecutor(getDatastore(), monitor);
     } catch (IOException e) {
       monitor.severe(() -> "Error initializing datastore: " + e);
-      throw e;
+      throw new IllegalStateException(e);
     }
   }
 

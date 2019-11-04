@@ -7,6 +7,8 @@ import org.datatransferproject.api.launcher.Monitor;
 
 public class IdempotentImportExecutorLoader {
 
+  private IdempotentImportExecutorLoader() { }
+
   public static IdempotentImportExecutor load(Monitor monitor) {
     ImmutableList.Builder<IdempotentImportExecutorExtension> builder = ImmutableList.builder();
     ServiceLoader.load(IdempotentImportExecutorExtension.class)
@@ -18,16 +20,9 @@ public class IdempotentImportExecutorLoader {
     } else if (executors.size() == 1) {
       IdempotentImportExecutorExtension extension = executors.get(0);
       extension.initialize();
-      try {
-        return extension.getIdempotentImportExecutor(monitor);
-      } catch (IOException e) {
-        throw new IllegalStateException("Cannot get IdempotentImportExecutor");
-      }
+      return extension.getIdempotentImportExecutor(monitor);
     } else {
       throw new IllegalStateException("Cannot load multiple IdempotentImportExecutors");
     }
-  }
-
-  private IdempotentImportExecutorLoader() {
   }
 }
