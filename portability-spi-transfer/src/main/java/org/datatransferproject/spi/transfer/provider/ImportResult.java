@@ -3,9 +3,7 @@ package org.datatransferproject.spi.transfer.provider;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * The result of an item import operation, after retries.
- */
+/** The result of an item import operation, after retries. */
 public class ImportResult {
 
   public static final ImportResult OK = new ImportResult(ResultType.OK);
@@ -47,23 +45,17 @@ public class ImportResult {
     this.counts = Optional.ofNullable(counts);
   }
 
-  /**
-   * Returns the type of result.
-   */
+  /** Returns the type of result. */
   public ResultType getType() {
     return type;
   }
 
-  /**
-   * Returns the throwable or an empty optional if no throwable is present.
-   */
+  /** Returns the throwable or an empty optional if no throwable is present. */
   public Optional<Throwable> getThrowable() {
     return throwable;
   }
 
-  /**
-   * Returns the number of imported items or an empty optional if no mapping is present.
-   */
+  /** Returns the number of imported items or an empty optional if no mapping is present. */
   public Optional<Map<String, Integer>> getCounts() {
     return counts;
   }
@@ -76,18 +68,12 @@ public class ImportResult {
     return new ImportResult(type, throwable, newCounts);
   }
 
-  /**
-   * Result types.
-   */
+  /** Result types. */
   public enum ResultType {
-    /**
-     * Indicates a successful import.
-     */
+    /** Indicates a successful import. */
     OK,
 
-    /**
-     * Indicates an unrecoverable error was raised.
-     */
+    /** Indicates an unrecoverable error was raised. */
     ERROR
   }
 }
