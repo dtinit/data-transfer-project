@@ -19,12 +19,17 @@ package org.datatransferproject.types.common.models.videos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 import java.util.Collection;
 import java.util.Objects;
 
 public class VideosContainerResource extends ContainerResource {
+  private static final String VIDEOS_COUNT_DATA_NAME = "videosCount";
+  private static final String ALBUMS_COUNT_DATA_NAME = "albumsCount";
+
   private final Collection<VideoAlbum> albums;
   private final Collection<VideoObject> videos;
 
@@ -42,6 +47,14 @@ public class VideosContainerResource extends ContainerResource {
 
   public Collection<VideoObject> getVideos() {
     return videos;
+  }
+
+  @Override
+  public Map<String, Integer> getCounts() {
+    return new ImmutableMap.Builder<String, Integer>()
+        .put(VIDEOS_COUNT_DATA_NAME, videos.size())
+        .put(ALBUMS_COUNT_DATA_NAME, albums.size())
+        .build();
   }
 
   @Override

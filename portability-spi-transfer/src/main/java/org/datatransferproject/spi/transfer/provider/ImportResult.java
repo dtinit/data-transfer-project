@@ -44,7 +44,7 @@ public class ImportResult {
   public ImportResult(ResultType type, Optional<Throwable> throwable, Map<String, Integer> counts) {
     this.type = type;
     this.throwable = throwable;
-    this.counts = Optional.of(counts);
+    this.counts = Optional.ofNullable(counts);
   }
 
   /**
