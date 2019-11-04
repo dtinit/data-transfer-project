@@ -142,7 +142,7 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
     if (INSTANCE == null) {
       INSTANCE = new GoogleDtpInternalMetricRecorder(
           GoogleCredentials.getApplicationDefault(),
-          GoogleCloudExtensionModule.getProjectId());
+          GoogleCloudUtils.getProjectId());
     }
 
     return INSTANCE;

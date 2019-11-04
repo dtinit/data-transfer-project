@@ -37,16 +37,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
@@ -201,7 +198,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     List<Entity> entities = new ArrayList<>();
     for (ErrorDetail errorDetail : errors) {
       Key key = getErrorKey(jobId, errorDetail.id());
-      entities.add(createEntityBuilder(
+      entities.add(GoogleCloudUtils.createEntityBuilder(
           key,
           ImmutableMap.of(
               JSON_DATA_FIELD,
@@ -358,7 +355,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
         oldCount = Math.toIntExact(current.getLong(COUNTS_FIELD));
       }
       transaction.put(
-          createEntityBuilder(
+          GoogleCloudUtils.createEntityBuilder(
                   key, ImmutableMap.of(COUNTS_FIELD, oldCount + newCounts.get(dataType)))
               .build());
     }
@@ -386,41 +383,17 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     return googleTempFileStore.getStream(jobId, key);
   }
 
-  private Entity.Builder createEntityBuilder(Key key, Map<String, Object> data) throws IOException {
-    Entity.Builder builder = Entity.newBuilder(key);
-
-    for (Entry<String, Object> entry : data.entrySet()) {
-      if (entry.getValue() instanceof String) {
-        builder.set(entry.getKey(), (String) entry.getValue()); // StringValue
-      } else if (entry.getValue() instanceof Integer) {
-        builder.set(entry.getKey(), (Integer) entry.getValue()); // LongValue
-      } else if (entry.getValue() instanceof Double) {
-        builder.set(entry.getKey(), (Double) entry.getValue()); // DoubleValue
-      } else if (entry.getValue() instanceof Boolean) {
-        builder.set(entry.getKey(), (Boolean) entry.getValue()); // BooleanValue
-      } else if (entry.getValue() instanceof Timestamp) {
-        builder.set(entry.getKey(), (Timestamp) entry.getValue()); // TimestampValue
-      } else {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
-          out.writeObject(entry.getValue());
-        }
-        builder.set(entry.getKey(), Blob.copyFrom(bos.toByteArray())); // BlobValue
-      }
-    }
-    return builder;
-  }
-
   private Entity createNewEntity(UUID jobId, Map<String, Object> data) throws IOException {
     Timestamp createdTime = Timestamp.now();
 
-    return createEntityBuilder(getJobKey(jobId), data).set(CREATED_FIELD, createdTime)
+    return GoogleCloudUtils
+        .createEntityBuilder(getJobKey(jobId), data).set(CREATED_FIELD, createdTime)
         .set(LAST_UPDATE_FIELD, createdTime).build();
   }
 
   private Entity createUpdatedEntity(Key key, Map<String, Object> data)
       throws IOException {
-    return createEntityBuilder(key, data).set(LAST_UPDATE_FIELD, Timestamp.now()).build();
+    return GoogleCloudUtils.createEntityBuilder(key, data).set(LAST_UPDATE_FIELD, Timestamp.now()).build();
   }
 
   private Key getJobKey(UUID jobId) {
