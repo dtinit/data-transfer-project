@@ -1,24 +1,20 @@
 package org.datatransferproject.cloud.google;
 
-import static java.lang.String.format;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreException;
-import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.Query;
-import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.*;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
-import com.google.cloud.datastore.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -26,9 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
+
+import static java.lang.String.format;
 
 public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExecutor {
 
@@ -112,6 +107,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
       if (errors.containsKey(idempotentId)) {
         // if the errors contain this key, that means the ID
         transaction.delete(getErrorKey(idempotentId, jobId));
+        errors.remove(idempotentId);
       }
       transaction.commit();
     } catch (DatastoreException e) {

@@ -69,6 +69,7 @@ public class GoogleCloudIdempotentImportExecutorTest {
     // now execute a successful import of id4
     googleExecutor.executeAndSwallowIOExceptions("id4", ITEM_NAME, () -> "idempotentId4");
     assertEquals(googleExecutor.getCachedValue("id4"), "idempotentId4");
+    assertEquals(googleExecutor.getErrors().size(), 0);
 
     // reset the jobId to trigger another read from datastore
     googleExecutor.setJobId(JOB_ID);
