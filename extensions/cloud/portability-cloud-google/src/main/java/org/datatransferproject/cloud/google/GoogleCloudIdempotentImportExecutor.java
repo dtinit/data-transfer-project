@@ -13,6 +13,7 @@ import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.Transaction;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -110,7 +111,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
       transaction.put(createResultEntity(idempotentId, result));
       if (errors.containsKey(idempotentId)) {
         // if the errors contain this key, that means the ID
-        transaction.delete(getErrorKey(idempotentId));
+        transaction.delete(getErrorKey(idempotentId, jobId));
       }
       transaction.commit();
     } catch (DatastoreException e) {
@@ -172,7 +173,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     while (results.hasNext()) {
       Entity result = results.next();
       dataStoreKnownValues.put(
-          result.getString(IDEMPOTENT_ID_FIELD), result.getBlob(RESULTS_FIELD));
+          result.getString(IDEMPOTENT_ID_FIELD), result.getString(RESULTS_FIELD));
     }
 
     return dataStoreKnownValues;
@@ -182,7 +183,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     Map<String, ErrorDetail> datastoreKnownErrors = new HashMap<>();
     Query<Entity> query =
         Query.newEntityQueryBuilder()
-            .setKind(IDEMPOTENT_RESULTS_KIND)
+            .setKind(IDEMPONTENT_ERRORS_KIND)
             .setFilter(CompositeFilter.and(PropertyFilter.eq(JOB_ID_FIELD, String.valueOf(jobId))))
             .build();
     QueryResults<Entity> results = datastore.run(query);
@@ -202,16 +203,24 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     return datastoreKnownErrors;
   }
 
+
   private <T extends Serializable> Entity createResultEntity(String idempotentId, T result)
       throws IOException {
+    return createResultEntity(idempotentId, this.jobId, result);
+  }
+
+  @VisibleForTesting
+  <T extends Serializable> Entity createResultEntity(String idempotentId, UUID jobId, T result)
+      throws IOException {
     return GoogleCloudUtils.createEntityBuilder(
-            getResultsKey(idempotentId),
-            ImmutableMap.of(
-                RESULTS_FIELD, result, JOB_ID_FIELD, jobId, IDEMPOTENT_ID_FIELD, idempotentId))
+        getResultsKey(idempotentId, jobId),
+        ImmutableMap.of(
+            RESULTS_FIELD, result, JOB_ID_FIELD, jobId.toString(), IDEMPOTENT_ID_FIELD,
+            idempotentId))
         .build();
   }
 
-  private Key getResultsKey(String idempotentId) {
+  private Key getResultsKey(String idempotentId, UUID jobId) {
     return datastore
         .newKeyFactory()
         .setKind(IDEMPOTENT_RESULTS_KIND)
@@ -219,19 +228,25 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   }
 
   private Entity createErrorEntity(String idempotentId, ErrorDetail error) throws IOException {
+    return createErrorEntity(idempotentId, this.jobId, error);
+  }
+
+  @VisibleForTesting
+  Entity createErrorEntity(String idempotentId, UUID jobId, ErrorDetail error)
+      throws IOException {
     return GoogleCloudUtils.createEntityBuilder(
-            getResultsKey(idempotentId),
-            ImmutableMap.of(
-                ERROR_FIELD,
-                objectMapper.writeValueAsString(error),
-                JOB_ID_FIELD,
-                jobId,
-                IDEMPOTENT_ID_FIELD,
-                idempotentId))
+        getErrorKey(idempotentId, jobId),
+        ImmutableMap.of(
+            ERROR_FIELD,
+            objectMapper.writeValueAsString(error),
+            JOB_ID_FIELD,
+            jobId.toString(),
+            IDEMPOTENT_ID_FIELD,
+            idempotentId))
         .build();
   }
 
-  private Key getErrorKey(String idempotentId) {
+  private Key getErrorKey(String idempotentId, UUID jobId) {
     return datastore
         .newKeyFactory()
         .setKind(IDEMPONTENT_ERRORS_KIND)
