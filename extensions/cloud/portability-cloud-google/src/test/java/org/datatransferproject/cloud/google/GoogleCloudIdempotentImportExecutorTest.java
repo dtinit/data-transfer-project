@@ -1,6 +1,7 @@
 package org.datatransferproject.cloud.google;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.datastore.Datastore;
@@ -19,11 +20,11 @@ public class GoogleCloudIdempotentImportExecutorTest {
 
   private static final String ITEM_NAME = "item1";
   private static final Monitor monitor = Mockito.mock(Monitor.class);
-
   private static final UUID JOB_ID = UUID.randomUUID();
+  private static final UUID JOB_ID_2 = UUID.randomUUID();
+
   private static LocalDatastoreHelper localDatastoreHelper;
   private static Datastore datastore;
-  private static GoogleTempFileStore tempFileStore = Mockito.mock(GoogleTempFileStore.class);
   private static GoogleCloudIdempotentImportExecutor googleExecutor;
 
   @Before
@@ -54,6 +55,9 @@ public class GoogleCloudIdempotentImportExecutorTest {
     assertEquals(googleExecutor.getErrors().size(), 1);
     assertTrue(googleExecutor.getErrors().contains(
         ErrorDetail.builder().setId("id4").setTitle("title").setException("error").build()));
+
+    // we shouldn't load any items belonging to JOB_ID_2
+    assertFalse(googleExecutor.isKeyCached("id1_job2"));
   }
 
   @Test
@@ -79,6 +83,8 @@ public class GoogleCloudIdempotentImportExecutorTest {
     t.put(googleExecutor.createResultEntity("id3", JOB_ID, "idempotentId3"));
     t.put(googleExecutor.createErrorEntity("id4", JOB_ID,
         ErrorDetail.builder().setId("id4").setTitle("title").setException("error").build()));
+
+    t.put(googleExecutor.createResultEntity("id1_job2", JOB_ID_2, "idempotentId1_job2"));
     t.commit();
   }
 }
