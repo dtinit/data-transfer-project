@@ -152,6 +152,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     return ImmutableList.copyOf(errors.values());
   }
 
+  // In non-tests setJobId is only ever called once per executor, so the initialization of
+  // knownValues and errors only happens once
   @Override
   public void setJobId(UUID jobId) {
     Preconditions.checkNotNull(jobId);
