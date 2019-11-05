@@ -18,11 +18,15 @@ package org.datatransferproject.transfer.microsoft.common;
 
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.RefreshTokenRequest;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import java.io.IOException;
 
 public class MicrosoftCredentialFactory {
   // TODO: Determine correct duration in production
@@ -62,5 +66,18 @@ public class MicrosoftCredentialFactory {
         .setAccessToken(authData.getAccessToken())
         .setRefreshToken(authData.getRefreshToken())
         .setExpiresInSeconds(EXPIRE_TIME_IN_SECONDS);
+  }
+
+  /**
+  * Refreshes and updates the given credential
+  */
+  public Credential refreshCredential(Credential credential) throws IOException {
+    TokenResponse tokenResponse = new RefreshTokenRequest(httpTransport, jsonFactory,
+        new GenericUrl(credential.getTokenServerEncodedUrl()),
+        credential.getRefreshToken())
+        .setClientAuthentication(credential.getClientAuthentication())
+        .setRequestInitializer(credential.getRequestInitializer()).execute();
+
+    return credential.setFromTokenResponse(tokenResponse);
   }
 }

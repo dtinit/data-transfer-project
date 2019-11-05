@@ -28,10 +28,12 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 import org.datatransferproject.api.launcher.Monitor;
+
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -59,6 +61,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
+  private final MicrosoftCredentialFactory credentialFactory;
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
@@ -71,7 +74,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       OkHttpClient client,
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
-      Monitor monitor) {
+      Monitor monitor,
+      MicrosoftCredentialFactory credentialFactory) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
 
     // first param is the folder id, second param is the file name
@@ -84,6 +88,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
+    this.credentialFactory = credentialFactory;
   }
 
   @Override
@@ -186,6 +191,17 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         int code = response.code();
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
+        }
+        if (code == 401){
+            // If there was an unauthorized error, then try refreshing the creds
+            credentialFactory.refreshCredential(credentialFactory.createCredential(authData));
+            monitor.info(() -> "Refreshed authorization token successfuly");
+
+            Response newResponse = client.newCall(requestBuilder.build()).execute();
+            if (newResponse.code() < 200 || newResponse.code() > 299){
+              throw new IOException("Got error code even after refreshing: " + code + " message "
+                + response.message());
+            }
         }
         // TODO return photo ID
         return "fakeId";

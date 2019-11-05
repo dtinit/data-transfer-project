@@ -124,7 +124,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
         CALENDAR,
         new MicrosoftCalendarImporter(BASE_GRAPH_URL, client, mapper, transformerService));
     importBuilder.put(
-        PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor));
+        PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
+          credentialFactory));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
