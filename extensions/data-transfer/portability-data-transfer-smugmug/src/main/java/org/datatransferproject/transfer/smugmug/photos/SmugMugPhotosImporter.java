@@ -47,6 +47,7 @@ public class SmugMugPhotosImporter
   private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
+  private static final String ROOT_ALBUM = "Transferred Photos";
 
   private SmugMugInterface smugMugInterface;
 
@@ -115,8 +116,19 @@ public class SmugMugPhotosImporter
       IdempotentImportExecutor idempotentExecutor,
       PhotoModel inputPhoto,
       SmugMugInterface smugMugInterface)
-      throws IOException {
-    String newAlbumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+      throws Exception {
+    String newAlbumUri;
+    if (inputPhoto.getAlbumId() == null){
+      // If the photo is not in an album, create the "root album", or just get the ID if it
+      // already exists
+      newAlbumUri = idempotentExecutor.executeAndSwallowIOExceptions(
+        ROOT_ALBUM,
+        ROOT_ALBUM,
+        () -> smugMugInterface.createAlbum(ROOT_ALBUM).getUri()
+      );
+    } else {
+      newAlbumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    }
     checkState(
         !Strings.isNullOrEmpty(newAlbumUri),
         "Cached album URI for %s is null",

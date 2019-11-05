@@ -21,25 +21,25 @@ import static org.junit.Assert.assertTrue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.Test;
 
 public class LocalJobStoreTest {
 
   private final String ITEM_NAME = "item1";
-
+  private final UUID jobId = UUID.randomUUID();
   private final LocalJobStore localJobStore = new LocalJobStore();
 
   @Test
   public void addingNullDoesNotChangeTheCurrentCountsTest() {
-    localJobStore.addCounts(null);
-    assertTrue(localJobStore.getCounts().isEmpty());
+    localJobStore.addCounts(jobId, null);
+    assertTrue(localJobStore.getCounts(jobId).isEmpty());
   }
 
   @Test
   public void canAddNewKeysToTheCurrentCountsTest() {
     addItemToJobStoreCounts(ITEM_NAME);
-
-    final Map<String, Integer> counts = localJobStore.getCounts();
+    final Map<String, Integer> counts = localJobStore.getCounts(jobId);
     Truth.assertThat(counts.size()).isEqualTo(1);
     Truth.assertThat(counts.get(ITEM_NAME)).isEqualTo(1);
   }
@@ -49,14 +49,13 @@ public class LocalJobStoreTest {
     addItemToJobStoreCounts(ITEM_NAME);
     addItemToJobStoreCounts(ITEM_NAME);
 
-    final Map<String, Integer> counts = localJobStore.getCounts();
+    final Map<String, Integer> counts = localJobStore.getCounts(jobId);
     Truth.assertThat(counts.size()).isEqualTo(1);
     Truth.assertThat(counts.get(ITEM_NAME)).isEqualTo(2);
   }
 
   private void addItemToJobStoreCounts(final String itemName) {
-    localJobStore.addCounts(new ImmutableMap.Builder<String, Integer>()
-        .put(itemName, 1)
-        .build());
+    localJobStore.addCounts(
+        jobId, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
   }
 }
