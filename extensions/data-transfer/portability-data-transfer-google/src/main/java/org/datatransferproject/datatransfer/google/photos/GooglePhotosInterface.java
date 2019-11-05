@@ -162,20 +162,11 @@ public class GooglePhotosInterface {
     try {
       response = getRequest.execute();
     } catch (HttpResponseException e) {
-      // if the response is "unauthorized" and we've successfully refreshed the token, try the
-      // request again
-      if (e.getStatusCode() == 401 && credential.refreshToken()) {
-        // if the second attempt throws an error, then something else is wrong, and we bubble up the
-        // response errors
-        response =
-            requestFactory
-                .buildGetRequest(new GenericUrl(url + "?" + generateParamsString(parameters)))
-                .execute();
-      } else {
-        // something else is wrong, bubble up the error
-        throw new IOException(
-            "Bad status code: " + e.getStatusCode() + " error: " + e.getStatusMessage());
-      }
+      response =
+          handleHttpResponseException(
+              requestFactory.buildGetRequest(
+                  new GenericUrl(url + "?" + generateParamsString(parameters))),
+              e);
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
@@ -197,26 +188,11 @@ public class GooglePhotosInterface {
     try {
       response = postRequest.execute();
     } catch (HttpResponseException e) {
-      // if the response is "unauthorized", refresh the token and try the request again
-      if (e.getStatusCode() == 401) {
-        monitor.info(() -> "Attempting to refresh authorization token");
-        // if the credential refresh failed, let the error bubble up via the IOException that gets
-        // thrown
-        credential = credentialFactory.refreshCredential(credential);
-        monitor.info(() -> "Refreshed authorization token successfuly");
-
-        // if the second attempt throws an error, then something else is wrong, and we bubble up the
-        // response errors
-        response =
-            requestFactory
-                .buildPostRequest(
-                    new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent)
-                .execute();
-      } else {
-        // something else is wrong, bubble up the error
-        throw new IOException(
-            "Bad status code: " + e.getStatusCode() + " error: " + e.getStatusMessage());
-      }
+      response =
+          handleHttpResponseException(
+              requestFactory.buildPostRequest(
+                  new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
+              e);
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
@@ -226,6 +202,31 @@ public class GooglePhotosInterface {
       return (T) result;
     } else {
       return objectMapper.readValue(result, clazz);
+    }
+  }
+
+  private HttpResponse handleHttpResponseException(HttpRequest httpRequest, HttpResponseException e)
+      throws IOException {
+    // if the response is "unauthorized", refresh the token and try the request again
+    if (e.getStatusCode() == 401) {
+      monitor.info(() -> "Attempting to refresh authorization token");
+      // if the credential refresh failed, let the error bubble up via the IOException that gets
+      // thrown
+      credential = credentialFactory.refreshCredential(credential);
+      monitor.info(() -> "Refreshed authorization token successfuly");
+
+      // if the second attempt throws an error, then something else is wrong, and we bubble up the
+      // response errors
+      return httpRequest.execute();
+    } else {
+      // something else is wrong, bubble up the error
+      throw new IOException(
+          "Bad status code: "
+              + e.getStatusCode()
+              + " Error: '"
+              + e.getStatusMessage()
+              + "' Content: "
+              + e.getContent());
     }
   }
 
