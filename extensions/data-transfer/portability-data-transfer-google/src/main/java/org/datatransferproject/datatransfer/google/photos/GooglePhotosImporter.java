@@ -113,7 +113,13 @@ public class GooglePhotosImporter
       throws IOException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    googleAlbum.setTitle(COPY_PREFIX + inputAlbum.getName());
+    String title = COPY_PREFIX + inputAlbum.getName();
+    // Album titles are restricted to 500 characters
+    // https://developers.google.com/photos/library/guides/manage-albums#creating-new-album
+    if (title.length() > 500) {
+      title = title.substring(0, 497) + "...";
+    }
+    googleAlbum.setTitle(title);
 
     GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
@@ -141,12 +147,7 @@ public class GooglePhotosImporter
 
     String uploadToken = getOrCreatePhotosInterface(authData).uploadPhotoContent(inputStream);
 
-    String description;
-    if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
-      description = "";
-    } else {
-      description = COPY_PREFIX + inputPhoto.getDescription();
-    }
+    String description = getPhotoDescription(inputPhoto);
     NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
 
     String albumId;
@@ -168,6 +169,21 @@ public class GooglePhotosImporter
         .getResults()[0]
         .getMediaItem()
         .getId();
+  }
+
+  private String getPhotoDescription(PhotoModel inputPhoto) {
+    String description;
+    if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
+      description = "";
+    } else {
+      description = COPY_PREFIX + inputPhoto.getDescription();
+      // Descriptions are restricted to 1000 characters
+      // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
+      if (description.length() > 1000) {
+        description = description.substring(0, 997) + "...";
+      }
+    }
+    return description;
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
