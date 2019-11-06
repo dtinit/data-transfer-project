@@ -164,8 +164,9 @@ public class GooglePhotosInterface {
     } catch (HttpResponseException e) {
       response =
           handleHttpResponseException(
-              requestFactory.buildGetRequest(
-                  new GenericUrl(url + "?" + generateParamsString(parameters))),
+              () ->
+                  requestFactory.buildGetRequest(
+                      new GenericUrl(url + "?" + generateParamsString(parameters))),
               e);
     }
 
@@ -190,8 +191,9 @@ public class GooglePhotosInterface {
     } catch (HttpResponseException e) {
       response =
           handleHttpResponseException(
-              requestFactory.buildPostRequest(
-                  new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
+              () ->
+                  requestFactory.buildPostRequest(
+                      new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
               e);
     }
 
@@ -205,7 +207,7 @@ public class GooglePhotosInterface {
     }
   }
 
-  private HttpResponse handleHttpResponseException(HttpRequest httpRequest, HttpResponseException e)
+  private HttpResponse handleHttpResponseException(SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
       throws IOException {
     // if the response is "unauthorized", refresh the token and try the request again
     if (e.getStatusCode() == 401) {
@@ -217,7 +219,7 @@ public class GooglePhotosInterface {
 
       // if the second attempt throws an error, then something else is wrong, and we bubble up the
       // response errors
-      return httpRequest.execute();
+      return httpRequest.getWithIO().execute();
     } else {
       // something else is wrong, bubble up the error
       throw new IOException(
@@ -230,7 +232,7 @@ public class GooglePhotosInterface {
     }
   }
 
-  private String generateParamsString(Optional<Map<String, String>> params) throws IOException {
+  private String generateParamsString(Optional<Map<String, String>> params) {
     Map<String, String> updatedParams = new ArrayMap<>();
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
@@ -258,5 +260,9 @@ public class GooglePhotosInterface {
     TypeReference<HashMap<String, Object>> typeRef =
         new TypeReference<HashMap<String, Object>>() {};
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
+  }
+
+  private interface SupplierWithIO<T> {
+    T getWithIO() throws IOException;
   }
 }
