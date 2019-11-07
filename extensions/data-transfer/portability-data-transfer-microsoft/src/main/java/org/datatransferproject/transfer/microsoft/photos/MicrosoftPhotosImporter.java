@@ -199,7 +199,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
             requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
             Response newResponse = client.newCall(requestBuilder.build()).execute();
-            code = newResponse.code()
+            code = newResponse.code();
         }
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
