@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.microsoft.photos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Strings;
+import com.google.common.base.Preconditions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -201,16 +202,14 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
             requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
             Response newResponse = client.newCall(requestBuilder.build()).execute();
             code = newResponse.code();
-            body = newResponse.body();
+            responseBody = newResponse.body();
         }
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
         }
 
         // Extract photo ID from response body
-        if (body == null) {
-          throw new IOException("Got null body");
-        }
+        Preconditions.checkState(body != null, "Got Null Body when creating photo %s", photo);
         Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
         String photoId = (String) responseData.get("id");
         checkState(!Strings.isNullOrEmpty(photoId),
