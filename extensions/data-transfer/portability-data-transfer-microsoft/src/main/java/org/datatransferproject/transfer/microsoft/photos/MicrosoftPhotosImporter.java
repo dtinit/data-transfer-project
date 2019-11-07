@@ -190,8 +190,10 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       // PUT the stream
       requestBuilder.put(body);
 
+      ResponseBody responseBody;
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
+        responseBody = response.body();
         if (code == 401){
             // If there was an unauthorized error, then try refreshing the creds
             credentialFactory.refreshCredential(credential);
@@ -204,8 +206,16 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
         }
-        // TODO return photo ID
-        return "fakeId";
+
+        // Extract photo ID from response body
+        if (body == null) {
+          throw new IOException("Got null body");
+        }
+        Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
+        String photoId = (String) responseData.get("id");
+        checkState(!Strings.isNullOrEmpty(photoId),
+            "Expected id value to be present in %s", responseData);
+        return photoId;
       }
     } finally {
       if (inputStream != null) {
