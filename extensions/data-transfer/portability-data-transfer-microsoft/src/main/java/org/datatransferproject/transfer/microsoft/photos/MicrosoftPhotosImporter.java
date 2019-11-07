@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Strings;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -62,7 +63,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
-  private final Credential credential;
+  private Credential credential;
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
@@ -156,7 +157,6 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private String importSinglePhoto(
       PhotoModel photo,
       UUID jobId,
-      Credential credential,
       IdempotentImportExecutor idempotentImportExecutor)
       throws IOException {
     InputStream inputStream = null;
@@ -200,7 +200,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
             credentialFactory.refreshCredential(credential);
             monitor.info(() -> "Refreshed authorization token successfuly");
 
-            requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken())
+            requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
             Response newResponse = client.newCall(requestBuilder.build()).execute();
             if (newResponse.code() < 200 || newResponse.code() > 299){
               throw new IOException("Got error code even after refreshing: " + code + " message "
@@ -223,7 +223,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData){
     if (this.credential == null){
-      this.credential = this.credentialFactory.createCredential(authdata);
+      this.credential = this.credentialFactory.createCredential(authData);
     }
     return this.credential;
   }
