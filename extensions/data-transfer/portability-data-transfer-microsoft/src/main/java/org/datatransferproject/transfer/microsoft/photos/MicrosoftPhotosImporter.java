@@ -190,10 +190,9 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       // PUT the stream
       requestBuilder.put(body);
 
-      ResponseBody responseBody;
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
-        responseBody = response.body();
+        ResponseBody responseBody = response.body();
         if (code == 401){
             // If there was an unauthorized error, then try refreshing the creds
             credentialFactory.refreshCredential(credential);
@@ -202,6 +201,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
             requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
             Response newResponse = client.newCall(requestBuilder.build()).execute();
             code = newResponse.code();
+            body = newResponse.body();
         }
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
