@@ -192,9 +192,6 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
-        if (code < 200 || code > 299) {
-          throw new IOException("Got error code: " + code + " message " + response.message());
-        }
         if (code == 401){
             // If there was an unauthorized error, then try refreshing the creds
             credentialFactory.refreshCredential(credential);
@@ -202,10 +199,10 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
             requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
             Response newResponse = client.newCall(requestBuilder.build()).execute();
-            if (newResponse.code() < 200 || newResponse.code() > 299){
-              throw new IOException("Got error code even after refreshing: " + code + " message "
-                + response.message());
-            }
+            code = newResponse.code()
+        }
+        if (code < 200 || code > 299) {
+          throw new IOException("Got error code: " + code + " message " + response.message());
         }
         // TODO return photo ID
         return "fakeId";
