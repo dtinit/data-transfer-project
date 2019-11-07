@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Strings;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -28,10 +29,12 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 import org.datatransferproject.api.launcher.Monitor;
+
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -59,6 +62,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
+  private final MicrosoftCredentialFactory credentialFactory;
+  private Credential credential;
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
@@ -71,7 +76,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       OkHttpClient client,
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
-      Monitor monitor) {
+      Monitor monitor,
+      MicrosoftCredentialFactory credentialFactory) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
 
     // first param is the folder id, second param is the file name
@@ -84,6 +90,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
+    this.credentialFactory = credentialFactory;
+    this.credential = null;
   }
 
   @Override
@@ -93,11 +101,13 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       TokensAndUrlAuthData authData,
       PhotosContainerResource resource)
       throws Exception {
+    // Ensure credential is populated
+    getOrCreateCredential(authData);
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> createOneDriveFolder(album, authData));
+          album.getId(), album.getName(), () -> createOneDriveFolder(album));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
@@ -106,15 +116,14 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
           Integer.toString(photoModel.hashCode()),
           photoModel.getTitle(),
           () -> {
-            return importSinglePhoto(photoModel, jobId, authData, idempotentImportExecutor);
+            return importSinglePhoto(photoModel, jobId, idempotentImportExecutor);
           });
     }
     return ImportResult.OK;
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(
-      PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
+  private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", album.getName());
@@ -122,7 +131,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
-    requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+    requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
     requestBuilder.post(
         RequestBody.create(
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
@@ -148,7 +157,6 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private String importSinglePhoto(
       PhotoModel photo,
       UUID jobId,
-      TokensAndUrlAuthData authData,
       IdempotentImportExecutor idempotentImportExecutor)
       throws IOException {
     InputStream inputStream = null;
@@ -173,7 +181,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       }
 
       Request.Builder requestBuilder = new Request.Builder().url(uploadUrl);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+      requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
       MediaType contentType = MediaType.parse(photo.getMediaType());
 
@@ -184,6 +192,15 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
+        if (code == 401){
+            // If there was an unauthorized error, then try refreshing the creds
+            credentialFactory.refreshCredential(credential);
+            monitor.info(() -> "Refreshed authorization token successfuly");
+
+            requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+            Response newResponse = client.newCall(requestBuilder.build()).execute();
+            code = newResponse.code();
+        }
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
         }
@@ -199,6 +216,13 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         }
       }
     }
+  }
+
+  private Credential getOrCreateCredential(TokensAndUrlAuthData authData){
+    if (this.credential == null){
+      this.credential = this.credentialFactory.createCredential(authData);
+    }
+    return this.credential;
   }
 
   private static class StreamingBody extends RequestBody {
