@@ -19,6 +19,13 @@ import static java.lang.String.format;
 
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
+import java.io.IOException;
+import java.time.Clock;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
@@ -36,15 +43,6 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
-import org.datatransferproject.transfer.DestinationMemoryFullException;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.time.Clock;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /** Implementation of {@link InMemoryDataCopier}. */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
@@ -85,11 +83,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-   public Collection<ErrorDetail> copy(
-       AuthData exportAuthData,
-       AuthData importAuthData,
-       UUID jobId,
-       Optional<ExportInformation> exportInfo)
+  public Collection<ErrorDetail> copy(
+      AuthData exportAuthData,
+      AuthData importAuthData,
+      UUID jobId,
+      Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
     idempotentImportExecutor.setJobId(jobId);
     return copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
@@ -109,11 +107,12 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      Optional<ExportInformation> exportInformation) throws CopyException {
+      Optional<ExportInformation> exportInformation)
+      throws CopyException {
 
     String jobIdPrefix = "Job " + jobId + ": ";
-    monitor.debug(
-        () -> jobIdPrefix + "Copy iteration: " + COPY_ITERATION_COUNTER.incrementAndGet());
+    final int i = COPY_ITERATION_COUNTER.incrementAndGet();
+    monitor.debug(() -> jobIdPrefix + "Copy iteration: " + i);
 
     RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
 
@@ -123,11 +122,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     monitor.debug(() -> jobIdPrefix + "Starting export", EventCode.COPIER_STARTED_EXPORT);
     CallableExporter callableExporter =
         new CallableExporter(
-            exporterProvider,
-            jobId,
-            exportAuthData,
-            exportInformation,
-            metricRecorder);
+            exporterProvider, jobId, exportAuthData, exportInformation, metricRecorder);
     RetryingCallable<ExportResult> retryingExporter =
         new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
     ExportResult<?> exportResult;
@@ -138,7 +133,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       exportSuccess = exportResult.getType() != ExportResult.ResultType.ERROR;
     } catch (RetryException | RuntimeException e) {
       throw new CopyException(jobIdPrefix + "Error happened during export", e);
-    } finally{
+    } finally {
       metricRecorder.exportPageFinished(
           JobMetadata.getDataType(),
           JobMetadata.getExportService(),
@@ -166,15 +161,19 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         ImportResult importResult = retryingImporter.call();
         importSuccess = importResult.getType() == ImportResult.ResultType.OK;
         if (importSuccess) {
-          jobStore.addCounts(importResult.getCounts().orElse(null));
+          try {
+            jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
+          } catch (IOException e) {
+            monitor.debug(() -> jobIdPrefix + "Unable to add counts to job: ", e);
+          }
         }
       } catch (RetryException | RuntimeException e) {
         monitor.severe(() -> format("Got error importing data: %s", e), e);
-        if (e.getClass() == RetryException.class &&
-            e.getCause().getClass() == DestinationMemoryFullException.class){
+        if (e.getClass() == RetryException.class
+            && e.getCause().getClass() == DestinationMemoryFullException.class) {
           throw (DestinationMemoryFullException) e.getCause();
         }
-      } finally{
+      } finally {
         metricRecorder.importPageFinished(
             JobMetadata.getDataType(),
             JobMetadata.getImportService(),
@@ -195,18 +194,22 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             jobId,
             exportAuthData,
             importAuthData,
-            Optional.of(new ExportInformation(
-                continuationData.getPaginationData(),
-                exportInformation.isPresent()
-                    ? exportInformation.get().getContainerResource()
-                    : null)));
+            Optional.of(
+                new ExportInformation(
+                    continuationData.getPaginationData(),
+                    exportInformation.isPresent()
+                        ? exportInformation.get().getContainerResource()
+                        : null)));
       }
 
       // Start processing sub-resources
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
-          copyHelper(jobId, exportAuthData, importAuthData,
+          copyHelper(
+              jobId,
+              exportAuthData,
+              importAuthData,
               Optional.of(new ExportInformation(null, resource)));
         }
       }

@@ -51,9 +51,6 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
 
   // The value for the 'cloud' flag when hosting on Google Cloud Platform.
   private static final String GOOGLE_CLOUD_NAME = "GOOGLE";
-  // Environment variable where GCP project ID is stored. The value is set in
-  // config/k8s/api-deployment.yaml.
-  private static final String GCP_PROJECT_ID_ENV_VAR = "GOOGLE_PROJECT_ID";
   // Environment variable for path where GCP credentials are stored. The value of the environment
   // variable (i.e. the path to creds) is configured in config/k8s/api-deployment.yaml. The creds
   // themselves are exposed as a Kubernetes secret.
@@ -180,7 +177,7 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
     validateUsingGoogle(cloud);
     String projectId;
     try {
-      projectId = getProjectId();
+      projectId = GoogleCloudUtils.getProjectId();
     } catch (NullPointerException e) {
       throw new IllegalArgumentException(
           "Need to specify a project ID when using Google Cloud. "
@@ -193,10 +190,6 @@ final class GoogleCloudExtensionModule extends CloudExtensionModule {
             + "ID when using Google Cloud. This should be exposed as an environment variable by "
             + "Kubernetes, see k8s/api-deployment.yaml");
     return projectId;
-  }
-
-  static String getProjectId() {
-    return System.getenv(GCP_PROJECT_ID_ENV_VAR);
   }
 
   @Provides

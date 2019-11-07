@@ -18,4 +18,6 @@ package org.datatransferproject.types.transfer.auth;
 import org.datatransferproject.types.common.PortableType;
 
 /** Base type for authentication data. */
-public abstract class AuthData extends PortableType {}
+public abstract class AuthData extends PortableType {
+  public abstract String getToken();
+}
