@@ -62,6 +62,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final Credential credential;
 
   private final String createFolderUrl;
   private final String uploadPhotoUrlTemplate;
@@ -89,6 +90,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     this.jobStore = jobStore;
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
+    this.credential = null;
   }
 
   @Override
@@ -98,11 +100,13 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       TokensAndUrlAuthData authData,
       PhotosContainerResource resource)
       throws Exception {
+    // Ensure credential is populated
+    getOrCreateCredential(authData);
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> createOneDriveFolder(album, authData));
+          album.getId(), album.getName(), () -> createOneDriveFolder(album));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
@@ -111,15 +115,14 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
           Integer.toString(photoModel.hashCode()),
           photoModel.getTitle(),
           () -> {
-            return importSinglePhoto(photoModel, jobId, authData, idempotentImportExecutor);
+            return importSinglePhoto(photoModel, jobId, idempotentImportExecutor);
           });
     }
     return ImportResult.OK;
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(
-      PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
+  private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", album.getName());
@@ -127,7 +130,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
-    requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+    requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
     requestBuilder.post(
         RequestBody.create(
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
@@ -153,7 +156,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private String importSinglePhoto(
       PhotoModel photo,
       UUID jobId,
-      TokensAndUrlAuthData authData,
+      Credential credential,
       IdempotentImportExecutor idempotentImportExecutor)
       throws IOException {
     InputStream inputStream = null;
@@ -178,7 +181,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       }
 
       Request.Builder requestBuilder = new Request.Builder().url(uploadUrl);
-      requestBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+      requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
       MediaType contentType = MediaType.parse(photo.getMediaType());
 
@@ -194,9 +197,10 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         }
         if (code == 401){
             // If there was an unauthorized error, then try refreshing the creds
-            credentialFactory.refreshCredential(credentialFactory.createCredential(authData));
+            credentialFactory.refreshCredential(credential);
             monitor.info(() -> "Refreshed authorization token successfuly");
 
+            requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken())
             Response newResponse = client.newCall(requestBuilder.build()).execute();
             if (newResponse.code() < 200 || newResponse.code() > 299){
               throw new IOException("Got error code even after refreshing: " + code + " message "
@@ -215,6 +219,13 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         }
       }
     }
+  }
+
+  private Credential getOrCreateCredential(TokensAndUrlAuthData authData){
+    if (this.credential == null){
+      this.credential = this.credentialFactory.createCredential(authdata);
+    }
+    return this.credential;
   }
 
   private static class StreamingBody extends RequestBody {
