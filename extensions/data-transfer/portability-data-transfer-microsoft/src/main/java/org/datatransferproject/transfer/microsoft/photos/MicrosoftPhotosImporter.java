@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.microsoft.photos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Strings;
+import com.google.common.base.Preconditions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -192,6 +193,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
+        ResponseBody responseBody = response.body();
         if (code == 401){
             // If there was an unauthorized error, then try refreshing the creds
             credentialFactory.refreshCredential(credential);
@@ -200,12 +202,19 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
             requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
             Response newResponse = client.newCall(requestBuilder.build()).execute();
             code = newResponse.code();
+            responseBody = newResponse.body();
         }
         if (code < 200 || code > 299) {
           throw new IOException("Got error code: " + code + " message " + response.message());
         }
-        // TODO return photo ID
-        return "fakeId";
+
+        // Extract photo ID from response body
+        Preconditions.checkState(body != null, "Got Null Body when creating photo %s", photo);
+        Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
+        String photoId = (String) responseData.get("id");
+        checkState(!Strings.isNullOrEmpty(photoId),
+            "Expected id value to be present in %s", responseData);
+        return photoId;
       }
     } finally {
       if (inputStream != null) {
