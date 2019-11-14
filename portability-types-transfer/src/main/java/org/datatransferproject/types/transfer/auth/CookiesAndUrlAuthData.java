@@ -1,6 +1,7 @@
 package org.datatransferproject.types.transfer.auth;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
@@ -26,6 +27,7 @@ public class CookiesAndUrlAuthData extends AuthData {
     return cookies;
   }
 
+  @JsonIgnore
   @Override
   public String getToken() {
     // CookiesAndUrlAuthData is the only class not to have a token.
