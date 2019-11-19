@@ -29,6 +29,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.RateLimiter;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collection;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -41,13 +47,6 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Collection;
-import java.util.UUID;
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
@@ -114,7 +113,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
-      storeAlbumbs(jobId, data.getAlbums());
+      storeAlbums(jobId, data.getAlbums());
     }
 
     if (data.getPhotos() != null) {
@@ -135,11 +134,19 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   // Store any album data in the cache because Flickr only allows you to create an album with a
   // photo in it, so we have to wait for the first photo to create the album
-  private void storeAlbumbs(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
+  private void storeAlbums(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
     for (PhotoAlbum album : albums) {
-      jobStore.create(jobId,
+      FlickrTempPhotoData temp =
+          jobStore.findData(
+              jobId,
               ORIGINAL_ALBUM_PREFIX + album.getId(),
-              new FlickrTempPhotoData(album.getName(), album.getDescription()));
+              FlickrTempPhotoData.class);
+
+      if (temp == null) {
+        jobStore.create(jobId,
+            ORIGINAL_ALBUM_PREFIX + album.getId(),
+            new FlickrTempPhotoData(album.getName(), album.getDescription()));
+      }
     }
   }
 
