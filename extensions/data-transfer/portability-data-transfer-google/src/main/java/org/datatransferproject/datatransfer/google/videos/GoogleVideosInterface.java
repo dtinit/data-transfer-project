@@ -50,8 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 
 public class GoogleVideosInterface {
@@ -89,7 +89,7 @@ public class GoogleVideosInterface {
     return makePostRequest(BASE_URL + "uploads/", Optional.empty(), httpContent, String.class);
   }
 
-  NewMediaItemResult createVideo(NewMediaItemUpload newMediaItemUpload) throws IOException {
+  BatchMediaItemResponse createVideo(NewMediaItemUpload newMediaItemUpload) throws IOException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
 
@@ -97,7 +97,7 @@ public class GoogleVideosInterface {
         BASE_URL + "mediaItems:batchCreate",
         Optional.empty(),
         httpContent,
-        NewMediaItemResult.class);
+        BatchMediaItemResponse.class);
   }
 
   MediaItemSearchResponse listVideoItems(Optional<String> pageToken) throws IOException {
@@ -177,8 +177,7 @@ public class GoogleVideosInterface {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
     TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {
-        };
+        new TypeReference<HashMap<String, Object>>() {};
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 }
