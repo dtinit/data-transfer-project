@@ -104,7 +104,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
             "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor));
-    importerBuilder.put("VIDEOS", new GoogleVideosImporter(credentialFactory, jsonFactory, monitor));
+    importerBuilder.put("VIDEOS", new GoogleVideosImporter(appCredentials, monitor));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
