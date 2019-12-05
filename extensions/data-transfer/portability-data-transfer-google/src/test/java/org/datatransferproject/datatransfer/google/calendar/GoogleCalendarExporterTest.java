@@ -22,7 +22,7 @@ import static org.datatransferproject.datatransfer.google.common.GoogleStaticObj
 import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.MAX_ATTENDEES;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.calendar.Calendar;
@@ -97,7 +97,7 @@ public class GoogleCalendarExporterTest {
     when(calendarEvents.list(CALENDAR_ID)).thenReturn(eventListRequest);
     when(eventListRequest.setMaxAttendees(MAX_ATTENDEES)).thenReturn(eventListRequest);
 
-    verifyZeroInteractions(credentialFactory);
+    verifyNoInteractions(credentialFactory);
   }
 
   @Test
