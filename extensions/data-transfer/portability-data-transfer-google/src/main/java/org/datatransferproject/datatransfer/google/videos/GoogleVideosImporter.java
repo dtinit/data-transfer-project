@@ -50,12 +50,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -74,17 +73,23 @@ public class GoogleVideosImporter
   private final ImageStreamProvider videoStreamProvider;
   private Monitor monitor;
   private final AppCredentials appCredentials;
+  private final TemporaryPerJobDataStore dataStore;
 
-  public GoogleVideosImporter(AppCredentials appCredentials, Monitor monitor) {
-    this(new ImageStreamProvider(), monitor, appCredentials);
+  public GoogleVideosImporter(
+      AppCredentials appCredentials, TemporaryPerJobDataStore dataStore, Monitor monitor) {
+    this(new ImageStreamProvider(), monitor, appCredentials, dataStore);
   }
 
   @VisibleForTesting
   GoogleVideosImporter(
-      ImageStreamProvider videoStreamProvider, Monitor monitor, AppCredentials appCredentials) {
+      ImageStreamProvider videoStreamProvider,
+      Monitor monitor,
+      AppCredentials appCredentials,
+      TemporaryPerJobDataStore dataStore) {
     this.videoStreamProvider = videoStreamProvider;
     this.monitor = monitor;
     this.appCredentials = appCredentials;
+    this.dataStore = dataStore;
   }
 
   @Override
@@ -134,12 +139,11 @@ public class GoogleVideosImporter
     } else {
       filename = COPY_PREFIX + inputVideo.getName();
     }
-    File tmp = File.createTempFile(filename, ".mp4");
-    tmp.deleteOnExit();
 
+    final File tmp;
     try (InputStream inputStream =
         this.videoStreamProvider.get(inputVideo.getContentUrl().toString())) {
-      Files.copy(inputStream, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      tmp = dataStore.getTempFileFromInputStream(inputStream, filename, ".mp4");
     }
 
     try (PhotosLibraryClient photosLibraryClient = PhotosLibraryClient.initialize(settings)) {
