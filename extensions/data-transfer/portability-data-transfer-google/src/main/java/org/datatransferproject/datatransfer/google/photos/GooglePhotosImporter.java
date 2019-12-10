@@ -99,7 +99,7 @@ public class GooglePhotosImporter
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
         idempotentImportExecutor.executeAndSwallowIOExceptions(
-            photo.getDataId(),
+            photo.getAlbumId() + "-" + photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
       }
