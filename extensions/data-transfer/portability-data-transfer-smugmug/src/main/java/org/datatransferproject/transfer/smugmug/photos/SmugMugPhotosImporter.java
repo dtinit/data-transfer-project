@@ -92,7 +92,7 @@ public class SmugMugPhotosImporter
       }
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
-            photo.getDataId(),
+            photo.getAlbumId() + "-" + photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));
       }
