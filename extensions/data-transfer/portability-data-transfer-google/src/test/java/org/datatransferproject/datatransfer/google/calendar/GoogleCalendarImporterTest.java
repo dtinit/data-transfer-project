@@ -33,7 +33,7 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class GoogleCalendarImporterTest {
@@ -63,7 +63,7 @@ public class GoogleCalendarImporterTest {
     when(calendarClient.calendars()).thenReturn(calendarCalendars);
     when(calendarClient.events()).thenReturn(calendarEvents);
 
-    verifyZeroInteractions(credentialFactory);
+    verifyNoInteractions(credentialFactory);
   }
 
   @Test

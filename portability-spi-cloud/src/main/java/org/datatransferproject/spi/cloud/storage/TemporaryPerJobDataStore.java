@@ -1,10 +1,12 @@
 package org.datatransferproject.spi.cloud.storage;
 
-import org.datatransferproject.types.common.models.DataModel;
-
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * A store for data that will be persisted for the life of a backup job.
@@ -17,24 +19,18 @@ public interface TemporaryPerJobDataStore {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Updates the given model instance associated with a job.
-   */
+  /** Updates the given model instance associated with a job. */
   default <T extends DataModel> void update(UUID jobId, String key, T model) {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Returns a model instance for the id of the given type or null if not found.
-   */
+  /** Returns a model instance for the id of the given type or null if not found. */
   default <T extends DataModel> T findData(UUID jobId, String key, Class<T> type)
       throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Removes the data model instance.
-   */
+  /** Removes the data model instance. */
   default void removeData(UUID JobId, String key) {
     throw new UnsupportedOperationException();
   }
@@ -45,5 +41,13 @@ public interface TemporaryPerJobDataStore {
 
   default InputStream getStream(UUID jobId, String key) throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  default File getTempFileFromInputStream(InputStream inputStream, String prefix, String suffix)
+      throws IOException {
+    File tmp = File.createTempFile(prefix, suffix);
+    tmp.deleteOnExit();
+    Files.copy(inputStream, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    return tmp;
   }
 }

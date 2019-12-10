@@ -17,9 +17,11 @@
 package org.datatransferproject.datatransfer.google.mail;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.services.gmail.Gmail;
@@ -48,10 +50,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMailExporterTest {
@@ -90,12 +91,12 @@ public class GoogleMailExporterTest {
 
     when(gmail.users()).thenReturn(users);
     when(users.messages()).thenReturn(messages);
-    when(messages.list(Matchers.anyString())).thenReturn(messageListRequest);
-    when(messageListRequest.setMaxResults(Matchers.anyLong())).thenReturn(messageListRequest);
-    when(messages.get(Matchers.anyString(), Matchers.anyString())).thenReturn(get);
-    when(get.setFormat(Matchers.anyString())).thenReturn(get);
+    when(messages.list(anyString())).thenReturn(messageListRequest);
+    when(messageListRequest.setMaxResults(anyLong())).thenReturn(messageListRequest);
+    when(messages.get(anyString(), anyString())).thenReturn(get);
+    when(get.setFormat(anyString())).thenReturn(get);
 
-    verifyZeroInteractions(googleCredentialFactory);
+    verifyNoInteractions(googleCredentialFactory);
   }
 
   @Test
@@ -115,7 +116,7 @@ public class GoogleMailExporterTest {
     // First request
     inOrder.verify(messages).list(GoogleMailExporter.USER);
     inOrder.verify(messageListRequest).setMaxResults(GoogleMailExporter.PAGE_SIZE);
-    verify(messageListRequest, never()).setPageToken(Matchers.anyString());
+    verify(messageListRequest, never()).setPageToken(anyString());
     // Second request
     inOrder.verify(messages).get(GoogleMailExporter.USER, MESSAGE_ID);
     inOrder.verify(get).setFormat("raw");

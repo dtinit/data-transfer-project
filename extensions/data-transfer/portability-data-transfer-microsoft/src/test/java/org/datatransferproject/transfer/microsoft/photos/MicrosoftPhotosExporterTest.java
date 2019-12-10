@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.mockito.Matchers;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosExporter.DRIVE_TOKEN_PREFIX;
 
@@ -73,12 +74,12 @@ public class MicrosoftPhotosExporterTest {
         new MicrosoftPhotosExporter(
             credentialFactory, new JacksonFactory(), photosInterface, monitor);
 
-    when(photosInterface.getDriveItems(Matchers.any(Optional.class), Matchers.any(Optional.class)))
+    when(photosInterface.getDriveItems(any(Optional.class), any(Optional.class)))
         .thenReturn(driveItemsResponse);
     when(photosInterface.getDriveItemsFromSpecialFolder(
-            Matchers.any(MicrosoftSpecialFolder.FolderType.class)))
+            any(MicrosoftSpecialFolder.FolderType.class)))
         .thenReturn(driveItemsResponse);
-    verifyZeroInteractions(credentialFactory);
+    verifyNoInteractions(credentialFactory);
   }
 
   @Test

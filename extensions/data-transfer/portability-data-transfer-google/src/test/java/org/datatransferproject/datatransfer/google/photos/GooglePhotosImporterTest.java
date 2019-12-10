@@ -42,6 +42,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 public class GooglePhotosImporterTest {
 
@@ -70,16 +73,16 @@ public class GooglePhotosImporterTest {
     googlePhotosInterface = Mockito.mock(GooglePhotosInterface.class);
     monitor = Mockito.mock(Monitor.class);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(Matchers.any(InputStream.class)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(InputStream.class)))
         .thenReturn(UPLOAD_TOKEN);
-    Mockito.when(googlePhotosInterface.makePostRequest(Matchers.anyString(), Matchers.any(), Matchers.any(),
-        Matchers.eq(NewMediaItemResult.class))).thenReturn(Mockito.mock(NewMediaItemResult.class));
+    Mockito.when(googlePhotosInterface.makePostRequest(anyString(), any(), any(),
+        eq(NewMediaItemResult.class))).thenReturn(Mockito.mock(NewMediaItemResult.class));
 
     jobStore = new LocalJobStore();
 
     inputStream = Mockito.mock(InputStream.class);
     imageStreamProvider = Mockito.mock(ImageStreamProvider.class);
-    Mockito.when(imageStreamProvider.get(Matchers.anyString())).thenReturn(inputStream);
+    Mockito.when(imageStreamProvider.get(anyString())).thenReturn(inputStream);
 
     googlePhotosImporter = new GooglePhotosImporter(null, jobStore, null,
         googlePhotosInterface, imageStreamProvider, monitor);
@@ -94,7 +97,7 @@ public class GooglePhotosImporterTest {
 
     GoogleAlbum responseAlbum = new GoogleAlbum();
     responseAlbum.setId(NEW_ALBUM_ID);
-    Mockito.when(googlePhotosInterface.createAlbum(Matchers.any(GoogleAlbum.class)))
+    Mockito.when(googlePhotosInterface.createAlbum(any(GoogleAlbum.class)))
         .thenReturn(responseAlbum);
 
     // Run test
@@ -122,7 +125,7 @@ public class GooglePhotosImporterTest {
 
     BatchMediaItemResponse batchMediaItemResponse = new BatchMediaItemResponse(
         new NewMediaItemResult[] {newMediaItemResult});
-    Mockito.when(googlePhotosInterface.createPhoto(Mockito.any(NewMediaItemUpload.class)))
+    Mockito.when(googlePhotosInterface.createPhoto(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
 
     // Run test

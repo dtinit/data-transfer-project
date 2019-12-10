@@ -41,9 +41,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class GoogleVideosExporterTest {
@@ -72,10 +73,10 @@ public class GoogleVideosExporterTest {
 
     googleVideosExporter = new GoogleVideosExporter(credentialFactory, videosInterface);
 
-    when(videosInterface.listVideoItems(Matchers.any(Optional.class)))
+    when(videosInterface.listVideoItems(any(Optional.class)))
             .thenReturn(mediaItemSearchResponse);
 
-    verifyZeroInteractions(credentialFactory);
+    verifyNoInteractions(credentialFactory);
   }
 
   @Test
