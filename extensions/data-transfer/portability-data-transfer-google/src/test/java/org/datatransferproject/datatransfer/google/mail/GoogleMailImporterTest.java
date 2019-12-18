@@ -36,20 +36,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -90,15 +91,15 @@ public class GoogleMailImporterTest {
 
     when(gmail.users()).thenReturn(users);
     when(users.messages()).thenReturn(messages);
-    when(messages.insert(Matchers.anyString(), Matchers.any(Message.class))).thenReturn(insert);
+    when(messages.insert(anyString(), any(Message.class))).thenReturn(insert);
     when(insert.execute()).thenReturn(new Message().setId("fooBar"));
     when(users.labels()).thenReturn(labels);
-    when(labels.list(Matchers.anyString())).thenReturn(labelsList);
+    when(labels.list(anyString())).thenReturn(labelsList);
     when(labelsList.execute()).thenReturn(labelsListResponse);
-    when(labels.create(Matchers.anyString(), Matchers.any(Label.class))).thenReturn(labelsCreate);
+    when(labels.create(anyString(), any(Label.class))).thenReturn(labelsCreate);
     when(labelsCreate.execute()).thenReturn(label);
 
-    verifyZeroInteractions(googleCredentialFactory);
+    verifyNoInteractions(googleCredentialFactory);
   }
 
   @Test

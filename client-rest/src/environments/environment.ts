@@ -5,5 +5,5 @@
 export const environment = {
     production: false,
     encryptionScheme: "jwe", // supported values are "jwe" and "cleartext" which must correspond to the schemes supported by the server
-    apiBaseUrl: 'https://localhost:3000'
+    apiBaseUrl: ((typeof document !== "undefined") && document.baseURI) || 'https://localhost:3000'
 };

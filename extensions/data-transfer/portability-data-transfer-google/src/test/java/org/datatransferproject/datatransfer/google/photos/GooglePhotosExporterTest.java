@@ -53,9 +53,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.ALBUM_TOKEN_PREFIX;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class GooglePhotosExporterTest {
@@ -91,13 +93,13 @@ public class GooglePhotosExporterTest {
         new GooglePhotosExporter(credentialFactory, jobStore, new JacksonFactory(),
             photosInterface, monitor);
 
-    when(photosInterface.listAlbums(Matchers.any(Optional.class)))
+    when(photosInterface.listAlbums(any(Optional.class)))
         .thenReturn(albumListResponse);
     when(photosInterface
-        .listMediaItems(Matchers.any(Optional.class), Matchers.any(Optional.class)))
+        .listMediaItems(any(Optional.class), any(Optional.class)))
         .thenReturn(mediaItemSearchResponse);
 
-    verifyZeroInteractions(credentialFactory);
+    verifyNoInteractions(credentialFactory);
   }
 
   @Test
@@ -242,7 +244,7 @@ public class GooglePhotosExporterTest {
     GoogleMediaItem secondPhoto = setUpSinglePhoto(secondUri, secondId);
 
     when(photosInterface
-        .listMediaItems(Matchers.eq(Optional.of(ALBUM_ID)), Matchers.any(Optional.class)))
+        .listMediaItems(eq(Optional.of(ALBUM_ID)), any(Optional.class)))
         .thenReturn(albumMediaResponse);
     when(albumMediaResponse.getMediaItems())
         .thenReturn(new GoogleMediaItem[]{firstPhoto, secondPhoto});
@@ -254,7 +256,7 @@ public class GooglePhotosExporterTest {
     // Check contents of job store
     ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor
         .forClass(InputStream.class);
-    verify(jobStore).create(Matchers.eq(uuid), Matchers.eq("tempPhotosData"),
+    verify(jobStore).create(eq(uuid), eq("tempPhotosData"),
         inputStreamArgumentCaptor.capture());
     TempPhotosData tempPhotosData = new ObjectMapper()
         .readValue(inputStreamArgumentCaptor.getValue(), TempPhotosData.class);
@@ -277,7 +279,7 @@ public class GooglePhotosExporterTest {
     MediaItemSearchResponse mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
     when(photosInterface
-        .listMediaItems(Matchers.eq(Optional.empty()), Matchers.eq(Optional.empty())))
+        .listMediaItems(eq(Optional.empty()), eq(Optional.empty())))
         .thenReturn(mediaItemSearchResponse);
     when(mediaItemSearchResponse.getMediaItems())
         .thenReturn(new GoogleMediaItem[]{containedPhoto, albumlessPhoto});

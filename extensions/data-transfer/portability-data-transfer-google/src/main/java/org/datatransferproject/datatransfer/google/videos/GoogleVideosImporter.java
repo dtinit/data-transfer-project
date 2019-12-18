@@ -31,93 +31,107 @@
  */
 package org.datatransferproject.datatransfer.google.videos;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.json.JsonFactory;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.photos.library.v1.PhotosLibraryClient;
+import com.google.photos.library.v1.PhotosLibrarySettings;
+import com.google.photos.library.v1.proto.BatchCreateMediaItemsResponse;
+import com.google.photos.library.v1.proto.NewMediaItem;
+import com.google.photos.library.v1.proto.NewMediaItemResult;
+import com.google.photos.library.v1.upload.UploadMediaItemRequest;
+import com.google.photos.library.v1.upload.UploadMediaItemResponse;
+import com.google.photos.library.v1.upload.UploadMediaItemResponse.Error;
+import com.google.photos.library.v1.util.NewMediaItemFactory;
+import com.google.rpc.Code;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
-import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.UUID;
-
 public class GoogleVideosImporter
-        implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
+    implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   // TODO: internationalize copy prefix
   private static final String COPY_PREFIX = "Copy of ";
 
-  private final GoogleCredentialFactory credentialFactory;
   private final ImageStreamProvider videoStreamProvider;
-  private volatile GoogleVideosInterface videosInterface;
   private Monitor monitor;
-  private JsonFactory jsonFactory;
+  private final AppCredentials appCredentials;
+  private final TemporaryPerJobDataStore dataStore;
 
-  public GoogleVideosImporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
-    this(credentialFactory, null, new ImageStreamProvider(), jsonFactory, monitor);
+  public GoogleVideosImporter(
+      AppCredentials appCredentials, TemporaryPerJobDataStore dataStore, Monitor monitor) {
+    this(new ImageStreamProvider(), monitor, appCredentials, dataStore);
   }
 
   @VisibleForTesting
   GoogleVideosImporter(
-          GoogleCredentialFactory credentialFactory,
-          GoogleVideosInterface videosInterface,
-          ImageStreamProvider videoStreamProvider,
-          JsonFactory jsonFactory,
-          Monitor monitor) {
-    this.credentialFactory = credentialFactory;
-    this.videosInterface = videosInterface;
+      ImageStreamProvider videoStreamProvider,
+      Monitor monitor,
+      AppCredentials appCredentials,
+      TemporaryPerJobDataStore dataStore) {
     this.videoStreamProvider = videoStreamProvider;
-    this.jsonFactory = jsonFactory;
     this.monitor = monitor;
+    this.appCredentials = appCredentials;
+    this.dataStore = dataStore;
   }
 
   @Override
   public ImportResult importItem(
-          UUID jobId,
-          IdempotentImportExecutor executor,
-          TokensAndUrlAuthData authData,
-          VideosContainerResource data) throws Exception {
+      UUID jobId,
+      IdempotentImportExecutor executor,
+      TokensAndUrlAuthData authData,
+      VideosContainerResource data)
+      throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
     }
 
+    PhotosLibrarySettings settings =
+        PhotosLibrarySettings.newBuilder()
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(
+                    UserCredentials.newBuilder()
+                        .setClientId(appCredentials.getKey())
+                        .setClientSecret(appCredentials.getSecret())
+                        .setAccessToken(new AccessToken(authData.getAccessToken(), null))
+                        .setRefreshToken(authData.getRefreshToken())
+                        .build()))
+            .build();
+
     //     Uploads videos
     if (data.getVideos() != null && data.getVideos().size() > 0) {
       for (VideoObject video : data.getVideos()) {
-        importSingleVideo(authData, video, executor);
+        executor.executeAndSwallowIOExceptions(
+            video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
       }
     }
     return ImportResult.OK;
   }
 
-  void importSingleVideo(
-          TokensAndUrlAuthData authData,
-          VideoObject inputVideo,
-          IdempotentImportExecutor executor)
-          throws Exception {
-
-    // download video and create input stream
-    InputStream inputStream;
+  String importSingleVideo(VideoObject inputVideo, PhotosLibrarySettings settings)
+      throws Exception {
     if (inputVideo.getContentUrl() == null) {
-      monitor.info(
-              () ->
-                      "Content Url is empty. Make sure that you provide a valid content Url.");
-      return;
+      monitor.info(() -> "Content Url is empty. Make sure that you provide a valid content Url.");
+      return null;
     }
-
-    inputStream = this.videoStreamProvider.get(inputVideo.getContentUrl().toString());
 
     String filename;
     if (Strings.isNullOrEmpty(inputVideo.getName())) {
@@ -126,28 +140,62 @@ public class GoogleVideosImporter
       filename = COPY_PREFIX + inputVideo.getName();
     }
 
-    String uploadToken =
-            getOrCreateVideosInterface(authData).uploadVideoContent(inputStream, filename);
+    final File tmp;
+    try (InputStream inputStream =
+        this.videoStreamProvider.get(inputVideo.getContentUrl().toString())) {
+      tmp = dataStore.getTempFileFromInputStream(inputStream, filename, ".mp4");
+    }
 
-    NewMediaItem newMediaItem = new NewMediaItem(filename, uploadToken);
-
-    NewMediaItemUpload uploadItem =
-            new NewMediaItemUpload(null, Collections.singletonList(newMediaItem));
-
-    executor.executeAndSwallowIOExceptions(
-            inputVideo.getDataId(),
-            inputVideo.getName(),
-            () -> getOrCreateVideosInterface(authData).createVideo(uploadItem));
+    try (PhotosLibraryClient photosLibraryClient = PhotosLibraryClient.initialize(settings)) {
+      UploadMediaItemRequest uploadRequest =
+          UploadMediaItemRequest.newBuilder()
+              .setFileName(filename)
+              .setDataFile(new RandomAccessFile(tmp, "r"))
+              .build();
+      UploadMediaItemResponse uploadResponse = photosLibraryClient.uploadMediaItem(uploadRequest);
+      if (uploadResponse.getError().isPresent() || !uploadResponse.getUploadToken().isPresent()) {
+        Error error = uploadResponse.getError().orElse(null);
+        throw new IOException(
+            "An error was encountered while uploading the video.",
+            error != null ? error.getCause() : null);
+      } else {
+        String uploadToken = uploadResponse.getUploadToken().get();
+        return createMediaItem(inputVideo, photosLibraryClient, uploadToken);
+      }
+    } finally {
+      //noinspection ResultOfMethodCallIgnored
+      tmp.delete();
+    }
   }
 
-  private synchronized GoogleVideosInterface getOrCreateVideosInterface(
-          TokensAndUrlAuthData authData) {
-    return videosInterface == null ? makeVideosInterface(authData) : videosInterface;
-  }
+  String createMediaItem(
+      VideoObject inputVideo, PhotosLibraryClient photosLibraryClient, String uploadToken)
+      throws IOException {
+    NewMediaItem newMediaItem;
+    if (inputVideo.getDescription() != null && !inputVideo.getDescription().isEmpty()) {
+      newMediaItem =
+          NewMediaItemFactory.createNewMediaItem(uploadToken, inputVideo.getDescription());
+    } else {
+      newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken);
+    }
 
-  private synchronized GoogleVideosInterface makeVideosInterface(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    GoogleVideosInterface videosInterface = new GoogleVideosInterface(credential, this.jsonFactory);
-    return videosInterface;
+    List<NewMediaItem> newItems = Collections.singletonList(newMediaItem);
+
+    BatchCreateMediaItemsResponse response = photosLibraryClient.batchCreateMediaItems(newItems);
+    final List<NewMediaItemResult> resultsList = response.getNewMediaItemResultsList();
+    if (resultsList.size() != 1) {
+      throw new IOException("Expected resultsList to be of size 1");
+    } else {
+      final NewMediaItemResult itemResult = resultsList.get(0);
+      final int code = itemResult.getStatus().getCode();
+      if (code != Code.OK_VALUE) {
+        throw new IOException(
+            String.format(
+                "Video item could not be created. Code: %d Message: %s",
+                code, itemResult.getStatus().getMessage()));
+      } else {
+        return itemResult.getMediaItem().getId();
+      }
+    }
   }
 }

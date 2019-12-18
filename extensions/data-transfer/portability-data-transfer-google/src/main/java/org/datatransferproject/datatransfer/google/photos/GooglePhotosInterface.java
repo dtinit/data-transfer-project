@@ -134,6 +134,10 @@ public class GooglePhotosInterface {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     content.writeTo(outputStream);
     byte[] contentBytes = outputStream.toByteArray();
+    if (contentBytes.length == 0) {
+      // Google Photos cannot add an empty photo so gracefully ignore
+      return "EMPTY_PHOTO";
+    }
     HttpContent httpContent = new ByteArrayContent(null, contentBytes);
 
     return makePostRequest(
@@ -207,8 +211,8 @@ public class GooglePhotosInterface {
     }
   }
 
-  private HttpResponse handleHttpResponseException(SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
-      throws IOException {
+  private HttpResponse handleHttpResponseException(
+      SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e) throws IOException {
     // if the response is "unauthorized", refresh the token and try the request again
     if (e.getStatusCode() == 401) {
       monitor.info(() -> "Attempting to refresh authorization token");

@@ -16,14 +16,13 @@
 
 package org.datatransferproject.types.transfer.retry;
 
-import org.datatransferproject.api.launcher.Monitor;
+import static java.lang.Thread.currentThread;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
-
-import static java.lang.Thread.currentThread;
+import org.datatransferproject.api.launcher.Monitor;
 
 /**
  * Class for retrying a {@link Callable} given a {@link RetryStrategyLibrary}.
@@ -66,7 +65,7 @@ public class RetryingCallable<T> implements Callable<T> {
         return callable.call();
       } catch (Exception e) {
         mostRecentException = e;
-        monitor.severe(() -> "Caught exception", e);
+        monitor.info(() -> "RetryingCallable caught an exception", e);
         long elapsedMillis = Duration.between(start, clock.instant()).toMillis();
         // TODO: do we want to reset anything (eg, number of retries) if we see a different
         // RetryStrategy?
@@ -74,14 +73,15 @@ public class RetryingCallable<T> implements Callable<T> {
         monitor.debug(
             () ->
                 String.format(
-                    "Attempt %d failed, using retry strategy: %s",
-                    attempts, strategy.toString()));
+                    "Attempt %d failed, using retry strategy: %s", attempts, strategy.toString()));
         if (strategy.canTryAgain(attempts)) {
           long nextAttemptIntervalMillis =
               strategy.getRemainingIntervalMillis(attempts, elapsedMillis);
-          monitor.debug(() -> String.format(
-              "Strategy has %d remainingIntervalMillis after %d elapsedMillis",
-              nextAttemptIntervalMillis, elapsedMillis));
+          monitor.debug(
+              () ->
+                  String.format(
+                      "Strategy has %d remainingIntervalMillis after %d elapsedMillis",
+                      nextAttemptIntervalMillis, elapsedMillis));
           if (nextAttemptIntervalMillis > 0L) {
             try {
               Thread.sleep(nextAttemptIntervalMillis);
@@ -92,8 +92,9 @@ public class RetryingCallable<T> implements Callable<T> {
             }
           }
         } else {
-          monitor.debug(() -> String
-              .format("Strategy canTryAgain returned false after %d retries", attempts));
+          monitor.debug(
+              () ->
+                  String.format("Strategy canTryAgain returned false after %d retries", attempts));
           throw new RetryException(attempts, mostRecentException);
         }
       }

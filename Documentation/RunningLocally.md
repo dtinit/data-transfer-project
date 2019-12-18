@@ -61,6 +61,6 @@ If everything worked, you'll start to see some log lines scrolling by, like:
 
 You should now be able to access the web application at https://localhost:3000.
 
-The API is accessible via https://localhost:8080/_/listDataTypes. A java debugger can be connected via `port 5005`.
+The API is accessible via https://localhost:3000/api/datatypes. A java debugger can be connected via `port 5005`.
 
 You can interact with the docker image via `docker exec -it dtp-demo <command>`
