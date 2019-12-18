@@ -34,19 +34,18 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUser;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUserResponse;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -247,7 +246,8 @@ public class SmugMugInterface {
     Response response = request.send();
     if (response.getCode() < 200 || response.getCode() >= 300) {
       throw new IOException(
-          String.format("Error occurred in request for %s : %s", fullUrl, response.getMessage()));
+          String.format("Error occurred in request for %s, code: %s, message: %s", fullUrl,
+              response.getCode(), response.getMessage()));
     }
 
     return mapper.readValue(response.getBody(), typeReference);
