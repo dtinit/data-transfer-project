@@ -245,6 +245,14 @@ public class SmugMugInterface {
 
     Response response = request.send();
     if (response.getCode() < 200 || response.getCode() >= 300) {
+      if (response.getCode() == 400) {
+        throw new IOException(
+            String.format(
+                "Error occurred in request for %s, code: %s, message: %s, request: %s, bodyParams: %s, payload: %s",
+                fullUrl,
+                response.getCode(), response.getMessage(), request.toString(),
+                request.getBodyParams(), request.getBodyContents()));
+      }
       throw new IOException(
           String.format("Error occurred in request for %s, code: %s, message: %s", fullUrl,
               response.getCode(), response.getMessage()));
