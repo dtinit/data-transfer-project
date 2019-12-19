@@ -11,3 +11,5 @@ This folder contains documentation for contributing to and running the Data Tran
 * [Integration.md](Integration.md) - integrating a new service, data type, and/or hosting platform
 
 * [Keys.md](Keys.md) - our philosophy for how DTP interacts with service provider APIs
+
+* [Glossary.md](Glossary.md) - a glossary of recommended terms to use in DTP UIs
