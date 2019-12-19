@@ -13,4 +13,4 @@
 > **Usage note**: Whenever possible, describe the actual data or information type (ex: photos, videos, etc.).
 
 **Sign into / Signed into**: Labels describing the destination service that has been authenticated to transfer data to.
->	**Usage note**: “Signed into” is preferred over “connected to” since it confirms that the sign in (or authentication) process to the other service has been done successfully. It’s also has more of a temporal feel and doesn’t give the impression that the person has connected the two accounts forever. The UI for removing the destination account is “sign out.”
+> **Usage note**: “Signed into” is preferred over “connected to” since it confirms that the sign in (or authentication) process to the other service has been done successfully. It’s also has more of a temporal feel and doesn’t give the impression that the person has connected the two accounts forever. The UI for removing the destination account is “sign out.”
