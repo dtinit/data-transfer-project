@@ -138,20 +138,28 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
-      if (code >= 200 && code <= 299) {
-        ResponseBody body = response.body();
-        if (body == null) {
-          throw new IOException("Got null body");
-        }
-        Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
-        String folderId = (String) responseData.get("id");
-        checkState(!Strings.isNullOrEmpty(folderId),
-            "Expected id value to be present in %s", responseData);
-        return folderId;
-      } else {
-        throw new IOException("Got response code: " + code);
+      ResponseBody body = response.body();
+      if (code == 401){
+          // If there was an unauthorized error, then try refreshing the creds
+          credentialFactory.refreshCredential(credential);
+          monitor.info(() -> "Refreshed authorization token successfuly");
+
+          requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+          Response newResponse = client.newCall(requestBuilder.build()).execute();
+          code = newResponse.code();
+          body = newResponse.body();
       }
-      // FIXME evaluate HTTP response and return whether to retry
+      if (code < 200 || code > 299) {
+        throw new IOException("Got error code: " + code + " message " + response.message());
+      }
+      if (body == null) {
+        throw new IOException("Got null body");
+      }
+      Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
+      String folderId = (String) responseData.get("id");
+      checkState(!Strings.isNullOrEmpty(folderId),
+          "Expected id value to be present in %s", responseData);
+      return folderId;
     }
   }
 
