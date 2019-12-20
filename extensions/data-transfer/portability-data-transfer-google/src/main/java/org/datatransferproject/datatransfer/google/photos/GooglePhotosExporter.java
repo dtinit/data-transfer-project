@@ -174,7 +174,8 @@ public class GooglePhotosExporter
         albums.add(photoAlbum);
 
         monitor.debug(
-            () -> String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
+            () -> String
+                .format("%s: Google Photos exporting album: %s", jobId, photoAlbum.getId()));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
