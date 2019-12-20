@@ -229,7 +229,8 @@ public abstract class PortabilityJob {
     IN_PROGRESS,
     COMPLETE,
     ERROR,
-    CANCELED
+    CANCELED,
+    PREEMPTED
   }
 
   @AutoValue.Builder
