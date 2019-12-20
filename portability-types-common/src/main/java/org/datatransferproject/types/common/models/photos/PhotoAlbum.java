@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 
 import java.util.Objects;
+import java.util.List;
+import java.util.ArrayList;
 
 public class PhotoAlbum {
   private final String id;
@@ -62,5 +64,19 @@ public class PhotoAlbum {
   public int hashCode() {
 
     return Objects.hash(id);
+  }
+
+  public List<PhotoAlbum> split(int numberOfNewAlbums){
+    List<PhotoAlbum> newAlbums = new ArrayList<>();
+    for(int i = 1; i <= numberOfNewAlbums; i++){
+      newAlbums.add(
+        new PhotoAlbum(
+          String.format("%s-pt%d", id, i),
+          String.format("%s (%d/%d)", id, i, numberOfNewAlbums),
+          description
+        )
+      );
+    }
+    return newAlbums;
   }
 }

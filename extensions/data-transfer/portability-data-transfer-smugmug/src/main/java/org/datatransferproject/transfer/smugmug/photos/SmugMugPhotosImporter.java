@@ -42,12 +42,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
+  private static final int MAX_ALBUM_SIZE=5000;
+
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
-  private static final String ROOT_ALBUM = "Transferred Photos";
 
   private SmugMugInterface smugMugInterface;
 
@@ -82,6 +83,7 @@ public class SmugMugPhotosImporter
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
       PhotosContainerResource data) throws Exception {
+    data.transmogrifyAlbums(MAX_ALBUM_SIZE, false);
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
@@ -117,20 +119,9 @@ public class SmugMugPhotosImporter
       PhotoModel inputPhoto,
       SmugMugInterface smugMugInterface)
       throws Exception {
-    String newAlbumUri;
-    if (inputPhoto.getAlbumId() == null){
-      // If the photo is not in an album, create the "root album", or just get the ID if it
-      // already exists
-      newAlbumUri = idempotentExecutor.executeAndSwallowIOExceptions(
-        ROOT_ALBUM,
-        ROOT_ALBUM,
-        () -> smugMugInterface.createAlbum(ROOT_ALBUM).getUri()
-      );
-    } else {
-      newAlbumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
-    }
+    String albumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkState(
-        !Strings.isNullOrEmpty(newAlbumUri),
+        !Strings.isNullOrEmpty(albumUri),
         "Cached album URI for %s is null",
         inputPhoto.getAlbumId());
 
@@ -141,7 +132,7 @@ public class SmugMugPhotosImporter
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
     SmugMugImageUploadResponse response =
-        smugMugInterface.uploadImage(inputPhoto, newAlbumUri, inputStream);
+        smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
     return response.toString();
   }
 

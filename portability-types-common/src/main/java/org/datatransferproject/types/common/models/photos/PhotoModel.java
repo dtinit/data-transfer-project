@@ -26,7 +26,7 @@ public class PhotoModel {
   private final String fetchableUrl;
   private final String description;
   private final String mediaType;
-  private final String albumId;
+  private String albumId;
   private final boolean inTempStore;
   private String dataId;
 
@@ -89,7 +89,7 @@ public class PhotoModel {
         .add("inTempStore", inTempStore)
         .toString();
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -101,5 +101,9 @@ public class PhotoModel {
             Objects.equal(getMediaType(), that.getMediaType()) &&
             Objects.equal(getDataId(), that.getDataId()) &&
             Objects.equal(getAlbumId(), that.getAlbumId());
+  }
+
+  public void reassignToAlbum(String newAlbum){
+    this.albumId = newAlbum;
   }
 }
