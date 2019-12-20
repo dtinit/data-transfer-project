@@ -308,7 +308,8 @@ public class GooglePhotosExporter
           PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
-          monitor.debug(() -> String.format("%s: Google exporting photo: %s", jobId, photoModel));
+          monitor.debug(
+              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
         }
       }
     }
