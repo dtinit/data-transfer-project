@@ -66,6 +66,10 @@ public class PhotoAlbum {
     return Objects.hash(id);
   }
 
+  // Generates PhotoAlbum objects that represent fragments of this one.
+  // Used in cases where an album from the originating service is larger than the allowable size
+  // in the destination service.
+  // If an album "MyAlbum" is split into 3, the results will be "MyAlbum (1/3)", etc.
   public List<PhotoAlbum> split(int numberOfNewAlbums){
     List<PhotoAlbum> newAlbums = new ArrayList<>();
     for(int i = 1; i <= numberOfNewAlbums; i++){

@@ -89,13 +89,15 @@ public class PhotosContainerResource extends ContainerResource {
   }
 
   // Coerce the albums of the transfer using the specification provided, e.g.
-  // limiting max album size or grouping un-collected photos into a root album
+  // limiting max album size or grouping un-collected photos into a root album.
   public void transmogrifyAlbums(int maxSize, boolean allowRootPhotos){
       ensureRootAlbum(allowRootPhotos);
       ensureAlbumSize(maxSize);
   }
 
-  public void ensureAlbumSize(int maxSize){
+  // Splits albumns that are too large into albums that are smaller than {maxSize}.
+  // A value of maxSize=-1 signals that there is no maximum
+  void ensureAlbumSize(int maxSize){
     if (maxSize == -1){
       // No max size; no need to go through that code.
       return;
@@ -108,7 +110,7 @@ public class PhotosContainerResource extends ContainerResource {
     // Go through groups, splitting up anything that's too big
     for(Entry<String,Collection<PhotoModel>> entry : albumGroups.asMap().entrySet()){
       if (entry.getValue().size() > maxSize) {
-        for(PhotoAlbum album: albums){
+        for(PhotoAlbum album : albums){
           if (album.getId() != entry.getKey()){
             break;
           }
@@ -134,6 +136,8 @@ public class PhotosContainerResource extends ContainerResource {
     }
   }
 
+  // Ensures that the model obeys the restrictions of the destination service, grouping all
+  // un-nested photos into their own root album if allowRootPhotos is true, noop otherwise
   void ensureRootAlbum(boolean allowRootPhotos){
     if (allowRootPhotos) {
       return;

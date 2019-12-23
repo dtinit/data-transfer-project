@@ -42,7 +42,11 @@ import static com.google.common.base.Preconditions.checkState;
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
-  private static final int MAX_ALBUM_SIZE=5000;
+  // Album size specified here:
+  // https://github.com/google/data-transfer-project/pull/805/files
+  private static final int MAX_ALBUM_SIZE = 5000;
+  // Smugmug doesn't allow photos to exist outside of a folder
+  private static final boolean ALLOW_LOOSE_PHOTOS = false;
 
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
@@ -83,7 +87,7 @@ public class SmugMugPhotosImporter
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
       PhotosContainerResource data) throws Exception {
-    data.transmogrifyAlbums(MAX_ALBUM_SIZE, false);
+    data.transmogrifyAlbums(MAX_ALBUM_SIZE, ALLOW_LOOSE_PHOTOS);
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
