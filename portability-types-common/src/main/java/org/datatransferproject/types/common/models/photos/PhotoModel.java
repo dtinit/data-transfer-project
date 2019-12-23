@@ -103,6 +103,9 @@ public class PhotoModel {
             Objects.equal(getAlbumId(), that.getAlbumId());
   }
 
+  // Assign this photo to a different album. Used in cases where an album is too large and
+  // needs to be divided into smaller albums, the photos will each get reassigned to new
+  // albumnIds.
   public void reassignToAlbum(String newAlbum){
     this.albumId = newAlbum;
   }
