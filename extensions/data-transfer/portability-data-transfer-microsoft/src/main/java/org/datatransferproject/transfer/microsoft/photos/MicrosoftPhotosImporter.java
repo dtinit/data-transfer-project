@@ -240,7 +240,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   static String cleanName(String name) {
     return name.chars()
         .mapToObj(c -> (char) c)
-        .map(c -> (!Character.isLetterOrDigit(c) || !Character.isWhitespace(c)) ? '-' : c)
+        .map(c -> (!Character.isLetterOrDigit(c) && !Character.isWhitespace(c)) ? '-' : c)
         .limit(40)
         .map(Object::toString)
         .collect(Collectors.joining(""));
