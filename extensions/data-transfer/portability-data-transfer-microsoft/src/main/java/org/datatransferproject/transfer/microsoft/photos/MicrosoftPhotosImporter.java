@@ -45,7 +45,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -59,6 +61,8 @@ import static com.google.common.base.Preconditions.checkState;
  * videos) using the Upload Session API.
  */
 public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+
+  private static final List<String> FORBIDDEN_CHARACTERS = Arrays.asList("~\"#%&*:<>?/\\{|}.");
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -128,7 +132,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
-    rawFolder.put("name", cleanName(album.getName()));
+    rawFolder.put("name", cleanAlbumName(album.getName()));
     rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
@@ -172,14 +176,15 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     InputStream inputStream = null;
 
     try {
+      String photoTitle = cleanOneDriveName(photo.getTitle());
       String uploadUrl = null;
       if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-        uploadUrl = String.format(albumlessPhotoUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
+        uploadUrl = String.format(albumlessPhotoUrlTemplate, photoTitle, UPLOAD_PARAMS);
       } else {
         String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
         uploadUrl =
             String.format(
-                uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
+                uploadPhotoUrlTemplate, oneDriveFolderId, photoTitle, UPLOAD_PARAMS);
       }
 
       if (photo.isInTempStore()) {
@@ -237,10 +242,20 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   }
 
   // Replace any non-whitespace, non-letter, or non-digit characters with -
-  static String cleanName(String name) {
+  static String cleanAlbumName(String name) {
     return name.chars()
         .mapToObj(c -> (char) c)
         .map(c -> (!Character.isLetterOrDigit(c) && !Character.isWhitespace(c)) ? '-' : c)
+        .limit(40)
+        .map(Object::toString)
+        .collect(Collectors.joining(""));
+  }
+
+  // Replace forbidden OneDrive file/directory characters with -
+  static String cleanOneDriveName(String name) {
+    return name.chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> FORBIDDEN_CHARACTERS.contains(c) ? '-' : c)
         .limit(40)
         .map(Object::toString)
         .collect(Collectors.joining(""));
