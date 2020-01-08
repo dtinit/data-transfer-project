@@ -115,7 +115,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     for (PhotoModel photoModel : resource.getPhotos()) {
 
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          Integer.toString(photoModel.hashCode()),
+          photoModel.getAlbumId() + "-" + photoModel.getDataId(),
           photoModel.getTitle(),
           () -> {
             return importSinglePhoto(photoModel, jobId, idempotentImportExecutor);
