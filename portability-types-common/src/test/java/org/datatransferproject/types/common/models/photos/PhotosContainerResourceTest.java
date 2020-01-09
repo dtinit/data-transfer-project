@@ -146,4 +146,27 @@ public class PhotosContainerResourceTest {
     Truth.assertThat(data.getPhotos()).hasSize(3);
   }
 
+  @Test
+  public void verifyTransmogrifyAlbums_oddDivisionWithoutLoosePhotos() throws Exception {
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
+
+    List<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
+                false),
+            new PhotoModel("Pic3", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1",
+                false),
+            new PhotoModel(
+                "Pic2", "https://fake.com/pic2.png", "fine art", "image/png", "p2", null, false),
+            new PhotoModel(
+                "Pic5", "https://fake.com/pic5.png", "fine art", "image/png", "p5", null, false),
+            new PhotoModel(
+                "Pic6", "https://fake.com/pic6.png", "fine art", "image/png", "p6", null, false));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, photos);
+    data.transmogrifyAlbums(2, false);
+    Truth.assertThat(data.getAlbums()).hasSize(3);
+    Truth.assertThat(data.getPhotos()).hasSize(5);
+  }
 }
