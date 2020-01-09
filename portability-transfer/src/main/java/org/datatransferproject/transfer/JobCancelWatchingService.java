@@ -18,6 +18,7 @@ package org.datatransferproject.transfer;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 
@@ -43,11 +44,14 @@ class JobCancelWatchingService extends AbstractScheduledService {
     monitor.debug(() -> "polling for job to check cancellation");
     PortabilityJob currentJob = store.findJob(JobMetadata.getJobId());
     boolean isCanceled = currentJob.state() == PortabilityJob.State.CANCELED;
-    monitor.debug(
-        () -> String.format("Job %s is canceled: %s", JobMetadata.getJobId(), isCanceled));
     if (isCanceled) {
+      monitor.info(
+          () -> String.format("Job %s is canceled", JobMetadata.getJobId()),
+          EventCode.WORKER_JOB_CANCELED);
       monitor.flushLogs();
       System.exit(-1);
+    } else {
+      monitor.debug(() -> String.format("Job %s is not canceled", JobMetadata.getJobId()));
     }
   }
 
