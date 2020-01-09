@@ -174,7 +174,8 @@ public class GooglePhotosExporter
         albums.add(photoAlbum);
 
         monitor.debug(
-            () -> String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum));
+            () -> String
+                .format("%s: Google Photos exporting album: %s", jobId, photoAlbum.getId()));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -308,7 +309,8 @@ public class GooglePhotosExporter
           PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
-          monitor.debug(() -> String.format("%s: Google exporting photo: %s", jobId, photoModel));
+          monitor.debug(
+              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
         }
       }
     }
