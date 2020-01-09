@@ -10,6 +10,7 @@ public class EventCode {
 
   public static final EventCode WORKER_CREDS_STORED = new EventCode("WORKER_CREDS_STORED");
   public static final EventCode WORKER_CREDS_TIMEOUT = new EventCode("WORKER_CREDS_TIMEOUT");
+  public static final EventCode WORKER_JOB_CANCELED = new EventCode("WORKER_JOB_CANCELED");
   public static final EventCode WORKER_JOB_ERRORED = new EventCode("WORKER_JOB_ERRORED");
   public static final EventCode WORKER_JOB_FINISHED = new EventCode("WORKER_JOB_FINISHED");
   public static final EventCode WORKER_JOB_STARTED = new EventCode("WORKER_JOB_STARTED");
