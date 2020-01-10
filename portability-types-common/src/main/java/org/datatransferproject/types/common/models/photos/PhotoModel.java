@@ -20,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
+import java.util.stream.Collectors;
+
 public class PhotoModel {
 
-  private final String title;
+  private String title;
   private final String fetchableUrl;
   private final String description;
   private final String mediaType;
@@ -75,6 +77,19 @@ public class PhotoModel {
     return dataId;
   }
 
+  // remove all forbidden characters
+  public void cleanTitle(String forbiddenCharacters, char replacementCharacter, int maxLength) {
+    title = title.chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
+        .map(Object::toString)
+        .collect(Collectors.joining(""));
+    if (maxLength <= 0) {
+      return;
+    }
+    title = title.substring(0, maxLength);
+  }
+  
   public boolean isInTempStore() { return inTempStore; }
 
   @Override

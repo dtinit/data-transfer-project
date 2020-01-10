@@ -22,10 +22,11 @@ import com.google.common.base.Preconditions;
 import java.util.Objects;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class PhotoAlbum {
   private final String id;
-  private final String name;
+  private String name;
   private final String description;
 
   /** The {@code id} is used to associate photos with this album. * */
@@ -82,5 +83,17 @@ public class PhotoAlbum {
       );
     }
     return newAlbums;
+  }
+
+  public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
+    name = name.chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
+        .map(Object::toString)
+        .collect(Collectors.joining(""));
+    if (maxLength <= 0) {
+      return;
+    }
+    name = name.substring(0, maxLength);
   }
 }

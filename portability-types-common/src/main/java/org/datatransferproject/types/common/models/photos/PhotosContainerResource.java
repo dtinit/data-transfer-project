@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
@@ -84,15 +85,14 @@ public class PhotosContainerResource extends ContainerResource {
     return Objects.hash(getAlbums(), getPhotos());
   }
 
-  public void transmogrifyAlbums(int maxSize){
-    transmogrifyAlbums(maxSize, true);
-  }
-
   // Coerce the albums of the transfer using the specification provided, e.g.
   // limiting max album size or grouping un-collected photos into a root album.
-  public void transmogrifyAlbums(int maxSize, boolean allowRootPhotos){
-      ensureRootAlbum(allowRootPhotos);
-      ensureAlbumSize(maxSize);
+  public void transmogrifyAlbums(TransmogrificationConfig config) {
+    ensureRootAlbum(config.getAlbumAllowRootPhotos());
+    ensureAlbumSize(config.getAlbumMaxSize());
+    ensureCleanAlbumNames(config.getAlbumNameForbiddenCharacters(), 
+      config.getAlbumNameReplacementCharacter(),
+      config.getAlbumNameMaxLength());
   }
 
   // Splits albumns that are too large into albums that are smaller than {maxSize}.
@@ -159,6 +159,29 @@ public class PhotosContainerResource extends ContainerResource {
       List<PhotoAlbum> albums_ = new ArrayList<PhotoAlbum>(albums);
       albums_.add(rootAlbum);
       this.albums = albums_;
+    }
+  }
+
+  // Replaces forbidden characters and makes sure that the name is not too long
+  void ensureCleanAlbumNames(String forbiddenTitleCharacters, char replacementCharacter, int maxTitleLength) {
+    for (PhotoAlbum album: albums) {
+      album.cleanName(forbiddenTitleCharacters, replacementCharacter, maxTitleLength);
+    }
+  }
+
+  // Coerce the photos of the transfer using the specification provided, e.g.
+  // limiting max title length or removing forbidden characters, etc.
+  public void transmogrifyPhotos(TransmogrificationConfig config) {
+    ensureCleanPhotoTitles(
+      config.getPhotoTitleForbiddenCharacters(),
+      config.getPhotoTitleReplacementCharater(), 
+      config.getPhotoTitleMaxLength());
+  }
+
+  // Replaces forbidden characters and makes sure that the title is not too long
+  void ensureCleanPhotoTitles(String forbiddenTitleCharacters, char replacementCharacter, int maxTitleLength) {
+    for (PhotoModel photo: photos) {
+      photo.cleanTitle(forbiddenTitleCharacters, replacementCharacter, maxTitleLength);
     }
   }
 }
