@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Strings;
 import com.google.common.base.Preconditions;
-import java.util.stream.Collectors;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,6 +36,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -45,7 +45,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -65,6 +67,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final MicrosoftTransmogrificationConfig transmogrificationConfig = new MicrosoftTransmogrificationConfig();
   private Credential credential;
 
   private final String createFolderUrl;
@@ -106,6 +109,9 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     // Ensure credential is populated
     getOrCreateCredential(authData);
 
+    // Make the data onedrive compatinle
+    resource.transmogrify(transmogrificationConfig);
+
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
@@ -128,7 +134,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
-    rawFolder.put("name", cleanName(album.getName()));
+    rawFolder.put("name", album.getName());
     rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
@@ -234,16 +240,6 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         }
       }
     }
-  }
-
-  // Replace any non-whitespace, non-letter, or non-digit characters with -
-  static String cleanName(String name) {
-    return name.chars()
-        .mapToObj(c -> (char) c)
-        .map(c -> (!Character.isLetterOrDigit(c) && !Character.isWhitespace(c)) ? '-' : c)
-        .limit(40)
-        .map(Object::toString)
-        .collect(Collectors.joining(""));
   }
 
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData){

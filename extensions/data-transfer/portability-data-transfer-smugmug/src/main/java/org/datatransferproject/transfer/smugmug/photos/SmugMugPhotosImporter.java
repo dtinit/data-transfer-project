@@ -25,6 +25,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.smugmug.SmugMugTransmogrificationConfig;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -42,19 +43,15 @@ import static com.google.common.base.Preconditions.checkState;
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
-  // Album size specified here:
-  // https://github.com/google/data-transfer-project/pull/805/files
-  private static final int MAX_ALBUM_SIZE = 5000;
-  // Smugmug doesn't allow photos to exist outside of a folder
-  private static final boolean ALLOW_LOOSE_PHOTOS = false;
-
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
   private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
+  private final SmugMugTransmogrificationConfig transmogrificationConfig = new SmugMugTransmogrificationConfig();;
 
   private SmugMugInterface smugMugInterface;
+
 
   public SmugMugPhotosImporter(
       TemporaryPerJobDataStore jobStore,
@@ -78,7 +75,7 @@ public class SmugMugPhotosImporter
     this.transport = transport;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
-    this.monitor = monitor;
+    this.monitor = monitor; 
   }
 
   @Override
@@ -87,7 +84,10 @@ public class SmugMugPhotosImporter
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
       PhotosContainerResource data) throws Exception {
-    data.transmogrifyAlbums(MAX_ALBUM_SIZE, ALLOW_LOOSE_PHOTOS);
+    
+    // Make the data smugmug compatible
+    data.transmogrify(transmogrificationConfig);
+
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
