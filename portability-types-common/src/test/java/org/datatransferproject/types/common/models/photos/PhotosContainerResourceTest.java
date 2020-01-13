@@ -163,6 +163,7 @@ public class PhotosContainerResourceTest {
   }
 
   @Test
+
   public void verifyTransmogrifyAlbums_NameForbiddenCharacters() throws Exception {
     TransmogrificationConfig config = new TransmogrificationConfig() {
         public String getAlbumNameForbiddenCharacters() {
@@ -174,20 +175,53 @@ public class PhotosContainerResourceTest {
     };
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "This:a fake album!", "This:a fake album!"));
-
     List<PhotoModel> photos =
         ImmutableList.of(
             new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
                 false),
             new PhotoModel("Pic3", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1",
                 false),
+            new PhotoModel("Pic2", "https://fake.com/pic2.png", "fine art", "image/png", "p2", null, false),
             new PhotoModel(
-                "Pic2", "https://fake.com/pic.png", "fine art", "image/png", "p2", null, false));
+                "Pic5", "https://fake.com/pic5.png", "fine art", "image/png", "p5", null, false),
+            new PhotoModel(
+                "Pic6", "https://fake.com/pic6.png", "fine art", "image/png", "p6", null, false));
 
     PhotosContainerResource data = new PhotosContainerResource(albums, photos);
     data.transmogrify(config);
     Truth.assertThat(Iterables.get(data.getAlbums(),0).getName()).isEqualTo("This?a fake album?");
   }
+
+  public void verifyTransmogrifyAlbums_oddDivisionWithoutLoosePhotos() throws Exception {
+    TransmogrificationConfig config = new TransmogrificationConfig() {
+        public boolean getAlbumAllowRootPhotos() {
+            return false;
+        }
+        public int getAlbumMaxSize() {
+            return 2;
+        }
+    };
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
+    List<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
+                false),
+            new PhotoModel("Pic3", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1",
+                false),
+            new PhotoModel("Pic2", "https://fake.com/pic2.png", "fine art", "image/png", "p2", null, false),
+            new PhotoModel(
+                "Pic5", "https://fake.com/pic5.png", "fine art", "image/png", "p5", null, false),
+            new PhotoModel(
+                "Pic6", "https://fake.com/pic6.png", "fine art", "image/png", "p6", null, false));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, photos);
+    data.transmogrify(config);
+    Truth.assertThat(data.getAlbums()).hasSize(3);
+    Truth.assertThat(data.getPhotos()).hasSize(5);
+}
+
+
 
   @Test
   public void verifyTransmogrifyAlbums_NameNoForbiddenCharacters() throws Exception {
@@ -354,5 +388,6 @@ public class PhotosContainerResourceTest {
     Truth.assertThat(Iterables.get(data.getPhotos(),0).getTitle()).hasLength(4);
     Truth.assertThat(Iterables.get(data.getPhotos(),1).getTitle()).hasLength(4);
     Truth.assertThat(Iterables.get(data.getPhotos(),2).getTitle()).hasLength(4);
+
   }
 }

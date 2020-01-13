@@ -117,15 +117,15 @@ public class PhotosContainerResource extends ContainerResource {
       if (entry.getValue().size() > maxSize) {
         for(PhotoAlbum album : albums){
           if (album.getId() != entry.getKey()){
-            break;
+            continue;
           }
           // Create new partial album objects and reassign photos to those albums
           List<PhotoAlbum> newAlbums = album.split(-Math.floorDiv(- entry.getValue().size(), maxSize));
-          Iterator<PhotoModel> remainingAlbums = entry.getValue().iterator();
+          Iterator<PhotoModel> remainingPhotos = entry.getValue().iterator();
           for (PhotoAlbum newAlbum: newAlbums){
             for (int i = 0; i < maxSize; i++){
-              remainingAlbums.next().reassignToAlbum(newAlbum.getId());
-              if (!remainingAlbums.hasNext()){
+              remainingPhotos.next().reassignToAlbum(newAlbum.getId());
+              if (!remainingPhotos.hasNext()){
                 break;
               }
             }
