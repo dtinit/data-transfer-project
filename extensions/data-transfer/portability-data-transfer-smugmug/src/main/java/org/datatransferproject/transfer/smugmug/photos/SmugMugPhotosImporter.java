@@ -48,8 +48,10 @@ public class SmugMugPhotosImporter
   private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
+  private final SmugMugTransmogrificationConfig transmogrificationConfig = new SmugMugTransmogrificationConfig();;
 
   private SmugMugInterface smugMugInterface;
+
 
   public SmugMugPhotosImporter(
       TemporaryPerJobDataStore jobStore,
@@ -73,7 +75,7 @@ public class SmugMugPhotosImporter
     this.transport = transport;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
-    this.monitor = monitor;
+    this.monitor = monitor; 
   }
 
   @Override
@@ -82,8 +84,10 @@ public class SmugMugPhotosImporter
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
       PhotosContainerResource data) throws Exception {
-    SmugMugTransmogrificationConfig config = new SmugMugTransmogrificationConfig();
-    data.transmogrifyAlbums(config);
+    
+    // Make the data smugmug compatible
+    data.transmogrify(transmogrificationConfig);
+
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {

@@ -67,6 +67,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final MicrosoftTransmogrificationConfig transmogrificationConfig = new MicrosoftTransmogrificationConfig();
   private Credential credential;
 
   private final String createFolderUrl;
@@ -107,10 +108,9 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       throws Exception {
     // Ensure credential is populated
     getOrCreateCredential(authData);
-    MicrosoftTransmogrificationConfig config = new MicrosoftTransmogrificationConfig();
-    resource.transmogrifyPhotos(config);
-    resource.transmogrifyAlbums(config);
 
+    // Make the data onedrive compatinle
+    resource.transmogrify(transmogrificationConfig);
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data

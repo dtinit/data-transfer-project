@@ -87,7 +87,7 @@ public class PhotoModel {
     if (maxLength <= 0) {
       return;
     }
-    title = title.substring(0, maxLength);
+    title = title.substring(0, Math.min(maxLength, title.length()));
   }
   
   public boolean isInTempStore() { return inTempStore; }

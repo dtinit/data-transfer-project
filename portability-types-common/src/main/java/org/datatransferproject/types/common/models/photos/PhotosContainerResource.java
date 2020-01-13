@@ -85,9 +85,14 @@ public class PhotosContainerResource extends ContainerResource {
     return Objects.hash(getAlbums(), getPhotos());
   }
 
+  public void transmogrify(TransmogrificationConfig config) {
+    transmogrifyAlbums(config);
+    transmogrifyPhotos(config);
+  }
+
   // Coerce the albums of the transfer using the specification provided, e.g.
   // limiting max album size or grouping un-collected photos into a root album.
-  public void transmogrifyAlbums(TransmogrificationConfig config) {
+  private void transmogrifyAlbums(TransmogrificationConfig config) {
     ensureRootAlbum(config.getAlbumAllowRootPhotos());
     ensureAlbumSize(config.getAlbumMaxSize());
     ensureCleanAlbumNames(config.getAlbumNameForbiddenCharacters(), 
@@ -171,7 +176,7 @@ public class PhotosContainerResource extends ContainerResource {
 
   // Coerce the photos of the transfer using the specification provided, e.g.
   // limiting max title length or removing forbidden characters, etc.
-  public void transmogrifyPhotos(TransmogrificationConfig config) {
+  private void transmogrifyPhotos(TransmogrificationConfig config) {
     ensureCleanPhotoTitles(
       config.getPhotoTitleForbiddenCharacters(),
       config.getPhotoTitleReplacementCharater(), 
@@ -184,4 +189,6 @@ public class PhotosContainerResource extends ContainerResource {
       photo.cleanTitle(forbiddenTitleCharacters, replacementCharacter, maxTitleLength);
     }
   }
+
+
 }
