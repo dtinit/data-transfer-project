@@ -46,5 +46,4 @@ public class TransmogrificationConfig {
     public int getAlbumMaxSize() {
         return ALBUM_MAX_SIZE;
     }
-
 }
