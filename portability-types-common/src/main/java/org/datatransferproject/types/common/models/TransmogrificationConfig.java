@@ -5,15 +5,15 @@ package org.datatransferproject.types.common.models;
     These defaults represent no-chnage transmogrifications.  
 */
 public class TransmogrificationConfig {
-    private final String    PHOTO_TITLE_FORBIDDEN_CHARACTERS    = "";
-    private final char      PHOTO_TITLE_REPLACEMENT_CHARACTER   = '_';
-    private final int       PHOTO_TITLE_MAX_LENGTH              = -1;
+    private static final String    PHOTO_TITLE_FORBIDDEN_CHARACTERS    = "";
+    private static final char      PHOTO_TITLE_REPLACEMENT_CHARACTER   = '_';
+    private static final int       PHOTO_TITLE_MAX_LENGTH              = -1;
 
-    private final String    ALBUM_NAME_FORBIDDEN_CHARACTERS     = "";
-    private final char      ALBUM_NAME_REPLACEMENT_CHARACTER    = '_';
-    private final int       ALBUM_NAME_MAX_LENGTH               = -1;
-    private final boolean   ALBUM_ALLOW_ROOT_PHOTOS             = true;
-    private final int       ALBUM_MAX_SIZE                      = -1;
+    private static final String    ALBUM_NAME_FORBIDDEN_CHARACTERS     = "";
+    private static final char      ALBUM_NAME_REPLACEMENT_CHARACTER    = '_';
+    private static final int       ALBUM_NAME_MAX_LENGTH               = -1;
+    private static final boolean   ALBUM_ALLOW_ROOT_PHOTOS             = true;
+    private static final int       ALBUM_MAX_SIZE                      = -1;
 
     public String getPhotoTitleForbiddenCharacters() {
         return PHOTO_TITLE_FORBIDDEN_CHARACTERS;
