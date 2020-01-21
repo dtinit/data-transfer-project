@@ -8,6 +8,7 @@ import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.junit.Test;
 
+import java.util.stream.Collectors;
 import java.util.List;
 
 public class PhotosContainerResourceTest {
@@ -163,7 +164,6 @@ public class PhotosContainerResourceTest {
   }
 
   @Test
-
   public void verifyTransmogrifyAlbums_NameForbiddenCharacters() throws Exception {
     TransmogrificationConfig config = new TransmogrificationConfig() {
         public String getAlbumNameForbiddenCharacters() {
@@ -192,6 +192,7 @@ public class PhotosContainerResourceTest {
     Truth.assertThat(Iterables.get(data.getAlbums(),0).getName()).isEqualTo("This?a fake album?");
   }
 
+  @Test
   public void verifyTransmogrifyAlbums_oddDivisionWithoutLoosePhotos() throws Exception {
     TransmogrificationConfig config = new TransmogrificationConfig() {
         public boolean getAlbumAllowRootPhotos() {
@@ -201,15 +202,11 @@ public class PhotosContainerResourceTest {
             return 2;
         }
     };
-    List<PhotoAlbum> albums =
-        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
+    List<PhotoAlbum> albums = ImmutableList.of();
     List<PhotoModel> photos =
         ImmutableList.of(
-            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
-                false),
-            new PhotoModel("Pic3", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1",
-                false),
-            new PhotoModel("Pic2", "https://fake.com/pic2.png", "fine art", "image/png", "p2", null, false),
+            new PhotoModel(
+                "Pic2", "https://fake.com/pic2.png", "fine art", "image/png", "p2", null, false),
             new PhotoModel(
                 "Pic5", "https://fake.com/pic5.png", "fine art", "image/png", "p5", null, false),
             new PhotoModel(
@@ -217,8 +214,11 @@ public class PhotosContainerResourceTest {
 
     PhotosContainerResource data = new PhotosContainerResource(albums, photos);
     data.transmogrify(config);
-    Truth.assertThat(data.getAlbums()).hasSize(3);
-    Truth.assertThat(data.getPhotos()).hasSize(5);
+    Truth.assertThat(data.getAlbums()).hasSize(2);
+    Truth.assertThat(
+            data.getAlbums().stream().map(thing -> thing.getName()).collect(Collectors.toList()))
+        .isEqualTo(ImmutableList.of("Transferred Photos (1/2)", "Transferred Photos (2/2)"));
+    Truth.assertThat(data.getPhotos()).hasSize(3);
 }
 
 
