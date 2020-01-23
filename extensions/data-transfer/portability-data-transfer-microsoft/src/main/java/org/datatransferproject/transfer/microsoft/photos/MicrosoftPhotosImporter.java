@@ -218,7 +218,9 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
             responseBody = newResponse.body();
         }
         if (code < 200 || code > 299) {
-          throw new IOException("Got error code: " + code + " message " + response.message());
+          throw new IOException(
+              "Got error code: " + code + " message: " + response.message() + " body: " + response
+                  .body());
         }
 
         // Extract photo ID from response body
