@@ -105,8 +105,16 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     // Ensure credential is populated
     getOrCreateCredential(authData);
 
-    // Make the data onedrive compatinle
+    monitor.debug(
+        () -> String
+            .format("%s: Importing %s albums and %s photos before transmogrification", jobId,
+                resource.getAlbums().size(), resource.getPhotos().size()));
+
+    // Make the data onedrive compatible
     resource.transmogrify(transmogrificationConfig);
+    monitor.debug(
+        () -> String.format("%s: Importing %s albums and %s photos after transmogrification", jobId,
+            resource.getAlbums().size(), resource.getPhotos().size()));
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
@@ -115,13 +123,10 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
-
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           photoModel.getAlbumId() + "-" + photoModel.getDataId(),
           photoModel.getTitle(),
-          () -> {
-            return importSinglePhoto(photoModel, jobId, idempotentImportExecutor);
-          });
+          () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
     }
     return ImportResult.OK;
   }
