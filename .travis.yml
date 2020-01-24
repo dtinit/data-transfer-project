@@ -66,6 +66,7 @@ matrix:
             branch: master
 
 addons:
+  chrome: stable
   apt:
     sources:
       - google-chrome
