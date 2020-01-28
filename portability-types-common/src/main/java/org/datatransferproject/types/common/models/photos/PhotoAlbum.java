@@ -90,10 +90,10 @@ public class PhotoAlbum {
         .mapToObj(c -> (char) c)
         .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
         .map(Object::toString)
-        .collect(Collectors.joining(""));
+        .collect(Collectors.joining("")).trim();
     if (maxLength <= 0) {
       return;
     }
-    name = name.substring(0, maxLength);
+    name = name.substring(0, Math.min(maxLength, name.length())).trim();
   }
 }
