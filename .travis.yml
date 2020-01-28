@@ -66,12 +66,7 @@ matrix:
             branch: master
 
 addons:
-  apt:
-    sources:
-      - google-chrome
-    packages:
-      - dpkg
-      - google-chrome-stable
+  chrome: stable
       
 notifications:
   slack:
