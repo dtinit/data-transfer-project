@@ -160,7 +160,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       if (code < 200 || code > 299) {
         throw new IOException(
             "Got error code: " + code + " message: " + response.message() + " body: " + response
-                .body());
+                .body().string());
       }
       if (body == null) {
         throw new IOException("Got null body");
@@ -225,7 +225,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         if (code < 200 || code > 299) {
           throw new IOException(
               "Got error code: " + code + " message: " + response.message() + " body: " + response
-                  .body());
+                  .body().string());
         }
 
         // Extract photo ID from response body

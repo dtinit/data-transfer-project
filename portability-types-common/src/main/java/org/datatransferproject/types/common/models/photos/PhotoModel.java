@@ -83,11 +83,11 @@ public class PhotoModel {
         .mapToObj(c -> (char) c)
         .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
         .map(Object::toString)
-        .collect(Collectors.joining(""));
+        .collect(Collectors.joining("")).trim();
     if (maxLength <= 0) {
       return;
     }
-    title = title.substring(0, Math.min(maxLength, title.length()));
+    title = title.substring(0, Math.min(maxLength, title.length())).trim();
   }
   
   public boolean isInTempStore() { return inTempStore; }
