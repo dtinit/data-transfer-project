@@ -243,6 +243,26 @@ public class PhotosContainerResourceTest {
     Truth.assertThat(Iterables.get(data.getAlbums(),0).getName()).isEqualTo("This:a fake album!");
   }
 
+  @Test
+  public void verifyTransmogrifyAlbums_stripName() throws Exception {
+    TransmogrificationConfig config = new TransmogrificationConfig();
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "This:a fake album!   ", "This:a fake album!"));
+
+    List<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
+                false),
+            new PhotoModel("Pic3", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1",
+                false),
+            new PhotoModel(
+                "Pic2", "https://fake.com/pic.png", "fine art", "image/png", "p2", null, false));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, photos);
+    data.transmogrify(config);
+    Truth.assertThat(Iterables.get(data.getAlbums(),0).getName()).isEqualTo("This:a fake album!");
+  }
+
 
   @Test
   public void verifyTransmogrifyAlbums_NameTooLong() throws Exception {
@@ -388,6 +408,26 @@ public class PhotosContainerResourceTest {
     Truth.assertThat(Iterables.get(data.getPhotos(),0).getTitle()).hasLength(4);
     Truth.assertThat(Iterables.get(data.getPhotos(),1).getTitle()).hasLength(4);
     Truth.assertThat(Iterables.get(data.getPhotos(),2).getTitle()).hasLength(4);
+
+  }
+
+  @Test
+  public void verifyTransmogrifyPhotos_stripTitle() throws Exception {
+    TransmogrificationConfig config = new TransmogrificationConfig();
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This:a fake album!"));
+
+    List<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel("Pic1 ", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
+                false),
+            new PhotoModel("Pic3 ", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1",
+                false));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, photos);
+    data.transmogrify(config);
+    Truth.assertThat(Iterables.get(data.getPhotos(),0).getTitle()).isEqualTo("Pic1");
+    Truth.assertThat(Iterables.get(data.getPhotos(),1).getTitle()).isEqualTo("Pic3");
 
   }
 }
