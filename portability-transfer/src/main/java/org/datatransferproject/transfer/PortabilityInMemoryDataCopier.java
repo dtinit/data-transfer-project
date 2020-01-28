@@ -15,17 +15,8 @@
  */
 package org.datatransferproject.transfer;
 
-import static java.lang.String.format;
-
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
-import java.io.IOException;
-import java.time.Clock;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
@@ -44,6 +35,16 @@ import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
 
+import javax.inject.Inject;
+import java.io.IOException;
+import java.time.Clock;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.lang.String.format;
+
 /** Implementation of {@link InMemoryDataCopier}. */
 final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
@@ -57,7 +58,6 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
 
   private final Provider<Importer> importerProvider;
   private final IdempotentImportExecutor idempotentImportExecutor;
-
   private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder metricRecorder;
@@ -111,15 +111,17 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       throws CopyException {
 
     String jobIdPrefix = "Job " + jobId + ": ";
-    final int i = COPY_ITERATION_COUNTER.incrementAndGet();
-    monitor.debug(() -> jobIdPrefix + "Copy iteration: " + i);
+    final int copyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
+    monitor.debug(() -> jobIdPrefix + "Copy iteration: " + copyIteration);
 
     RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
 
     // NOTE: order is important below, do the import of all the items, then do continuation
     // then do sub resources, this ensures all parents are populated before children get
     // processed.
-    monitor.debug(() -> jobIdPrefix + "Starting export", EventCode.COPIER_STARTED_EXPORT);
+    monitor.debug(
+        () -> jobIdPrefix + "Starting export, copy iteration: " + copyIteration,
+        EventCode.COPIER_STARTED_EXPORT);
     CallableExporter callableExporter =
         new CallableExporter(
             exporterProvider, jobId, exportAuthData, exportInformation, metricRecorder);
@@ -140,10 +142,14 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
           exportSuccess,
           exportStopwatch.elapsed());
     }
-    monitor.debug(() -> jobIdPrefix + "Finished export", EventCode.COPIER_FINISHED_EXPORT);
+    monitor.debug(
+        () -> jobIdPrefix + "Finished export, copy iteration: " + copyIteration,
+        EventCode.COPIER_FINISHED_EXPORT);
 
     if (exportResult.getExportedData() != null) {
-      monitor.debug(() -> jobIdPrefix + "Starting import", EventCode.COPIER_STARTED_IMPORT);
+      monitor.debug(
+          () -> jobIdPrefix + "Starting import, copy iteration: " + copyIteration,
+          EventCode.COPIER_STARTED_IMPORT);
       CallableImporter callableImporter =
           new CallableImporter(
               importerProvider,
@@ -180,7 +186,9 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
             importSuccess,
             importStopwatch.elapsed());
       }
-      monitor.debug(() -> jobIdPrefix + "Finished import", EventCode.COPIER_FINISHED_IMPORT);
+      monitor.debug(
+          () -> jobIdPrefix + "Finished import, copy iteration: " + copyIteration,
+          EventCode.COPIER_FINISHED_IMPORT);
     }
 
     // Import and Export were successful, determine what to do next
@@ -189,7 +197,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
     if (null != continuationData) {
       // Process the next page of items for the resource
       if (null != continuationData.getPaginationData()) {
-        monitor.debug(() -> jobIdPrefix + "Starting off a new copy iteration with pagination info");
+        monitor.debug(
+            () ->
+                jobIdPrefix
+                    + "Starting off a new copy iteration with pagination info, copy iteration: "
+                    + copyIteration);
         copyHelper(
             jobId,
             exportAuthData,
@@ -206,6 +218,11 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       if (continuationData.getContainerResources() != null
           && !continuationData.getContainerResources().isEmpty()) {
         for (ContainerResource resource : continuationData.getContainerResources()) {
+          monitor.debug(
+              () ->
+                  jobIdPrefix
+                      + "Starting off a new copy iteration with a new container resource, copy iteration: "
+                      + copyIteration);
           copyHelper(
               jobId,
               exportAuthData,
