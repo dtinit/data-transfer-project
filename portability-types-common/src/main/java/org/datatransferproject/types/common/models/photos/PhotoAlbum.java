@@ -86,9 +86,6 @@ public class PhotoAlbum {
   }
 
   public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
-    if (name == null) {
-      return;
-    }
     name = name.chars()
         .mapToObj(c -> (char) c)
         .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
