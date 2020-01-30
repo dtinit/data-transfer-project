@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import java.util.List;
 
 public class PhotosContainerResourceTest {
+
+
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -41,7 +43,26 @@ public class PhotosContainerResourceTest {
     Truth.assertThat(deserialized.getPhotos()).hasSize(2);
   }
 
-    @Test
+  @Test
+  public void verifyTransmogrifyAlbums_nullName() throws Exception {
+    TransmogrificationConfig config = new TransmogrificationConfig() {
+        public int getAlbumMaxSize() { return 2;}
+    };
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", null, "This is a fake album"));
+
+    List<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
+                false));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, photos);
+    data.transmogrify(config);
+    Truth.assertThat(Iterables.get(data.getAlbums(),0).getName()).isEqualTo(null);
+  }
+
+
+  @Test
   public void verifyTransmogrifyAlbums_evenDivision() throws Exception {
     TransmogrificationConfig config = new TransmogrificationConfig() {
         public int getAlbumMaxSize() { return 2;}
