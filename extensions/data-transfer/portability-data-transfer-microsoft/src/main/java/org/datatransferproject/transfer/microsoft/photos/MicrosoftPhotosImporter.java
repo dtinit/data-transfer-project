@@ -21,9 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -73,12 +75,12 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
 
   public MicrosoftPhotosImporter(
-      String baseUrl,
-      OkHttpClient client,
-      ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore,
-      Monitor monitor,
-      MicrosoftCredentialFactory credentialFactory) {
+    String baseUrl,
+    OkHttpClient client,
+    ObjectMapper objectMapper,
+    TemporaryPerJobDataStore jobStore,
+    Monitor monitor,
+    MicrosoftCredentialFactory credentialFactory) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
 
     // first param is the folder id, second param is the file name
@@ -97,36 +99,36 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
 
   @Override
   public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor,
-      TokensAndUrlAuthData authData,
-      PhotosContainerResource resource)
-      throws Exception {
+    UUID jobId,
+    IdempotentImportExecutor idempotentImportExecutor,
+    TokensAndUrlAuthData authData,
+    PhotosContainerResource resource)
+  throws Exception {
     // Ensure credential is populated
     getOrCreateCredential(authData);
 
     monitor.debug(
-        () -> String
-            .format("%s: Importing %s albums and %s photos before transmogrification", jobId,
-                resource.getAlbums().size(), resource.getPhotos().size()));
+      () -> String
+      .format("%s: Importing %s albums and %s photos before transmogrification", jobId,
+              resource.getAlbums().size(), resource.getPhotos().size()));
 
     // Make the data onedrive compatible
     resource.transmogrify(transmogrificationConfig);
     monitor.debug(
-        () -> String.format("%s: Importing %s albums and %s photos after transmogrification", jobId,
-            resource.getAlbums().size(), resource.getPhotos().size()));
+      () -> String.format("%s: Importing %s albums and %s photos after transmogrification", jobId,
+                          resource.getAlbums().size(), resource.getPhotos().size()));
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> createOneDriveFolder(album));
+        album.getId(), album.getName(), () -> createOneDriveFolder(album));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          photoModel.getAlbumId() + "-" + photoModel.getDataId(),
-          photoModel.getTitle(),
-          () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
+        photoModel.getAlbumId() + "-" + photoModel.getDataId(),
+        photoModel.getTitle(),
+        () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
     }
     return ImportResult.OK;
   }
@@ -142,25 +144,25 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
     requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
     requestBuilder.post(
-        RequestBody.create(
-            MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
+      RequestBody.create(
+        MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
       ResponseBody body = response.body();
-      if (code == 401){
-          // If there was an unauthorized error, then try refreshing the creds
-          credentialFactory.refreshCredential(credential);
-          monitor.info(() -> "Refreshed authorization token successfuly");
+      if (code == 401) {
+        // If there was an unauthorized error, then try refreshing the creds
+        credentialFactory.refreshCredential(credential);
+        monitor.info(() -> "Refreshed authorization token successfuly");
 
-          requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-          Response newResponse = client.newCall(requestBuilder.build()).execute();
-          code = newResponse.code();
-          body = newResponse.body();
+        requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+        Response newResponse = client.newCall(requestBuilder.build()).execute();
+        code = newResponse.code();
+        body = newResponse.body();
       }
       if (code < 200 || code > 299) {
         throw new IOException(
-            "Got error code: " + code + " message: " + response.message() + " body: " + response
-                .body().string());
+          "Got error code: " + code + " message: " + response.message() + " body: " + response
+          .body().string());
       }
       if (body == null) {
         throw new IOException("Got null body");
@@ -168,90 +170,175 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
       String folderId = (String) responseData.get("id");
       checkState(!Strings.isNullOrEmpty(folderId),
-          "Expected id value to be present in %s", responseData);
+                 "Expected id value to be present in %s", responseData);
       return folderId;
     }
   }
 
   private String importSinglePhoto(
-      PhotoModel photo,
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor)
-      throws IOException {
+    PhotoModel photo,
+    UUID jobId,
+    IdempotentImportExecutor idempotentImportExecutor)
+  throws IOException {
     InputStream inputStream = null;
 
-    try {
-      String uploadUrl = null;
-      if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-        uploadUrl = String.format(albumlessPhotoUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
-      } else {
-        String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
-        uploadUrl =
-            String.format(
-                uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
+    String uploadUrl = null;
+    if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+      uploadUrl = String.format(albumlessPhotoUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
+    } else {
+      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
+      uploadUrl =
+        String.format(
+          uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
+    }
+
+    if (photo.isInTempStore()) {
+      inputStream = jobStore.getStream(jobId, photo.getFetchableUrl());
+    } else if (photo.getFetchableUrl() != null) {
+      inputStream = new URL(photo.getFetchableUrl()).openStream();
+    } else {
+      throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
+    }
+
+
+    // create upload session
+    // POST to /me/drive/items/{folder_id}:/createUploadSession
+    // JSON BODY:
+    // {
+    //   "item": {
+    //     "name": "{filename}"
+    //   }
+    // }
+    // get {uploadurl} from respones
+    Request.Builder createSessionRequestBuilder = new Request.Builder().url("/me/drive/items/{folder_id}:/createUploadSession");
+    createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+    createSessionRequestBuilder.header("Content-Type", "application/json");
+    Map<String, Object> rawItem = new LinkedHashMap<>();
+    rawItem.put("name", photo.getTitle());
+    Map<String, Object> body = ImmutableMap.of("item", rawItem);
+
+    createSessionRequestBuilder.post(
+      RequestBody.create(
+        MediaType.parse("application/json"), objectMapper.writeValueAsString(body)));
+    ResponseBody responseBody;
+
+    String photoUploadUrl;
+    try (Response response = client.newCall(createSessionRequestBuilder.build()).execute()) {
+      int code = response.code();
+      responseBody = response.body();
+      if (code == 401) {
+        // If there was an unauthorized error, then try refreshing the creds
+        credentialFactory.refreshCredential(credential);
+        monitor.info(() -> "Refreshed authorization token successfuly");
+
+        createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+        Response newResponse = client.newCall(createSessionRequestBuilder.build()).execute();
+        code = newResponse.code();
+        responseBody = newResponse.body();
       }
-
-      if (photo.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl());
-      } else if (photo.getFetchableUrl() != null) {
-        inputStream = new URL(photo.getFetchableUrl()).openStream();
-      } else {
-        throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
+      if (code < 200 || code > 299) {
+        throw new IOException(
+          "Got error code: " + code + " message: " + response.message() + " body: " + response
+          .body().string());
       }
+      Preconditions.checkState(responseBody != null, "Got Null Body when creating photo upload session %s", photo);
+      Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
+      photoUploadUrl = (String) responseData.get("uploadUrl");
+    }
 
-      Request.Builder requestBuilder = new Request.Builder().url(uploadUrl);
-      requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+    // upload file in 32000KiB chunks
+    // PUT to {uploadurl}
+    // HEADERS
+    // Content-Length: {chunk size in bytes}
+    // Content-Range: bytes {begin}-{end}/{total size}
+    // body={bytes}
+    int CHUNK_SIZE = 32000 * 1024; // 32000KiB
 
-      MediaType contentType = MediaType.parse(photo.getMediaType());
+    Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
+    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
-      StreamingBody body = new StreamingBody(contentType, inputStream);
 
-      // PUT the stream
-      requestBuilder.put(body);
+    ArrayList<Chunk> chunksToSend = new ArrayList();
+    byte[] data = new byte[CHUNK_SIZE];
+    int offset = 0;
+    int quantityToSend;
+    while ((quantityToSend = inputStream.read(data)) != 0) {
+      chunksToSend.add(new Chunk(data.clone(), quantityToSend, offset, offset + quantityToSend - 1));
+      offset += quantityToSend;
+    }
+    inputStream.close();
 
-      try (Response response = client.newCall(requestBuilder.build()).execute()) {
-        int code = response.code();
-        ResponseBody responseBody = response.body();
-        if (code == 401){
-            // If there was an unauthorized error, then try refreshing the creds
-            credentialFactory.refreshCredential(credential);
-            monitor.info(() -> "Refreshed authorization token successfuly");
+    Integer code = null;
+    Map<String, Object> responseData = null;
+    for (Chunk chunk : chunksToSend) {
+      // setup upload for this chunk
+      RequestBody uploadChunkBody = RequestBody.create(MediaType.parse(photo.getMediaType()), chunk.getData());
+      uploadRequestBuilder.header("Content-Length", chunk.getSize().toString());
+      uploadRequestBuilder.header("Content-Range", String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), offset));
+      uploadRequestBuilder.put(uploadChunkBody);
+      try (Response response = client.newCall(uploadRequestBuilder.build()).execute()) {
+        code = response.code();
+        responseBody = response.body();
+        if (code == 401) {
+          // If there was an unauthorized error, then try refreshing the creds
+          credentialFactory.refreshCredential(credential);
+          monitor.info(() -> "Refreshed authorization token successfuly");
 
-            requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-            Response newResponse = client.newCall(requestBuilder.build()).execute();
-            code = newResponse.code();
-            responseBody = newResponse.body();
+          uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+          Response newResponse = client.newCall(uploadRequestBuilder.build()).execute();
+          code = newResponse.code();
+          responseBody = newResponse.body();
         }
         if (code < 200 || code > 299) {
           throw new IOException(
-              "Got error code: " + code + " message: " + response.message() + " body: " + response
-                  .body().string());
-        }
-
-        // Extract photo ID from response body
-        Preconditions.checkState(body != null, "Got Null Body when creating photo %s", photo);
-        Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
-        String photoId = (String) responseData.get("id");
-        checkState(!Strings.isNullOrEmpty(photoId),
-            "Expected id value to be present in %s", responseData);
-        return photoId;
-      }
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException e1) {
-          monitor.info(() -> "Couldn't close input stream");
+            "Got error code: " + code + " message: " + response.message() + " body: " + response
+            .body().string());
         }
       }
+      Preconditions.checkState(responseBody != null, "Got null body on uploading a chunk %s", photo);
+      responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
     }
+
+    // get complete file response
+    Preconditions.checkState(code == 201 || code == 200, "Got bad response code when finishing uploadSession: %d", code);
+
+    return (String) responseData.get("id");
   }
 
-  private Credential getOrCreateCredential(TokensAndUrlAuthData authData){
-    if (this.credential == null){
+  private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
+    if (this.credential == null) {
       this.credential = this.credentialFactory.createCredential(authData);
     }
     return this.credential;
+  }
+
+  private static class Chunk {
+    private final byte[] data;
+    private final Integer size;
+    private final int rangeStart;
+    private final int rangeEnd;
+    public Chunk(byte[] data, int size, int rangeStart, int rangeEnd) {
+      this.data = data;
+      this.size = size;
+      this.rangeStart = rangeStart;
+      this.rangeEnd = rangeEnd;
+    }
+
+    public Integer getSize() {
+      return size;
+    }
+
+    public byte[] getData() {
+      return data;
+    }
+
+    public int getStart() {
+      return rangeStart;
+    }
+
+    public int getEnd() {
+      return rangeEnd;
+    }
   }
 
   private static class StreamingBody extends RequestBody {
