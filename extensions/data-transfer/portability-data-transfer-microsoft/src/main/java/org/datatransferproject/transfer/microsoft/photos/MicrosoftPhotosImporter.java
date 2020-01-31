@@ -245,7 +245,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         "Got error code: " + code + " message: " + response.message() + " body: " + response
         .body().string());
     } else if (code != 200) {
-      monitor.info(() -> String.format("Got an unexpected non-200, non-error response code: %s, %s", code, responseBody.string()));
+      monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
     Preconditions.checkState(responseBody != null, "Got Null Body when creating photo upload session %s", photo);
     Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
@@ -296,14 +296,16 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
         // update auth info, reupload chunk
         uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
         chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
-        chunkCode = newResponse.code();
+        chunkCode = chunkResponse.code();
       }
       if (chunkCode < 200 || code > 299) {
         throw new IOException(
           "Got error code: " + code + " message: " + response.message() + " body: " + chunkResponse
           .body().string());
       }
-      monitor.info(() -> String.format("Uploaded chunk %s-%s, got code %s", chunk.getStart(), chunk.getEnd(), chunkCode));
+      if (chunkCode == 200) {
+        monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly", chunk.getStart(), chunk.getEnd()));        
+      }
     }
     // get complete file response
     Preconditions.checkState(code == 201 || code == 200, "Got bad response code when finishing uploadSession: %d", code);
