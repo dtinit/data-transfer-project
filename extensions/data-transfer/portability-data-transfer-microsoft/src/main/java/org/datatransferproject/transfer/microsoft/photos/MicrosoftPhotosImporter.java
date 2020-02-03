@@ -1,3 +1,38 @@
+package extensions.data - transfer.portability - data - transfer - microsoft.src.main.java.org.datatransferproject.transfer.microsoft.photos;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
+import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.omg.CORBA.Object;
+
 /*
  * Copyright 2018 The Data-Portability Project Authors.
  *
@@ -13,49 +48,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer.microsoft.photos;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.lang.Long;
-import java.time.Instant;
-import java.time.Duration;
-import java.util.Map;
-import java.util.Timer;
-import java.util.UUID;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.Util;
-import okio.BufferedSink;
-import okio.Okio;
-import okio.Source;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
-import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
