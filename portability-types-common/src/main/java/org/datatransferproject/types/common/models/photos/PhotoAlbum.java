@@ -85,15 +85,22 @@ public class PhotoAlbum {
     return newAlbums;
   }
 
+  // This allows us to make album names palatable, removing unpalatable characters and
+  // enforcing length rules
   public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
+    // An album name is allowed to be null, handled on the importer level if there is a problem with
+    // this value, so we support it here
+    if (name == null) {
+      return;
+    }
     name = name.chars()
         .mapToObj(c -> (char) c)
         .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
         .map(Object::toString)
         .collect(Collectors.joining("")).trim();
-    if (maxLength <= 0) {
+    if (maxLength <= 0 || maxLength >= name.length()) {
       return;
     }
-    name = name.substring(0, Math.min(maxLength, name.length())).trim();
+    name = name.substring(0, maxLength).trim();
   }
 }
