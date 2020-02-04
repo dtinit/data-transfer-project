@@ -52,9 +52,7 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
-/**
- * A {@link JobStore} implementation based on Google Cloud Platform's Datastore.
- */
+/** A {@link JobStore} implementation based on Google Cloud Platform's Datastore. */
 @Singleton
 public final class GoogleJobStore extends JobStoreWithValidator {
 
@@ -73,8 +71,8 @@ public final class GoogleJobStore extends JobStoreWithValidator {
   private final ObjectMapper objectMapper;
 
   @Inject
-  public GoogleJobStore(Datastore datastore, GoogleTempFileStore googleTempFileStore,
-      ObjectMapper objectMapper) {
+  public GoogleJobStore(
+      Datastore datastore, GoogleTempFileStore googleTempFileStore, ObjectMapper objectMapper) {
     this.datastore = datastore;
     this.googleTempFileStore = googleTempFileStore;
     this.objectMapper = objectMapper;
@@ -123,7 +121,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
    * <p>To update an existing {@link PortabilityJob} instead, use {@link JobStore#update}.
    *
    * @throws IOException if a job already exists for {@code jobId}, or if there was a different
-   * problem inserting the job.
+   *     problem inserting the job.
    */
   @Override
   public void createJob(UUID jobId, PortabilityJob job) throws IOException {
@@ -161,7 +159,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
    * validator.validate() is called first in the transaction.
    *
    * @throws IOException if a job didn't already exist for {@code jobId} or there was a problem
-   * updating it @throws IllegalStateException if validator.validate() failed
+   *     updating it @throws IllegalStateException if validator.validate() failed
    */
   @Override
   protected void updateJob(UUID jobId, PortabilityJob job, JobUpdateValidator validator)
@@ -198,13 +196,14 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     List<Entity> entities = new ArrayList<>();
     for (ErrorDetail errorDetail : errors) {
       Key key = getErrorKey(jobId, errorDetail.id());
-      entities.add(GoogleCloudUtils.createEntityBuilder(
-          key,
-          ImmutableMap.of(
-              JSON_DATA_FIELD,
-              // TODO: encrypt this data
-              objectMapper.writeValueAsString(errorDetail)))
-          .build());
+      entities.add(
+          GoogleCloudUtils.createEntityBuilder(
+                  key,
+                  ImmutableMap.of(
+                      JSON_DATA_FIELD,
+                      // TODO: encrypt this data
+                      objectMapper.writeValueAsString(errorDetail)))
+              .build());
     }
     datastore.add(entities.toArray(new Entity[entities.size()]));
   }
@@ -223,9 +222,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     }
   }
 
-  /**
-   * Returns the job keyed by {@code jobId} in Datastore, or null if not found.
-   */
+  /** Returns the job keyed by {@code jobId} in Datastore, or null if not found. */
   @Override
   public PortabilityJob findJob(UUID jobId) {
     Entity entity = datastore.get(getJobKey(jobId));
@@ -244,8 +241,8 @@ public final class GoogleJobStore extends JobStoreWithValidator {
    * Finds the ID of the first {@link PortabilityJob} in state {@code jobState} in Datastore, or
    * null if none found.
    *
-   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying
-   * to OrderBy.asc("created") currently fails because we don't yet have an index set up.
+   * <p>TODO(rtannenbaum): Order by creation time so we can process jobs in a FIFO manner. Trying to
+   * OrderBy.asc("created") currently fails because we don't yet have an index set up.
    */
   @Override
   public UUID findFirst(JobAuthorization.State jobState) {
@@ -277,10 +274,11 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     }
 
     String serialized = objectMapper.writeValueAsString(model);
-    Entity entity = Entity.newBuilder(fullKey)
-        .set(CREATED_FIELD, Timestamp.now())
-        .set(model.getClass().getName(), serialized)
-        .build();
+    Entity entity =
+        Entity.newBuilder(fullKey)
+            .set(CREATED_FIELD, Timestamp.now())
+            .set(model.getClass().getName(), serialized)
+            .build();
 
     try {
       transaction.put(entity);
@@ -303,10 +301,11 @@ public final class GoogleJobStore extends JobStoreWithValidator {
       }
 
       String serialized = objectMapper.writeValueAsString(model);
-      Entity entity = Entity.newBuilder(entityKey)
-          .set(CREATED_FIELD, Timestamp.now())
-          .set(model.getClass().getName(), serialized)
-          .build();
+      Entity entity =
+          Entity.newBuilder(entityKey)
+              .set(CREATED_FIELD, Timestamp.now())
+              .set(model.getClass().getName(), serialized)
+              .build();
 
       transaction.put(entity);
       transaction.commit();
@@ -386,14 +385,16 @@ public final class GoogleJobStore extends JobStoreWithValidator {
   private Entity createNewEntity(UUID jobId, Map<String, Object> data) throws IOException {
     Timestamp createdTime = Timestamp.now();
 
-    return GoogleCloudUtils
-        .createEntityBuilder(getJobKey(jobId), data).set(CREATED_FIELD, createdTime)
-        .set(LAST_UPDATE_FIELD, createdTime).build();
+    return GoogleCloudUtils.createEntityBuilder(getJobKey(jobId), data)
+        .set(CREATED_FIELD, createdTime)
+        .set(LAST_UPDATE_FIELD, createdTime)
+        .build();
   }
 
-  private Entity createUpdatedEntity(Key key, Map<String, Object> data)
-      throws IOException {
-    return GoogleCloudUtils.createEntityBuilder(key, data).set(LAST_UPDATE_FIELD, Timestamp.now()).build();
+  private Entity createUpdatedEntity(Key key, Map<String, Object> data) throws IOException {
+    return GoogleCloudUtils.createEntityBuilder(key, data)
+        .set(LAST_UPDATE_FIELD, Timestamp.now())
+        .build();
   }
 
   private Key getJobKey(UUID jobId) {
@@ -403,7 +404,8 @@ public final class GoogleJobStore extends JobStoreWithValidator {
   private Key getErrorKey(UUID jobId, String errorId) {
     // Use the main job as the ancestor to all the errors, see:
     // https://cloud.google.com/datastore/docs/concepts/entities#ancestor_paths
-    return datastore.newKeyFactory()
+    return datastore
+        .newKeyFactory()
         .setKind(ERROR_KIND)
         .addAncestor(PathElement.of(JOB_KIND, jobId.toString()))
         .newKey(errorId);

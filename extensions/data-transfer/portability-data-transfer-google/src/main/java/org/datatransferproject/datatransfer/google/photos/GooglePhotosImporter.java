@@ -102,10 +102,11 @@ public class GooglePhotosImporter
     // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        final PhotoResult photoResult = idempotentImportExecutor.executeAndSwallowIOExceptions(
-            photo.getAlbumId() + "-" + photo.getDataId(),
-            photo.getTitle(),
-            () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
+        final PhotoResult photoResult =
+            idempotentImportExecutor.executeAndSwallowIOExceptions(
+                photo.getAlbumId() + "-" + photo.getDataId(),
+                photo.getTitle(),
+                () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
         bytes += photoResult.getBytes();
       }
     }
@@ -177,11 +178,13 @@ public class GooglePhotosImporter
     NewMediaItemUpload uploadItem =
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
 
-    return new PhotoResult(getOrCreatePhotosInterface(authData)
-        .createPhoto(uploadItem)
-        .getResults()[0]
-        .getMediaItem()
-        .getId(), bytes);
+    return new PhotoResult(
+        getOrCreatePhotosInterface(authData)
+            .createPhoto(uploadItem)
+            .getResults()[0]
+            .getMediaItem()
+            .getId(),
+        bytes);
   }
 
   private String getPhotoDescription(PhotoModel inputPhoto) {

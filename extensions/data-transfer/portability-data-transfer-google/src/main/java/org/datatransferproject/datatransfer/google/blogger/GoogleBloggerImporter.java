@@ -16,6 +16,8 @@
 
 package org.datatransferproject.datatransfer.google.blogger;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
@@ -30,7 +32,11 @@ import com.google.common.collect.ImmutableList;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.time.LocalDate;
+import java.util.UUID;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -40,13 +46,6 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.LocalDate;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class GoogleBloggerImporter
     implements Importer<TokensAndUrlAuthData, SocialActivityContainerResource> {
@@ -58,8 +57,7 @@ public class GoogleBloggerImporter
   // Used for image upload/hosting.
   private Drive driveInterface;
 
-  public GoogleBloggerImporter(
-      GoogleCredentialFactory credentialFactory) {
+  public GoogleBloggerImporter(GoogleCredentialFactory credentialFactory) {
     this.credentialFactory = credentialFactory;
 
     this.imageStreamProvider = new ImageStreamProvider();
@@ -69,10 +67,12 @@ public class GoogleBloggerImporter
   }
 
   @Override
-  public ImportResult importItem(UUID jobId,
+  public ImportResult importItem(
+      UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokensAndUrlAuthData authData,
-      SocialActivityContainerResource data) throws Exception {
+      SocialActivityContainerResource data)
+      throws Exception {
     Blogger blogger = getOrCreateBloggerService(authData);
 
     BlogList blogList = blogger.blogs().listByUser("self").execute();
@@ -116,18 +116,21 @@ public class GoogleBloggerImporter
     // don't know how they were laid out in the originating service.
     for (LinkValue attachmentLinkValue : asObject.attachments()) {
       ASObject attachment = (ASObject) attachmentLinkValue;
-      content = "<a href=\"" + attachment.firstUrl().toString() +"\">"
-          + attachment.displayNameString() + "</a>\n</hr>\n"
-          + content;
+      content =
+          "<a href=\""
+              + attachment.firstUrl().toString()
+              + "\">"
+              + attachment.displayNameString()
+              + "</a>\n</hr>\n"
+              + content;
     }
 
     if (asObject.firstImage() != null) {
       // Store any attached images in Drive in a new folder.
       Drive driveInterface = getOrCreateDriveService(authData);
-      String folderId = idempotentExecutor.executeOrThrowException(
-          "MainAlbum",
-          "Photo Album",
-          () -> createAlbumFolder(driveInterface));
+      String folderId =
+          idempotentExecutor.executeOrThrowException(
+              "MainAlbum", "Photo Album", () -> createAlbumFolder(driveInterface));
       for (LinkValue image : asObject.image()) {
         try {
           String newImgSrc =
@@ -152,13 +155,12 @@ public class GoogleBloggerImporter
 
     if (asObject.title() != null && !Strings.isNullOrEmpty(asObject.titleString())) {
       title = asObject.titleString();
-    } if (asObject.displayName() != null && !Strings.isNullOrEmpty(asObject.displayNameString())) {
+    }
+    if (asObject.displayName() != null && !Strings.isNullOrEmpty(asObject.displayNameString())) {
       title = asObject.displayNameString();
     }
 
-    Post post = new Post()
-        .setTitle("Imported " + provider+ " post: " + title)
-        .setContent(content);
+    Post post = new Post().setTitle("Imported " + provider + " post: " + title).setContent(content);
     if (activity.firstActor() != null) {
       Post.Author author = new Post.Author();
       ASObject actorObject = (ASObject) activity.firstActor();
@@ -178,13 +180,15 @@ public class GoogleBloggerImporter
     idempotentExecutor.executeAndSwallowIOExceptions(
         title,
         title,
-        () -> getOrCreateBloggerService(authData).posts()
-            .insert(blogId, post)
-            // Don't publish directly, ensure that the user explicitly reviews
-            // and approves content first.
-            .setIsDraft(true)
-            .execute()
-            .getId());
+        () ->
+            getOrCreateBloggerService(authData)
+                .posts()
+                .insert(blogId, post)
+                // Don't publish directly, ensure that the user explicitly reviews
+                // and approves content first.
+                .setIsDraft(true)
+                .execute()
+                .getId());
   }
 
   private String createAlbumFolder(Drive driveInterface) throws IOException {
@@ -192,26 +196,19 @@ public class GoogleBloggerImporter
     LocalDate localDate = LocalDate.now();
     fileMetadata.setName("(Public)Imported Images on: " + localDate.toString());
     fileMetadata.setMimeType("application/vnd.google-apps.folder");
-    File folder = driveInterface.files().create(fileMetadata)
-        .setFields("id")
-        .execute();
-    driveInterface.permissions()
+    File folder = driveInterface.files().create(fileMetadata).setFields("id").execute();
+    driveInterface
+        .permissions()
         .create(
             folder.getId(),
             // Set link sharing on, see:
             // https://developers.google.com/drive/api/v3/reference/permissions/create
-            new Permission()
-                .setRole("reader")
-                .setType("anyone")
-                .setAllowFileDiscovery(false))
+            new Permission().setRole("reader").setType("anyone").setAllowFileDiscovery(false))
         .execute();
     return folder.getId();
   }
 
-  private String uploadImage(
-      ASObject imageObject,
-      Drive driveService,
-      String parentFolderId)
+  private String uploadImage(ASObject imageObject, Drive driveService, String parentFolderId)
       throws IOException {
     String url;
     String description = null;
@@ -229,13 +226,9 @@ public class GoogleBloggerImporter
     }
     HttpURLConnection conn = imageStreamProvider.getConnection(url);
     InputStream inputStream = conn.getInputStream();
-    File driveFile = new File()
-        .setName(description)
-        .setParents(ImmutableList.of(parentFolderId));
+    File driveFile = new File().setName(description).setParents(ImmutableList.of(parentFolderId));
     InputStreamContent content = new InputStreamContent(null, inputStream);
-    File newFile = driveService.files().create(driveFile, content)
-        .setFields("id")
-        .execute();
+    File newFile = driveService.files().create(driveFile, content).setFields("id").execute();
 
     return "https://drive.google.com/thumbnail?id=" + newFile.getId();
   }
@@ -247,20 +240,19 @@ public class GoogleBloggerImporter
   private synchronized Blogger makeBloggerService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Blogger.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }
 
-  private synchronized Drive getOrCreateDriveService(
-      TokensAndUrlAuthData authData) {
+  private synchronized Drive getOrCreateDriveService(TokensAndUrlAuthData authData) {
     return driveInterface == null ? (driveInterface = makeDriveService(authData)) : driveInterface;
   }
 
   private synchronized Drive makeDriveService(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new Drive.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
+            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
         .setApplicationName(GoogleStaticObjects.APP_NAME)
         .build();
   }

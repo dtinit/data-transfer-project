@@ -17,15 +17,12 @@
 package org.datatransferproject.transfer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class ImageStreamProvider {
 
-  /**
-   * Gets an HttpURLConnection to an image, given its URL.
-   */
+  /** Gets an HttpURLConnection to an image, given its URL. */
   public HttpURLConnection getConnection(String urlStr) throws IOException {
     URL url = new URL(urlStr);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();

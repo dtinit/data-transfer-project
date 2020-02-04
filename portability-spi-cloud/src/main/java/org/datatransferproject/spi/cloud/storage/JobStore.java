@@ -132,9 +132,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
    */
   default void addBytes(UUID jobId, Long bytes) throws IOException {}
 
-  /**
-   * Provides the total number of bytes transferred.
-   */
+  /** Provides the total number of bytes transferred. */
   default Long getBytes(UUID jobId) {
     return null;
   }

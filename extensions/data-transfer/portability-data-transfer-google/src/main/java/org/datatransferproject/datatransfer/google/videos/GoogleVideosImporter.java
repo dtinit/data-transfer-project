@@ -122,8 +122,9 @@ public class GoogleVideosImporter
     //     Uploads videos
     if (data.getVideos() != null && data.getVideos().size() > 0) {
       for (VideoObject video : data.getVideos()) {
-        final VideoResult result = executor.executeAndSwallowIOExceptions(
-            video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
+        final VideoResult result =
+            executor.executeAndSwallowIOExceptions(
+                video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
         bytes += result.getBytes();
       }
     }
@@ -146,10 +147,9 @@ public class GoogleVideosImporter
     }
 
     final File tmp;
-    HttpURLConnection conn = this.videoStreamProvider
-        .getConnection(inputVideo.getContentUrl().toString());
-    try (InputStream inputStream =
-        conn.getInputStream()) {
+    HttpURLConnection conn =
+        this.videoStreamProvider.getConnection(inputVideo.getContentUrl().toString());
+    try (InputStream inputStream = conn.getInputStream()) {
       tmp = dataStore.getTempFileFromInputStream(inputStream, filename, ".mp4");
     }
 
