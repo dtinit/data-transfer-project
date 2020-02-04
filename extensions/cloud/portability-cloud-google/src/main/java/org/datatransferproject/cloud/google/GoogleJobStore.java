@@ -379,7 +379,7 @@ public final class GoogleJobStore extends JobStoreWithValidator {
   }
 
   @Override
-  public InputStream getStream(UUID jobId, String key) {
+  public InputStreamWrapper getStream(UUID jobId, String key) {
     return googleTempFileStore.getStream(jobId, key);
   }
 

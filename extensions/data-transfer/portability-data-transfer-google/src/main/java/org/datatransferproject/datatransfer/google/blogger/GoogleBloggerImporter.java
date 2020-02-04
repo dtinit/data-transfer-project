@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 import com.ibm.common.activitystreams.ASObject;
 import com.ibm.common.activitystreams.Activity;
 import com.ibm.common.activitystreams.LinkValue;
+import java.net.HttpURLConnection;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -226,7 +227,8 @@ public class GoogleBloggerImporter
     if (description == null) {
       description = "Imported photo from: " + url;
     }
-    InputStream inputStream = imageStreamProvider.get(url);
+    HttpURLConnection conn = imageStreamProvider.getConnection(url);
+    InputStream inputStream = conn.getInputStream();
     File driveFile = new File()
         .setName(description)
         .setParents(ImmutableList.of(parentFolderId));

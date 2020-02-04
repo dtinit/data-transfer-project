@@ -26,6 +26,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchRe
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Photo;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
@@ -39,7 +40,6 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +54,7 @@ import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExp
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -82,6 +83,7 @@ public class GooglePhotosExporterTest {
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
+    when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
     photosInterface = mock(GooglePhotosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);
@@ -288,7 +290,7 @@ public class GooglePhotosExporterTest {
     TempPhotosData tempPhotosData = new TempPhotosData(uuid);
     tempPhotosData.addContainedPhotoId(containedPhotoId);
     InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempPhotosData);
-    when(jobStore.getStream(uuid, "tempPhotosData")).thenReturn(stream);
+    when(jobStore.getStream(uuid, "tempPhotosData")).thenReturn(new InputStreamWrapper(stream));
 
     // Run test
     ExportResult<PhotosContainerResource> result = googlePhotosExporter

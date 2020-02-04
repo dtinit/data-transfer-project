@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
@@ -46,6 +47,7 @@ public final class LocalJobStore extends JobStoreWithValidator {
 
   private final Monitor monitor;
   private final ConcurrentHashMap<UUID, ConcurrentHashMap<String, Integer>> counts;
+  private final ConcurrentHashMap<UUID, LongAdder> bytesMap = new ConcurrentHashMap<>();
 
   /** Ctor for testing with a null monitor. */
   public LocalJobStore() {
@@ -194,6 +196,20 @@ public final class LocalJobStore extends JobStoreWithValidator {
   }
 
   @Override
+  public void addBytes(UUID jobId, Long bytes) throws IOException {
+    if (bytes == null) {
+      return;
+    }
+
+    bytesMap.computeIfAbsent(jobId, k -> new LongAdder()).add(bytes);
+  }
+
+  @Override
+  public Long getBytes(UUID jobId) {
+    return bytesMap.getOrDefault(jobId, new LongAdder()).longValue();
+  }
+
+  @Override
   public <T extends DataModel> void create(UUID jobId, String key, T model) {
     if (!DATA_MAP.containsKey(createFullKey(jobId, key))) {
       DATA_MAP.put(createFullKey(jobId, key), new ConcurrentHashMap<>());
@@ -226,7 +242,7 @@ public final class LocalJobStore extends JobStoreWithValidator {
   }
 
   @Override
-  public InputStream getStream(UUID jobId, String key) throws IOException {
+  public InputStreamWrapper getStream(UUID jobId, String key) throws IOException {
     return localTempFileStore.getInputStream(makeFileName(jobId, key));
   }
 

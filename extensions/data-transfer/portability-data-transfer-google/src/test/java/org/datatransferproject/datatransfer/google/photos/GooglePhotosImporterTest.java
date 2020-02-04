@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
+import com.google.api.Http;
+import java.net.HttpURLConnection;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
@@ -32,7 +34,6 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -82,7 +83,9 @@ public class GooglePhotosImporterTest {
 
     inputStream = Mockito.mock(InputStream.class);
     imageStreamProvider = Mockito.mock(ImageStreamProvider.class);
-    Mockito.when(imageStreamProvider.get(anyString())).thenReturn(inputStream);
+    HttpURLConnection conn = Mockito.mock(HttpURLConnection.class);
+    Mockito.when(imageStreamProvider.getConnection(anyString())).thenReturn(conn);
+    Mockito.when(conn.getInputStream()).thenReturn(inputStream);
 
     googlePhotosImporter = new GooglePhotosImporter(null, jobStore, null,
         googlePhotosInterface, imageStreamProvider, monitor);
@@ -132,7 +135,7 @@ public class GooglePhotosImporterTest {
     googlePhotosImporter.importSinglePhoto(uuid, null, photoModel, executor);
 
     // Check results
-    Mockito.verify(imageStreamProvider).get(IMG_URI);
+    Mockito.verify(imageStreamProvider).getConnection(IMG_URI);
     Mockito.verify(googlePhotosInterface).uploadPhotoContent(inputStream);
 
     ArgumentCaptor<NewMediaItemUpload> uploadArgumentCaptor = ArgumentCaptor

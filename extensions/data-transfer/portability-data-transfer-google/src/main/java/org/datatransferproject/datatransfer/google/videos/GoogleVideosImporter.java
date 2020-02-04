@@ -50,6 +50,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -116,17 +118,20 @@ public class GoogleVideosImporter
                         .build()))
             .build();
 
+    long bytes = 0L;
     //     Uploads videos
     if (data.getVideos() != null && data.getVideos().size() > 0) {
       for (VideoObject video : data.getVideos()) {
-        executor.executeAndSwallowIOExceptions(
+        final VideoResult result = executor.executeAndSwallowIOExceptions(
             video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
+        bytes += result.getBytes();
       }
     }
-    return ImportResult.OK;
+    final ImportResult result = ImportResult.OK;
+    return result.copyWithBytes(bytes);
   }
 
-  String importSingleVideo(VideoObject inputVideo, PhotosLibrarySettings settings)
+  VideoResult importSingleVideo(VideoObject inputVideo, PhotosLibrarySettings settings)
       throws Exception {
     if (inputVideo.getContentUrl() == null) {
       monitor.info(() -> "Content Url is empty. Make sure that you provide a valid content Url.");
@@ -141,8 +146,10 @@ public class GoogleVideosImporter
     }
 
     final File tmp;
+    HttpURLConnection conn = this.videoStreamProvider
+        .getConnection(inputVideo.getContentUrl().toString());
     try (InputStream inputStream =
-        this.videoStreamProvider.get(inputVideo.getContentUrl().toString())) {
+        conn.getInputStream()) {
       tmp = dataStore.getTempFileFromInputStream(inputStream, filename, ".mp4");
     }
 
@@ -160,7 +167,8 @@ public class GoogleVideosImporter
             error != null ? error.getCause() : null);
       } else {
         String uploadToken = uploadResponse.getUploadToken().get();
-        return createMediaItem(inputVideo, photosLibraryClient, uploadToken);
+        return new VideoResult(
+            createMediaItem(inputVideo, photosLibraryClient, uploadToken), tmp.length());
       }
     } finally {
       //noinspection ResultOfMethodCallIgnored
@@ -196,6 +204,24 @@ public class GoogleVideosImporter
       } else {
         return itemResult.getMediaItem().getId();
       }
+    }
+  }
+
+  private class VideoResult implements Serializable {
+    private String id;
+    private Long bytes;
+
+    public VideoResult(String id, Long bytes) {
+      this.id = id;
+      this.bytes = bytes;
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    public Long getBytes() {
+      return bytes;
     }
   }
 }

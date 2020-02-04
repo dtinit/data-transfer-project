@@ -24,12 +24,12 @@ import java.net.URL;
 public class ImageStreamProvider {
 
   /**
-   * Gets an input stream to an image, given its URL.
+   * Gets an HttpURLConnection to an image, given its URL.
    */
-  public InputStream get(String urlStr) throws IOException {
+  public HttpURLConnection getConnection(String urlStr) throws IOException {
     URL url = new URL(urlStr);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
-    return conn.getInputStream();
+    return conn;
   }
 }

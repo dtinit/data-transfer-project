@@ -192,7 +192,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       }
 
       if (photo.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl());
+        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl()).getStream();
       } else if (photo.getFetchableUrl() != null) {
         inputStream = new URL(photo.getFetchableUrl()).openStream();
       } else {

@@ -21,6 +21,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
@@ -29,6 +31,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -95,17 +98,20 @@ public class GooglePhotosImporter
       }
     }
 
+    long bytes = 0L;
     // Uploads photos
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentImportExecutor.executeAndSwallowIOExceptions(
+        final PhotoResult photoResult = idempotentImportExecutor.executeAndSwallowIOExceptions(
             photo.getAlbumId() + "-" + photo.getDataId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
+        bytes += photoResult.getBytes();
       }
     }
 
-    return ImportResult.OK;
+    final ImportResult result = ImportResult.OK;
+    return result.copyWithBytes(bytes);
   }
 
   @VisibleForTesting
@@ -126,7 +132,7 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  String importSinglePhoto(
+  PhotoResult importSinglePhoto(
       UUID jobId,
       TokensAndUrlAuthData authData,
       PhotoModel inputPhoto,
@@ -139,10 +145,17 @@ public class GooglePhotosImporter
     */
     // Upload photo
     InputStream inputStream;
+    Long bytes;
     if (inputPhoto.isInTempStore()) {
-      inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl());
+      final InputStreamWrapper streamWrapper =
+          jobStore.getStream(jobId, inputPhoto.getFetchableUrl());
+      bytes = streamWrapper.getBytes();
+      inputStream = streamWrapper.getStream();
     } else {
-      inputStream = imageStreamProvider.get(inputPhoto.getFetchableUrl());
+      HttpURLConnection conn = imageStreamProvider.getConnection(inputPhoto.getFetchableUrl());
+      final long contentLengthLong = conn.getContentLengthLong();
+      bytes = contentLengthLong != -1 ? contentLengthLong : 0;
+      inputStream = conn.getInputStream();
     }
 
     String uploadToken = getOrCreatePhotosInterface(authData).uploadPhotoContent(inputStream);
@@ -164,11 +177,11 @@ public class GooglePhotosImporter
     NewMediaItemUpload uploadItem =
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
 
-    return getOrCreatePhotosInterface(authData)
+    return new PhotoResult(getOrCreatePhotosInterface(authData)
         .createPhoto(uploadItem)
         .getResults()[0]
         .getMediaItem()
-        .getId();
+        .getId(), bytes);
   }
 
   private String getPhotoDescription(PhotoModel inputPhoto) {
@@ -194,5 +207,23 @@ public class GooglePhotosImporter
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(credentialFactory, credential, jsonFactory, monitor);
+  }
+
+  private class PhotoResult implements Serializable {
+    private String id;
+    private Long bytes;
+
+    public PhotoResult(String id, Long bytes) {
+      this.id = id;
+      this.bytes = bytes;
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    public Long getBytes() {
+      return bytes;
+    }
   }
 }

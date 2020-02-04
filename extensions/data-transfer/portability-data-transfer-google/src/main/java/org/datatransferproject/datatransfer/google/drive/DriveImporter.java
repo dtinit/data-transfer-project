@@ -116,7 +116,7 @@ public final class DriveImporter implements
       throws IOException {
     InputStreamContent content = new InputStreamContent(
         null,
-        jobStore.getStream(jobId, file.getCachedContentId()));
+        jobStore.getStream(jobId, file.getCachedContentId()).getStream());
     DtpDigitalDocument dtpDigitalDocument = file.getDtpDigitalDocument();
     File driveFile = new File().setName(dtpDigitalDocument.getName());
     if (!Strings.isNullOrEmpty(parentId)) {

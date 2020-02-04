@@ -290,7 +290,7 @@ public class GooglePhotosExporter
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
 
     TempPhotosData tempPhotosData = null;
-    InputStream stream = jobStore.getStream(jobId, createCacheKey());
+    InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
     if (stream != null) {
       tempPhotosData = new ObjectMapper().readValue(stream, TempPhotosData.class);
       stream.close();

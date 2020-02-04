@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 
 /**
  * Class for temporarily storing user data for transfer
@@ -44,11 +45,11 @@ public class GoogleTempFileStore {
     return bucket.create(blobName, inputStream);
   }
 
-  InputStream getStream(UUID jobId, String keyName) {
+  InputStreamWrapper getStream(UUID jobId, String keyName) {
     String blobName = getDataKeyName(jobId, keyName);
     Blob blob = bucket.get(blobName);
     ReadChannel channel = blob.reader();
-    return Channels.newInputStream(channel);
+    return new InputStreamWrapper(Channels.newInputStream(channel), blob.getSize());
   }
 
   @VisibleForTesting

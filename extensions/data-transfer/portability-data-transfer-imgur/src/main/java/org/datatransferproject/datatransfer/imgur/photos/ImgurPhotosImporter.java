@@ -145,7 +145,7 @@ public class ImgurPhotosImporter
     String imageDescription = photoModel.getDescription();
 
     if (photoModel.isInTempStore()) {
-      inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl());
+      inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream();
     } else if (photoModel.getFetchableUrl() != null) {
       inputStream = new URL(photoModel.getFetchableUrl()).openStream();
     } else {

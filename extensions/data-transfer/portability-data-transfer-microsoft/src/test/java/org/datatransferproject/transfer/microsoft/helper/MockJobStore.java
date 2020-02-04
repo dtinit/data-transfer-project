@@ -17,7 +17,6 @@ package org.datatransferproject.transfer.microsoft.helper;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
@@ -86,8 +85,8 @@ public class MockJobStore extends JobStoreWithValidator {
   }
 
   @Override
-  public InputStream getStream(UUID jobId, String key) {
-    return keyedData.get(createFullKey(jobId, key));
+  public InputStreamWrapper getStream(UUID jobId, String key) {
+    return new InputStreamWrapper(keyedData.get(createFullKey(jobId, key)));
   }
 
   private static String createFullKey(UUID jobId, String key) {

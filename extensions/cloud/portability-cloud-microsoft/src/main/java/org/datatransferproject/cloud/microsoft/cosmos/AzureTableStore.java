@@ -213,11 +213,11 @@ public class AzureTableStore extends JobStoreWithValidator {
   }
 
   @Override
-  public InputStream getStream(UUID jobId, String key) {
+  public InputStreamWrapper getStream(UUID jobId, String key) {
     try {
       CloudBlobContainer reference = blobClient.getContainerReference(BLOB_CONTAINER);
       CloudBlockBlob blob = reference.getBlockBlobReference(createRowKey(jobId, key));
-      return blob.openInputStream();
+      return new InputStreamWrapper(blob.openInputStream(), blob.getProperties().getLength());
     } catch (StorageException | URISyntaxException e) {
       throw new MicrosoftStorageException("Error returning stream for job: " + jobId, e);
     }
