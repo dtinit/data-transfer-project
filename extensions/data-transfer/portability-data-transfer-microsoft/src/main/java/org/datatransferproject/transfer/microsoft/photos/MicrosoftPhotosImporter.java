@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.time.Instant;
 import java.time.Duration;
@@ -44,6 +44,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -60,6 +61,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  */
 public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
+
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
@@ -72,7 +74,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final String uploadPhotoUrlTemplate;
   private final String albumlessPhotoUrlTemplate;
 
-  private String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
+  private static final String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
+
 
   public MicrosoftPhotosImporter(
     String baseUrl,
@@ -188,80 +191,17 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
     }
 
-
-    // upload file in 32000KiB chunks
-    int CHUNK_SIZE = 32000 * 1024; // 32000KiB
+    String photoUploadUrl = createUploadSession(photo, idempotentImportExecutor);
 
     // Arrange the data to be uploaded in chunks
-    ArrayList<Chunk> chunksToSend = new ArrayList();
-    byte[] data = new byte[CHUNK_SIZE];
-    int totalFileSize = 0;
-    int quantityToSend;
-    int roomLeft = CHUNK_SIZE;
-    int offset = 0;
-    int chunksRead = 0;
-
-
-    // start timing
-    Instant start = Instant.now();
-    while ((quantityToSend = inputStream.read(data, offset, roomLeft)) != -1) {
-      offset += quantityToSend;
-      roomLeft -= quantityToSend;
-      if (roomLeft == 0) {
-        chunksToSend.add(new Chunk(data, CHUNK_SIZE, chunksRead * CHUNK_SIZE));
-        chunksRead++;
-        roomLeft = CHUNK_SIZE;
-        offset = 0;
-        totalFileSize += CHUNK_SIZE;
-        data = new byte[CHUNK_SIZE];
-      }
-    }
-    if (offset != 0) {
-      chunksToSend.add(new Chunk(data, offset, chunksRead * CHUNK_SIZE));
-      totalFileSize += offset;
-      chunksRead++;
-    }
-    final int _debugTotalFileSize = totalFileSize;
-    final int _debugChunksRead = chunksRead;
-    // finish timing
-    Instant finish = Instant.now();
-    final long timeElapsed = Duration.between(start, finish).toMillis();
-    monitor.info(()-> String.format("Took %d millseconds to read %s bytes, split into %d chunks", timeElapsed, _debugTotalFileSize, _debugChunksRead));
-
-
-
-    String photoUploadUrl = createUploadSession(photo, idempotentImportExecutor);
-    // PUT to {uploadurl}
-    // HEADERS
-    // Content-Length: {chunk size in bytes}
-    // Content-Range: bytes {begin}-{end}/{total size}
-    // body={bytes}
-    Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
-    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+    List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
+    final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
 
     Integer chunkCode = null;
     Response chunkResponse = null;
-    for (Chunk chunk : chunksToSend) {
-      // put chunk data in
-      RequestBody uploadChunkBody = RequestBody.create(MediaType.parse(photo.getMediaType()), chunk.getData(), 0, chunk.getSize());
-      uploadRequestBuilder.put(uploadChunkBody);
-      // set chunk data headers, indicating size and chunk range
-      uploadRequestBuilder.header("Content-Length", chunk.getSize().toString());
-      final String contentRange = String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
-      uploadRequestBuilder.header("Content-Range", contentRange);
-      // upload the chunk
-      chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
-      // check for auth error
+    for (DataChunk chunk : chunksToSend) {
+      chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
       chunkCode = chunkResponse.code();
-      if (chunkCode == 401) {
-        // If there was an unauthorized error, then try refreshing the creds
-        credentialFactory.refreshCredential(credential);
-        monitor.info(() -> "Refreshed authorization token successfuly");
-        // update auth info, reupload chunk
-        uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-        chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
-        chunkCode = chunkResponse.code();
-      }
       if (chunkCode < 200 || chunkCode > 299) {
         throw new IOException(
           "Got error code: " + chunkCode + " message: " + chunkResponse.message() + " body: " + chunkResponse
@@ -273,7 +213,6 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     }
     // get complete file response
     Preconditions.checkState(chunkCode == 201 || chunkCode == 200, "Got bad response code when finishing uploadSession: %d", chunkCode);
-    //
     ResponseBody chunkResponseBody = chunkResponse.body();
     Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
@@ -345,31 +284,37 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     return (String) responseData.get("uploadUrl");
   }
 
-  private static class Chunk {
-    private final byte[] data;
-    private final Integer size;
-    private final int rangeStart;
-    public Chunk(byte[] data, int size, int rangeStart) {
-      this.data = data;
-      this.size = size;
-      this.rangeStart = rangeStart;
-    }
 
-    public Integer getSize() {
-      return size;
-    }
+  // PUT to {uploadurl}
+  // HEADERS
+  // Content-Length: {chunk size in bytes}
+  // Content-Range: bytes {begin}-{end}/{total size}
+  // body={bytes}
+  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize, String mediaType) throws IOException {
 
-    public byte[] getData() {
-      return data;
-    }
+    Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
+    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
-    public int getStart() {
-      return rangeStart;
-    }
+    // put chunk data in
+    RequestBody uploadChunkBody = RequestBody.create(MediaType.parse(mediaType), chunk.getData(), 0, chunk.getSize());
+    uploadRequestBuilder.put(uploadChunkBody);
 
-    public int getEnd() {
-      return rangeStart + size - 1;
+    // set chunk data headers, indicating size and chunk range
+    final String contentRange = String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+    uploadRequestBuilder.header("Content-Range", contentRange);
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
+
+    // upload the chunk
+    Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
+    if (chunkResponse.code() == 401) {
+      // If there was an unauthorized error, then try refreshing the creds
+      credentialFactory.refreshCredential(credential);
+      monitor.info(() -> "Refreshed authorization token successfuly");
+
+      // update auth info, reupload chunk
+      uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+      chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
     }
+    return chunkResponse;
   }
-
 }
