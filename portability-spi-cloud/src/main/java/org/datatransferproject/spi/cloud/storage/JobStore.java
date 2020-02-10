@@ -124,4 +124,16 @@ public interface JobStore extends TemporaryPerJobDataStore {
   default Map<String, Integer> getCounts(UUID jobId) {
     return null;
   }
+
+  /**
+   * Increments the bytes count for the job.
+   *
+   * @param bytes the size in bytes of new items
+   */
+  default void addBytes(UUID jobId, Long bytes) throws IOException {}
+
+  /** Provides the total number of bytes transferred. */
+  default Long getBytes(UUID jobId) {
+    return null;
+  }
 }

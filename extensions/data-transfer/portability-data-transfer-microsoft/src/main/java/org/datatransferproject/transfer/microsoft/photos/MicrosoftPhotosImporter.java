@@ -52,18 +52,20 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  *
- * <p>The implementation currently uses the Graph Upload API, which has a content size limit of
- * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
+ * <p>The implementation currently uses the Graph Upload API, which has a content size limit of 4MB.
+ * In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
-public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosImporter
+    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
-  private final MicrosoftTransmogrificationConfig transmogrificationConfig = new MicrosoftTransmogrificationConfig();
+  private final MicrosoftTransmogrificationConfig transmogrificationConfig =
+      new MicrosoftTransmogrificationConfig();
   private Credential credential;
 
   private final String createFolderUrl;
@@ -106,15 +108,18 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     getOrCreateCredential(authData);
 
     monitor.debug(
-        () -> String
-            .format("%s: Importing %s albums and %s photos before transmogrification", jobId,
-                resource.getAlbums().size(), resource.getPhotos().size()));
+        () ->
+            String.format(
+                "%s: Importing %s albums and %s photos before transmogrification",
+                jobId, resource.getAlbums().size(), resource.getPhotos().size()));
 
     // Make the data onedrive compatible
     resource.transmogrify(transmogrificationConfig);
     monitor.debug(
-        () -> String.format("%s: Importing %s albums and %s photos after transmogrification", jobId,
-            resource.getAlbums().size(), resource.getPhotos().size()));
+        () ->
+            String.format(
+                "%s: Importing %s albums and %s photos after transmogrification",
+                jobId, resource.getAlbums().size(), resource.getPhotos().size()));
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
@@ -147,36 +152,38 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
       ResponseBody body = response.body();
-      if (code == 401){
-          // If there was an unauthorized error, then try refreshing the creds
-          credentialFactory.refreshCredential(credential);
-          monitor.info(() -> "Refreshed authorization token successfuly");
+      if (code == 401) {
+        // If there was an unauthorized error, then try refreshing the creds
+        credentialFactory.refreshCredential(credential);
+        monitor.info(() -> "Refreshed authorization token successfuly");
 
-          requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-          Response newResponse = client.newCall(requestBuilder.build()).execute();
-          code = newResponse.code();
-          body = newResponse.body();
+        requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+        Response newResponse = client.newCall(requestBuilder.build()).execute();
+        code = newResponse.code();
+        body = newResponse.body();
       }
       if (code < 200 || code > 299) {
         throw new IOException(
-            "Got error code: " + code + " message: " + response.message() + " body: " + response
-                .body().string());
+            "Got error code: "
+                + code
+                + " message: "
+                + response.message()
+                + " body: "
+                + response.body().string());
       }
       if (body == null) {
         throw new IOException("Got null body");
       }
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
       String folderId = (String) responseData.get("id");
-      checkState(!Strings.isNullOrEmpty(folderId),
-          "Expected id value to be present in %s", responseData);
+      checkState(
+          !Strings.isNullOrEmpty(folderId), "Expected id value to be present in %s", responseData);
       return folderId;
     }
   }
 
   private String importSinglePhoto(
-      PhotoModel photo,
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor)
+      PhotoModel photo, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
       throws IOException {
     InputStream inputStream = null;
 
@@ -192,7 +199,7 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       }
 
       if (photo.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl());
+        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl()).getStream();
       } else if (photo.getFetchableUrl() != null) {
         inputStream = new URL(photo.getFetchableUrl()).openStream();
       } else {
@@ -212,28 +219,32 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       try (Response response = client.newCall(requestBuilder.build()).execute()) {
         int code = response.code();
         ResponseBody responseBody = response.body();
-        if (code == 401){
-            // If there was an unauthorized error, then try refreshing the creds
-            credentialFactory.refreshCredential(credential);
-            monitor.info(() -> "Refreshed authorization token successfuly");
+        if (code == 401) {
+          // If there was an unauthorized error, then try refreshing the creds
+          credentialFactory.refreshCredential(credential);
+          monitor.info(() -> "Refreshed authorization token successfuly");
 
-            requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-            Response newResponse = client.newCall(requestBuilder.build()).execute();
-            code = newResponse.code();
-            responseBody = newResponse.body();
+          requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+          Response newResponse = client.newCall(requestBuilder.build()).execute();
+          code = newResponse.code();
+          responseBody = newResponse.body();
         }
         if (code < 200 || code > 299) {
           throw new IOException(
-              "Got error code: " + code + " message: " + response.message() + " body: " + response
-                  .body().string());
+              "Got error code: "
+                  + code
+                  + " message: "
+                  + response.message()
+                  + " body: "
+                  + response.body().string());
         }
 
         // Extract photo ID from response body
         Preconditions.checkState(body != null, "Got Null Body when creating photo %s", photo);
         Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
         String photoId = (String) responseData.get("id");
-        checkState(!Strings.isNullOrEmpty(photoId),
-            "Expected id value to be present in %s", responseData);
+        checkState(
+            !Strings.isNullOrEmpty(photoId), "Expected id value to be present in %s", responseData);
         return photoId;
       }
     } finally {
@@ -247,8 +258,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     }
   }
 
-  private Credential getOrCreateCredential(TokensAndUrlAuthData authData){
-    if (this.credential == null){
+  private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
+    if (this.credential == null) {
       this.credential = this.credentialFactory.createCredential(authData);
     }
     return this.credential;

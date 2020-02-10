@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 
 public class LocalTempFileStore {
 
@@ -39,9 +40,8 @@ public class LocalTempFileStore {
     }
   }
 
-  InputStream getInputStream(String filename) throws IOException {
+  InputStreamWrapper getInputStream(String filename) throws IOException {
     File file = new File(TEMP_DIR + filename);
-    return new FileInputStream(file);
+    return new InputStreamWrapper(new FileInputStream(file), file.length());
   }
-
 }

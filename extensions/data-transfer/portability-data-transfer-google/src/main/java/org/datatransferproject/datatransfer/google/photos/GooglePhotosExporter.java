@@ -174,8 +174,8 @@ public class GooglePhotosExporter
         albums.add(photoAlbum);
 
         monitor.debug(
-            () -> String
-                .format("%s: Google Photos exporting album: %s", jobId, photoAlbum.getId()));
+            () ->
+                String.format("%s: Google Photos exporting album: %s", jobId, photoAlbum.getId()));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -290,7 +290,7 @@ public class GooglePhotosExporter
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
 
     TempPhotosData tempPhotosData = null;
-    InputStream stream = jobStore.getStream(jobId, createCacheKey());
+    InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
     if (stream != null) {
       tempPhotosData = new ObjectMapper().readValue(stream, TempPhotosData.class);
       stream.close();
