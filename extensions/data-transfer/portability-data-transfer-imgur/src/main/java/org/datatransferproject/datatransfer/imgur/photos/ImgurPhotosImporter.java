@@ -20,6 +20,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Base64;
+import java.util.Map;
+import java.util.UUID;
 import okhttp3.*;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -30,13 +36,6 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Base64;
-import java.util.Map;
-import java.util.UUID;
 
 /** Imports albums and photos to Imgur */
 public class ImgurPhotosImporter
@@ -81,9 +80,7 @@ public class ImgurPhotosImporter
     // Import albums
     for (PhotoAlbum album : resource.getAlbums()) {
       executor.executeAndSwallowIOExceptions(
-          album.getId(),
-          album.getName(),
-          () -> importAlbum(album, authData));
+          album.getId(), album.getName(), () -> importAlbum(album, authData));
     }
     // Import photos
     for (PhotoModel photo : resource.getPhotos()) {
@@ -98,8 +95,7 @@ public class ImgurPhotosImporter
               albumId = executor.getCachedValue(photo.getAlbumId());
             }
             return importPhoto(photo, jobId, authData, albumId);
-          }
-      );
+          });
     }
 
     return new ImportResult(ImportResult.ResultType.OK);
@@ -145,7 +141,7 @@ public class ImgurPhotosImporter
     String imageDescription = photoModel.getDescription();
 
     if (photoModel.isInTempStore()) {
-      inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl());
+      inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream();
     } else if (photoModel.getFetchableUrl() != null) {
       inputStream = new URL(photoModel.getFetchableUrl()).openStream();
     } else {

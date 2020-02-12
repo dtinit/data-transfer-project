@@ -17,19 +17,17 @@ package org.datatransferproject.transfer.microsoft.helper;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
-import org.datatransferproject.spi.cloud.types.JobAuthorization;
-import org.datatransferproject.spi.cloud.types.PortabilityJob;
-import org.datatransferproject.types.common.models.DataModel;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.JobStoreWithValidator;
+import org.datatransferproject.spi.cloud.types.JobAuthorization;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /** An implementation for testing. */
 public class MockJobStore extends JobStoreWithValidator {
@@ -82,12 +80,12 @@ public class MockJobStore extends JobStoreWithValidator {
 
   @Override
   public void create(UUID jobId, String key, InputStream stream) {
-     keyedData.put(createFullKey(jobId, key), stream);
+    keyedData.put(createFullKey(jobId, key), stream);
   }
 
   @Override
-  public InputStream getStream(UUID jobId, String key) {
-    return keyedData.get(createFullKey(jobId, key));
+  public InputStreamWrapper getStream(UUID jobId, String key) {
+    return new InputStreamWrapper(keyedData.get(createFullKey(jobId, key)));
   }
 
   private static String createFullKey(UUID jobId, String key) {

@@ -39,7 +39,7 @@ public interface TemporaryPerJobDataStore {
     throw new UnsupportedOperationException();
   }
 
-  default InputStream getStream(UUID jobId, String key) throws IOException {
+  default InputStreamWrapper getStream(UUID jobId, String key) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -49,5 +49,29 @@ public interface TemporaryPerJobDataStore {
     tmp.deleteOnExit();
     Files.copy(inputStream, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
     return tmp;
+  }
+
+  public class InputStreamWrapper {
+
+    private final InputStream stream;
+    private final Long bytes;
+
+    public InputStreamWrapper(InputStream stream) {
+      this.stream = stream;
+      bytes = 0L;
+    }
+
+    public InputStreamWrapper(InputStream stream, Long bytes) {
+      this.stream = stream;
+      this.bytes = bytes;
+    }
+
+    public InputStream getStream() {
+      return stream;
+    }
+
+    public Long getBytes() {
+      return bytes;
+    }
   }
 }

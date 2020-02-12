@@ -55,11 +55,12 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  *
- * <p>The implementation currently uses the Graph Upload API, which has a content size limit of
- * 4MB. In the future, this can be enhanced to support large files (e.g. high resolution images and
+ * <p>The implementation currently uses the Graph Upload API, which has a content size limit of 4MB.
+ * In the future, this can be enhanced to support large files (e.g. high resolution images and
  * videos) using the Upload Session API.
  */
-public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class MicrosoftPhotosImporter
+    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
 
   private final OkHttpClient client;
@@ -67,7 +68,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
-  private final MicrosoftTransmogrificationConfig transmogrificationConfig = new MicrosoftTransmogrificationConfig();
+  private final MicrosoftTransmogrificationConfig transmogrificationConfig =
+      new MicrosoftTransmogrificationConfig();
   private Credential credential;
 
   private final String createFolderUrl;
@@ -114,11 +116,13 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       .format("%s: Importing %s albums and %s photos before transmogrification", jobId,
               resource.getAlbums().size(), resource.getPhotos().size()));
 
+
     // Make the data onedrive compatible
     resource.transmogrify(transmogrificationConfig);
     monitor.debug(
       () -> String.format("%s: Importing %s albums and %s photos after transmogrification", jobId,
                           resource.getAlbums().size(), resource.getPhotos().size()));
+
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
@@ -163,8 +167,12 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
       }
       if (code < 200 || code > 299) {
         throw new IOException(
-          "Got error code: " + code + " message: " + response.message() + " body: " + response
-          .body().string());
+            "Got error code: "
+                + code
+                + " message: "
+                + response.message()
+                + " body: "
+                + response.body().string());
       }
       if (body == null) {
         throw new IOException("Got null body");

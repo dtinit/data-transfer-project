@@ -21,14 +21,12 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 
-/**
- * Class for temporarily storing user data for transfer
- */
+/** Class for temporarily storing user data for transfer */
 public class GoogleTempFileStore {
   // TODO: extract a temp file store interface
   private final Bucket bucket;
@@ -44,11 +42,11 @@ public class GoogleTempFileStore {
     return bucket.create(blobName, inputStream);
   }
 
-  InputStream getStream(UUID jobId, String keyName) {
+  InputStreamWrapper getStream(UUID jobId, String keyName) {
     String blobName = getDataKeyName(jobId, keyName);
     Blob blob = bucket.get(blobName);
     ReadChannel channel = blob.reader();
-    return Channels.newInputStream(channel);
+    return new InputStreamWrapper(Channels.newInputStream(channel), blob.getSize());
   }
 
   @VisibleForTesting
