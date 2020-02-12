@@ -5,6 +5,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+  This utility class allows us to break up an InputStream into multiple chunks
+  for part-by-part upload to a service, for example to be consumed in an upload session.
+*/
 public class DataChunk {
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
 

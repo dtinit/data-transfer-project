@@ -225,6 +225,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     return this.credential;
   }
 
+  // Request an upload session to the OneDrive api so that we can upload chunks
+  // to the returned URL
   private String createUploadSession(PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor) throws IOException {
 
     // Forming the URL to create an upload session
@@ -284,8 +286,8 @@ public class MicrosoftPhotosImporter implements Importer<TokensAndUrlAuthData, P
     return (String) responseData.get("uploadUrl");
   }
 
-
-  // PUT to {uploadurl}
+  // Uploads a single DataChunk to an upload URL
+  // PUT to {photoUploadUrl}
   // HEADERS
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
