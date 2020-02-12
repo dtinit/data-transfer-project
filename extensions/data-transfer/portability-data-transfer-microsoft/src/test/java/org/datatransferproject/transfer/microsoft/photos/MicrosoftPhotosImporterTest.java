@@ -29,6 +29,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -128,9 +129,9 @@ public class MicrosoftPhotosImporterTest {
         new PhotoModel(
           "Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
     when(jobStore.getStream(uuid, "http://fake.com/1.jpg"))
-    .thenReturn(new ByteArrayInputStream(new byte[CHUNK_SIZE]));
+    .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
     when(jobStore.getStream(uuid, "https://fake.com/2.png"))
-    .thenReturn(new ByteArrayInputStream(new byte[CHUNK_SIZE]));
+    .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
     PhotosContainerResource data = new PhotosContainerResource(albums, photos);
 
     Call call = mock(Call.class);

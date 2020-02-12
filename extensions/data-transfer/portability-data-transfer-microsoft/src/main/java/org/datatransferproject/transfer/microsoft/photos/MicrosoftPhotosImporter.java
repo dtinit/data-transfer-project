@@ -192,7 +192,7 @@ public class MicrosoftPhotosImporter
   throws IOException {
     BufferedInputStream inputStream = null;
     if (photo.isInTempStore()) {
-      inputStream = new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()));
+      inputStream = new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
     } else if (photo.getFetchableUrl() != null) {
       inputStream = new BufferedInputStream(new URL(photo.getFetchableUrl()).openStream());
     } else {
