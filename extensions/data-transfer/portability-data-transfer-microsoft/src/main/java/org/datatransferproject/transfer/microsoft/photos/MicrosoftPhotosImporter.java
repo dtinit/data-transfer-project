@@ -209,15 +209,6 @@ public class MicrosoftPhotosImporter
     Response chunkResponse = null;
     for (DataChunk chunk : chunksToSend) {
       chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
-      chunkCode = chunkResponse.code();
-      if (chunkCode < 200 || chunkCode > 299) {
-        throw new IOException(
-          "Got error code: " + chunkCode + " message: " + chunkResponse.message() + " body: " + chunkResponse
-          .body().string());
-      }
-      if (chunkCode == 200) {
-        monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly", chunk.getStart(), chunk.getEnd()));
-      }
     }
     // get complete file response
     Preconditions.checkState(chunkCode == 201 || chunkCode == 200, "Got bad response code when finishing uploadSession: %d", chunkCode);
@@ -324,6 +315,15 @@ public class MicrosoftPhotosImporter
       // update auth info, reupload chunk
       uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
       chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
+    }
+    int chunkCode = chunkResponse.code();
+    if (chunkCode < 200 || chunkCode > 299) {
+      throw new IOException(
+        "Got error code: " + chunkCode + " message: " + chunkResponse.message() + " body: " + chunkResponse
+        .body().string());
+    }
+    if (chunkCode == 200) {
+      monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly", chunk.getStart(), chunk.getEnd()));
     }
     return chunkResponse;
   }
