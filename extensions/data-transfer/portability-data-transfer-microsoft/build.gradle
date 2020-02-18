@@ -32,6 +32,8 @@ dependencies {
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:auth:portability-auth-harness-microsoft')
     testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.7.5'
+    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.2.0'
+    testImplementation "org.mockito:mockito-inline:${mockitoVersion}"
 
 }
 
