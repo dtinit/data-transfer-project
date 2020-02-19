@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.UUID;
@@ -210,23 +209,5 @@ public class GooglePhotosImporter
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(credentialFactory, credential, jsonFactory, monitor);
-  }
-
-  private class PhotoResult implements Serializable {
-    private String id;
-    private Long bytes;
-
-    public PhotoResult(String id, Long bytes) {
-      this.id = id;
-      this.bytes = bytes;
-    }
-
-    public String getId() {
-      return id;
-    }
-
-    public Long getBytes() {
-      return bytes;
-    }
   }
 }
