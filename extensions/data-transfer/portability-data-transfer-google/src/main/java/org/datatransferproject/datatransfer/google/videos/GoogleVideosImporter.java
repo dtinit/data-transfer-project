@@ -50,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.List;
@@ -204,24 +203,6 @@ public class GoogleVideosImporter
       } else {
         return itemResult.getMediaItem().getId();
       }
-    }
-  }
-
-  private class VideoResult implements Serializable {
-    private String id;
-    private Long bytes;
-
-    public VideoResult(String id, Long bytes) {
-      this.id = id;
-      this.bytes = bytes;
-    }
-
-    public String getId() {
-      return id;
-    }
-
-    public Long getBytes() {
-      return bytes;
     }
   }
 }
