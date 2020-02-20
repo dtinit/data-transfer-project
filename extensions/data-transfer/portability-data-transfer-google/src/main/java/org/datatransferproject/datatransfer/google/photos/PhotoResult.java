@@ -8,7 +8,7 @@ class PhotoResult implements Serializable {
 
   public PhotoResult(String id, Long bytes) {
     this.id = id;
-    this.bytes = bytes;
+    this.bytes = bytes == null ? 0 : bytes;
   }
 
   public String getId() {
