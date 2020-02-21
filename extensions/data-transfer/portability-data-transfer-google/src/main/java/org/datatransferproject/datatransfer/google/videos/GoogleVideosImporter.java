@@ -124,7 +124,9 @@ public class GoogleVideosImporter
         final VideoResult result =
             executor.executeAndSwallowIOExceptions(
                 video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
-        bytes += result.getBytes();
+        if (result != null) {
+          bytes += result.getBytes();
+        }
       }
     }
     final ImportResult result = ImportResult.OK;
