@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.transfer;
 
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;

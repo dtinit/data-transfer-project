@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer;
-import org.datatransferproject.transfer.CopyException;
+package org.datatransferproject.spi.transfer.types;
 
-public class DestinationMemoryFullException extends CopyException {
+import javax.annotation.Nonnull;
+
+public class DestinationMemoryFullException extends CopyExceptionWithFailureReason {
+
   public DestinationMemoryFullException(String message, Throwable cause) {
     super(message, cause);
+  }
+
+  @Nonnull
+  @Override
+  public String getFailureReason() {
+    return "DESTINATION_FULL";
   }
 }
