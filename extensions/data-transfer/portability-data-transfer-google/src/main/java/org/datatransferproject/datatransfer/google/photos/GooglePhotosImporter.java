@@ -106,7 +106,9 @@ public class GooglePhotosImporter
                 photo.getAlbumId() + "-" + photo.getDataId(),
                 photo.getTitle(),
                 () -> importSinglePhoto(jobId, authData, photo, idempotentImportExecutor));
-        bytes += photoResult.getBytes();
+        if (photoResult != null) {
+          bytes += photoResult.getBytes();
+        }
       }
     }
 
