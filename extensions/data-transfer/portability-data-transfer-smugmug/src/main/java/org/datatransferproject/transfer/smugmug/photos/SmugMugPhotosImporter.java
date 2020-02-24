@@ -31,6 +31,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.smugmug.SmugMugTransmogrificationConfig;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbum;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -108,10 +109,9 @@ public class SmugMugPhotosImporter
   }
 
   @VisibleForTesting
-  String importSingleAlbum(PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
+  SmugMugAlbumResponse importSingleAlbum(PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
       throws IOException {
-    SmugMugAlbumResponse response = smugMugInterface.createAlbum(inputAlbum.getName());
-    return response.getUri();
+    return smugMugInterface.createAlbum(inputAlbum.getName());
   }
 
   @VisibleForTesting
@@ -162,19 +162,21 @@ public class SmugMugPhotosImporter
   }
 
   private SmugMugPhotoTempData getAlbumCount(UUID jobId, IdempotentImportExecutor idempotentExecutor, PhotoModel inputPhoto) throws Exception {
-    String albumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    SmugMugAlbumResponse albumUploadResponse = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    SmugMugAlbum smugMugAlbum = albumUploadResponse.getAlbum();
+    String albumUri = albumUploadResponse.getUri();
     SmugMugPhotoTempData albumCount = jobStore.findData(
         jobId,
-        albumUri,
+        albumUploadResponse.getUri(),
         SmugMugPhotoTempData.class);
     while (albumCount.getPhotoCount() >= transmogrificationConfig.getAlbumMaxSize()) {
       String overflowAlbumUri = albumCount.getOverflowAlbumUri();
       if (overflowAlbumUri == null) {
         // create a new one
-        PhotoAlbum album = new PhotoAlbum(inputPhoto.getAlbumId() + "-overflow", inputPhoto.getAlbumId() + "-overflow", inputPhoto.getAlbumId() + "-overflow");
-        overflowAlbumUri = idempotentExecutor.executeAndSwallowIOExceptions(
-            album.getId(), album.getName(), () -> importSingleAlbum(album, smugMugInterface));
-        checkState(!Strings.isNullOrEmpty(overflowAlbumUri), "Failed to create overflow album for %s", inputPhoto);
+        PhotoAlbum newAlbum = new PhotoAlbum(smugMugAlbum.getUri() + "-overflow", smugMugAlbum.getName() + "-overflow", smugMugAlbum.getDescription());
+        SmugMugAlbumResponse overflowUploadResponse = idempotentExecutor.executeAndSwallowIOExceptions(
+            newAlbum.getId(), newAlbum.getName(), () -> importSingleAlbum(newAlbum, smugMugInterface));
+        checkState(!Strings.isNullOrEmpty(overflowUploadResponse.getUri()), "Failed to create overflow album for %s", inputPhoto);
         albumCount = new SmugMugPhotoTempData(overflowAlbumUri);
         jobStore.create(jobId, overflowAlbumUri, albumCount);
       } else {
