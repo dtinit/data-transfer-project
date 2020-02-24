@@ -19,6 +19,7 @@ package org.datatransferproject.spi.transfer.idempotentexecutor;
 import java.util.UUID;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -48,6 +49,7 @@ public interface IdempotentImportExecutor {
    * @param callable the callable to execute
    * @return the result of executing the callable.
    */
+  @Nullable
   <T extends Serializable> T executeAndSwallowIOExceptions(
       String idempotentId, String itemName, Callable<T> callable) throws Exception;
 
