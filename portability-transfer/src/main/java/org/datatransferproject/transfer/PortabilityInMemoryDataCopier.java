@@ -36,6 +36,8 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.spi.transfer.types.CopyException;
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
@@ -133,6 +135,10 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       exportResult = retryingExporter.call();
       exportSuccess = exportResult.getType() != ExportResult.ResultType.ERROR;
     } catch (RetryException | RuntimeException e) {
+      if (e.getClass() == RetryException.class
+          && e.getCause().getClass().isInstance(CopyExceptionWithFailureReason.class)) {
+        throw (CopyExceptionWithFailureReason) e.getCause();
+      }
       throw new CopyException(jobIdPrefix + "Error happened during export", e);
     } finally {
       metricRecorder.exportPageFinished(
@@ -176,8 +182,8 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       } catch (RetryException | RuntimeException e) {
         monitor.severe(() -> format("Got error importing data: %s", e), e);
         if (e.getClass() == RetryException.class
-            && e.getCause().getClass() == DestinationMemoryFullException.class) {
-          throw (DestinationMemoryFullException) e.getCause();
+            && e.getCause().getClass().isInstance(CopyExceptionWithFailureReason.class)) {
+          throw (CopyExceptionWithFailureReason) e.getCause();
         }
       } finally {
         metricRecorder.importPageFinished(

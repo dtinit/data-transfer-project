@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer;
+package org.datatransferproject.spi.transfer.types;
 
 public class CopyException extends Exception {
   public CopyException(String message, Throwable cause) {
