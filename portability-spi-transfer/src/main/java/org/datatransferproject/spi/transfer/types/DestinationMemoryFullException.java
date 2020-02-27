@@ -17,6 +17,10 @@ package org.datatransferproject.spi.transfer.types;
 
 import javax.annotation.Nonnull;
 
+/**
+ * DestinationMemoryFullException is thrown when the importer for a transfer has run out of storage
+ * on the destination account and the transfer cannot continue.
+ */
 public class DestinationMemoryFullException extends CopyExceptionWithFailureReason {
 
   public DestinationMemoryFullException(String message, Throwable cause) {
@@ -26,6 +30,6 @@ public class DestinationMemoryFullException extends CopyExceptionWithFailureReas
   @Nonnull
   @Override
   public String getFailureReason() {
-    return "DESTINATION_FULL";
+    return FailureReasons.DESTINATION_FULL.toString();
   }
 }
