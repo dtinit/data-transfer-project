@@ -136,7 +136,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       exportSuccess = exportResult.getType() != ExportResult.ResultType.ERROR;
     } catch (RetryException | RuntimeException e) {
       if (e.getClass() == RetryException.class
-          && e.getCause().getClass().isInstance(CopyExceptionWithFailureReason.class)) {
+          && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
         throw (CopyExceptionWithFailureReason) e.getCause();
       }
       throw new CopyException(jobIdPrefix + "Error happened during export", e);
@@ -182,7 +182,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
       } catch (RetryException | RuntimeException e) {
         monitor.severe(() -> format("Got error importing data: %s", e), e);
         if (e.getClass() == RetryException.class
-            && e.getCause().getClass().isInstance(CopyExceptionWithFailureReason.class)) {
+            && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
           throw (CopyExceptionWithFailureReason) e.getCause();
         }
       } finally {
