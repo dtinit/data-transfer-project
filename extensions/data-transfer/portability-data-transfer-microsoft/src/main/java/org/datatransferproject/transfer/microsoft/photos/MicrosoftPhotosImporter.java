@@ -209,8 +209,11 @@ public class MicrosoftPhotosImporter
     Response chunkResponse = null;
     for (DataChunk chunk : chunksToSend) {
       chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
+      chunkCode = chunkResponse.code();
     }
     // get complete file response
+    Preconditions.checkNotNull(chunkResponse, "chunkResponse is null");
+    Preconditions.checkNotNull(chunkCode, "chunkCode is null");
     Preconditions.checkState(chunkCode == 201 || chunkCode == 200, "Got bad response code when finishing uploadSession: %d", chunkCode);
     ResponseBody chunkResponseBody = chunkResponse.body();
     Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
