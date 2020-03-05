@@ -32,6 +32,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -50,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +60,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -125,7 +126,9 @@ public class GoogleVideosImporter
         final VideoResult result =
             executor.executeAndSwallowIOExceptions(
                 video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
-        bytes += result.getBytes();
+        if (result != null) {
+          bytes += result.getBytes();
+        }
       }
     }
     final ImportResult result = ImportResult.OK;
@@ -170,6 +173,12 @@ public class GoogleVideosImporter
         return new VideoResult(
             createMediaItem(inputVideo, photosLibraryClient, uploadToken), tmp.length());
       }
+    } catch (InvalidArgumentException e) {
+      if (e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+        throw new DestinationMemoryFullException("Google destination storage full", e);
+      } else {
+        throw e;
+      }
     } finally {
       //noinspection ResultOfMethodCallIgnored
       tmp.delete();
@@ -204,24 +213,6 @@ public class GoogleVideosImporter
       } else {
         return itemResult.getMediaItem().getId();
       }
-    }
-  }
-
-  private class VideoResult implements Serializable {
-    private String id;
-    private Long bytes;
-
-    public VideoResult(String id, Long bytes) {
-      this.id = id;
-      this.bytes = bytes;
-    }
-
-    public String getId() {
-      return id;
-    }
-
-    public Long getBytes() {
-      return bytes;
     }
   }
 }

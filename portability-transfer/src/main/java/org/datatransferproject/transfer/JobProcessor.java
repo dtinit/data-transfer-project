@@ -34,6 +34,8 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
+import org.datatransferproject.spi.transfer.types.CopyException;
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
@@ -46,9 +48,6 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * (2)Run the copy job
  */
 final class JobProcessor {
-  // TODO(cnnorris): add failure reason enums once there are more failure reasons
-  public static final String DESTINATION_FULL_ENUM = "DESTINATION_FULL";
-
   private final JobStore store;
   private final JobHooks hooks;
   private final ObjectMapper objectMapper;
@@ -125,12 +124,15 @@ final class JobProcessor {
       monitor.debug(
           () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
       success = errors.isEmpty();
-    } catch (DestinationMemoryFullException e) {
+    } catch (CopyExceptionWithFailureReason e) {
       monitor.severe(
-          () -> "Destination memory error processing jobId: " + jobId,
+          () ->
+              format(
+                  "Error with failure code '%s' while processing jobId: %s",
+                  e.getFailureReason(), jobId),
           e,
           EventCode.WORKER_JOB_ERRORED);
-      addFailureReasonToJob(jobId, DESTINATION_FULL_ENUM);
+      addFailureReasonToJob(jobId, e.getFailureReason());
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
