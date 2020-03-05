@@ -204,14 +204,13 @@ public class MicrosoftPhotosImporter
     // Arrange the data to be uploaded in chunks
     List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
     final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
+    Preconditions.checkState(chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
 
-    Integer chunkCode = null;
     Response chunkResponse = null;
     for (DataChunk chunk : chunksToSend) {
       chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
     }
     // get complete file response
-    Preconditions.checkState(chunkCode == 201 || chunkCode == 200, "Got bad response code when finishing uploadSession: %d", chunkCode);
     ResponseBody chunkResponseBody = chunkResponse.body();
     Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
@@ -307,6 +306,7 @@ public class MicrosoftPhotosImporter
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
+    Preconditions.checkNotNull(chunkResponse, "chunkResponse is null");
     if (chunkResponse.code() == 401) {
       // If there was an unauthorized error, then try refreshing the creds
       credentialFactory.refreshCredential(credential);
