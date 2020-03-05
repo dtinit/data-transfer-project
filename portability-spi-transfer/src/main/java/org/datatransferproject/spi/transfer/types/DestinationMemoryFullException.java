@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer;
-import org.datatransferproject.transfer.CopyException;
+package org.datatransferproject.spi.transfer.types;
 
-public class DestinationMemoryFullException extends CopyException {
+import javax.annotation.Nonnull;
+
+/**
+ * DestinationMemoryFullException is thrown when the importer for a transfer has run out of storage
+ * on the destination account and the transfer cannot continue.
+ */
+public class DestinationMemoryFullException extends CopyExceptionWithFailureReason {
+
   public DestinationMemoryFullException(String message, Throwable cause) {
     super(message, cause);
+  }
+
+  @Nonnull
+  @Override
+  public String getFailureReason() {
+    return FailureReasons.DESTINATION_FULL.toString();
   }
 }
