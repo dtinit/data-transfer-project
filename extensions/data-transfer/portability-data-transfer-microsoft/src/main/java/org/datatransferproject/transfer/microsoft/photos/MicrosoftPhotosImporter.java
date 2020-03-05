@@ -210,6 +210,7 @@ public class MicrosoftPhotosImporter
     for (DataChunk chunk : chunksToSend) {
       chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
     }
+    Preconditions.checkState(chunkResponse.code() == 200 || chunkResponse.code() == 201 , "Received a bad code on completion of uploading chunks %d", chunkResponse.code());
     // get complete file response
     ResponseBody chunkResponseBody = chunkResponse.body();
     Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
@@ -322,8 +323,8 @@ public class MicrosoftPhotosImporter
         "Got error code: " + chunkCode + " message: " + chunkResponse.message() + " body: " + chunkResponse
         .body().string());
     }
-    if (chunkCode == 200) {
-      monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly", chunk.getStart(), chunk.getEnd()));
+    if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
+      monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly, code %d", chunk.getStart(), chunk.getEnd()));
     }
     return chunkResponse;
   }
