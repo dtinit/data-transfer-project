@@ -32,16 +32,18 @@ import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator.WorkerKeyPair;
 
 /**
- * A service that polls storage for a job to process in two steps: <br>
- * (1) find an unassigned job for this transfer worker <br>
- * (2) wait until the job is ready to process (i.e. creds are available)
+ * A service that polls storage for a job to process in two steps: <br> (1) find an unassigned job
+ * for this transfer worker <br> (2) wait until the job is ready to process (i.e. creds are
+ * available)
  */
 class JobPollingService extends AbstractScheduledService {
+
   private final JobStore store;
   private final TransferKeyGenerator transferKeyGenerator;
   private final PublicKeySerializer publicKeySerializer;
@@ -216,7 +218,9 @@ class JobPollingService extends AbstractScheduledService {
     return true;
   }
 
-  /** Polls for job with populated auth data and stops this service when found. */
+  /**
+   * Polls for job with populated auth data and stops this service when found.
+   */
   private void pollUntilJobIsReady() {
     monitor.debug(() -> "pollUntilJobIsReady");
     UUID jobId = JobMetadata.getJobId();
@@ -225,6 +229,11 @@ class JobPollingService extends AbstractScheduledService {
       monitor.severe(
           () -> format("Could not poll job %s, it was not present in the key-value store", jobId),
           EventCode.WORKER_JOB_ERRORED);
+      this.stopAsync();
+    } else if (job.state() == PortabilityJob.State.CANCELED) {
+      monitor.severe(
+          () -> format("Could not poll job %s, it was cancelled", jobId),
+          EventCode.WORKER_JOB_CANCELED);
       this.stopAsync();
     } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_STORED) {
       monitor.debug(() -> format("Polled job %s in state CREDS_STORED", jobId));
