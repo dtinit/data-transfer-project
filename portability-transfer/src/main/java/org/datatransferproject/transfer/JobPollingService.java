@@ -230,6 +230,11 @@ class JobPollingService extends AbstractScheduledService {
           () -> format("Could not poll job %s, it was not present in the key-value store", jobId),
           EventCode.WORKER_JOB_ERRORED);
       this.stopAsync();
+    } else if (job.state() == PortabilityJob.State.CANCELED) {
+      monitor.severe(
+          () -> format("Could not poll job %s, it was cancelled", jobId),
+          EventCode.WORKER_JOB_CANCELED);
+      this.stopAsync();
     } else if (job.jobAuthorization().state() == JobAuthorization.State.CREDS_STORED) {
       monitor.debug(() -> format("Polled job %s in state CREDS_STORED", jobId));
       JobAuthorization jobAuthorization = job.jobAuthorization();
@@ -246,11 +251,6 @@ class JobPollingService extends AbstractScheduledService {
                         + "Done polling this job since it's in a bad state! Starting over.",
                     jobId), EventCode.WORKER_JOB_ERRORED);
       }
-      this.stopAsync();
-    } else if (job.state() == PortabilityJob.State.CANCELED) {
-      monitor.severe(
-          () -> format("Could not poll job %s, it was cancelled", jobId),
-          EventCode.WORKER_JOB_CANCELED);
       this.stopAsync();
     } else {
       monitor.debug(
