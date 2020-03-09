@@ -122,6 +122,9 @@ public class SmugMugPhotosImporter
   @VisibleForTesting
   SmugMugAlbumResponse importSingleAlbum(PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
       throws IOException {
+    Preconditions.checkNotNull(smugMugInterface);
+    Preconditions.checkNotNull(inputAlbum);
+    Preconditions.checkNotNull(inputAlbum.getName());
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     monitor.info(() -> "Created an album", albumResponse);
     return albumResponse;
