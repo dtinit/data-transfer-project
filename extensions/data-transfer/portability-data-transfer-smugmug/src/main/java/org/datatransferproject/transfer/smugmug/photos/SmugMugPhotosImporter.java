@@ -139,7 +139,7 @@ public class SmugMugPhotosImporter
       throws Exception {
     SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto);
     monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
-    String albumUri = albumCount.getAlbumUri();
+    String albumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkState(
         !Strings.isNullOrEmpty(albumUri),
         "Cached album URI for %s is null",
@@ -206,9 +206,11 @@ public class SmugMugPhotosImporter
         SmugMugAlbumResponse overflowUploadResponse = idempotentExecutor.executeAndSwallowIOExceptions(
             newAlbum.getId(), newAlbum.getName(), () -> importSingleAlbum(newAlbum, smugMugInterface));
         checkState(!Strings.isNullOrEmpty(overflowUploadResponse.getUri()), "Failed to create overflow album for %s", inputPhoto);
+        overflowAlbumUri = overflowUploadResponse.getUri();
+        inputPhoto.reassignToAlbum(newAlbum.getId());
         albumCount = new SmugMugPhotoTempData(overflowAlbumUri);
         jobStore.create(jobId, overflowAlbumUri, albumCount);
-        monitor.info(() -> "Created overflow albumCount", overflowAlbumUri);        
+        monitor.info(() -> "Created overflow albumCount", overflowAlbumUri);      
       } else {
         albumCount = jobStore.findData(
           jobId,
