@@ -160,13 +160,17 @@ public class SmugMugInterface {
     }
 
     // Upload photo
-    return postRequest(
+    SmugMugImageUploadResponse response = postRequest(
         "https://upload.smugmug.com/",
         ImmutableMap.of(), // No content params for photo upload
         contentBytes,
         headersMap,
         new TypeReference<SmugMugImageUploadResponse>() {
         });
+
+    System.out.printf("resultgoku %s\n", response);
+    Preconditions.checkNotNull(response, "Image upload Response is null");
+    return response;
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
@@ -257,8 +261,9 @@ public class SmugMugInterface {
           String.format("Error occurred in request for %s, code: %s, message: %s", fullUrl,
               response.getCode(), response.getMessage()));
     }
-
-    return mapper.readValue(response.getBody(), typeReference);
+    String result = response.getBody();
+    System.out.printf("nogoku %s\n", result);
+    return mapper.readValue(result, typeReference);
   }
 
   static String cleanName(String name) {
