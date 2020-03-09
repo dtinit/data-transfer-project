@@ -26,28 +26,20 @@ public final class SmugMugImageUploadResponse {
   @JsonProperty("method")
   private String method;
 
-  @JsonProperty("image")
+  @JsonProperty("Image")
   private ImageInfo image;
-
-  @JsonProperty("code")
-  private String code;
-
-  @JsonProperty("message")
-  private String message;
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("stat", stat)
         .add("method", method)
-        .add("image", image)
-        .add("code", code)
-        .add("message", message)
+        .add("Image", image)
         .toString();
   }
 
-  public String getCode() {
-    return code;
+  public ImageInfo getImageInfo() {
+    return image;
   }
 
   public static class ImageInfo {

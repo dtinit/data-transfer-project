@@ -250,8 +250,7 @@ public class SmugMugInterface {
     Response response = request.send();
     String result = response.getBody();
 
-    System.out.printf("Sent a post request... %s %s", request.getBodyParams(), request.getBodyContents());
-    System.out.printf("Received a post response... %s", result);
+    System.out.printf("Received a post response... %s\n", result);
     if (response.getCode() < 200 || response.getCode() >= 300) {
       if (response.getCode() == 400) {
         throw new IOException(
