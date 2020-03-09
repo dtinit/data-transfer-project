@@ -140,8 +140,8 @@ public class SmugMugPhotosImporter
     SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto);
     monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
     SmugMugAlbumResponse albumUploadResponse = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
-    checkState(
-        !Strings.isNullOrEmpty(albumUploadResponse),
+    checkNotNull(
+        albumUploadResponse,
         "Cached album upload response for %s is null",
         inputPhoto.getAlbumId());
     String albumUri = albumUploadResponse.getUri();
