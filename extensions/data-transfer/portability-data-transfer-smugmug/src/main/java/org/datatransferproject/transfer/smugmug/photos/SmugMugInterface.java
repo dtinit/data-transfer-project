@@ -246,8 +246,12 @@ public class SmugMugInterface {
     }
     // add accept and content type headers so the response comes back in json and not html
     request.addHeader(HttpHeaders.ACCEPT, "application/json");
-
+    
     Response response = request.send();
+    String result = response.getBody();
+
+    System.out.printf("Sent a post request... %s %s", request.getBodyParams(), request.getBodyContents());
+    System.out.printf("Received a post response... %s", result);
     if (response.getCode() < 200 || response.getCode() >= 300) {
       if (response.getCode() == 400) {
         throw new IOException(
@@ -261,8 +265,6 @@ public class SmugMugInterface {
           String.format("Error occurred in request for %s, code: %s, message: %s", fullUrl,
               response.getCode(), response.getMessage()));
     }
-    String result = response.getBody();
-    System.out.printf("nogoku %s\n", result);
     return mapper.readValue(result, typeReference);
   }
 
