@@ -200,25 +200,35 @@ public class SmugMugPhotosImporter
     while (albumCount.getPhotoCount() >= transmogrificationConfig.getAlbumMaxSize()) {
       String overflowAlbumUri = albumCount.getOverflowAlbumUri();
       if (overflowAlbumUri == null) {
-        // create a new one
+        // create a new album
         PhotoAlbum newAlbum = new PhotoAlbum(smugMugAlbum.getUri() + "-overflow", smugMugAlbum.getName() + "-overflow", smugMugAlbum.getDescription());
-        monitor.info(() -> "IS IT NULL? DO IT NULL?", smugMugInterface == null);
         SmugMugAlbumResponse overflowUploadResponse = idempotentExecutor.executeAndSwallowIOExceptions(
             newAlbum.getId(), newAlbum.getName(), () -> importSingleAlbum(newAlbum, smugMugInterface));
         checkState(!Strings.isNullOrEmpty(overflowUploadResponse.getUri()), "Failed to create overflow album for %s", inputPhoto);
+
+        // create a new albumcount 
         overflowAlbumUri = overflowUploadResponse.getUri();
+        SmugMugPhotoTempData overflowAlbumCount = new SmugMugPhotoTempData(overflowAlbumUri);
+        jobStore.create(jobId, overflowAlbumUri, overflowAlbumCount);
+        monitor.info(() -> "Created overflow albumCount", overflowAlbumUri, overflowAlbumCount);      
+
+        // set references to overflow album
         inputPhoto.reassignToAlbum(newAlbum.getId());
-        albumCount = new SmugMugPhotoTempData(overflowAlbumUri);
-        jobStore.create(jobId, overflowAlbumUri, albumCount);
-        monitor.info(() -> "Created overflow albumCount", overflowAlbumUri);      
+        albumCount.setOverflowAlbumUri(overflowAlbumUri);
+        jobStore.update(jobId, albumUri, albumCount);
+        
+        // reassign album
+        albumCount = overflowAlbumCount;
+        albumUri = overflowAlbumUri;
       } else {
-        albumCount = jobStore.findData(
+        SmugMugPhotoTempData overflowAlbumCount = jobStore.findData(
           jobId,
           overflowAlbumUri,
           SmugMugPhotoTempData.class);
         checkState(albumCount != null, "Couldn't find overflow album for", inputPhoto);
+        albumCount = overflowAlbumCount;
+        albumUri = overflowAlbumUri; 
       }
-      albumUri = overflowAlbumUri;
     }
     return albumCount;
   }
