@@ -139,12 +139,12 @@ public class SmugMugPhotosImporter
       throws Exception {
     SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto);
     monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
-    String albumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    SmugMugAlbumResponse albumUploadResponse = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkState(
-        !Strings.isNullOrEmpty(albumUri),
-        "Cached album URI for %s is null",
+        !Strings.isNullOrEmpty(albumUploadResponse),
+        "Cached album upload response for %s is null",
         inputPhoto.getAlbumId());
-
+    String albumUri = albumUploadResponse.getUri();
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
       inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl()).getStream();
