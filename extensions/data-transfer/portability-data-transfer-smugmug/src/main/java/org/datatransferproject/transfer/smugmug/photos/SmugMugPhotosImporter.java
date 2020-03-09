@@ -202,8 +202,9 @@ public class SmugMugPhotosImporter
       if (overflowAlbumUri == null) {
         // create a new one
         PhotoAlbum newAlbum = new PhotoAlbum(smugMugAlbum.getUri() + "-overflow", smugMugAlbum.getName() + "-overflow", smugMugAlbum.getDescription());
+        monitor.info(() -> "IS IT NULL? DO IT NULL?", smugMugInterface == null);
         SmugMugAlbumResponse overflowUploadResponse = idempotentExecutor.executeAndSwallowIOExceptions(
-            newAlbum.getId(), newAlbum.getName(), () -> importSingleAlbum(newAlbum, smugMugInterface));
+            newAlbum.getId(), newAlbum.getName(), () -> importSingleAlbum(newAlbum, getOrCreateSmugMugInterface()));
         checkState(!Strings.isNullOrEmpty(overflowUploadResponse.getUri()), "Failed to create overflow album for %s", inputPhoto);
         albumCount = new SmugMugPhotoTempData(overflowAlbumUri);
         jobStore.create(jobId, overflowAlbumUri, albumCount);
