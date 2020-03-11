@@ -246,7 +246,7 @@ public class SmugMugPhotosExporter
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData)
       throws IOException {
     return smugMugInterface == null
-        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
+        ? new SmugMugInterface(appCredentials, authData, mapper)
         : smugMugInterface;
   }
 
