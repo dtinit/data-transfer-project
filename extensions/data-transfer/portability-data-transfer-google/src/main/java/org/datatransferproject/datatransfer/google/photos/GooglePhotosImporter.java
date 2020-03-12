@@ -34,6 +34,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputS
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -118,7 +119,7 @@ public class GooglePhotosImporter
 
   @VisibleForTesting
   String importSingleAlbum(TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     String title = COPY_PREFIX + inputAlbum.getName();
@@ -139,7 +140,7 @@ public class GooglePhotosImporter
       TokensAndUrlAuthData authData,
       PhotoModel inputPhoto,
       IdempotentImportExecutor idempotentImportExecutor)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     /*
     TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
     Resumable uploads would allow the upload of larger media that don't fit in memory.  To do this,
