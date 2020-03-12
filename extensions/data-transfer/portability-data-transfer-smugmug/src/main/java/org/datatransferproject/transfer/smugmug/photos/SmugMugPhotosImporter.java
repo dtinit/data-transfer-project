@@ -48,7 +48,7 @@ public class SmugMugPhotosImporter
   private final ObjectMapper mapper;
   private final Monitor monitor;
   private final SmugMugTransmogrificationConfig transmogrificationConfig =
-      new SmugMugTransmogrificationConfig();;
+      new SmugMugTransmogrificationConfig();
 
   private SmugMugInterface smugMugInterface;
 
@@ -142,17 +142,7 @@ public class SmugMugPhotosImporter
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData)
       throws IOException {
     return smugMugInterface == null
-        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
+        ? new SmugMugInterface(appCredentials, authData, mapper)
         : smugMugInterface;
-  }
-
-  /**
-   * Key for cache of album mappings. TODO: Add a method parameter for a {@code key} for fine
-   * grained objects.
-   */
-  private String createCacheKey() {
-    // TODO: store objects containing individual mappings instead of single object containing all
-    // mappings
-    return "tempPhotosData";
   }
 }

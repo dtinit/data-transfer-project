@@ -38,7 +38,8 @@ import java.util.List;
 import static java.lang.String.format;
 
 public class SmugMugTransferExtension implements TransferExtension {
-  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
+
+  private static final ImmutableList<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
 

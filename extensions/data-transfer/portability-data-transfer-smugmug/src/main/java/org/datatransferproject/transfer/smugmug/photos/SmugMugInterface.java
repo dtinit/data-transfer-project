@@ -61,18 +61,15 @@ public class SmugMugInterface {
   private static final String FOLDER_KEY = "Folder";
 
   private final OAuthService oAuthService;
-  private final HttpTransport httpTransport;
   private final Token accessToken;
   private final ObjectMapper mapper;
   private final SmugMugUser user;
 
   SmugMugInterface(
-      HttpTransport transport,
       AppCredentials appCredentials,
       TokenSecretAuthData authData,
       ObjectMapper mapper)
       throws IOException {
-    this.httpTransport = transport;
     this.oAuthService =
         new ServiceBuilder()
             .apiKey(appCredentials.getKey())
@@ -116,7 +113,6 @@ public class SmugMugInterface {
     json.put("Title", "Copy of " + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
-    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
 
     // Upload album
     String folder = user.getUris().get(FOLDER_KEY).getUri();
@@ -127,7 +123,8 @@ public class SmugMugInterface {
             json,
             null, // No HttpContent for album creation
             ImmutableMap.of(), // No special Smugmug headers are required
-            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {});
+            new TypeReference<SmugMugResponse<SmugMugAlbumResponse>>() {
+            });
 
     Preconditions.checkState(response.getResponse() != null, "Response is null");
     Preconditions.checkState(response.getResponse().getAlbum() != null, "Album is null");
@@ -137,7 +134,8 @@ public class SmugMugInterface {
 
   /* Uploads the resource at photoUrl to the albumId provided
    * The albumId must exist before calling upload, else the request will fail */
-  SmugMugImageUploadResponse uploadImage(PhotoModel photoModel, String albumUri, InputStream inputStream)
+  SmugMugImageUploadResponse uploadImage(PhotoModel photoModel, String albumUri,
+      InputStream inputStream)
       throws IOException {
     // Set up photo
     InputStreamContent content = new InputStreamContent(null, inputStream);
@@ -262,15 +260,13 @@ public class SmugMugInterface {
   }
 
   static String cleanName(String name) {
-      // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
-      return new String(
-        name.chars()
-          .mapToObj(c -> (char)c)
-          .map(c -> Character.isWhitespace(c) ? '-' : c)
-          .filter(c -> Character.isLetterOrDigit(c) || c == '-')
-          .limit(40)
-          .map(Object::toString)
-          .collect(Collectors.joining(""))
-      );
+    // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
+    return name.chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> Character.isWhitespace(c) ? '-' : c)
+        .filter(c -> Character.isLetterOrDigit(c) || c == '-')
+        .limit(40)
+        .map(Object::toString)
+        .collect(Collectors.joining(""));
   }
 }
