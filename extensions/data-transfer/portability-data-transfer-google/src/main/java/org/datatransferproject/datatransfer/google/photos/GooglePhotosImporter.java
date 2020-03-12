@@ -54,13 +54,22 @@ public class GooglePhotosImporter
   private final ImageStreamProvider imageStreamProvider;
   private volatile GooglePhotosInterface photosInterface;
   private final Monitor monitor;
+  private final double writesPerSecond;
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
-      Monitor monitor) {
-    this(credentialFactory, jobStore, jsonFactory, null, new ImageStreamProvider(), monitor);
+      Monitor monitor,
+      double writesPerSecond) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        null,
+        new ImageStreamProvider(),
+        monitor,
+        writesPerSecond);
   }
 
   @VisibleForTesting
@@ -70,13 +79,15 @@ public class GooglePhotosImporter
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       ImageStreamProvider imageStreamProvider,
-      Monitor monitor) {
+      Monitor monitor,
+      double writesPerSecond) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
     this.imageStreamProvider = imageStreamProvider;
     this.monitor = monitor;
+    this.writesPerSecond = writesPerSecond;
   }
 
   @Override
@@ -220,6 +231,7 @@ public class GooglePhotosImporter
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GooglePhotosInterface(credentialFactory, credential, jsonFactory, monitor);
+    return new GooglePhotosInterface(
+        credentialFactory, credential, jsonFactory, monitor, writesPerSecond);
   }
 }

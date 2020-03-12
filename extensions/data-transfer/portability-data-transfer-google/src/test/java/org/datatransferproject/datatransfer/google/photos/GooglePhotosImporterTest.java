@@ -90,7 +90,7 @@ public class GooglePhotosImporterTest {
 
     googlePhotosImporter =
         new GooglePhotosImporter(
-            null, jobStore, null, googlePhotosInterface, imageStreamProvider, monitor);
+            null, jobStore, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
   }
 
   @Test
