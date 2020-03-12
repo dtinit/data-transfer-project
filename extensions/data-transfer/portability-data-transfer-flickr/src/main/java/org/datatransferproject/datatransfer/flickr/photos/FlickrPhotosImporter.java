@@ -205,9 +205,9 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         oldAlbumId,
         album.getName(),
         () -> {
-          // TODO: do we want to keep the COPY_PREFIX?  I feel like not
+          // TODO: make COPY_PREFIX configurable.
           String albumName =
-              Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
+              Strings.isNullOrEmpty(album.getName()) ? "untitled" : COPY_PREFIX + album.getName();
           String albumDescription = cleanString(album.getDescription());
 
           perUserRateLimiter.acquire();
