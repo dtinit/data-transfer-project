@@ -36,6 +36,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResul
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -67,7 +68,7 @@ public class GooglePhotosImporterTest {
   private static final String NEW_ALBUM_ID = "NEW_ALBUM_ID";
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws IOException, InvalidTokenException {
     executor = new FakeIdempotentImportExecutor();
     googlePhotosInterface = Mockito.mock(GooglePhotosInterface.class);
     monitor = Mockito.mock(Monitor.class);
