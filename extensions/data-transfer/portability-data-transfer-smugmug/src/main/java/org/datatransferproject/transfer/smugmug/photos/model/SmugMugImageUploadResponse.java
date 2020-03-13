@@ -66,5 +66,4 @@ public final class SmugMugImageUploadResponse {
           .toString();
     }
   }
-
 }

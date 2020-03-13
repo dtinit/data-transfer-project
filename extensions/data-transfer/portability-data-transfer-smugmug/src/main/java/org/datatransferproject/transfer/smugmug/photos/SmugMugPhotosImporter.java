@@ -16,8 +16,8 @@
 
 package org.datatransferproject.transfer.smugmug.photos;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
@@ -93,17 +93,13 @@ public class SmugMugPhotosImporter
     try {
       this.smugMugInterface = getOrCreateSmugMugInterface(authData);
       for (PhotoAlbum album : data.getAlbums()) {
-        SmugMugAlbumResponse albumUploadResponse = idempotentExecutor.executeAndSwallowIOExceptions(
-            album.getId(), album.getName(), () -> importSingleAlbum(album, smugMugInterface));
+        SmugMugAlbumResponse albumUploadResponse =
+            idempotentExecutor.executeAndSwallowIOExceptions(
+                album.getId(), album.getName(), () -> importSingleAlbum(album, smugMugInterface));
         if (albumUploadResponse == null) {
           monitor.severe(() -> "Problem uploading album", album.getId(), album.getName());
         } else {
           monitor.info(() -> "Got this shit cached %s", album.getId());
-          jobStore.create(jobId, albumUploadResponse.getUri(), new SmugMugPhotoTempData(albumUploadResponse.getUri()));
-          monitor.info(() -> "Created albumCount", albumUploadResponse.getUri());
-          SmugMugPhotoTempData albumCount = jobStore.findData(jobId, albumUploadResponse.getUri(), SmugMugPhotoTempData.class);
-          monitor.info(() -> "confirming albumCount", albumCount);
-
         }
       }
       for (PhotoModel photo : data.getPhotos()) {
@@ -126,6 +122,8 @@ public class SmugMugPhotosImporter
     checkNotNull(inputAlbum);
     checkNotNull(inputAlbum.getName());
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
+    jobStore.create(
+        jobId, albumResponse.getUri(), new SmugMugPhotoTempData(albumResponse.getUri()));
     monitor.info(() -> "Created an album", albumResponse);
     return albumResponse;
   }
@@ -139,7 +137,8 @@ public class SmugMugPhotosImporter
       throws Exception {
     SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto);
     monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
-    SmugMugAlbumResponse albumUploadResponse = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    SmugMugAlbumResponse albumUploadResponse =
+        idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkNotNull(
         albumUploadResponse,
         "Cached album upload response for %s is null",
@@ -155,7 +154,11 @@ public class SmugMugPhotosImporter
         smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
     monitor.info(() -> "what it do jloo", response);
     albumCount.incrementPhotoCount();
-    monitor.info(() -> "updating with this", albumCount.getAlbumUri(), albumCount.getPhotoCount(),  albumCount.getOverflowAlbumUri());
+    monitor.info(
+        () -> "updating with this",
+        albumCount.getAlbumUri(),
+        albumCount.getPhotoCount(),
+        albumCount.getOverflowAlbumUri());
     jobStore.update(jobId, albumUri, albumCount);
     return response.toString();
   }
@@ -178,22 +181,19 @@ public class SmugMugPhotosImporter
     return "tempPhotosData";
   }
 
-  private SmugMugPhotoTempData getAlbumCount(UUID jobId, IdempotentImportExecutor idempotentExecutor, PhotoModel inputPhoto) throws Exception {
-    SmugMugAlbumResponse albumUploadResponse = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+  private SmugMugPhotoTempData getAlbumCount(
+      UUID jobId, IdempotentImportExecutor idempotentExecutor, PhotoModel inputPhoto)
+      throws Exception {
+    SmugMugAlbumResponse albumUploadResponse =
+        idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkNotNull(albumUploadResponse, "Got a null albumUploadResponse %s", inputPhoto.getAlbumId());
     SmugMugAlbum smugMugAlbum = albumUploadResponse.getAlbum();
     String albumUri = albumUploadResponse.getUri();
-    SmugMugPhotoTempData albumCount = jobStore.findData(
-        jobId,
-        albumUploadResponse.getUri(),
-        SmugMugPhotoTempData.class);
+    SmugMugPhotoTempData albumCount =
+        jobStore.findData(jobId, albumUploadResponse.getUri(), SmugMugPhotoTempData.class);
     if (albumCount == null) {
-      monitor.info(() -> "Got a null albumCount for, creating a fresh one", albumUploadResponse.getUri());
-      albumCount = new SmugMugPhotoTempData(albumUri);
-      jobStore.create(jobId, albumUri, albumCount);
-      monitor.info(() -> "Created albumCount fresh", albumUploadResponse.getUri());
-    } else {
-      monitor.info(() -> "Didn't need fresh got this", albumCount);
+      throw new Exception(
+          String.format("No albumcount in jobstore for uri %s", albumUploadResponse.getUri()));
     }
 
     // Preconditions.checkNotNull(albumCount, "albumCount is null for album %s", )
@@ -201,33 +201,41 @@ public class SmugMugPhotosImporter
       String overflowAlbumUri = albumCount.getOverflowAlbumUri();
       if (overflowAlbumUri == null) {
         // create a new album
-        PhotoAlbum newAlbum = new PhotoAlbum(smugMugAlbum.getUri() + "-overflow", smugMugAlbum.getName() + "-overflow", smugMugAlbum.getDescription());
-        SmugMugAlbumResponse overflowUploadResponse = idempotentExecutor.executeAndSwallowIOExceptions(
-            newAlbum.getId(), newAlbum.getName(), () -> importSingleAlbum(newAlbum, smugMugInterface));
-        checkState(!Strings.isNullOrEmpty(overflowUploadResponse.getUri()), "Failed to create overflow album for %s", inputPhoto);
+        PhotoAlbum newAlbum =
+            new PhotoAlbum(
+                smugMugAlbum.getUri() + "-overflow",
+                smugMugAlbum.getName() + "-overflow",
+                smugMugAlbum.getDescription());
+        SmugMugAlbumResponse overflowUploadResponse =
+            idempotentExecutor.executeAndSwallowIOExceptions(
+                newAlbum.getId(),
+                newAlbum.getName(),
+                () -> importSingleAlbum(newAlbum, smugMugInterface));
+        checkState(
+            !Strings.isNullOrEmpty(overflowUploadResponse.getUri()),
+            "Failed to create overflow album for %s",
+            inputPhoto);
 
-        // create a new albumcount 
+        // create a new albumcount
         overflowAlbumUri = overflowUploadResponse.getUri();
         SmugMugPhotoTempData overflowAlbumCount = new SmugMugPhotoTempData(overflowAlbumUri);
         jobStore.create(jobId, overflowAlbumUri, overflowAlbumCount);
-        monitor.info(() -> "Created overflow albumCount", overflowAlbumUri, overflowAlbumCount);      
+        monitor.info(() -> "Created overflow albumCount", overflowAlbumUri, overflowAlbumCount);
 
         // set references to overflow album
         inputPhoto.reassignToAlbum(newAlbum.getId());
         albumCount.setOverflowAlbumUri(overflowAlbumUri);
         jobStore.update(jobId, albumUri, albumCount);
-        
+
         // reassign album
         albumCount = overflowAlbumCount;
         albumUri = overflowAlbumUri;
       } else {
-        SmugMugPhotoTempData overflowAlbumCount = jobStore.findData(
-          jobId,
-          overflowAlbumUri,
-          SmugMugPhotoTempData.class);
+        SmugMugPhotoTempData overflowAlbumCount =
+            jobStore.findData(jobId, overflowAlbumUri, SmugMugPhotoTempData.class);
         checkState(albumCount != null, "Couldn't find overflow album for", inputPhoto);
         albumCount = overflowAlbumCount;
-        albumUri = overflowAlbumUri; 
+        albumUri = overflowAlbumUri;
       }
     }
     return albumCount;

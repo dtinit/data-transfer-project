@@ -22,6 +22,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -40,13 +46,6 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 public class SmugMugPhotosExporter
     implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
@@ -90,7 +89,7 @@ public class SmugMugPhotosExporter
 
   @Override
   public ExportResult<PhotosContainerResource> export(
-          UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
+      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException {
 
     StringPaginationToken paginationToken =

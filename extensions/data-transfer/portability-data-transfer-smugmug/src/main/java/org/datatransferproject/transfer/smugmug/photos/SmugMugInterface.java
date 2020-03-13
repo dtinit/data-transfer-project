@@ -87,10 +87,9 @@ public class SmugMugInterface {
   SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
-    SmugMugAlbumImageResponse response = makeRequest(url,
-        new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {
-        })
-        .getResponse();
+    SmugMugAlbumImageResponse response =
+        makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumImageResponse>>() {})
+            .getResponse();
     return response;
   }
 
@@ -100,8 +99,7 @@ public class SmugMugInterface {
     if (Strings.isNullOrEmpty(url)) {
       url = user.getUris().get(ALBUMS_KEY).getUri();
     }
-    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {
-    })
+    return makeRequest(url, new TypeReference<SmugMugResponse<SmugMugAlbumsResponse>>() {})
         .getResponse();
   }
 
@@ -137,8 +135,8 @@ public class SmugMugInterface {
 
   /* Uploads the resource at photoUrl to the albumId provided
    * The albumId must exist before calling upload, else the request will fail */
-  SmugMugImageUploadResponse uploadImage(PhotoModel photoModel, String albumUri, InputStream inputStream)
-      throws IOException {
+  SmugMugImageUploadResponse uploadImage(
+      PhotoModel photoModel, String albumUri, InputStream inputStream) throws IOException {
     // Set up photo
     InputStreamContent content = new InputStreamContent(null, inputStream);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -160,13 +158,13 @@ public class SmugMugInterface {
     }
 
     // Upload photo
-    SmugMugImageUploadResponse response = postRequest(
-        "https://upload.smugmug.com/",
-        ImmutableMap.of(), // No content params for photo upload
-        contentBytes,
-        headersMap,
-        new TypeReference<SmugMugImageUploadResponse>() {
-        });
+    SmugMugImageUploadResponse response =
+        postRequest(
+            "https://upload.smugmug.com/",
+            ImmutableMap.of(), // No content params for photo upload
+            contentBytes,
+            headersMap,
+            new TypeReference<SmugMugImageUploadResponse>() {});
 
     System.out.printf("resultgoku %s\n", response);
     Preconditions.checkNotNull(response, "Image upload Response is null");
@@ -174,8 +172,7 @@ public class SmugMugInterface {
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
-    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {
-    })
+    return makeRequest(USER_URL, new TypeReference<SmugMugResponse<SmugMugUserResponse>>() {})
         .getResponse();
   }
 
@@ -196,8 +193,7 @@ public class SmugMugInterface {
     } else {
       fullUrl = url;
     }
-    OAuthRequest request =
-        new OAuthRequest(Verb.GET, fullUrl + "?_accept=application%2Fjson");
+    OAuthRequest request = new OAuthRequest(Verb.GET, fullUrl + "?_accept=application%2Fjson");
     oAuthService.signRequest(accessToken, request);
     final Response response = request.send();
 
@@ -246,7 +242,7 @@ public class SmugMugInterface {
     }
     // add accept and content type headers so the response comes back in json and not html
     request.addHeader(HttpHeaders.ACCEPT, "application/json");
-    
+
     Response response = request.send();
     String result = response.getBody();
 
@@ -257,26 +253,29 @@ public class SmugMugInterface {
             String.format(
                 "Error occurred in request for %s, code: %s, message: %s, request: %s, bodyParams: %s, payload: %s",
                 fullUrl,
-                response.getCode(), response.getMessage(), request.toString(),
-                request.getBodyParams(), request.getBodyContents()));
+                response.getCode(),
+                response.getMessage(),
+                request.toString(),
+                request.getBodyParams(),
+                request.getBodyContents()));
       }
       throw new IOException(
-          String.format("Error occurred in request for %s, code: %s, message: %s", fullUrl,
-              response.getCode(), response.getMessage()));
+          String.format(
+              "Error occurred in request for %s, code: %s, message: %s",
+              fullUrl, response.getCode(), response.getMessage()));
     }
     return mapper.readValue(result, typeReference);
   }
 
   static String cleanName(String name) {
-      // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
-      return new String(
+    // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
+    return new String(
         name.chars()
-          .mapToObj(c -> (char)c)
-          .map(c -> Character.isWhitespace(c) ? '-' : c)
-          .filter(c -> Character.isLetterOrDigit(c) || c == '-')
-          .limit(40)
-          .map(Object::toString)
-          .collect(Collectors.joining(""))
-      );
+            .mapToObj(c -> (char) c)
+            .map(c -> Character.isWhitespace(c) ? '-' : c)
+            .filter(c -> Character.isLetterOrDigit(c) || c == '-')
+            .limit(40)
+            .map(Object::toString)
+            .collect(Collectors.joining("")));
   }
 }
