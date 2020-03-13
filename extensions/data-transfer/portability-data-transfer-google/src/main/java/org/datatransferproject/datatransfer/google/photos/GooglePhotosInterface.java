@@ -190,7 +190,7 @@ public class GooglePhotosInterface {
     HttpRequest postRequest =
         requestFactory.buildPostRequest(
             new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
-
+    postRequest.setReadTimeout(2 * 60000);  // 2 minutes read timeout
     HttpResponse response;
 
     try {
