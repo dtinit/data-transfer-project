@@ -17,7 +17,6 @@
 package org.datatransferproject.transfer.smugmug.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.datatransferproject.api.launcher.Monitor;
@@ -45,7 +44,6 @@ public class SmugMugPhotosImporter
 
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
-  private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
   private final SmugMugTransmogrificationConfig transmogrificationConfig =
@@ -55,24 +53,21 @@ public class SmugMugPhotosImporter
 
   public SmugMugPhotosImporter(
       TemporaryPerJobDataStore jobStore,
-      HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
-    this(null, jobStore, transport, appCredentials, mapper, monitor);
+    this(null, jobStore, appCredentials, mapper, monitor);
   }
 
   @VisibleForTesting
   SmugMugPhotosImporter(
       SmugMugInterface smugMugInterface,
       TemporaryPerJobDataStore jobStore,
-      HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
-    this.transport = transport;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
     this.monitor = monitor;
