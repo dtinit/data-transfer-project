@@ -95,7 +95,7 @@ public class SmugMugPhotosImporter
       for (PhotoAlbum album : data.getAlbums()) {
         SmugMugAlbumResponse albumUploadResponse =
             idempotentExecutor.executeAndSwallowIOExceptions(
-                album.getId(), album.getName(), () -> importSingleAlbum(album, smugMugInterface));
+                album.getId(), album.getName(), () -> importSingleAlbum(jobId, album, smugMugInterface));
         if (albumUploadResponse == null) {
           monitor.severe(() -> "Problem uploading album", album.getId(), album.getName());
         } else {
@@ -116,7 +116,7 @@ public class SmugMugPhotosImporter
   }
 
   @VisibleForTesting
-  SmugMugAlbumResponse importSingleAlbum(PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
+  SmugMugAlbumResponse importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
       throws IOException {
     checkNotNull(smugMugInterface);
     checkNotNull(inputAlbum);
@@ -210,7 +210,7 @@ public class SmugMugPhotosImporter
             idempotentExecutor.executeAndSwallowIOExceptions(
                 newAlbum.getId(),
                 newAlbum.getName(),
-                () -> importSingleAlbum(newAlbum, smugMugInterface));
+                () -> importSingleAlbum(jobId, newAlbum, smugMugInterface));
         checkState(
             !Strings.isNullOrEmpty(overflowUploadResponse.getUri()),
             "Failed to create overflow album for %s",
