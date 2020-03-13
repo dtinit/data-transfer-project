@@ -17,7 +17,7 @@
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import java.util.Map;
 
 public class SmugMugImage {

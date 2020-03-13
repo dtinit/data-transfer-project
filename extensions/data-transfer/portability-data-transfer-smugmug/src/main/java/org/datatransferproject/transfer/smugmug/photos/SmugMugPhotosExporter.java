@@ -90,7 +90,7 @@ public class SmugMugPhotosExporter
 
   @Override
   public ExportResult<PhotosContainerResource> export(
-          UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
+      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException {
 
     StringPaginationToken paginationToken =

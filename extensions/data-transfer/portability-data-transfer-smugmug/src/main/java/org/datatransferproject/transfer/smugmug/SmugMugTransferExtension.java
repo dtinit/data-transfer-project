@@ -33,7 +33,6 @@ import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 import java.io.IOException;
-import java.util.List;
 
 import static java.lang.String.format;
 
