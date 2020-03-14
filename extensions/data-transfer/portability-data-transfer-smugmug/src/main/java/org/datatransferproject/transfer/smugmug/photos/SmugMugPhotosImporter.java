@@ -137,6 +137,7 @@ public class SmugMugPhotosImporter
       throws Exception {
     SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto);
     monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
+    inputPhoto.reassignToAlbum(albumCount.getAlbumId());    
     SmugMugAlbumResponse albumUploadResponse =
         idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
     checkNotNull(
@@ -155,7 +156,7 @@ public class SmugMugPhotosImporter
     monitor.info(() -> "what it do jloo", response);
     albumCount.incrementPhotoCount();
         // set references to overflow album
-    inputPhoto.reassignToAlbum(albumCount.getAlbumId());
+    
 
     monitor.info(
         () -> "updating with this",
