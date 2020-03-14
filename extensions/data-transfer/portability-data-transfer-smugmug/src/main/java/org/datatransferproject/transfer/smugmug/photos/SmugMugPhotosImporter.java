@@ -206,7 +206,7 @@ public class SmugMugPhotosImporter
       albumUploadResponse = idempotentExecutor.getCachedValue(albumCount.getAlbumId());
       checkNotNull(albumUploadResponse, "Got a null albumUploadResponse %s", inputPhoto.getAlbumId());
       smugMugAlbum = albumUploadResponse.getAlbum();
-      overflowAlbumUri = albumCount.getOverflowAlbumUri();
+      String overflowAlbumUri = albumCount.getOverflowAlbumUri();
       if (overflowAlbumUri == null) {
         // create a new album
         PhotoAlbum newAlbum =
