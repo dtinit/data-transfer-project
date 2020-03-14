@@ -203,7 +203,10 @@ public class SmugMugPhotosImporter
 
     // Preconditions.checkNotNull(albumCount, "albumCount is null for album %s", )
     while (albumCount.getPhotoCount() >= transmogrificationConfig.getAlbumMaxSize()) {
-      String overflowAlbumUri = albumCount.getOverflowAlbumUri();
+      albumUploadResponse = idempotentExecutor.getCachedValue(albumCount.getAlbumId());
+      checkNotNull(albumUploadResponse, "Got a null albumUploadResponse %s", inputPhoto.getAlbumId());
+      smugMugAlbum = albumUploadResponse.getAlbum();
+      overflowAlbumUri = albumCount.getOverflowAlbumUri();
       if (overflowAlbumUri == null) {
         // create a new album
         PhotoAlbum newAlbum =
