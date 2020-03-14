@@ -123,7 +123,7 @@ public class SmugMugPhotosImporter
     checkNotNull(inputAlbum.getName());
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     jobStore.create(
-        jobId, albumResponse.getUri(), new SmugMugPhotoTempData(albumResponse.getUri()));
+        jobId, albumResponse.getUri(), new SmugMugPhotoTempData(albumResponse.getUri(), inputAlbum.getId()));
     monitor.info(() -> "Created an album", albumResponse);
     return albumResponse;
   }
@@ -154,9 +154,13 @@ public class SmugMugPhotosImporter
         smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
     monitor.info(() -> "what it do jloo", response);
     albumCount.incrementPhotoCount();
+        // set references to overflow album
+    inputPhoto.reassignToAlbum(albumCount.getAlbumId());
+
     monitor.info(
         () -> "updating with this",
         albumCount.getAlbumUri(),
+        albumCount.getAlbumId(),
         albumCount.getPhotoCount(),
         albumCount.getOverflowAlbumUri());
     jobStore.update(jobId, albumUri, albumCount);
@@ -218,15 +222,12 @@ public class SmugMugPhotosImporter
 
         // create a new albumcount
         overflowAlbumUri = overflowUploadResponse.getUri();
-        SmugMugPhotoTempData overflowAlbumCount = new SmugMugPhotoTempData(overflowAlbumUri);
+        SmugMugPhotoTempData overflowAlbumCount = new SmugMugPhotoTempData(overflowAlbumUri, newAlbum.getId());
         jobStore.create(jobId, overflowAlbumUri, overflowAlbumCount);
         monitor.info(() -> "Created overflow albumCount", overflowAlbumUri, overflowAlbumCount);
-
-        // set references to overflow album
-        inputPhoto.reassignToAlbum(newAlbum.getId());
+        
         albumCount.setOverflowAlbumUri(overflowAlbumUri);
         jobStore.update(jobId, albumUri, albumCount);
-
         // reassign album
         albumCount = overflowAlbumCount;
         albumUri = overflowAlbumUri;

@@ -9,18 +9,24 @@ import org.datatransferproject.types.common.models.DataModel;
 @JsonTypeName("org.dataportability:SmugMugPhotoTempData")
 public class SmugMugPhotoTempData extends DataModel {
   private final String albumUri;
+  private final String albumId;
   private int photoCount;
   private String overflowAlbumUri;
 
   @JsonCreator
-  public SmugMugPhotoTempData(@JsonProperty("albumUri") String albumUri) {
+  public SmugMugPhotoTempData(@JsonProperty("albumUri") String albumUri, @JsonProperty("albumId") String albumId) {
     this.albumUri = albumUri;
+    this.albumId =albumId;
     this.photoCount = 0;
     this.overflowAlbumUri = null;
   }
 
   public String getAlbumUri() {
     return this.albumUri;
+  }
+
+  public String getAlbumId() {
+    return this.albumId;
   }
 
   public int incrementPhotoCount() {
@@ -43,6 +49,7 @@ public class SmugMugPhotoTempData extends DataModel {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("albumUri", albumUri)
+        .add("albumId", albumId)
         .add("photoCount", photoCount)
         .add("overflowAlbumUri", overflowAlbumUri)
         .toString();
