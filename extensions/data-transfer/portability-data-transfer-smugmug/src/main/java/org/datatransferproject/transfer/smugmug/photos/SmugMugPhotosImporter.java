@@ -146,7 +146,7 @@ public class SmugMugPhotosImporter
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
     SmugMugImageUploadResponse response =
-        smugMugInterface.uploadImage(inputPh oto, albumUri, inputStream);
+        smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
     monitor.info(() -> "what it do jloo", response);
     albumCount.incrementPhotoCount();    
 
