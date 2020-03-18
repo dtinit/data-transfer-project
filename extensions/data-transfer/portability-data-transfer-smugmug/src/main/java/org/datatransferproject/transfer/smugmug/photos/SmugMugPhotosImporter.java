@@ -122,8 +122,6 @@ public class SmugMugPhotosImporter
     checkNotNull(inputAlbum);
     checkNotNull(inputAlbum.getName());
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
-    SmugMugPhotoTempData test = jobStore.findData(jobId, inputAlbum.getId(), SmugMugPhotoTempData.class);
-    monitor.info(() -> "this is at the jobstore", test);
     SmugMugPhotoTempData tempData = new SmugMugPhotoTempData(inputAlbum.getId(), albumResponse.getAlbum());
     jobStore.create(jobId, inputAlbum.getId(), tempData);
     return albumResponse.getUri();
@@ -148,7 +146,7 @@ public class SmugMugPhotosImporter
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
     SmugMugImageUploadResponse response =
-        smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
+        smugMugInterface.uploadImage(inputPh oto, albumUri, inputStream);
     monitor.info(() -> "what it do jloo", response);
     albumCount.incrementPhotoCount();    
 
