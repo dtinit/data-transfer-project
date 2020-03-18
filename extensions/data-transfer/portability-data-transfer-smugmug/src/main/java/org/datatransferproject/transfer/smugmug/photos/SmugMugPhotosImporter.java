@@ -150,9 +150,7 @@ public class SmugMugPhotosImporter
     SmugMugImageUploadResponse response =
         smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
     monitor.info(() -> "what it do jloo", response);
-    albumCount.incrementPhotoCount();
-        // set references to overflow album
-    
+    albumCount.incrementPhotoCount();    
 
     monitor.info(
         () -> "updating with this",
@@ -182,7 +180,7 @@ public class SmugMugPhotosImporter
     return "tempPhotosData";
   }
 
-  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+  @VisibleForTesting
   private SmugMugPhotoTempData getAlbumCount(
       UUID jobId, IdempotentImportExecutor idempotentExecutor, String baseAlbumId)
       throws Exception {
@@ -217,7 +215,7 @@ public class SmugMugPhotosImporter
   * name        -> {baseAlbumName} ({copyNumber})
   * description -> {baseAlbumDescription}
   */
-  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+  @VisibleForTesting
   private static PhotoAlbum createOverflowAlbum(String baseAlbumId, SmugMugAlbum baseApiAlbum,
     int copyNumber) throws Exception {
     checkState(copyNumber > 0, "copyNumber should be > 0");
