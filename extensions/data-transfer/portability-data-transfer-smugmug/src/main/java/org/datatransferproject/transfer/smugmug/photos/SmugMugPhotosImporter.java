@@ -124,6 +124,8 @@ public class SmugMugPhotosImporter
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     SmugMugPhotoTempData tempData = new SmugMugPhotoTempData(inputAlbum.getId(), albumResponse.getAlbum());
     jobStore.create(jobId, inputAlbum.getId(), tempData);
+    jobStore.findData(jobId, inputAlbum.getId(), SmugMugPhotoTempData.class);
+    monitor.info(() -> "Created a jobStore entity for album with id", inputAlbum.getId());
     return albumResponse.getUri();
   }
 
