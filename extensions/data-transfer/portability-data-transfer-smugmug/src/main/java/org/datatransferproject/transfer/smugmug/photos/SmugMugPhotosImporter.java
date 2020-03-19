@@ -188,7 +188,7 @@ public class SmugMugPhotosImporter
             idempotentExecutor.executeOrThrowException(
                 newAlbum.getId(),
                 newAlbum.getName(),
-                () -> importSingleAlbum(jobId, newAlbum, smugMugInterface));
+                () -> importSingleAlbum(jobId, newAlbum));
         albumTempData.setOverflowAlbumId(newAlbum.getId());
         jobStore.update(jobId, albumTempData.getAlbumId(), albumTempData);
         albumTempData =
