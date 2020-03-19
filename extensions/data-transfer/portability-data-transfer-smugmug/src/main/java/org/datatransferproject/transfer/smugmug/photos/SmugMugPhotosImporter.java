@@ -137,10 +137,11 @@ public class SmugMugPhotosImporter
       SmugMugInterface smugMugInterface)
       throws Exception {
     SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto.getAlbumId());
-    monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
     inputPhoto.reassignToAlbum(albumCount.getAlbumId());    
     String albumUri =
         idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    monitor.info(() -> "Importing a photo, got an albumCount", albumCount, albumUri);
+
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
       inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl()).getStream();
