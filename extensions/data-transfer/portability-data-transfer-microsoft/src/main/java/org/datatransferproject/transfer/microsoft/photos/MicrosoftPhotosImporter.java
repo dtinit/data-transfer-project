@@ -15,8 +15,6 @@
  */
 package org.datatransferproject.transfer.microsoft.photos;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
@@ -44,6 +42,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -62,7 +61,6 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class MicrosoftPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
-
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
@@ -77,7 +75,6 @@ public class MicrosoftPhotosImporter
   private final String albumlessPhotoUrlTemplate;
 
   private static final String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
-
 
   public MicrosoftPhotosImporter(
     String baseUrl,
@@ -179,7 +176,7 @@ public class MicrosoftPhotosImporter
       }
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
       String folderId = (String) responseData.get("id");
-      checkState(!Strings.isNullOrEmpty(folderId),
+      Preconditions.checkState(!Strings.isNullOrEmpty(folderId),
                  "Expected id value to be present in %s", responseData);
       return folderId;
     }
@@ -188,8 +185,7 @@ public class MicrosoftPhotosImporter
   private String importSinglePhoto(
     PhotoModel photo,
     UUID jobId,
-    IdempotentImportExecutor idempotentImportExecutor)
-  throws IOException {
+    IdempotentImportExecutor idempotentImportExecutor) throws Exception {
     BufferedInputStream inputStream = null;
     if (photo.isInTempStore()) {
       inputStream = new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
@@ -204,14 +200,18 @@ public class MicrosoftPhotosImporter
     // Arrange the data to be uploaded in chunks
     List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
     final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
+    Preconditions.checkState(chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
 
-    Integer chunkCode = null;
     Response chunkResponse = null;
     for (DataChunk chunk : chunksToSend) {
       chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
     }
+    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) { 
+      // Once we upload the last chunk, we should have either 200 or 201. 
+      // This should change to a precondition check after we debug some more.
+      monitor.debug(() -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
+    }
     // get complete file response
-    Preconditions.checkState(chunkCode == 201 || chunkCode == 200, "Got bad response code when finishing uploadSession: %d", chunkCode);
     ResponseBody chunkResponseBody = chunkResponse.body();
     Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
@@ -226,7 +226,8 @@ public class MicrosoftPhotosImporter
 
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
-  private String createUploadSession(PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor) throws IOException {
+  private String createUploadSession(PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor) throws
+          IOException, DestinationMemoryFullException {
 
     // Forming the URL to create an upload session
     String createSessionUrl;
@@ -269,8 +270,11 @@ public class MicrosoftPhotosImporter
       code = newResponse.code();
       responseBody = newResponse.body();
     }
-    // Check for success
-    if (code < 200 || code > 299) {
+
+    if (code == 507 && response.message().contains("Insufficient Storage")) {
+      throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
+              new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
+    } else if (code < 200 || code > 299) {
       throw new IOException(
         String.format("Got error code: %s\nmessage: %s\nbody: %s\nrequest url: %s\nbearer token: %s\n", code, response.message(), response.body().string(), createSessionUrl, credential.getAccessToken()));
     } else if (code != 200) {
@@ -291,7 +295,8 @@ public class MicrosoftPhotosImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize, String mediaType) throws IOException {
+  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize, String mediaType)
+          throws IOException, DestinationMemoryFullException {
 
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
@@ -307,6 +312,7 @@ public class MicrosoftPhotosImporter
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
+    Preconditions.checkNotNull(chunkResponse, "chunkResponse is null");
     if (chunkResponse.code() == 401) {
       // If there was an unauthorized error, then try refreshing the creds
       credentialFactory.refreshCredential(credential);
@@ -317,13 +323,15 @@ public class MicrosoftPhotosImporter
       chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
     }
     int chunkCode = chunkResponse.code();
-    if (chunkCode < 200 || chunkCode > 299) {
+    if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
+      throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
+              new IOException(String.format("Got error code %d  with message: %s", chunkCode, chunkResponse.message())));
+    } else if (chunkCode < 200 || chunkCode > 299) {
       throw new IOException(
         "Got error code: " + chunkCode + " message: " + chunkResponse.message() + " body: " + chunkResponse
         .body().string());
-    }
-    if (chunkCode == 200) {
-      monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly", chunk.getStart(), chunk.getEnd()));
+    } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
+      monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly, code %d", chunk.getStart(), chunk.getEnd(), chunkCode));
     }
     return chunkResponse;
   }

@@ -19,30 +19,12 @@ package org.datatransferproject.transfer.smugmug.photos;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
-import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugResponse;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUser;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugUserResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.*;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -53,6 +35,15 @@ import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
 
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
 public class SmugMugInterface {
 
   private static final String BASE_URL = "https://api.smugmug.com";
@@ -61,18 +52,12 @@ public class SmugMugInterface {
   private static final String FOLDER_KEY = "Folder";
 
   private final OAuthService oAuthService;
-  private final HttpTransport httpTransport;
   private final Token accessToken;
   private final ObjectMapper mapper;
   private final SmugMugUser user;
 
-  SmugMugInterface(
-      HttpTransport transport,
-      AppCredentials appCredentials,
-      TokenSecretAuthData authData,
-      ObjectMapper mapper)
+  SmugMugInterface(AppCredentials appCredentials, TokenSecretAuthData authData, ObjectMapper mapper)
       throws IOException {
-    this.httpTransport = transport;
     this.oAuthService =
         new ServiceBuilder()
             .apiKey(appCredentials.getKey())
@@ -114,7 +99,6 @@ public class SmugMugInterface {
     json.put("Title", "Copy of " + albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
-    HttpContent content = new JsonHttpContent(new JacksonFactory(), json);
 
     // Upload album
     String folder = user.getUris().get(FOLDER_KEY).getUri();
@@ -166,9 +150,9 @@ public class SmugMugInterface {
             headersMap,
             new TypeReference<SmugMugImageUploadResponse>() {});
 
-    System.out.printf("resultgoku %s\n", response);
     Preconditions.checkNotNull(response, "Image upload Response is null");
     return response;
+
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
@@ -246,7 +230,6 @@ public class SmugMugInterface {
     Response response = request.send();
     String result = response.getBody();
 
-    System.out.printf("Received a post response... %s\n", result);
     if (response.getCode() < 200 || response.getCode() >= 300) {
       if (response.getCode() == 400) {
         throw new IOException(
@@ -269,13 +252,12 @@ public class SmugMugInterface {
 
   static String cleanName(String name) {
     // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
-    return new String(
-        name.chars()
-            .mapToObj(c -> (char) c)
-            .map(c -> Character.isWhitespace(c) ? '-' : c)
-            .filter(c -> Character.isLetterOrDigit(c) || c == '-')
-            .limit(40)
-            .map(Object::toString)
-            .collect(Collectors.joining("")));
+    return name.chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> Character.isWhitespace(c) ? '-' : c)
+        .filter(c -> Character.isLetterOrDigit(c) || c == '-')
+        .limit(40)
+        .map(Object::toString)
+        .collect(Collectors.joining(""));
   }
 }

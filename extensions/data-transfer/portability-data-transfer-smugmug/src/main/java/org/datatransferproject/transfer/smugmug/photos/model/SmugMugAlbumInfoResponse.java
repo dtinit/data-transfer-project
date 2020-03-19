@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class SmugMugAlbumInfoResponse {

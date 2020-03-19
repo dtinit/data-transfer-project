@@ -57,6 +57,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemRes
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 
 public class GooglePhotosInterface {
 
@@ -94,7 +95,8 @@ public class GooglePhotosInterface {
     this.credentialFactory = credentialFactory;
   }
 
-  AlbumListResponse listAlbums(Optional<String> pageToken) throws IOException {
+  AlbumListResponse listAlbums(Optional<String> pageToken)
+      throws IOException, InvalidTokenException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -104,7 +106,7 @@ public class GooglePhotosInterface {
   }
 
   MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
     if (albumId.isPresent()) {
@@ -120,7 +122,7 @@ public class GooglePhotosInterface {
         BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException {
+  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException, InvalidTokenException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
@@ -128,7 +130,7 @@ public class GooglePhotosInterface {
     return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream) throws IOException {
+  String uploadPhotoContent(InputStream inputStream) throws IOException, InvalidTokenException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -144,7 +146,8 @@ public class GooglePhotosInterface {
         BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
   }
 
-  BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload) throws IOException {
+  BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload)
+      throws IOException, InvalidTokenException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
 
@@ -156,7 +159,7 @@ public class GooglePhotosInterface {
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest =
         requestFactory.buildGetRequest(
@@ -182,12 +185,12 @@ public class GooglePhotosInterface {
 
   <T> T makePostRequest(
       String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest postRequest =
         requestFactory.buildPostRequest(
             new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
-
+    postRequest.setReadTimeout(2 * 60000);  // 2 minutes read timeout
     HttpResponse response;
 
     try {
@@ -212,7 +215,8 @@ public class GooglePhotosInterface {
   }
 
   private HttpResponse handleHttpResponseException(
-      SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e) throws IOException {
+      SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
+      throws IOException, InvalidTokenException {
     // if the response is "unauthorized", refresh the token and try the request again
     if (e.getStatusCode() == 401) {
       monitor.info(() -> "Attempting to refresh authorization token");

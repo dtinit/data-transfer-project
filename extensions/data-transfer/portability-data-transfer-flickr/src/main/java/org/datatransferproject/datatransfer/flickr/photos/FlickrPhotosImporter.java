@@ -40,7 +40,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -205,9 +205,9 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         oldAlbumId,
         album.getName(),
         () -> {
-          // TODO: do we want to keep the COPY_PREFIX?  I feel like not
+          // TODO: make COPY_PREFIX configurable.
           String albumName =
-              Strings.isNullOrEmpty(album.getName()) ? "" : COPY_PREFIX + album.getName();
+              Strings.isNullOrEmpty(album.getName()) ? "untitled" : COPY_PREFIX + album.getName();
           String albumDescription = cleanString(album.getDescription());
 
           perUserRateLimiter.acquire();

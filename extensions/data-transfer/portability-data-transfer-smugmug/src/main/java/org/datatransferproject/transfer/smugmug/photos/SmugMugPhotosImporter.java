@@ -19,8 +19,8 @@ package org.datatransferproject.transfer.smugmug.photos;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,12 +39,17 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
+
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
-  private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final Monitor monitor;
   private final SmugMugTransmogrificationConfig transmogrificationConfig =
@@ -54,24 +59,21 @@ public class SmugMugPhotosImporter
 
   public SmugMugPhotosImporter(
       TemporaryPerJobDataStore jobStore,
-      HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
-    this(null, jobStore, transport, appCredentials, mapper, monitor);
+    this(null, jobStore, appCredentials, mapper, monitor);
   }
 
   @VisibleForTesting
   SmugMugPhotosImporter(
       SmugMugInterface smugMugInterface,
       TemporaryPerJobDataStore jobStore,
-      HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
-    this.transport = transport;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
     this.monitor = monitor;
@@ -95,13 +97,13 @@ public class SmugMugPhotosImporter
             idempotentExecutor.executeAndSwallowIOExceptions(
                 album.getId(),
                 album.getName(),
-                () -> importSingleAlbum(jobId, album, smugMugInterface));
+                () -> importSingleAlbum(jobId, album));
       }
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
             photo.getAlbumId() + "-" + photo.getDataId(),
             photo.getTitle(),
-            () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));
+            () -> importSinglePhoto(jobId, idempotentExecutor, photo));
       }
     } catch (IOException e) {
       monitor.severe(() -> "Error importing", e);
@@ -111,11 +113,8 @@ public class SmugMugPhotosImporter
   }
 
   @VisibleForTesting
-  String importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
+  String importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum)
       throws IOException {
-    checkNotNull(smugMugInterface);
-    checkNotNull(inputAlbum);
-    checkNotNull(inputAlbum.getName());
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     SmugMugPhotoTempData tempData =
         new SmugMugPhotoTempData(
@@ -128,8 +127,7 @@ public class SmugMugPhotosImporter
   String importSinglePhoto(
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      PhotoModel inputPhoto,
-      SmugMugInterface smugMugInterface)
+      PhotoModel inputPhoto)
       throws Exception {
     SmugMugPhotoTempData albumTempData =
         getAlbumTempData(jobId, idempotentExecutor, inputPhoto.getAlbumId());
@@ -153,7 +151,7 @@ public class SmugMugPhotosImporter
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData)
       throws IOException {
     return smugMugInterface == null
-        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
+        ? new SmugMugInterface(appCredentials, authData, mapper)
         : smugMugInterface;
   }
 
@@ -219,4 +217,5 @@ public class SmugMugPhotosImporter
         String.format("%s (%d)", baseAlbumName, copyNumber),
         baseAlbumDescription);
   }
+
 }

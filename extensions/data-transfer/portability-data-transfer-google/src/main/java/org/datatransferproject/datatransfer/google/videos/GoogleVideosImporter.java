@@ -32,6 +32,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -59,6 +60,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -170,6 +172,12 @@ public class GoogleVideosImporter
         String uploadToken = uploadResponse.getUploadToken().get();
         return new VideoResult(
             createMediaItem(inputVideo, photosLibraryClient, uploadToken), tmp.length());
+      }
+    } catch (InvalidArgumentException e) {
+      if (e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+        throw new DestinationMemoryFullException("Google destination storage full", e);
+      } else {
+        throw e;
       }
     } finally {
       //noinspection ResultOfMethodCallIgnored

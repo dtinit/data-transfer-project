@@ -16,6 +16,7 @@ Dockerfile
 # compiled output
 build/
 out/
+generated/
 target/
 /dist
 /tmp
