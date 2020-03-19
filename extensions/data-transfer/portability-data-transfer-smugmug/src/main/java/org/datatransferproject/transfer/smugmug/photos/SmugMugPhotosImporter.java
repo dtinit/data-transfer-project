@@ -71,6 +71,7 @@ public class SmugMugPhotosImporter
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
+    monitor.info("Our job store", jobStore);
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
     this.transport = transport;
@@ -123,9 +124,9 @@ public class SmugMugPhotosImporter
     checkNotNull(inputAlbum.getName());
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     SmugMugPhotoTempData tempData = new SmugMugPhotoTempData(inputAlbum.getId(), albumResponse.getAlbum());
-    jobStore.create(jobId, inputAlbum.getId(), tempData);
-    SmugMugPhotoTempData tempDataCheck = jobStore.findData(jobId, inputAlbum.getId(), SmugMugPhotoTempData.class);
-    monitor.info(() -> "Created a jobStore entity for album with id", inputAlbum.getId(), tempDataCheck);
+    jobStore.create(jobId, tempData.getAlbumUri(), tempData);
+    SmugMugPhotoTempData tempDataCheck = jobStore.findData(jobId, tempData.getAlbumUri(), SmugMugPhotoTempData.class);
+    monitor.info(() -> "Created a jobStore entity for album with uri", tempData.getAlbumUri(), tempDataCheck);
     return albumResponse.getUri();
   }
 
@@ -136,11 +137,11 @@ public class SmugMugPhotosImporter
       PhotoModel inputPhoto,
       SmugMugInterface smugMugInterface)
       throws Exception {
-    SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, inputPhoto.getAlbumId());
-    monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
-    inputPhoto.reassignToAlbum(albumCount.getAlbumId());    
     String albumUri =
         idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
+    SmugMugPhotoTempData albumCount = getAlbumCount(jobId, idempotentExecutor, albumUri);
+    monitor.info(() -> "Importing a photo, got an albumCount", albumCount);
+    inputPhoto.reassignToAlbum(albumCount.getAlbumId());    
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
       inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl()).getStream();
@@ -192,13 +193,13 @@ public class SmugMugPhotosImporter
     while (albumCachedData.getPhotoCount() >= transmogrificationConfig.getAlbumMaxSize()) {
       if (albumCachedData.getOverflowAlbumId() == null) {
         PhotoAlbum newAlbum = createOverflowAlbum(baseAlbumCachedData.getAlbumId(), baseAlbumCachedData.getApiAlbum(), depth + 1);
-        idempotentExecutor.executeOrThrowException(
+        String newUri = idempotentExecutor.executeOrThrowException(
               newAlbum.getId(),
               newAlbum.getName(),
               () -> importSingleAlbum(jobId, newAlbum, smugMugInterface));
-        albumCachedData.setOverflowAlbumId(newAlbum.getId());
-        jobStore.update(jobId, albumCachedData.getAlbumId(), albumCachedData);
-        albumCachedData = jobStore.findData(jobId, newAlbum.getId(), SmugMugPhotoTempData.class);
+        albumCachedData.setOverflowAlbumId(newUri);
+        jobStore.update(jobId, albumCachedData.getAlbumUri(), albumCachedData);
+        albumCachedData = jobStore.findData(jobId, newUri, SmugMugPhotoTempData.class);
       } else {
         albumCachedData =
             jobStore.findData(jobId, albumCachedData.getOverflowAlbumId(), SmugMugPhotoTempData.class);
