@@ -71,7 +71,7 @@ public class SmugMugPhotosImporter
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
-    monitor.info("Our job store", jobStore);
+    monitor.info(() -> "Our job store", jobStore);
     this.smugMugInterface = smugMugInterface;
     this.jobStore = jobStore;
     this.transport = transport;
