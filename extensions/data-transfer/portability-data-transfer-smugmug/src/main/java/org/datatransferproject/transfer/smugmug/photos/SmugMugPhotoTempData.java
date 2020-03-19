@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
-import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbum;
-import org.datatransferproject.types.common.models.DataModel;
 import java.io.Serializable;
+import org.datatransferproject.types.common.models.DataModel;
 
 @JsonTypeName("org.dataportability:SmugMugPhotoTempData")
 public class SmugMugPhotoTempData extends DataModel implements Serializable {
@@ -17,7 +16,10 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
   private String overflowAlbumId;
 
   @JsonCreator
-  public SmugMugPhotoTempData(@JsonProperty("albumId") String albumId, @JsonProperty("albumName") String albumName, @JsonProperty("albumDescription") String albumDescription) {
+  public SmugMugPhotoTempData(
+      @JsonProperty("albumId") String albumId,
+      @JsonProperty("albumName") String albumName,
+      @JsonProperty("albumDescription") String albumDescription) {
     this.albumId = albumId;
     this.albumName = albumName;
     this.albumDescription = albumDescription;
@@ -48,7 +50,7 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
   public String getAlbumDescription() {
     return albumDescription;
   }
-  
+
   public String getAlbumName() {
     return albumName;
   }
