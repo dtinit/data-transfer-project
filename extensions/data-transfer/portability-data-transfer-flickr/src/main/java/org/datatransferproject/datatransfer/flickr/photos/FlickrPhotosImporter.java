@@ -236,6 +236,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setTitle(photoTitle)
             .setDescription(photoDescription);
     perUserRateLimiter.acquire();
+    monitor.debug(() -> "upload stuff", inStream, uploadMetaData);
     String uploadResult = uploader.upload(inStream, uploadMetaData);
     monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
