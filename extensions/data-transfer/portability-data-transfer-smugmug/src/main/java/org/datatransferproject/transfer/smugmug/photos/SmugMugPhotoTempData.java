@@ -11,20 +11,18 @@ import java.io.Serializable;
 @JsonTypeName("org.dataportability:SmugMugPhotoTempData")
 public class SmugMugPhotoTempData extends DataModel implements Serializable {
   private final String albumId;
-  private final SmugMugAlbum apiAlbum;
+  private final String albumName;
+  private final String albumDescription;
   private int photoCount;
   private String overflowAlbumId;
 
   @JsonCreator
-  public SmugMugPhotoTempData(@JsonProperty("albumId") String albumId, @JsonProperty("album") SmugMugAlbum apiAlbum) {
+  public SmugMugPhotoTempData(@JsonProperty("albumId") String albumId, @JsonProperty("albumName") String albumName, @JsonProperty("albumDescription") String albumDescription) {
     this.albumId = albumId;
-    this.apiAlbum = apiAlbum;
+    this.albumName = albumName;
+    this.albumDescription = albumDescription;
     this.photoCount = 0;
     this.overflowAlbumId = null;
-  }
-
-  public String getAlbumUri() {
-    return this.apiAlbum.getUri();
   }
 
   public String getAlbumId() {
@@ -47,8 +45,12 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
     return this.overflowAlbumId;
   }
 
-  public SmugMugAlbum getApiAlbum() {
-    return this.apiAlbum;
+  public String getAlbumDescription() {
+    return albumDescription;
+  }
+  
+  public String getAlbumName() {
+    return albumName;
   }
 
   @Override
@@ -57,7 +59,8 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
         .add("albumId", albumId)
         .add("photoCount", photoCount)
         .add("overflowAlbumId", overflowAlbumId)
-        .add("apiAlbum", apiAlbum)
+        .add("albumName", albumName)
+        .add("albumDescription", albumDescription)
         .toString();
   }
 }
