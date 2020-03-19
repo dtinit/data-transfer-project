@@ -233,7 +233,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setPublicFlag(false)
             .setFriendFlag(false)
             .setFamilyFlag(false)
-            .setTitle(photoTitle)
+            .setTitle(null)
             .setDescription(photoDescription);
     perUserRateLimiter.acquire();
     monitor.debug(() -> "upload stuff", inStream, uploadMetaData);
