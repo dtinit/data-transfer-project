@@ -16,9 +16,9 @@
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
+import java.util.Map;
 
-public class SmugMugAlbum implements Serializable {
+public class SmugMugAlbum {
 
   @JsonProperty("Date")
   private String date;
@@ -41,31 +41,17 @@ public class SmugMugAlbum implements Serializable {
   @JsonProperty("WebUri")
   private String webUri;
 
-  public String getDate() {
-    return date;
-  }
+  public String getDate() { return date; }
 
-  public String getDescription() {
-    return description;
-  }
+  public String getDescription() { return description; }
 
-  public String getName() {
-    return name;
-  }
+  public String getName() { return name; }
 
-  public String getPrivacy() {
-    return privacy;
-  }
+  public String getPrivacy() { return privacy; }
 
-  public String getUri() {
-    return uri;
-  }
+  public String getUri() { return uri; }
 
-  public String getUrlName() {
-    return urlName;
-  }
+  public String getUrlName() { return urlName; }
 
-  public String getWebUri() {
-    return webUri;
-  }
+  public String getWebUri() { return webUri; }
 }

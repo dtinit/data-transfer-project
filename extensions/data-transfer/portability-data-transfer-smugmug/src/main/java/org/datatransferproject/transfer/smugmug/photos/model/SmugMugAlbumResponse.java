@@ -16,9 +16,8 @@
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
 
-public class SmugMugAlbumResponse implements Serializable {
+public class SmugMugAlbumResponse {
 
   @JsonProperty("Uri")
   private String uri;

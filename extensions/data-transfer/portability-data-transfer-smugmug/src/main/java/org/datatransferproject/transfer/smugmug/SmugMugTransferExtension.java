@@ -16,14 +16,10 @@
 
 package org.datatransferproject.transfer.smugmug;
 
-import static java.lang.String.format;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -36,9 +32,13 @@ import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosExporter;
 import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
-public class SmugMugTransferExtension implements TransferExtension {
+import java.io.IOException;
+import java.util.List;
 
-  private static final ImmutableList<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
+import static java.lang.String.format;
+
+public class SmugMugTransferExtension implements TransferExtension {
+  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
 
@@ -79,6 +79,7 @@ public class SmugMugTransferExtension implements TransferExtension {
       return;
     }
 
+    HttpTransport transport = context.getService(HttpTransport.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
     AppCredentials appCredentials;
@@ -99,8 +100,8 @@ public class SmugMugTransferExtension implements TransferExtension {
 
     ObjectMapper mapper = context.getService(TypeManager.class).getMapper();
 
-    exporter = new SmugMugPhotosExporter(appCredentials, mapper, jobStore, monitor);
-    importer = new SmugMugPhotosImporter(jobStore, appCredentials, mapper, monitor);
+    exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper, jobStore, monitor);
+    importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper, monitor);
     initialized = true;
   }
 }

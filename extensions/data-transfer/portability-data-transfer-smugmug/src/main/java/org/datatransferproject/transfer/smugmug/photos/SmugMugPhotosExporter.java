@@ -17,16 +17,11 @@
 package org.datatransferproject.transfer.smugmug.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -46,6 +41,13 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 public class SmugMugPhotosExporter
     implements Exporter<TokenSecretAuthData, PhotosContainerResource> {
 
@@ -54,6 +56,7 @@ public class SmugMugPhotosExporter
   static final String PRIVATE_ALBUM = "Private";
 
   private final AppCredentials appCredentials;
+  private final HttpTransport transport;
   private final ObjectMapper mapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
@@ -61,20 +64,23 @@ public class SmugMugPhotosExporter
   private SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosExporter(
+      HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
-    this(null, appCredentials, mapper, jobStore, monitor);
+    this(null, transport, appCredentials, mapper, jobStore, monitor);
   }
 
   @VisibleForTesting
   SmugMugPhotosExporter(
       SmugMugInterface smugMugInterface,
+      HttpTransport transport,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor) {
+    this.transport = transport;
     this.appCredentials = appCredentials;
     this.smugMugInterface = smugMugInterface;
     this.mapper = mapper;
@@ -84,7 +90,7 @@ public class SmugMugPhotosExporter
 
   @Override
   public ExportResult<PhotosContainerResource> export(
-      UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
+          UUID jobId, TokenSecretAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException {
 
     StringPaginationToken paginationToken =
@@ -240,7 +246,7 @@ public class SmugMugPhotosExporter
   private SmugMugInterface getOrCreateSmugMugInterface(TokenSecretAuthData authData)
       throws IOException {
     return smugMugInterface == null
-        ? new SmugMugInterface(appCredentials, authData, mapper)
+        ? new SmugMugInterface(transport, appCredentials, authData, mapper)
         : smugMugInterface;
   }
 
