@@ -33,12 +33,12 @@ import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 import java.io.IOException;
-import java.util.List;
 
 import static java.lang.String.format;
 
 public class SmugMugTransferExtension implements TransferExtension {
-  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
+
+  private static final ImmutableList<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
 
@@ -79,7 +79,6 @@ public class SmugMugTransferExtension implements TransferExtension {
       return;
     }
 
-    HttpTransport transport = context.getService(HttpTransport.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
     AppCredentials appCredentials;
@@ -100,8 +99,8 @@ public class SmugMugTransferExtension implements TransferExtension {
 
     ObjectMapper mapper = context.getService(TypeManager.class).getMapper();
 
-    exporter = new SmugMugPhotosExporter(transport, appCredentials, mapper, jobStore, monitor);
-    importer = new SmugMugPhotosImporter(jobStore, transport, appCredentials, mapper, monitor);
+    exporter = new SmugMugPhotosExporter(appCredentials, mapper, jobStore, monitor);
+    importer = new SmugMugPhotosImporter(jobStore, appCredentials, mapper, monitor);
     initialized = true;
   }
 }
