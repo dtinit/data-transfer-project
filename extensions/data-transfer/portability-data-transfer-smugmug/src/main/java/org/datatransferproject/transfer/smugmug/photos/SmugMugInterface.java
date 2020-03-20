@@ -150,9 +150,7 @@ public class SmugMugInterface {
             headersMap,
             new TypeReference<SmugMugImageUploadResponse>() {});
 
-    Preconditions.checkNotNull(response, "Image upload Response is null");
-    return response;
-
+    return Preconditions.checkNotNull(response, "Image upload Response is null");
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
@@ -186,8 +184,7 @@ public class SmugMugInterface {
           String.format("Error occurred in request for %s : %s", url, response.getMessage()));
     }
 
-    String result = response.getBody();
-    return mapper.readValue(result, typeReference);
+    return mapper.readValue(response.getBody(), typeReference);
   }
 
   // Makes a post request with the content parameters provided as the body, or the httpcontent as
@@ -228,8 +225,6 @@ public class SmugMugInterface {
     request.addHeader(HttpHeaders.ACCEPT, "application/json");
 
     Response response = request.send();
-    String result = response.getBody();
-
     if (response.getCode() < 200 || response.getCode() >= 300) {
       if (response.getCode() == 400) {
         throw new IOException(
@@ -247,7 +242,7 @@ public class SmugMugInterface {
               "Error occurred in request for %s, code: %s, message: %s",
               fullUrl, response.getCode(), response.getMessage()));
     }
-    return mapper.readValue(result, typeReference);
+    return mapper.readValue(response.getBody(), typeReference);
   }
 
   static String cleanName(String name) {
