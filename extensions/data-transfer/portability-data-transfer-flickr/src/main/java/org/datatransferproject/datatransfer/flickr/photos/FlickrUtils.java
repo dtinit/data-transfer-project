@@ -16,22 +16,21 @@
 
 package org.datatransferproject.datatransfer.flickr.photos;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
-import com.flickr4java.flickr.photosets.Photoset;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.model.Token;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public class FlickrUtils {
   public static Auth getAuth(AuthData authData, Flickr flickr) throws FlickrException {
     checkArgument(
-            authData instanceof TokenSecretAuthData,
-            "authData expected to be TokenSecretAuthData not %s",
-            authData.getClass().getCanonicalName());
+        authData instanceof TokenSecretAuthData,
+        "authData expected to be TokenSecretAuthData not %s",
+        authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenAuthData = (TokenSecretAuthData) authData;
     Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
     return flickr.getAuthInterface().checkToken(requestToken);

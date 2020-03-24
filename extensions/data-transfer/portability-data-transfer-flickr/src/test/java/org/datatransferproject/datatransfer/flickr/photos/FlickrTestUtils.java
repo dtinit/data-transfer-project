@@ -19,7 +19,6 @@ package org.datatransferproject.datatransfer.flickr.photos;
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.Size;
 import com.flickr4java.flickr.photosets.Photoset;
-
 import java.util.Collections;
 import java.util.UUID;
 
@@ -33,7 +32,8 @@ class FlickrTestUtils {
     return photoset;
   }
 
-  public static Photo initializePhoto(String title, String url, String description, String mediaType) {
+  public static Photo initializePhoto(
+      String title, String url, String description, String mediaType) {
     Photo photo = new Photo();
     photo.setTitle(title);
     photo.setId(UUID.randomUUID().toString());
@@ -45,5 +45,4 @@ class FlickrTestUtils {
     photo.setSizes(Collections.singletonList(size));
     return photo;
   }
-
 }
