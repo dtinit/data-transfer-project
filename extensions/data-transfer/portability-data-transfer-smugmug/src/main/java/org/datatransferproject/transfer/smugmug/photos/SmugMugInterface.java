@@ -233,7 +233,7 @@ public class SmugMugInterface {
                 fullUrl,
                 response.getCode(),
                 response.getMessage(),
-                request.toString(),
+                request,
                 request.getBodyParams(),
                 request.getBodyContents()));
       }
