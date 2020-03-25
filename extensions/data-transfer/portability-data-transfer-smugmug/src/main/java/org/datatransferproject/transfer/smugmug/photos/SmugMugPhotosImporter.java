@@ -129,21 +129,23 @@ public class SmugMugPhotosImporter
       PhotoModel inputPhoto,
       SmugMugInterface smugMugInterface)
       throws Exception {
-    SmugMugPhotoTempData albumTempData =
-        getAlbumTempData(jobId, idempotentExecutor, inputPhoto.getAlbumId(), smugMugInterface);
-    inputPhoto.reassignToAlbum(albumTempData.getAlbumId());
-    String albumUri = idempotentExecutor.getCachedValue(inputPhoto.getAlbumId());
-
     InputStream inputStream;
     if (inputPhoto.isInTempStore()) {
       inputStream = jobStore.getStream(jobId, inputPhoto.getFetchableUrl()).getStream();
     } else {
       inputStream = smugMugInterface.getImageAsStream(inputPhoto.getFetchableUrl());
     }
+
+    String originalAlbumId = inputPhoto.getAlbumId();
+    SmugMugPhotoTempData albumTempData =
+        getAlbumTempData(jobId, idempotentExecutor, originalAlbumId, smugMugInterface);
+    String albumUri = idempotentExecutor.getCachedValue(albumTempData.getAlbumId());
+    
     SmugMugImageUploadResponse response =
-        smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
+      smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
     albumTempData.incrementPhotoCount();
-    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumId()), albumTempData);
+    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumId()), albumTempData);  
+
     return response.toString();
   }
 
