@@ -9,26 +9,29 @@ import org.datatransferproject.types.common.models.DataModel;
 
 @JsonTypeName("org.dataportability:SmugMugPhotoTempData")
 public class SmugMugPhotoTempData extends DataModel implements Serializable {
-  private final String albumId;
+  private final String albumExportId;
   private final String albumName;
   private final String albumDescription;
+  private final String albumUri;
   private int photoCount;
-  private String overflowAlbumId;
+  private String overflowAlbumExportId;
 
   @JsonCreator
   public SmugMugPhotoTempData(
-      @JsonProperty("albumId") String albumId,
+      @JsonProperty("albumExportId") String albumExportId,
       @JsonProperty("albumName") String albumName,
-      @JsonProperty("albumDescription") String albumDescription) {
-    this.albumId = albumId;
+      @JsonProperty("albumDescription") String albumDescription,
+      @JsonProperty("albumUri") String albumUri) {
+    this.albumExportId = albumExportId;
     this.albumName = albumName;
     this.albumDescription = albumDescription;
+    this.albumUri = albumUri;
     this.photoCount = 0;
-    this.overflowAlbumId = null;
+    this.overflowAlbumExportId = null;
   }
 
-  public String getAlbumId() {
-    return this.albumId;
+  public String getAlbumExportId() {
+    return this.albumExportId;
   }
 
   public int incrementPhotoCount() {
@@ -39,12 +42,12 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
     return this.photoCount;
   }
 
-  public void setOverflowAlbumId(String overflowAlbumId) {
-    this.overflowAlbumId = overflowAlbumId;
+  public void setOverflowAlbumExportId(String overflowAlbumExportId) {
+    this.overflowAlbumExportId = overflowAlbumExportId;
   }
 
-  public String getOverflowAlbumId() {
-    return this.overflowAlbumId;
+  public String getOverflowAlbumExportId() {
+    return this.overflowAlbumExportId;
   }
 
   public String getAlbumDescription() {
@@ -55,12 +58,16 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
     return albumName;
   }
 
+  public String getAlbumUri() {
+    return albumUri;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("albumId", albumId)
+        .add("albumExportId", albumExportId)
         .add("photoCount", photoCount)
-        .add("overflowAlbumId", overflowAlbumId)
+        .add("overflowAlbumExportId", overflowAlbumExportId)
         .add("albumName", albumName)
         .add("albumDescription", albumDescription)
         .toString();

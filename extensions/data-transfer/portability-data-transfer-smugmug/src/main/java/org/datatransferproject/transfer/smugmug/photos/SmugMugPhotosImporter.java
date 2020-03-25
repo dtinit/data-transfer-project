@@ -117,7 +117,7 @@ public class SmugMugPhotosImporter
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     SmugMugPhotoTempData tempData =
         new SmugMugPhotoTempData(
-            inputAlbum.getId(), inputAlbum.getName(), inputAlbum.getDescription());
+            inputAlbum.getId(), inputAlbum.getName(), inputAlbum.getDescription(), albumResponse.getUri());
     jobStore.create(jobId, getTempDataId(inputAlbum.getId()), tempData);
     return albumResponse.getUri();
   }
@@ -139,12 +139,11 @@ public class SmugMugPhotosImporter
     String originalAlbumId = inputPhoto.getAlbumId();
     SmugMugPhotoTempData albumTempData =
         getAlbumTempData(jobId, idempotentExecutor, originalAlbumId, smugMugInterface);
-    String albumUri = idempotentExecutor.getCachedValue(albumTempData.getAlbumId());
     
     SmugMugImageUploadResponse response =
-      smugMugInterface.uploadImage(inputPhoto, albumUri, inputStream);
+      smugMugInterface.uploadImage(inputPhoto, albumTempData.getAlbumUri(), inputStream);
     albumTempData.incrementPhotoCount();
-    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumId()), albumTempData);  
+    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);  
 
     return response.toString();
   }
@@ -169,10 +168,10 @@ public class SmugMugPhotosImporter
     SmugMugPhotoTempData albumTempData = baseAlbumTempData;
     int depth = 0;
     while (albumTempData.getPhotoCount() >= transmogrificationConfig.getAlbumMaxSize()) {
-      if (albumTempData.getOverflowAlbumId() == null) {
+      if (albumTempData.getOverflowAlbumExportId() == null) {
         PhotoAlbum newAlbum =
             createOverflowAlbum(
-                baseAlbumTempData.getAlbumId(),
+                baseAlbumTempData.getAlbumExportId(),
                 baseAlbumTempData.getAlbumName(),
                 baseAlbumTempData.getAlbumDescription(),
                 depth + 1);
@@ -181,15 +180,15 @@ public class SmugMugPhotosImporter
                 newAlbum.getId(),
                 newAlbum.getName(),
                 () -> importSingleAlbum(jobId, newAlbum, smugMugInterface));
-        albumTempData.setOverflowAlbumId(newAlbum.getId());
-        jobStore.update(jobId, getTempDataId(albumTempData.getAlbumId()), albumTempData);
+        albumTempData.setOverflowAlbumExportId(newAlbum.getId());
+        jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);
         albumTempData =
             jobStore.findData(
-                jobId, getTempDataId(albumTempData.getOverflowAlbumId()), SmugMugPhotoTempData.class);
+                jobId, getTempDataId(albumTempData.getOverflowAlbumExportId()), SmugMugPhotoTempData.class);
       } else {
         albumTempData =
             jobStore.findData(
-                jobId, getTempDataId(albumTempData.getOverflowAlbumId()), SmugMugPhotoTempData.class);
+                jobId, getTempDataId(albumTempData.getOverflowAlbumExportId()), SmugMugPhotoTempData.class);
       }
       depth += 1;
     }
