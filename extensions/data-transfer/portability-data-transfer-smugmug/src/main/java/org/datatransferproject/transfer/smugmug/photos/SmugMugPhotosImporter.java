@@ -179,6 +179,7 @@ public class SmugMugPhotosImporter
                 baseAlbumTempData.getAlbumName(),
                 baseAlbumTempData.getAlbumDescription(),
                 depth + 1);
+        // since the album is full and has no overflow, we need to create a new one
         String newUri =
             idempotentExecutor.executeOrThrowException(
                 newAlbum.getId(),
