@@ -52,8 +52,7 @@ public class SmugMugPhotosImporter
   private final AppCredentials appCredentials;
   private final ObjectMapper mapper;
   private final Monitor monitor;
-  private final SmugMugTransmogrificationConfig transmogrificationConfig =
-      new SmugMugTransmogrificationConfig();
+  private final SmugMugTransmogrificationConfig transmogrificationConfig;
 
   private SmugMugInterface smugMugInterface;
 
@@ -62,22 +61,26 @@ public class SmugMugPhotosImporter
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
-    this(null, jobStore, appCredentials, mapper, monitor);
+    this(null, new SmugMugTransmogrificationConfig(), jobStore, appCredentials, mapper, monitor);
   }
 
   @VisibleForTesting
   SmugMugPhotosImporter(
       SmugMugInterface smugMugInterface,
+      SmugMugTransmogrificationConfig transmogrificationConfig,
       TemporaryPerJobDataStore jobStore,
       AppCredentials appCredentials,
       ObjectMapper mapper,
       Monitor monitor) {
     this.smugMugInterface = smugMugInterface;
+    this.transmogrificationConfig = transmogrificationConfig;
     this.jobStore = jobStore;
     this.appCredentials = appCredentials;
     this.mapper = mapper;
     this.monitor = monitor;
   }
+
+
 
   @Override
   public ImportResult importItem(
@@ -138,7 +141,7 @@ public class SmugMugPhotosImporter
 
     String originalAlbumId = inputPhoto.getAlbumId();
     SmugMugPhotoTempData albumTempData =
-        getAlbumTempData(jobId, idempotentExecutor, originalAlbumId, smugMugInterface);
+        getDestinationAlbumTempData(jobId, idempotentExecutor, originalAlbumId, smugMugInterface);
     
     SmugMugImageUploadResponse response =
       smugMugInterface.uploadImage(inputPhoto, albumTempData.getAlbumUri(), inputStream);
@@ -160,7 +163,8 @@ public class SmugMugPhotosImporter
    * Get the proper album upload information for the photo. Takes into account size limits of the
    * albums and completed uploads.
    */
-  private SmugMugPhotoTempData getAlbumTempData(
+  @VisibleForTesting
+  SmugMugPhotoTempData getDestinationAlbumTempData(
       UUID jobId, IdempotentImportExecutor idempotentExecutor, String baseAlbumId, SmugMugInterface smugMugInterface)
       throws Exception {
     SmugMugPhotoTempData baseAlbumTempData =

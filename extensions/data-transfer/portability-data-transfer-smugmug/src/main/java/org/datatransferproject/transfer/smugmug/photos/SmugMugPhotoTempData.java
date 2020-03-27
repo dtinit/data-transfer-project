@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
 import org.datatransferproject.types.common.models.DataModel;
 
@@ -22,13 +23,25 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
       @JsonProperty("albumName") String albumName,
       @JsonProperty("albumDescription") String albumDescription,
       @JsonProperty("albumUri") String albumUri) {
+    this(albumExportId, albumName, albumDescription, albumUri, 0, null);
+  }
+
+  @VisibleForTesting
+  @JsonCreator
+  public SmugMugPhotoTempData(
+      @JsonProperty("albumExportId") String albumExportId,
+      @JsonProperty("albumName") String albumName,
+      @JsonProperty("albumDescription") String albumDescription,
+      @JsonProperty("albumUri") String albumUri,
+      int photoCount,
+      String overflowAlbumExportId) {
     this.albumExportId = albumExportId;
     this.albumName = albumName;
     this.albumDescription = albumDescription;
     this.albumUri = albumUri;
-    this.photoCount = 0;
-    this.overflowAlbumExportId = null;
-  }
+    this.photoCount = photoCount;
+    this.overflowAlbumExportId = overflowAlbumExportId;
+  }   
 
   public String getAlbumExportId() {
     return this.albumExportId;
@@ -70,6 +83,7 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
         .add("overflowAlbumExportId", overflowAlbumExportId)
         .add("albumName", albumName)
         .add("albumDescription", albumDescription)
+        .add("albumUri", albumUri)
         .toString();
   }
 }

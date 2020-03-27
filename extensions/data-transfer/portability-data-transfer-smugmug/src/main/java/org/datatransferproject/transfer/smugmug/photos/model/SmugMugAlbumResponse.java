@@ -31,6 +31,16 @@ public class SmugMugAlbumResponse {
   @JsonProperty("Album")
   private SmugMugAlbum album;
 
+  public SmugMugAlbumResponse(String uri, 
+    String locator, 
+    String locatorType, 
+    SmugMugAlbum album){
+    this.uri = uri;
+    this.locator = locator;
+    this.locatorType = locatorType;
+    this.album = album;
+  }
+
   public SmugMugAlbum getAlbum() {
     return album;
   }
