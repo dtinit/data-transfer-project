@@ -16,6 +16,12 @@
 
 package org.datatransferproject.datatransfer.flickr.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
@@ -28,6 +34,10 @@ import com.flickr4java.flickr.photos.PhotosInterface;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
@@ -42,17 +52,6 @@ import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.Test;
 import org.scribe.model.Token;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class FlickrPhotosExporterTest {
   private static final String PHOTO_TITLE = "Title";
@@ -110,11 +109,11 @@ public class FlickrPhotosExporterTest {
         .thenReturn(photosetsList);
 
     // run test
-    FlickrPhotosExporter exporter = new FlickrPhotosExporter(
-        flickr,
-        TransferServiceConfig.getDefaultInstance());
+    FlickrPhotosExporter exporter =
+        new FlickrPhotosExporter(flickr, TransferServiceConfig.getDefaultInstance());
     AuthData authData = new TokenSecretAuthData("token", "secret");
-    ExportResult<PhotosContainerResource> result = exporter.export(UUID.randomUUID(), authData, Optional.empty());
+    ExportResult<PhotosContainerResource> result =
+        exporter.export(UUID.randomUUID(), authData, Optional.empty());
 
     // make sure album and photo information is correct
     assertThat(result.getExportedData().getPhotos()).isEmpty();
@@ -162,9 +161,8 @@ public class FlickrPhotosExporterTest {
         .thenReturn(photosList);
 
     // run test
-    FlickrPhotosExporter exporter = new FlickrPhotosExporter(
-        flickr,
-        TransferServiceConfig.getDefaultInstance());
+    FlickrPhotosExporter exporter =
+        new FlickrPhotosExporter(flickr, TransferServiceConfig.getDefaultInstance());
     ExportResult<PhotosContainerResource> result =
         exporter.export(
             UUID.randomUUID(),
