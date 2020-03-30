@@ -104,6 +104,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         return "image/jpeg";
       case "png":
         return "image/png";
+      case "gif":
+        return "image/gif";
       default:
         throw new IllegalArgumentException("Don't know how to map: " + flickrFormat);
     }
