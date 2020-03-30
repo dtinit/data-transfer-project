@@ -33,6 +33,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.RateLimiter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -47,13 +53,6 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerResource> {
 
@@ -93,7 +92,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         p.getDescription(),
         toMimeType(p.getOriginalFormat()),
         p.getId(),
-        albumId, false);
+        albumId,
+        false);
   }
 
   @VisibleForTesting
@@ -104,6 +104,8 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         return "image/jpeg";
       case "png":
         return "image/png";
+      case "gif":
+        return "image/gif";
       default:
         throw new IllegalArgumentException("Don't know how to map: " + flickrFormat);
     }
@@ -121,12 +123,12 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
 
     RequestContext.getRequestContext().setAuth(auth);
 
-    PaginationData paginationData = exportInformation.isPresent()
-        ? exportInformation.get().getPaginationData()
-        : null;
-    IdOnlyContainerResource resource = exportInformation.isPresent()
-        ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
-        : null;
+    PaginationData paginationData =
+        exportInformation.isPresent() ? exportInformation.get().getPaginationData() : null;
+    IdOnlyContainerResource resource =
+        exportInformation.isPresent()
+            ? (IdOnlyContainerResource) exportInformation.get().getContainerResource()
+            : null;
     if (resource != null) {
       return getPhotos(resource, paginationData);
     } else {

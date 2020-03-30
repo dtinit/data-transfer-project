@@ -16,8 +16,11 @@
 
 package org.datatransferproject.datatransfer.flickr;
 
+import static java.lang.String.format;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosExporter;
@@ -29,10 +32,6 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
-import java.util.Set;
-
-import static java.lang.String.format;
 
 public class FlickrTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "flickr";

@@ -16,6 +16,13 @@
 
 package org.datatransferproject.datatransfer.flickr.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
@@ -26,6 +33,9 @@ import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
+import java.io.BufferedInputStream;
+import java.util.Collections;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -41,18 +51,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.scribe.model.Token;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.UUID;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class FlickrPhotosImporterTest {
   private static final String ALBUM_ID = "Album ID";
   private static final String ALBUM_NAME = "Album name";
@@ -67,8 +65,8 @@ public class FlickrPhotosImporterTest {
   private static final PhotoAlbum PHOTO_ALBUM =
       new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION);
   private static final PhotoModel PHOTO_MODEL =
-      new PhotoModel(PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, "MyId", ALBUM_ID,
-          false);
+      new PhotoModel(
+          PHOTO_TITLE, FETCHABLE_URL, PHOTO_DESCRIPTION, MEDIA_TYPE, "MyId", ALBUM_ID, false);
   private static final IdempotentImportExecutor EXECUTOR = new FakeIdempotentImportExecutor();
 
   private Flickr flickr = mock(Flickr.class);
@@ -111,25 +109,26 @@ public class FlickrPhotosImporterTest {
         .thenReturn(photoset);
 
     // Run test
-    FlickrPhotosImporter importer = new FlickrPhotosImporter(
-        flickr,
-        jobStore,
-        imageStreamProvider,
-        monitor,
-        TransferServiceConfig.getDefaultInstance());
-    ImportResult result = importer.importItem(
-        jobId,
-        EXECUTOR,
-        new TokenSecretAuthData("token", "secret"),
-        photosContainerResource);
+    FlickrPhotosImporter importer =
+        new FlickrPhotosImporter(
+            flickr,
+            jobStore,
+            imageStreamProvider,
+            monitor,
+            TransferServiceConfig.getDefaultInstance());
+    ImportResult result =
+        importer.importItem(
+            jobId, EXECUTOR, new TokenSecretAuthData("token", "secret"), photosContainerResource);
 
-    // Verify that the image stream provider got the correct URL and that the correct info was uploaded
+    // Verify that the image stream provider got the correct URL and that the correct info was
+    // uploaded
     verify(imageStreamProvider).get(FETCHABLE_URL);
-    ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor = ArgumentCaptor.forClass(UploadMetaData.class);
+    ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor =
+        ArgumentCaptor.forClass(UploadMetaData.class);
     verify(uploader).upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());
     UploadMetaData actualUploadMetaData = uploadMetaDataArgumentCaptor.getValue();
     assertThat(actualUploadMetaData.getTitle())
-            .isEqualTo(FlickrPhotosImporter.COPY_PREFIX + PHOTO_TITLE);
+        .isEqualTo(FlickrPhotosImporter.COPY_PREFIX + PHOTO_TITLE);
     assertThat(actualUploadMetaData.getDescription()).isEqualTo(PHOTO_DESCRIPTION);
 
     // Verify the photosets interface got the command to create the correct album
