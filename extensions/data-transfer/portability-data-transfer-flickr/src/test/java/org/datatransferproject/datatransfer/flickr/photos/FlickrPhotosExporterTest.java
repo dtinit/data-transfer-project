@@ -84,7 +84,7 @@ public class FlickrPhotosExporterTest {
   @Test
   public void getMimeType() {
     assertThat(FlickrPhotosExporter.toMimeType("jpeg")).isEqualTo("image/jpeg");
-    assertThrows(IllegalArgumentException.class, () -> FlickrPhotosExporter.toMimeType("gif"));
+    assertThat(FlickrPhotosExporter.toMimeType("gif")).isEqualTo("image/gif");
   }
 
   @Test
