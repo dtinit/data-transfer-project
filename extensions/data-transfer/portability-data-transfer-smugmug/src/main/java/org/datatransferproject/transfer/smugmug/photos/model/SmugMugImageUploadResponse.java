@@ -26,24 +26,26 @@ public final class SmugMugImageUploadResponse {
   @JsonProperty("method")
   private String method;
 
-  @JsonProperty("image")
+  @JsonProperty("Image")
   private ImageInfo image;
 
-  @JsonProperty("code")
-  private String code;
-
-  @JsonProperty("message")
-  private String message;
+  public SmugMugImageUploadResponse(String stat, String method, ImageInfo image) {
+    this.stat = stat;
+    this.method = method;
+    this.image = image;
+  }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("stat", stat)
         .add("method", method)
-        .add("image", image)
-        .add("code", code)
-        .add("message", message)
+        .add("Image", image)
         .toString();
+  }
+
+  public ImageInfo getImageInfo() {
+    return image;
   }
 
   public static class ImageInfo {
@@ -59,6 +61,13 @@ public final class SmugMugImageUploadResponse {
 
     @JsonProperty("URL")
     private String url;
+
+    public ImageInfo(String imageUri, String albumImageUri, String statusImageReplaceUri, String url) {
+      this.imageUri = imageUri;
+      this.albumImageUri = albumImageUri;
+      this.statusImageReplaceUri = statusImageReplaceUri;
+      this.url = url;
+    }
 
     @Override
     public String toString() {

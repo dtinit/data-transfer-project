@@ -142,12 +142,15 @@ public class SmugMugInterface {
     }
 
     // Upload photo
-    return postRequest(
-        "https://upload.smugmug.com/",
-        ImmutableMap.of(), // No content params for photo upload
-        contentBytes,
-        headersMap,
-        new TypeReference<SmugMugImageUploadResponse>() {});
+    SmugMugImageUploadResponse response =
+        postRequest(
+            "https://upload.smugmug.com/",
+            ImmutableMap.of(), // No content params for photo upload
+            contentBytes,
+            headersMap,
+            new TypeReference<SmugMugImageUploadResponse>() {});
+
+    return Preconditions.checkNotNull(response, "Image upload Response is null");
   }
 
   private SmugMugUserResponse getUserInformation() throws IOException {
@@ -181,8 +184,7 @@ public class SmugMugInterface {
           String.format("Error occurred in request for %s : %s", url, response.getMessage()));
     }
 
-    String result = response.getBody();
-    return mapper.readValue(result, typeReference);
+    return mapper.readValue(response.getBody(), typeReference);
   }
 
   // Makes a post request with the content parameters provided as the body, or the httpcontent as
@@ -240,7 +242,6 @@ public class SmugMugInterface {
               "Error occurred in request for %s, code: %s, message: %s",
               fullUrl, response.getCode(), response.getMessage()));
     }
-
     return mapper.readValue(response.getBody(), typeReference);
   }
 
