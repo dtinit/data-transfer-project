@@ -40,6 +40,16 @@ public class SmugMugAlbum {
   @JsonProperty("WebUri")
   private String webUri;
 
+  public SmugMugAlbum(String date, String description, String name, String privacy, String uri, String urlName, String webUri) {
+    this.date = date;
+    this.description = description;
+    this.name = name;
+    this.privacy = privacy;
+    this.uri = uri;
+    this.urlName = urlName;
+    this.webUri = webUri;
+  }
+
   public String getDate() {
     return date;
   }

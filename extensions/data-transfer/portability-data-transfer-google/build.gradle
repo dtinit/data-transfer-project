@@ -37,7 +37,7 @@ dependencies {
     compile("com.google.apis:google-api-services-tasks:${googleTasksVersion}")
     compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
-    compile("com.google.photos.library:google-photos-library-client:1.4.0")
+    compile("com.google.photos.library:google-photos-library-client:1.5.0")
 
     // Needed for OpenSocial ActivityStreams, which depends on these specific version
     // so not generifying them.
