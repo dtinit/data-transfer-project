@@ -38,6 +38,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.RateLimiter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,16 +84,19 @@ public class GooglePhotosInterface {
   private final JsonFactory jsonFactory;
   private final Monitor monitor;
   private final GoogleCredentialFactory credentialFactory;
+  private final RateLimiter writeRateLimiter;
 
   GooglePhotosInterface(
       GoogleCredentialFactory credentialFactory,
       Credential credential,
       JsonFactory jsonFactory,
-      Monitor monitor) {
+      Monitor monitor,
+      double writesPerSecond) {
     this.credential = credential;
     this.jsonFactory = jsonFactory;
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
+    writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 
   AlbumListResponse listAlbums(Optional<String> pageToken)
@@ -186,6 +190,9 @@ public class GooglePhotosInterface {
   <T> T makePostRequest(
       String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
       throws IOException, InvalidTokenException {
+    // Wait for write permit before making request
+    writeRateLimiter.acquire();
+
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest postRequest =
         requestFactory.buildPostRequest(

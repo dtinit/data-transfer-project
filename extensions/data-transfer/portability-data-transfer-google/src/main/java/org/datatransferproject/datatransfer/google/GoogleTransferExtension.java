@@ -102,7 +102,13 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, monitor));
     importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
-        "PHOTOS", new GooglePhotosImporter(credentialFactory, jobStore, jsonFactory, monitor));
+        "PHOTOS",
+        new GooglePhotosImporter(
+            credentialFactory,
+            jobStore,
+            jsonFactory,
+            monitor,
+            context.getSetting("googleWritesPerSecond", 1.0)));
     importerBuilder.put("VIDEOS", new GoogleVideosImporter(appCredentials, jobStore, monitor));
     importerMap = importerBuilder.build();
 
