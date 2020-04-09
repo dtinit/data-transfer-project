@@ -15,32 +15,39 @@
  */
 package org.datatransferproject.transfer.smugmug.photos.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
+@JsonTypeName("org.dataportability:SmugMugAlbum")
 public class SmugMugAlbum {
 
-  @JsonProperty("Date")
-  private String date;
+  
+  private final String date;
 
-  @JsonProperty("Description")
-  private String description;
+  
+  private final String description;
 
-  @JsonProperty("Name")
-  private String name;
+  
+  private final String name;
 
-  @JsonProperty("Privacy")
-  private String privacy;
+  private final String privacy;
 
-  @JsonProperty("Uri")
-  private String uri;
+  
+  private final String uri;
 
-  @JsonProperty("UrlName")
-  private String urlName;
+  private final String urlName;
 
-  @JsonProperty("WebUri")
-  private String webUri;
+  private final String webUri;
 
-  public SmugMugAlbum(String date, String description, String name, String privacy, String uri, String urlName, String webUri) {
+  public SmugMugAlbum(
+    @JsonProperty("Date") String date, 
+    @JsonProperty("Description") String description, 
+    @JsonProperty("Name") String name, 
+    @JsonProperty("Privacy") String privacy, 
+    @JsonProperty("Uri") String uri, 
+    @JsonProperty("UrlName") String urlName, 
+    @JsonProperty("WebUri") String webUri) {
     this.date = date;
     this.description = description;
     this.name = name;
