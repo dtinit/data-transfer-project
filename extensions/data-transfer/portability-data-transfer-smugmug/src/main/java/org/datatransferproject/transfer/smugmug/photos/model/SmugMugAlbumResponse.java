@@ -15,26 +15,23 @@
  */
 package org.datatransferproject.transfer.smugmug.photos.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
+@JsonTypeName("org.dataportability:SmugMugAlbumResponse")
 public class SmugMugAlbumResponse {
-
-  @JsonProperty("Uri")
-  private String uri;
-
-  @JsonProperty("Locator")
-  private String locator;
-
-  @JsonProperty("LocatorType")
-  private String locatorType;
-
-  @JsonProperty("Album")
-  private SmugMugAlbum album;
-
-  public SmugMugAlbumResponse(String uri, 
-    String locator, 
-    String locatorType, 
-    SmugMugAlbum album){
+  private final String uri;
+  private final String locator;
+  private final String locatorType;
+  private final SmugMugAlbum album;
+  
+  @JsonCreator
+  public SmugMugAlbumResponse(
+    @JsonProperty("Uri") String uri, 
+    @JsonProperty("Locator") String locator, 
+    @JsonProperty("LocatorType") String locatorType, 
+    @JsonProperty("Album") SmugMugAlbum album){
     this.uri = uri;
     this.locator = locator;
     this.locatorType = locatorType;
