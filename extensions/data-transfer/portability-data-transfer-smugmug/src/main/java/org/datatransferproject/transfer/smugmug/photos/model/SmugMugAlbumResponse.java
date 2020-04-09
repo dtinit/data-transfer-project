@@ -21,13 +21,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("org.dataportability:SmugMugAlbumResponse")
 public class SmugMugAlbumResponse {
-
   private final String uri;
-
   private final String locator;
-
   private final String locatorType;
-
   private final SmugMugAlbum album;
   
   @JsonCreator
