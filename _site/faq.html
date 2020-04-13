@@ -1,0 +1,149 @@
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-51297152-3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'UA-51297152-3');
+</script>
+<style>
+
+* {
+    background-repeat: no-repeat;
+    padding: 0;
+    margin: 0;
+}
+  div {
+    display: block;
+}
+
+
+
+</style>
+
+<!DOCTYPE html>
+<html lang=" en-US ">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#157878">
+  <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/assets/css/style.css?v=e62221796ef8451ac150740357c0d5563a94c265">
+</head>
+<body>
+  <header>
+    <div class="header-wrapper">
+  <div id="logo-bar">
+      <a href="/" class="logo">
+        <img src="/images/logo-dtp.png" alt="Data Transfer Project Logo">
+        <div class="logo-text">
+          Data Transfer Project
+        </div>
+      </a>
+      <div class="download-link-wrapper">
+        <a href="/dtp-overview.pdf" class="download-header-link">Download White Paper</a>
+      </div>
+  </div>
+
+
+  <ul id='nav_list'>
+    <li class='nav_item'><a href="/" class=''>About</a></li>
+    <li class='nav_item'><a href="/community" class=''>Community</a></li>
+    <li class='nav_item'><a href="/documentation" class=''>Documentation</a></li>
+    <li class='nav_item'><a href="/updates" class=''>Updates</a></li>
+    <li class='nav_item'><a href="/faq" class='active'>FAQ</a></li>
+  </ul>
+</div>
+
+  </header>
+
+  <section class="main-content">
+    <div class="section">
+  <h2 id="q-are-there-common-standards-by-which-data-transfer-project-partners-should-abide-in-performing-transfers">Q: Are there common standards by which Data Transfer Project partners should abide in performing transfers?</h2>
+  <div class="mustache">
+</div>
+  <p>As described in the white paper, DTP adheres to the following principles:</p>
+
+  <p>We believe the following principles around interoperability and portability of data promote user choice and encourage responsible product development, maximizing the benefits to users and mitigating the potential drawbacks.</p>
+
+  <ul>
+    <li><strong>Build for users</strong>: Data portability tools should be easy to find, intuitive to use, and readily available for users. They should also be open and interoperable with standard industry formats, where applicable, so that users can easily transfer data between services or download it for their own purposes.</li>
+    <li><strong>Privacy and security</strong>: Providers on each side of the portability transaction should have strong privacy and security measures—such as encryption in transit—to guard against unauthorized access, diversion of data, or other types of fraud. It is important to apply privacy principles such as data minimization and transparency when transferring data between providers. When users initiate a transfer they should be told in a clear and concise manner about the types and scope of data being transferred as well as how the data will be used at the destination service. Users should also be advised about the privacy and security practices of the destination service. These measures will help to educate users about the data being transferred and how the data will be used at the destination service. More details are in the Security &amp; Privacy section below.</li>
+    <li><strong>Reciprocity</strong>: While portability offers more choice and flexibility for users, it will be important to guard against incentives that are misaligned with user interests. A user’s decision to move data to another service should not result in any loss of transparency or control over that data. Individuals should have assurance that data imported to a provider can likewise be exported again, if they so choose. Ultimately, users should be able to make informed choices about where to store their data. We believe that providing transparency around portability will lead to users preferring providers that are committed to reciprocal data portability, over those that are not.</li>
+    <li><strong>Focus on user’s data</strong>: Portability efforts should emphasize data and use cases that support the individual user. Focusing on content a user creates, imports, approves for collection, or has control over reduces the friction for users who want to switch among products or services or use their data in novel ways, because the data they export is meaningful to them. Portability should not extend to data that may negatively impact the privacy of other users, or data collected to improve a service, including data generated to improve system performance or train models that may be commercially sensitive or proprietary. This approach encourages companies to continue to support data portability, knowing that their proprietary technologies are not threatened by data portability requirements. For a detailed taxonomy of such data, see ISO/IEC 19944:2017.</li>
+    <li><strong>Respect Everyone</strong>: We live in a collaborative world: people connect and share on social media, they edit docs together, and they comment on videos, pictures and more. Data portability tools should focus only on providing data that is directly tied to the person requesting the transfer. We think this strikes the right balance between portability, privacy, and benefits of trying a new service.</li>
+  </ul>
+
+</div>
+
+<div class="section">
+  <h2 id="q-what-kinds-of-data-can-be-transferred-through-dtp">Q: What kinds of data can be transferred through DTP?</h2>
+  <div class="mustache">
+</div>
+
+  <p>The terms of each organization’s API determine the data types that can be transferred between providers. This ordinarily includes data stored in a specific users’s account, but may not be limited to that data, depending on the organizations involved.  Additional or substitute functionality outside of the Data Transfer Project would be required for data transfers requiring particularly high integrity (e.g. health records).</p>
+
+</div>
+
+<div class="section">
+  <h2 id="q-who-is-responsible-for-protecting-data-before-during-and-after-the-transfer-takes-place">Q: Who is responsible for protecting data before, during, and after the transfer takes place?</h2>
+  <div class="mustache">
+</div>
+
+  <p>Each organization is responsible for securing and protecting the data stored on its platform, regardless of whether it is supporting a transfer out or receiving a transfer from another organization. Generally, this includes established practices in securing access, authorization, and authentication to public APIs or other mechanisms. Additionally, this includes writing and enforcing policies governing access to that information through an API or other mechanism. Those specific terms govern the conditions of transferring data into or out of each provider. Additionally, there are baseline security requirements detailed in the White Paper, such as  encryption in transit, that should always be adhered to.</p>
+
+</div>
+
+<div class="section">
+  <h2 id="q-when-data-is-transferred-do-the-partners-all-get-a-copy">Q: When data is transferred, do the Partners all get a copy?</h2>
+  <div class="mustache">
+</div>
+
+  <p>No, when a user initiates a data transfer, their encrypted information flows from one provider directly to another that is chosen by the users. Only the source service, the destination service (and hosting provider, if it is not the source or destination service) have access to the data.  No other DTP partners or 3rd parties have access to a copy of the data as part of the transfer.</p>
+
+</div>
+
+<div class="section">
+  <h2 id="q-why-arent-there-more-smaller-companies-in-the-project">Q: Why aren’t there more, smaller companies in the Project?</h2>
+  <div class="mustache">
+</div>
+
+  <p>DTP is an open source project centered around the idea that less-resourced companies can use and build on the common models and codebase developed by the community of contributors. All companies are welcome to participate. Although the DTP reduces the technical burdens of service-to-service transfers, development work is required of each participating organization. Deciding to participate in the project may require shifting limited resources from other  priorities. We are continuing to make integrating with DTP easier. Our goal is to help companies of all sizes realize the value of providing users more control over their data.</p>
+
+  <p>If you are interested in joining the project, please visit our <a href="/community">community</a> page to learn how.</p>
+
+</div>
+
+  </section>
+
+  
+  <script type="text/javascript">
+    (function (i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-51297152-3', 'auto');
+    ga('send', 'pageview');
+
+    function handleOutboundLinkClicks(event) {
+      ga('send', 'event', {
+        eventCategory: 'Outbound Link',
+        eventAction: 'click',
+        eventLabel: event.target.href,
+        transport: 'beacon',
+      });
+    }
+
+    document.querySelectorAll('a').forEach(function (anchor) {
+      anchor.addEventListener('click', handleOutboundLinkClicks);
+    });
+  </script> 
+</body>
+
+</html>

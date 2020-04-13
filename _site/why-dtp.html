@@ -1,0 +1,119 @@
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-51297152-3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'UA-51297152-3');
+</script>
+<style>
+
+* {
+    background-repeat: no-repeat;
+    padding: 0;
+    margin: 0;
+}
+  div {
+    display: block;
+}
+
+
+
+</style>
+
+<!DOCTYPE html>
+<html lang=" en-US ">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#157878">
+  <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/assets/css/style.css?v=e62221796ef8451ac150740357c0d5563a94c265">
+</head>
+<body>
+  <header>
+    <div class="header-wrapper">
+  <div id="logo-bar">
+      <a href="/" class="logo">
+        <img src="/images/logo-dtp.png" alt="Data Transfer Project Logo">
+        <div class="logo-text">
+          Data Transfer Project
+        </div>
+      </a>
+      <div class="download-link-wrapper">
+        <a href="/dtp-overview.pdf" class="download-header-link">Download White Paper</a>
+      </div>
+  </div>
+
+
+  <ul id='nav_list'>
+    <li class='nav_item'><a href="/" class=''>About</a></li>
+    <li class='nav_item'><a href="/community" class=''>Community</a></li>
+    <li class='nav_item'><a href="/documentation" class=''>Documentation</a></li>
+    <li class='nav_item'><a href="/updates" class=''>Updates</a></li>
+    <li class='nav_item'><a href="/faq" class=''>FAQ</a></li>
+  </ul>
+</div>
+
+  </header>
+
+  <section class="main-content">
+    <div class="section">
+  <h2 id="why-do-we-need-the-dtp">Why do we need the DTP</h2>
+  <div class="mustache">
+</div>
+
+  <p>Companies have been adding the ability to download you data (Takeout, Microsoft Export). This is great and is a huge step forward in terms of empowering users to be in control of their data.</p>
+
+  <p>However just being able to download your data has a number of shortcomings:</p>
+
+  <ul>
+    <li>
+      <p><strong>Bandwidth</strong> If you have limited bandwidth downloading and re-uploading data can either take a LONG time and/or be expensive, oftentimes to the point of making it impractical.</p>
+    </li>
+    <li>
+      <p><strong>Incompatible Formats</strong> Companies have (for some reason) all started offering their data in structured, commonly used and machine-readable formats, however in most cases those formats are not compatible with one another making it hard for users to re-import data they have exported.</p>
+    </li>
+    <li>
+      <p><strong>Discoverability</strong> When exporting data it’s often hard to know where else you could take the data</p>
+    </li>
+  </ul>
+
+  <p>DTP aims to solve those problems by making it easy for users to directly transfer data directly from one provider to another. This puts both the burden for bandwidth and figuring out compatibility with the service providers and not with the user.</p>
+
+  <p>An alternative approach to DTP is to have each company build direct transfer capabilities with each alternative service provider directly.</p>
+</div>
+
+  </section>
+
+  
+  <script type="text/javascript">
+    (function (i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-51297152-3', 'auto');
+    ga('send', 'pageview');
+
+    function handleOutboundLinkClicks(event) {
+      ga('send', 'event', {
+        eventCategory: 'Outbound Link',
+        eventAction: 'click',
+        eventLabel: event.target.href,
+        transport: 'beacon',
+      });
+    }
+
+    document.querySelectorAll('a').forEach(function (anchor) {
+      anchor.addEventListener('click', handleOutboundLinkClicks);
+    });
+  </script> 
+</body>
+
+</html>

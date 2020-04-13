@@ -1,0 +1,22 @@
+<div class="header-wrapper">
+  <div id="logo-bar">
+      <a href="{{site.baseurl}}/" class="logo">
+        <img src="{{site.baseurl}}/images/logo-dtp.png" alt="Data Transfer Project Logo">
+        <div class="logo-text">
+          Data Transfer Project
+        </div>
+      </a>
+      <div class="download-link-wrapper">
+        <a href="{{site.baseurl}}/dtp-overview.pdf" class="download-header-link">Download White Paper</a>
+      </div>
+  </div>
+
+
+  <ul id='nav_list'>
+    <li class='nav_item'><a href="{{site.baseurl}}/" class='{% if "/" == page.url %}active{% endif %}'>About</a></li>
+    <li class='nav_item'><a href="{{site.baseurl}}/community" class='{% if "/community" == page.url %}active{% endif %}'>Community</a></li>
+    <li class='nav_item'><a href="{{site.baseurl}}/documentation" class='{% if "/documentation" == page.url %}active{% endif %}'>Documentation</a></li>
+    <li class='nav_item'><a href="{{site.baseurl}}/updates" class='{% if "/updates" == page.url %}active{% endif %}'>Updates</a></li>
+    <li class='nav_item'><a href="{{site.baseurl}}/faq" class='{% if "/faq" == page.url %}active{% endif %}'>FAQ</a></li>
+  </ul>
+</div>

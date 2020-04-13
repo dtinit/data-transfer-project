@@ -1,9 +1,21 @@
 <div class="section" markdown="1">
+## Technical Overview
+<div class="mustache">
+</div>
+
+To get a more in-depth understanding of the project, its fundamentals and the details involved, please download [“Data Transfer Project Overview and Fundamentals”]({{site.baseurl}}/dtp-overview.pdf). You can also use the button at the top of the page.
+
+<a href="{{site.baseurl}}/dtp-overview.pdf" class="download-link" ><img class="download-image" src="{{site.baseurl}}/images/download.png"></a>
+</div>
+
+<div class="section" markdown="1">
 ## How does DTP Work
 <div class="mustache">
 </div>
 
 DTP comprises three main components:
+
+### Data Models
 
 Data Models are the canonical formats that establish a common understanding of how to transfer data.
 Adapters provide a method for converting each Provider’s proprietary data and authentication formats into a form that is usable by the system.
@@ -35,3 +47,17 @@ The rest is just plumbing.
 
 The Task Management Libraries handle background tasks, such as calls between the two relevant Adapters, secure data storage, retry logic, rate limiting, pagination management, failure handling, and individual notifications.
 DTP has developed a collection of Task Management Libraries as a reference implementation for how to utilize the Adapters to transfer data between two Providers. If preferred, Providers can choose to write their own implementation of the Task Management Libraries that utilize the Data Models and Adapters of DTP.
+
+<div class="section" markdown="1">
+## How to try it out
+<div class="mustache">
+</div>
+
+DTP is still in development and is not quite ready for everyone to use yet. However if you want to give it a shot we have a couple methods you can try out:
+
+Note: For both of these you need to get your own API keys from the services you want to port data between; please see instructions for getting keys.
+
+  * [Via Docker](https://github.com/google/data-transfer-project/blob/master/Documentation/RunningLocally.md)
+  * [Via Code](https://github.com/google/data-transfer-project/blob/master/Documentation/Developer.md)
+  * Sites powered by DTP (coming soon)
+</div>
