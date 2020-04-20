@@ -17,7 +17,6 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
   private int photoCount;
   private String overflowAlbumExportId;
 
-  @JsonCreator
   public SmugMugPhotoTempData(
       @JsonProperty("albumExportId") String albumExportId,
       @JsonProperty("albumName") String albumName,
@@ -33,15 +32,15 @@ public class SmugMugPhotoTempData extends DataModel implements Serializable {
       @JsonProperty("albumName") String albumName,
       @JsonProperty("albumDescription") String albumDescription,
       @JsonProperty("albumUri") String albumUri,
-      int photoCount,
-      String overflowAlbumExportId) {
+      @JsonProperty("photoCount") int photoCount,
+      @JsonProperty("overflowAlbumExportId") String overflowAlbumExportId) {
     this.albumExportId = albumExportId;
     this.albumName = albumName;
     this.albumDescription = albumDescription;
     this.albumUri = albumUri;
     this.photoCount = photoCount;
     this.overflowAlbumExportId = overflowAlbumExportId;
-  }   
+  }
 
   public String getAlbumExportId() {
     return this.albumExportId;
