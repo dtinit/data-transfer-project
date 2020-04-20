@@ -121,9 +121,12 @@ public class SmugMugPhotosImporter
     SmugMugPhotoTempData tempData =
         new SmugMugPhotoTempData(
             inputAlbum.getId(), inputAlbum.getName(), inputAlbum.getDescription(), albumResponse.getUri());
-    monitor.info(() -> "uploading temp data to jobstore", tempData, inputAlbum.getId());
+    System.out.printf("uploading temp data to jobstore %s %s\n", tempData, inputAlbum.getId());
     jobStore.create(jobId, getTempDataId(inputAlbum.getId()), tempData);
-    monitor.info(() -> "success uploading temp data to jobstore", tempData, inputAlbum.getId());
+    System.out.printf("success uploading temp data to jobstore %s %s\n", tempData, inputAlbum.getId());
+    SmugMugPhotoTempData baseAlbumTempData =
+        jobStore.findData(jobId, getTempDataId(inputAlbum.getId()), SmugMugPhotoTempData.class);
+    System.out.printf("here it is %s\n", baseAlbumTempData);
     return albumResponse.getUri();
   }
 
@@ -203,8 +206,8 @@ public class SmugMugPhotosImporter
   }
 
   private static String getTempDataId(String albumId) {
-    return albumId;
-    // return String.format("smugmug-album-temp-data-%s", albumId);
+    // return albumId;
+    return String.format("smugmug-album-temp-data-%s", albumId);
   }
 
   /**
