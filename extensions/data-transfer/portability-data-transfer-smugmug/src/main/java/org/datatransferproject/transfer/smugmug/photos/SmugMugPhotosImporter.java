@@ -16,9 +16,7 @@
 
 package org.datatransferproject.transfer.smugmug.photos;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -39,12 +37,6 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkState;
-
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
@@ -54,7 +46,7 @@ public class SmugMugPhotosImporter
   private final Monitor monitor;
   private final SmugMugTransmogrificationConfig transmogrificationConfig;
 
-  private SmugMugInterface smugMugInterface;
+  private final SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosImporter(
       TemporaryPerJobDataStore jobStore,
@@ -79,8 +71,6 @@ public class SmugMugPhotosImporter
     this.mapper = mapper;
     this.monitor = monitor;
   }
-
-
 
   @Override
   public ImportResult importItem(
@@ -120,13 +110,11 @@ public class SmugMugPhotosImporter
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
     SmugMugPhotoTempData tempData =
         new SmugMugPhotoTempData(
-            inputAlbum.getId(), inputAlbum.getName(), inputAlbum.getDescription(), albumResponse.getUri());
-    monitor.info(() -> "uploading temp data to jobstore", tempData, inputAlbum.getId());
+            inputAlbum.getId(),
+            inputAlbum.getName(),
+            inputAlbum.getDescription(),
+            albumResponse.getUri());
     jobStore.create(jobId, getTempDataId(inputAlbum.getId()), tempData);
-    monitor.info(() -> "success uploading temfp data to jobstore", tempData, inputAlbum.getId());
-    SmugMugPhotoTempData baseAlbumTempData =
-        jobStore.findData(jobId, getTempDataId(inputAlbum.getId()), SmugMugPhotoTempData.class);
-    monitor.info(() -> "here it is", baseAlbumTempData);
     return albumResponse.getUri();
   }
 
@@ -147,11 +135,11 @@ public class SmugMugPhotosImporter
     String originalAlbumId = inputPhoto.getAlbumId();
     SmugMugPhotoTempData albumTempData =
         getDestinationAlbumTempData(jobId, idempotentExecutor, originalAlbumId, smugMugInterface);
-    
+
     SmugMugImageUploadResponse response =
-      smugMugInterface.uploadImage(inputPhoto, albumTempData.getAlbumUri(), inputStream);
+        smugMugInterface.uploadImage(inputPhoto, albumTempData.getAlbumUri(), inputStream);
     albumTempData.incrementPhotoCount();
-    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);  
+    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);
 
     return response.toString();
   }
@@ -170,7 +158,10 @@ public class SmugMugPhotosImporter
    */
   @VisibleForTesting
   SmugMugPhotoTempData getDestinationAlbumTempData(
-      UUID jobId, IdempotentImportExecutor idempotentExecutor, String baseAlbumId, SmugMugInterface smugMugInterface)
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      String baseAlbumId,
+      SmugMugInterface smugMugInterface)
       throws Exception {
     SmugMugPhotoTempData baseAlbumTempData =
         jobStore.findData(jobId, getTempDataId(baseAlbumId), SmugMugPhotoTempData.class);
@@ -194,11 +185,15 @@ public class SmugMugPhotosImporter
         jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);
         albumTempData =
             jobStore.findData(
-                jobId, getTempDataId(albumTempData.getOverflowAlbumExportId()), SmugMugPhotoTempData.class);
+                jobId,
+                getTempDataId(albumTempData.getOverflowAlbumExportId()),
+                SmugMugPhotoTempData.class);
       } else {
         albumTempData =
             jobStore.findData(
-                jobId, getTempDataId(albumTempData.getOverflowAlbumExportId()), SmugMugPhotoTempData.class);
+                jobId,
+                getTempDataId(albumTempData.getOverflowAlbumExportId()),
+                SmugMugPhotoTempData.class);
       }
       depth += 1;
     }
@@ -206,16 +201,14 @@ public class SmugMugPhotosImporter
   }
 
   private static String getTempDataId(String albumId) {
-    // return albumId;
     return String.format("smugmug-album-temp-data-%s", albumId);
   }
 
   /**
-   * Create an overflow album using the base album's id, name, and description and the overflow album's
-   * opy number.
-   * E.g. if baseAlbum needs a single overflow album, it will be created with 
-   * createOverflowAlbum("baseAlbumId", "baseAlbumName", "baseAlbumDescription", 1) and result in 
-   * an album PhotoAlbum("baseAlbumId-overflow-1", "baseAlbumName (1)", "baseAlbumDescription")
+   * Create an overflow album using the base album's id, name, and description and the overflow
+   * album's opy number. E.g. if baseAlbum needs a single overflow album, it will be created with
+   * createOverflowAlbum("baseAlbumId", "baseAlbumName", "baseAlbumDescription", 1) and result in an
+   * album PhotoAlbum("baseAlbumId-overflow-1", "baseAlbumName (1)", "baseAlbumDescription")
    */
   private static PhotoAlbum createOverflowAlbum(
       String baseAlbumId, String baseAlbumName, String baseAlbumDescription, int copyNumber)
@@ -226,5 +219,4 @@ public class SmugMugPhotosImporter
         String.format("%s (%d)", baseAlbumName, copyNumber),
         baseAlbumDescription);
   }
-
 }
