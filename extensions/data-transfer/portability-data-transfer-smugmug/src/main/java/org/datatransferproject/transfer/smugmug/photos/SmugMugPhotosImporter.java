@@ -121,7 +121,9 @@ public class SmugMugPhotosImporter
     SmugMugPhotoTempData tempData =
         new SmugMugPhotoTempData(
             inputAlbum.getId(), inputAlbum.getName(), inputAlbum.getDescription(), albumResponse.getUri());
+    monitor.info("uploading temp data to jobstore", tempData, inputAlbum.getId());
     jobStore.create(jobId, getTempDataId(inputAlbum.getId()), tempData);
+    monitor.info("success uploading temp data to jobstore", tempData, inputAlbum.getId());
     return albumResponse.getUri();
   }
 
@@ -201,7 +203,8 @@ public class SmugMugPhotosImporter
   }
 
   private static String getTempDataId(String albumId) {
-    return String.format("smugmug-album-temp-data-%s", albumId);
+    return albumId;
+    // return String.format("smugmug-album-temp-data-%s", albumId);
   }
 
   /**
