@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.transfer.smugmug.photos.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
@@ -29,7 +30,11 @@ public final class SmugMugImageUploadResponse {
   @JsonProperty("Image")
   private ImageInfo image;
 
-  public SmugMugImageUploadResponse(String stat, String method, ImageInfo image) {
+  @JsonCreator
+  public SmugMugImageUploadResponse(
+      @JsonProperty("stat") String stat,
+      @JsonProperty("method") String method,
+      @JsonProperty("Image") ImageInfo image) {
     this.stat = stat;
     this.method = method;
     this.image = image;
@@ -62,7 +67,12 @@ public final class SmugMugImageUploadResponse {
     @JsonProperty("URL")
     private String url;
 
-    public ImageInfo(String imageUri, String albumImageUri, String statusImageReplaceUri, String url) {
+    @JsonCreator
+    public ImageInfo(
+        @JsonProperty("ImageUri") String imageUri,
+        @JsonProperty("AlbumImageUri") String albumImageUri,
+        @JsonProperty("StatusImageReplaceUri") String statusImageReplaceUri,
+        @JsonProperty("URL") String url) {
       this.imageUri = imageUri;
       this.albumImageUri = albumImageUri;
       this.statusImageReplaceUri = statusImageReplaceUri;
