@@ -150,6 +150,7 @@ public class SmugMugInterface {
             headersMap,
             new TypeReference<SmugMugImageUploadResponse>() {});
 
+    Preconditions.checkState(response.getStat().equals("ok"), "Failed to upload image");
     return Preconditions.checkNotNull(response, "Image upload Response is null");
   }
 
