@@ -53,6 +53,10 @@ public final class SmugMugImageUploadResponse {
     return image;
   }
 
+  public String getStat() {
+    return stat;
+  }
+
   public static class ImageInfo {
 
     @JsonProperty("ImageUri")
