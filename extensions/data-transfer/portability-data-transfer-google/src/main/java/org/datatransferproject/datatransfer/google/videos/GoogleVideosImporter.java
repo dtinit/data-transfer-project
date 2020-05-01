@@ -61,6 +61,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -165,6 +166,14 @@ public class GoogleVideosImporter
       UploadMediaItemResponse uploadResponse = photosLibraryClient.uploadMediaItem(uploadRequest);
       if (uploadResponse.getError().isPresent() || !uploadResponse.getUploadToken().isPresent()) {
         Error error = uploadResponse.getError().orElse(null);
+        if (error != null
+            && error
+                .getCause()
+                .getMessage()
+                .contains("The upload url is either finalized or rejected by the server")) {
+          throw new UploadErrorException(
+              "Upload was terminated because of error", error.getCause());
+        }
         throw new IOException(
             "An error was encountered while uploading the video.",
             error != null ? error.getCause() : null);

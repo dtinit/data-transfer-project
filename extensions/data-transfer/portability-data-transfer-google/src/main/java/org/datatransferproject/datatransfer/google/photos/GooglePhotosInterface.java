@@ -59,6 +59,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 
 public class GooglePhotosInterface {
 
@@ -100,7 +101,7 @@ public class GooglePhotosInterface {
   }
 
   AlbumListResponse listAlbums(Optional<String> pageToken)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
     if (pageToken.isPresent()) {
@@ -110,7 +111,7 @@ public class GooglePhotosInterface {
   }
 
   MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
     if (albumId.isPresent()) {
@@ -126,7 +127,8 @@ public class GooglePhotosInterface {
         BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(GoogleAlbum googleAlbum) throws IOException, InvalidTokenException {
+  GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
@@ -134,7 +136,8 @@ public class GooglePhotosInterface {
     return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream) throws IOException, InvalidTokenException {
+  String uploadPhotoContent(InputStream inputStream)
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -151,7 +154,7 @@ public class GooglePhotosInterface {
   }
 
   BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
 
@@ -163,7 +166,7 @@ public class GooglePhotosInterface {
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
-      throws IOException, InvalidTokenException {
+          throws IOException, InvalidTokenException, PermissionDeniedException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest =
         requestFactory.buildGetRequest(
@@ -189,7 +192,7 @@ public class GooglePhotosInterface {
 
   <T> T makePostRequest(
       String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     // Wait for write permit before making request
     writeRateLimiter.acquire();
 
@@ -197,7 +200,7 @@ public class GooglePhotosInterface {
     HttpRequest postRequest =
         requestFactory.buildPostRequest(
             new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
-    postRequest.setReadTimeout(2 * 60000);  // 2 minutes read timeout
+    postRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
     try {
@@ -223,9 +226,11 @@ public class GooglePhotosInterface {
 
   private HttpResponse handleHttpResponseException(
       SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     // if the response is "unauthorized", refresh the token and try the request again
-    if (e.getStatusCode() == 401) {
+    final int statusCode = e.getStatusCode();
+
+    if (statusCode == 401) {
       monitor.info(() -> "Attempting to refresh authorization token");
       // if the credential refresh failed, let the error bubble up via the IOException that gets
       // thrown
@@ -235,6 +240,13 @@ public class GooglePhotosInterface {
       // if the second attempt throws an error, then something else is wrong, and we bubble up the
       // response errors
       return httpRequest.getWithIO().execute();
+    }
+    // "The caller does not have permission" is potential error for albums.
+    // "Google Photos is disabled for the user" is potential error for photos.
+    if (statusCode == 403 &&
+            (e.getContent().contains("The caller does not have permission") ||
+             e.getContent().contains("Google Photos is disabled for the user"))) {
+      throw new PermissionDeniedException("User permission to google photos was denied", e);
     } else {
       // something else is wrong, bubble up the error
       throw new IOException(
