@@ -141,7 +141,7 @@ public class MicrosoftPhotosImporter
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     // clean up album name for microsoft specifically
-    String albumName = album.getName() == null || album.getName().length() == 0 ? "Untitled" : album.getName();
+    String albumName = Strings.isNullOrEmpty(album.getName()) ? "Untitled" : album.getName();
     rawFolder.put("name", albumName);
     rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
