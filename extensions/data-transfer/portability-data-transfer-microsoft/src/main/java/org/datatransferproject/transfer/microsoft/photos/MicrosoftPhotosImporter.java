@@ -140,7 +140,9 @@ public class MicrosoftPhotosImporter
   private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
-    rawFolder.put("name", album.getName());
+    // clean up album name for microsoft specifically
+    String albumName = album.getName() == null || album.getName().length() == 0 ? "Untitled" : album.getName();
+    rawFolder.put("name", albumName);
     rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
