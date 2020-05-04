@@ -199,6 +199,7 @@ public class MicrosoftPhotosImporter
 
     // Arrange the data to be uploaded in chunks
     List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
+    inputStream.close();
     final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
     Preconditions.checkState(chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
 
