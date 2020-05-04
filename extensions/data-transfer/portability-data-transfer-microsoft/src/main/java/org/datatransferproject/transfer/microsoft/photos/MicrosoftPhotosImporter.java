@@ -140,7 +140,13 @@ public class MicrosoftPhotosImporter
   private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
-    rawFolder.put("name", album.getName());
+    // clean up album name for microsoft specifically
+    // Note that PhotoAlbum.getName() can return an empty string or null depending
+    // on the results of PhotoAlbum.cleanName(), e.g. if a Google Photos album has
+    // title=" ", its cleaned name will be "". See PhotoAlbum.cleanName for further
+    // details on what forms the name can take .
+    String albumName = Strings.isNullOrEmpty(album.getName()) ? "Untitled" : album.getName();
+    rawFolder.put("name", albumName);
     rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
