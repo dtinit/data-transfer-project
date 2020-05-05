@@ -68,21 +68,20 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
     String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
     String scope = scopes.isEmpty() ? "" : String.join(" ", scopes);
-    URIBuilder builder = new URIBuilder()
-        .setPath(config.getAuthUrl())
-        .setParameter("response_type", "code")
-        .setParameter("client_id", clientId)
-        .setParameter("redirect_uri", callbackBaseUrl)
-        .setParameter("scope", scope)
-        .setParameter("state", encodedJobId);
-
-    if (config.getAdditionalAuthUrlParameters() != null) {
-      for (Entry<String, String> entry : config.getAdditionalAuthUrlParameters().entrySet()) {
-        builder.setParameter(entry.getKey(), entry.getValue());
-      }
-    }
-
     try {
+      URIBuilder builder = new URIBuilder(config.getAuthUrl())
+              .setParameter("response_type", "code")
+              .setParameter("client_id", clientId)
+              .setParameter("redirect_uri", callbackBaseUrl)
+              .setParameter("scope", scope)
+              .setParameter("state", encodedJobId);
+
+      if (config.getAdditionalAuthUrlParameters() != null) {
+        for (Entry<String, String> entry : config.getAdditionalAuthUrlParameters().entrySet()) {
+          builder.setParameter(entry.getKey(), entry.getValue());
+        }
+      }
+
       String url = builder.build().toString();
       return new AuthFlowConfiguration(url, OAUTH_2, getTokenUrl());
     } catch (URISyntaxException e) {
