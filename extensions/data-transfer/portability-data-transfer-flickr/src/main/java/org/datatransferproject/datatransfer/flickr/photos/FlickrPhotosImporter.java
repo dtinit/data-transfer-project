@@ -214,7 +214,6 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
     BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
-
     // TODO: do we want to keep COPY_PREFIX?  I think not
     String photoTitle =
         Strings.isNullOrEmpty(photo.getTitle()) ? "" : COPY_PREFIX + photo.getTitle();
@@ -230,6 +229,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setDescription(photoDescription);
     perUserRateLimiter.acquire();
     String uploadResult = uploader.upload(inStream, uploadMetaData);
+    inStream.close();
     monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
     return uploadResult;
   }
