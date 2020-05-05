@@ -140,7 +140,13 @@ public class MicrosoftPhotosImporter
   private String createOneDriveFolder(PhotoAlbum album) throws IOException {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
-    rawFolder.put("name", album.getName());
+    // clean up album name for microsoft specifically
+    // Note that PhotoAlbum.getName() can return an empty string or null depending
+    // on the results of PhotoAlbum.cleanName(), e.g. if a Google Photos album has
+    // title=" ", its cleaned name will be "". See PhotoAlbum.cleanName for further
+    // details on what forms the name can take .
+    String albumName = Strings.isNullOrEmpty(album.getName()) ? "Untitled" : album.getName();
+    rawFolder.put("name", albumName);
     rawFolder.put("folder", new LinkedHashMap());
     rawFolder.put("@microsoft.graph.conflictBehavior", "rename");
 
@@ -199,6 +205,7 @@ public class MicrosoftPhotosImporter
 
     // Arrange the data to be uploaded in chunks
     List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
+    inputStream.close();
     final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
     Preconditions.checkState(chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
 
