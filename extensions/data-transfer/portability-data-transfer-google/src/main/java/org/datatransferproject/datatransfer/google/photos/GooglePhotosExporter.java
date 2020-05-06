@@ -42,6 +42,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
@@ -96,7 +97,7 @@ public class GooglePhotosExporter
   @Override
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     if (!exportInformation.isPresent()) {
       // Make list of photos contained in albums so they are not exported twice later on
       populateContainedPhotosList(jobId, authData);
@@ -143,7 +144,7 @@ public class GooglePhotosExporter
   @VisibleForTesting
   ExportResult<PhotosContainerResource> exportAlbums(
       TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     Optional<String> paginationToken = Optional.empty();
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
@@ -195,7 +196,7 @@ public class GooglePhotosExporter
       Optional<IdOnlyContainerResource> albumData,
       Optional<PaginationData> paginationData,
       UUID jobId)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     Optional<String> albumId = Optional.empty();
     if (albumData.isPresent()) {
       albumId = Optional.of(albumData.get().getId());
@@ -231,7 +232,7 @@ public class GooglePhotosExporter
   /** Method for storing a list of all photos that are already contained in albums */
   @VisibleForTesting
   void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, PermissionDeniedException {
     // This method is only called once at the beginning of the transfer, so we can start by
     // initializing a new TempPhotosData to be store in the job store.
     TempPhotosData tempPhotosData = new TempPhotosData(jobId);
