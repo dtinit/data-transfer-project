@@ -124,6 +124,16 @@ public class LoggingDtpInternalMetricRecorder implements DtpInternalMetricRecord
   }
 
   @Override
+  public void cancelledJob(
+      String dataType, String exportService, String importService, Duration duration) {
+    monitor.debug(
+        () ->
+            format(
+                "Metric: cancelledJob, data type: %s, from: %s, to: %s, duration: %s",
+                dataType, exportService, importService, duration));
+  }
+
+  @Override
   public void recordGenericMetric(String dataType, String service, String tag) {
     monitor.debug(
         () ->

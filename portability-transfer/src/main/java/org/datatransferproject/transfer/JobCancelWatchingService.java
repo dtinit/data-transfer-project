@@ -17,6 +17,7 @@ package org.datatransferproject.transfer;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -27,13 +28,16 @@ class JobCancelWatchingService extends AbstractScheduledService {
   private final JobStore store;
   private final Scheduler scheduler;
   private final Monitor monitor;
+  private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
 
   @Inject
   JobCancelWatchingService(
-      JobStore store, @Annotations.CancelScheduler Scheduler scheduler, Monitor monitor) {
+          JobStore store, @Annotations.CancelScheduler Scheduler scheduler,
+          Monitor monitor, DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.store = store;
     this.scheduler = scheduler;
     this.monitor = monitor;
+    this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
   }
 
   @Override
@@ -48,6 +52,11 @@ class JobCancelWatchingService extends AbstractScheduledService {
       monitor.info(
           () -> String.format("Job %s is canceled", JobMetadata.getJobId()),
           EventCode.WORKER_JOB_CANCELED);
+      dtpInternalMetricRecorder.cancelledJob(
+              JobMetadata.getDataType(),
+              JobMetadata.getExportService(),
+              JobMetadata.getImportService(),
+              JobMetadata.getStopWatch().elapsed());
       monitor.flushLogs();
       System.exit(0);
     } else {
