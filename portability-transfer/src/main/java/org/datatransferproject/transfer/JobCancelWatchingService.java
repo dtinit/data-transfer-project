@@ -49,7 +49,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
           () -> String.format("Job %s is canceled", JobMetadata.getJobId()),
           EventCode.WORKER_JOB_CANCELED);
       monitor.flushLogs();
-      System.exit(-1);
+      System.exit(0);
     } else {
       monitor.debug(() -> String.format("Job %s is not canceled", JobMetadata.getJobId()));
     }
