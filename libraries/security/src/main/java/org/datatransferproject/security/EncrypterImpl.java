@@ -47,7 +47,23 @@ final class EncrypterImpl implements Encrypter {
   @Override
   public String encrypt(String data) {
     try {
-      Cipher cipher = Cipher.getInstance(transformation);
+      Cipher cipher;
+      switch (transformation) {
+      case CryptoTransformations.AES_CBC_NOPADDING:
+        cipher = Cipher.getInstance(CryptoTransformations.AES_CBC_NOPADDING);
+        break;
+      case CryptoTransformations.RSA_ECB_PKCS1:
+        cipher = Cipher.getInstance(CryptoTransformations.RSA_ECB_PKCS1);
+        break;
+      default:
+        throw new RuntimeException(
+          format(
+            "Invalid cipher transformation, got: %s, expected one of:[%s, %s]",
+            transformation,
+            CryptoTransformations.AES_CBC_NOPADDING,
+            CryptoTransformations.RSA_ECB_PKCS1));
+      }
+      // don't submit before checking init logic
       cipher.init(Cipher.ENCRYPT_MODE, key);
       byte[] salt = new byte[8];
       SecureRandom random = SecureRandom.getInstance("SHA1PRNG");

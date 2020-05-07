@@ -34,7 +34,6 @@ import static java.lang.String.format;
  * DecrypterFactory} to create.
  */
 final class DecrypterImpl implements Decrypter {
-
   private final Key key;
   private final String transformation;
   private final Monitor monitor;
@@ -49,7 +48,26 @@ final class DecrypterImpl implements Decrypter {
   public String decrypt(String encrypted) {
     try {
       byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
-      Cipher cipher = Cipher.getInstance(transformation);
+      Cipher cipher;
+      // This odd switch statement ensures we're using a compile-time constant
+      // to define our cipher transformation. This prevents issues with certain
+      // compilers.
+      switch (transformation) {
+      case CryptoTransformations.AES_CBC_NOPADDING:
+        cipher = Cipher.getInstance(CryptoTransformations.AES_CBC_NOPADDING);
+        break;
+      case CryptoTransformations.RSA_ECB_PKCS1:
+        cipher = Cipher.getInstance(CryptoTransformations.RSA_ECB_PKCS1);
+        break;
+      default:
+        throw new RuntimeException(
+          format(
+            "Invalid cipher transformation, got: %s, expected one of:[%s, %s]",
+            transformation,
+            CryptoTransformations.AES_CBC_NOPADDING,
+            CryptoTransformations.RSA_ECB_PKCS1));
+      }
+      // don't submit before checking init logic
       cipher.init(Cipher.DECRYPT_MODE, key);
       byte[] decrypted = cipher.doFinal(decoded);
       if (decrypted == null || decrypted.length <= 8) {
