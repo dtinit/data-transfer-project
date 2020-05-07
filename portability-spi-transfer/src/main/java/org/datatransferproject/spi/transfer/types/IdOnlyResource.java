@@ -32,4 +32,9 @@ public class IdOnlyResource extends ItemResource {
     IdOnlyResource resource = (IdOnlyResource) object;
     return this.id.equals(resource.getId());
   }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  } 
 }
