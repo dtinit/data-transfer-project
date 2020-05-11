@@ -26,6 +26,7 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.junit.Test;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -36,7 +37,7 @@ public class PortabilityJobTest {
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = ObjectMapperFactory.createObjectMapper();
-    LocalDateTime date = LocalDateTime.of(2018, 2, 20, 12, 0);
+    Instant date = Instant.now();
 
     JobAuthorization jobAuthorization =
         JobAuthorization.builder()
@@ -51,7 +52,7 @@ public class PortabilityJobTest {
             .setImportService("barService")
             .setTransferDataType("PHOTOS")
             .setCreatedTimestamp(date)
-            .setLastUpdateTimestamp(date.plusMinutes(2))
+            .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)
             .build();
 
@@ -68,7 +69,7 @@ public class PortabilityJobTest {
   @Test
   public void verifySerializeDeserializeWithAlbum() throws IOException {
     ObjectMapper objectMapper = ObjectMapperFactory.createObjectMapper();
-    LocalDateTime date = LocalDateTime.of(2018, 2, 20, 12, 0);
+    Instant date = Instant.now();
 
     JobAuthorization jobAuthorization =
         JobAuthorization.builder()
@@ -90,7 +91,7 @@ public class PortabilityJobTest {
                             new PhotoAlbum("album_id", "album name", "album description")),
                         null)))
             .setCreatedTimestamp(date)
-            .setLastUpdateTimestamp(date.plusMinutes(2))
+            .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)
             .build();
 
