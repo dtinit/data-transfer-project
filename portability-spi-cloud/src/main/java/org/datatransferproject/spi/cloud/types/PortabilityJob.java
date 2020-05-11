@@ -285,6 +285,8 @@ public abstract class PortabilityJob {
               jobAuthorization.authPublicKey(),
               jobAuthorization.encryptedAuthData());
           break;
+        case TIMED_OUT:
+          throw new RuntimeException("Authorization timed out, can't validate.");
       }
       return setJobAuthorization(jobAuthorization);
     }
