@@ -23,7 +23,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import java.security.InvalidKeyException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -51,9 +53,11 @@ final class EncrypterImpl implements Encrypter {
       switch (transformation) {
       case CryptoTransformations.AES_CBC_NOPADDING:
         cipher = Cipher.getInstance(CryptoTransformations.AES_CBC_NOPADDING);
+        cipher.init(Cipher.ENCRYPT_MODE, key, generateIv(cipher));
         break;
       case CryptoTransformations.RSA_ECB_PKCS1:
         cipher = Cipher.getInstance(CryptoTransformations.RSA_ECB_PKCS1);
+        cipher.init(Cipher.ENCRYPT_MODE, key);
         break;
       default:
         throw new RuntimeException(
@@ -63,9 +67,9 @@ final class EncrypterImpl implements Encrypter {
             CryptoTransformations.AES_CBC_NOPADDING,
             CryptoTransformations.RSA_ECB_PKCS1));
       }
-      // don't submit before checking init logic
-      cipher.init(Cipher.ENCRYPT_MODE, key);
-      byte[] salt = new byte[8];
+      // we use a salt the size of the first block
+      // so that we don't need to know IV for AES/CBC
+      byte[] salt = new byte[cipher.getBlockSize()];
       SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
       random.nextBytes(salt);
       cipher.update(salt);
@@ -73,11 +77,19 @@ final class EncrypterImpl implements Encrypter {
       return BaseEncoding.base64Url().encode(encrypted);
     } catch (BadPaddingException
         | IllegalBlockSizeException
+        | InvalidAlgorithmParameterException
         | InvalidKeyException
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
       monitor.severe(() -> format("Exception encrypting data, length: %s", data.length()), e);
       throw new RuntimeException(e);
     }
+  }
+
+  private static final IvParameterSpec generateIv(Cipher cipher) throws NoSuchAlgorithmException {
+    SecureRandom randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
+    byte[] iv = new byte[cipher.getBlockSize()];
+    randomSecureRandom.nextBytes(iv);
+    return new IvParameterSpec(iv);
   }
 }
