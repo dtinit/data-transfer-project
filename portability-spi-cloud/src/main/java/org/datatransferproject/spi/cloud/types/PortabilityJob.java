@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.types.common.ExportInformation;
 
 import javax.annotation.Nullable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
@@ -43,7 +43,7 @@ public abstract class PortabilityJob {
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
 
   public static PortabilityJob.Builder builder() {
-    LocalDateTime now = LocalDateTime.now();
+    Instant now = Instant.now();
     // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
     // the class name due to a conflict in package names for our generated code, but the conflict
     // doesn't cause any actual problems with building.
@@ -55,7 +55,7 @@ public abstract class PortabilityJob {
   }
 
   public static PortabilityJob fromMap(Map<String, Object> properties) {
-    LocalDateTime now = LocalDateTime.now();
+    Instant now = Instant.now();
     String encryptedAuthData =
         properties.containsKey(ENCRYPTED_CREDS_KEY)
             ? (String) properties.get(ENCRYPTED_CREDS_KEY)
@@ -144,10 +144,10 @@ public abstract class PortabilityJob {
   public abstract ExportInformation exportInformation();
 
   @JsonProperty("createdTimestamp")
-  public abstract LocalDateTime createdTimestamp(); // ISO 8601 timestamp
+  public abstract Instant createdTimestamp(); // ISO 8601 timestamp
 
   @JsonProperty("lastUpdateTimestamp")
-  public abstract LocalDateTime lastUpdateTimestamp(); // ISO 8601 timestamp
+  public abstract Instant lastUpdateTimestamp(); // ISO 8601 timestamp
 
   @JsonProperty("jobAuthorization")
   public abstract JobAuthorization jobAuthorization();
@@ -259,10 +259,10 @@ public abstract class PortabilityJob {
     public abstract Builder setExportInformation(ExportInformation exportInformation);
 
     @JsonProperty("createdTimestamp")
-    public abstract Builder setCreatedTimestamp(LocalDateTime createdTimestamp);
+    public abstract Builder setCreatedTimestamp(Instant createdTimestamp);
 
     @JsonProperty("lastUpdateTimestamp")
-    public abstract Builder setLastUpdateTimestamp(LocalDateTime lastUpdateTimestamp);
+    public abstract Builder setLastUpdateTimestamp(Instant lastUpdateTimestamp);
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("failureReason")
