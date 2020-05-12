@@ -228,7 +228,10 @@ public class GooglePhotosImporter
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
       TokensAndUrlAuthData authData) {
-    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+    if (photosInterface == null) {
+      photosInterface = makePhotosInterface(authData);
+    }
+    return photosInterface;
   }
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
