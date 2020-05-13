@@ -34,6 +34,9 @@ import static java.lang.String.format;
 
 /**
  * Provides AES and RSA-based encryption implementations. See {@link EncrypterFactory} to create.
+ * 
+ * The first block encrypted is a random salt so that we can ignore its value in the decrypter. This
+ * makes it so we don't have to record the IV for AES.
  */
 final class EncrypterImpl implements Encrypter {
   private final Key key;
