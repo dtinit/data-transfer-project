@@ -26,7 +26,7 @@ import com.google.inject.Inject;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.token.TokenManager;
 
-import java.io.UnsupportedEncodingException;
+import java.lang.IllegalArgumentException;
 import java.util.Date;
 import java.util.UUID;
 
@@ -62,7 +62,7 @@ public class JWTTokenManager implements TokenManager {
   private static Algorithm createAlgorithm(String secret) {
     try {
       return Algorithm.HMAC256(secret);
-    } catch (UnsupportedEncodingException e) {
+    } catch (IllegalArgumentException e) {
       throw new RuntimeException(e); // TODO: Better error handling
     }
   }
