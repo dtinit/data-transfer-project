@@ -51,14 +51,18 @@ final class DecrypterImpl implements Decrypter {
   public String decrypt(String encrypted) {
     try {
       byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
-      Cipher cipher = Cipher.getInstance(transformation.algorithm());
+      Cipher cipher;
       switch (transformation) {
         case AES_CBC_NOPADDING:
+          cipher = Cipher.getInstance("AES/CBC/NoPadding");
           cipher.init(Cipher.DECRYPT_MODE, key, generateIv(cipher));
           break;
         case RSA_ECB_PKCS1:
+          cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
           cipher.init(Cipher.DECRYPT_MODE, key);        
           break;
+        default:
+          throw new AssertionError("How could this happen...");
       }
       byte[] decrypted = cipher.doFinal(decoded);
       if (decrypted == null || decrypted.length <= cipher.getBlockSize()) {

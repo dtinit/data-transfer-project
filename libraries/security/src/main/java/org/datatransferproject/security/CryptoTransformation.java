@@ -18,17 +18,7 @@ package org.datatransferproject.security;
 /** Provides compile-time constants for secure crypto transformations. For use 
 in creation of Encrypter/Decrypter */
 public enum CryptoTransformation {
-	AES_CBC_NOPADDING("AES/CBC/NoPadding"),
-	RSA_ECB_PKCS1("RSA/ECB/PKCS1Padding");
-
-	private final String algorithm;
-
-	private CryptoTransformation(String algorithm) {
-	    this.algorithm = algorithm;
-	}
-
-	public String algorithm() {
-		return algorithm;
-	};
+	AES_CBC_NOPADDING,
+	RSA_ECB_PKCS1
 }
 
