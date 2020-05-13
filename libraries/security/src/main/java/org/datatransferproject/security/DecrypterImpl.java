@@ -38,10 +38,10 @@ import static java.lang.String.format;
  */
 final class DecrypterImpl implements Decrypter {
   private final Key key;
-  private final String transformation;
+  private final CryptoTransformation transformation;
   private final Monitor monitor;
 
-  DecrypterImpl(String transformation, Key key, Monitor monitor) {
+  DecrypterImpl(CryptoTransformation transformation, Key key, Monitor monitor) {
     this.key = key;
     this.transformation = transformation;
     this.monitor = monitor;
@@ -51,26 +51,14 @@ final class DecrypterImpl implements Decrypter {
   public String decrypt(String encrypted) {
     try {
       byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
-      Cipher cipher;
-      // This odd switch statement ensures we're using a compile-time constant
-      // to define our cipher transformation. This prevents issues with certain
-      // compilers.
+      Cipher cipher = Cipher.getInstance(transformation.algorithm());
       switch (transformation) {
-      case CryptoTransformations.AES_CBC_NOPADDING:
-        cipher = Cipher.getInstance(CryptoTransformations.AES_CBC_NOPADDING);
-        cipher.init(Cipher.DECRYPT_MODE, key, generateIv(cipher));
-        break;
-      case CryptoTransformations.RSA_ECB_PKCS1:
-        cipher = Cipher.getInstance(CryptoTransformations.RSA_ECB_PKCS1);
-        cipher.init(Cipher.DECRYPT_MODE, key);        
-        break;
-      default:
-        throw new RuntimeException(
-          format(
-            "Invalid cipher transformation, got: %s, expected one of:[%s, %s]",
-            transformation,
-            CryptoTransformations.AES_CBC_NOPADDING,
-            CryptoTransformations.RSA_ECB_PKCS1));
+        case AES_CBC_NOPADDING:
+          cipher.init(Cipher.DECRYPT_MODE, key, generateIv(cipher));
+          break;
+        case RSA_ECB_PKCS1:
+          cipher.init(Cipher.DECRYPT_MODE, key);        
+          break;
       }
       byte[] decrypted = cipher.doFinal(decoded);
       if (decrypted == null || decrypted.length <= cipher.getBlockSize()) {

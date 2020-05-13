@@ -37,10 +37,10 @@ import static java.lang.String.format;
  */
 final class EncrypterImpl implements Encrypter {
   private final Key key;
-  private final String transformation;
+  private final CryptoTransformation transformation;
   private final Monitor monitor;
 
-  EncrypterImpl(String transformation, Key key, Monitor monitor) {
+  EncrypterImpl(CryptoTransformation transformation, Key key, Monitor monitor) {
     this.key = key;
     this.transformation = transformation;
     this.monitor = monitor;
@@ -49,23 +49,14 @@ final class EncrypterImpl implements Encrypter {
   @Override
   public String encrypt(String data) {
     try {
-      Cipher cipher;
+      Cipher cipher = Cipher.getInstance(transformation.algorithm());
       switch (transformation) {
-      case CryptoTransformations.AES_CBC_NOPADDING:
-        cipher = Cipher.getInstance(CryptoTransformations.AES_CBC_NOPADDING);
-        cipher.init(Cipher.ENCRYPT_MODE, key, generateIv(cipher));
-        break;
-      case CryptoTransformations.RSA_ECB_PKCS1:
-        cipher = Cipher.getInstance(CryptoTransformations.RSA_ECB_PKCS1);
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        break;
-      default:
-        throw new RuntimeException(
-          format(
-            "Invalid cipher transformation, got: %s, expected one of:[%s, %s]",
-            transformation,
-            CryptoTransformations.AES_CBC_NOPADDING,
-            CryptoTransformations.RSA_ECB_PKCS1));
+        case AES_CBC_NOPADDING:
+          cipher.init(Cipher.ENCRYPT_MODE, key, generateIv(cipher));
+          break;
+        case RSA_ECB_PKCS1:
+          cipher.init(Cipher.ENCRYPT_MODE, key);
+          break;
       }
       // we use a salt the size of the first block
       // so that we don't need to know IV for AES/CBC
