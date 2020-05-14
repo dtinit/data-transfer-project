@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -54,6 +56,7 @@ public class GooglePhotosImporter
   private final TemporaryPerJobDataStore jobStore;
   private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
+  private volatile Map<UUID, GooglePhotosInterface> photosInterfacesMap;
   private volatile GooglePhotosInterface photosInterface;
   private final Monitor monitor;
   private final double writesPerSecond;
@@ -68,6 +71,7 @@ public class GooglePhotosImporter
         credentialFactory,
         jobStore,
         jsonFactory,
+        new HashMap<>(),
         null,
         new ImageStreamProvider(),
         monitor,
@@ -79,6 +83,7 @@ public class GooglePhotosImporter
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
+      Map<UUID, GooglePhotosInterface> photosInterfacesMap,
       GooglePhotosInterface photosInterface,
       ImageStreamProvider imageStreamProvider,
       Monitor monitor,
@@ -86,6 +91,7 @@ public class GooglePhotosImporter
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
+    this.photosInterfacesMap = photosInterfacesMap;
     this.photosInterface = photosInterface;
     this.imageStreamProvider = imageStreamProvider;
     this.monitor = monitor;
@@ -108,7 +114,7 @@ public class GooglePhotosImporter
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
         idempotentImportExecutor.executeAndSwallowIOExceptions(
-            album.getId(), album.getName(), () -> importSingleAlbum(authData, album));
+            album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
       }
     }
 
@@ -132,7 +138,7 @@ public class GooglePhotosImporter
   }
 
   @VisibleForTesting
-  String importSingleAlbum(TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
+  String importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
@@ -144,7 +150,7 @@ public class GooglePhotosImporter
     }
     googleAlbum.setTitle(title);
 
-    GoogleAlbum responseAlbum = getOrCreatePhotosInterface(authData).createAlbum(googleAlbum);
+    GoogleAlbum responseAlbum = getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
   }
 
@@ -175,7 +181,7 @@ public class GooglePhotosImporter
       inputStream = conn.getInputStream();
     }
 
-    String uploadToken = getOrCreatePhotosInterface(authData).uploadPhotoContent(inputStream);
+    String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
 
     String description = getPhotoDescription(inputPhoto);
     NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
@@ -195,7 +201,7 @@ public class GooglePhotosImporter
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
     try {
       return new PhotoResult(
-          getOrCreatePhotosInterface(authData)
+          getOrCreatePhotosInterface(jobId, authData)
               .createPhoto(uploadItem)
               .getResults()[0]
               .getMediaItem()
@@ -227,11 +233,20 @@ public class GooglePhotosImporter
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
-      TokensAndUrlAuthData authData) {
-    if (photosInterface == null) {
-      photosInterface = makePhotosInterface(authData);
+          UUID jobId, TokensAndUrlAuthData authData) {
+
+    if (photosInterface != null) {
+      return photosInterface;
     }
-    return photosInterface;
+
+    if (photosInterfacesMap.containsKey(jobId)) {
+      return photosInterfacesMap.get(jobId);
+    }
+
+    GooglePhotosInterface newInterface = makePhotosInterface(authData);
+    photosInterfacesMap.put(jobId, newInterface);
+
+    return newInterface;
   }
 
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {

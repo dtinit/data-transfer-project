@@ -91,7 +91,7 @@ public class GooglePhotosImporterTest {
 
     googlePhotosImporter =
         new GooglePhotosImporter(
-            null, jobStore, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
+            null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
   }
 
   @Test
@@ -107,7 +107,7 @@ public class GooglePhotosImporterTest {
         .thenReturn(responseAlbum);
 
     // Run test
-    googlePhotosImporter.importSingleAlbum(null, albumModel);
+    googlePhotosImporter.importSingleAlbum(uuid, null, albumModel);
 
     // Check results
     ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
