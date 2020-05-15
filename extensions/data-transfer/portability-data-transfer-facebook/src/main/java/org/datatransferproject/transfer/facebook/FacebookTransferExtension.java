@@ -19,6 +19,7 @@ package org.datatransferproject.transfer.facebook;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -26,15 +27,16 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter;
+import org.datatransferproject.transfer.facebook.videos.FacebookVideosExporter;
+import org.datatransferproject.transfer.facebook.videos.FacebookVideosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
-import java.io.IOException;
 
 public class FacebookTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Facebook";
   private boolean initialized = false;
 
-  private static final ImmutableList<String> SUPPORTED_SERVICES = ImmutableList.of("PHOTOS");
+  private static final ImmutableList<String> SUPPORTED_SERVICES =
+      ImmutableList.of("PHOTOS", "VIDEOS");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
 
@@ -62,23 +64,27 @@ public class FacebookTransferExtension implements TransferExtension {
     if (initialized) return;
 
     AppCredentials appCredentials;
+    final Monitor monitor = context.getMonitor();
     try {
       appCredentials =
           context
               .getService(AppCredentialStore.class)
               .getAppCredentials("FACEBOOK_KEY", "FACEBOOK_SECRET");
     } catch (IOException e) {
-      Monitor monitor = context.getMonitor();
       monitor.info(
-          () -> "Unable to retrieve Facebook AppCredentials. Did you set FACEBOOK_KEY and FACEBOOK_SECRET?", e);
+          () ->
+              "Unable to retrieve Facebook AppCredentials. Did you set FACEBOOK_KEY and FACEBOOK_SECRET?",
+          e);
       return;
     }
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+    importerBuilder.put("VIDEOS", new FacebookVideosImporter(appCredentials));
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put("PHOTOS", new FacebookPhotosExporter(appCredentials));
+    exporterBuilder.put("VIDEOS", new FacebookVideosExporter(appCredentials, monitor));
     exporterMap = exporterBuilder.build();
 
     initialized = true;
