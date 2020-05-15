@@ -49,14 +49,14 @@ import org.mockito.Mockito;
 
 public class GooglePhotosImporterTest {
 
+  private static final String OLD_ALBUM_ID = "OLD_ALBUM_ID";
+  private static final String NEW_ALBUM_ID = "NEW_ALBUM_ID";
   private String PHOTO_TITLE = "Model photo title";
   private String PHOTO_DESCRIPTION = "Model photo description";
   private String IMG_URI = "image uri";
   private String JPEG_MEDIA_TYPE = "image/jpeg";
   private String UPLOAD_TOKEN = "uploadToken";
-
   private UUID uuid = UUID.randomUUID();
-
   private GooglePhotosImporter googlePhotosImporter;
   private GooglePhotosInterface googlePhotosInterface;
   private TemporaryPerJobDataStore jobStore;
@@ -64,9 +64,6 @@ public class GooglePhotosImporterTest {
   private InputStream inputStream;
   private IdempotentImportExecutor executor;
   private Monitor monitor;
-
-  private static final String OLD_ALBUM_ID = "OLD_ALBUM_ID";
-  private static final String NEW_ALBUM_ID = "NEW_ALBUM_ID";
 
   @Before
   public void setUp() throws IOException, InvalidTokenException, PermissionDeniedException {
@@ -91,7 +88,7 @@ public class GooglePhotosImporterTest {
 
     googlePhotosImporter =
         new GooglePhotosImporter(
-            null, jobStore, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
+            null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
   }
 
   @Test
@@ -107,7 +104,7 @@ public class GooglePhotosImporterTest {
         .thenReturn(responseAlbum);
 
     // Run test
-    googlePhotosImporter.importSingleAlbum(null, albumModel);
+    googlePhotosImporter.importSingleAlbum(uuid, null, albumModel);
 
     // Check results
     ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
