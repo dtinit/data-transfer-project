@@ -56,10 +56,10 @@ public class GooglePhotosImporter
   private final TemporaryPerJobDataStore jobStore;
   private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
-  private volatile Map<UUID, GooglePhotosInterface> photosInterfacesMap;
-  private volatile GooglePhotosInterface photosInterface;
   private final Monitor monitor;
   private final double writesPerSecond;
+  private volatile Map<UUID, GooglePhotosInterface> photosInterfacesMap;
+  private volatile GooglePhotosInterface photosInterface;
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
@@ -150,7 +150,8 @@ public class GooglePhotosImporter
     }
     googleAlbum.setTitle(title);
 
-    GoogleAlbum responseAlbum = getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
+    GoogleAlbum responseAlbum =
+        getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
   }
 
@@ -181,7 +182,8 @@ public class GooglePhotosImporter
       inputStream = conn.getInputStream();
     }
 
-    String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
+    String uploadToken =
+        getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
 
     String description = getPhotoDescription(inputPhoto);
     NewMediaItem newMediaItem = new NewMediaItem(description, uploadToken);
@@ -233,7 +235,7 @@ public class GooglePhotosImporter
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
-          UUID jobId, TokensAndUrlAuthData authData) {
+      UUID jobId, TokensAndUrlAuthData authData) {
 
     if (photosInterface != null) {
       return photosInterface;
