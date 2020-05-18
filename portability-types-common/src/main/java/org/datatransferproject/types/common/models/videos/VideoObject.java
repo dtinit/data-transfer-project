@@ -81,4 +81,9 @@ public class VideoObject extends MediaObject {
             Objects.equal(getDataId(), that.getDataId()) &&
             Objects.equal(getAlbumId(), that.getAlbumId());
   }
+
+  @Override
+  public int hashCode() {
+    return this.dataId.hashCode();
+  }
 }

@@ -23,7 +23,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import java.security.InvalidKeyException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -32,13 +34,16 @@ import static java.lang.String.format;
 
 /**
  * Provides AES and RSA-based encryption implementations. See {@link EncrypterFactory} to create.
+ * 
+ * The first block encrypted is a random salt so that we can ignore its value in the decrypter. This
+ * makes it so we don't have to record the IV for AES.
  */
 final class EncrypterImpl implements Encrypter {
   private final Key key;
-  private final String transformation;
+  private final CryptoTransformation transformation;
   private final Monitor monitor;
 
-  EncrypterImpl(String transformation, Key key, Monitor monitor) {
+  EncrypterImpl(CryptoTransformation transformation, Key key, Monitor monitor) {
     this.key = key;
     this.transformation = transformation;
     this.monitor = monitor;
@@ -47,9 +52,22 @@ final class EncrypterImpl implements Encrypter {
   @Override
   public String encrypt(String data) {
     try {
-      Cipher cipher = Cipher.getInstance(transformation);
-      cipher.init(Cipher.ENCRYPT_MODE, key);
-      byte[] salt = new byte[8];
+      Cipher cipher;
+      switch (transformation) {
+        case AES_CBC_NOPADDING:
+          cipher = Cipher.getInstance("AES/CBC/NoPadding");
+          cipher.init(Cipher.ENCRYPT_MODE, key, generateIv(cipher));
+          break;
+        case RSA_ECB_PKCS1:
+          cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+          cipher.init(Cipher.ENCRYPT_MODE, key);        
+          break;
+        default:
+          throw new AssertionError("How could this happen...");
+      }
+      // we use a salt the size of the first block
+      // so that we don't need to know IV for AES/CBC
+      byte[] salt = new byte[cipher.getBlockSize()];
       SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
       random.nextBytes(salt);
       cipher.update(salt);
@@ -57,11 +75,19 @@ final class EncrypterImpl implements Encrypter {
       return BaseEncoding.base64Url().encode(encrypted);
     } catch (BadPaddingException
         | IllegalBlockSizeException
+        | InvalidAlgorithmParameterException
         | InvalidKeyException
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
       monitor.severe(() -> format("Exception encrypting data, length: %s", data.length()), e);
       throw new RuntimeException(e);
     }
+  }
+
+  private static final IvParameterSpec generateIv(Cipher cipher) throws NoSuchAlgorithmException {
+    SecureRandom randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
+    byte[] iv = new byte[cipher.getBlockSize()];
+    randomSecureRandom.nextBytes(iv);
+    return new IvParameterSpec(iv);
   }
 }
