@@ -16,6 +16,8 @@
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+
 import java.util.UUID;
 
 /**
@@ -34,13 +36,15 @@ public final class JobMetadata {
   private static String dataType = null;
   private static String exportService = null;
   private static String importService = null;
+  private static Stopwatch stopWatch = null;
 
   public static boolean isInitialized() {
     return (jobId != null
         && encodedPrivateKey != null
         && dataType != null
         && exportService != null
-        && importService != null);
+        && importService != null
+        && stopWatch != null);
   }
 
   static void init(
@@ -48,13 +52,15 @@ public final class JobMetadata {
       byte[] initEncodedPrivateKey,
       String initDataType,
       String initExportService,
-      String initImportService) {
+      String initImportService,
+      Stopwatch initStopWatch) {
     Preconditions.checkState(!isInitialized(), "JobMetadata cannot be initialized twice");
     jobId = initJobId;
     encodedPrivateKey = initEncodedPrivateKey;
     dataType = initDataType;
     exportService = initExportService;
     importService = initImportService;
+    stopWatch = initStopWatch;
   }
 
   // TODO: remove this
@@ -64,6 +70,7 @@ public final class JobMetadata {
     dataType = null;
     exportService = null;
     importService = null;
+    stopWatch = null;
   }
 
   static byte[] getPrivateKey() {
@@ -89,5 +96,10 @@ public final class JobMetadata {
   public static String getImportService() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return importService;
+  }
+
+  public static Stopwatch getStopWatch() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
+    return stopWatch;
   }
 }

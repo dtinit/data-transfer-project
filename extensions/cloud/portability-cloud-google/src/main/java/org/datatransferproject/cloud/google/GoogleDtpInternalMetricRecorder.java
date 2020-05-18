@@ -320,6 +320,11 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
+  public void cancelledJob(String dataType, String exportService, String importService, Duration duration) {
+    // Need Google folks to implement the necessary changes here.
+  }
+
+  @Override
   public void recordGenericMetric(String dataType, String service, String tag) {
     recordGenericMetric(dataType, service, tag, 1);
   }

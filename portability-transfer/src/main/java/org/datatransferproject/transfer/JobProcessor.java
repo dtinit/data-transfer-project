@@ -84,7 +84,6 @@ final class JobProcessor {
 
     PortabilityJob job = store.findJob(jobId);
     JobAuthorization jobAuthorization = job.jobAuthorization();
-    Stopwatch stopwatch = Stopwatch.createUnstarted();
     Collection<ErrorDetail> errors = null;
 
     try {
@@ -118,7 +117,7 @@ final class JobProcessor {
           JobMetadata.getDataType(),
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
-      stopwatch.start();
+      JobMetadata.getStopWatch().start();
       errors = copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       final int numErrors = errors.size();
       monitor.debug(
@@ -144,7 +143,7 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService(),
           success,
-          stopwatch.elapsed());
+          JobMetadata.getStopWatch().elapsed());
       monitor.flushLogs();
       JobMetadata.reset();
     }
