@@ -34,4 +34,9 @@ public class IdOnlyContainerResource extends ContainerResource {
     IdOnlyContainerResource idResource= (IdOnlyContainerResource) object;
     return this.id.equals(idResource.getId());
   }
+
+  @Override
+  public int hashCode() {
+    return this.id.hashCode();
+  }
 }

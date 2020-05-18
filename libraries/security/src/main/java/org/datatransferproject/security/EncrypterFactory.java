@@ -38,7 +38,7 @@ public class EncrypterFactory {
    */
   public Encrypter create(SecretKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("AES"));
-    return new EncrypterImpl("AES", key, monitor);
+    return new EncrypterImpl(CryptoTransformation.AES_CBC_NOPADDING, key, monitor);
   }
 
   /**
@@ -47,7 +47,7 @@ public class EncrypterFactory {
    */
   public Encrypter create(PublicKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
-    return new EncrypterImpl("RSA/ECB/PKCS1Padding", key, monitor);
+    return new EncrypterImpl(CryptoTransformation.RSA_ECB_PKCS1, key, monitor);
   }
 
   /**
@@ -56,6 +56,6 @@ public class EncrypterFactory {
    */
   public Encrypter create(PrivateKey key) {
     Preconditions.checkArgument(key.getAlgorithm().equals("RSA"));
-    return new EncrypterImpl("RSA/ECB/PKCS1Padding", key, monitor);
+    return new EncrypterImpl(CryptoTransformation.RSA_ECB_PKCS1, key, monitor);
   }
 }

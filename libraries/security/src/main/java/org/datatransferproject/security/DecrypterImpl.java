@@ -23,9 +23,12 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 import static java.lang.String.format;
 
@@ -34,12 +37,11 @@ import static java.lang.String.format;
  * DecrypterFactory} to create.
  */
 final class DecrypterImpl implements Decrypter {
-
   private final Key key;
-  private final String transformation;
+  private final CryptoTransformation transformation;
   private final Monitor monitor;
 
-  DecrypterImpl(String transformation, Key key, Monitor monitor) {
+  DecrypterImpl(CryptoTransformation transformation, Key key, Monitor monitor) {
     this.key = key;
     this.transformation = transformation;
     this.monitor = monitor;
@@ -49,22 +51,41 @@ final class DecrypterImpl implements Decrypter {
   public String decrypt(String encrypted) {
     try {
       byte[] decoded = BaseEncoding.base64Url().decode(encrypted);
-      Cipher cipher = Cipher.getInstance(transformation);
-      cipher.init(Cipher.DECRYPT_MODE, key);
+      Cipher cipher;
+      switch (transformation) {
+        case AES_CBC_NOPADDING:
+          cipher = Cipher.getInstance("AES/CBC/NoPadding");
+          cipher.init(Cipher.DECRYPT_MODE, key, generateIv(cipher));
+          break;
+        case RSA_ECB_PKCS1:
+          cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+          cipher.init(Cipher.DECRYPT_MODE, key);        
+          break;
+        default:
+          throw new AssertionError("How could this happen...");
+      }
       byte[] decrypted = cipher.doFinal(decoded);
-      if (decrypted == null || decrypted.length <= 8) {
+      if (decrypted == null || decrypted.length <= cipher.getBlockSize()) {
         throw new RuntimeException("incorrect decrypted text.");
       }
-      byte[] data = new byte[decrypted.length - 8];
-      System.arraycopy(decrypted, 8, data, 0, data.length);
+      byte[] data = new byte[decrypted.length - cipher.getBlockSize()];
+      System.arraycopy(decrypted, cipher.getBlockSize(), data, 0, data.length);
       return new String(data, Charsets.UTF_8);
     } catch (BadPaddingException
         | IllegalBlockSizeException
+        | InvalidAlgorithmParameterException
         | InvalidKeyException
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
       monitor.severe(() -> format("Error decrypting data, length: %s", encrypted.length()), e);
       throw new RuntimeException(e);
     }
+  }
+
+  private static final IvParameterSpec generateIv(Cipher cipher) throws NoSuchAlgorithmException {
+    SecureRandom randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
+    byte[] iv = new byte[cipher.getBlockSize()];
+    randomSecureRandom.nextBytes(iv);
+    return new IvParameterSpec(iv);
   }
 }
