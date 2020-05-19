@@ -38,6 +38,12 @@ public interface DtpInternalMetricRecorder {
       String importService,
       boolean success,
       Duration duration);
+  /** A DTP job cancelled **/
+  void cancelledJob(
+      String dataType,
+      String exportService,
+      String importService,
+      Duration duration);
 
   /** An single attempt to export a page of data finished. **/
   void exportPageAttemptFinished(

@@ -206,12 +206,14 @@ class JobPollingService extends AbstractScheduledService {
     if (monitor instanceof JobAwareMonitor) {
       ((JobAwareMonitor) monitor).setJobId(jobId.toString());
     }
+
     JobMetadata.init(
         jobId,
         keyPair.getEncodedPrivateKey(),
         existingJob.transferDataType(),
         existingJob.exportService(),
-        existingJob.importService());
+        existingJob.importService(),
+        Stopwatch.createUnstarted());
     monitor.debug(
         () -> format("Stored updated job: tryToClaimJob: JobMetadata initialized: %s", jobId));
 
