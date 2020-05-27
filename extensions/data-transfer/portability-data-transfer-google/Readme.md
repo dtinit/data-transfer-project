@@ -25,11 +25,41 @@ This folder contains the extension implementation for the
     - Stores attached photos in Drive
 
 ## Keys & Auth
-
-Sign up for a [Google Cloud developer account](https://console.developers.google.com/start)
-and then enable the appropriate APIs in the console.
-
 Google uses OAuth 2 for authorization.
+
+### Create a developer account
+Before getting started you will need a [Google Cloud developer account](https://console.developers.google.com/start)
+
+### Google Photos
+#### Getting Started
+ - Enable the Google Photos API and request an OAuth 2.0 client ID by following the [getting started guide](https://developers.google.com/photos/library/guides/get-started).
+ - Choose which [authorization scopes](https://developers.google.com/photos/library/guides/authentication-authorization) your application will need. You can see the required scopes in the [GoogleOauthConfig](https://github.com/google/data-transfer-project/blob/master/extensions/auth/portability-auth-google/src/main/java/org/datatransferproject/auth/google/GoogleOAuthConfig.java#L51-L77).
+ - Initially, your application will show an "Unverified app" message until it is [verified](https://support.google.com/cloud/answer/7454865) and you will have limited [API](https://developers.google.com/photos/library/guides/api-limits-quotas) and [OAuth](https://console.developers.google.com/apis/credentials/consent) quota
+ - We recommend you review the [UX Guidelines](https://developers.google.com/photos/library/guides/ux-guidelines) and [Acceptable use policy](https://developers.google.com/photos/library/guides/acceptable-use)  while designing your app if you want to eventually get increased quota through the Google Photos Partner Program.
+
+#### Launching to Production
+Before launching your application to production, you’ll want to get it verified and increase your quota limits by applying for the [Google Photos Partner Program](https://developers.google.com/photos/partner-program/overview). We recommend getting this process started well before your intended launch
+
+__Getting your app verified__
+ - Follow the [instructions](https://support.google.com/cloud/answer/7454865) under “Verification for apps”. **Note**: The OAuth consent screen requires a support email. This has to be a google account of a developer or a google group.
+ - Visit the [OAuth API verification FAQs](https://support.google.com/cloud/answer/9110914) for more information.
+
+__Increasing Quota__
+*Oauth*
+ - You can monitor your Oauth token grant rate [here](https://console.developers.google.com/apis/credentials/consent).
+ - To increase your quota, fill out this [form](https://support.google.com/code/contact/oauth_quota_increase).
+*API*
+ - You can monitor your API quota [here](https://console.developers.google.com/iam-admin/quotas)
+ - To increase your quota, apply for the [Google Photos Partner Program](https://developers.google.com/photos/partner-program/overview). **Note**: Your application must adhere to the [UX Guidelines](https://developers.google.com/photos/library/guides/ux-guidelines) and the [Acceptable use policy](https://developers.google.com/photos/library/guides/acceptable-use).
+ - As part of your application you must pass an [integration review](https://developers.google.com/photos/partner-program/overview#launching) before launch, which could take several weeks to complete.
+
+#### Best Practices
+Some Google Photos API [best practices](https://developers.google.com/photos/library/guides/best-practices) are handled by the DTP infrastructure, but may require configuring:
+ - __Authentication and authorization__ - only request the scopes required for the [specific adapter](https://github.com/google/data-transfer-project/blob/master/extensions/auth/portability-auth-google/src/main/java/org/datatransferproject/auth/google/GoogleOAuthConfig.java#L51-L77) you intend to use.
+ - __Retrying Failed Requests__ - there is a [default retry strategy](https://github.com/google/data-transfer-project/blob/master/distributions/demo-server/src/main/resources/config/retry/default.yaml) built into the platform that is configurable. 
+ - __Exponential backoff__ - we rate limit the writes by default to 1/sec and employ exponential backoff for retries
+
+For more information about the Google Photos API, please visit their developer page.
 
 ## Maintained By
 
