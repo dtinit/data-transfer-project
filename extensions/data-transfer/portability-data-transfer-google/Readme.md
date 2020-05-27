@@ -40,14 +40,16 @@ Before getting started you will need a [Google Cloud developer account](https://
 #### Launching to Production
 Before launching your application to production, you’ll want to get it verified and increase your quota limits by applying for the [Google Photos Partner Program](https://developers.google.com/photos/partner-program/overview). We recommend getting this process started well before your intended launch
 
-__Getting your app verified__
+1. Getting your app verified
  - Follow the [instructions](https://support.google.com/cloud/answer/7454865) under “Verification for apps”. **Note**: The OAuth consent screen requires a support email. This has to be a google account of a developer or a google group.
  - Visit the [OAuth API verification FAQs](https://support.google.com/cloud/answer/9110914) for more information.
 
-__Increasing Quota__
+2. Increasing Quota
+
 *Oauth*
  - You can monitor your Oauth token grant rate [here](https://console.developers.google.com/apis/credentials/consent).
  - To increase your quota, fill out this [form](https://support.google.com/code/contact/oauth_quota_increase).
+
 *API*
  - You can monitor your API quota [here](https://console.developers.google.com/iam-admin/quotas)
  - To increase your quota, apply for the [Google Photos Partner Program](https://developers.google.com/photos/partner-program/overview). **Note**: Your application must adhere to the [UX Guidelines](https://developers.google.com/photos/library/guides/ux-guidelines) and the [Acceptable use policy](https://developers.google.com/photos/library/guides/acceptable-use).
