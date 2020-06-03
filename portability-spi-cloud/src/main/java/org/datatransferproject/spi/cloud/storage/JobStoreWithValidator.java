@@ -11,7 +11,6 @@ import java.util.UUID;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
-import org.datatransferproject.spi.transfer.types.FailureReasons;
 
 public abstract class JobStoreWithValidator implements JobStore {
 
@@ -80,7 +79,6 @@ public abstract class JobStoreWithValidator implements JobStore {
         jobId,
         job.toBuilder()
             .setState(PortabilityJob.State.ERROR)
-            .setFailureReason(FailureReasons.TIMEOUT.toString()).build()
             .setAndValidateJobAuthorization(
                 job.jobAuthorization()
                     .toBuilder()
