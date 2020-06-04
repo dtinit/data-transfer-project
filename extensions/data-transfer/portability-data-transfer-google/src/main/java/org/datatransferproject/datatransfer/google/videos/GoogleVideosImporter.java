@@ -52,9 +52,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -74,23 +74,14 @@ public class GoogleVideosImporter
   // TODO: internationalize copy prefix
   private static final String COPY_PREFIX = "Copy of ";
 
-  private final ImageStreamProvider videoStreamProvider;
+  private final ImageStreamProvider videoStreamProvider = new ImageStreamProvider();
   private Monitor monitor;
   private final AppCredentials appCredentials;
   private final TemporaryPerJobDataStore dataStore;
+  private Map<UUID, PhotosLibrarySettings> settingsMap = new HashMap<>();
 
   public GoogleVideosImporter(
       AppCredentials appCredentials, TemporaryPerJobDataStore dataStore, Monitor monitor) {
-    this(new ImageStreamProvider(), monitor, appCredentials, dataStore);
-  }
-
-  @VisibleForTesting
-  GoogleVideosImporter(
-      ImageStreamProvider videoStreamProvider,
-      Monitor monitor,
-      AppCredentials appCredentials,
-      TemporaryPerJobDataStore dataStore) {
-    this.videoStreamProvider = videoStreamProvider;
     this.monitor = monitor;
     this.appCredentials = appCredentials;
     this.dataStore = dataStore;
@@ -108,17 +99,25 @@ public class GoogleVideosImporter
       return ImportResult.OK;
     }
 
-    PhotosLibrarySettings settings =
-        PhotosLibrarySettings.newBuilder()
-            .setCredentialsProvider(
-                FixedCredentialsProvider.create(
-                    UserCredentials.newBuilder()
-                        .setClientId(appCredentials.getKey())
-                        .setClientSecret(appCredentials.getSecret())
-                        .setAccessToken(new AccessToken(authData.getAccessToken(), null))
-                        .setRefreshToken(authData.getRefreshToken())
-                        .build()))
-            .build();
+    PhotosLibrarySettings settings;
+    if (settingsMap.containsKey(jobId)) {
+      settings = settingsMap.get(jobId);
+    } else {
+      settings =
+          PhotosLibrarySettings.newBuilder()
+              .setCredentialsProvider(
+                  FixedCredentialsProvider.create(
+                      UserCredentials.newBuilder()
+                          .setClientId(appCredentials.getKey())
+                          .setClientSecret(appCredentials.getSecret())
+                          .setAccessToken(
+                              new AccessToken(
+                                  authData.getAccessToken(), new Date()))
+                          .setRefreshToken(authData.getRefreshToken())
+                          .build()))
+              .build();
+      settingsMap.put(jobId, settings);
+    }
 
     long bytes = 0L;
     //     Uploads videos
