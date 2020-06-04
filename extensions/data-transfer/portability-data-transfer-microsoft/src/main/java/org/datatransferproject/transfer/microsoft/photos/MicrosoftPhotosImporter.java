@@ -42,7 +42,9 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -53,10 +55,6 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
- *
- * <p>The implementation currently uses the Graph Upload API, which has a content size limit of 4MB.
- * In the future, this can be enhanced to support large files (e.g. high resolution images and
- * videos) using the Upload Session API.
  */
 public class MicrosoftPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -137,7 +135,7 @@ public class MicrosoftPhotosImporter
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(PhotoAlbum album) throws IOException {
+  private String createOneDriveFolder(PhotoAlbum album) throws IOException, CopyExceptionWithFailureReason {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     // clean up album name for microsoft specifically
@@ -168,7 +166,10 @@ public class MicrosoftPhotosImporter
         code = newResponse.code();
         body = newResponse.body();
       }
-      if (code < 200 || code > 299) {
+
+      if (code == 403 && response.message() == "Access Denied") {
+        throw new PermissionDeniedException("User access to microsoft onedrive was denied", new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
+      } else if (code < 200 || code > 299) {
         throw new IOException(
             "Got error code: "
                 + code
@@ -176,10 +177,10 @@ public class MicrosoftPhotosImporter
                 + response.message()
                 + " body: "
                 + response.body().string());
-      }
-      if (body == null) {
+      } else if (body == null) {
         throw new IOException("Got null body");
       }
+
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
       String folderId = (String) responseData.get("id");
       Preconditions.checkState(!Strings.isNullOrEmpty(folderId),
@@ -234,7 +235,7 @@ public class MicrosoftPhotosImporter
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
   private String createUploadSession(PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor) throws
-          IOException, DestinationMemoryFullException {
+          IOException, CopyExceptionWithFailureReason {
 
     // Forming the URL to create an upload session
     String createSessionUrl;
@@ -278,12 +279,16 @@ public class MicrosoftPhotosImporter
       responseBody = newResponse.body();
     }
 
-    if (code == 507 && response.message().contains("Insufficient Storage")) {
+    if (code == 403 && response.message() == "Access Denied") {
+      throw new PermissionDeniedException("User access to Microsoft One Drive was denied",
+          new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
+    } else if (code == 507 && response.message().contains("Insufficient Storage")) {
       throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
               new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
     } else if (code < 200 || code > 299) {
       throw new IOException(
-        String.format("Got error code: %s\nmessage: %s\nbody: %s\nrequest url: %s\nbearer token: %s\n", code, response.message(), response.body().string(), createSessionUrl, credential.getAccessToken()));
+        String.format("Got error code: %s\nmessage: %s\nbody: %s\nrequest url: %s\nbearer token: %s\n",
+            code, response.message(), response.body().string(), createSessionUrl, credential.getAccessToken()));
     } else if (code != 200) {
       monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
