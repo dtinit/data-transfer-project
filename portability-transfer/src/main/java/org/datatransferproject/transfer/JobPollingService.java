@@ -36,6 +36,7 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator.WorkerKeyPair;
+import org.datatransferproject.spi.transfer.types.FailureReasons;
 
 /**
  * A service that polls storage for a job to process in two steps: <br> (1) find an unassigned job
@@ -96,6 +97,7 @@ class JobPollingService extends AbstractScheduledService {
   private void markJobTimedOut(UUID jobId) {
     try {
       store.markJobAsTimedOut(jobId);
+      store.addFailureReasonToJob(jobId, FailureReasons.CREDS_TIMEOUT.toString());
     } catch (IOException e) {
       // Suppress exception so we still pass out the original exception
       monitor.severe(
