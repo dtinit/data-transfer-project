@@ -35,6 +35,8 @@ public class RetryingCallable<T> implements Callable<T> {
   private final RetryStrategyLibrary retryStrategyLibrary;
   private final Clock clock;
   private final Monitor monitor;
+  private final String dataType;
+  private final String service;
 
   private volatile int attempts;
   private volatile Exception mostRecentException;
@@ -43,11 +45,15 @@ public class RetryingCallable<T> implements Callable<T> {
       Callable<T> callable,
       RetryStrategyLibrary retryStrategyLibrary,
       Clock clock,
-      Monitor monitor) {
+      Monitor monitor,
+      String dataType,
+      String service) {
     this.callable = callable;
     this.retryStrategyLibrary = retryStrategyLibrary;
     this.clock = clock;
     this.monitor = monitor;
+    this.dataType = dataType;
+    this.service = service;
     this.attempts = 0;
   }
 
@@ -62,6 +68,11 @@ public class RetryingCallable<T> implements Callable<T> {
       Instant start = clock.instant();
       attempts++;
       try {
+        monitor.debug(
+            () ->
+                String.format(
+                    "Attempt %d started, service: %s, dataType: %s",
+                    attempts, service, dataType));
         return callable.call();
       } catch (Exception e) {
         mostRecentException = e;
@@ -73,7 +84,8 @@ public class RetryingCallable<T> implements Callable<T> {
         monitor.debug(
             () ->
                 String.format(
-                    "Attempt %d failed, using retry strategy: %s", attempts, strategy.toString()));
+                    "Attempt %d failed, using retry strategy: %s, service: %s, dataType: %s",
+                    attempts, strategy.toString(), service, dataType));
         if (strategy.canTryAgain(attempts)) {
           long nextAttemptIntervalMillis =
               strategy.getRemainingIntervalMillis(attempts, elapsedMillis);

@@ -127,7 +127,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
         new CallableExporter(
             exporterProvider, jobId, exportAuthData, exportInformation, metricRecorder);
     RetryingCallable<ExportResult> retryingExporter =
-        new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
+        new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor, JobMetadata.getDataType(), JobMetadata.getExportService());
     ExportResult<?> exportResult;
     boolean exportSuccess = false;
     Stopwatch exportStopwatch = Stopwatch.createStarted();
@@ -165,7 +165,7 @@ final class PortabilityInMemoryDataCopier implements InMemoryDataCopier {
               metricRecorder);
       RetryingCallable<ImportResult> retryingImporter =
           new RetryingCallable<>(
-              callableImporter, retryStrategyLibrary, Clock.systemUTC(), monitor);
+              callableImporter, retryStrategyLibrary, Clock.systemUTC(), monitor, JobMetadata.getDataType(), JobMetadata.getImportService());
       boolean importSuccess = false;
       Stopwatch importStopwatch = Stopwatch.createStarted();
       try {
