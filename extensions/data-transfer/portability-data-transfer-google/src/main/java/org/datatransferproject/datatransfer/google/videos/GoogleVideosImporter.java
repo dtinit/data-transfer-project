@@ -35,7 +35,6 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.photos.library.v1.PhotosLibrarySettings;
@@ -58,7 +57,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -83,7 +81,7 @@ public class GoogleVideosImporter
   private Monitor monitor;
   private final AppCredentials appCredentials;
   private final TemporaryPerJobDataStore dataStore;
-  private Map<UUID, PhotosLibrarySettings> settingsMap = new HashMap<>();
+  private Map<UUID, PhotosLibraryClient> clientsMap = new HashMap<>();
 
   public GoogleVideosImporter(
       AppCredentials appCredentials, TemporaryPerJobDataStore dataStore, Monitor monitor) {
@@ -104,11 +102,11 @@ public class GoogleVideosImporter
       return ImportResult.OK;
     }
 
-    PhotosLibrarySettings settings;
-    if (settingsMap.containsKey(jobId)) {
-      settings = settingsMap.get(jobId);
+    PhotosLibraryClient client;
+    if (clientsMap.containsKey(jobId)) {
+      client = clientsMap.get(jobId);
     } else {
-      settings =
+      PhotosLibrarySettings settings =
           PhotosLibrarySettings.newBuilder()
               .setCredentialsProvider(
                   FixedCredentialsProvider.create(
@@ -121,7 +119,8 @@ public class GoogleVideosImporter
                           .setRefreshToken(authData.getRefreshToken())
                           .build()))
               .build();
-      settingsMap.put(jobId, settings);
+      client = PhotosLibraryClient.initialize(settings);
+      clientsMap.put(jobId, client);
     }
 
     long bytes = 0L;
@@ -130,7 +129,7 @@ public class GoogleVideosImporter
       for (VideoObject video : data.getVideos()) {
         final VideoResult result =
             executor.executeAndSwallowIOExceptions(
-                video.getDataId(), video.getName(), () -> importSingleVideo(video, settings));
+                video.getDataId(), video.getName(), () -> importSingleVideo(video, client));
         if (result != null) {
           bytes += result.getBytes();
         }
@@ -140,7 +139,7 @@ public class GoogleVideosImporter
     return result.copyWithBytes(bytes);
   }
 
-  VideoResult importSingleVideo(VideoObject inputVideo, PhotosLibrarySettings settings)
+  VideoResult importSingleVideo(VideoObject inputVideo, PhotosLibraryClient photosLibraryClient)
       throws Exception {
     if (inputVideo.getContentUrl() == null) {
       monitor.info(() -> "Content Url is empty. Make sure that you provide a valid content Url.");
@@ -161,7 +160,7 @@ public class GoogleVideosImporter
       tmp = dataStore.getTempFileFromInputStream(inputStream, filename, ".mp4");
     }
 
-    try (PhotosLibraryClient photosLibraryClient = PhotosLibraryClient.initialize(settings)) {
+    try {
       UploadMediaItemRequest uploadRequest =
           UploadMediaItemRequest.newBuilder()
               .setFileName(filename)
