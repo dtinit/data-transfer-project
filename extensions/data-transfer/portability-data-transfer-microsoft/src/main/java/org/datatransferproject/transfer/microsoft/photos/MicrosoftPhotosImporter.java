@@ -23,12 +23,9 @@ import com.google.common.collect.ImmutableMap;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 import java.util.LinkedHashMap;
-import java.time.Instant;
-import java.time.Duration;
+import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -36,7 +33,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.internal.Util;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -168,7 +164,10 @@ public class MicrosoftPhotosImporter
       }
 
       if (code == 403 && response.message() == "Access Denied") {
-        throw new PermissionDeniedException("User access to microsoft onedrive was denied", new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
+        throw new PermissionDeniedException(
+            "User access to microsoft onedrive was denied",
+            new IOException(
+                String.format("Got error code %d  with message: %s", code, response.message())));
       } else if (code < 200 || code > 299) {
         throw new IOException(
             "Got error code: "
@@ -208,16 +207,18 @@ public class MicrosoftPhotosImporter
     List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
     inputStream.close();
     final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
-    Preconditions.checkState(chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
+    Preconditions.checkState(
+        chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
 
     Response chunkResponse = null;
     for (DataChunk chunk : chunksToSend) {
       chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
     }
-    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) { 
-      // Once we upload the last chunk, we should have either 200 or 201. 
+    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
+      // Once we upload the last chunk, we should have either 200 or 201.
       // This should change to a precondition check after we debug some more.
-      monitor.debug(() -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
+      monitor.debug(
+          () -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
     }
     // get complete file response
     ResponseBody chunkResponseBody = chunkResponse.body();
@@ -280,20 +281,36 @@ public class MicrosoftPhotosImporter
     }
 
     if (code == 403 && response.message() == "Access Denied") {
-      throw new PermissionDeniedException("User access to Microsoft One Drive was denied",
-          new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
+      throw new PermissionDeniedException(
+          "User access to Microsoft One Drive was denied",
+          new IOException(
+              String.format("Got error code %d  with message: %s", code, response.message())));
     } else if (code == 507 && response.message().contains("Insufficient Storage")) {
-      throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
-              new IOException(String.format("Got error code %d  with message: %s", code, response.message())));
+      throw new DestinationMemoryFullException(
+          "Microsoft destination storage limit reached",
+          new IOException(
+              String.format("Got error code %d  with message: %s", code, response.message())));
     } else if (code < 200 || code > 299) {
       throw new IOException(
-        String.format("Got error code: %s\nmessage: %s\nbody: %s\nrequest url: %s\nbearer token: %s\n",
-            code, response.message(), response.body().string(), createSessionUrl, credential.getAccessToken()));
+          String.format(
+              "Got error code: %s\n"
+                  + "message: %s\n"
+                  + "body: %s\n"
+                  + "request url: %s\n"
+                  + "bearer token: %s\n"
+                  + " photo: %s\n", // For debugging 404s on upload
+              code,
+              response.message(),
+              response.body().string(),
+              createSessionUrl,
+              credential.getAccessToken(),
+              photo));
     } else if (code != 200) {
       monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
     // make sure we have a non-null response body
-    Preconditions.checkState(responseBody != null, "Got Null Body when creating photo upload session %s", photo);
+    Preconditions.checkState(
+        responseBody != null, "Got Null Body when creating photo upload session %s", photo);
     // convert to a map
     final Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
     // return the session's upload url
@@ -318,7 +335,8 @@ public class MicrosoftPhotosImporter
     uploadRequestBuilder.put(uploadChunkBody);
 
     // set chunk data headers, indicating size and chunk range
-    final String contentRange = String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+    final String contentRange =
+        String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
     uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
 
@@ -336,14 +354,25 @@ public class MicrosoftPhotosImporter
     }
     int chunkCode = chunkResponse.code();
     if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
-      throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
-              new IOException(String.format("Got error code %d  with message: %s", chunkCode, chunkResponse.message())));
+      throw new DestinationMemoryFullException(
+          "Microsoft destination storage limit reached",
+          new IOException(
+              String.format(
+                  "Got error code %d  with message: %s", chunkCode, chunkResponse.message())));
     } else if (chunkCode < 200 || chunkCode > 299) {
       throw new IOException(
-        "Got error code: " + chunkCode + " message: " + chunkResponse.message() + " body: " + chunkResponse
-        .body().string());
+          "Got error code: "
+              + chunkCode
+              + " message: "
+              + chunkResponse.message()
+              + " body: "
+              + chunkResponse.body().string());
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
-      monitor.info(() -> String.format("Uploaded chunk %s-%s successfuly, code %d", chunk.getStart(), chunk.getEnd(), chunkCode));
+      monitor.info(
+          () ->
+              String.format(
+                  "Uploaded chunk %s-%s successfuly, code %d",
+                  chunk.getStart(), chunk.getEnd(), chunkCode));
     }
     return chunkResponse;
   }
