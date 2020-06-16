@@ -17,18 +17,32 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.photos.library.v1.proto.BatchCreateMediaItemsResponse;
 import com.google.photos.library.v1.proto.NewMediaItemResult;
+import com.google.photos.library.v1.upload.UploadMediaItemResponse;
 import com.google.photos.types.proto.MediaItem;
 import com.google.rpc.Code;
 import com.google.rpc.Status;
+import java.io.File;
+import java.net.HttpURLConnection;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
+import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentMatchers;
 
 public class GoogleVideosImporterTest {
@@ -37,43 +51,147 @@ public class GoogleVideosImporterTest {
   private static final String VIDEO_DESCRIPTION = "Model video description";
   private static final String VIDEO_URI = "https://www.example.com/video.mp4";
   private static final String MP4_MEDIA_TYPE = "video/mp4";
-  private static final String UPLOAD_TOKEN = "uploadToken";
   private static final String VIDEO_ID = "myId";
-  private static final String RESULT_ID = "RESULT_ID";
 
   private GoogleVideosImporter googleVideosImporter;
-  private PhotosLibraryClient photosLibraryClient;
 
   @Before
   public void setUp() throws Exception {
-    googleVideosImporter = new GoogleVideosImporter(null, null, null);
+    // Create files so we can accurately check the length of file counting
+    TemporaryPerJobDataStore dataStore = mock(TemporaryPerJobDataStore.class);
+    TemporaryFolder folder = new TemporaryFolder();
+    folder.create();
+    File file1 = folder.newFile();
+    Files.write(new byte[32], file1);
+    File file2 = folder.newFile();
+    Files.write(new byte[32], file2);
+    when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(file1, file2);
 
-    photosLibraryClient = mock(PhotosLibraryClient.class);
+    ImageStreamProvider streamProvider = mock(ImageStreamProvider.class);
+    when(streamProvider.getConnection(any())).thenReturn(mock(HttpURLConnection.class));
+    googleVideosImporter =
+        new GoogleVideosImporter(null, dataStore, mock(Monitor.class), streamProvider);
+  }
 
+  @Test
+  public void importTwoVideos() throws Exception {
+    PhotosLibraryClient photosLibraryClient = mock(PhotosLibraryClient.class);
+
+    // Mock uploads
+    when(photosLibraryClient.uploadMediaItem(any()))
+        .thenReturn(
+            UploadMediaItemResponse.newBuilder().setUploadToken("token1").build(),
+            UploadMediaItemResponse.newBuilder().setUploadToken("token2").build());
+
+    // Mock creation response
     final NewMediaItemResult newMediaItemResult =
         NewMediaItemResult.newBuilder()
             .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
-            .setMediaItem(MediaItem.newBuilder().setId(RESULT_ID).build())
+            .setMediaItem(MediaItem.newBuilder().setId("RESULT_ID_1").build())
+            .setUploadToken("token1")
+            .build();
+    final NewMediaItemResult newMediaItemResult2 =
+        NewMediaItemResult.newBuilder()
+            .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
+            .setMediaItem(MediaItem.newBuilder().setId("RESULT_ID_2").build())
+            .setUploadToken("token2")
             .build();
     BatchCreateMediaItemsResponse response =
         BatchCreateMediaItemsResponse.newBuilder()
             .addNewMediaItemResults(newMediaItemResult)
+            .addNewMediaItemResults(newMediaItemResult2)
             .build();
     when(photosLibraryClient.batchCreateMediaItems(ArgumentMatchers.anyList()))
         .thenReturn(response);
+
+    InMemoryIdempotentImportExecutor executor =
+        new InMemoryIdempotentImportExecutor(mock(Monitor.class));
+    Long length =
+        googleVideosImporter.importVideoBatch(
+            Lists.newArrayList(
+                new VideoObject(
+                    VIDEO_TITLE,
+                    VIDEO_URI,
+                    VIDEO_DESCRIPTION,
+                    MP4_MEDIA_TYPE,
+                    VIDEO_ID,
+                    null,
+                    false),
+                new VideoObject(
+                    VIDEO_TITLE,
+                    VIDEO_URI,
+                    VIDEO_DESCRIPTION,
+                    MP4_MEDIA_TYPE,
+                    "myId2",
+                    null,
+                    false)),
+            photosLibraryClient,
+            executor);
+    assertEquals(
+        "Expected the number of bytes to be the two files of 32L.", 64L, length.longValue());
+    assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
   }
 
   @Test
-  public void exportVideo() throws Exception {
-    // Set up
-    VideoObject videoModel =
-        new VideoObject(
-            VIDEO_TITLE, VIDEO_URI, VIDEO_DESCRIPTION, MP4_MEDIA_TYPE, VIDEO_ID, null, false);
+  public void failOneVideo() throws Exception {
+    PhotosLibraryClient photosLibraryClient = mock(PhotosLibraryClient.class);
 
-    // Run test
-    final String resultId =
-        googleVideosImporter.createMediaItem(videoModel, photosLibraryClient, UPLOAD_TOKEN);
+    // Mock uploads
+    when(photosLibraryClient.uploadMediaItem(any()))
+        .thenReturn(
+            UploadMediaItemResponse.newBuilder().setUploadToken("token1").build(),
+            UploadMediaItemResponse.newBuilder().setUploadToken("token2").build());
 
-    assertEquals(RESULT_ID, resultId);
+    // Mock creation response
+    final NewMediaItemResult newMediaItemResult =
+        NewMediaItemResult.newBuilder()
+            .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
+            .setMediaItem(MediaItem.newBuilder().setId("RESULT_ID_1").build())
+            .setUploadToken("token1")
+            .build();
+    final NewMediaItemResult newMediaItemResult2 =
+        NewMediaItemResult.newBuilder()
+            .setStatus(Status.newBuilder().setCode(Code.INVALID_ARGUMENT_VALUE).build())
+            .setUploadToken("token2")
+            .build();
+    BatchCreateMediaItemsResponse response =
+        BatchCreateMediaItemsResponse.newBuilder()
+            .addNewMediaItemResults(newMediaItemResult)
+            .addNewMediaItemResults(newMediaItemResult2)
+            .build();
+    when(photosLibraryClient.batchCreateMediaItems(ArgumentMatchers.anyList()))
+        .thenReturn(response);
+
+    InMemoryIdempotentImportExecutor executor =
+        new InMemoryIdempotentImportExecutor(mock(Monitor.class));
+    Long length =
+        googleVideosImporter.importVideoBatch(
+            Lists.newArrayList(
+                new VideoObject(
+                    VIDEO_TITLE,
+                    VIDEO_URI,
+                    VIDEO_DESCRIPTION,
+                    MP4_MEDIA_TYPE,
+                    VIDEO_ID,
+                    null,
+                    false),
+                new VideoObject(
+                    VIDEO_TITLE,
+                    VIDEO_URI,
+                    VIDEO_DESCRIPTION,
+                    MP4_MEDIA_TYPE,
+                    "myId2",
+                    null,
+                    false)),
+            photosLibraryClient,
+            executor);
+
+    assertEquals(
+        "Expected the number of bytes to be the one files of 32L.", 32L, length.longValue());
+    assertEquals("Expected executor to have one error.", 1, executor.getErrors().size());
+    ErrorDetail errorDetail = executor.getErrors().iterator().next();
+    assertEquals("myId2", errorDetail.id());
+    assertThat(
+        errorDetail.exception(), CoreMatchers.containsString("Video item could not be created."));
   }
 }
