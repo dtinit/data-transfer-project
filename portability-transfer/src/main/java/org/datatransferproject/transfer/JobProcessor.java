@@ -79,14 +79,16 @@ final class JobProcessor {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
     monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
-    markJobStarted(jobId);
-    hooks.jobStarted(jobId);
 
-    PortabilityJob job = store.findJob(jobId);
-    JobAuthorization jobAuthorization = job.jobAuthorization();
     Collection<ErrorDetail> errors = null;
 
     try {
+      markJobStarted(jobId);
+      hooks.jobStarted(jobId);
+
+      PortabilityJob job = store.findJob(jobId);
+      JobAuthorization jobAuthorization = job.jobAuthorization();
+
       monitor.debug(
           () ->
               format(
