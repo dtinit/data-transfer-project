@@ -65,16 +65,16 @@ public class CallableImporter implements Callable<ImportResult> {
     try {
       ImportResult result = importerProvider.get()
           .importItem(jobId, idempotentImportExecutor, authData, data);
-      success = result.getType() == ImportResult.ResultType.OK;
-      if (success) {
-        result = result.copyWithCounts(data.getCounts());
-      }
       Collection<ErrorDetail> errors = idempotentImportExecutor.getErrors();
-      if (!success || !errors.isEmpty()) {
+      success = result.getType() == ImportResult.ResultType.OK && errors.isEmpty();
+
+      if (!success) {
         throw new IOException("Problem with importer, forcing a retry, "
             + errors.size() + " errors, first one: " +
             (errors.iterator().hasNext() ? errors.iterator().next() : "none"));
       }
+
+      result = result.copyWithCounts(data.getCounts());
       return result;
     } finally{
       metricRecorder.importPageAttemptFinished(
