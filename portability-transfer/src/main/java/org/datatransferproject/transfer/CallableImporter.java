@@ -63,9 +63,11 @@ public class CallableImporter implements Callable<ImportResult> {
     boolean success = false;
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
+      idempotentImportExecutor.resetRecentErrors();
       ImportResult result = importerProvider.get()
           .importItem(jobId, idempotentImportExecutor, authData, data);
-      Collection<ErrorDetail> errors = idempotentImportExecutor.getErrors();
+
+      Collection<ErrorDetail> errors = idempotentImportExecutor.getRecentErrors();
       success = result.getType() == ImportResult.ResultType.OK && errors.isEmpty();
 
       if (!success) {
