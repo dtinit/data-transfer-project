@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 public class InMemoryIdempotentImportExecutor implements IdempotentImportExecutor {
   private final Map<String, Serializable> knownValues = new HashMap<>();
   private final Map<String, ErrorDetail> errors = new HashMap<>();
+  private final Map<String, ErrorDetail> recentErrors = new HashMap<>();
   private final Monitor monitor;
   private UUID jobId;
 
@@ -83,6 +84,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
               .setException(Throwables.getStackTraceAsString(e))
               .build();
       errors.put(idempotentId, errorDetail);
+      recentErrors.put(idempotentId, errorDetail);
       monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
       throw e;
     }
@@ -113,5 +115,15 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   public void setJobId(UUID jobId) {
     this.jobId = jobId;
+  }
+
+  @Override
+  public Collection<ErrorDetail> getRecentErrors() {
+    return ImmutableList.copyOf(recentErrors.values());
+  }
+
+  @Override
+  public void resetRecentErrors() {
+    recentErrors.clear();
   }
 }
