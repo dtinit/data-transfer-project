@@ -96,4 +96,14 @@ public interface IdempotentImportExecutor {
    * @param jobId The jobId of the job that this IdempotentImportExecutor is being used for
    */
   void setJobId(UUID jobId);
+
+
+  /** Get the set of recent errors that occurred, and weren't subsequently successful. */
+  default Collection<ErrorDetail> getRecentErrors() {
+    return getErrors();
+  }
+
+  /** Reset recent errors to empty set */
+  default void resetRecentErrors() {}
+
 }
