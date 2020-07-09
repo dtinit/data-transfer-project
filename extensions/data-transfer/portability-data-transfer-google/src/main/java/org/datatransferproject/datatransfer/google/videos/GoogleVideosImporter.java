@@ -153,10 +153,8 @@ public class GoogleVideosImporter
       final UnmodifiableIterator<List<VideoObject>> batches =
           Iterators.partition(stream.iterator(), 49);
       while (batches.hasNext()) {
-        Long batchBytes = importVideoBatch(batches.next(), client, executor);
-        if (batchBytes != null) {
-          bytes += batchBytes;
-        }
+        long batchBytes = importVideoBatch(batches.next(), client, executor);
+        bytes += batchBytes;
       }
     }
     final ImportResult result = ImportResult.OK;
@@ -184,7 +182,7 @@ public class GoogleVideosImporter
     return video;
   }
 
-  Long importVideoBatch(
+  long importVideoBatch(
       List<VideoObject> batchedVideos,
       PhotosLibraryClient client,
       IdempotentImportExecutor executor)
@@ -213,12 +211,12 @@ public class GoogleVideosImporter
       }
       if (mediaItems.isEmpty()) {
         // Either we were not passed in any videos or we failed upload on all of them.
-        return null;
+        return 0L;
       }
 
       BatchCreateMediaItemsResponse response = client.batchCreateMediaItems(mediaItems);
       final List<NewMediaItemResult> resultsList = response.getNewMediaItemResultsList();
-      Long bytes = 0L;
+      long bytes = 0L;
       for (NewMediaItemResult result : resultsList) {
         String uploadToken = result.getUploadToken();
         Status status = result.getStatus();
@@ -268,7 +266,7 @@ public class GoogleVideosImporter
 
   private Pair<String, Long> uploadMediaItem(
       MediaObject inputVideo, PhotosLibraryClient photosLibraryClient)
-      throws IOException, UploadErrorException, DestinationMemoryFullException {
+      throws IOException, UploadErrorException {
 
     final File tmp;
     try (InputStream inputStream =

@@ -106,7 +106,7 @@ public class GoogleVideosImporterTest {
 
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
-    Long length =
+    long length =
         googleVideosImporter.importVideoBatch(
             Lists.newArrayList(
                 new VideoObject(
@@ -127,8 +127,7 @@ public class GoogleVideosImporterTest {
                     false)),
             photosLibraryClient,
             executor);
-    assertEquals(
-        "Expected the number of bytes to be the two files of 32L.", 64L, length.longValue());
+    assertEquals("Expected the number of bytes to be the two files of 32L.", 64L, length);
     assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
   }
 
@@ -164,7 +163,7 @@ public class GoogleVideosImporterTest {
 
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
-    Long length =
+    long length =
         googleVideosImporter.importVideoBatch(
             Lists.newArrayList(
                 new VideoObject(
@@ -186,8 +185,7 @@ public class GoogleVideosImporterTest {
             photosLibraryClient,
             executor);
 
-    assertEquals(
-        "Expected the number of bytes to be the one files of 32L.", 32L, length.longValue());
+    assertEquals("Expected the number of bytes to be the one files of 32L.", 32L, length);
     assertEquals("Expected executor to have one error.", 1, executor.getErrors().size());
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
     assertEquals("myId2", errorDetail.id());
