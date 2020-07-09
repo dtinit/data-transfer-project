@@ -28,8 +28,11 @@ import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
+import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
@@ -202,13 +205,20 @@ public class GooglePhotosImporter
     NewMediaItemUpload uploadItem =
         new NewMediaItemUpload(albumId, Collections.singletonList(newMediaItem));
     try {
-      return new PhotoResult(
-          getOrCreatePhotosInterface(jobId, authData)
-              .createPhoto(uploadItem)
-              .getResults()[0]
-              .getMediaItem()
-              .getId(),
-          bytes);
+      BatchMediaItemResponse photoCreationResponse =
+          getOrCreatePhotosInterface(jobId, authData).createPhoto(uploadItem);
+      if (photoCreationResponse == null) {
+        throw new IOException("The photo was not created");
+      }
+      NewMediaItemResult[] mediaItemResults = photoCreationResponse.getResults();
+      if (mediaItemResults == null || mediaItemResults.length != 1) {
+        throw new IOException("No media item results returned");
+      }
+      GoogleMediaItem mediaItem = mediaItemResults[0].getMediaItem();
+      if (mediaItem == null) {
+        throw new IOException("No media item returned");
+      }
+      return new PhotoResult(mediaItem.getId(), bytes);
     } catch (IOException e) {
       if (e.getMessage() != null
           && e.getMessage().contains("The remaining storage in the user's account is not enough")) {

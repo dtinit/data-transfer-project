@@ -155,4 +155,26 @@ public class GooglePhotosImporterTest {
     assertEquals(mediaItem.getSimpleMediaItem().getUploadToken(), UPLOAD_TOKEN);
     assertEquals(mediaItem.getDescription(), "Copy of " + PHOTO_DESCRIPTION);
   }
+
+  @Test(expected = IOException.class)
+  public void createPhotoBadResponse() throws Exception {
+    // Set up
+    PhotoModel photoModel =
+        new PhotoModel(
+            PHOTO_TITLE,
+            IMG_URI,
+            PHOTO_DESCRIPTION,
+            JPEG_MEDIA_TYPE,
+            "oldPhotoID",
+            OLD_ALBUM_ID,
+            false);
+
+    executor.executeOrThrowException(OLD_ALBUM_ID, OLD_ALBUM_ID, () -> NEW_ALBUM_ID);
+
+    Mockito.when(googlePhotosInterface.createPhoto(any(NewMediaItemUpload.class)))
+        .thenReturn(null); // bad response (null)
+
+    // Run test
+    googlePhotosImporter.importSinglePhoto(uuid, null, photoModel, executor);
+  }
 }
