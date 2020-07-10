@@ -94,7 +94,7 @@ public class GoogleVideosImporter
     this.monitor = monitor;
     this.appCredentials = appCredentials;
     this.dataStore = dataStore;
-    videoStreamProvider = new ImageStreamProvider();
+    this.videoStreamProvider = new ImageStreamProvider();
   }
 
   GoogleVideosImporter(
