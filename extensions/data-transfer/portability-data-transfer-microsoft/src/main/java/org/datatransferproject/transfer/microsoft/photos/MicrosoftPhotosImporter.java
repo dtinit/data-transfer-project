@@ -81,8 +81,8 @@ public class MicrosoftPhotosImporter
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
-
-    albumlessPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/root:/Pictures/%s:/createUploadSession%s";
+    albumlessPhotoUrlTemplate =
+        baseUrl + "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s";
 
     this.client = client;
     this.objectMapper = objectMapper;
