@@ -40,10 +40,10 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** Implementation of {@link InMemoryDataCopier}. */
-final class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier
+class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier
     implements InMemoryDataCopier {
 
-  private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
+  static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
 
   @Inject
   public PortabilityInMemoryDataCopier(
