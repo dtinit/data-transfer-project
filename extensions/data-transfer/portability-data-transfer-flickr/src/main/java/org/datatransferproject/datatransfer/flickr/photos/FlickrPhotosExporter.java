@@ -143,7 +143,7 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     PhotoList<Photo> photoSetList;
 
     try {
-      if (photoSetId == null) {
+      if (Strings.isNullOrEmpty(photoSetId)) {
         RequestContext.getRequestContext().setExtras(EXTRAS);
         perUserRateLimiter.acquire();
         photoSetList = photosInterface.getNotInSet(PHOTO_PER_PAGE, page);
@@ -208,6 +208,9 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
         photoSetList.getPage() != photoSetList.getPages() && !photoSetList.getPhotosets().isEmpty();
     if (hasMore) {
       newPage = new IntPaginationToken(page + 1);
+    } else {
+      // No more albums to get, add a resource for albumless items
+      subResources.add(new IdOnlyContainerResource(""));
     }
 
     PhotosContainerResource photosContainerResource =
