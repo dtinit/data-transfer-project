@@ -73,24 +73,24 @@ final class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDat
       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
     idempotentImportExecutor.setJobId(jobId);
-    return copyHelper(jobId, exportAuthData, importAuthData, exportInfo);
+    return copyHelper(exportAuthData, importAuthData, jobId, exportInfo);
   }
 
   /**
    * Transfers data from the given {@code exporter} optionally starting at the point specified in
-   * the provided {@code exportInformation}. Imports the data using the provided {@code importer}.
-   * If there is more data to required to be exported, recursively copies using the specific {@link
+   * the provided {@code exportInfo}. Imports the data using the provided {@code importer}. If there
+   * is more data to required to be exported, recursively copies using the specific {@link
    * ExportInformation} to continue the process.
    *
    * @param exportAuthData The auth data for the export
    * @param importAuthData The auth data for the import
-   * @param exportInformation Any pagination or resource information to use for subsequent calls.
+   * @param exportInfo Any pagination or resource information to use for subsequent calls.
    */
   private Collection<ErrorDetail> copyHelper(
-      UUID jobId,
       AuthData exportAuthData,
       AuthData importAuthData,
-      Optional<ExportInformation> exportInformation)
+      UUID jobId,
+      Optional<ExportInformation> exportInfo)
       throws CopyException {
 
     String jobIdPrefix = "Job " + jobId + ": ";
@@ -102,7 +102,7 @@ final class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDat
 
     ExportResult<?> exportResult =
         copyIteration(
-            jobId, exportAuthData, importAuthData, exportInformation, jobIdPrefix, copyIteration);
+            jobId, exportAuthData, importAuthData, exportInfo, jobIdPrefix, copyIteration);
 
     // Import and Export were successful, determine what to do next
     ContinuationData continuationData = exportResult.getContinuationData();
@@ -116,15 +116,13 @@ final class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDat
                     + "Starting off a new copy iteration with pagination info, copy iteration: "
                     + copyIteration);
         copyHelper(
-            jobId,
             exportAuthData,
             importAuthData,
+            jobId,
             Optional.of(
                 new ExportInformation(
                     continuationData.getPaginationData(),
-                    exportInformation.isPresent()
-                        ? exportInformation.get().getContainerResource()
-                        : null)));
+                    exportInfo.isPresent() ? exportInfo.get().getContainerResource() : null)));
       }
 
       // Start processing sub-resources
@@ -137,9 +135,9 @@ final class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDat
                       + "Starting off a new copy iteration with a new container resource, copy iteration: "
                       + copyIteration);
           copyHelper(
-              jobId,
               exportAuthData,
               importAuthData,
+              jobId,
               Optional.of(new ExportInformation(null, resource)));
         }
       }
