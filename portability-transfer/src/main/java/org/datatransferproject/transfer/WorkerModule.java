@@ -51,6 +51,8 @@ import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
+import org.datatransferproject.transfer.copier.InMemoryDataCopier;
+import org.datatransferproject.transfer.copier.InMemoryDataCopierClassLoader;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
@@ -104,7 +106,10 @@ final class WorkerModule extends FlagBindingModule {
     bindFlags(context);
 
     bind(JobHooks.class).toInstance(jobHooks);
-    bind(InMemoryDataCopier.class).to(PortabilityInMemoryDataCopier.class);
+    bind(InMemoryDataCopier.class).to(InMemoryDataCopierClassLoader.load());
+    getMonitor()
+        .info(() -> "Using InMemoryDataCopier: " + InMemoryDataCopierClassLoader.load().getName());
+
     bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
 
     // Ensure a DtpInternalMetricRecorder exists
@@ -195,7 +200,7 @@ final class WorkerModule extends FlagBindingModule {
   @Provides
   @Singleton
   RetryStrategyLibrary getRetryStrategyLibrary() {
-    return context.getSetting("retryLibrary", null);
+      return context.getSetting("retryLibrary", null);
   }
 
   @Provides

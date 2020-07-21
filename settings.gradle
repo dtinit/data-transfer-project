@@ -27,6 +27,9 @@ include ':extensions:transport:portability-transport-jettyrest'
 // Security extensions
 include ':extensions:security:portability-security-cleartext', ':extensions:security:portability-security-jwe'
 
+// Copier extensions
+include ':extensions:copier:portability-stack-copier'
+
 // Service Integrations - Auth and Transfer Extensions
 // Deezer
 include ':extensions:auth:portability-auth-deezer'

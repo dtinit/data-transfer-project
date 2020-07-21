@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer;
+package org.datatransferproject.copier.stack;
 
 import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
@@ -26,6 +26,8 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyException;
+import org.datatransferproject.transfer.copier.InMemoryDataCopier;
+import org.datatransferproject.transfer.copier.PortabilityAbstractInMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
@@ -44,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /** Implementation of {@link InMemoryDataCopier}. */
 public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier {
 
-  static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
+  private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
 
   private Stack<ExportInformation> exportInfoStack = new Stack<>();
 
@@ -65,6 +67,11 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
         idempotentImportExecutor,
         dtpInternalMetricRecorder,
         jobStore);
+  }
+
+  @Override
+  public void resetCopyIterationCounter() {
+    COPY_ITERATION_COUNTER.set(0);
   }
 
   /**

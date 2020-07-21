@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer;
+package org.datatransferproject.transfer.copier;
 
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.copier.stack.PortabilityStackInMemoryDataCopier;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyException;
@@ -119,9 +120,7 @@ public class PortabilityInMemoryDataCopierTest {
     exportInfo = Mockito.mock(ExportInformation.class);
     initialExportResult = Mockito.mock(ExportResult.class);
     continuationData = Mockito.mock(ContinuationData.class);
-    // reset counters
-    TestPortabilityInMemoryDataCopier.COPY_ITERATION_COUNTER.set(0);
-    TestPortabilityStackInMemoryDataCopier.COPY_ITERATION_COUNTER.set(0);
+    inMemoryDataCopier.resetCopyIterationCounter();
   }
 
   @Test

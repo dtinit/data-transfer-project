@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer;
+package org.datatransferproject.transfer.copier;
 
 import static java.lang.String.format;
 
@@ -35,6 +35,9 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.transfer.CallableExporter;
+import org.datatransferproject.transfer.CallableImporter;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
@@ -74,6 +77,8 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     this.metricRecorder = dtpInternalMetricRecorder;
     this.jobStore = jobStore;
   }
+
+  public abstract void resetCopyIterationCounter();
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
