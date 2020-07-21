@@ -50,7 +50,7 @@ dependencies {
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
-
+    testCompile project(':extensions:copier:portability-stack-copier')
 }
 
 configurePublication(project)

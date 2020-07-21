@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer;
+package org.datatransferproject.transfer.copier;
 
 import static java.lang.String.format;
 
@@ -40,10 +40,10 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** Implementation of {@link InMemoryDataCopier}. */
-class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier
+public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier
     implements InMemoryDataCopier {
 
-  static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
+  private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
 
   @Inject
   public PortabilityInMemoryDataCopier(
@@ -62,6 +62,11 @@ class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopie
         idempotentImportExecutor,
         dtpInternalMetricRecorder,
         jobStore);
+  }
+
+  @Override
+  public void resetCopyIterationCounter() {
+    COPY_ITERATION_COUNTER.set(0);
   }
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
