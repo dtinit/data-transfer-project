@@ -1,11 +1,20 @@
 package org.datatransferproject.api.action.transfer;
 
+import static java.lang.String.format;
+import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
+import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.EXPORT;
+import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.IMPORT;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
@@ -22,21 +31,12 @@ import org.datatransferproject.types.client.transfer.CreateTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
 import org.datatransferproject.types.common.ExportInformation;
 
-import javax.crypto.SecretKey;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import static java.lang.String.format;
-import static org.datatransferproject.api.action.ActionUtils.encodeJobId;
-import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.EXPORT;
-import static org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode.IMPORT;
-
 /**
  * Creates a transfer job and prepares it for both the export and import service authentication
  * flow.
  */
 public class CreateTransferJobAction implements Action<CreateTransferJob, TransferJob> {
+
   private final JobStore jobStore;
   private final AuthServiceProviderRegistry registry;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
@@ -69,7 +69,8 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     String dataType = request.getDataType();
     String exportService = request.getExportService();
     String importService = request.getImportService();
-    Optional<ExportInformation> exportInformation = Optional.ofNullable(request.getExportInformation());
+    Optional<ExportInformation> exportInformation = Optional
+        .ofNullable(request.getExportInformation());
     String exportCallbackUrl = request.getExportCallbackUrl();
     String importCallbackUrl = request.getImportCallbackUrl();
 
@@ -79,9 +80,14 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     String encodedSessionKey = BaseEncoding.base64Url().encode(sessionKey.getEncoded());
 
     String encryptionScheme = request.getEncryptionScheme();
-    PortabilityJob job =
-        createJob(encodedSessionKey, dataType, exportService, importService, exportInformation, encryptionScheme);
-
+    PortabilityJob job;
+    try {
+      job =
+          createJob(encodedSessionKey, dataType, exportService, importService, exportInformation,
+              encryptionScheme);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     AuthDataGenerator exportGenerator =
         registry.getAuthDataGenerator(job.exportService(), job.transferDataType(), EXPORT);
     Preconditions.checkNotNull(
@@ -180,14 +186,16 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
     return job;
   }
 
-  /** Populates the initial state of the {@link PortabilityJob} instance. */
+  /**
+   * Populates the initial state of the {@link PortabilityJob} instance.
+   */
   private PortabilityJob createJob(
       String encodedSessionKey,
       String dataType,
       String exportService,
       String importService,
       Optional<ExportInformation> exportInformation,
-      String encryptionScheme) {
+      String encryptionScheme) throws IOException {
 
     // Job auth data
     JobAuthorization jobAuthorization =
@@ -203,8 +211,8 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             .setExportService(exportService)
             .setImportService(importService)
             .setAndValidateJobAuthorization(jobAuthorization);
-    if(exportInformation.isPresent()) {
-      builder.setExportInformation(objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData()));
+    if (exportInformation.isPresent()) {
+      builder.setExportInformation(objectMapper.writeValueAsString(exportInformation.get()));
     }
 
     return builder.build();
