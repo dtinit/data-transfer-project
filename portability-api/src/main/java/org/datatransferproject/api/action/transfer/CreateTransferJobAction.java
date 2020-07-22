@@ -181,7 +181,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
   }
 
   /** Populates the initial state of the {@link PortabilityJob} instance. */
-  private static PortabilityJob createJob(
+  private PortabilityJob createJob(
       String encodedSessionKey,
       String dataType,
       String exportService,
@@ -203,7 +203,10 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
             .setExportService(exportService)
             .setImportService(importService)
             .setAndValidateJobAuthorization(jobAuthorization);
-    exportInformation.ifPresent(builder::setExportInformation);
+    if(exportInformation.isPresent()) {
+      builder.setExportInformation(objectMapper.writeValueAsString(exportConfiguration.getInitialAuthData()));
+    }
+
     return builder.build();
   }
 }
