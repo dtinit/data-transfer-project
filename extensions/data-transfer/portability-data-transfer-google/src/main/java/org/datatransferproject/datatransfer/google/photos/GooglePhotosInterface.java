@@ -153,7 +153,7 @@ public class GooglePhotosInterface {
         BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
   }
 
-  BatchMediaItemResponse createPhoto(NewMediaItemUpload newMediaItemUpload)
+  BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);

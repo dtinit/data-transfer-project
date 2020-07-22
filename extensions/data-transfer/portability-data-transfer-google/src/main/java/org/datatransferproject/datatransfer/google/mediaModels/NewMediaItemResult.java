@@ -41,4 +41,8 @@ public class NewMediaItemResult implements Serializable {
   public GoogleMediaItem getMediaItem() {
     return mediaItem;
   }
+
+  public String getUploadToken() {
+    return uploadToken;
+  }
 }
