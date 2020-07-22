@@ -150,8 +150,7 @@ public class GooglePhotosImporter
         }
 
         // We partition into groups of 49 as 50 is the maximum number of items that can be created
-        // in
-        // one call. (We use 49 to avoid potential off by one errors)
+        // in one call. (We use 49 to avoid potential off by one errors)
         // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
         UnmodifiableIterator<List<PhotoModel>> batches =
             Iterators.partition(albumEntry.getValue().iterator(), 49);
