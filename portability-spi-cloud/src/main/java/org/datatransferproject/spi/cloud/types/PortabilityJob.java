@@ -8,12 +8,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import org.datatransferproject.types.common.ExportInformation;
-
-import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * A job that will fulfill a transfer request.
@@ -94,7 +91,7 @@ public abstract class PortabilityJob {
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
         .setImportService((String) properties.get(IMPORT_SERVICE_KEY))
         .setTransferDataType((String) properties.get(DATA_TYPE_KEY))
-        .setExportInformation((ExportInformation) properties.get(EXPORT_INFORMATION_KEY))
+        .setExportInformation((String) properties.get(EXPORT_INFORMATION_KEY))
         .setCreatedTimestamp(now) // TODO: get from DB
         .setLastUpdateTimestamp(now)
         .setFailureReason(failureReason)
@@ -141,7 +138,7 @@ public abstract class PortabilityJob {
 
   @Nullable
   @JsonProperty("exportInformation")
-  public abstract ExportInformation exportInformation();
+  public abstract String exportInformation();
 
   @JsonProperty("createdTimestamp")
   public abstract Instant createdTimestamp(); // ISO 8601 timestamp
@@ -241,7 +238,7 @@ public abstract class PortabilityJob {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("exportInformation")
-    public abstract Builder setExportInformation(ExportInformation exportInformation);
+    public abstract Builder setExportInformation(String exportInformation);
 
     @JsonProperty("createdTimestamp")
     public abstract Builder setCreatedTimestamp(Instant createdTimestamp);
