@@ -93,19 +93,28 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
       throws IOException, CopyException {
     idempotentImportExecutor.setJobId(jobId);
     String jobIdPrefix = "Job " + jobId + ": ";
-    int initialCopyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
-    ExportResult<?> initialExportResult =
-        copyIteration(
-            jobId, exportAuthData, importAuthData, exportInfo, jobIdPrefix, initialCopyIteration);
-    // Import and Export were successful, determine what to do next
-    ContainerResource exportContainerResource =
-        exportInfo.isPresent() ? exportInfo.get().getContainerResource() : null;
-    updateStackAfterCopyIteration(
-        jobIdPrefix,
-        exportContainerResource,
-        initialCopyIteration,
-        initialExportResult.getContinuationData());
 
+    Optional<Stack<ExportInformation>> maybeLoadedStack = jobStore.loadJobStack(jobId);
+
+    if (maybeLoadedStack.isPresent() && !maybeLoadedStack.get().isEmpty()) {
+      // load stack from partially completed transfer
+      exportInfoStack = maybeLoadedStack.get();
+    } else {
+      // start new transfer
+      int initialCopyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
+      ExportResult<?> initialExportResult =
+          copyIteration(
+              jobId, exportAuthData, importAuthData, exportInfo, jobIdPrefix, initialCopyIteration);
+      // Import and Export were successful, determine what to do next
+      ContainerResource exportContainerResource =
+          exportInfo.isPresent() ? exportInfo.get().getContainerResource() : null;
+      updateStackAfterCopyIteration(
+          jobId,
+          jobIdPrefix,
+          exportContainerResource,
+          initialCopyIteration,
+          initialExportResult.getContinuationData());
+    }
     while (!exportInfoStack.isEmpty()) {
       int copyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
       ExportInformation currentExportInfo = exportInfoStack.pop();
@@ -117,9 +126,9 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
               Optional.of(currentExportInfo),
               jobIdPrefix,
               copyIteration);
-      exportContainerResource = currentExportInfo.getContainerResource();
       // Import and Export were successful, determine what to do next
       updateStackAfterCopyIteration(
+          jobId,
           jobIdPrefix,
           currentExportInfo.getContainerResource(),
           copyIteration,
@@ -129,6 +138,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
   }
 
   private void updateStackAfterCopyIteration(
+      UUID jobId,
       String jobIdPrefix,
       ContainerResource exportContainerResource,
       int copyIteration,
@@ -163,5 +173,6 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
             new ExportInformation(continuationData.getPaginationData(), exportContainerResource));
       }
     }
+    jobStore.storeJobStack(jobId, (Stack<ExportInformation>) exportInfoStack.clone());
   }
 }
