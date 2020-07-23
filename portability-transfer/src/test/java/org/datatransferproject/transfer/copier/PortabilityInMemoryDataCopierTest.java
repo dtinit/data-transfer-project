@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.copier;
 
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.copier.stack.PortabilityStackInMemoryDataCopier;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyException;
@@ -31,12 +32,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.UUID;
 
 @RunWith(Parameterized.class)
@@ -49,6 +52,7 @@ public class PortabilityInMemoryDataCopierTest {
   private AuthData exportAuthData;
   private AuthData importAuthData;
   private PortabilityAbstractInMemoryDataCopier inMemoryDataCopier;
+  private PortabilityStackInMemoryDataCopier stackInMemoryDataCopier;
 
   private static class TestPortabilityInMemoryDataCopier extends PortabilityInMemoryDataCopier {
     public TestPortabilityInMemoryDataCopier() {
@@ -84,7 +88,7 @@ public class PortabilityInMemoryDataCopierTest {
           Mockito.mock(Monitor.class),
           new FakeIdempotentImportExecutor(),
           null,
-          null);
+          (Mockito.mock(JobStore.class)));
     }
 
     protected ExportResult<?> copyIteration(
@@ -120,7 +124,9 @@ public class PortabilityInMemoryDataCopierTest {
     exportInfo = Mockito.mock(ExportInformation.class);
     initialExportResult = Mockito.mock(ExportResult.class);
     continuationData = Mockito.mock(ContinuationData.class);
+    stackInMemoryDataCopier = Mockito.spy(new TestPortabilityStackInMemoryDataCopier());
     inMemoryDataCopier.resetCopyIterationCounter();
+    stackInMemoryDataCopier.resetCopyIterationCounter();
   }
 
   @Test
@@ -413,5 +419,55 @@ public class PortabilityInMemoryDataCopierTest {
             jobIdPrefix,
             4);
   }
-}
 
+  @Test
+  public void loadStackFromJobStoreAtStartOfTransfer() throws CopyException, IOException {
+
+    // Act
+    stackInMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
+
+    // Assert
+    Mockito.verify(stackInMemoryDataCopier.jobStore).loadJobStack(jobId);
+  }
+
+  @Test
+  public void storeStackContainingPaginationDataAndMultipleSubResourcesInJobStore()
+      throws CopyException, IOException {
+
+    // Arrange
+    PaginationData paginationData = Mockito.mock(PaginationData.class);
+    ContainerResource subResource1 = Mockito.mock(ContainerResource.class);
+    ContainerResource subResource2 = Mockito.mock(ContainerResource.class);
+
+    ExportInformation paginationExportInfo = new ExportInformation(paginationData, null);
+    ExportInformation subResource1ExportInfo = new ExportInformation(null, subResource1);
+    ExportInformation subResource2ExportInfo = new ExportInformation(null, subResource2);
+
+    Stack<ExportInformation> jobStack = new Stack<>();
+    jobStack.push(subResource2ExportInfo);
+    jobStack.push(subResource1ExportInfo);
+    jobStack.push(paginationExportInfo);
+
+    Mockito.when(continuationData.getPaginationData()).thenReturn(paginationData);
+    Mockito.when(continuationData.getContainerResources())
+        .thenReturn(Arrays.asList(subResource1, subResource2));
+    Mockito.when(initialExportResult.getContinuationData()).thenReturn(continuationData);
+    Mockito.doReturn(initialExportResult)
+        .when(stackInMemoryDataCopier)
+        .copyIteration(
+            jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
+
+    // Act
+    stackInMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
+
+    // Assert
+    InOrder orderVerifier = Mockito.inOrder(stackInMemoryDataCopier.jobStore);
+    orderVerifier.verify(stackInMemoryDataCopier.jobStore).storeJobStack(jobId, jobStack);
+    jobStack.pop();
+    orderVerifier.verify(stackInMemoryDataCopier.jobStore).storeJobStack(jobId, jobStack);
+    jobStack.pop();
+    orderVerifier.verify(stackInMemoryDataCopier.jobStore).storeJobStack(jobId, jobStack);
+    jobStack.pop();
+    orderVerifier.verify(stackInMemoryDataCopier.jobStore).storeJobStack(jobId, jobStack);
+  }
+}

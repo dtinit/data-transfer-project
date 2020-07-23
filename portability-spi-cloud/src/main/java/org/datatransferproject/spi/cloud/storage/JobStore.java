@@ -3,10 +3,13 @@ package org.datatransferproject.spi.cloud.storage;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Stack;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 /**
@@ -136,4 +139,18 @@ public interface JobStore extends TemporaryPerJobDataStore {
   default Long getBytes(UUID jobId) {
     return null;
   }
+
+  /**
+   * Returns a stack of export information associated with outstanding job iterations - used to
+   * resume job transfer.
+   */
+  default Optional<Stack<ExportInformation>> loadJobStack(UUID jobId) {
+    return Optional.empty();
+  }
+
+  /**
+   * Stores a stack of export information associated with the remaining copy iterations left in a job
+   * transfer.
+   */
+  default void storeJobStack(UUID jobId, Stack<ExportInformation> stack) {}
 }
