@@ -123,10 +123,10 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
 
     RequestContext.getRequestContext().setAuth(auth);
 
+    // If ExportInformation is a photos container, this is a request to only export the contents
+    // in that container instead of the whole user library
     if (exportInformation.isPresent()
         && exportInformation.get().getContainerResource() instanceof PhotosContainerResource) {
-      // if ExportInformation is a photos container, this is a request to only export the contents
-      // in that container instead of the whole user library
       return exportPhotosContainer(
           (PhotosContainerResource) exportInformation.get().getContainerResource());
     }

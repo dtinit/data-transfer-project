@@ -110,18 +110,21 @@ public class GooglePhotosExporter
           (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
     }
 
-    /* Use the export information to determine whether this export call should export albums or
-    photos.
-    Albums are exported if and only if the export information doesn't hold an album
-    already, and the pagination token begins with the album prefix.  There must be a pagination
-    token for album export since this is isn't the first export operation performed (if it was,
-    there wouldn't be any export information at all).
-    Otherwise, photos are exported.  If photos are exported, there may or may not be pagination
-    information, and there may or may not be album information.
-    If there is no container resource, that means that we're exporting albumless photos and a
-    pagination token must be present.  The beginning step of exporting albumless photos is
-    indicated by a pagination token containing only PHOTO_TOKEN_PREFIX with no token attached, in
-    order to differentiate this case for the first step of export (no export information at all).
+    /*
+     * Use the export information to determine whether this export call should export albums or
+     * photos.
+     *
+     * Albums are exported if and only if the export information doesn't hold an album
+     * already, and the pagination token begins with the album prefix.  There must be a pagination
+     * token for album export since this is isn't the first export operation performed (if it was,
+     * there wouldn't be any export information at all).
+     *
+     * Otherwise, photos are exported. If photos are exported, there may or may not be pagination
+     * information, and there may or may not be album information. If there is no container
+     * resource, that means that we're exporting albumless photos and a pagination token must be
+     * present. The beginning step of exporting albumless photos is indicated by a pagination token
+     * containing only PHOTO_TOKEN_PREFIX with no token attached, in order to differentiate this
+     * case for the first step of export (no export information at all).
      */
     StringPaginationToken paginationToken =
         (StringPaginationToken) exportInformation.get().getPaginationData();
@@ -263,7 +266,9 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  /** Method for storing a list of all photos that are already contained in albums */
+  /**
+   * Method for storing a list of all photos that are already contained in albums
+   */
   @VisibleForTesting
   void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
       throws IOException, InvalidTokenException, PermissionDeniedException {
