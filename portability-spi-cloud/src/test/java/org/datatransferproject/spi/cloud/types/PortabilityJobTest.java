@@ -83,13 +83,13 @@ public class PortabilityJobTest {
             .setExportService("fooService")
             .setImportService("barService")
             .setTransferDataType("PHOTOS")
-            .setExportInformation(
+            .setExportInformation(objectMapper.writeValueAsString(
                 new ExportInformation(
                     null,
                     new PhotosContainerResource(
                         Lists.newArrayList(
                             new PhotoAlbum("album_id", "album name", "album description")),
-                        null)))
+                        null))))
             .setCreatedTimestamp(date)
             .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)
