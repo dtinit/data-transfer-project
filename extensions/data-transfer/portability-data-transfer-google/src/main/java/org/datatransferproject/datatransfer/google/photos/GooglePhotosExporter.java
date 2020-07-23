@@ -161,7 +161,7 @@ public class GooglePhotosExporter
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(convertToPhotoModel(null, googleMediaItem));
+      photosBuilder.add(convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
     PhotosContainerResource photosContainerResource =
