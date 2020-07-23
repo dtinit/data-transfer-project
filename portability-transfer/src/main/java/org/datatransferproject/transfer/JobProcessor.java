@@ -18,7 +18,7 @@ package org.datatransferproject.transfer;
 import static java.lang.String.format;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
@@ -113,7 +113,11 @@ final class JobProcessor {
       AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
       AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
-      Optional<ExportInformation> exportInfo = Optional.ofNullable(job.exportInformation());
+      String exportInfoStr = job.exportInformation();
+      Optional<ExportInformation> exportInfo = Optional.empty();
+      if (!Strings.isNullOrEmpty(exportInfoStr)) {
+        exportInfo = Optional.of(objectMapper.readValue(exportInfoStr, ExportInformation.class));
+      }
 
       // Copy the data
       dtpInternalMetricRecorder.startedJob(
