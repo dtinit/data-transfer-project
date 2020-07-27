@@ -123,6 +123,14 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
 
     RequestContext.getRequestContext().setAuth(auth);
 
+    // If ExportInformation is a photos container, this is a request to only export the contents
+    // in that container instead of the whole user library
+    if (exportInformation.isPresent()
+        && exportInformation.get().getContainerResource() instanceof PhotosContainerResource) {
+      return exportPhotosContainer(
+          (PhotosContainerResource) exportInformation.get().getContainerResource());
+    }
+
     PaginationData paginationData =
         exportInformation.isPresent() ? exportInformation.get().getPaginationData() : null;
     IdOnlyContainerResource resource =
@@ -134,6 +142,37 @@ public class FlickrPhotosExporter implements Exporter<AuthData, PhotosContainerR
     } else {
       return getAlbums(paginationData, auth);
     }
+  }
+
+  private ExportResult<PhotosContainerResource> exportPhotosContainer(
+      PhotosContainerResource container) {
+    ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
+    ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
+    List<IdOnlyContainerResource> subResources = new ArrayList<>();
+
+    try {
+      for (PhotoAlbum album : container.getAlbums()) {
+        Photoset photoset = photosetsInterface.getInfo(album.getId());
+        // Saving data to the album allows the target service to recreate the album structure
+        albumBuilder.add(
+            new PhotoAlbum(photoset.getId(), photoset.getTitle(), photoset.getDescription()));
+        // Adding subresources tells the framework to recall export to get all the photos
+        subResources.add(new IdOnlyContainerResource(photoset.getId()));
+      }
+
+      for (PhotoModel photo : container.getPhotos()) {
+        Photo p = photosInterface.getInfo(photo.getDataId(), null);
+        photosBuilder.add(toCommonPhoto(p, null));
+      }
+    } catch (FlickrException e) {
+      return new ExportResult<>(e);
+    }
+
+    PhotosContainerResource photosContainerResource =
+        new PhotosContainerResource(albumBuilder.build(), photosBuilder.build());
+    ContinuationData continuationData = new ContinuationData(null);
+    subResources.forEach(resource -> continuationData.addContainerResource(resource));
+    return new ExportResult<>(ResultType.CONTINUE, photosContainerResource, continuationData);
   }
 
   private ExportResult<PhotosContainerResource> getPhotos(
