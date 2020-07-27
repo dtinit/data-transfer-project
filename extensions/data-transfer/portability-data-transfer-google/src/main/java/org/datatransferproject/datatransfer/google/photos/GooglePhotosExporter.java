@@ -22,6 +22,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,19 +103,28 @@ public class GooglePhotosExporter
       // Make list of photos contained in albums so they are not exported twice later on
       populateContainedPhotosList(jobId, authData);
       return exportAlbums(authData, Optional.empty(), jobId);
+    } else if (exportInformation.get().getContainerResource() instanceof PhotosContainerResource) {
+      // if ExportInformation is a photos container, this is a request to only export the contents
+      // in that container instead of the whole user library
+      return exportPhotosContainer(
+          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
     }
-    /* Use the export information to determine whether this export call should export albums or
-    photos.
-    Albums are exported if and only if the export information doesn't hold an album
-    already, and the pagination token begins with the album prefix.  There must be a pagination
-    token for album export since this is isn't the first export operation performed (if it was,
-    there wouldn't be any export information at all).
-    Otherwise, photos are exported.  If photos are exported, there may or may not be pagination
-    information, and there may or may not be album information.
-    If there is no container resource, that means that we're exporting albumless photos and a
-    pagination token must be present.  The beginning step of exporting albumless photos is
-    indicated by a pagination token containing only PHOTO_TOKEN_PREFIX with no token attached, in
-    order to differentiate this case for the first step of export (no export information at all).
+
+    /*
+     * Use the export information to determine whether this export call should export albums or
+     * photos.
+     *
+     * Albums are exported if and only if the export information doesn't hold an album
+     * already, and the pagination token begins with the album prefix.  There must be a pagination
+     * token for album export since this is isn't the first export operation performed (if it was,
+     * there wouldn't be any export information at all).
+     *
+     * Otherwise, photos are exported. If photos are exported, there may or may not be pagination
+     * information, and there may or may not be album information. If there is no container
+     * resource, that means that we're exporting albumless photos and a pagination token must be
+     * present. The beginning step of exporting albumless photos is indicated by a pagination token
+     * containing only PHOTO_TOKEN_PREFIX with no token attached, in order to differentiate this
+     * case for the first step of export (no export information at all).
      */
     StringPaginationToken paginationToken =
         (StringPaginationToken) exportInformation.get().getPaginationData();
@@ -135,6 +145,33 @@ public class GooglePhotosExporter
           Optional.ofNullable(paginationToken),
           jobId);
     }
+  }
+
+  private ExportResult<PhotosContainerResource> exportPhotosContainer(
+      PhotosContainerResource container, TokensAndUrlAuthData authData)
+      throws IOException, InvalidTokenException, PermissionDeniedException {
+    ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
+    ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
+    List<IdOnlyContainerResource> subResources = new ArrayList<>();
+
+    for (PhotoAlbum album : container.getAlbums()) {
+      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      albumBuilder.add(new PhotoAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
+      // Adding subresources tells the framework to recall export to get all the photos
+      subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
+    }
+
+    for (PhotoModel photo : container.getPhotos()) {
+      GoogleMediaItem googleMediaItem =
+          getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
+      photosBuilder.add(convertToPhotoModel(Optional.empty(), googleMediaItem));
+    }
+
+    PhotosContainerResource photosContainerResource =
+        new PhotosContainerResource(albumBuilder.build(), photosBuilder.build());
+    ContinuationData continuationData = new ContinuationData(null);
+    subResources.forEach(resource -> continuationData.addContainerResource(resource));
+    return new ExportResult<>(ResultType.CONTINUE, photosContainerResource, continuationData);
   }
 
   /**
@@ -229,7 +266,9 @@ public class GooglePhotosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  /** Method for storing a list of all photos that are already contained in albums */
+  /**
+   * Method for storing a list of all photos that are already contained in albums
+   */
   @VisibleForTesting
   void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
       throws IOException, InvalidTokenException, PermissionDeniedException {
