@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -83,7 +84,10 @@ public class FacebookTransferExtension implements TransferExtension {
     importerMap = importerBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
-    exporterBuilder.put("PHOTOS", new FacebookPhotosExporter(appCredentials));
+    exporterBuilder.put(
+        "PHOTOS",
+        new FacebookPhotosExporter(
+            appCredentials, monitor, context.getService(TemporaryPerJobDataStore.class)));
     exporterBuilder.put("VIDEOS", new FacebookVideosExporter(appCredentials, monitor));
     exporterMap = exporterBuilder.build();
 

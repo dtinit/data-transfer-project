@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.restfb.Connection;
+import com.restfb.exception.FacebookGraphException;
 import com.restfb.types.Video;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,38 +75,55 @@ public class FacebookVideosExporter
 
     Optional<String> paginationToken = paginationData.map(StringPaginationToken::getToken);
 
-    Connection<Video> videoConnection =
-        getOrCreateVideosInterface(authData).getVideos(paginationToken);
-    List<Video> videos = videoConnection.getData();
+    try {
+      Connection<Video> videoConnection =
+          getOrCreateVideosInterface(authData).getVideos(paginationToken);
+      List<Video> videos = videoConnection.getData();
 
-    if (videos.isEmpty()) {
-      return new ExportResult<>(ExportResult.ResultType.END, null);
-    }
-
-    ArrayList<VideoObject> exportVideos = new ArrayList<>();
-    for (Video video : videos) {
-      final String url = video.getSource();
-      final String fbid = video.getId();
-      if (null == url || url.isEmpty()) {
-        monitor.severe(() -> String.format("Source was missing or empty for video %s", fbid));
-        continue;
+      if (videos.isEmpty()) {
+        return new ExportResult<>(ExportResult.ResultType.END, null);
       }
-      exportVideos.add(
-          new VideoObject(
-              String.format("%s.mp4", fbid), url, video.getName(), "video/mp4", fbid, null, false));
-    }
 
-    String token = videoConnection.getAfterCursor();
-    if (Strings.isNullOrEmpty(token)) {
-      return new ExportResult<>(
-          ExportResult.ResultType.END, new VideosContainerResource(null, exportVideos));
-    } else {
-      PaginationData nextPageData = new StringPaginationToken(token);
-      ContinuationData continuationData = new ContinuationData(nextPageData);
-      return new ExportResult<>(
-          ExportResult.ResultType.CONTINUE,
-          new VideosContainerResource(null, exportVideos),
-          continuationData);
+      ArrayList<VideoObject> exportVideos = new ArrayList<>();
+      for (Video video : videos) {
+        final String url = video.getSource();
+        final String fbid = video.getId();
+        if (null == url || url.isEmpty()) {
+          monitor.severe(() -> String.format("Source was missing or empty for video %s", fbid));
+          continue;
+        }
+        exportVideos.add(
+            new VideoObject(
+                String.format("%s.mp4", fbid),
+                url,
+                video.getName(),
+                "video/mp4",
+                fbid,
+                null,
+                false));
+      }
+
+      String token = videoConnection.getAfterCursor();
+      if (Strings.isNullOrEmpty(token)) {
+        return new ExportResult<>(
+            ExportResult.ResultType.END, new VideosContainerResource(null, exportVideos));
+      } else {
+        PaginationData nextPageData = new StringPaginationToken(token);
+        ContinuationData continuationData = new ContinuationData(nextPageData);
+        return new ExportResult<>(
+            ExportResult.ResultType.CONTINUE,
+            new VideosContainerResource(null, exportVideos),
+            continuationData);
+      }
+    } catch (FacebookGraphException e) {
+      String message = e.getMessage();
+      // This error means the object we are trying to copy does not exist any more.
+      // In such case, we should skip this object and continue with the rest of the transfer.
+      if (message != null && message.contains("code 100, subcode 33")) {
+        monitor.info(() -> "Cannot find videos to export, skipping to the next bunch", e);
+        return new ExportResult<>(ExportResult.ResultType.END, null);
+      }
+      throw e;
     }
   }
 

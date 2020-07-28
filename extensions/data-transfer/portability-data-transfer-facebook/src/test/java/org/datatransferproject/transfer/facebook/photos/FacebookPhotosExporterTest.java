@@ -20,7 +20,17 @@ import com.google.common.collect.Lists;
 import com.restfb.Connection;
 import com.restfb.types.Album;
 import com.restfb.types.Photo;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
@@ -31,11 +41,8 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
@@ -57,7 +64,7 @@ public class FacebookPhotosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
     FacebookPhotosInterface photosInterface = mock(FacebookPhotosInterface.class);
 
     // Set up example album
@@ -77,6 +84,7 @@ public class FacebookPhotosExporterTest {
     // Set up example photo
     Photo photo = new Photo();
     photo.setId(PHOTO_ID);
+    photo.setCreatedTime(new Date());
     Photo.Image image = new Photo.Image();
     image.setSource(PHOTO_SOURCE);
     photo.addImage(image);
@@ -91,12 +99,25 @@ public class FacebookPhotosExporterTest {
     when(photosInterface.getPhotos(ALBUM_ID, Optional.empty())).thenReturn(photoConnection);
     when(photoConnection.getData()).thenReturn(photos);
 
+    final ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test.jpeg");
+    HttpURLConnection connection = mock(HttpURLConnection.class);
+    when(imageStreamProvider.getConnection(ArgumentMatchers.anyString())).thenReturn(connection);
+    when(connection.getInputStream()).thenReturn(inputStream);
+
+    final TemporaryPerJobDataStore store = mock(TemporaryPerJobDataStore.class);
+
     facebookPhotosExporter =
-        new FacebookPhotosExporter(new AppCredentials("key", "secret"), photosInterface);
+        new FacebookPhotosExporter(
+            new AppCredentials("key", "secret"),
+            photosInterface,
+            null,
+            store,
+            imageStreamProvider);
   }
 
   @Test
-  public void testExportAlbum() {
+  public void testExportAlbum() throws CopyExceptionWithFailureReason {
     ExportResult<PhotosContainerResource> result =
         facebookPhotosExporter.export(
             uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.empty());
@@ -113,7 +134,7 @@ public class FacebookPhotosExporterTest {
   }
 
   @Test
-  public void testExportPhoto() {
+  public void testExportPhoto() throws CopyExceptionWithFailureReason {
     ExportResult<PhotosContainerResource> result =
         facebookPhotosExporter.export(
             uuid,
@@ -125,12 +146,12 @@ public class FacebookPhotosExporterTest {
     assertEquals(1, exportedData.getPhotos().size());
     assertEquals(
         new PhotoModel(
-            PHOTO_ID + ".jpg", PHOTO_SOURCE, PHOTO_NAME, "image/jpg", PHOTO_ID, ALBUM_ID, false),
+            PHOTO_ID + ".jpg", PHOTO_ID, PHOTO_NAME, "image/jpg", PHOTO_ID, ALBUM_ID, false),
         exportedData.getPhotos().toArray()[0]);
   }
 
   @Test
-  public void testSpecifiedAlbums() {
+  public void testSpecifiedAlbums() throws CopyExceptionWithFailureReason {
     ExportResult<PhotosContainerResource> result =
         facebookPhotosExporter.export(
             uuid,
@@ -153,7 +174,7 @@ public class FacebookPhotosExporterTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testIllegalExport() {
+  public void testIllegalExport() throws CopyExceptionWithFailureReason {
     facebookPhotosExporter.export(
         uuid,
         new TokensAndUrlAuthData("accessToken", null, null),
