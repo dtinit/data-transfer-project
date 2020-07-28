@@ -470,4 +470,25 @@ public class PortabilityInMemoryDataCopierTest {
     jobStack.pop();
     orderVerifier.verify(stackInMemoryDataCopier.jobStore).storeJobStack(jobId, jobStack);
   }
+
+  @Test
+  public void doNotPerformAdditionalCopyingIfLoadingEmptyStackFromJobStore() throws CopyException, IOException {
+
+    // Arrange
+    Mockito.when(stackInMemoryDataCopier.jobStore.loadJobStack(jobId))
+        .thenReturn(Optional.of(new Stack<ExportInformation>()));
+
+    // Act
+    stackInMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
+
+    // Assert
+    Mockito.verify(stackInMemoryDataCopier, Mockito.never())
+        .copyIteration(
+            Mockito.any(UUID.class),
+            Mockito.any(AuthData.class),
+            Mockito.any(AuthData.class),
+            Mockito.any(Optional.class),
+            Mockito.anyString(),
+            Mockito.anyInt());
+  }
 }

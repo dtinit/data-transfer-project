@@ -96,7 +96,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
 
     Optional<Stack<ExportInformation>> maybeLoadedStack = jobStore.loadJobStack(jobId);
 
-    if (maybeLoadedStack.isPresent() && !maybeLoadedStack.get().isEmpty()) {
+    if (maybeLoadedStack.isPresent()) {
       // load stack from partially completed transfer
       exportInfoStack = maybeLoadedStack.get();
     } else {
