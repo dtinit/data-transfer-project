@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 
 public class CalendarEventModel {
 
@@ -83,6 +84,34 @@ public class CalendarEventModel {
     return recurrenceRule;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CalendarEventModel that = (CalendarEventModel) o;
+    return Objects.equals(getCalendarId(), that.getCalendarId())
+        && Objects.equals(getTitle(), that.getTitle())
+        && Objects.equals(getNotes(), that.getNotes())
+        && Objects.equals(getAttendees(), that.getAttendees())
+        && Objects.equals(getLocation(), that.getLocation())
+        && Objects.equals(getStartTime(), that.getStartTime())
+        && Objects.equals(getEndTime(), that.getEndTime())
+        && Objects.equals(getRecurrenceRule(), that.getRecurrenceRule());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        getCalendarId(),
+        getTitle(),
+        getNotes(),
+        getAttendees(),
+        getLocation(),
+        getStartTime(),
+        getEndTime(),
+        getRecurrenceRule());
+  }
+
   public static class CalendarEventTime {
     private final OffsetDateTime dateTime;
     private final boolean dateOnly;
@@ -101,6 +130,20 @@ public class CalendarEventModel {
 
     public boolean isDateOnly() {
       return dateOnly;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      CalendarEventTime that = (CalendarEventTime) o;
+      return isDateOnly() == that.isDateOnly() &&
+              Objects.equals(getDateTime(), that.getDateTime());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getDateTime(), isDateOnly());
     }
   }
 }

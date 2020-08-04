@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
+import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 /** A Wrapper for all the possible objects that can be returned by a mail exporter. */
@@ -51,5 +52,19 @@ public class MailContainerResource extends ContainerResource {
         .add("folders", folders.size())
         .add("messages", messages.size())
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MailContainerResource that = (MailContainerResource) o;
+    return Objects.equals(getFolders(), that.getFolders()) &&
+            Objects.equals(getMessages(), that.getMessages());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getFolders(), getMessages());
   }
 }
