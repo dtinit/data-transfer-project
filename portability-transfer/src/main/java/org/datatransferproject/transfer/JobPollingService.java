@@ -235,7 +235,7 @@ class JobPollingService extends AbstractScheduledService {
           EventCode.WORKER_JOB_ERRORED);
       this.stopAsync();
     } else if (job.state() == PortabilityJob.State.CANCELED) {
-      monitor.severe(
+      monitor.info(
           () -> format("Could not poll job %s, it was cancelled", jobId),
           EventCode.WORKER_JOB_CANCELED);
       this.stopAsync();
