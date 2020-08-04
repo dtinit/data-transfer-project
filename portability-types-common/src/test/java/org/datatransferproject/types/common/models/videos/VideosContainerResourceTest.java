@@ -52,5 +52,6 @@ public class VideosContainerResourceTest {
     VideosContainerResource deserialized = (VideosContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getAlbums()).hasSize(1);
     Truth.assertThat(deserialized.getVideos()).hasSize(2);
+    Truth.assertThat(deserialized).isEqualTo(data);
   }
 }

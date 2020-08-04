@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
+import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 /** A Wrapper for all the possible objects that can be returned by a task exporter. */
@@ -42,5 +43,19 @@ public class TaskContainerResource extends ContainerResource {
 
   public Collection<TaskModel> getTasks() {
     return tasks;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TaskContainerResource that = (TaskContainerResource) o;
+    return Objects.equals(getLists(), that.getLists())
+        && Objects.equals(getTasks(), that.getTasks());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getLists(), getTasks());
   }
 }

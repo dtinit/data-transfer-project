@@ -38,5 +38,6 @@ public class MailContainerResourceTest {
     MailContainerResource deserialized = (MailContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getMessages()).hasSize(2);
     Truth.assertThat(deserialized.getFolders()).hasSize(2);
+    Truth.assertThat(deserialized).isEqualTo(data);
   }
 }

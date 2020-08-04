@@ -9,6 +9,7 @@ import org.datatransferproject.types.common.models.calendar.CalendarEventModel.C
 import org.junit.Test;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 public class CalendarContainerResourceTest {
@@ -18,7 +19,8 @@ public class CalendarContainerResourceTest {
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.registerSubtypes(CalendarContainerResource.class);
 
-    CalendarEventTime today = new CalendarEventTime(OffsetDateTime.now(), true);
+    CalendarEventTime today =
+        new CalendarEventTime(OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC), true);
 
     List<CalendarModel> calendars =
         ImmutableList.of(new CalendarModel("id1", "name", "description"));
@@ -48,5 +50,6 @@ public class CalendarContainerResourceTest {
     CalendarContainerResource deserialized = (CalendarContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getCalendars()).hasSize(1);
     Truth.assertThat(deserialized.getEvents()).hasSize(2);
+    Truth.assertThat(deserialized).isEqualTo(data);
   }
 }
