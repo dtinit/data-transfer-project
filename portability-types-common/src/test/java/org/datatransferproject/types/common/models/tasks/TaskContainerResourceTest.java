@@ -12,7 +12,7 @@ import org.datatransferproject.types.common.models.tasks.TaskListModel;
 import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.junit.Test;
 
-public class TasksModelWrapperTest {
+public class TaskContainerResourceTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
