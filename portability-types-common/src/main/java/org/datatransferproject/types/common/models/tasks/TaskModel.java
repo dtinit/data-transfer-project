@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 public class TaskModel {
   private final String taskListId;
@@ -56,4 +57,21 @@ public class TaskModel {
   public Instant getCompletedTime() { return completedTime; }
 
   public Instant getDueTime() { return dueTime; }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TaskModel taskModel = (TaskModel) o;
+    return Objects.equals(getTaskListId(), taskModel.getTaskListId()) &&
+            Objects.equals(getText(), taskModel.getText()) &&
+            Objects.equals(getNotes(), taskModel.getNotes()) &&
+            Objects.equals(getCompletedTime(), taskModel.getCompletedTime()) &&
+            Objects.equals(getDueTime(), taskModel.getDueTime());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getTaskListId(), getText(), getNotes(), getCompletedTime(), getDueTime());
+  }
 }

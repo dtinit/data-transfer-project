@@ -55,4 +55,18 @@ public class VideosContainerResource extends ContainerResource {
         .put(ALBUMS_COUNT_DATA_NAME, albums.size())
         .build();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VideosContainerResource that = (VideosContainerResource) o;
+    return Objects.equals(getAlbums(), that.getAlbums())
+        && Objects.equals(getVideos(), that.getVideos());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getAlbums(), getVideos());
+  }
 }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
+import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 /** A Wrapper for all the possible objects that can be returned by a calendar exporter. */
@@ -42,5 +43,19 @@ public class CalendarContainerResource extends ContainerResource {
 
   public Collection<CalendarEventModel> getEvents() {
     return events;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CalendarContainerResource that = (CalendarContainerResource) o;
+    return Objects.equals(getCalendars(), that.getCalendars()) &&
+            Objects.equals(getEvents(), that.getEvents());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getCalendars(), getEvents());
   }
 }

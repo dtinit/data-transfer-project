@@ -39,6 +39,7 @@ public class PhotosContainerResourceTest {
     PhotosContainerResource deserialized = (PhotosContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getAlbums()).hasSize(1);
     Truth.assertThat(deserialized.getPhotos()).hasSize(2);
+    Truth.assertThat(deserialized).isEqualTo(data);
   }
 
   @Test

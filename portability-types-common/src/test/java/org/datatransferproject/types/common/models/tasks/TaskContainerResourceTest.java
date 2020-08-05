@@ -12,7 +12,7 @@ import org.datatransferproject.types.common.models.tasks.TaskListModel;
 import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.junit.Test;
 
-public class TasksModelWrapperTest {
+public class TaskContainerResourceTest {
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
@@ -25,7 +25,7 @@ public class TasksModelWrapperTest {
     List<TaskModel> tasks =
         ImmutableList.of(
             new TaskModel("id1", "Write Better tests", "Do this soon", null, null),
-            new TaskModel("id1", "Liberate all the data", "do this in stages", null, null));
+            new TaskModel("id2", "Liberate all the data", "do this in stages", null, null));
 
     ContainerResource data = new TaskContainerResource(taskLists, tasks);
 
@@ -39,5 +39,6 @@ public class TasksModelWrapperTest {
     TaskContainerResource deserialized = (TaskContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getLists()).hasSize(1);
     Truth.assertThat(deserialized.getTasks()).hasSize(2);
+    Truth.assertThat(deserialized).isEqualTo(data);
   }
 }

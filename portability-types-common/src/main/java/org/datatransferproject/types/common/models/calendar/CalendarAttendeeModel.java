@@ -18,6 +18,8 @@ package org.datatransferproject.types.common.models.calendar;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 public class CalendarAttendeeModel {
   private final String displayName;
   private final String email;
@@ -43,5 +45,20 @@ public class CalendarAttendeeModel {
 
   public String getDisplayName() {
     return displayName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CalendarAttendeeModel that = (CalendarAttendeeModel) o;
+    return getOptional() == that.getOptional() &&
+            Objects.equals(getDisplayName(), that.getDisplayName()) &&
+            Objects.equals(getEmail(), that.getEmail());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getDisplayName(), getEmail(), getOptional());
   }
 }

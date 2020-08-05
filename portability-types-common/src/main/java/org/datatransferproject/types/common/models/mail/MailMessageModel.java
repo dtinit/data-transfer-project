@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Objects;
 
 public final class MailMessageModel {
   private final String rawString;
@@ -48,5 +49,19 @@ public final class MailMessageModel {
         .add("rawString", rawString.length())
         .add("containerIds", containerIds.size())
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MailMessageModel that = (MailMessageModel) o;
+    return Objects.equals(getRawString(), that.getRawString()) &&
+            Objects.equals(getContainerIds(), that.getContainerIds());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getRawString(), getContainerIds());
   }
 }
