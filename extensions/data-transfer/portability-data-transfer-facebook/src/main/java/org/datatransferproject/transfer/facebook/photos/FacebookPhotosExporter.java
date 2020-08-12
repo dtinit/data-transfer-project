@@ -227,7 +227,8 @@ public class FacebookPhotosExporter
                 "image/jpg",
                 photo.getId(),
                 albumId,
-                true));
+                true,
+                photo.getCreatedTime()));
       }
 
       String token = photoConnection.getAfterCursor();
