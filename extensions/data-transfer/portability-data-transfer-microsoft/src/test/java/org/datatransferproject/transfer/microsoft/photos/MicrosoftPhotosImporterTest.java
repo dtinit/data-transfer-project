@@ -16,64 +16,46 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
-import java.io.IOException;
-import java.io.ByteArrayInputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import com.google.api.client.auth.oauth2.Credential;
-
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.launcher.monitor.ConsoleMonitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
-import org.datatransferproject.transfer.microsoft.driveModels.*;
-import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.transfer.microsoft.DataChunk;
-import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
-import org.junit.Before;
-import com.google.api.client.auth.oauth2.Credential;
-
-import com.google.api.client.auth.oauth2.BearerToken;
-
-import org.junit.Test;
-import org.mockito.Matchers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.Call;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import com.google.common.collect.ImmutableList;
-
-
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.common.collect.ImmutableList;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.launcher.monitor.ConsoleMonitor;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
+import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.transfer.microsoft.driveModels.*;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.junit.Before;
+import org.junit.Test;
 
-/** 
-  This tests the MicrosoftPhotosImporter. As of now, it only tests the number
-  of requests called. More tests are needed to test request bodies and parameters.
-*/
+
+/**
+ * This tests the MicrosoftPhotosImporter. As of now, it only tests the number of requests called.
+ * More tests are needed to test request bodies and parameters.
+ */
 public class MicrosoftPhotosImporterTest {
 
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
@@ -95,8 +77,9 @@ public class MicrosoftPhotosImporterTest {
   public void setUp() throws IOException {
     executor = new FakeIdempotentImportExecutor();
     authData = mock(TokensAndUrlAuthData.class);
-    client =  mock(OkHttpClient.class);
-    objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    client = mock(OkHttpClient.class);
+    objectMapper = new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     // mocked on a per test basis
     jobStore = mock(TemporaryPerJobDataStore.class);
     monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
@@ -107,62 +90,101 @@ public class MicrosoftPhotosImporterTest {
     credential.setAccessToken("acc");
     credential.setExpirationTimeMilliseconds(null);
     importer = new MicrosoftPhotosImporter(
-      BASE_URL,
-      client,
-      objectMapper,
-      jobStore,
-      monitor,
-      credentialFactory
+        BASE_URL,
+        client,
+        objectMapper,
+        jobStore,
+        monitor,
+        credentialFactory
     );
+  }
+
+  @Test
+  public void testCleanAlbumNames()  throws Exception {
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, null);
+
+    Call call = mock(Call.class);
+    doReturn(call).when(client).newCall(argThat((Request r) -> {
+      return
+          r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
+              &&
+              !r.body().toString().contains("album1.") &&
+              r.body().toString().contains("album1");
+    }));
+    Response response = mock(Response.class);
+    ResponseBody body = mock(ResponseBody.class);
+    when(body.bytes()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+    when(body.string()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+    when(response.code()).thenReturn(200);
+    when(response.body()).thenReturn(body);
+    when(call.execute()).thenReturn(response);
+
+    ImportResult result = importer.importItem(uuid, executor, authData, data);
+    verify(client, times(1)).newCall(any());
+    assertThat(result).isEqualTo(ImportResult.OK);
   }
 
   @Test
   public void testImportItemAllSuccess() throws Exception {
     List<PhotoAlbum> albums =
-      ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake albumb"));
+        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake albumb"));
 
     List<PhotoModel> photos =
-      ImmutableList.of(
-        new PhotoModel(
-          "Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
-          true),
-        new PhotoModel(
-          "Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
+        ImmutableList.of(
+            new PhotoModel(
+                "Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
+                true),
+            new PhotoModel(
+                "Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
     when(jobStore.getStream(uuid, "http://fake.com/1.jpg"))
-    .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
+        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
     when(jobStore.getStream(uuid, "https://fake.com/2.png"))
-    .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
+        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
     PhotosContainerResource data = new PhotosContainerResource(albums, photos);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) ->
-                                        r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+        r.url().toString()
+            .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"),  "{\"id\": \"id1\"}").bytes());
-    when(body.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"),  "{\"id\": \"id1\"}").string());
+    when(body.bytes()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+    when(body.string()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
     Call call2 = mock(Call.class);
     doReturn(call2).when(client).newCall(argThat((Request r) ->
-                                         r.url().toString().contains("createUploadSession")));
+        r.url().toString().contains("createUploadSession")));
     Response response2 = mock(Response.class);
     ResponseBody body2 = mock(ResponseBody.class);
-    when(body2.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}").bytes());
-    when(body2.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}").string());
+    when(body2.bytes()).thenReturn(ResponseBody
+        .create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}")
+        .bytes());
+    when(body2.string()).thenReturn(ResponseBody
+        .create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}")
+        .string());
     when(response2.code()).thenReturn(200);
     when(response2.body()).thenReturn(body2);
     when(call2.execute()).thenReturn(response2);
 
     Call call3 = mock(Call.class);
     doReturn(call3).when(client).newCall(argThat((Request r) ->
-                                         r.url().toString().contains("scalia.com/link")));
+        r.url().toString().contains("scalia.com/link")));
     Response response3 = mock(Response.class);
     ResponseBody body3 = mock(ResponseBody.class);
-    when(body3.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"),  "{\"id\": \"rand1\"}").bytes());
-    when(body3.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"),  "{\"id\": \"rand1\"}").string());
+    when(body3.bytes()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}").bytes());
+    when(body3.string()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}").string());
     when(response3.code()).thenReturn(200);
     when(response3.body()).thenReturn(body3);
     when(call3.execute()).thenReturn(response3);
