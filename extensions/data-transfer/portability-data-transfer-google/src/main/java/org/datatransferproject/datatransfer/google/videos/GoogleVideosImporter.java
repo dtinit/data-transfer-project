@@ -51,6 +51,7 @@ import com.google.photos.library.v1.util.NewMediaItemFactory;
 import com.google.rpc.Code;
 import com.google.rpc.Status;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -201,6 +202,13 @@ public class GoogleVideosImporter
           uploadTokenToDataId.put(uploadToken, video);
           uploadTokenToLength.put(uploadToken, pair.getRight());
         } catch (IOException e) {
+          if (e instanceof FileNotFoundException) {
+            // If the video file is no longer available then skip the video. We see this in a small
+            // number of videos where the video has been deleted.
+            monitor.info(
+                () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+            continue;
+          }
           executor.executeAndSwallowIOExceptions(
               video.getDataId(),
               video.getName(),

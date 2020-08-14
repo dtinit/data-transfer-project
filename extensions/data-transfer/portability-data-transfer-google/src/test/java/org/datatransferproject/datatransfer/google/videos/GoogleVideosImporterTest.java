@@ -32,6 +32,7 @@ import com.google.photos.types.proto.MediaItem;
 import com.google.rpc.Code;
 import com.google.rpc.Status;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.HttpURLConnection;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -54,6 +55,7 @@ public class GoogleVideosImporterTest {
   private static final String VIDEO_ID = "myId";
 
   private GoogleVideosImporter googleVideosImporter;
+  private ImageStreamProvider streamProvider;
 
   @Before
   public void setUp() throws Exception {
@@ -67,7 +69,7 @@ public class GoogleVideosImporterTest {
     Files.write(new byte[32], file2);
     when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(file1, file2);
 
-    ImageStreamProvider streamProvider = mock(ImageStreamProvider.class);
+    streamProvider = mock(ImageStreamProvider.class);
     when(streamProvider.getConnection(any())).thenReturn(mock(HttpURLConnection.class));
     googleVideosImporter =
         new GoogleVideosImporter(null, dataStore, mock(Monitor.class), streamProvider);
@@ -191,5 +193,32 @@ public class GoogleVideosImporterTest {
     assertEquals("myId2", errorDetail.id());
     assertThat(
         errorDetail.exception(), CoreMatchers.containsString("Video item could not be created."));
+  }
+
+  @Test
+  public void skipNotFoundVideo() throws Exception {
+    PhotosLibraryClient photosLibraryClient = mock(PhotosLibraryClient.class);
+
+    HttpURLConnection httpURLConnection = mock(HttpURLConnection.class);
+    when(httpURLConnection.getInputStream()).thenThrow(new FileNotFoundException());
+    when(streamProvider.getConnection(any())).thenReturn(httpURLConnection);
+
+    InMemoryIdempotentImportExecutor executor =
+        new InMemoryIdempotentImportExecutor(mock(Monitor.class));
+    long length =
+        googleVideosImporter.importVideoBatch(
+            Lists.newArrayList(
+                new VideoObject(
+                    VIDEO_TITLE,
+                    VIDEO_URI,
+                    VIDEO_DESCRIPTION,
+                    MP4_MEDIA_TYPE,
+                    VIDEO_ID,
+                    null,
+                    false)),
+            photosLibraryClient,
+            executor);
+    assertEquals("Expected the number of bytes to be 0L.", 0L, length);
+    assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
   }
 }

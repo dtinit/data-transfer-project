@@ -59,6 +59,7 @@ public class FacebookPhotosExporterTest {
   private static final String PHOTO_ID = "937644721";
   private static final String PHOTO_SOURCE = "https://www.example.com/photo.jpg";
   private static final String PHOTO_NAME = "Example photo";
+  private static final Date PHOTO_TIME = new Date(1234567890123L);
 
   private FacebookPhotosExporter facebookPhotosExporter;
   private UUID uuid = UUID.randomUUID();
@@ -84,7 +85,7 @@ public class FacebookPhotosExporterTest {
     // Set up example photo
     Photo photo = new Photo();
     photo.setId(PHOTO_ID);
-    photo.setCreatedTime(new Date());
+    photo.setCreatedTime(PHOTO_TIME);
     Photo.Image image = new Photo.Image();
     image.setSource(PHOTO_SOURCE);
     photo.addImage(image);
@@ -146,7 +147,14 @@ public class FacebookPhotosExporterTest {
     assertEquals(1, exportedData.getPhotos().size());
     assertEquals(
         new PhotoModel(
-            PHOTO_ID + ".jpg", PHOTO_ID, PHOTO_NAME, "image/jpg", PHOTO_ID, ALBUM_ID, false),
+            PHOTO_ID + ".jpg",
+            PHOTO_ID,
+            PHOTO_NAME,
+            "image/jpg",
+            PHOTO_ID,
+            ALBUM_ID,
+            false,
+            PHOTO_TIME),
         exportedData.getPhotos().toArray()[0]);
   }
 

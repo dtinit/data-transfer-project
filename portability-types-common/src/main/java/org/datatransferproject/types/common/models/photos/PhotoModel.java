@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
+import java.util.Date;
 import java.util.stream.Collectors;
 
 public class PhotoModel {
@@ -31,6 +32,7 @@ public class PhotoModel {
   private String albumId;
   private final boolean inTempStore;
   private String dataId;
+  private Date uploadedTime;
 
   @JsonCreator
   public PhotoModel(
@@ -40,7 +42,8 @@ public class PhotoModel {
       @JsonProperty("mediaType") String mediaType,
       @JsonProperty("dataId") String dataId,
       @JsonProperty("albumId") String albumId,
-      @JsonProperty("inTempStore") boolean inTempStore) {
+      @JsonProperty("inTempStore") boolean inTempStore,
+      @JsonProperty("uploadedTime") Date uploadedTime) {
     this.title = title;
     this.fetchableUrl = fetchableUrl;
     this.description = description;
@@ -51,6 +54,28 @@ public class PhotoModel {
     this.dataId = dataId;
     this.albumId = albumId;
     this.inTempStore = inTempStore;
+    this.uploadedTime = uploadedTime;
+  }
+
+  public PhotoModel(
+      String title,
+      String fetchableUrl,
+      String description,
+      String mediaType,
+      String dataId,
+      String albumId,
+      boolean inTempStore) {
+    this.title = title;
+    this.fetchableUrl = fetchableUrl;
+    this.description = description;
+    this.mediaType = mediaType;
+    if (dataId == null || dataId.isEmpty()) {
+      throw new IllegalArgumentException("dataID must be set");
+    }
+    this.dataId = dataId;
+    this.albumId = albumId;
+    this.inTempStore = inTempStore;
+    this.uploadedTime = null;
   }
 
   public String getTitle() {
@@ -75,6 +100,10 @@ public class PhotoModel {
 
   public String getDataId() {
     return dataId;
+  }
+
+  public Date getUploadedTime() {
+    return uploadedTime;
   }
 
   // remove all forbidden characters
@@ -102,6 +131,7 @@ public class PhotoModel {
         .add("dataId", dataId)
         .add("albumId", albumId)
         .add("inTempStore", inTempStore)
+        .add("uploadedTime", uploadedTime)
         .toString();
   }
 
@@ -115,7 +145,8 @@ public class PhotoModel {
             Objects.equal(getDescription(), that.getDescription()) &&
             Objects.equal(getMediaType(), that.getMediaType()) &&
             Objects.equal(getDataId(), that.getDataId()) &&
-            Objects.equal(getAlbumId(), that.getAlbumId());
+            Objects.equal(getAlbumId(), that.getAlbumId()) &&
+            Objects.equal(getUploadedTime(), that.getUploadedTime());
   }
 
   @Override
