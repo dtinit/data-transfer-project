@@ -35,12 +35,14 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.transfer.microsoft.driveModels.*;
@@ -100,7 +102,7 @@ public class MicrosoftPhotosImporterTest {
   }
 
   @Test
-  public void testCleanAlbumNames()  throws Exception {
+  public void testCleanAlbumNames() throws Exception {
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
 
@@ -108,11 +110,20 @@ public class MicrosoftPhotosImporterTest {
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) -> {
+      String body = "";
+
+      try {
+        final Buffer buffer = new Buffer();
+        r.body().writeTo(buffer);
+        body = buffer.readUtf8();
+      } catch (IOException e) {
+        return false;
+      }
+
       return
           r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
               &&
-              !r.body().toString().contains("album1.") &&
-              r.body().toString().contains("album1");
+              body.contains("album1_");
     }));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
@@ -127,6 +138,31 @@ public class MicrosoftPhotosImporterTest {
     ImportResult result = importer.importItem(uuid, executor, authData, data);
     verify(client, times(1)).newCall(any());
     assertThat(result).isEqualTo(ImportResult.OK);
+  }
+
+  @Test(expected = PermissionDeniedException.class)
+  public void testImportItemPermissionDenied() throws Exception {
+    List<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
+
+    PhotosContainerResource data = new PhotosContainerResource(albums, null);
+
+    Call call = mock(Call.class);
+    doReturn(call).when(client).newCall(argThat((Request r) ->
+        r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
+    ));
+    Response response = mock(Response.class);
+    ResponseBody body = mock(ResponseBody.class);
+    when(body.bytes()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+    when(body.string()).thenReturn(
+        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+    when(response.code()).thenReturn(403);
+    when(response.message()).thenReturn("Access Denied");
+    when(response.body()).thenReturn(body);
+    when(call.execute()).thenReturn(response);
+
+    ImportResult result = importer.importItem(uuid, executor, authData, data);
   }
 
   @Test
