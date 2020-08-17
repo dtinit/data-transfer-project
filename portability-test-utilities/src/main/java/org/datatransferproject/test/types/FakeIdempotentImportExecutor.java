@@ -2,17 +2,17 @@ package org.datatransferproject.test.types;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import java.util.UUID;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.Callable;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
+
   private HashMap<String, Serializable> knownValues = new HashMap<>();
 
   @Override
@@ -38,7 +38,7 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
       System.out.println("Storing key " + idempotentId + " in cache");
       return result;
     } catch (Exception e) {
-      throw new IOException("Problem executing callable for: " + idempotentId, e);
+      throw e;
     }
   }
 

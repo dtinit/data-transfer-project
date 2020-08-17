@@ -35,6 +35,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -109,11 +110,20 @@ public class MicrosoftPhotosImporterTest {
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) -> {
+      String body = "";
+
+      try {
+        final Buffer buffer = new Buffer();
+        r.body().writeTo(buffer);
+        body = buffer.readUtf8();
+      } catch (IOException e) {
+        return false;
+      }
+
       return
           r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
               &&
-              !r.body().toString().contains("album1.") &&
-              r.body().toString().contains("album1");
+              body.contains("album1_");
     }));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
@@ -131,9 +141,7 @@ public class MicrosoftPhotosImporterTest {
   }
 
   @Test(expected = PermissionDeniedException.class)
-  public void testImportItemPermissionDenied() throws Exception
-
-  {
+  public void testImportItemPermissionDenied() throws Exception {
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
 
