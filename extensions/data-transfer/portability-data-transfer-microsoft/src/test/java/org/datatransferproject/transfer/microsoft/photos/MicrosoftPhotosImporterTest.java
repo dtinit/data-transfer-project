@@ -131,7 +131,7 @@ public class MicrosoftPhotosImporterTest {
   }
 
   @Test(expected = PermissionDeniedException.class)
-  public void testImportItemPermissionDenied throws Exception
+  public void testImportItemPermissionDenied() throws Exception
 
   {
     List<PhotoAlbum> albums =
