@@ -141,7 +141,7 @@ public class MicrosoftPhotosImporterTest {
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) ->
-        r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children");
+        r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     ));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
