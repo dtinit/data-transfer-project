@@ -163,7 +163,7 @@ public class MicrosoftPhotosImporter
         body = newResponse.body();
       }
 
-      if (code == 403 && response.message() == "Access Denied") {
+      if (code == 403 && response.message().contains("Access Denied")) {
         throw new PermissionDeniedException(
             "User access to microsoft onedrive was denied",
             new IOException(
@@ -280,7 +280,7 @@ public class MicrosoftPhotosImporter
       responseBody = newResponse.body();
     }
 
-    if (code == 403 && response.message() == "Access Denied") {
+    if (code == 403 && response.message().contains("Access Denied")) {
       throw new PermissionDeniedException(
           "User access to Microsoft One Drive was denied",
           new IOException(
