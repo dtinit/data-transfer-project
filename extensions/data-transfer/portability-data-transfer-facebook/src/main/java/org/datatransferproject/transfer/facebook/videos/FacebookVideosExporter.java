@@ -96,7 +96,7 @@ public class FacebookVideosExporter
             new VideoObject(
                 String.format("%s.mp4", fbid),
                 url,
-                video.getName(),
+                video.getDescription(),
                 "video/mp4",
                 fbid,
                 null,

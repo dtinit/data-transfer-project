@@ -41,7 +41,7 @@ public class RestFbFacebookVideos implements FacebookVideosInterface {
   public Connection<Video> getVideos(Optional<String> paginationToken)
       throws CopyExceptionWithFailureReason {
     ArrayList<Parameter> parameters = new ArrayList<>();
-    parameters.add(Parameter.with("fields", "title,source"));
+    parameters.add(Parameter.with("fields", "description,source"));
     paginationToken.ifPresent(token -> parameters.add(Parameter.with("after", token)));
     try {
       return client.fetchConnection(
