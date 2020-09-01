@@ -91,6 +91,7 @@ dependencies {
     compile project(':extensions:data-transfer:portability-data-transfer-spotify')
     compile project(':extensions:data-transfer:portability-data-transfer-twitter')
     compile project(':extensions:data-transfer:portability-data-transfer-imgur')
+    compile project(':extensions:data-transfer:portability-data-transfer-koofr')
 
     if (offlineData == 'true') {
         compile project(':extensions:auth:portability-auth-offline-demo')
