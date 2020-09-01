@@ -22,6 +22,14 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
     compile project(':libraries:transfer')
+
+    compile("com.squareup.okhttp3:logging-interceptor:${okHttpVersion}")
+    compile("com.squareup.okhttp3:okhttp:${okHttpVersion}")
+    compile("com.google.api-client:google-api-client:${googleApiClient}")
+    compile("org.apache.httpcomponents:httpclient:${apacheHttpVersion}")
+
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
+    testCompile("com.squareup.okhttp3:mockwebserver:${okHttpVersion}")
 }
 
 configurePublication(project)
