@@ -52,7 +52,7 @@ public class FacebookVideosExporterTest {
     Video video = new Video();
     video.setId(VIDEO_ID);
     video.setSource(VIDEO_SOURCE);
-    video.setName(VIDEO_NAME);
+    video.setDescription(VIDEO_NAME);
 
     ArrayList<Video> videos = new ArrayList<>();
     videos.add(video);
