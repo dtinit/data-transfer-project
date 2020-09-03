@@ -38,7 +38,9 @@ public class InputStreamRequestBody extends RequestBody {
       source = Okio.source(inputStream);
       sink.writeAll(source);
     } finally {
-      source.close();
+      if (source != null) {
+        source.close();
+      }
     }
   }
 }
