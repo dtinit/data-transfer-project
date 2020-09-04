@@ -19,6 +19,7 @@ import okhttp3.ResponseBody;
 import org.apache.http.client.utils.URIBuilder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /** A minimal Koofr REST API client. */
@@ -54,7 +55,7 @@ public class KoofrClient {
     this.videosEnsured = false;
   }
 
-  public boolean fileExists(String path) throws IOException {
+  public boolean fileExists(String path) throws IOException, InvalidTokenException {
     String url;
     try {
       url =
@@ -87,7 +88,8 @@ public class KoofrClient {
     }
   }
 
-  public void ensureFolder(String parentPath, String name) throws IOException {
+  public void ensureFolder(String parentPath, String name)
+      throws IOException, InvalidTokenException {
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     rawFolder.put("name", name);
 
@@ -123,7 +125,8 @@ public class KoofrClient {
     }
   }
 
-  public void addDescription(String path, String description) throws IOException {
+  public void addDescription(String path, String description)
+      throws IOException, InvalidTokenException {
     Map<String, String[]> tags = new LinkedHashMap<>();
     tags.put("description", new String[] {description});
     Map<String, Object> body = new LinkedHashMap<>();
@@ -168,7 +171,7 @@ public class KoofrClient {
       String mediaType,
       Date modified,
       String description)
-      throws IOException, DestinationMemoryFullException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     String url;
     try {
       URIBuilder builder =
@@ -222,7 +225,7 @@ public class KoofrClient {
     }
   }
 
-  public String ensureRootFolder() throws IOException {
+  public String ensureRootFolder() throws IOException, InvalidTokenException {
     if (!rootEnsured) {
       ensureFolder("/", ROOT_NAME);
       rootEnsured = true;
@@ -231,7 +234,7 @@ public class KoofrClient {
     return "/" + ROOT_NAME;
   }
 
-  public String ensureVideosFolder() throws IOException {
+  public String ensureVideosFolder() throws IOException, InvalidTokenException {
     String rootFolder = ensureRootFolder();
 
     if (!videosEnsured) {
@@ -265,7 +268,8 @@ public class KoofrClient {
   }
 
   private Response getResponse(
-      OkHttpClient httpClient, Request.Builder requestBuilder, OnRetry onRetry) throws IOException {
+      OkHttpClient httpClient, Request.Builder requestBuilder, OnRetry onRetry)
+      throws IOException, InvalidTokenException {
     Response response = client.newCall(requestBuilder.build()).execute();
 
     if (response.code() == 401) {
@@ -287,7 +291,8 @@ public class KoofrClient {
     return response;
   }
 
-  private Response getResponse(Request.Builder requestBuilder) throws IOException {
+  private Response getResponse(Request.Builder requestBuilder)
+      throws IOException, InvalidTokenException {
     return getResponse(client, requestBuilder, null);
   }
 
@@ -303,6 +308,6 @@ public class KoofrClient {
 
   @FunctionalInterface
   private interface OnRetry {
-    void run() throws IOException;
+    void run() throws IOException, InvalidTokenException;
   }
 }

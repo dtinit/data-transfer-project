@@ -17,6 +17,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.After;
 import org.junit.Assert;
@@ -134,6 +135,38 @@ public class KoofrClientTest {
     Assert.assertEquals(
         "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
     Assert.assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
+    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+  }
+
+  @Test
+  public void testFileExistsRefreshTokenNotFound() throws Exception {
+    when(credentialFactory.refreshCredential(credential))
+        .then(
+            (InvocationOnMock invocation) -> {
+              throw new InvalidTokenException("Unable to refresh token.", null);
+            });
+
+    server.enqueue(new MockResponse().setResponseCode(401));
+
+    InvalidTokenException caughtExc = null;
+
+    try {
+      client.fileExists("/path/to/file");
+    } catch (InvalidTokenException exc) {
+      caughtExc = exc;
+    }
+
+    Assert.assertNotNull(caughtExc);
+    Assert.assertEquals("Unable to refresh token.", caughtExc.getMessage());
+
+    Assert.assertEquals(1, server.getRequestCount());
+
+    RecordedRequest recordedRequest = server.takeRequest();
+
+    Assert.assertEquals("GET", recordedRequest.getMethod());
+    Assert.assertEquals(
+        "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
+    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
     Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
   }
 

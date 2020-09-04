@@ -23,6 +23,8 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
@@ -81,7 +83,7 @@ public class KoofrVideosImporter
     return ImportResult.OK;
   }
 
-  private String createAlbumFolder(VideoAlbum album) throws IOException {
+  private String createAlbumFolder(VideoAlbum album) throws IOException, InvalidTokenException {
     monitor.debug(() -> String.format("Create Koofr folder %s", album.getName()));
 
     String rootPath = koofrClient.ensureRootFolder();
@@ -100,7 +102,7 @@ public class KoofrVideosImporter
 
   private String importSingleVideo(
       VideoObject video, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
-      throws Exception {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single video %s", video.getName()));
 
     HttpURLConnection conn = imageStreamProvider.getConnection(video.getContentUrl().toString());
