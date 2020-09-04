@@ -33,6 +33,8 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
@@ -102,7 +104,7 @@ public class KoofrPhotosImporter
     return ImportResult.OK;
   }
 
-  private String createAlbumFolder(PhotoAlbum album) throws IOException {
+  private String createAlbumFolder(PhotoAlbum album) throws IOException, InvalidTokenException {
     monitor.debug(() -> String.format("Create Koofr folder %s", album.getName()));
 
     String rootPath = koofrClient.ensureRootFolder();
@@ -121,7 +123,7 @@ public class KoofrPhotosImporter
 
   private String importSinglePhoto(
       PhotoModel photo, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
-      throws Exception {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single photo %s", photo.getTitle()));
 
     BufferedInputStream inputStream = null;

@@ -21,10 +21,12 @@ import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.oauth2.RefreshTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -68,17 +70,26 @@ public class KoofrCredentialFactory {
   }
 
   /** Refreshes and updates the given credential */
-  public Credential refreshCredential(Credential credential) throws IOException {
-    TokenResponse tokenResponse =
-        new RefreshTokenRequest(
-                httpTransport,
-                jsonFactory,
-                new GenericUrl(credential.getTokenServerEncodedUrl()),
-                credential.getRefreshToken())
-            .setClientAuthentication(credential.getClientAuthentication())
-            .setRequestInitializer(credential.getRequestInitializer())
-            .execute();
+  public Credential refreshCredential(Credential credential)
+      throws IOException, InvalidTokenException {
+    try {
+      TokenResponse tokenResponse =
+          new RefreshTokenRequest(
+                  httpTransport,
+                  jsonFactory,
+                  new GenericUrl(credential.getTokenServerEncodedUrl()),
+                  credential.getRefreshToken())
+              .setClientAuthentication(credential.getClientAuthentication())
+              .setRequestInitializer(credential.getRequestInitializer())
+              .execute();
 
-    return credential.setFromTokenResponse(tokenResponse);
+      return credential.setFromTokenResponse(tokenResponse);
+    } catch (TokenResponseException e) {
+      if (e.getStatusCode() == 401) {
+        throw new InvalidTokenException("Unable to refresh token.", e);
+      } else {
+        throw e;
+      }
+    }
   }
 }
