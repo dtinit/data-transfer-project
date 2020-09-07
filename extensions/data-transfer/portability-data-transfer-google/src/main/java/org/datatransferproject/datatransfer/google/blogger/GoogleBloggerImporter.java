@@ -16,8 +16,6 @@
 
 package org.datatransferproject.datatransfer.google.blogger;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
@@ -29,14 +27,15 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Permission;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.ibm.common.activitystreams.ASObject;
-import com.ibm.common.activitystreams.Activity;
-import com.ibm.common.activitystreams.LinkValue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -44,7 +43,12 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
+import org.datatransferproject.types.common.models.social.SocialActivityActor;
+import org.datatransferproject.types.common.models.social.SocialActivityAttachment;
+import org.datatransferproject.types.common.models.social.SocialActivityAttachmentType;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
+import org.datatransferproject.types.common.models.social.SocialActivityModel;
+import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleBloggerImporter
@@ -81,17 +85,13 @@ public class GoogleBloggerImporter
     // but there is no API to create a new blog.
     String blogId = blogList.getItems().get(0).getId();
 
-    for (Activity activity : data.getActivities()) {
-      for (LinkValue object : activity.object()) {
-        checkState(object instanceof ASObject, "%s isn't of expected type", object);
-        ASObject asObject = (ASObject) object;
-        if (asObject.objectTypeString().equalsIgnoreCase("note")
-            || asObject.objectTypeString().equalsIgnoreCase("post")) {
-          try {
-            insertActivity(idempotentExecutor, activity, asObject, blogId, authData);
-          } catch (IOException | RuntimeException e) {
-            throw new IOException("Couldn't import: " + activity, e);
-          }
+    for (SocialActivityModel activity : data.getActivities()) {
+      if (activity.getType() == SocialActivityType.NOTE
+          || activity.getType() == SocialActivityType.POST) {
+        try {
+          insertActivity(idempotentExecutor, data.getActor(), activity, blogId, authData);
+        } catch (IOException | RuntimeException e) {
+          throw new IOException("Couldn't import: " + activity, e);
         }
       }
     }
@@ -101,80 +101,71 @@ public class GoogleBloggerImporter
 
   private void insertActivity(
       IdempotentImportExecutor idempotentExecutor,
-      Activity activity,
-      ASObject asObject,
+      SocialActivityActor actor,
+      SocialActivityModel activity,
       String blogId,
       TokensAndUrlAuthData authData)
       throws Exception {
-    String content = asObject.content() == null ? "" : asObject.contentString();
+    String content = activity.getContent() == null ? "" : activity.getContent();
 
-    if (content == null) {
-      content = "";
-    }
+    Collection<SocialActivityAttachment> linkAttachments =
+        activity.getAttachments().stream()
+            .filter(attachment -> attachment.getType() == SocialActivityAttachmentType.LINK)
+            .collect(Collectors.toList());
+    Collection<SocialActivityAttachment> imageAttachments =
+        activity.getAttachments().stream()
+            .filter(attachment -> attachment.getType() == SocialActivityAttachmentType.IMAGE)
+            .collect(Collectors.toList());
 
     // Just put link attachments at the bottom of the post, as we
     // don't know how they were laid out in the originating service.
-    for (LinkValue attachmentLinkValue : asObject.attachments()) {
-      ASObject attachment = (ASObject) attachmentLinkValue;
+    for (SocialActivityAttachment attachment : linkAttachments) {
       content =
           "<a href=\""
-              + attachment.firstUrl().toString()
+              + attachment.getUrl()
               + "\">"
-              + attachment.displayNameString()
+              + attachment.getName()
               + "</a>\n</hr>\n"
               + content;
     }
 
-    if (asObject.firstImage() != null) {
+    if (!imageAttachments.isEmpty()) {
       // Store any attached images in Drive in a new folder.
       Drive driveInterface = getOrCreateDriveService(authData);
       String folderId =
           idempotentExecutor.executeOrThrowException(
               "MainAlbum", "Photo Album", () -> createAlbumFolder(driveInterface));
-      for (LinkValue image : asObject.image()) {
+      for (SocialActivityAttachment image : imageAttachments) {
         try {
           String newImgSrc =
               idempotentExecutor.executeAndSwallowIOExceptions(
-                  image.toString(),
-                  "Image",
-                  () -> uploadImage((ASObject) image, driveInterface, folderId));
+                  image.toString(), "Image", () -> uploadImage(image, driveInterface, folderId));
           content += "\n<hr/><img src=\"" + newImgSrc + "\">";
         } catch (RuntimeException e) {
-          throw new IOException("Couldn't import: " + asObject.image(), e);
+          throw new IOException("Couldn't import: " + imageAttachments, e);
         }
       }
     }
 
     String title = "";
 
-    String provider = null;
-
-    if (asObject.provider() != null) {
-      provider = asObject.firstProvider().toString();
+    if (activity.getTitle() != null && !Strings.isNullOrEmpty(activity.getTitle())) {
+      title = activity.getTitle();
     }
 
-    if (asObject.title() != null && !Strings.isNullOrEmpty(asObject.titleString())) {
-      title = asObject.titleString();
-    }
-    if (asObject.displayName() != null && !Strings.isNullOrEmpty(asObject.displayNameString())) {
-      title = asObject.displayNameString();
-    }
-
-    Post post = new Post().setTitle("Imported " + provider + " post: " + title).setContent(content);
-    if (activity.firstActor() != null) {
+    Post post = new Post().setTitle("Imported post: " + title).setContent(content);
+    if (actor != null) {
       Post.Author author = new Post.Author();
-      ASObject actorObject = (ASObject) activity.firstActor();
-      if (!Strings.isNullOrEmpty(actorObject.displayNameString())) {
-        author.setDisplayName(actorObject.displayNameString());
+      if (!Strings.isNullOrEmpty(actor.getName())) {
+        author.setDisplayName(actor.getName());
       }
-      if (actorObject.firstUrl() != null
-          && !Strings.isNullOrEmpty(actorObject.firstUrl().toString())) {
-        author.setUrl(actorObject.firstUrl().toString());
+      if (!Strings.isNullOrEmpty(actor.getUrl())) {
+        author.setUrl(actor.getUrl());
       }
       post.setAuthor(author);
     }
-    if (asObject.published() != null) {
-      post.setPublished(new DateTime(asObject.published().getMillis()));
+    if (activity.getPublished() != null) {
+      post.setPublished(new DateTime(activity.getPublished().toEpochMilli()));
     }
 
     idempotentExecutor.executeAndSwallowIOExceptions(
@@ -208,22 +199,15 @@ public class GoogleBloggerImporter
     return folder.getId();
   }
 
-  private String uploadImage(ASObject imageObject, Drive driveService, String parentFolderId)
+  private String uploadImage(
+      SocialActivityAttachment imageObject, Drive driveService, String parentFolderId)
       throws IOException {
     String url;
-    String description = null;
-    // The image property can either be an object, or just a URL, handle both cases.
-    if ("Image".equalsIgnoreCase(imageObject.objectTypeString())) {
-      url = imageObject.firstUrl().toString();
-      if (imageObject.displayName() != null) {
-        description = imageObject.displayNameString();
-      }
-    } else {
-      url = imageObject.toString();
-    }
-    if (description == null) {
-      description = "Imported photo from: " + url;
-    }
+    url = imageObject.getUrl().toString();
+
+    String description =
+        imageObject.getName() != null ? imageObject.getName() : ("Imported photo from: " + url);
+
     HttpURLConnection conn = imageStreamProvider.getConnection(url);
     InputStream inputStream = conn.getInputStream();
     File driveFile = new File().setName(description).setParents(ImmutableList.of(parentFolderId));

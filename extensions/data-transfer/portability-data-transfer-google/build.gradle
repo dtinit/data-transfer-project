@@ -39,11 +39,6 @@ dependencies {
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
     compile("com.google.photos.library:google-photos-library-client:1.5.0")
 
-    // Needed for OpenSocial ActivityStreams, which depends on these specific version
-    // so not generifying them.
-    compile group: 'joda-time', name: 'joda-time', version: '2.3'
-    implementation 'com.google.code.gson:gson:2.2.4'
-
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }
