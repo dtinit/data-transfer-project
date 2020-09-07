@@ -18,43 +18,59 @@ package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ibm.common.activitystreams.Activity;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
+import java.util.Objects;
+
 import org.datatransferproject.types.common.models.ContainerResource;
 
 /**
- * Wrapper class for encoding social activity streams using Activity Stream 2.0
+ * Wrapper class for encoding social activity streams based on Activity Stream 2.0
  * (https://www.w3.org/TR/activitystreams-core/)
  *
- * <p>The wrapper is needed to allow DTP to page through large collections of items.  DTP
- * doesn't know how to parse Activity Stream, only extensions that process social data will
- * understand this data, so it needs to by split up to allow DTP to efficiently process it.
+ * <p>The wrapper is needed to allow DTP to page through large collections of items. DTP doesn't
+ * know how to parse SocialActivityModel, only extensions that process social data will understand this
+ * data, so it needs to by split up to allow DTP to efficiently process it.
  */
 public class SocialActivityContainerResource extends ContainerResource {
   private final String id;
-  private final Collection<Activity> activities;
-  private final Collection<SocialActivityContainerResource> subContainers;
+  private final Collection<SocialActivityModel> activities;
+  private SocialActivityActor actor;
 
   @JsonCreator
   public SocialActivityContainerResource(
       @JsonProperty("id") String id,
-      @JsonProperty("activities") Collection<Activity> activities,
-      @JsonProperty("subContainers") Collection<SocialActivityContainerResource> subContainers) {
+      @JsonProperty("actor") SocialActivityActor actor,
+      @JsonProperty("activities") Collection<SocialActivityModel> activities) {
     this.id = id;
+    this.actor = actor;
     this.activities = activities == null ? ImmutableList.of() : activities;
-    this.subContainers = subContainers == null ? ImmutableList.of() : subContainers;
   }
 
-  public Collection<Activity> getActivities() {
+  public Collection<SocialActivityModel> getActivities() {
     return activities;
   }
 
-  public Collection<SocialActivityContainerResource> getSubContainers() {
-    return subContainers;
+  public SocialActivityActor getActor() {
+    return actor;
   }
 
   public String getId() {
     return id;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SocialActivityContainerResource that = (SocialActivityContainerResource) o;
+    return Objects.equals(getId(), that.getId()) &&
+            Objects.equals(getActivities(), that.getActivities()) &&
+            Objects.equals(getActor(), that.getActor());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getId(), getActivities(), getActor());
   }
 }
