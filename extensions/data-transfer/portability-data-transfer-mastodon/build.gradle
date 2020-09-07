@@ -34,11 +34,6 @@ dependencies {
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
 
-    // Needed for OpenSocial ActivityStreams
-    compile group: 'joda-time', name: 'joda-time', version: '2.3'
-    implementation 'com.google.code.gson:gson:2.2.4'
-
-    compile fileTree(include: ['*.jar'], dir: 'lib')
 }
 
 configurePublication(project)

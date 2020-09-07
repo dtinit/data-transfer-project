@@ -17,13 +17,12 @@
 package org.datatransferproject.transfer.mastodon.social;
 
 
-import com.ibm.common.activitystreams.ASObject;
-import com.ibm.common.activitystreams.Activity;
-import com.ibm.common.activitystreams.LinkValue;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
+import org.datatransferproject.types.common.models.social.SocialActivityModel;
+import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
 
 import java.io.IOException;
@@ -51,32 +50,26 @@ public class MastodonActivityImport
         authData.getCookies().get(0),
         authData.getUrl());
 
-    if (!data.getSubContainers().isEmpty()) {
-      throw new IllegalStateException("Mastodon doesn't support containers");
-    }
 
-    for (Activity activity : data.getActivities()) {
-      for (LinkValue object : activity.object()) {
-        checkState(object instanceof ASObject, "%s isn't of expected type", object);
-        ASObject asObject = (ASObject) object;
-        if (asObject.objectTypeString().equals("note")) {
+    for (SocialActivityModel activity : data.getActivities()) {
+        if (activity.getType() == SocialActivityType.NOTE) {
           idempotentImportExecutor.executeAndSwallowIOExceptions(
-              asObject.id(),
-              asObject.contentString(),
+                  activity.getId(),
+                  activity.getContent(),
               () -> {
-                postNode(asObject, utilities, jobId);
+                postNode(activity, utilities, jobId);
                 return 1;
               });
         }
       }
-    }
+
 
     return ImportResult.OK;
   }
 
-  private void postNode(ASObject asObject, MastodonHttpUtilities utilities, UUID jobId) throws IOException {
+  private void postNode(SocialActivityModel activity, MastodonHttpUtilities utilities, UUID jobId) throws IOException {
     utilities.postStatus(
-        "Duplicated: " + asObject.contentString(),
-        jobId + asObject.id());
+        "Duplicated: " + activity.getContent(),
+        jobId + activity.getId());
   }
 }
