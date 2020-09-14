@@ -42,4 +42,14 @@ public class KoofrTransmogrificationConfigTest {
     Assert.assertEquals("pic1_______________.jpg", photosArray[0].getTitle());
     Assert.assertEquals("pic2_______________.jpg", photosArray[1].getTitle());
   }
+
+  @Test
+  public void testGetAlbumName() {
+    KoofrTransmogrificationConfig config = new KoofrTransmogrificationConfig();
+
+    Assert.assertEquals("Valid name", config.getAlbumName("Valid name"));
+    Assert.assertEquals("Album", config.getAlbumName(""));
+    Assert.assertEquals("Album .", config.getAlbumName("."));
+    Assert.assertEquals("Album ..", config.getAlbumName(".."));
+  }
 }

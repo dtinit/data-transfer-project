@@ -84,12 +84,14 @@ public class KoofrVideosImporter
   }
 
   private String createAlbumFolder(VideoAlbum album) throws IOException, InvalidTokenException {
-    monitor.debug(() -> String.format("Create Koofr folder %s", album.getName()));
+    String albumName = KoofrTransmogrificationConfig.getAlbumName(album.getName());
+
+    monitor.debug(() -> String.format("Create Koofr folder %s", albumName));
 
     String rootPath = koofrClient.ensureRootFolder();
-    String fullPath = rootPath + "/" + album.getName();
+    String fullPath = rootPath + "/" + albumName;
 
-    koofrClient.ensureFolder(rootPath, album.getName());
+    koofrClient.ensureFolder(rootPath, albumName);
 
     String description = KoofrClient.trimDescription(album.getDescription());
 

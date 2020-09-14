@@ -9,6 +9,8 @@ public class KoofrTransmogrificationConfig extends TransmogrificationConfig {
 
   private static final String ALBUM_NAME_FORBIDDEN_CHARACTERS = "~\"#%&*:<>?/\\{|}";
 
+  private static final String ALBUM_NAME_DEFAULT = "Album";
+
   /** We need to override the methods */
   @Override
   public String getPhotoTitleForbiddenCharacters() {
@@ -18,5 +20,17 @@ public class KoofrTransmogrificationConfig extends TransmogrificationConfig {
   @Override
   public String getAlbumNameForbiddenCharacters() {
     return ALBUM_NAME_FORBIDDEN_CHARACTERS;
+  }
+
+  public static String getAlbumName(String name) {
+    // if all characters were forbidden, the name can be empty
+    if (name.equals("")) {
+      return ALBUM_NAME_DEFAULT;
+    }
+    // . and .. are not valid names on filesystems
+    if (name.equals(".") || name.equals("..")) {
+      return ALBUM_NAME_DEFAULT + " " + name;
+    }
+    return name;
   }
 }

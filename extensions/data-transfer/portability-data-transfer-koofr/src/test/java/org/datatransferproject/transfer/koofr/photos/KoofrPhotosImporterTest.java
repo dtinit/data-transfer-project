@@ -94,13 +94,13 @@ public class KoofrPhotosImporterTest {
 
     when(client.ensureRootFolder()).thenReturn("/root");
     when(executor.getCachedValue(eq("id1"))).thenReturn("/root/Album 1");
-    when(executor.getCachedValue(eq("id2"))).thenReturn("/root/Album 2");
+    when(executor.getCachedValue(eq("id2"))).thenReturn("/root/Album");
 
     when(client.fileExists("/root/Album 1/pic1.jpg")).thenReturn(false);
     when(client.fileExists("/root/Album 1/pic2.png")).thenReturn(true);
     when(client.fileExists("/root/Album 1/2020-08-03 11.55.24 pic3.jpg")).thenReturn(false);
     when(client.fileExists("/root/Album 1/2020-08-17 11.55.24 pic4.jpg")).thenReturn(false);
-    when(client.fileExists("/root/Album 2/pic5.jpg")).thenReturn(false);
+    when(client.fileExists("/root/Album/pic5.jpg")).thenReturn(false);
 
     String description1000 = new String(new char[1000]).replace("\0", "a");
     String description1001 = new String(new char[1001]).replace("\0", "a");
@@ -109,7 +109,7 @@ public class KoofrPhotosImporterTest {
     Collection<PhotoAlbum> albums =
         ImmutableList.of(
             new PhotoAlbum("id1", "Album 1", "This is a fake album"),
-            new PhotoAlbum("id2", "Album 2", description1001));
+            new PhotoAlbum("id2", "", description1001));
 
     Collection<PhotoModel> photos =
         ImmutableList.of(
@@ -170,8 +170,8 @@ public class KoofrPhotosImporterTest {
     clientInOrder.verify(client).ensureRootFolder();
     clientInOrder.verify(client).ensureFolder("/root", "Album 1");
     clientInOrder.verify(client).addDescription("/root/Album 1", "This is a fake album");
-    clientInOrder.verify(client).ensureFolder("/root", "Album 2");
-    clientInOrder.verify(client).addDescription("/root/Album 2", description1000);
+    clientInOrder.verify(client).ensureFolder("/root", "Album");
+    clientInOrder.verify(client).addDescription("/root/Album", description1000);
     clientInOrder.verify(client).fileExists(eq("/root/Album 1/pic1.jpg"));
     clientInOrder
         .verify(client)
@@ -197,11 +197,11 @@ public class KoofrPhotosImporterTest {
             eq("image/jpeg"),
             eq(new SimpleDateFormat("yyyy:MM:dd HH:mm:ss").parse("2020:08:17 11:55:24")),
             eq("A pic with uploaded time"));
-    clientInOrder.verify(client).fileExists(eq("/root/Album 2/pic5.jpg"));
+    clientInOrder.verify(client).fileExists(eq("/root/Album/pic5.jpg"));
     clientInOrder
         .verify(client)
         .uploadFile(
-            eq("/root/Album 2"),
+            eq("/root/Album"),
             eq("pic5.jpg"),
             any(),
             eq("image/jpeg"),
