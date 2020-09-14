@@ -38,6 +38,7 @@ import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
+import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -47,7 +48,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  private final KoofrClient koofrClient;
+  private final KoofrClientFactory koofrClientFactory;
   private final TemporaryPerJobDataStore jobStore;
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
@@ -58,8 +59,8 @@ public class KoofrPhotosImporter
   private final SimpleDateFormat titleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss ");
 
   public KoofrPhotosImporter(
-      KoofrClient koofrClient, Monitor monitor, TemporaryPerJobDataStore jobStore) {
-    this.koofrClient = koofrClient;
+      KoofrClientFactory koofrClientFactory, Monitor monitor, TemporaryPerJobDataStore jobStore) {
+    this.koofrClientFactory = koofrClientFactory;
     this.imageStreamProvider = new ImageStreamProvider();
     this.monitor = monitor;
     this.jobStore = jobStore;
@@ -72,8 +73,7 @@ public class KoofrPhotosImporter
       TokensAndUrlAuthData authData,
       PhotosContainerResource resource)
       throws Exception {
-    // Ensure credential is populated
-    koofrClient.getOrCreateCredential(authData);
+    KoofrClient koofrClient = koofrClientFactory.create(authData);
 
     monitor.debug(
         () ->
@@ -92,19 +92,20 @@ public class KoofrPhotosImporter
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a Koofr folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> createAlbumFolder(album));
+          album.getId(), album.getName(), () -> createAlbumFolder(album, koofrClient));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           photoModel.getAlbumId() + "-" + photoModel.getDataId(),
           photoModel.getTitle(),
-          () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
+          () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient));
     }
     return ImportResult.OK;
   }
 
-  private String createAlbumFolder(PhotoAlbum album) throws IOException, InvalidTokenException {
+  private String createAlbumFolder(PhotoAlbum album, KoofrClient koofrClient)
+      throws IOException, InvalidTokenException {
     String albumName = KoofrTransmogrificationConfig.getAlbumName(album.getName());
 
     monitor.debug(() -> String.format("Create Koofr folder %s", albumName));
@@ -124,7 +125,10 @@ public class KoofrPhotosImporter
   }
 
   private String importSinglePhoto(
-      PhotoModel photo, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
+      PhotoModel photo,
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      KoofrClient koofrClient)
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single photo %s", photo.getTitle()));
 

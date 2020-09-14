@@ -18,7 +18,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.koofr.common.KoofrClient;
+import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.transfer.koofr.common.KoofrCredentialFactory;
 import org.datatransferproject.transfer.koofr.photos.KoofrPhotosImporter;
 import org.datatransferproject.transfer.koofr.videos.KoofrVideosImporter;
@@ -106,12 +106,13 @@ public class KoofrTransferExtension implements TransferExtension {
             .writeTimeout(fileUploadReadTimeout, TimeUnit.MILLISECONDS)
             .build();
 
-    KoofrClient koofrClient =
-        new KoofrClient(BASE_API_URL, client, fileUploadClient, mapper, monitor, credentialFactory);
+    KoofrClientFactory koofrClientFactory =
+        new KoofrClientFactory(
+            BASE_API_URL, client, fileUploadClient, mapper, monitor, credentialFactory);
 
     ImmutableMap.Builder<String, Importer> importBuilder = ImmutableMap.builder();
-    importBuilder.put(PHOTOS, new KoofrPhotosImporter(koofrClient, monitor, jobStore));
-    importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClient, monitor));
+    importBuilder.put(PHOTOS, new KoofrPhotosImporter(koofrClientFactory, monitor, jobStore));
+    importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClientFactory, monitor));
     importerMap = importBuilder.build();
 
     initialized = true;
