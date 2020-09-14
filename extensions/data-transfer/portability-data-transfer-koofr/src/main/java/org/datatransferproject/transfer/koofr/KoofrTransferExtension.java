@@ -60,17 +60,14 @@ public class KoofrTransferExtension implements TransferExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    // Note: initialize could be called twice in an account migration scenario where
-    // we import and
-    // export to the same service provider. So just return rather than throwing if
-    // called multiple
-    // times.
+    // Note: initialize could be called twice in an account migration scenario
+    // where we import and export to the same service provider. So just return
+    // rather than throwing if called multiple times.
     if (initialized) return;
 
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
-    // TransformerService transformerService = new TransformerServiceImpl();
     OkHttpClient client = new OkHttpClient.Builder().build();
     ObjectMapper mapper = new ObjectMapper();
 
