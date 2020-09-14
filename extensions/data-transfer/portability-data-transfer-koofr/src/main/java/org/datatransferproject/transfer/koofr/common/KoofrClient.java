@@ -34,6 +34,8 @@ public class KoofrClient {
   private boolean rootEnsured;
   private boolean videosEnsured;
 
+  private static final String API_PATH_PREFIX = "/api/v2";
+  private static final String CONTENT_API_PATH_PREFIX = "/content/api/v2";
   private static final String ROOT_NAME = "Data transfer";
   private static final String VIDEOS_NAME = "Videos";
 
@@ -60,7 +62,7 @@ public class KoofrClient {
     try {
       url =
           getUriBuilder()
-              .setPath("/api/v2/mounts/primary/files/info")
+              .setPath(API_PATH_PREFIX + "/mounts/primary/files/info")
               .setParameter("path", path)
               .build()
               .toString();
@@ -97,7 +99,7 @@ public class KoofrClient {
     try {
       url =
           getUriBuilder()
-              .setPath("/api/v2/mounts/primary/files/folder")
+              .setPath(API_PATH_PREFIX + "/mounts/primary/files/folder")
               .setParameter("path", parentPath)
               .build()
               .toString();
@@ -136,7 +138,7 @@ public class KoofrClient {
     try {
       url =
           getUriBuilder()
-              .setPath("/api/v2/mounts/primary/files/tags/add")
+              .setPath(API_PATH_PREFIX + "/mounts/primary/files/tags/add")
               .setParameter("path", path)
               .build()
               .toString();
@@ -176,7 +178,7 @@ public class KoofrClient {
     try {
       URIBuilder builder =
           getUriBuilder()
-              .setPath("/content/api/v2/mounts/primary/files/put")
+              .setPath(CONTENT_API_PATH_PREFIX + "/mounts/primary/files/put")
               .setParameter("path", parentPath)
               .setParameter("filename", name)
               .setParameter("autorename", "true")
