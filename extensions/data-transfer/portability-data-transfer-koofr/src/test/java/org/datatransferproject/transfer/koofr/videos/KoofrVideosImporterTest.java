@@ -73,11 +73,11 @@ public class KoofrVideosImporterTest {
 
     when(client.ensureRootFolder()).thenReturn("/root");
     when(executor.getCachedValue(eq("id1"))).thenReturn("/root/Album 1");
-    when(executor.getCachedValue(eq("id2"))).thenReturn("/root/Album 2");
+    when(executor.getCachedValue(eq("id2"))).thenReturn("/root/Album");
 
     when(client.fileExists("/root/Album 1/video1.mp4")).thenReturn(false);
     when(client.fileExists("/root/Album 1/video2.mp4")).thenReturn(true);
-    when(client.fileExists("/root/Album 2/video3.mp4")).thenReturn(false);
+    when(client.fileExists("/root/Album/video3.mp4")).thenReturn(false);
 
     String description1000 = new String(new char[1000]).replace("\0", "a");
     String description1001 = new String(new char[1001]).replace("\0", "a");
@@ -86,7 +86,7 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums =
         ImmutableList.of(
             new VideoAlbum("id1", "Album 1", "This is a fake album"),
-            new VideoAlbum("id2", "Album 2", description1001));
+            new VideoAlbum("id2", "", description1001));
 
     Collection<VideoObject> videos =
         ImmutableList.of(
@@ -125,8 +125,8 @@ public class KoofrVideosImporterTest {
     clientInOrder.verify(client).ensureRootFolder();
     clientInOrder.verify(client).ensureFolder("/root", "Album 1");
     clientInOrder.verify(client).addDescription("/root/Album 1", "This is a fake album");
-    clientInOrder.verify(client).ensureFolder("/root", "Album 2");
-    clientInOrder.verify(client).addDescription("/root/Album 2", description1000);
+    clientInOrder.verify(client).ensureFolder("/root", "Album");
+    clientInOrder.verify(client).addDescription("/root/Album", description1000);
     clientInOrder.verify(client).fileExists(eq("/root/Album 1/video1.mp4"));
     clientInOrder
         .verify(client)
@@ -138,11 +138,11 @@ public class KoofrVideosImporterTest {
             isNull(),
             eq("A video 1"));
     clientInOrder.verify(client).fileExists(eq("/root/Album 1/video2.mp4"));
-    clientInOrder.verify(client).fileExists(eq("/root/Album 2/video3.mp4"));
+    clientInOrder.verify(client).fileExists(eq("/root/Album/video3.mp4"));
     clientInOrder
         .verify(client)
         .uploadFile(
-            eq("/root/Album 2"),
+            eq("/root/Album"),
             eq("video3.mp4"),
             any(),
             eq("video/mp4"),
