@@ -70,7 +70,8 @@ public class InstagramTransferExtension implements TransferExtension {
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     HttpTransport httpTransport = context.getService(HttpTransport.class);
-    exporter = new InstagramPhotoExporter(mapper, httpTransport);
+    Monitor monitor = context.getMonitor();
+    exporter = new InstagramPhotoExporter(mapper, httpTransport, monitor);
     initialized = true;
   }
 }

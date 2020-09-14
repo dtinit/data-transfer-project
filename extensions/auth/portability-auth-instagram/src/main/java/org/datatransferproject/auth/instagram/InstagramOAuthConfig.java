@@ -47,7 +47,7 @@ public class InstagramOAuthConfig implements OAuth2Config {
   // See https://www.instagram.com/developer/authorization/
   @Override
   public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", ImmutableSet.of("basic"));
+    return ImmutableMap.of("PHOTOS", ImmutableSet.of("user_profile,user_media"));
   }
 
   // Instagram does not provide an API for import; https://help.instagram.com/442418472487929

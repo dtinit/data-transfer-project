@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -46,20 +47,22 @@ import java.util.UUID;
 public class InstagramPhotoExporter implements
     Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  private static final String MEDIA_URL = "https://api.instagram.com/v1/users/self/media/recent";
-  private static final String FAKE_ALBUM_ID = "instagramAlbum";
+  private static final String MEDIA_URL = "https://graph.instagram.com/me/media?fields=id,media_url,media_type,caption,timestamp";
+  private static final String DEFAULT_ALBUM_ID = "Instagram Photos";
 
   private final ObjectMapper objectMapper;
   private final HttpTransport httpTransport;
+  private final Monitor monitor;
 
-  public InstagramPhotoExporter(ObjectMapper objectMapper, HttpTransport httpTransport) {
+  public InstagramPhotoExporter(ObjectMapper objectMapper, HttpTransport httpTransport, Monitor monitor) {
     this.objectMapper = objectMapper;
     this.httpTransport = httpTransport;
+    this.monitor = monitor;
   }
 
   @Override
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      Optional<ExportInformation> exportInformation) {
+      Optional<ExportInformation> exportInformation) throws IOException {
     if (exportInformation.isPresent()) {
       return exportPhotos(authData, Optional.ofNullable(exportInformation.get().getPaginationData()));
     } else {
@@ -68,31 +71,33 @@ public class InstagramPhotoExporter implements
   }
 
   private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
-      Optional<PaginationData> pageData) {
+      Optional<PaginationData> pageData) throws IOException{
     Preconditions.checkNotNull(authData);
     MediaResponse response;
     try {
       response = makeRequest(MEDIA_URL, MediaResponse.class, authData);
     } catch (IOException e) {
-      return new ExportResult<>(e);
+      monitor.info(() -> "Failed to get photos from instagram API", e);
+      throw e;
     }
 
-    List<PhotoModel> photos = new ArrayList<>();
+    ArrayList<PhotoModel> photos = new ArrayList<>();
 
     // TODO: check out paging.
     for (MediaFeedData photo : response.getData()) {
-      // TODO json mapping is broken.
-      String photoId = photo.getId();
-      String url = photo.getImages().getStandardResolution().getUrl();
-      String text = (photo.getCaption() != null) ? photo.getCaption().getText() : null;
+      if (!photo.getMediaType().equals("IMAGE")) {
+        continue;
+      }
+
       photos.add(new PhotoModel(
-          "Instagram photo: " + photoId,
-          url,
-          text,
-          null,
-          photoId,
-          FAKE_ALBUM_ID,
-          false));
+          String.format("%s.jpg", photo.getId()),
+          photo.getMediaUrl(),
+          photo.getCaption(),
+          "image/jpg",
+          photo.getId(),
+          DEFAULT_ALBUM_ID,
+          false,
+          photo.getPublishDate()));
     }
 
     List<PhotoAlbum> albums = new ArrayList<>();
@@ -100,7 +105,7 @@ public class InstagramPhotoExporter implements
     if (!photos.isEmpty() && !pageData.isPresent()) {
       albums.add(
           new PhotoAlbum(
-              FAKE_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
+              DEFAULT_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
     }
 
     return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, photos));
@@ -111,7 +116,7 @@ public class InstagramPhotoExporter implements
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest =
         requestFactory.buildGetRequest(
-            new GenericUrl(url + "?access_token=" + authData.getAccessToken()));
+            new GenericUrl(url + "&access_token=" + authData.getAccessToken()));
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {

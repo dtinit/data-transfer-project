@@ -16,18 +16,15 @@
 
 package org.datatransferproject.transfer.instagram.photos.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 /** DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping. */
 public final class MediaResponse {
 
-  private Meta meta;
-
+  @JsonProperty("data")
   private List<MediaFeedData> data;
-
-  public Meta getMeta() {
-    return meta;
-  }
 
   public List<MediaFeedData> getData() {
     return data;

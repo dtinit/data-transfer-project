@@ -16,36 +16,40 @@
 
 package org.datatransferproject.transfer.instagram.photos.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Date;
+
 /** DataModel for a media feed in the Instagram API. Instantiated by JSON mapping. */
 public final class MediaFeedData {
 
+  @JsonProperty("id")
   private String id;
 
-  private String type;
+  @JsonProperty("media_type")
+  private String media_type;
 
-  private String created_time;
+  @JsonProperty("media_url")
+  private String media_url;
 
-  private ImageObject images;
+  @JsonProperty("caption")
+  private String caption;
 
-  private Caption caption;
+  @JsonProperty("timestamp")
+  private Date publish_date;
 
   public String getId() {
     return id;
   }
 
-  public Caption getCaption() {
+  public String getMediaType() { return media_type; }
+
+  public String getMediaUrl() { return media_url; }
+
+  public String getCaption() {
     return caption;
   }
 
-  public ImageObject getImages() {
-    return images;
-  }
-
-  public String getCreatedTime() {
-    return created_time;
-  }
-
-  public String getType() {
-    return type;
-  }
+  public Date getPublishDate() { return publish_date; }
 }
+
