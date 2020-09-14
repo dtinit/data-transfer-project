@@ -16,6 +16,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
+import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -32,6 +33,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class KoofrVideosImporterTest {
 
+  private KoofrClientFactory clientFactory;
   private KoofrClient client;
   private Monitor monitor;
   private KoofrVideosImporter importer;
@@ -46,9 +48,12 @@ public class KoofrVideosImporterTest {
 
     client = mock(KoofrClient.class);
 
+    clientFactory = mock(KoofrClientFactory.class);
+    when(clientFactory.create(any())).thenReturn(client);
+
     monitor = mock(Monitor.class);
 
-    importer = new KoofrVideosImporter(client, monitor);
+    importer = new KoofrVideosImporter(clientFactory, monitor);
 
     executor = mock(IdempotentImportExecutor.class);
     when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
@@ -121,7 +126,6 @@ public class KoofrVideosImporterTest {
 
     InOrder clientInOrder = Mockito.inOrder(client);
 
-    clientInOrder.verify(client).getOrCreateCredential(authData);
     clientInOrder.verify(client).ensureRootFolder();
     clientInOrder.verify(client).ensureFolder("/root", "Album 1");
     clientInOrder.verify(client).addDescription("/root/Album 1", "This is a fake album");
@@ -186,7 +190,6 @@ public class KoofrVideosImporterTest {
 
     InOrder clientInOrder = Mockito.inOrder(client);
 
-    clientInOrder.verify(client).getOrCreateCredential(authData);
     clientInOrder.verify(client).ensureVideosFolder();
     clientInOrder.verify(client).fileExists(eq("/root/Videos/video1.mp4"));
     clientInOrder

@@ -24,6 +24,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputS
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
+import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -40,6 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class KoofrPhotosImporterTest {
 
+  private KoofrClientFactory clientFactory;
   private KoofrClient client;
   private Monitor monitor;
   private TemporaryPerJobDataStore jobStore;
@@ -55,10 +57,13 @@ public class KoofrPhotosImporterTest {
 
     client = mock(KoofrClient.class);
 
+    clientFactory = mock(KoofrClientFactory.class);
+    when(clientFactory.create(any())).thenReturn(client);
+
     monitor = mock(Monitor.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
 
-    importer = new KoofrPhotosImporter(client, monitor, jobStore);
+    importer = new KoofrPhotosImporter(clientFactory, monitor, jobStore);
 
     executor = mock(IdempotentImportExecutor.class);
     when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
@@ -165,7 +170,6 @@ public class KoofrPhotosImporterTest {
 
     InOrder clientInOrder = Mockito.inOrder(client);
 
-    clientInOrder.verify(client).getOrCreateCredential(authData);
     verify(resource).transmogrify(any(KoofrTransmogrificationConfig.class));
     clientInOrder.verify(client).ensureRootFolder();
     clientInOrder.verify(client).ensureFolder("/root", "Album 1");
@@ -234,7 +238,6 @@ public class KoofrPhotosImporterTest {
 
     InOrder clientInOrder = Mockito.inOrder(client);
 
-    clientInOrder.verify(client).getOrCreateCredential(authData);
     verify(resource).transmogrify(any(KoofrTransmogrificationConfig.class));
     clientInOrder.verify(client).ensureRootFolder();
     clientInOrder.verify(client).ensureFolder("/root", "Album 1");

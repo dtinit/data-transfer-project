@@ -26,7 +26,9 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.transfer.ImageStreamProvider;
+import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
+import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -36,12 +38,12 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class KoofrVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
-  private final KoofrClient koofrClient;
+  private final KoofrClientFactory koofrClientFactory;
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
 
-  public KoofrVideosImporter(KoofrClient koofrClient, Monitor monitor) {
-    this.koofrClient = koofrClient;
+  public KoofrVideosImporter(KoofrClientFactory koofrClientFactory, Monitor monitor) {
+    this.koofrClientFactory = koofrClientFactory;
     this.imageStreamProvider = new ImageStreamProvider();
     this.monitor = monitor;
   }
@@ -53,8 +55,7 @@ public class KoofrVideosImporter
       TokensAndUrlAuthData authData,
       VideosContainerResource resource)
       throws Exception {
-    // Ensure credential is populated
-    koofrClient.getOrCreateCredential(authData);
+    KoofrClient koofrClient = koofrClientFactory.create(authData);
 
     monitor.debug(
         () ->
@@ -62,10 +63,12 @@ public class KoofrVideosImporter
                 "%s: Importing %s albums and %s videos",
                 jobId, resource.getAlbums().size(), resource.getVideos().size()));
 
+    // TODO: VideosContainerResource does not support transmogrification
+
     for (VideoAlbum album : resource.getAlbums()) {
       // Create a Koofr folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> createAlbumFolder(album));
+          album.getId(), album.getName(), () -> createAlbumFolder(album, koofrClient));
     }
 
     for (VideoObject videoObject : resource.getVideos()) {
@@ -78,12 +81,13 @@ public class KoofrVideosImporter
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           id,
           videoObject.getName(),
-          () -> importSingleVideo(videoObject, jobId, idempotentImportExecutor));
+          () -> importSingleVideo(videoObject, jobId, idempotentImportExecutor, koofrClient));
     }
     return ImportResult.OK;
   }
 
-  private String createAlbumFolder(VideoAlbum album) throws IOException, InvalidTokenException {
+  private String createAlbumFolder(VideoAlbum album, KoofrClient koofrClient)
+      throws IOException, InvalidTokenException {
     String albumName = KoofrTransmogrificationConfig.getAlbumName(album.getName());
 
     monitor.debug(() -> String.format("Create Koofr folder %s", albumName));
@@ -103,7 +107,10 @@ public class KoofrVideosImporter
   }
 
   private String importSingleVideo(
-      VideoObject video, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
+      VideoObject video,
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      KoofrClient koofrClient)
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single video %s", video.getName()));
 
