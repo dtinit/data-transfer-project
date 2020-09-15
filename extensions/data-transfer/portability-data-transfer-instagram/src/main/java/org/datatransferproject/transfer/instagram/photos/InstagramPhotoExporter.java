@@ -24,22 +24,27 @@ import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
+import org.apache.http.client.utils.URIBuilder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
-import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.transfer.instagram.photos.model.MediaFeedData;
 import org.datatransferproject.transfer.instagram.photos.model.MediaResponse;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.PaginationData;
+import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,7 +52,7 @@ import java.util.UUID;
 public class InstagramPhotoExporter implements
     Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  private static final String MEDIA_URL = "https://graph.instagram.com/me/media?fields=id,media_url,media_type,caption,timestamp";
+  private static final String MEDIA_URL = "https://graph.instagram.com/me/media";
   private static final String DEFAULT_ALBUM_ID = "Instagram Photos";
 
   private final ObjectMapper objectMapper;
@@ -64,18 +69,42 @@ public class InstagramPhotoExporter implements
   public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) throws IOException {
     if (exportInformation.isPresent()) {
-      return exportPhotos(authData, Optional.ofNullable(exportInformation.get().getPaginationData()));
+      return exportPhotos(authData, exportInformation.get().getPaginationData());
     } else {
-      return exportPhotos(authData, Optional.empty());
+      return exportAlbum(authData);
     }
   }
 
-  private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData,
-      Optional<PaginationData> pageData) throws IOException{
+  private ExportResult<PhotosContainerResource> exportAlbum(TokensAndUrlAuthData authData) throws IOException {
+    try {
+      String url = new URIBuilder(MEDIA_URL)
+          .setParameter("fields", "id,media_url,media_type,caption,timestamp")
+          .setParameter("access_token", authData.getAccessToken())
+          .build()
+          .toString();
+      List<PhotoAlbum> defaultAlbums =
+          Arrays.asList(new PhotoAlbum(DEFAULT_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
+      return new ExportResult<>(ResultType.CONTINUE,
+          new PhotosContainerResource(defaultAlbums, null), createContinuationData(url));
+    } catch (URISyntaxException e) {
+      throw new IOException("Failed to produce instagram api url.", e);
+    }
+  }
+
+  private ContinuationData createContinuationData(String url) {
+    PaginationData nextPageData = new StringPaginationToken(url);
+    return new ContinuationData(nextPageData);
+  }
+
+  private ExportResult<PhotosContainerResource> exportPhotos(TokensAndUrlAuthData authData, PaginationData pageData)
+      throws IOException {
     Preconditions.checkNotNull(authData);
+    Preconditions.checkNotNull(pageData);
     MediaResponse response;
     try {
-      response = makeRequest(MEDIA_URL, MediaResponse.class, authData);
+      StringPaginationToken paginationToken = (StringPaginationToken) pageData;
+      String url = paginationToken.getToken();
+      response = makeRequest(url, MediaResponse.class);
     } catch (IOException e) {
       monitor.info(() -> "Failed to get photos from instagram API", e);
       throw e;
@@ -83,7 +112,6 @@ public class InstagramPhotoExporter implements
 
     ArrayList<PhotoModel> photos = new ArrayList<>();
 
-    // TODO: check out paging.
     for (MediaFeedData photo : response.getData()) {
       if (!photo.getMediaType().equals("IMAGE")) {
         continue;
@@ -100,23 +128,19 @@ public class InstagramPhotoExporter implements
           photo.getPublishDate()));
     }
 
-    List<PhotoAlbum> albums = new ArrayList<>();
 
-    if (!photos.isEmpty() && !pageData.isPresent()) {
-      albums.add(
-          new PhotoAlbum(
-              DEFAULT_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
+    String nextToken = response.getPaging().getNext();
+    if (nextToken != null && !nextToken.isEmpty()) {
+      return new ExportResult<>(ResultType.CONTINUE,
+          new PhotosContainerResource(null, photos), createContinuationData(nextToken));
     }
 
-    return new ExportResult<>(ResultType.END, new PhotosContainerResource(albums, photos));
+    return new ExportResult<>(ResultType.END, new PhotosContainerResource(null, photos));
   }
 
-  private <T> T makeRequest(String url, Class<T> clazz, TokensAndUrlAuthData authData)
-      throws IOException {
+  private <T> T makeRequest(String url, Class<T> clazz) throws IOException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest getRequest =
-        requestFactory.buildGetRequest(
-            new GenericUrl(url + "&access_token=" + authData.getAccessToken()));
+    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(url));
     HttpResponse response = getRequest.execute();
     int statusCode = response.getStatusCode();
     if (statusCode != 200) {
