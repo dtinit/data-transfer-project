@@ -4,12 +4,12 @@ This folder contains the extension implementation for [Koofr](https://koofr.eu).
 
 ## Data Supported
 
- - Photos Import
+ - Photos import
  - Videos import
 
 ## Current State
 
- - Does not support exports.
+ - Does not support exports (#933).
 
 ## Keys & Auth
 
