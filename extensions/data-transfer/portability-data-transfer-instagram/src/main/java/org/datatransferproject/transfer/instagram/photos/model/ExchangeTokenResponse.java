@@ -19,17 +19,10 @@ package org.datatransferproject.transfer.instagram.photos.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping. */
-public final class Paging {
+public final class ExchangeTokenResponse {
 
-  @JsonProperty("cursors")
-  private Cursors cursors;
+    @JsonProperty("access_token")
+    private String access_token;
 
-  @JsonProperty("next")
-  private String next;
-
-  public Cursors getCursors() {
-    return cursors;
-  }
-
-  public String getNext() { return next; }
+    public String getAccessToken() { return access_token; }
 }

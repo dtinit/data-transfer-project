@@ -20,15 +20,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.instagram.photos.InstagramPhotoExporter;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
 
 public class InstagramTransferExtension implements TransferExtension {
   private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
@@ -66,12 +68,26 @@ public class InstagramTransferExtension implements TransferExtension {
       return;
     }
 
+    AppCredentials appCredentials;
+    final Monitor monitor = context.getMonitor();
+    try {
+      appCredentials =
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials("INSTAGRAM_KEY", "INSTAGRAM_SECRET");
+    } catch (IOException e) {
+      monitor.info(
+          () ->
+              "Unable to retrieve Instagram AppCredentials. Did you set INSTAGRAM_KEY, INSTAGRAM_SECRET?",
+          e);
+      return;
+    }
+
     ObjectMapper mapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     HttpTransport httpTransport = context.getService(HttpTransport.class);
-    Monitor monitor = context.getMonitor();
-    exporter = new InstagramPhotoExporter(mapper, httpTransport, monitor);
+    exporter = new InstagramPhotoExporter(mapper, httpTransport, monitor, appCredentials);
     initialized = true;
   }
 }
