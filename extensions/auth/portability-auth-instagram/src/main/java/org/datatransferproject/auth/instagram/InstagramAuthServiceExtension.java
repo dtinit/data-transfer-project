@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2020 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,10 @@ package org.datatransferproject.auth.instagram;
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
-/**
- * An {@link AuthServiceExtension} providing an authentication mechanism for Instagram services.
- */
+/** An {@link AuthServiceExtension} providing an authentication mechanism for Instagram services. */
 public class InstagramAuthServiceExtension extends OAuth2ServiceExtension {
 
   public InstagramAuthServiceExtension() {
     super(new InstagramOAuthConfig());
   }
-
 }

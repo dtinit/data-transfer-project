@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2020 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.instagram.photos.model;
+package org.datatransferproject.transfer.instagram.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Date;
 
 /** DataModel for a media feed in the Instagram API. Instantiated by JSON mapping. */
@@ -42,14 +41,19 @@ public final class MediaFeedData {
     return id;
   }
 
-  public String getMediaType() { return media_type; }
+  public String getMediaType() {
+    return media_type;
+  }
 
-  public String getMediaUrl() { return media_url; }
+  public String getMediaUrl() {
+    return media_url;
+  }
 
   public String getCaption() {
     return caption;
   }
 
-  public Date getPublishDate() { return publish_date; }
+  public Date getPublishDate() {
+    return publish_date;
+  }
 }
-

@@ -15,11 +15,10 @@
  */
 package org.datatransferproject.transfer.instagram;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
@@ -28,14 +27,14 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.instagram.photos.InstagramPhotoExporter;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.transfer.instagram.videos.InstagramVideoExporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class InstagramTransferExtension implements TransferExtension {
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
+  private static final ImmutableList<String> SUPPORTED_DATA_TYPES =
+      ImmutableList.of("PHOTOS", "VIDEOS");
 
-  private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
+  private ImmutableMap<String, Exporter> exporterMap;
 
   private boolean initialized = false;
 
@@ -49,7 +48,7 @@ public class InstagramTransferExtension implements TransferExtension {
     Preconditions.checkArgument(
         initialized, "InstagramTransferExtension not initialized. Unable to get Exporter");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return exporter;
+    return exporterMap.get(transferDataType);
   }
 
   @Override
@@ -83,11 +82,14 @@ public class InstagramTransferExtension implements TransferExtension {
       return;
     }
 
-    ObjectMapper mapper =
-        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     HttpTransport httpTransport = context.getService(HttpTransport.class);
-    exporter = new InstagramPhotoExporter(mapper, httpTransport, monitor, appCredentials);
+
+    ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
+    exporterBuilder.put(
+        "PHOTOS", new InstagramPhotoExporter(httpTransport, monitor, appCredentials));
+    exporterBuilder.put(
+        "VIDEOS", new InstagramVideoExporter(httpTransport, monitor, appCredentials));
+    exporterMap = exporterBuilder.build();
     initialized = true;
   }
 }

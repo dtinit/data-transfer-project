@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2020 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.instagram.photos.model;
+package org.datatransferproject.transfer.instagram.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 /** DataModel for the result of a media query in the Instagram API. Instantiated by JSON mapping. */
-public final class MediaResponse {
+public final class Paging {
 
-  @JsonProperty("data")
-  private List<MediaFeedData> data;
+  @JsonProperty("cursors")
+  private Cursors cursors;
 
-  @JsonProperty("paging")
-  private Paging paging;
+  @JsonProperty("next")
+  private String next;
 
-  public List<MediaFeedData> getData() {
-    return data;
+  public Cursors getCursors() {
+    return cursors;
   }
 
-  public Paging getPaging() { return paging; }
+  public String getNext() {
+    return next;
+  }
 }

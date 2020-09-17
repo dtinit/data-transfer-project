@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2020 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,10 @@ import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
 
-/**
- * Class that provides Instagram-specific information for OAuth2
- */
+/** Class that provides Instagram-specific information for OAuth2 */
 public class InstagramOAuthConfig implements OAuth2Config {
 
-  // https://www.instagram.com/developer/authentication/
+  // https://developers.facebook.com/docs/instagram-basic-display-api/guides/getting-access-tokens-and-permissions
 
   @Override
   public String getServiceName() {
@@ -44,10 +42,14 @@ public class InstagramOAuthConfig implements OAuth2Config {
     return "https://api.instagram.com/oauth/access_token";
   }
 
-  // See https://www.instagram.com/developer/authorization/
+  // See
+  // https://developers.facebook.com/docs/instagram-basic-display-api/guides/getting-access-tokens-and-permissions
   @Override
   public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", ImmutableSet.of("user_profile,user_media"));
+    return ImmutableMap.<String, Set<String>>builder()
+        .put("PHOTOS", ImmutableSet.of("user_profile,user_media"))
+        .put("VIDEOS", ImmutableSet.of("user_profile,user_media"))
+        .build();
   }
 
   // Instagram does not provide an API for import; https://help.instagram.com/442418472487929

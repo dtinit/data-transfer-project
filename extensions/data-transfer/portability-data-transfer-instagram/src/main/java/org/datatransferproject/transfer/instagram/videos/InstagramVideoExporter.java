@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer.instagram.photos;
+package org.datatransferproject.transfer.instagram.videos;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
@@ -34,23 +34,23 @@ import org.datatransferproject.transfer.instagram.model.MediaResponse;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-public class InstagramPhotoExporter
-    implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+public class InstagramVideoExporter
+    implements Exporter<TokensAndUrlAuthData, VideosContainerResource> {
 
-  private static final String DEFAULT_ALBUM_ID = "Instagram Photos";
+  private static final String DEFAULT_ALBUM_ID = "Instagram Videos";
 
   private final HttpTransport httpTransport;
   private final Monitor monitor;
   private final AppCredentials appCredentials;
   private InstagramApiClient instagramApiClient;
 
-  public InstagramPhotoExporter(
+  public InstagramVideoExporter(
       HttpTransport httpTransport, Monitor monitor, AppCredentials appCredentials) {
     this.httpTransport = httpTransport;
     this.monitor = monitor;
@@ -58,7 +58,7 @@ public class InstagramPhotoExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(
+  public ExportResult<VideosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException {
     if (this.instagramApiClient == null) {
@@ -67,24 +67,24 @@ public class InstagramPhotoExporter
     }
 
     if (exportInformation.isPresent()) {
-      return exportPhotos(exportInformation.get().getPaginationData());
+      return exportVideos(exportInformation.get().getPaginationData());
     } else {
       return exportAlbum();
     }
   }
 
-  private ExportResult<PhotosContainerResource> exportAlbum() {
-    List<PhotoAlbum> defaultAlbums =
+  private ExportResult<VideosContainerResource> exportAlbum() {
+    List<VideoAlbum> defaultAlbums =
         Arrays.asList(
-            new PhotoAlbum(
-                DEFAULT_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
+            new VideoAlbum(
+                DEFAULT_ALBUM_ID, "Imported Instagram Videos", "Videos imported from instagram"));
     return new ExportResult<>(
         ResultType.CONTINUE,
-        new PhotosContainerResource(defaultAlbums, null),
+        new VideosContainerResource(defaultAlbums, null),
         new ContinuationData(new StringPaginationToken(InstagramApiClient.getMediaBaseUrl())));
   }
 
-  private ExportResult<PhotosContainerResource> exportPhotos(PaginationData pageData)
+  private ExportResult<VideosContainerResource> exportVideos(PaginationData pageData)
       throws IOException {
     Preconditions.checkNotNull(pageData);
     MediaResponse response;
@@ -93,37 +93,36 @@ public class InstagramPhotoExporter
       String url = paginationToken.getToken();
       response = instagramApiClient.makeRequest(url, MediaResponse.class);
     } catch (IOException e) {
-      monitor.info(() -> "Failed to get photos from instagram API", e);
+      monitor.info(() -> "Failed to get videos from instagram API", e);
       throw e;
     }
 
-    ArrayList<PhotoModel> photos = new ArrayList<>();
+    ArrayList<VideoObject> videos = new ArrayList<>();
 
-    for (MediaFeedData photo : response.getData()) {
-      if (!photo.getMediaType().equals("IMAGE")) {
+    for (MediaFeedData video : response.getData()) {
+      if (!video.getMediaType().equals("VIDEO")) {
         continue;
       }
 
-      photos.add(
-          new PhotoModel(
-              String.format("%s.jpg", photo.getId()),
-              photo.getMediaUrl(),
-              photo.getCaption(),
-              "image/jpg",
-              photo.getId(),
+      videos.add(
+          new VideoObject(
+              String.format("%s.mp4", video.getId()),
+              video.getMediaUrl(),
+              video.getCaption(),
+              "video/mp4",
+              video.getId(),
               DEFAULT_ALBUM_ID,
-              false,
-              photo.getPublishDate()));
+              false));
     }
 
     String url = InstagramApiClient.getContinuationUrl(response);
     if (url == null) {
-      return new ExportResult<>(ResultType.END, new PhotosContainerResource(null, photos));
+      return new ExportResult<>(ResultType.END, new VideosContainerResource(null, videos));
     }
 
     return new ExportResult<>(
         ResultType.CONTINUE,
-        new PhotosContainerResource(null, photos),
+        new VideosContainerResource(null, videos),
         new ContinuationData(new StringPaginationToken(url)));
   }
 }
