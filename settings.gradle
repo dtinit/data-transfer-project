@@ -70,6 +70,9 @@ include ':extensions:data-transfer:portability-data-transfer-twitter'
 // Facebook
 include ':extensions:auth:portability-auth-facebook'
 include ':extensions:data-transfer:portability-data-transfer-facebook'
+// Koofr
+include ':extensions:auth:portability-auth-koofr'
+include ':extensions:data-transfer:portability-data-transfer-koofr'
 
 include ':extensions:auth:portability-auth-offline-demo'
 include ':extensions:data-transfer:portability-data-transfer-offline-demo'
