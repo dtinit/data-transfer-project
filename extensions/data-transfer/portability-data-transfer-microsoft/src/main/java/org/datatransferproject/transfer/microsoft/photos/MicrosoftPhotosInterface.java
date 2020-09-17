@@ -16,22 +16,21 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftDriveItemsResponse;
-import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFolder;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.stream.Collectors;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftDriveItemsResponse;
+import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFolder;
 
 public class MicrosoftPhotosInterface {
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
@@ -93,8 +92,7 @@ public class MicrosoftPhotosInterface {
       throw new IOException(
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    String result = CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
     return objectMapper.readValue(result, tClass);
   }
 
