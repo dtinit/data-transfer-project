@@ -16,6 +16,8 @@
 
 package org.datatransferproject.auth;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
@@ -23,7 +25,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,8 +44,7 @@ class OAuthUtils {
       throw new IOException(
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
-    return CharStreams
-        .toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+    return CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
   }
 
   static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent,

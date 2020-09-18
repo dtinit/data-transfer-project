@@ -15,26 +15,25 @@
  */
 package org.datatransferproject.security;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.BaseEncoding;
-import org.datatransferproject.api.launcher.Monitor;
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.io.BaseEncoding;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.InvalidKeyException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-
-import static java.lang.String.format;
+import org.datatransferproject.api.launcher.Monitor;
 
 /**
  * Provides AES and RSA-based encryption implementations. See {@link EncrypterFactory} to create.
- * 
+ *
  * The first block encrypted is a random salt so that we can ignore its value in the decrypter. This
  * makes it so we don't have to record the IV for AES.
  */
@@ -60,7 +59,7 @@ final class EncrypterImpl implements Encrypter {
           break;
         case RSA_ECB_PKCS1:
           cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-          cipher.init(Cipher.ENCRYPT_MODE, key);        
+          cipher.init(Cipher.ENCRYPT_MODE, key);
           break;
         default:
           throw new AssertionError("How could this happen...");
@@ -71,7 +70,7 @@ final class EncrypterImpl implements Encrypter {
       SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
       random.nextBytes(salt);
       cipher.update(salt);
-      byte[] encrypted = cipher.doFinal(data.getBytes(Charsets.UTF_8));
+      byte[] encrypted = cipher.doFinal(data.getBytes(UTF_8));
       return BaseEncoding.base64Url().encode(encrypted);
     } catch (BadPaddingException
         | IllegalBlockSizeException

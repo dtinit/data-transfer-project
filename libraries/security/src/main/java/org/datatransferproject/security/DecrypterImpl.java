@@ -15,22 +15,21 @@
  */
 package org.datatransferproject.security;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.BaseEncoding;
-import org.datatransferproject.api.launcher.Monitor;
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
+import com.google.common.io.BaseEncoding;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-
-import static java.lang.String.format;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import org.datatransferproject.api.launcher.Monitor;
 
 /**
  * Provides AES and RSA-based encryption implementations for decryption. See {@link
@@ -59,7 +58,7 @@ final class DecrypterImpl implements Decrypter {
           break;
         case RSA_ECB_PKCS1:
           cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-          cipher.init(Cipher.DECRYPT_MODE, key);        
+          cipher.init(Cipher.DECRYPT_MODE, key);
           break;
         default:
           throw new AssertionError("How could this happen...");
@@ -70,7 +69,7 @@ final class DecrypterImpl implements Decrypter {
       }
       byte[] data = new byte[decrypted.length - cipher.getBlockSize()];
       System.arraycopy(decrypted, cipher.getBlockSize(), data, 0, data.length);
-      return new String(data, Charsets.UTF_8);
+      return new String(data, UTF_8);
     } catch (BadPaddingException
         | IllegalBlockSizeException
         | InvalidAlgorithmParameterException

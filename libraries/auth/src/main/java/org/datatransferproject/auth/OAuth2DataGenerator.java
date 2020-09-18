@@ -16,12 +16,12 @@
 
 package org.datatransferproject.auth;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.UrlEncodedContent;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
@@ -37,7 +37,6 @@ import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * General implementation of an {@link AuthDataGenerator} for OAuth2.
@@ -66,15 +65,15 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
 
   @Override
   public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(Charsets.UTF_8));
+    String encodedJobId = BaseEncoding.base64Url().encode(id.getBytes(UTF_8));
     String scope = scopes.isEmpty() ? "" : String.join(" ", scopes);
     try {
       URIBuilder builder = new URIBuilder(config.getAuthUrl())
-              .setParameter("response_type", "code")
-              .setParameter("client_id", clientId)
-              .setParameter("redirect_uri", callbackBaseUrl)
-              .setParameter("scope", scope)
-              .setParameter("state", encodedJobId);
+          .setParameter("response_type", "code")
+          .setParameter("client_id", clientId)
+          .setParameter("redirect_uri", callbackBaseUrl)
+          .setParameter("scope", scope)
+          .setParameter("state", encodedJobId);
 
       if (config.getAdditionalAuthUrlParameters() != null) {
         for (Entry<String, String> entry : config.getAdditionalAuthUrlParameters().entrySet()) {
