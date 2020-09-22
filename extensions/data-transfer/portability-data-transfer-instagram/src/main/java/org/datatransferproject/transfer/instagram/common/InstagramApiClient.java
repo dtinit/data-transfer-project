@@ -33,7 +33,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class InstagramApiClient {
   private static final String MEDIA_BASE_URL =
-      "https://graph.instagram.com/me/media?fields=id,media_url,media_type,caption,timestamp";
+      "https://graph.instagram.com/me/media?fields=id,media_url,media_type,caption,timestamp,children%7Bid,media_url,media_type%7D";
   private static final String ACCESS_TOKEN_BASE_URL =
       "https://graph.instagram.com/access_token?grant_type=ig_exchange_token";
 

@@ -29,6 +29,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.transfer.instagram.common.InstagramApiClient;
+import org.datatransferproject.transfer.instagram.model.Child;
 import org.datatransferproject.transfer.instagram.model.MediaFeedData;
 import org.datatransferproject.transfer.instagram.model.MediaResponse;
 import org.datatransferproject.types.common.ExportInformation;
@@ -84,6 +85,19 @@ public class InstagramVideoExporter
         new ContinuationData(new StringPaginationToken(InstagramApiClient.getMediaBaseUrl())));
   }
 
+  private VideoObject createVideoModel(String id, String mediaUrl, String caption) {
+    return new VideoObject(
+        String.format("%s.mp4", id), mediaUrl, caption, "video/mp4", id, DEFAULT_ALBUM_ID, false);
+  }
+
+  private void addVideosInCarouselAlbum(ArrayList<VideoObject> videos, MediaFeedData data) {
+    for (Child video : data.getChildren().getData()) {
+      if (video.getMediaType().equals("VIDEO")) {
+        videos.add(createVideoModel(video.getId(), video.getMediaUrl(), data.getCaption()));
+      }
+    }
+  }
+
   private ExportResult<VideosContainerResource> exportVideos(PaginationData pageData)
       throws IOException {
     Preconditions.checkNotNull(pageData);
@@ -99,20 +113,16 @@ public class InstagramVideoExporter
 
     ArrayList<VideoObject> videos = new ArrayList<>();
 
-    for (MediaFeedData video : response.getData()) {
-      if (!video.getMediaType().equals("VIDEO")) {
+    for (MediaFeedData data : response.getData()) {
+      if (data.getMediaType().equals("CAROUSEL_ALBUM")) {
+        addVideosInCarouselAlbum(videos, data);
         continue;
       }
 
-      videos.add(
-          new VideoObject(
-              String.format("%s.mp4", video.getId()),
-              video.getMediaUrl(),
-              video.getCaption(),
-              "video/mp4",
-              video.getId(),
-              DEFAULT_ALBUM_ID,
-              false));
+      if (data.getMediaType().equals("VIDEO")) {
+        videos.add(createVideoModel(data.getId(), data.getMediaUrl(), data.getCaption()));
+        continue;
+      }
     }
 
     String url = InstagramApiClient.getContinuationUrl(response);

@@ -37,6 +37,9 @@ public final class MediaFeedData {
   @JsonProperty("timestamp")
   private Date publish_date;
 
+  @JsonProperty("children")
+  private Children children;
+
   public String getId() {
     return id;
   }
@@ -55,5 +58,9 @@ public final class MediaFeedData {
 
   public Date getPublishDate() {
     return publish_date;
+  }
+
+  public Children getChildren() {
+    return children;
   }
 }

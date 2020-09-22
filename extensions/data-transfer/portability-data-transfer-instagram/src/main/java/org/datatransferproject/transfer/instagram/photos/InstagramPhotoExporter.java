@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +30,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.transfer.instagram.common.InstagramApiClient;
+import org.datatransferproject.transfer.instagram.model.Child;
 import org.datatransferproject.transfer.instagram.model.MediaFeedData;
 import org.datatransferproject.transfer.instagram.model.MediaResponse;
 import org.datatransferproject.types.common.ExportInformation;
@@ -84,6 +86,29 @@ public class InstagramPhotoExporter
         new ContinuationData(new StringPaginationToken(InstagramApiClient.getMediaBaseUrl())));
   }
 
+  private PhotoModel createPhotoModel(
+      String id, String mediaUrl, String caption, Date publishDate) {
+    return new PhotoModel(
+        String.format("%s.jpg", id),
+        mediaUrl,
+        caption,
+        "image/jpg",
+        id,
+        DEFAULT_ALBUM_ID,
+        false,
+        publishDate);
+  }
+
+  private void addPhotosInCarouselAlbum(ArrayList<PhotoModel> photos, MediaFeedData data) {
+    for (Child photo : data.getChildren().getData()) {
+      if (photo.getMediaType().equals("IMAGE")) {
+        photos.add(
+            createPhotoModel(
+                photo.getId(), photo.getMediaUrl(), data.getCaption(), data.getPublishDate()));
+      }
+    }
+  }
+
   private ExportResult<PhotosContainerResource> exportPhotos(PaginationData pageData)
       throws IOException {
     Preconditions.checkNotNull(pageData);
@@ -99,21 +124,18 @@ public class InstagramPhotoExporter
 
     ArrayList<PhotoModel> photos = new ArrayList<>();
 
-    for (MediaFeedData photo : response.getData()) {
-      if (!photo.getMediaType().equals("IMAGE")) {
+    for (MediaFeedData data : response.getData()) {
+      if (data.getMediaType().equals("CAROUSEL_ALBUM")) {
+        addPhotosInCarouselAlbum(photos, data);
         continue;
       }
 
-      photos.add(
-          new PhotoModel(
-              String.format("%s.jpg", photo.getId()),
-              photo.getMediaUrl(),
-              photo.getCaption(),
-              "image/jpg",
-              photo.getId(),
-              DEFAULT_ALBUM_ID,
-              false,
-              photo.getPublishDate()));
+      if (data.getMediaType().equals("IMAGE")) {
+        photos.add(
+            createPhotoModel(
+                data.getId(), data.getMediaUrl(), data.getCaption(), data.getPublishDate()));
+        continue;
+      }
     }
 
     String url = InstagramApiClient.getContinuationUrl(response);
