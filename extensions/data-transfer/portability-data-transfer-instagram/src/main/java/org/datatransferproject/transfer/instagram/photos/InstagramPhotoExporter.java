@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.instagram.photos;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,7 +46,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class InstagramPhotoExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  private static final String DEFAULT_ALBUM_ID = "Instagram Photos";
+  public static final String DEFAULT_ALBUM_ID = "Instagram Photos";
+  public static final String DEFAULT_ALBUM_NAME = "Imported Instagram Photos";
+  public static final String DEFAULT_ALBUM_DESCRIPTION = "Photos importer from Instagram";
 
   private final HttpTransport httpTransport;
   private final Monitor monitor;
@@ -57,6 +60,18 @@ public class InstagramPhotoExporter
     this.httpTransport = httpTransport;
     this.monitor = monitor;
     this.appCredentials = appCredentials;
+  }
+
+  @VisibleForTesting
+  InstagramPhotoExporter(
+      HttpTransport httpTransport,
+      Monitor monitor,
+      AppCredentials appCredentials,
+      InstagramApiClient instagramApiClient) {
+    this.httpTransport = httpTransport;
+    this.monitor = monitor;
+    this.appCredentials = appCredentials;
+    this.instagramApiClient = instagramApiClient;
   }
 
   @Override
@@ -78,8 +93,7 @@ public class InstagramPhotoExporter
   private ExportResult<PhotosContainerResource> exportAlbum() {
     List<PhotoAlbum> defaultAlbums =
         Arrays.asList(
-            new PhotoAlbum(
-                DEFAULT_ALBUM_ID, "Imported Instagram Photos", "Photos imported from instagram"));
+            new PhotoAlbum(DEFAULT_ALBUM_ID, DEFAULT_ALBUM_NAME, DEFAULT_ALBUM_DESCRIPTION));
     return new ExportResult<>(
         ResultType.CONTINUE,
         new PhotosContainerResource(defaultAlbums, null),
@@ -116,7 +130,7 @@ public class InstagramPhotoExporter
     try {
       StringPaginationToken paginationToken = (StringPaginationToken) pageData;
       String url = paginationToken.getToken();
-      response = instagramApiClient.makeRequest(url, MediaResponse.class);
+      response = instagramApiClient.makeRequest(url);
     } catch (IOException e) {
       monitor.info(() -> "Failed to get photos from instagram API", e);
       throw e;

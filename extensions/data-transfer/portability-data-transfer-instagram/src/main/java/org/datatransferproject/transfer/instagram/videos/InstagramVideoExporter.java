@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.instagram.videos;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +45,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class InstagramVideoExporter
     implements Exporter<TokensAndUrlAuthData, VideosContainerResource> {
 
-  private static final String DEFAULT_ALBUM_ID = "Instagram Videos";
+  public static final String DEFAULT_ALBUM_ID = "Instagram Videos";
+  public static final String DEFAULT_ALBUM_NAME = "Imported Instagram Videos";
+  public static final String DEFAULT_ALBUM_DESCRIPTION = "Videos imported from instagram";
 
   private final HttpTransport httpTransport;
   private final Monitor monitor;
@@ -56,6 +59,18 @@ public class InstagramVideoExporter
     this.httpTransport = httpTransport;
     this.monitor = monitor;
     this.appCredentials = appCredentials;
+  }
+
+  @VisibleForTesting
+  InstagramVideoExporter(
+      HttpTransport httpTransport,
+      Monitor monitor,
+      AppCredentials appCredentials,
+      InstagramApiClient instagramApiClient) {
+    this.httpTransport = httpTransport;
+    this.monitor = monitor;
+    this.appCredentials = appCredentials;
+    this.instagramApiClient = instagramApiClient;
   }
 
   @Override
@@ -105,7 +120,7 @@ public class InstagramVideoExporter
     try {
       StringPaginationToken paginationToken = (StringPaginationToken) pageData;
       String url = paginationToken.getToken();
-      response = instagramApiClient.makeRequest(url, MediaResponse.class);
+      response = instagramApiClient.makeRequest(url);
     } catch (IOException e) {
       monitor.info(() -> "Failed to get videos from instagram API", e);
       throw e;

@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer.instagram.photos;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+package org.datatransferproject.transfer.instagram.videos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.transfer.instagram.common.InstagramApiClient;
 import org.datatransferproject.transfer.instagram.model.Child;
@@ -30,9 +24,9 @@ import org.datatransferproject.transfer.instagram.model.MediaFeedData;
 import org.datatransferproject.transfer.instagram.model.MediaResponse;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +34,17 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
-public class InstagramPhotoExporterTest {
-  private InstagramPhotoExporter exporter;
+public class InstagramVideoExporterTest {
+  private InstagramVideoExporter exporter;
   private UUID uuid = UUID.randomUUID();
   private MediaResponse mediaResponse;
 
@@ -100,23 +102,23 @@ public class InstagramPhotoExporterTest {
     mediaResponse = mapper.readValue(mediaResponseJson, MediaResponse.class);
     when(instagramApiClient.makeRequest(Mockito.any())).thenReturn(mediaResponse);
 
-    exporter = new InstagramPhotoExporter(null, null, null, instagramApiClient);
+    exporter = new InstagramVideoExporter(null, null, null, instagramApiClient);
   }
 
   @Test
   public void testExportAlbum() throws IOException {
-    ExportResult<PhotosContainerResource> result =
+    ExportResult<VideosContainerResource> result =
         exporter.export(
             uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.empty());
 
     assertEquals(ExportResult.ResultType.CONTINUE, result.getType());
-    PhotosContainerResource exportedData = result.getExportedData();
+    VideosContainerResource exportedData = result.getExportedData();
     assertEquals(1, exportedData.getAlbums().size());
     assertEquals(
-        new PhotoAlbum(
-            InstagramPhotoExporter.DEFAULT_ALBUM_ID,
-            InstagramPhotoExporter.DEFAULT_ALBUM_NAME,
-            InstagramPhotoExporter.DEFAULT_ALBUM_DESCRIPTION),
+        new VideoAlbum(
+            InstagramVideoExporter.DEFAULT_ALBUM_ID,
+            InstagramVideoExporter.DEFAULT_ALBUM_NAME,
+            InstagramVideoExporter.DEFAULT_ALBUM_DESCRIPTION),
         exportedData.getAlbums().toArray()[0]);
     StringPaginationToken paginationToken =
         (StringPaginationToken) result.getContinuationData().getPaginationData();
@@ -124,8 +126,8 @@ public class InstagramPhotoExporterTest {
   }
 
   @Test
-  public void testExportPhotos() throws IOException {
-    ExportResult<PhotosContainerResource> result =
+  public void testExportVideos() throws IOException {
+    ExportResult<VideosContainerResource> result =
         exporter.export(
             uuid,
             new TokensAndUrlAuthData("accessToken", null, null),
@@ -134,37 +136,35 @@ public class InstagramPhotoExporterTest {
                     new StringPaginationToken(InstagramApiClient.getMediaBaseUrl()), null)));
 
     assertEquals(ExportResult.ResultType.END, result.getType());
-    PhotosContainerResource exportedData = result.getExportedData();
+    VideosContainerResource exportedData = result.getExportedData();
     assertEquals(0, exportedData.getAlbums().size());
-    assertEquals(2, exportedData.getPhotos().size());
+    assertEquals(2, exportedData.getVideos().size());
 
-    // check carousel image
+    // check carousel video
     MediaFeedData carouselAlbum = mediaResponse.getData().get(0);
-    Child carouselPhoto = carouselAlbum.getChildren().getData().get(0);
+    Child carouselVideo = carouselAlbum.getChildren().getData().get(1);
     assertEquals(
-        new PhotoModel(
-            carouselPhoto.getId() + ".jpg",
-            carouselPhoto.getMediaUrl(),
+        new VideoObject(
+            carouselVideo.getId() + ".mp4",
+            carouselVideo.getMediaUrl(),
             carouselAlbum.getCaption(),
-            "image/jpg",
-            carouselPhoto.getId(),
-            InstagramPhotoExporter.DEFAULT_ALBUM_ID,
-            false,
-            carouselAlbum.getPublishDate()),
-        exportedData.getPhotos().toArray()[0]);
+            "video/mp4",
+            carouselVideo.getId(),
+            InstagramVideoExporter.DEFAULT_ALBUM_ID,
+            false),
+        exportedData.getVideos().toArray()[0]);
 
-    // check standalone image
-    MediaFeedData standalonePhoto = mediaResponse.getData().get(2);
+    // check standalone video
+    MediaFeedData standaloneVideo = mediaResponse.getData().get(1);
     assertEquals(
-        new PhotoModel(
-            standalonePhoto.getId() + ".jpg",
-            standalonePhoto.getMediaUrl(),
-            standalonePhoto.getCaption(),
-            "image/jpg",
-            standalonePhoto.getId(),
-            InstagramPhotoExporter.DEFAULT_ALBUM_ID,
-            false,
-            standalonePhoto.getPublishDate()),
-        exportedData.getPhotos().toArray()[1]);
+        new VideoObject(
+            standaloneVideo.getId() + ".mp4",
+            standaloneVideo.getMediaUrl(),
+            standaloneVideo.getCaption(),
+            "video/mp4",
+            standaloneVideo.getId(),
+            InstagramVideoExporter.DEFAULT_ALBUM_ID,
+            false),
+        exportedData.getVideos().toArray()[1]);
   }
 }

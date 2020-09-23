@@ -57,8 +57,8 @@ public class InstagramApiClient {
     this.accessToken = getLongLivedAccessToken(authData);
   }
 
-  public <T> T makeRequest(String url, Class<T> clazz) throws IOException {
-    return makeRequest(url, clazz, this.accessToken);
+  public MediaResponse makeRequest(String url) throws IOException {
+    return makeRequest(url, MediaResponse.class, this.accessToken);
   }
 
   public static String getMediaBaseUrl() {
