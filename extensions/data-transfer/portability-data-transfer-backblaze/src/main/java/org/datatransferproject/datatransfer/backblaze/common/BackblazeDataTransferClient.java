@@ -1,8 +1,12 @@
 package org.datatransferproject.datatransfer.backblaze.common;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -14,9 +18,27 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.SdkHttpClient;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException;
+import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.CreateBucketConfiguration;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
 public class BackblazeDataTransferClient {
   private static final String DATA_TRANSFER_BUCKET_PREFIX = "facebook-data-transfer";
@@ -24,6 +46,10 @@ public class BackblazeDataTransferClient {
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
   private static final List<String> BACKBLAZE_REGIONS =
       Arrays.asList("us-west-000", "us-west-001", "us-west-002", "eu-central-003");
+
+  private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024; // 20 MB.
+  private static final long PART_SIZE_FOR_MULTIPART_UPLOAD = 5 * 1024 * 1024; // 5 MB.
+  private static final Duration HTTP_CLIENT_SOCKET_TIMEOUT = Duration.ofMinutes(5);
 
   private final Monitor monitor;
   private S3Client s3Client;
@@ -69,6 +95,19 @@ public class BackblazeDataTransferClient {
     }
 
     try {
+      long contentLength = file.length();
+      monitor.debug(
+          () -> String.format("Uploading '%s' with file size %d bytes", fileKey, contentLength));
+
+      if (contentLength >= SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD) {
+        monitor.debug(
+            () ->
+                String.format(
+                    "File size is larger than %d bytes, so using multipart upload",
+                    SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD));
+        return uploadFileUsingMultipartUpload(fileKey, file, contentLength);
+      }
+
       PutObjectRequest putObjectRequest =
           PutObjectRequest.builder().bucket(bucketName).key(fileKey).build();
 
@@ -77,8 +116,53 @@ public class BackblazeDataTransferClient {
 
       return putObjectResponse.versionId();
     } catch (AwsServiceException | SdkClientException e) {
-      throw new IOException("Error while uploading file", e);
+      throw new IOException(String.format("Error while uploading file, fileKey: %s", fileKey), e);
     }
+  }
+
+  private String uploadFileUsingMultipartUpload(String fileKey, File file, long contentLength)
+      throws IOException, AwsServiceException, SdkClientException {
+    List<CompletedPart> completedParts = new ArrayList<>();
+
+    CreateMultipartUploadRequest createMultipartUploadRequest =
+        CreateMultipartUploadRequest.builder().bucket(bucketName).key(fileKey).build();
+    CreateMultipartUploadResponse createMultipartUploadResponse =
+        s3Client.createMultipartUpload(createMultipartUploadRequest);
+
+    long filePosition = 0;
+    InputStream fileInputStream = new FileInputStream(file);
+    for (int i = 1; filePosition < contentLength; i++) {
+      // Because the last part could be smaller than others, adjust the part size as needed
+      long partSize = Math.min(PART_SIZE_FOR_MULTIPART_UPLOAD, (contentLength - filePosition));
+
+      UploadPartRequest uploadRequest =
+          UploadPartRequest.builder()
+              .bucket(bucketName)
+              .key(fileKey)
+              .uploadId(createMultipartUploadResponse.uploadId())
+              .partNumber(i)
+              .build();
+      RequestBody requestBody = RequestBody.fromInputStream(fileInputStream, partSize);
+
+      UploadPartResponse uploadPartResponse = s3Client.uploadPart(uploadRequest, requestBody);
+      completedParts.add(
+          CompletedPart.builder().partNumber(i).eTag(uploadPartResponse.eTag()).build());
+
+      filePosition += partSize;
+    }
+
+    CompleteMultipartUploadRequest completeMultipartUploadRequest =
+        CompleteMultipartUploadRequest.builder()
+            .bucket(bucketName)
+            .key(fileKey)
+            .uploadId(createMultipartUploadResponse.uploadId())
+            .multipartUpload(CompletedMultipartUpload.builder().parts(completedParts).build())
+            .build();
+
+    CompleteMultipartUploadResponse completeMultipartUploadResponse =
+        s3Client.completeMultipartUpload(completeMultipartUploadRequest);
+
+    return completeMultipartUploadResponse.versionId();
   }
 
   private static String getOrCreateBucket(
@@ -129,7 +213,12 @@ public class BackblazeDataTransferClient {
     // Use any AWS region for the client, the Backblaze API does not care about it
     Region awsRegion = Region.US_EAST_1;
 
+    // TODO(T77168807) - Remove the following when AWS SDK is upgraded to 2.14.x or later
+    SdkHttpClient httpClient =
+        ApacheHttpClient.builder().socketTimeout(HTTP_CLIENT_SOCKET_TIMEOUT).build();
+
     return S3Client.builder()
+        .httpClient(httpClient)
         .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
         .overrideConfiguration(clientOverrideConfiguration)
         .endpointOverride(URI.create(String.format(S3_ENDPOINT_FORMAT_STRING, region)))
