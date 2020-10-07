@@ -44,7 +44,7 @@ public class BackblazeDataTransferClient {
   private static final String DATA_TRANSFER_BUCKET_PREFIX = "facebook-data-transfer";
   private static final String S3_ENDPOINT_FORMAT_STRING = "https://s3.%s.backblazeb2.com";
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
-  private static final List<String> BACKBLAZE_REGIONS =
+  private final List<String> BACKBLAZE_REGIONS =
       Arrays.asList("us-west-000", "us-west-001", "us-west-002", "eu-central-003");
 
   private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024; // 20 MB.
@@ -64,6 +64,18 @@ public class BackblazeDataTransferClient {
     // Fetch all the available buckets and use that to find which region the user is in
     ListBucketsResponse listBucketsResponse = null;
     String userRegion = null;
+
+    // The Key ID starts with the region identifier number, so reorder the regions such that
+    // the first region is most likely the user's region
+    String regionId = keyId.substring(0, 3);
+    BACKBLAZE_REGIONS.sort(
+        (String region1, String region2) -> {
+          if (region1.endsWith(regionId)) {
+            return -1;
+          }
+          return 0;
+        });
+
     for (String region : BACKBLAZE_REGIONS) {
       try {
         s3Client = getOrCreateS3Client(keyId, applicationKey, region);
@@ -179,7 +191,7 @@ public class BackblazeDataTransferClient {
         String bucketName =
             String.format(
                 "%s-%s",
-                DATA_TRANSFER_BUCKET_PREFIX, RandomStringUtils.randomAlphanumeric(8).toLowerCase());
+                DATA_TRANSFER_BUCKET_PREFIX, RandomStringUtils.randomNumeric(8).toLowerCase());
         try {
           CreateBucketConfiguration createBucketConfiguration =
               CreateBucketConfiguration.builder().locationConstraint(region).build();
