@@ -1,0 +1,15 @@
+plugins {
+    id 'maven-publish'
+    id 'io.spring.bintray'
+}
+
+dependencies {
+    compile project(':portability-spi-cloud')
+    compile project(':portability-spi-transfer')
+    compile project(':libraries:transfer')
+
+    compile('software.amazon.awssdk:s3:2.8.5')
+    compile('org.apache.commons:commons-lang3:3.11')
+}
+
+configurePublication(project)
