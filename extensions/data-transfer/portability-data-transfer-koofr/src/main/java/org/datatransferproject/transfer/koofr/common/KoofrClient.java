@@ -1,14 +1,36 @@
+/*
+ * Copyright 2020 The Data-Portability Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.datatransferproject.transfer.koofr.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -227,13 +249,97 @@ public class KoofrClient {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  public List<FilesListRecursiveItem> listRecursive(String path)
+      throws IOException, InvalidTokenException {
+    String url;
+    try {
+      URIBuilder builder =
+          getUriBuilder()
+              .setPath(CONTENT_API_PATH_PREFIX + "/mounts/primary/files/listrecursive")
+              .setParameter("path", path);
+      url = builder.build().toString();
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException("Could not produce url.", e);
+    }
+
+    Request.Builder requestBuilder = getRequestBuilder(url).get();
+
+    try (Response response = getResponse(requestBuilder)) {
+      int code = response.code();
+      if (code == 404) {
+        return ImmutableList.of();
+      }
+      ResponseBody body = response.body();
+      if (code < 200 || code > 299) {
+        throw new IOException(
+            "Got error code: "
+                + code
+                + " message: "
+                + response.message()
+                + " body: "
+                + body.string());
+      }
+
+      try (final Reader bodyReader =
+              new InputStreamReader(body.byteStream(), StandardCharsets.UTF_8);
+          final BufferedReader bufferedBodyReader = new BufferedReader(bodyReader); ) {
+        String line;
+        List<FilesListRecursiveItem> items = new ArrayList<FilesListRecursiveItem>();
+        while ((line = bufferedBodyReader.readLine()) != null) {
+          items.add(objectMapper.readValue(line, FilesListRecursiveItem.class));
+        }
+        return items;
+      }
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public String fileLink(String path) throws IOException, InvalidTokenException {
+    String url;
+    try {
+      url =
+          getUriBuilder()
+              .setPath(API_PATH_PREFIX + "/mounts/primary/files/download")
+              .setParameter("path", path)
+              .build()
+              .toString();
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException("Could not produce url.", e);
+    }
+
+    Request.Builder requestBuilder = getRequestBuilder(url);
+
+    try (Response response = getResponse(requestBuilder)) {
+      int code = response.code();
+      ResponseBody body = response.body();
+      if (code < 200 || code > 299) {
+        throw new IOException(
+            "Got error code: "
+                + code
+                + " message: "
+                + response.message()
+                + " body: "
+                + body.string());
+      }
+
+      Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
+
+      return (String) responseData.get("link");
+    }
+  }
+
+  public String getRootPath() {
+    return "/" + ROOT_NAME;
+  }
+
   public String ensureRootFolder() throws IOException, InvalidTokenException {
     if (!rootEnsured) {
       ensureFolder("/", ROOT_NAME);
       rootEnsured = true;
     }
 
-    return "/" + ROOT_NAME;
+    return getRootPath();
   }
 
   public String ensureVideosFolder() throws IOException, InvalidTokenException {
