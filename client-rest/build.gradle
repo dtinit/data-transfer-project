@@ -118,13 +118,13 @@ project.publishing {
                 root.appendNode('description', 'The Data Transfer Project')
                 root.appendNode('name', 'DTP')
                 root.appendNode('url', 'https://datatransferproject.dev/')
-                root.children().last() + getPomConfig();
+                root.children().last() + getPomConfig()
             }
         }
     }
 }
 
-configBinTray(project);
+configBinTray(project)
 
 // link the publish task to archive creation to ensure the latter is present
 tasks.findAll { it.name.startsWith('publish') }*.dependsOn(createDistribution)
