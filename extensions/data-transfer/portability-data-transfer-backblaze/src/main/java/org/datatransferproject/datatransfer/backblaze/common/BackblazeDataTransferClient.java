@@ -179,7 +179,7 @@ public class BackblazeDataTransferClient {
     return completeMultipartUploadResponse.versionId();
   }
 
-  private static String getOrCreateBucket(
+  private String getOrCreateBucket(
       S3Client s3Client, ListBucketsResponse listBucketsResponse, String region)
       throws IOException {
     try {
@@ -205,7 +205,7 @@ public class BackblazeDataTransferClient {
           s3Client.createBucket(createBucketRequest);
           return bucketName;
         } catch (BucketAlreadyExistsException | BucketAlreadyOwnedByYouException e) {
-          System.out.print("Bucket name already exists");
+          monitor.info(() -> "Bucket name already exists");
         }
       }
       throw new IOException(
@@ -218,7 +218,7 @@ public class BackblazeDataTransferClient {
     }
   }
 
-  private static S3Client getOrCreateS3Client(String accessKey, String secretKey, String region) {
+  private S3Client getOrCreateS3Client(String accessKey, String secretKey, String region) {
     AwsSessionCredentials awsCreds = AwsSessionCredentials.create(accessKey, secretKey, "");
 
     ClientOverrideConfiguration clientOverrideConfiguration =
