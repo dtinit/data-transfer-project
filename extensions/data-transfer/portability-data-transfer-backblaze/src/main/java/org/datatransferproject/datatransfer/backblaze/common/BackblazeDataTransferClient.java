@@ -76,6 +76,7 @@ public class BackblazeDataTransferClient {
           return 0;
         });
 
+    Throwable s3Exception = null;
     for (String region : BACKBLAZE_REGIONS) {
       try {
         s3Client = getOrCreateS3Client(keyId, applicationKey, region);
@@ -84,6 +85,7 @@ public class BackblazeDataTransferClient {
         userRegion = region;
         break;
       } catch (S3Exception e) {
+        s3Exception = e;
         if (s3Client != null) {
           s3Client.close();
         }
@@ -95,7 +97,7 @@ public class BackblazeDataTransferClient {
 
     if (listBucketsResponse == null || userRegion == null) {
       throw new BackblazeCredentialsException(
-          "User's credentials or permissions are not valid for any regions available");
+          "User's credentials or permissions are not valid for any regions available", s3Exception);
     }
 
     bucketName = getOrCreateBucket(s3Client, listBucketsResponse, userRegion);

@@ -6,7 +6,7 @@ import java.net.HttpURLConnection;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
-import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
+import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -25,11 +25,12 @@ public class BackblazePhotosImporter
   private final TemporaryPerJobDataStore jobStore;
   private final ImageStreamProvider imageStreamProvider = new ImageStreamProvider();
   private final Monitor monitor;
-  private BackblazeDataTransferClient b2Client;
+  private final BackblazeDataTransferClientFactory b2ClientFactory;
 
   public BackblazePhotosImporter(Monitor monitor, TemporaryPerJobDataStore jobStore) {
     this.monitor = monitor;
     this.jobStore = jobStore;
+    this.b2ClientFactory = new BackblazeDataTransferClientFactory();
   }
 
   @Override
@@ -44,7 +45,7 @@ public class BackblazePhotosImporter
       return ImportResult.OK;
     }
 
-    b2Client = getOrCreateB2Client(monitor, authData);
+    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(monitor, authData);
 
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
@@ -86,15 +87,5 @@ public class BackblazePhotosImporter
     return b2Client.uploadFile(
         String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
         jobStore.getTempFileFromInputStream(inputStream, photo.getDataId(), ".jpg"));
-  }
-
-  private BackblazeDataTransferClient getOrCreateB2Client(
-      Monitor monitor, TokenSecretAuthData authData)
-      throws BackblazeCredentialsException, IOException {
-    if (b2Client == null) {
-      b2Client = new BackblazeDataTransferClient(monitor);
-      b2Client.init(authData.getToken(), authData.getSecret());
-    }
-    return b2Client;
   }
 }
