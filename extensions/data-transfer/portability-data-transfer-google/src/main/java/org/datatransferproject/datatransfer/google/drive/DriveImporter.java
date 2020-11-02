@@ -21,7 +21,7 @@ import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainer
 import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
 
-/** An {@link Importer} to export data from Google Drive. */
+/** An {@link Importer} to import data to Google Drive. */
 public final class DriveImporter
     implements Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
   private static final String ROOT_FOLDER_ID = "root-id";
