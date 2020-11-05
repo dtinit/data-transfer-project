@@ -55,7 +55,7 @@ plugins {
 
 ext.nodeType = hasProperty('nodeType') ? nodeType : 'local'
 ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
-println "Node installation: ${ext.nodeType}, Cloud type: ${ext.cloudType}";
+println "Node installation: ${ext.nodeType}, Cloud type: ${ext.cloudType}"
 
 setGitVersion()
 
@@ -119,13 +119,13 @@ def configurePublication(project) {
                     root.appendNode('name', 'DTP')
                     root.appendNode('url', 'https://datatransferproject.dev/')
                     root.appendNode('properties').appendNode('build-commit', project.rootProject.ext.gitVersion)
-                    root.children().last() + getPomConfig();
+                    root.children().last() + getPomConfig()
                 }
             }
         }
     }
 
-    configBinTray(project);
+    configBinTray(project)
 
 }
 

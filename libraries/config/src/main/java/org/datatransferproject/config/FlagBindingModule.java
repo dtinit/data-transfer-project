@@ -49,7 +49,7 @@ public abstract class FlagBindingModule extends AbstractModule {
       } catch (IllegalAccessException | InvocationTargetException e) {
         throw new RuntimeException("Could not get flag value by invoking: " + method.getName(), e);
       }
-      Preconditions.checkNotNull(flagValue, "Required flag " + method.getName() + " was mull");
+      Preconditions.checkNotNull(flagValue, "Required flag " + method.getName() + " was null");
       bind(returnType).annotatedWith(Names.named(method.getName())).toInstance(flagValue);
     }
   }
