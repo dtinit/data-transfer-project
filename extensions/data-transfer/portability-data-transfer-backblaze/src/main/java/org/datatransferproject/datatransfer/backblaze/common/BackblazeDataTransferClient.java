@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,8 +17,6 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.http.SdkHttpClient;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
@@ -49,7 +46,6 @@ public class BackblazeDataTransferClient {
 
   private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024; // 20 MB.
   private static final long PART_SIZE_FOR_MULTIPART_UPLOAD = 5 * 1024 * 1024; // 5 MB.
-  private static final Duration HTTP_CLIENT_SOCKET_TIMEOUT = Duration.ofMinutes(5);
 
   private final Monitor monitor;
   private S3Client s3Client;
@@ -227,12 +223,7 @@ public class BackblazeDataTransferClient {
     // Use any AWS region for the client, the Backblaze API does not care about it
     Region awsRegion = Region.US_EAST_1;
 
-    // TODO(T77168807) - Remove the following when AWS SDK is upgraded to 2.14.x or later
-    SdkHttpClient httpClient =
-        ApacheHttpClient.builder().socketTimeout(HTTP_CLIENT_SOCKET_TIMEOUT).build();
-
     return S3Client.builder()
-        .httpClient(httpClient)
         .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
         .overrideConfiguration(clientOverrideConfiguration)
         .endpointOverride(URI.create(String.format(S3_ENDPOINT_FORMAT_STRING, region)))
