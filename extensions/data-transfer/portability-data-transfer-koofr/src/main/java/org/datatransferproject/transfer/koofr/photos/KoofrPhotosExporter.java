@@ -65,7 +65,7 @@ public class KoofrPhotosExporter
     try {
       items = koofrClient.listRecursive(rootPath);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      return new ExportResult<>(e);
     }
 
     ArrayList<PhotoAlbum> albums = new ArrayList<>();
