@@ -17,10 +17,6 @@ package org.datatransferproject.transfer.koofr.photos;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,10 +24,9 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.transfer.koofr.common.FilesFile;
-import org.datatransferproject.transfer.koofr.common.FilesListRecursiveItem;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
+import org.datatransferproject.transfer.koofr.common.KoofrMediaExport;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -57,107 +52,20 @@ public class KoofrPhotosExporter
     Preconditions.checkNotNull(authData);
 
     KoofrClient koofrClient = koofrClientFactory.create(authData);
-
-    String rootPath = koofrClient.getRootPath();
-
-    List<FilesListRecursiveItem> items;
+    KoofrMediaExport export = new KoofrMediaExport(koofrClient, monitor);
 
     try {
-      items = koofrClient.listRecursive(rootPath);
+      export.export();
+
+      List<PhotoAlbum> exportAlbums = export.getPhotoAlbums();
+      List<PhotoModel> exportPhotos = export.getPhotos();
+
+      PhotosContainerResource containerResource =
+          new PhotosContainerResource(exportAlbums, exportPhotos);
+
+      return new ExportResult<>(ExportResult.ResultType.END, containerResource, null);
     } catch (IOException e) {
       return new ExportResult<>(e);
     }
-
-    ArrayList<PhotoAlbum> albums = new ArrayList<>();
-    HashSet<String> albumsWithPhotos = new HashSet<>();
-
-    ArrayList<PhotoModel> exportPhotos = new ArrayList<>();
-
-    for (FilesListRecursiveItem item : items) {
-      String path = item.getPath();
-      String[] pathParts = path.split("/");
-
-      if (FilesListRecursiveItem.TYPE_FILE.equals(item.getType())) {
-        FilesFile file = item.getFile();
-
-        if (FilesFile.TYPE_DIR.equals(file.getType())) {
-          if (pathParts.length == 2 && !pathParts[1].isEmpty()) {
-            String albumId = path;
-
-            String albumName = file.getName();
-
-            if (file.getTags() != null && file.getTags().containsKey("originalName")) {
-              albumName = file.getTags().get("originalName").get(0);
-            }
-
-            String description = null;
-
-            if (file.getTags() != null && file.getTags().containsKey("description")) {
-              description = file.getTags().get("description").get(0);
-            }
-
-            albums.add(new PhotoAlbum(albumId, albumName, description));
-          }
-        } else if (pathParts.length > 2 && file.getContentType().startsWith("image/")) {
-          String photoId = path;
-
-          String photoName = file.getName();
-
-          String description = null;
-
-          if (file.getTags() != null && file.getTags().containsKey("description")) {
-            description = file.getTags().get("description").get(0);
-          }
-
-          String contentType = file.getContentType();
-
-          String albumId = String.join("/", Arrays.copyOfRange(pathParts, 0, 2));
-          albumsWithPhotos.add(albumId);
-
-          String fullPath = rootPath + path;
-
-          String fetchableUrl;
-
-          try {
-            fetchableUrl = koofrClient.fileLink(fullPath);
-          } catch (IOException e) {
-            monitor.severe(() -> String.format("Koofr file link error: %s: %s", path, e));
-            continue;
-          }
-
-          Date uploadedTime = new Date(file.getModified());
-
-          exportPhotos.add(
-              new PhotoModel(
-                  photoName,
-                  fetchableUrl,
-                  description,
-                  contentType,
-                  photoId,
-                  albumId,
-                  false,
-                  uploadedTime));
-        }
-      } else if (FilesListRecursiveItem.TYPE_ERROR.equals(item.getType())) {
-        monitor.severe(
-            () ->
-                String.format(
-                    "Koofr list item error: %s: %s: %s",
-                    path, item.getError().getCode(), item.getError().getMessage()));
-      }
-    }
-
-    ArrayList<PhotoAlbum> exportAlbums = new ArrayList<>();
-
-    for (PhotoAlbum album : albums) {
-      if (albumsWithPhotos.contains(album.getId())) {
-        exportAlbums.add(album);
-      }
-    }
-
-    PhotosContainerResource containerResource =
-        new PhotosContainerResource(exportAlbums, exportPhotos);
-
-    return new ExportResult<>(ExportResult.ResultType.END, containerResource, null);
   }
 }
