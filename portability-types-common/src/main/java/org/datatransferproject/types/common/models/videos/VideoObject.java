@@ -55,6 +55,9 @@ public class VideoObject extends MediaObject {
     return dataId;
   }
 
+  public boolean isInTempStore() {
+    return inTempStore;
+  }
 
   @Override
   public String toString() {

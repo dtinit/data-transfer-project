@@ -20,7 +20,9 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.transfer.koofr.common.KoofrCredentialFactory;
+import org.datatransferproject.transfer.koofr.photos.KoofrPhotosExporter;
 import org.datatransferproject.transfer.koofr.photos.KoofrPhotosImporter;
+import org.datatransferproject.transfer.koofr.videos.KoofrVideosExporter;
 import org.datatransferproject.transfer.koofr.videos.KoofrVideosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
@@ -31,7 +33,10 @@ public class KoofrTransferExtension implements TransferExtension {
   private static final String VIDEOS = "VIDEOS";
   private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
       ImmutableList.of(PHOTOS, VIDEOS);
+  private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
+      ImmutableList.of(PHOTOS, VIDEOS);
   private ImmutableMap<String, Importer> importerMap;
+  private ImmutableMap<String, Exporter> exporterMap;
 
   private static final String BASE_API_URL = "https://app.koofr.net";
 
@@ -48,7 +53,8 @@ public class KoofrTransferExtension implements TransferExtension {
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
     Preconditions.checkState(initialized);
-    return null;
+    Preconditions.checkArgument(SUPPORTED_EXPORT_SERVICES.contains(transferDataType));
+    return exporterMap.get(transferDataType);
   }
 
   @Override
@@ -114,6 +120,11 @@ public class KoofrTransferExtension implements TransferExtension {
     importBuilder.put(PHOTOS, new KoofrPhotosImporter(koofrClientFactory, monitor, jobStore));
     importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClientFactory, monitor));
     importerMap = importBuilder.build();
+
+    ImmutableMap.Builder<String, Exporter> exportBuilder = ImmutableMap.builder();
+    exportBuilder.put(PHOTOS, new KoofrPhotosExporter(koofrClientFactory, monitor));
+    exportBuilder.put(VIDEOS, new KoofrVideosExporter(koofrClientFactory, monitor));
+    exporterMap = exportBuilder.build();
 
     initialized = true;
   }
