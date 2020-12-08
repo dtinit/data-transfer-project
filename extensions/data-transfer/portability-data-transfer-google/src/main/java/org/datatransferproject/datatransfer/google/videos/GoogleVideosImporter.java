@@ -35,6 +35,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
@@ -314,13 +315,17 @@ public class GoogleVideosImporter
     }
   }
 
-  private NewMediaItem buildMediaItem(VideoObject inputVideo, String uploadToken) {
+  @VisibleForTesting
+  NewMediaItem buildMediaItem(VideoObject inputVideo, String uploadToken) {
     NewMediaItem newMediaItem;
-    if (inputVideo.getDescription() != null && !inputVideo.getDescription().isEmpty()) {
-      newMediaItem =
-          NewMediaItemFactory.createNewMediaItem(uploadToken, inputVideo.getDescription());
-    } else {
+    String videoDescription = inputVideo.getDescription();
+    if (Strings.isNullOrEmpty(videoDescription)) {
       newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken);
+    } else {
+      if (videoDescription.length() > 1000) {
+        videoDescription = videoDescription.substring(0, 997) + "...";
+      }
+      newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken, videoDescription);
     }
     return newMediaItem;
   }
