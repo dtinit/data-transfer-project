@@ -170,7 +170,7 @@ final class JobProcessor {
       store.addErrorsToJob(jobId, errors);
     } catch (IOException | RuntimeException e) {
       success = false;
-      monitor.severe(() -> format("Problem adding errors to JobStore: %s", e), e);
+      monitor.severe(() -> "Problem adding errors to JobStore", e);
     }
     try {
       store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
@@ -183,7 +183,7 @@ final class JobProcessor {
     try {
       store.addFailureReasonToJob(jobId, failureReason);
     } catch (IOException e) {
-      monitor.severe(() -> format("Problem adding failure reason to JobStore: %s", e), e);
+      monitor.severe(() -> "Problem adding failure reason to JobStore", e);
     }
   }
 
@@ -191,7 +191,7 @@ final class JobProcessor {
     try {
       store.markJobAsStarted(jobId);
     } catch (IOException e) {
-      monitor.severe(() -> format("Could not mark job %s as %s, %s", jobId, State.IN_PROGRESS, e));
+      monitor.severe(() -> format("Could not mark job %s as %s", jobId, State.IN_PROGRESS), e);
     }
   }
 }
