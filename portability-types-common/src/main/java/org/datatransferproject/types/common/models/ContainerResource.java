@@ -25,6 +25,7 @@ import org.datatransferproject.types.common.models.videos.VideosContainerResourc
         @JsonSubTypes.Type(TaskContainerResource.class),
         @JsonSubTypes.Type(PlaylistContainerResource.class),
         @JsonSubTypes.Type(SocialActivityContainerResource.class),
-        @JsonSubTypes.Type(IdOnlyContainerResource.class)
+        @JsonSubTypes.Type(IdOnlyContainerResource.class),
+        @JsonSubTypes.Type(DateRangeContainerResource.class)
 })
 public abstract class ContainerResource extends DataModel {}
