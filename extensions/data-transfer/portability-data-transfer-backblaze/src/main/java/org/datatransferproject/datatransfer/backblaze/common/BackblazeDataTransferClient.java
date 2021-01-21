@@ -157,25 +157,26 @@ public class BackblazeDataTransferClient {
         s3Client.createMultipartUpload(createMultipartUploadRequest);
 
     long filePosition = 0;
-    InputStream fileInputStream = new FileInputStream(file);
-    for (int i = 1; filePosition < contentLength; i++) {
-      // Because the last part could be smaller than others, adjust the part size as needed
-      long partSize = Math.min(PART_SIZE_FOR_MULTIPART_UPLOAD, (contentLength - filePosition));
+    try (InputStream fileInputStream = new FileInputStream(file)) {
+      for (int i = 1; filePosition < contentLength; i++) {
+        // Because the last part could be smaller than others, adjust the part size as needed
+        long partSize = Math.min(PART_SIZE_FOR_MULTIPART_UPLOAD, (contentLength - filePosition));
 
-      UploadPartRequest uploadRequest =
-          UploadPartRequest.builder()
-              .bucket(bucketName)
-              .key(fileKey)
-              .uploadId(createMultipartUploadResponse.uploadId())
-              .partNumber(i)
-              .build();
-      RequestBody requestBody = RequestBody.fromInputStream(fileInputStream, partSize);
+        UploadPartRequest uploadRequest =
+            UploadPartRequest.builder()
+                .bucket(bucketName)
+                .key(fileKey)
+                .uploadId(createMultipartUploadResponse.uploadId())
+                .partNumber(i)
+                .build();
+        RequestBody requestBody = RequestBody.fromInputStream(fileInputStream, partSize);
 
-      UploadPartResponse uploadPartResponse = s3Client.uploadPart(uploadRequest, requestBody);
-      completedParts.add(
-          CompletedPart.builder().partNumber(i).eTag(uploadPartResponse.eTag()).build());
+        UploadPartResponse uploadPartResponse = s3Client.uploadPart(uploadRequest, requestBody);
+        completedParts.add(
+            CompletedPart.builder().partNumber(i).eTag(uploadPartResponse.eTag()).build());
 
-      filePosition += partSize;
+        filePosition += partSize;
+      }
     }
 
     CompleteMultipartUploadRequest completeMultipartUploadRequest =
