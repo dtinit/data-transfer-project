@@ -1,3 +1,5 @@
+// (c) Facebook, Inc. and its affiliates. Confidential and proprietary.
+
 package org.datatransferproject.datatransfer.backblaze.common;
 
 import java.io.File;
@@ -11,6 +13,7 @@ import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
+import org.datatransferproject.transfer.JobMetadata;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -38,7 +41,7 @@ import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
 public class BackblazeDataTransferClient {
-  private static final String DATA_TRANSFER_BUCKET_PREFIX = "facebook-data-transfer";
+  private static final String DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING = "%s-data-transfer";
   private static final String S3_ENDPOINT_FORMAT_STRING = "https://s3.%s.backblazeb2.com";
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
   private final List<String> BACKBLAZE_REGIONS =
@@ -178,18 +181,21 @@ public class BackblazeDataTransferClient {
   private String getOrCreateBucket(
       S3Client s3Client, ListBucketsResponse listBucketsResponse, String region)
       throws IOException {
+
+    String fullPrefix =
+        String.format(
+            DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING,
+            JobMetadata.getExportService().toLowerCase());
     try {
       for (Bucket bucket : listBucketsResponse.buckets()) {
-        if (bucket.name().startsWith(DATA_TRANSFER_BUCKET_PREFIX)) {
+        if (bucket.name().startsWith(fullPrefix)) {
           return bucket.name();
         }
       }
 
       for (int i = 0; i < MAX_BUCKET_CREATION_ATTEMPTS; i++) {
         String bucketName =
-            String.format(
-                "%s-%s",
-                DATA_TRANSFER_BUCKET_PREFIX, RandomStringUtils.randomNumeric(8).toLowerCase());
+            String.format("%s-%s", fullPrefix, RandomStringUtils.randomNumeric(8).toLowerCase());
         try {
           CreateBucketConfiguration createBucketConfiguration =
               CreateBucketConfiguration.builder().locationConstraint(region).build();
