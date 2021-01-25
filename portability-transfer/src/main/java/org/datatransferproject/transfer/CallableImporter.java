@@ -71,9 +71,10 @@ public class CallableImporter implements Callable<ImportResult> {
       success = result.getType() == ImportResult.ResultType.OK && errors.isEmpty();
 
       if (!success) {
-        throw new IOException("Problem with importer, forcing a retry, "
-            + errors.size() + " errors, first one: " +
-            (errors.iterator().hasNext() ? errors.iterator().next() : "none"));
+        // No need to log out individual errors
+        // since IdempotentImportExecutor already logs them out
+        throw new IOException(
+            "Encountered errors in idempotentImportExecutor, forcing a retry");
       }
 
       result = result.copyWithCounts(data.getCounts());
