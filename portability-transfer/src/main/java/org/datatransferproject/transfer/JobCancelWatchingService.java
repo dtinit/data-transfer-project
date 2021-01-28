@@ -47,25 +47,53 @@ class JobCancelWatchingService extends AbstractScheduledService {
     }
     monitor.debug(() -> "polling for job to check cancellation");
     PortabilityJob currentJob = store.findJob(JobMetadata.getJobId());
-    boolean isCanceled = currentJob.state() == PortabilityJob.State.CANCELED;
-    if (isCanceled) {
-      monitor.info(
-          () -> String.format("Job %s is canceled", JobMetadata.getJobId()),
-          EventCode.WORKER_JOB_CANCELED);
-      dtpInternalMetricRecorder.cancelledJob(
-              JobMetadata.getDataType(),
-              JobMetadata.getExportService(),
-              JobMetadata.getImportService(),
-              JobMetadata.getStopWatch().elapsed());
-      monitor.flushLogs();
-      System.exit(0);
-    } else {
-      monitor.debug(() -> String.format("Job %s is not canceled", JobMetadata.getJobId()));
+    switch (currentJob.state()) {
+      case CANCELED:
+        monitor.info(
+            () -> String.format("Job %s is canceled", JobMetadata.getJobId()),
+            EventCode.WORKER_JOB_CANCELED);
+        dtpInternalMetricRecorder.cancelledJob(
+            JobMetadata.getDataType(),
+            JobMetadata.getExportService(),
+            JobMetadata.getImportService(),
+            JobMetadata.getStopWatch().elapsed());
+        monitor.flushLogs();
+        System.exit(0);
+        break;
+      case ERROR:
+        monitor.severe(
+            () -> String.format("Job %s is errored", JobMetadata.getJobId()),
+            EventCode.WATCHING_SERVICE_JOB_ERRORED);
+        recordGeneralMetric(PortabilityJob.State.ERROR.toString());
+        monitor.flushLogs();
+        System.exit(0);
+        break;
+      case PREEMPTED:
+        monitor.info(
+            () -> String.format("Job %s is preempted", JobMetadata.getJobId()),
+            EventCode.WATCHING_SERVICE_JOB_PREEMPTED);
+        recordGeneralMetric(PortabilityJob.State.PREEMPTED.toString());
+        monitor.flushLogs();
+        System.exit(0);
+        break;
+      default:
+        monitor.debug(
+            () ->
+                String.format(
+                    "Job %s is not canceled or errored or preempted", JobMetadata.getJobId()));
     }
   }
 
   @Override
   protected Scheduler scheduler() {
     return scheduler;
+  }
+
+  private void recordGeneralMetric(String jobState) {
+    dtpInternalMetricRecorder.recordGenericMetric(
+        JobMetadata.getDataType(),
+        JobMetadata.getExportService(),
+        jobState,
+        JobMetadata.getStopWatch().elapsed());
   }
 }

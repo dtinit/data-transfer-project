@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Data Transfer Project Authors.
+ * Copyright 2018 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.types.common.models.social;
+package org.datatransferproject.datatransfer.backblaze.exception;
 
-public enum SocialActivityAttachmentType {
-  LINK,
-  IMAGE,
-  VIDEO
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+
+public final class BackblazeCredentialsException extends CopyExceptionWithFailureReason {
+  public BackblazeCredentialsException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  @Override
+  public String getFailureReason() {
+    return "INVALID_MANUAL_CREDENTIALS";
+  }
 }
