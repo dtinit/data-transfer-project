@@ -48,6 +48,9 @@ public class SocialActivityContainerResourceTest {
             "some image url",
             "some image",
             "this is the image description");
+    SocialActivityAttachment videoAttachment =
+            new SocialActivityAttachment(
+                    SocialActivityAttachmentType.LINK, "some url", "some video", "this is the video text");
     List<SocialActivityModel> activities =
         ImmutableList.of(
             new SocialActivityModel(
@@ -63,7 +66,7 @@ public class SocialActivityContainerResourceTest {
                 "id2",
                 timePublished,
                 SocialActivityType.POST,
-                ImmutableList.of(linkAttachment, imageAttachment),
+                ImmutableList.of(linkAttachment, imageAttachment, videoAttachment),
                 null,
                 "Write Some more tests",
                 "Here's some sample post content",
