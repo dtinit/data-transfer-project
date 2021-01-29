@@ -95,7 +95,7 @@ public class SocialActivityContainerResourceTest {
     Truth.assertThat(deserializedModel).isNotNull();
     Truth.assertThat(deserializedModel).isInstanceOf(SocialActivityContainerResource.class);
     SocialActivityContainerResource deserialized =
-                (SocialActivityContainerResource) deserializedModel;
+        (SocialActivityContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getActivities()).hasSize(3);
     SocialActivityModel postModel = deserialized.getActivities()
                 .stream()
@@ -120,5 +120,5 @@ public class SocialActivityContainerResourceTest {
     Truth.assertThat(linkActivityAttachment).hasSize(1);
     Truth.assertThat(videoActivityAttachment).hasSize(1);
     Truth.assertThat(deserialized).isEqualTo(data);
-    }
+  }
 }
