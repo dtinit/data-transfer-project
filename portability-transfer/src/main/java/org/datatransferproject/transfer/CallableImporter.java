@@ -74,7 +74,7 @@ public class CallableImporter implements Callable<ImportResult> {
         throw new IOException(
             "Problem with importer, forcing a retry, "
                 + "first error: "
-                + (errors.iterator().hasNext() ? errors.iterator().next() : "none"));
+                + (errors.iterator().hasNext() ? errors.iterator().next().exception() : "none"));
       }
 
       result = result.copyWithCounts(data.getCounts());
