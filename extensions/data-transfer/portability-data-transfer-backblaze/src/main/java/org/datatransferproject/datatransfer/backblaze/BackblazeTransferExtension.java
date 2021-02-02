@@ -43,6 +43,7 @@ public class BackblazeTransferExtension implements TransferExtension {
 
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
+    //TODO: Implement exporters as per https://github.com/google/data-transfer-project/issues/960
     throw new IllegalArgumentException();
   }
 
