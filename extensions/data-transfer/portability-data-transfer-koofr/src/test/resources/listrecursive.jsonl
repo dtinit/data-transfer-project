@@ -1,0 +1,10 @@
+{"type":"file","path":"/","file":{"name":"Data transfer","type":"dir","modified":1598267490866,"size":0,"contentType":"","tags":{}}}
+{"type":"file","path":"/Album 1","file":{"name":"Album 1","type":"dir","modified":1598267493756,"size":0,"contentType":"","tags":{}}}
+{"type":"file","path":"/Album 1/Photo 1.jpg","file":{"name":"Photo 1.jpg","type":"file","modified":1324824491000,"size":59339,"contentType":"image/jpeg","hash":"bdd24ca54fdd485a6dc10cd7571c3bb0","tags":{"description":["Photo 1 description"]}}}
+{"type":"file","path":"/Album 1/Photo 2.jpg","file":{"name":"Photo 2.jpg","type":"file","modified":1368774569000,"size":331731,"contentType":"image/jpeg","hash":"02b0cef9ebcfdd043d1452baf64e9eab","tags":{}}}
+{"type":"file","path":"/Album 2 :heart:","file":{"name":"Album 2","type":"dir","modified":1598267491759,"size":0,"contentType":"","tags":{"description":["Album 2 description ❤️"],"originalName":["Album 2 ❤️"]}}}
+{"type":"file","path":"/Album 2 :heart:/Photo 3.jpg","file":{"name":"Photo 3.jpg","type":"file","modified":1489345497000,"size":165309,"contentType":"image/jpeg","hash":"4870ded22ee58d4dbc1d044763437aaa","tags":{"description":["Photo 3 description"]}}}
+{"type":"file","path":"/Album 2 :heart:/Video 1.mp4","file":{"name":"Video 1.mp4","type":"file","modified":1599223257741,"size":4642325,"contentType":"video/mp4","hash":"1f710b4e476becd9a2fec72c4aa5ab7f","tags":{}}}
+{"type":"file","path":"/Album 3","file":{"name":"Album 3","type":"dir","modified":1598267491759,"size":0,"contentType":"","tags":{}}}
+{"type":"file","path":"/Videos","file":{"name":"Videos","type":"dir","modified":1599222806829,"size":0,"contentType":"","tags":{}}}
+{"type":"file","path":"/Videos/Video 2.mp4","file":{"name":"Video 2.mp4","type":"file","modified":1599223266949,"size":2644034,"contentType":"video/mp4","hash":"8d0617e13a112b09a6f77b65d5abd57f","tags":{"description":["Video 3 description"]}}}

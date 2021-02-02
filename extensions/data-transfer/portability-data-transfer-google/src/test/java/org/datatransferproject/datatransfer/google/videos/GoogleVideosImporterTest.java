@@ -18,6 +18,8 @@ package org.datatransferproject.datatransfer.google.videos;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.photos.library.v1.proto.BatchCreateMediaItemsResponse;
+import com.google.photos.library.v1.proto.NewMediaItem;
 import com.google.photos.library.v1.proto.NewMediaItemResult;
 import com.google.photos.library.v1.upload.UploadMediaItemResponse;
 import com.google.photos.types.proto.MediaItem;
@@ -220,5 +223,34 @@ public class GoogleVideosImporterTest {
             executor);
     assertEquals("Expected the number of bytes to be 0L.", 0L, length);
     assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
+  }
+
+  @Test
+  public void descriptionOver1kCharactersShouldNotFail() {
+    // Mock creation response
+    String videoDescriptionOver1k =
+        "z0pyiaeQ03C7Pfs7qdoWfpR2E4BjqqLvsEL1OdBaQu8PeoI5uca83NJQKOfF4gnAhzvpgtbAPGBUade"
+            + "FH5i4vas067Q67aDg1JA9qnnMEy5TTS7Qrp0MImGAI4aHFINwDrTOlFnyGoOwtQC6LLbWWlM8m224G1C08oEyjxuWicMXIdsJfsQvbE"
+            + "dropW0jOMmO2DTCDCPRKwONGHPpo48pmi8HbtNolrbnU189mhyi4zSK3xmMAgmxQWOMmuNryXWB0Zok8hDxnxIes85Oe853U3jUxdu6"
+            + "wNwkbZcpb97dj3puh6UYO9YFFsU40F2ULzpvPTvAPvDeBeOENpUjuh9YhPQiMbwLqne2AxLgMDgxz473Ho2DosixcWjSmX6JfSxInXh"
+            + "lmXxN6xLJRi2abHeEpbOdvl28xEYpBF73DuZZ7NKPKyKhEcWi7aJVoWp9niBl0Cp4PCOO51ABROXOzE8dcoxf6dU1fhqkcQcuxV1qeK"
+            + "XfYewxh8uZeShaMoey1rwzuux7lnKoHDGVQe1nJwSuTUNE5BgLa3uOSwQ9wG0tuakZF2M2YIMhEF6DUu7mZfN41fwPFleuwzO76C6eD"
+            + "inP3xlNJzhsQjQtL0ITCf2oL6LgqLNxzHIRpY41d1Puxzyx2wWJ7DJy3UnMlylyEwhNkd8EuuyXYCs6GIzUXkvHRQZjN99ED6gkmnHS"
+            + "SIW0QHBWOb4jHSYpK52OVMIsLkwRll8zNWci7rRXxFeMw0s0sFcIZthajvP7PMA361bNUDQe4vVhsxF1AQufm0D2SYGpA4zH8LOsacl"
+            + "QPP2vKFFED90jUvbqkhesYYGvrvSq0t12LoMTFqkckRbxj7tODIUco9FFf9U5MQV40q6jgrKup19BSR9NUI58Y0GpI5ZqPgSaNhoJ5V"
+            + "vsPhjrywUo6s9oOnolihQYq6lXZzwhESS8diG34oFLEwq9msSsrRtUSjgH50mNGogOlgEtbaFlMgXstzOWtUk2CwFEHZ9Y2qv123456"
+            + "7890";
+    final VideoObject videoObject =
+        new VideoObject(
+            VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false);
+
+    String uploadToken = "token";
+    NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoObject, uploadToken);
+    assertFalse(
+        "Expected the length of the description to be truncated to 1000 chars.",
+        (newMediaItemResult.getDescription().length() > 1000));
+    assertTrue(
+        "Expected a truncated description to terminate with \"...\"",
+        newMediaItemResult.getDescription().endsWith("..."));
   }
 }

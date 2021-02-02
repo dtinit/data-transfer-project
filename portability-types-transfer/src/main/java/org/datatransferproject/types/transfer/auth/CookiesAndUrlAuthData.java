@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
 
-/** Auth data based on a set of cookies and a URL, currently only used for Solid. */
+/** Auth data based on a set of cookies and a URL, currently only used for Solid and Mastodon. */
 @JsonTypeName("org.dataportability:CookiesAndUrlAuthData")
 public class CookiesAndUrlAuthData extends AuthData {
   private final List<String> cookies;

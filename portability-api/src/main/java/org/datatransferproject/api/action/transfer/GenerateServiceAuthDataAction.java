@@ -112,7 +112,7 @@ public class GenerateServiceAuthDataAction
           () -> format("Generated auth data in mode '%s' for job: %s", authMode, jobId), jobId,
           EventCode.API_GENERATED_AUTH_DATA);
 
-      // Serialize and encrypt the auth data
+      // Serialize the auth data
       String serialized = objectMapper.writeValueAsString(authData);
       return new ServiceAuthData(serialized);
     } catch (IOException e) {

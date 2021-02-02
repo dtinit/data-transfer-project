@@ -196,6 +196,15 @@ paths:
         required: true
         schema:
           type: "string"
+      requestBody:
+        description: "Encrypted auth data"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                encryptedAuthData:
+                  type: "string"
       responses:
         200:
           description: "Success"

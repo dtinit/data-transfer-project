@@ -18,6 +18,7 @@ package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 import java.util.Objects;
@@ -51,6 +52,15 @@ public class VideoAlbum {
 
   public String getId() {
     return id;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("id", getId())
+        .add("name", getName())
+        .add("description", getDescription())
+        .toString();
   }
 
   @Override

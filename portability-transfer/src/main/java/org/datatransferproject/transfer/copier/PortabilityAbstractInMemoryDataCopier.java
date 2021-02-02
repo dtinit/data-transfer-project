@@ -161,7 +161,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
           }
         }
       } catch (RetryException | RuntimeException e) {
-        monitor.severe(() -> format("Got error importing data: %s", e), e);
+        monitor.severe(() -> "Got error importing data", e);
         if (e.getClass() == RetryException.class
                 && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
           throw (CopyExceptionWithFailureReason) e.getCause();

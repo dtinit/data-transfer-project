@@ -103,8 +103,8 @@ class JobPollingService extends AbstractScheduledService {
       monitor.severe(
           () ->
               format(
-                  "IOException while marking job as timed out. JobId: %s; Exception: %s",
-                  jobId, e));
+                  "IOException while marking job as timed out. JobId: %s",
+                  jobId), e);
     }
   }
 
