@@ -7,14 +7,18 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
@@ -598,6 +602,52 @@ public class KoofrClientTest {
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
     Assert.assertEquals(1, server.getRequestCount());
+  }
+
+  @Test
+  public void testListRecursive() throws Exception {
+    final String listRecursiveResponse =
+        IOUtils.toString(
+            getClass().getClassLoader().getResourceAsStream("listrecursive.jsonl"),
+            StandardCharsets.UTF_8);
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "application/x-ndjson; charset=utf-8")
+            .setChunkedBody(listRecursiveResponse, 1024));
+
+    List<FilesListRecursiveItem> items = client.listRecursive("/Data transfer");
+
+    Assert.assertEquals(Fixtures.listRecursiveItems, items);
+  }
+
+  @Test
+  public void testListRecursiveNotFound() throws Exception {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(404)
+            .setHeader("Content-Type", "application/json")
+            .setBody(
+                "{\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}"));
+
+    List<FilesListRecursiveItem> items = client.listRecursive("/Data transfer");
+
+    Assert.assertEquals(ImmutableList.of(), items);
+  }
+
+  @Test
+  public void testFileLink() throws Exception {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "application/json")
+            .setBody(
+                "{\"link\":\"https://app-1.koofr.net/content/files/get/Video+1.mp4?base=TESTBASE\"}"));
+
+    String link = client.fileLink("/Data transfer/Videos/Video 1.mp4");
+
+    Assert.assertEquals(
+        "https://app-1.koofr.net/content/files/get/Video+1.mp4?base=TESTBASE", link);
   }
 
   @Test
