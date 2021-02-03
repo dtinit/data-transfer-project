@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.junit.Test;
 
@@ -47,6 +48,9 @@ public class SocialActivityContainerResourceTest {
             "some image url",
             "some image",
             "this is the image description");
+    SocialActivityAttachment videoAttachment =
+        new SocialActivityAttachment(
+            SocialActivityAttachmentType.VIDEO, "some url", "some video", "this is the video text");
     List<SocialActivityModel> activities =
         ImmutableList.of(
             new SocialActivityModel(
@@ -62,7 +66,7 @@ public class SocialActivityContainerResourceTest {
                 "id2",
                 timePublished,
                 SocialActivityType.POST,
-                ImmutableList.of(linkAttachment, imageAttachment),
+                ImmutableList.of(linkAttachment, imageAttachment, videoAttachment),
                 null,
                 "Write Some more tests",
                 "Here's some sample post content",
@@ -92,6 +96,32 @@ public class SocialActivityContainerResourceTest {
     SocialActivityContainerResource deserialized =
         (SocialActivityContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getActivities()).hasSize(3);
+    SocialActivityModel postModel =
+        deserialized.getActivities().stream()
+            .filter(socialActivityModel -> socialActivityModel.getType() == SocialActivityType.POST)
+            .collect(Collectors.toList())
+            .get(0);
+    List<SocialActivityAttachment> imageActivityAttachment =
+        postModel.getAttachments().stream()
+            .filter(
+                socialActivityAttachment ->
+                    socialActivityAttachment.getType() == SocialActivityAttachmentType.IMAGE)
+            .collect(Collectors.toList());
+    List<SocialActivityAttachment> linkActivityAttachment =
+        postModel.getAttachments().stream()
+            .filter(
+                socialActivityAttachment ->
+                    socialActivityAttachment.getType() == SocialActivityAttachmentType.LINK)
+            .collect(Collectors.toList());
+    List<SocialActivityAttachment> videoActivityAttachment =
+        postModel.getAttachments().stream()
+            .filter(
+                socialActivityAttachment ->
+                    socialActivityAttachment.getType() == SocialActivityAttachmentType.VIDEO)
+            .collect(Collectors.toList());
+    Truth.assertThat(imageActivityAttachment).hasSize(1);
+    Truth.assertThat(linkActivityAttachment).hasSize(1);
+    Truth.assertThat(videoActivityAttachment).hasSize(1);
     Truth.assertThat(deserialized).isEqualTo(data);
     Truth.assertThat(
             deserialized
