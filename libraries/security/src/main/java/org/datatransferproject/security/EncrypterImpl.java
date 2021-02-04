@@ -69,8 +69,11 @@ final class EncrypterImpl implements Encrypter {
       byte[] salt = new byte[cipher.getBlockSize()];
       SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
       random.nextBytes(salt);
-      cipher.update(salt);
-      byte[] encrypted = cipher.doFinal(data.getBytes(UTF_8));
+      byte[] encryptedSalt = cipher.update(salt);
+      byte[] encryptedData = cipher.doFinal(data.getBytes(UTF_8));
+      byte[] encrypted = new byte[encryptedSalt.length + encryptedData.length];
+      System.arraycopy(encryptedSalt, 0, encrypted, 0, encryptedSalt.length);
+      System.arraycopy(encryptedData, 0, encrypted, encryptedSalt.length, encryptedData.length);
       return BaseEncoding.base64Url().encode(encrypted);
     } catch (BadPaddingException
         | IllegalBlockSizeException
