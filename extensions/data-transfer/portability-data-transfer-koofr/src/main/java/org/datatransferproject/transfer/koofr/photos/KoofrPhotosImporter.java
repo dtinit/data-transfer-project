@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.UUID;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
@@ -29,7 +30,7 @@ import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -49,7 +50,7 @@ public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final KoofrClientFactory koofrClientFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final KoofrTransmogrificationConfig transmogrificationConfig =
@@ -59,7 +60,7 @@ public class KoofrPhotosImporter
   private final SimpleDateFormat titleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss ");
 
   public KoofrPhotosImporter(
-      KoofrClientFactory koofrClientFactory, Monitor monitor, TemporaryPerJobDataStore jobStore) {
+      KoofrClientFactory koofrClientFactory, Monitor monitor, JobStore jobStore) {
     this.koofrClientFactory = koofrClientFactory;
     this.imageStreamProvider = new ImageStreamProvider();
     this.monitor = monitor;
@@ -74,12 +75,16 @@ public class KoofrPhotosImporter
       PhotosContainerResource resource)
       throws Exception {
     KoofrClient koofrClient = koofrClientFactory.create(authData);
-
     monitor.debug(
         () ->
             String.format(
                 "%s: Importing %s albums and %s photos before transmogrification",
                 jobId, resource.getAlbums().size(), resource.getPhotos().size()));
+
+   TimeZone userTimeZone = jobStore.findJob(jobId).userTimeZone();
+    if (null != userTimeZone) {
+      titleDateFormat.setTimeZone(userTimeZone);
+    }
 
     // Make the data Koofr compatible
     resource.transmogrify(transmogrificationConfig);

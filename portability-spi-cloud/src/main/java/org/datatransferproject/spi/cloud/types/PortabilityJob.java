@@ -10,6 +10,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.Map;
+import java.util.TimeZone;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +39,7 @@ public abstract class PortabilityJob {
   private static final String JOB_STATE = "JOB_STATE";
   private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
+  private static final String USER_TIMEZONE = "USER_TIMEZONE";
 
   public static PortabilityJob.Builder builder() {
     Instant now = Instant.now();
@@ -86,6 +88,10 @@ public abstract class PortabilityJob {
         properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON)
             : null;
 
+    TimeZone userTimeZone =
+        properties.containsKey(USER_TIMEZONE) ? (TimeZone) properties.get(USER_TIMEZONE)
+            : null;
+
     return PortabilityJob.builder()
         .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
@@ -107,6 +113,7 @@ public abstract class PortabilityJob {
                 .setEncryptedInitialExportAuthData(encryptedExportInitialAuthData)
                 .setEncryptedInitialImportAuthData(encryptedImportInitialAuthData)
                 .build())
+        .setUserTimeZone(userTimeZone)
         .build();
   }
 
@@ -152,6 +159,10 @@ public abstract class PortabilityJob {
   @Nullable
   @JsonProperty("failureReason")
   public abstract String failureReason();
+
+  @Nullable
+  @JsonProperty("userTimeZone")
+  public abstract TimeZone userTimeZone();
 
   public abstract PortabilityJob.Builder toBuilder();
 
@@ -202,6 +213,11 @@ public abstract class PortabilityJob {
       builder.put(
           IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
     }
+
+    if (null != userTimeZone()) {
+      builder.put(USER_TIMEZONE, userTimeZone());
+    }
+
     return builder.build();
   }
 
@@ -272,6 +288,10 @@ public abstract class PortabilityJob {
       }
       return setJobAuthorization(jobAuthorization);
     }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("userTimeZone")
+    public abstract Builder setUserTimeZone(TimeZone timeZone);
 
     // For internal use only; clients should use setAndValidateJobAuthorization
     protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);
