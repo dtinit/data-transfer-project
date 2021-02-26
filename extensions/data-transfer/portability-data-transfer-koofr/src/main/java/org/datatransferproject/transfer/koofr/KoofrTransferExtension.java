@@ -35,11 +35,9 @@ public class KoofrTransferExtension implements TransferExtension {
       ImmutableList.of(PHOTOS, VIDEOS);
   private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
       ImmutableList.of(PHOTOS, VIDEOS);
+  private static final String BASE_API_URL = "https://app.koofr.net";
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
-
-  private static final String BASE_API_URL = "https://app.koofr.net";
-
   private boolean initialized = false;
 
   // Needed for ServiceLoader to load this class.

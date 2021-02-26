@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.UUID;
 import org.apache.commons.imaging.Imaging;
@@ -57,7 +58,8 @@ public class KoofrPhotosImporter
       new KoofrTransmogrificationConfig();
 
   private final SimpleDateFormat exifDateFormat = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-  private final SimpleDateFormat titleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss ");
+
+  private volatile HashMap<UUID, SimpleDateFormat> titleDateFormats = new HashMap<>();
 
   public KoofrPhotosImporter(
       KoofrClientFactory koofrClientFactory, Monitor monitor, JobStore jobStore) {
@@ -80,11 +82,6 @@ public class KoofrPhotosImporter
             String.format(
                 "%s: Importing %s albums and %s photos before transmogrification",
                 jobId, resource.getAlbums().size(), resource.getPhotos().size()));
-
-   TimeZone userTimeZone = jobStore.findJob(jobId).userTimeZone();
-    if (null != userTimeZone) {
-      titleDateFormat.setTimeZone(userTimeZone);
-    }
 
     // Make the data Koofr compatible
     resource.transmogrify(transmogrificationConfig);
@@ -154,7 +151,7 @@ public class KoofrPhotosImporter
 
       Date dateCreated = getDateCreated(photo, bytes);
 
-      String title = buildPhotoTitle(photo.getTitle(), dateCreated);
+      String title = buildPhotoTitle(jobId, photo.getTitle(), dateCreated);
       String description = KoofrClient.trimDescription(photo.getDescription());
 
       String parentPath = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
@@ -177,12 +174,13 @@ public class KoofrPhotosImporter
     }
   }
 
-  private String buildPhotoTitle(String originalTitle, Date dateCreated) {
+  private String buildPhotoTitle(UUID jobId, String originalTitle, Date dateCreated) {
     if (dateCreated == null) {
       return originalTitle;
     }
 
-    return titleDateFormat.format(dateCreated) + originalTitle;
+    SimpleDateFormat dateFormat = getOrCreateTitleDateFormat(jobId);
+    return dateFormat.format(dateCreated) + originalTitle;
   }
 
   private Date getDateCreated(PhotoModel photo, byte[] bytes) {
@@ -224,5 +222,21 @@ public class KoofrPhotosImporter
           e);
       return null;
     }
+  }
+
+  private synchronized SimpleDateFormat getOrCreateTitleDateFormat(UUID jobId) {
+    if (titleDateFormats.containsKey(jobId)) {
+      return titleDateFormats.get(jobId);
+    }
+
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss ");
+    TimeZone userTimeZone = jobStore.findJob(jobId).userTimeZone();
+    if (null != userTimeZone) {
+      dateFormat.setTimeZone(userTimeZone);
+    }
+
+    titleDateFormats.put(jobId, dateFormat);
+
+    return dateFormat;
   }
 }

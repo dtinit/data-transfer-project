@@ -16,8 +16,12 @@
 
 package org.datatransferproject.spi.cloud.types;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.time.Instant;
 import java.util.TimeZone;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.test.types.ObjectMapperFactory;
@@ -25,11 +29,6 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.time.Instant;
-
-import static com.google.common.truth.Truth.assertThat;
 
 /** Tests serialization and deserialization of a {@link PortabilityJob}. */
 public class PortabilityJobTest {
@@ -83,13 +82,14 @@ public class PortabilityJobTest {
             .setExportService("fooService")
             .setImportService("barService")
             .setTransferDataType("PHOTOS")
-            .setExportInformation(objectMapper.writeValueAsString(
-                new ExportInformation(
-                    null,
-                    new PhotosContainerResource(
-                        Lists.newArrayList(
-                            new PhotoAlbum("album_id", "album name", "album description")),
-                        null))))
+            .setExportInformation(
+                objectMapper.writeValueAsString(
+                    new ExportInformation(
+                        null,
+                        new PhotosContainerResource(
+                            Lists.newArrayList(
+                                new PhotoAlbum("album_id", "album name", "album description")),
+                            null))))
             .setCreatedTimestamp(date)
             .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)
@@ -111,9 +111,7 @@ public class PortabilityJobTest {
     Instant date = Instant.now();
 
     JobAuthorization jobAuthorization =
-        JobAuthorization.builder()
-            .setState(JobAuthorization.State.INITIAL)
-            .build();
+        JobAuthorization.builder().setState(JobAuthorization.State.INITIAL).build();
 
     PortabilityJob job =
         PortabilityJob.builder()

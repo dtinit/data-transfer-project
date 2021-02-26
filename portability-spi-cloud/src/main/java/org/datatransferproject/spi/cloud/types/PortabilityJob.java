@@ -80,17 +80,15 @@ public abstract class PortabilityJob {
             : null;
 
     State state =
-        properties.containsKey(JOB_STATE) ? State.valueOf((String) properties.get(JOB_STATE))
+        properties.containsKey(JOB_STATE)
+            ? State.valueOf((String) properties.get(JOB_STATE))
             : State.NEW;
 
-
     String failureReason =
-        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON)
-            : null;
+        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON) : null;
 
     TimeZone userTimeZone =
-        properties.containsKey(USER_TIMEZONE) ? (TimeZone) properties.get(USER_TIMEZONE)
-            : null;
+        properties.containsKey(USER_TIMEZONE) ? (TimeZone) properties.get(USER_TIMEZONE) : null;
 
     return PortabilityJob.builder()
         .setState(state)
@@ -279,9 +277,7 @@ public abstract class PortabilityJob {
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_STORED:
-          isSet(
-              jobAuthorization.authPublicKey(),
-              jobAuthorization.encryptedAuthData());
+          isSet(jobAuthorization.authPublicKey(), jobAuthorization.encryptedAuthData());
           break;
         case TIMED_OUT:
           throw new RuntimeException("Authorization timed out, can't validate.");
