@@ -50,6 +50,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
+  private static final String TITLE_DATE_FORMAT = "yyyy-MM-dd HH.mm.ss ";
   private final KoofrClientFactory koofrClientFactory;
   private final JobStore jobStore;
   private final ImageStreamProvider imageStreamProvider;
@@ -229,7 +230,7 @@ public class KoofrPhotosImporter
       return titleDateFormats.get(jobId);
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss ");
+    SimpleDateFormat dateFormat = new SimpleDateFormat(TITLE_DATE_FORMAT);
     TimeZone userTimeZone = jobStore.findJob(jobId).userTimeZone();
     if (null != userTimeZone) {
       dateFormat.setTimeZone(userTimeZone);
