@@ -15,8 +15,6 @@
  */
 package org.datatransferproject.transfer.copier;
 
-import static java.lang.String.format;
-
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import java.io.IOException;
@@ -161,7 +159,6 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
           }
         }
       } catch (RetryException | RuntimeException e) {
-        monitor.severe(() -> "Got error importing data", e);
         if (e.getClass() == RetryException.class
                 && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
           throw (CopyExceptionWithFailureReason) e.getCause();
