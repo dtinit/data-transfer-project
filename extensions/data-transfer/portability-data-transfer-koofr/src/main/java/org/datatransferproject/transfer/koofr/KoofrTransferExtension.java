@@ -14,7 +14,7 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -35,11 +35,9 @@ public class KoofrTransferExtension implements TransferExtension {
       ImmutableList.of(PHOTOS, VIDEOS);
   private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
       ImmutableList.of(PHOTOS, VIDEOS);
+  private static final String BASE_API_URL = "https://app.koofr.net";
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
-
-  private static final String BASE_API_URL = "https://app.koofr.net";
-
   private boolean initialized = false;
 
   // Needed for ServiceLoader to load this class.
@@ -71,7 +69,7 @@ public class KoofrTransferExtension implements TransferExtension {
     // rather than throwing if called multiple times.
     if (initialized) return;
 
-    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
+    JobStore jobStore = context.getService(JobStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
     OkHttpClient client = new OkHttpClient.Builder().build();
