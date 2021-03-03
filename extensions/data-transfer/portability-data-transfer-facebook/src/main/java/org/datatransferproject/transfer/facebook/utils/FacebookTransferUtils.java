@@ -18,9 +18,9 @@ package org.datatransferproject.transfer.facebook.utils;
 
 import com.restfb.exception.FacebookOAuthException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.transfer.facebook.exceptions.FacebookSessionInvalidatedException;
-import org.datatransferproject.transfer.facebook.exceptions.FacebookUnconfirmedUserException;
-import org.datatransferproject.transfer.facebook.exceptions.FacebookUserCheckpointedException;
+import org.datatransferproject.spi.transfer.types.SessionInvalidatedException;
+import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
+import org.datatransferproject.spi.transfer.types.UserCheckpointedException;
 
 public class FacebookTransferUtils {
 
@@ -28,15 +28,15 @@ public class FacebookTransferUtils {
       throws CopyExceptionWithFailureReason {
     String message = e.getMessage();
     if (message != null && message.contains("the user is not a confirmed user")) {
-      throw new FacebookUnconfirmedUserException(
+      throw new UnconfirmedUserException(
           "The user account is not confirmed or deactivated", e);
     } else if (message != null && message.contains("code 190, subcode 459")) {
       // Throw out exception for known user checkpointed error from Graph API
-      throw new FacebookUserCheckpointedException("The user has been checkpointed", e);
+      throw new UserCheckpointedException("The user has been checkpointed", e);
     } else if (message != null && message.contains("code 190, subcode 460")) {
-      throw new FacebookSessionInvalidatedException("The user session has been invalidated", e);
+      throw new SessionInvalidatedException("The user session has been invalidated", e);
     } else if (message != null && message.contains("code 190, subcode 463")) {
-      throw new FacebookSessionInvalidatedException("The user session has expired", e);
+      throw new SessionInvalidatedException("The user session has expired", e);
     } else {
       return e;
     }
