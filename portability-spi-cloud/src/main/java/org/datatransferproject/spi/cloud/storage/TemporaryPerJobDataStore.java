@@ -1,6 +1,5 @@
 package org.datatransferproject.spi.cloud.storage;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -45,7 +44,7 @@ public interface TemporaryPerJobDataStore {
 
   default File getTempFileFromInputStream(InputStream inputStream, String prefix, String suffix)
       throws IOException {
-    File tmp = File.createTempFile(prefix, suffix);
+    File tmp = Files.createTempFile(prefix, suffix);
     tmp.deleteOnExit();
     Files.copy(inputStream, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
     return tmp;
