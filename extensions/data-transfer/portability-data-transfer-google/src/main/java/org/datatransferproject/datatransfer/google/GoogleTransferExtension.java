@@ -25,7 +25,7 @@ import org.datatransferproject.datatransfer.google.tasks.GoogleTasksImporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -71,7 +71,7 @@ public class GoogleTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
-    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
+    JobStore jobStore = context.getService(JobStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
 

@@ -129,4 +129,32 @@ public class PortabilityJobTest {
     PortabilityJob deserializedJob = objectMapper.readValue(serializedJob, PortabilityJob.class);
     assertThat(deserializedJob).isEqualTo(job);
   }
+
+  @Test
+  public void verifySerializeDeserializeUserLocale() throws Exception {
+    ObjectMapper objectMapper = ObjectMapperFactory.createObjectMapper();
+    Instant date = Instant.now();
+
+    JobAuthorization jobAuthorization =
+        JobAuthorization.builder().setState(JobAuthorization.State.INITIAL).build();
+
+    String userLocale = "it";
+
+    PortabilityJob job =
+        PortabilityJob.builder()
+            .setState(State.NEW)
+            .setExportService("fooService")
+            .setImportService("barService")
+            .setTransferDataType("PHOTOS")
+            .setCreatedTimestamp(date)
+            .setLastUpdateTimestamp(date.plusSeconds(120))
+            .setJobAuthorization(jobAuthorization)
+            .setUserLocale(userLocale)
+            .build();
+
+    String serializedJob = objectMapper.writeValueAsString(job);
+    PortabilityJob deserializedJob = objectMapper.readValue(serializedJob, PortabilityJob.class);
+    assertThat(deserializedJob.userLocale()).isEqualTo(userLocale);
+    assertThat(deserializedJob).isEqualTo(job);
+  }
 }

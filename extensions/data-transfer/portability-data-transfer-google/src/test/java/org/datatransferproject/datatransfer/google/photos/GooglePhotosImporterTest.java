@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atMostOnce;
 
 import com.google.common.collect.Lists;
 import com.google.rpc.Code;
@@ -38,7 +39,8 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.Status;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
@@ -66,11 +68,13 @@ public class GooglePhotosImporterTest {
   private GooglePhotosImporter googlePhotosImporter;
   private GooglePhotosInterface googlePhotosInterface;
   private IdempotentImportExecutor executor;
+  private ImageStreamProvider imageStreamProvider;
+  private Monitor monitor;
 
   @Before
   public void setUp() throws IOException, InvalidTokenException, PermissionDeniedException {
     googlePhotosInterface = Mockito.mock(GooglePhotosInterface.class);
-    Monitor monitor = Mockito.mock(Monitor.class);
+    monitor = Mockito.mock(Monitor.class);
     executor = new InMemoryIdempotentImportExecutor(monitor);
 
     Mockito.when(
@@ -78,10 +82,10 @@ public class GooglePhotosImporterTest {
                 anyString(), any(), any(), eq(NewMediaItemResult.class)))
         .thenReturn(Mockito.mock(NewMediaItemResult.class));
 
-    TemporaryPerJobDataStore jobStore = new LocalJobStore();
+    JobStore jobStore = new LocalJobStore();
 
     InputStream inputStream = Mockito.mock(InputStream.class);
-    ImageStreamProvider imageStreamProvider = Mockito.mock(ImageStreamProvider.class);
+    imageStreamProvider = Mockito.mock(ImageStreamProvider.class);
     HttpURLConnection conn = Mockito.mock(HttpURLConnection.class);
     Mockito.when(imageStreamProvider.getConnection(anyString())).thenReturn(conn);
     Mockito.when(conn.getInputStream()).thenReturn(inputStream);
@@ -218,5 +222,60 @@ public class GooglePhotosImporterTest {
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
     assertEquals(failedDataId, errorDetail.id());
     assertThat(errorDetail.exception(), CoreMatchers.containsString("Photo could not be created."));
+  }
+
+  @Test
+  public void importAlbumWithITString()
+      throws PermissionDeniedException, InvalidTokenException, IOException {
+    String albumId = "Album Id";
+    String albumName = "Album Name";
+    String albumDescription = "Album Description";
+
+    PhotoAlbum albumModel = new PhotoAlbum(albumId, albumName, albumDescription);
+
+    PortabilityJob portabilityJob = Mockito.mock(PortabilityJob.class);
+    Mockito.when(portabilityJob.userLocale()).thenReturn("it");
+    JobStore jobStore = Mockito.mock(JobStore.class);
+    Mockito.when(jobStore.findJob(uuid)).thenReturn(portabilityJob);
+    GoogleAlbum responseAlbum = new GoogleAlbum();
+    responseAlbum.setId(NEW_ALBUM_ID);
+    Mockito.when(googlePhotosInterface.createAlbum(any(GoogleAlbum.class)))
+        .thenReturn(responseAlbum);
+
+    GooglePhotosImporter sut =
+        new GooglePhotosImporter(
+            null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
+
+    sut.importSingleAlbum(uuid, null, albumModel);
+    ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
+    Mockito.verify(googlePhotosInterface).createAlbum(albumArgumentCaptor.capture());
+    assertEquals(albumArgumentCaptor.getValue().getTitle(), "Copia di " + albumName);
+  }
+
+  @Test
+  public void retrieveAlbumStringOnlyOnce()
+      throws PermissionDeniedException, InvalidTokenException, IOException {
+    String albumId = "Album Id";
+    String albumName = "Album Name";
+    String albumDescription = "Album Description";
+
+    PhotoAlbum albumModel = new PhotoAlbum(albumId, albumName, albumDescription);
+
+    PortabilityJob portabilityJob = Mockito.mock(PortabilityJob.class);
+    Mockito.when(portabilityJob.userLocale()).thenReturn("it");
+    JobStore jobStore = Mockito.mock(JobStore.class);
+    Mockito.when(jobStore.findJob(uuid)).thenReturn(portabilityJob);
+    GoogleAlbum responseAlbum = new GoogleAlbum();
+    responseAlbum.setId(NEW_ALBUM_ID);
+    Mockito.when(googlePhotosInterface.createAlbum(any(GoogleAlbum.class)))
+        .thenReturn(responseAlbum);
+
+    GooglePhotosImporter sut =
+        new GooglePhotosImporter(
+            null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
+
+    sut.importSingleAlbum(uuid, null, albumModel);
+    sut.importSingleAlbum(uuid, null, albumModel);
+    Mockito.verify(jobStore, atMostOnce()).findJob(uuid);
   }
 }
