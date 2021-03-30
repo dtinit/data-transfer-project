@@ -14,59 +14,59 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.i18n;
+package org.datatransferproject.spi.transfer.i18n;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public class GoogleMultilingualDictionaryTest {
+public class MultilingualDictionaryTest {
   @Test
   public void getITStrings() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary("it-IT");
-    String actualCopyOf = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary("it-IT");
+    String actualCopyOf = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("Copia di {0}", actualCopyOf);
   }
 
   @Test
   public void getRUStrings() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary("ru");
-    String actualCopyOf = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary("ru");
+    String actualCopyOf = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("Копия {0}", actualCopyOf);
   }
 
   @Test
   public void getARStrings() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary("ar");
-    String actualCopyOf = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary("ar");
+    String actualCopyOf = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("نسخة من {0}", actualCopyOf);
   }
 
   @Test
   public void getZHStrings() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary("zh");
-    String actualCopyOf = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary("zh");
+    String actualCopyOf = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("{0}副本", actualCopyOf);
   }
 
   @Test
   public void getNonExistentLocale() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary("12");
-    String actualCopyOf = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary("12");
+    String actualCopyOf = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("Copy of {0}", actualCopyOf);
   }
 
   @Test
   public void getNullLocale() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary(null);
-    String actualCopyOf = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary(null);
+    String actualCopyOf = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("Copy of {0}", actualCopyOf);
   }
 
   @Test
   public void getEmptyLocale() {
-    GoogleMultilingualDictionary sut = new GoogleMultilingualDictionary("");
-    String actualCopyOF = sut.get(GoogleMultilingualString.CopyOf);
+    BaseMultilingualDictionary sut = new BaseMultilingualDictionary("");
+    String actualCopyOF = sut.get(BaseMultilingualString.CopyOf);
     assertEquals("Copy of {0}", actualCopyOF);
   }
 }

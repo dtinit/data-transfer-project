@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.i18n;
+package org.datatransferproject.spi.transfer.i18n;
 
-import org.datatransferproject.spi.transfer.i18n.AbstractMultilingualDictionary;
-
-public class GoogleMultilingualDictionary extends AbstractMultilingualDictionary {
-  public GoogleMultilingualDictionary(String locale) {
-    super(locale, "GoogleMultilingualStringsBundle", GoogleMultilingualString.values());
+public class BaseMultilingualDictionary extends AbstractMultilingualDictionary {
+  public BaseMultilingualDictionary(String locale) {
+    super(locale, "MultilingualStringsBundle", BaseMultilingualString.values());
   }
 }

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.i18n;
+package org.datatransferproject.spi.transfer.i18n;
 
-import org.datatransferproject.spi.transfer.i18n.MultilingualString;
-
-public enum GoogleMultilingualString implements MultilingualString {
+public enum BaseMultilingualString implements MultilingualString {
   CopyOf("copyof", "Copy of {0}");
 
   private String key;
   private String defaultValue;
 
-  GoogleMultilingualString(String key, String defaultValue) {
+  BaseMultilingualString(String key, String defaultValue) {
     this.key = key;
     this.defaultValue = defaultValue;
   }

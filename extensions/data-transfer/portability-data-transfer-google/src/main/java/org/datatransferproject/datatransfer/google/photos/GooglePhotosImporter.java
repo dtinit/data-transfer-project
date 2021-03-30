@@ -37,8 +37,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.datatransfer.google.i18n.GoogleMultilingualDictionary;
-import org.datatransferproject.datatransfer.google.i18n.GoogleMultilingualString;
+import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
+import org.datatransferproject.spi.transfer.i18n.BaseMultilingualString;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -71,7 +71,7 @@ public class GooglePhotosImporter
   private final double writesPerSecond;
   private volatile Map<UUID, GooglePhotosInterface> photosInterfacesMap;
   private volatile GooglePhotosInterface photosInterface;
-  private volatile HashMap<UUID, GoogleMultilingualDictionary> multilingualStrings =
+  private volatile HashMap<UUID, BaseMultilingualDictionary> multilingualStrings =
       new HashMap<>();
 
   public GooglePhotosImporter(
@@ -175,7 +175,7 @@ public class GooglePhotosImporter
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    String copyOf = getOrCreateStringDictionary(jobId).get(GoogleMultilingualString.CopyOf);
+    String copyOf = getOrCreateStringDictionary(jobId).get(BaseMultilingualString.CopyOf);
     String title = MessageFormat.format(copyOf, Strings.nullToEmpty(inputAlbum.getName()));
 
     // Album titles are restricted to 500 characters
@@ -309,7 +309,7 @@ public class GooglePhotosImporter
     if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
       description = "";
     } else {
-      String copyOf = getOrCreateStringDictionary(jobId).get(GoogleMultilingualString.CopyOf);
+      String copyOf = getOrCreateStringDictionary(jobId).get(BaseMultilingualString.CopyOf);
       description = MessageFormat.format(copyOf, inputPhoto.getDescription());
       // Descriptions are restricted to 1000 characters
       // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
@@ -343,11 +343,11 @@ public class GooglePhotosImporter
         credentialFactory, credential, jsonFactory, monitor, writesPerSecond);
   }
 
-  private synchronized GoogleMultilingualDictionary getOrCreateStringDictionary(UUID jobId) {
+  private synchronized BaseMultilingualDictionary getOrCreateStringDictionary(UUID jobId) {
     if (!multilingualStrings.containsKey(jobId)) {
       PortabilityJob job = jobStore.findJob(jobId);
       String locale = job != null ? job.userLocale() : null;
-      multilingualStrings.put(jobId, new GoogleMultilingualDictionary(locale));
+      multilingualStrings.put(jobId, new BaseMultilingualDictionary(locale));
     }
 
     return multilingualStrings.get(jobId);
