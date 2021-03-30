@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 
 import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Supplier;
 import org.datatransferproject.launcher.monitor.events.EventCode;
@@ -73,7 +74,7 @@ public class ConsoleMonitor implements Monitor {
     color = ansi ? color : "";
     String reset = ansi ? ANSI_RESET : "";
 
-    String time = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    String time = ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     System.out.println(color + level + " " + time + " " + supplier.get() + reset);
     if (data != null) {
       for (Object datum : data) {
