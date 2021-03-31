@@ -46,6 +46,8 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+import static java.lang.String.format;
+
 /** Imports albums and photos to Koofr. */
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
@@ -172,6 +174,17 @@ public class KoofrPhotosImporter
       if (inputStream != null) {
         inputStream.close();
       }
+      try {
+        if (photo.isInTempStore()) {
+          jobStore.removeData(jobId, photo.getFetchableUrl());
+        }
+      } catch (Exception e) {
+        // Swallow the exception caused by Remove data so that existing flows continue
+        monitor.info(
+                () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
+                        jobId, photo.getFetchableUrl()), e);
+      }
+
     }
   }
 
