@@ -168,12 +168,9 @@ public class KoofrPhotosImporter
 
       final ByteArrayInputStream inMemoryInputStream = new ByteArrayInputStream(bytes);
 
-      return koofrClient.uploadFile(
+      String response = koofrClient.uploadFile(
           parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
-    } finally {
-      if (inputStream != null) {
-        inputStream.close();
-      }
+
       try {
         if (photo.isInTempStore()) {
           jobStore.removeData(jobId, photo.getFetchableUrl());
@@ -185,6 +182,11 @@ public class KoofrPhotosImporter
                         jobId, photo.getFetchableUrl()), e);
       }
 
+      return response;
+    } finally {
+      if (inputStream != null) {
+        inputStream.close();
+      }
     }
   }
 
