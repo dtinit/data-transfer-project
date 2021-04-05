@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Data Transfer Project Authors.
+ * Copyright 2018 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.facebook.exceptions;
+package org.datatransferproject.datatransfer.backblaze.exception;
 
-import javax.annotation.Nonnull;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 
-public class FacebookUnconfirmedUserException extends CopyExceptionWithFailureReason {
-
-  public FacebookUnconfirmedUserException(String message, Throwable cause) {
+public final class BackblazeCredentialsException extends CopyExceptionWithFailureReason {
+  public BackblazeCredentialsException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  @Nonnull
   @Override
   public String getFailureReason() {
-    return "UNCONFIRMED_USER";
+    return "INVALID_MANUAL_CREDENTIALS";
   }
 }

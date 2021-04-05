@@ -15,6 +15,9 @@ public class EventCode {
   public static final EventCode WORKER_JOB_FINISHED = new EventCode("WORKER_JOB_FINISHED");
   public static final EventCode WORKER_JOB_STARTED = new EventCode("WORKER_JOB_STARTED");
 
+  public static final EventCode WATCHING_SERVICE_JOB_ERRORED = new EventCode("WATCHING_SERVICE_JOB_ERRORED");
+  public static final EventCode WATCHING_SERVICE_JOB_PREEMPTED = new EventCode("WATCHING_SERVICE_JOB_PREEMPTED");
+
   public static final EventCode COPIER_FINISHED_EXPORT = new EventCode("COPIER_FINISHED_EXPORT");
   public static final EventCode COPIER_FINISHED_IMPORT = new EventCode("COPIER_FINISHED_IMPORT");
   public static final EventCode COPIER_STARTED_EXPORT = new EventCode("COPIER_STARTED_EXPORT");

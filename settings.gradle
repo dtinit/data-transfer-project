@@ -74,6 +74,9 @@ include ':extensions:data-transfer:portability-data-transfer-facebook'
 include ':extensions:auth:portability-auth-koofr'
 include ':extensions:data-transfer:portability-data-transfer-koofr'
 
+// Backblaze
+include ':extensions:data-transfer:portability-data-transfer-backblaze'
+
 include ':extensions:auth:portability-auth-offline-demo'
 include ':extensions:data-transfer:portability-data-transfer-offline-demo'
 

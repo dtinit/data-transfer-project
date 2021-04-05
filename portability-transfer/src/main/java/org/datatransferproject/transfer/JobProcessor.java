@@ -36,6 +36,7 @@ import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.FailureReasons;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
@@ -131,14 +132,24 @@ final class JobProcessor {
           () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
       success = errors.isEmpty();
     } catch (CopyExceptionWithFailureReason e) {
-      monitor.severe(
-          () ->
-              format(
-                  "Error with failure code '%s' while processing jobId: %s",
-                  e.getFailureReason(), jobId),
-          e,
-          EventCode.WORKER_JOB_ERRORED);
-      addFailureReasonToJob(jobId, e.getFailureReason());
+      String failureReason = e.getFailureReason();
+      if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
+        monitor.info(() -> "The remaining storage in the user's account is not enough to perform this operation.", e);
+      } else if (failureReason.contains(FailureReasons.INVALID_TOKEN.toString())  ||
+              failureReason.contains(FailureReasons.SESSION_INVALIDATED.toString())  ||
+              failureReason.contains(FailureReasons.UNCONFIRMED_USER.toString())  ||
+              failureReason.contains(FailureReasons.USER_CHECKPOINTED.toString())) {
+        monitor.info(() -> "Got token error", e);
+      } else {
+        monitor.severe(
+                () ->
+                        format(
+                                "Error with failure code '%s' while processing jobId: %s",
+                                failureReason, jobId),
+                e,
+                EventCode.WORKER_JOB_ERRORED);
+      }
+      addFailureReasonToJob(jobId, failureReason);
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
