@@ -56,6 +56,8 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+import static java.lang.String.format;
+
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
@@ -223,6 +225,16 @@ public class GooglePhotosImporter
         mediaItems.add(new NewMediaItem(getPhotoDescription(photo), uploadToken));
         uploadTokenToDataId.put(uploadToken, photo);
         uploadTokenToLength.put(uploadToken, bytes);
+        try {
+          if (photo.isInTempStore()) {
+            jobStore.removeData(jobId, photo.getFetchableUrl());
+          }
+        } catch (Exception e) {
+          // Swallow the exception caused by Remove data so that existing flows continue
+          monitor.info(
+                  () -> format("%s: Exception swallowed in removeData call for localPath %s",
+                          jobId, photo.getFetchableUrl()), e);
+        }
       } catch (IOException e) {
         executor.executeAndSwallowIOExceptions(
             getIdempotentId(photo),

@@ -33,6 +33,8 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
+import static java.lang.String.format;
+
 public class BackblazePhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
@@ -100,8 +102,21 @@ public class BackblazePhotosImporter
       inputStream = conn.getInputStream();
     }
 
-    return b2Client.uploadFile(
+    String response = b2Client.uploadFile(
         String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
         jobStore.getTempFileFromInputStream(inputStream, photo.getDataId(), ".jpg"));
+
+    try {
+      if (photo.isInTempStore()) {
+        jobStore.removeData(jobId, photo.getFetchableUrl());
+      }
+    } catch (Exception e) {
+      // Swallow the exception caused by Remove data so that existing flows continue
+      monitor.info(
+              () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
+                      jobId, photo.getFetchableUrl()), e);
+    }
+
+    return response;
   }
 }
