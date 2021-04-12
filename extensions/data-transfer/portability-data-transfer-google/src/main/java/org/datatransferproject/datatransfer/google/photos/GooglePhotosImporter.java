@@ -26,6 +26,7 @@ import com.google.rpc.Code;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,14 +37,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
+import org.datatransferproject.spi.transfer.i18n.BaseMultilingualString;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.Status;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -61,21 +65,20 @@ import static java.lang.String.format;
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  // TODO: internationalize copy prefix
-  private static final String COPY_PREFIX = "Copy of ";
-
   private final GoogleCredentialFactory credentialFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final JsonFactory jsonFactory;
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final double writesPerSecond;
   private volatile Map<UUID, GooglePhotosInterface> photosInterfacesMap;
   private volatile GooglePhotosInterface photosInterface;
+  private volatile HashMap<UUID, BaseMultilingualDictionary> multilingualStrings =
+      new HashMap<>();
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor,
       double writesPerSecond) {
@@ -93,7 +96,7 @@ public class GooglePhotosImporter
   @VisibleForTesting
   GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Map<UUID, GooglePhotosInterface> photosInterfacesMap,
       GooglePhotosInterface photosInterface,
@@ -174,7 +177,9 @@ public class GooglePhotosImporter
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    String title = COPY_PREFIX + inputAlbum.getName();
+    String copyOf = getOrCreateStringDictionary(jobId).get(BaseMultilingualString.CopyOf);
+    String title = MessageFormat.format(copyOf, Strings.nullToEmpty(inputAlbum.getName()));
+
     // Album titles are restricted to 500 characters
     // https://developers.google.com/photos/library/guides/manage-albums#creating-new-album
     if (title.length() > 500) {
@@ -222,7 +227,7 @@ public class GooglePhotosImporter
 
         String uploadToken =
             getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
-        mediaItems.add(new NewMediaItem(getPhotoDescription(photo), uploadToken));
+        mediaItems.add(new NewMediaItem(getPhotoDescription(jobId, photo), uploadToken));
         uploadTokenToDataId.put(uploadToken, photo);
         uploadTokenToLength.put(uploadToken, bytes);
         try {
@@ -311,12 +316,13 @@ public class GooglePhotosImporter
     return photo.getAlbumId() + "-" + photo.getDataId();
   }
 
-  private String getPhotoDescription(PhotoModel inputPhoto) {
+  private String getPhotoDescription(UUID jobId, PhotoModel inputPhoto) {
     String description;
     if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
       description = "";
     } else {
-      description = COPY_PREFIX + inputPhoto.getDescription();
+      String copyOf = getOrCreateStringDictionary(jobId).get(BaseMultilingualString.CopyOf);
+      description = MessageFormat.format(copyOf, inputPhoto.getDescription());
       // Descriptions are restricted to 1000 characters
       // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
       if (description.length() > 1000) {
@@ -347,5 +353,15 @@ public class GooglePhotosImporter
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(
         credentialFactory, credential, jsonFactory, monitor, writesPerSecond);
+  }
+
+  private synchronized BaseMultilingualDictionary getOrCreateStringDictionary(UUID jobId) {
+    if (!multilingualStrings.containsKey(jobId)) {
+      PortabilityJob job = jobStore.findJob(jobId);
+      String locale = job != null ? job.userLocale() : null;
+      multilingualStrings.put(jobId, new BaseMultilingualDictionary(locale));
+    }
+
+    return multilingualStrings.get(jobId);
   }
 }
