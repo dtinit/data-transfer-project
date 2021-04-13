@@ -249,20 +249,20 @@ components:
       example:
         transferDataType: "PHOTOS"
         exportServices:
-        - "FLICKR"
-        - "INSTAGRAM"
-        - "SMUGMUG"
+        - "Flickr"
+        - "Instagram"
+        - "SmugMug"
         - "Facebook"
-        - "TWITTER"
-        - "GOOGLE"
-        - "IMGUR"
+        - "Twitter"
+        - "Google"
+        - "Imgur"
         importServices:
-        - "FLICKR"
-        - "SMUGMUG"
+        - "Flickr"
+        - "SmugMug"
         - "Facebook"
-        - "TWITTER"
-        - "IMGUR"
-        - "GOOGLE"
+        - "Twitter"
+        - "Google"
+        - "Imgur"
     TransferJob:
       type: "object"
       properties:
