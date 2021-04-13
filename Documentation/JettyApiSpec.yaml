@@ -184,7 +184,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservedWorker"
-  /{id}/start:
+  /transfer/{id}/start:
     post:
       tags:
       - "job"
@@ -203,6 +203,8 @@ paths:
             schema:
               type: "object"
               properties:
+                id:
+                  type: "string"
                 encryptedAuthData:
                   type: "string"
       responses:
