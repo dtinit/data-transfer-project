@@ -1,9 +1,11 @@
 package org.datatransferproject.transfer.koofr.photos;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -227,6 +229,7 @@ public class KoofrPhotosImporterTest {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(client.ensureRootFolder()).thenReturn("/root");
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
+    doNothing().when(jobStore).removeData(any(), anyString());
     when(executor.getCachedValue(eq("id1"))).thenReturn("/root/Album 1");
 
     UUID jobId = UUID.randomUUID();
@@ -258,6 +261,7 @@ public class KoofrPhotosImporterTest {
         .verify(client)
         .uploadFile(
             eq("/root/Album 1"), eq("pic2.png"), any(), eq("image/png"), isNull(), eq("fine art"));
+    verify(jobStore, Mockito.times(2)).removeData(any(), anyString());
   }
 
   @Test
