@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.TimeZone;
 import java.util.UUID;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
@@ -29,7 +31,7 @@ import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -44,22 +46,26 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+import static java.lang.String.format;
+
 /** Imports albums and photos to Koofr. */
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
+  private static final String TITLE_DATE_FORMAT = "yyyy-MM-dd HH.mm.ss ";
   private final KoofrClientFactory koofrClientFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final KoofrTransmogrificationConfig transmogrificationConfig =
       new KoofrTransmogrificationConfig();
 
   private final SimpleDateFormat exifDateFormat = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-  private final SimpleDateFormat titleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss ");
+
+  private volatile HashMap<UUID, SimpleDateFormat> titleDateFormats = new HashMap<>();
 
   public KoofrPhotosImporter(
-      KoofrClientFactory koofrClientFactory, Monitor monitor, TemporaryPerJobDataStore jobStore) {
+      KoofrClientFactory koofrClientFactory, Monitor monitor, JobStore jobStore) {
     this.koofrClientFactory = koofrClientFactory;
     this.imageStreamProvider = new ImageStreamProvider();
     this.monitor = monitor;
@@ -74,7 +80,6 @@ public class KoofrPhotosImporter
       PhotosContainerResource resource)
       throws Exception {
     KoofrClient koofrClient = koofrClientFactory.create(authData);
-
     monitor.debug(
         () ->
             String.format(
@@ -149,7 +154,7 @@ public class KoofrPhotosImporter
 
       Date dateCreated = getDateCreated(photo, bytes);
 
-      String title = buildPhotoTitle(photo.getTitle(), dateCreated);
+      String title = buildPhotoTitle(jobId, photo.getTitle(), dateCreated);
       String description = KoofrClient.trimDescription(photo.getDescription());
 
       String parentPath = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
@@ -163,8 +168,21 @@ public class KoofrPhotosImporter
 
       final ByteArrayInputStream inMemoryInputStream = new ByteArrayInputStream(bytes);
 
-      return koofrClient.uploadFile(
+      String response = koofrClient.uploadFile(
           parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
+
+      try {
+        if (photo.isInTempStore()) {
+          jobStore.removeData(jobId, photo.getFetchableUrl());
+        }
+      } catch (Exception e) {
+        // Swallow the exception caused by Remove data so that existing flows continue
+        monitor.info(
+                () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
+                        jobId, photo.getFetchableUrl()), e);
+      }
+
+      return response;
     } finally {
       if (inputStream != null) {
         inputStream.close();
@@ -172,12 +190,13 @@ public class KoofrPhotosImporter
     }
   }
 
-  private String buildPhotoTitle(String originalTitle, Date dateCreated) {
+  private String buildPhotoTitle(UUID jobId, String originalTitle, Date dateCreated) {
     if (dateCreated == null) {
       return originalTitle;
     }
 
-    return titleDateFormat.format(dateCreated) + originalTitle;
+    SimpleDateFormat dateFormat = getOrCreateTitleDateFormat(jobId);
+    return dateFormat.format(dateCreated) + originalTitle;
   }
 
   private Date getDateCreated(PhotoModel photo, byte[] bytes) {
@@ -219,5 +238,21 @@ public class KoofrPhotosImporter
           e);
       return null;
     }
+  }
+
+  private synchronized SimpleDateFormat getOrCreateTitleDateFormat(UUID jobId) {
+    if (titleDateFormats.containsKey(jobId)) {
+      return titleDateFormats.get(jobId);
+    }
+
+    SimpleDateFormat dateFormat = new SimpleDateFormat(TITLE_DATE_FORMAT);
+    TimeZone userTimeZone = jobStore.findJob(jobId).userTimeZone();
+    if (null != userTimeZone) {
+      dateFormat.setTimeZone(userTimeZone);
+    }
+
+    titleDateFormats.put(jobId, dateFormat);
+
+    return dateFormat;
   }
 }

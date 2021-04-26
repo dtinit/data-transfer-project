@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Data Transfer Project Authors.
+ * Copyright 2021 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.facebook.exceptions;
+package org.datatransferproject.spi.transfer.i18n;
 
-import javax.annotation.Nonnull;
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+public interface MultilingualString {
+  String getKey();
 
-public class FacebookUnconfirmedUserException extends CopyExceptionWithFailureReason {
-
-  public FacebookUnconfirmedUserException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  @Nonnull
-  @Override
-  public String getFailureReason() {
-    return "UNCONFIRMED_USER";
-  }
+  String getDefaultValue();
 }

@@ -10,6 +10,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.Map;
+import java.util.TimeZone;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +39,8 @@ public abstract class PortabilityJob {
   private static final String JOB_STATE = "JOB_STATE";
   private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
+  private static final String USER_TIMEZONE = "USER_TIMEZONE";
+  private static final String USER_LOCALE = "USER_LOCALE";
 
   public static PortabilityJob.Builder builder() {
     Instant now = Instant.now();
@@ -78,13 +81,18 @@ public abstract class PortabilityJob {
             : null;
 
     State state =
-        properties.containsKey(JOB_STATE) ? State.valueOf((String) properties.get(JOB_STATE))
+        properties.containsKey(JOB_STATE)
+            ? State.valueOf((String) properties.get(JOB_STATE))
             : State.NEW;
 
-
     String failureReason =
-        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON)
-            : null;
+        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON) : null;
+
+    TimeZone userTimeZone =
+        properties.containsKey(USER_TIMEZONE) ? (TimeZone) properties.get(USER_TIMEZONE) : null;
+
+    String userLocale =
+        properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
 
     return PortabilityJob.builder()
         .setState(state)
@@ -107,6 +115,8 @@ public abstract class PortabilityJob {
                 .setEncryptedInitialExportAuthData(encryptedExportInitialAuthData)
                 .setEncryptedInitialImportAuthData(encryptedImportInitialAuthData)
                 .build())
+        .setUserTimeZone(userTimeZone)
+        .setUserLocale(userLocale)
         .build();
   }
 
@@ -152,6 +162,14 @@ public abstract class PortabilityJob {
   @Nullable
   @JsonProperty("failureReason")
   public abstract String failureReason();
+
+  @Nullable
+  @JsonProperty("userTimeZone")
+  public abstract TimeZone userTimeZone();
+
+  @Nullable
+  @JsonProperty("userLocale")
+  public abstract String userLocale();
 
   public abstract PortabilityJob.Builder toBuilder();
 
@@ -202,6 +220,15 @@ public abstract class PortabilityJob {
       builder.put(
           IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
     }
+
+    if (null != userTimeZone()) {
+      builder.put(USER_TIMEZONE, userTimeZone());
+    }
+
+    if (null != userLocale()) {
+      builder.put(USER_LOCALE, userLocale());
+    }
+
     return builder.build();
   }
 
@@ -263,15 +290,21 @@ public abstract class PortabilityJob {
           isUnset(jobAuthorization.encryptedAuthData());
           break;
         case CREDS_STORED:
-          isSet(
-              jobAuthorization.authPublicKey(),
-              jobAuthorization.encryptedAuthData());
+          isSet(jobAuthorization.authPublicKey(), jobAuthorization.encryptedAuthData());
           break;
         case TIMED_OUT:
           throw new RuntimeException("Authorization timed out, can't validate.");
       }
       return setJobAuthorization(jobAuthorization);
     }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("userTimeZone")
+    public abstract Builder setUserTimeZone(TimeZone timeZone);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("userLocale")
+    public abstract Builder setUserLocale(String locale);
 
     // For internal use only; clients should use setAndValidateJobAuthorization
     protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);

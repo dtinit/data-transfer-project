@@ -1,8 +1,11 @@
 package org.datatransferproject.transfer.koofr.photos;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -10,8 +13,10 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import okhttp3.mockwebserver.MockResponse;
@@ -19,8 +24,9 @@ import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
@@ -44,7 +50,7 @@ public class KoofrPhotosImporterTest {
   private KoofrClientFactory clientFactory;
   private KoofrClient client;
   private Monitor monitor;
-  private TemporaryPerJobDataStore jobStore;
+  private JobStore jobStore;
   private KoofrPhotosImporter importer;
   private IdempotentImportExecutor executor;
   private TokensAndUrlAuthData authData;
@@ -61,7 +67,7 @@ public class KoofrPhotosImporterTest {
     when(clientFactory.create(any())).thenReturn(client);
 
     monitor = mock(Monitor.class);
-    jobStore = mock(TemporaryPerJobDataStore.class);
+    jobStore = mock(JobStore.class);
 
     importer = new KoofrPhotosImporter(clientFactory, monitor, jobStore);
 
@@ -111,6 +117,10 @@ public class KoofrPhotosImporterTest {
     String description1001 = new String(new char[1001]).replace("\0", "a");
 
     UUID jobId = UUID.randomUUID();
+
+    PortabilityJob job = mock(PortabilityJob.class);
+    when(jobStore.findJob(jobId)).thenReturn(job);
+
     Collection<PhotoAlbum> albums =
         ImmutableList.of(
             new PhotoAlbum("id1", "Album 1", "This is a fake album"),
@@ -219,9 +229,11 @@ public class KoofrPhotosImporterTest {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(client.ensureRootFolder()).thenReturn("/root");
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
+    doNothing().when(jobStore).removeData(any(), anyString());
     when(executor.getCachedValue(eq("id1"))).thenReturn("/root/Album 1");
 
     UUID jobId = UUID.randomUUID();
+
     Collection<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "Album 1", "This is a fake album"));
 
@@ -249,5 +261,99 @@ public class KoofrPhotosImporterTest {
         .verify(client)
         .uploadFile(
             eq("/root/Album 1"), eq("pic2.png"), any(), eq("image/png"), isNull(), eq("fine art"));
+    verify(jobStore, Mockito.times(2)).removeData(any(), anyString());
+  }
+
+  @Test
+  public void testImportItemFromJobStoreUserTimeZone() throws Exception {
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
+
+    UUID jobId = UUID.randomUUID();
+
+    PortabilityJob job = mock(PortabilityJob.class);
+    when(job.userTimeZone()).thenReturn(TimeZone.getTimeZone("Europe/Rome"));
+    when(jobStore.findJob(jobId)).thenReturn(job);
+
+    Collection<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "Album 1", "This is a fake album"));
+
+    DateFormat format = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+    format.setTimeZone(TimeZone.getTimeZone("Europe/Kiev"));
+
+    Collection<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel(
+                "pic1.jpg",
+                "http://fake.com/1.jpg",
+                "A pic",
+                "image/jpeg",
+                "p1",
+                "id1",
+                true,
+                format.parse("2021:02:16 11:55:00")));
+
+    PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
+    importer.importItem(jobId, executor, authData, resource);
+    InOrder clientInOrder = Mockito.inOrder(client);
+
+    clientInOrder
+        .verify(client)
+        .uploadFile(any(), eq("2021-02-16 10.55.00 pic1.jpg"), any(), any(), any(), any());
+  }
+
+  @Test
+  public void testImportItemFromJobStoreUserTimeZoneCalledOnce() throws Exception {
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
+
+    UUID jobId = UUID.randomUUID();
+
+    PortabilityJob job = mock(PortabilityJob.class);
+    when(job.userTimeZone()).thenReturn(TimeZone.getTimeZone("Europe/Rome"));
+    when(jobStore.findJob(jobId)).thenReturn(job);
+
+    Collection<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "Album 1", "This is a fake album"));
+
+    DateFormat format = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+    format.setTimeZone(TimeZone.getTimeZone("Europe/Kiev"));
+
+    Collection<PhotoModel> photos1 =
+        ImmutableList.of(
+            new PhotoModel(
+                "pic1.jpg",
+                "http://fake.com/1.jpg",
+                "A pic",
+                "image/jpeg",
+                "p1",
+                "id1",
+                true,
+                format.parse("2021:02:16 11:55:00")));
+
+    Collection<PhotoModel> photos2 =
+        ImmutableList.of(
+            new PhotoModel(
+                "pic2.jpg",
+                "http://fake.com/2.jpg",
+                "A pic",
+                "image/jpeg",
+                "p2",
+                "id1",
+                true,
+                format.parse("2021:02:17 11:55:00")));
+
+    PhotosContainerResource resource1 = spy(new PhotosContainerResource(albums, photos1));
+    PhotosContainerResource resource2 = spy(new PhotosContainerResource(albums, photos2));
+    importer.importItem(jobId, executor, authData, resource1);
+    importer.importItem(jobId, executor, authData, resource2);
+    InOrder clientInOrder = Mockito.inOrder(client);
+
+    String[] titles = {"2021-02-16 10.55.00 pic1.jpg", "2021-02-17 10.55.00 pic2.jpg"};
+    for (String title : titles) {
+      clientInOrder.verify(client).uploadFile(any(), eq(title), any(), any(), any(), any());
+    }
+
+    verify(jobStore, atMostOnce()).findJob(jobId);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Data Transfer Project Authors.
+ * Copyright 2021 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.facebook.exceptions;
+package org.datatransferproject.spi.transfer.i18n;
 
-import javax.annotation.Nonnull;
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+public enum BaseMultilingualString implements MultilingualString {
+  CopyOf("copyof", "Copy of {0}");
 
-public class FacebookSessionInvalidatedException extends CopyExceptionWithFailureReason {
-  public FacebookSessionInvalidatedException(String message, Throwable cause) {
-    super(message, cause);
+  private String key;
+  private String defaultValue;
+
+  BaseMultilingualString(String key, String defaultValue) {
+    this.key = key;
+    this.defaultValue = defaultValue;
   }
 
-  @Nonnull
   @Override
-  public String getFailureReason() {
-    return "SESSION_INVALIDATED";
+  public String getKey() {
+    return key;
+  }
+
+  @Override
+  public String getDefaultValue() {
+    return defaultValue;
   }
 }

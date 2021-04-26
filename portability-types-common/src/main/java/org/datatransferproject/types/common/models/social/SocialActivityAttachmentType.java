@@ -18,5 +18,6 @@ package org.datatransferproject.types.common.models.social;
 
 public enum SocialActivityAttachmentType {
   LINK,
-  IMAGE
+  IMAGE,
+  VIDEO
 }
