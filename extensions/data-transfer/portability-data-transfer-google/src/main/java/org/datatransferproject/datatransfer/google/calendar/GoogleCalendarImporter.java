@@ -79,8 +79,8 @@ public class GoogleCalendarImporter implements
   static Event convertToGoogleCalendarEvent(CalendarEventModel eventModel) {
     Event event = new Event()
         .setLocation(eventModel.getLocation())
-        .setDescription(eventModel.getTitle())
-        .setSummary(eventModel.getNotes())
+        .setDescription(eventModel.getNotes())
+        .setSummary(eventModel.getTitle())
         .setStart(getEventDateTime(eventModel.getStartTime()))
         .setEnd(getEventDateTime(eventModel.getEndTime()));
     if (eventModel.getAttendees() != null) {
