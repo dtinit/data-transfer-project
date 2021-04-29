@@ -17,7 +17,6 @@
 plugins {
     id "com.moowork.node" version "1.2.0"
     id 'maven-publish'
-    id 'io.spring.bintray'
 }
 
 task installLocalAngularCli(type: NpmTask) {
@@ -123,8 +122,6 @@ project.publishing {
         }
     }
 }
-
-configBinTray(project)
 
 // link the publish task to archive creation to ensure the latter is present
 tasks.findAll { it.name.startsWith('publish') }*.dependsOn(createDistribution)

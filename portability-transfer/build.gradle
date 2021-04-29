@@ -16,8 +16,8 @@
 
 
 plugins {
-    id 'maven-publish'
-    id 'io.spring.bintray'
+    id 'maven'
+    id 'signing'
 }
 
 group = "${projectGroup}"
