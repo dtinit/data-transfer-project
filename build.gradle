@@ -44,13 +44,14 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "io.spring.gradle:spring-bintray-plugin:0.11.1"
         classpath 'org.eclipse.jgit:org.eclipse.jgit:5.2.1.201812262042-r'
     }
 }
 
 plugins {
     id 'java'
+    id 'maven'
+    id 'signing'
 }
 
 ext.nodeType = hasProperty('nodeType') ? nodeType : 'local'
@@ -102,96 +103,65 @@ def addCloudExtensionDependency(proj) {
 }
 
 /**
- * Configures the project to publish Maven artifacts to BinTray.
+ * Configures the project to publish Maven artifacts to Maven Central.
  */
-def configurePublication(project) {
-    // Configure artifact publication
+def configurePublication(Project project) {
+    project.artifacts {
+        archives project.javadocJar, project.sourcesJar
+    }
 
-    project.publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from project.components.java
-                artifact project.sourcesJar
-                artifact project.javadocJar
-                pom.withXml {
-                    def root = asNode()
-                    root.appendNode('description', 'The Data Transfer Project')
-                    root.appendNode('name', 'DTP')
-                    root.appendNode('url', 'https://datatransferproject.dev/')
-                    root.appendNode('properties').appendNode('build-commit', project.rootProject.ext.gitVersion)
-                    root.children().last() + getPomConfig()
+
+    // Configure artifact publication
+    project.uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: hasProperty('ossrhUsername') ? ossrhUsername : '', password: hasProperty('ossrhPassword') ? ossrhPassword : '')
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: hasProperty('ossrhUsername') ? ossrhUsername : '', password: hasProperty('ossrhPassword') ? ossrhPassword : '')
+                }
+
+                pom.project {
+                    name 'DTP'
+                    packaging 'jar'
+                    description 'The Data Transfer Project'
+                    url 'https://datatransferproject.dev/'
+
+                    scm {
+                        url 'https://github.com/google/data-transfer-project'
+                        developerConnection 'scm:git:ssh://git@github.com:google/data-transfer-project.git'
+                        connection 'scm:git:git://github.com/google/data-transfer-project.git'
+                    }
+
+                    licenses {
+                        license {
+                            name 'Apache 2.0'
+                            url 'https://www.apache.org/licenses/LICENSE-2.0.html'
+                            distribution 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'dtp'
+                            name 'Data Transfer Project'
+                            email "portability-maintainers@googlegroups.com"
+                        }
+                    }
                 }
             }
         }
     }
 
-    configBinTray(project)
-
-}
-
-/**
- * Configures the project to upload artifacts to BinTray.
- */
-def configBinTray(project) {
-    // Configuration for uploading to BinTray and signing artifacts
-    // secrets stored in ~/.gradle/gradle.properties
-    def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : 'undefined'
-    def bKey = project.hasProperty('bintrayKey') ? project.property('bintrayKey') : 'undefined'
-    def gpgPhrase = project.hasProperty('gpgPassphrase') ? project.property('gpgPassphrase') : 'undefined'
-
-    project.bintray {
-
-        bintrayUser = bUser
-        bintrayKey = bKey
-        gpgPassphrase = gpgPhrase
-        publication = 'mavenJava'
-
-        org = 'test-dtp'   // TODO currently publish to a test org and repo - these will be changed when permanents ones are established
-        repo = 'DTP'
-        labels = ['data transfer']
-        licenses = ['Apache-2.0']
-        overrideOnUpload = false // upload task should not override existing artifacts
-
-        websiteUrl = 'https://datatransferproject.dev/'
-        issueTrackerUrl = 'https://github.com/google/data-transfer-project/issues'
-        vcsUrl = 'https://github.com/google/data-transfer-project'
-
-        // if syncing to Maven Central
-        // ossrhUser =
-        // ossrhPassword =
-        // gpgPassphrase =
-    }
-
-}
-
-/**
- * Returns the sections of a Maven POM required for publication.
- */
-def getPomConfig() {
-    return {
-        licenses {
-            license {
-                name 'Apache 2.0'
-                url 'https://www.apache.org/licenses/LICENSE-2.0.html'
-                distribution 'repo'
-            }
-        }
-        developers {
-            developer {
-                id 'dtp'
-                name 'Data Transfer Project'
-                email "portability-maintainers@googlegroups.com"
-            }
-        }
-
-        scm {
-            url 'https://github.com/google/data-transfer-project'
-            developerConnection 'scm:git:ssh://git@github.com:google/data-transfer-project.git'
-            connection 'scm:git:git://github.com/google/data-transfer-project.git'
-
+    if (project.hasProperty("signing.keyId")) {
+        project.signing {
+            sign project.configurations.archives
         }
     }
-
 }
 
 
