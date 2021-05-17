@@ -134,26 +134,26 @@ task createDockerfile(type: Dockerfile) {
     // Port to open up for the debugger
     exposePort 5005
 
-    // API & Worker combined binary
-    copyFile("build/libs/demo-server-${project.version}-all.jar", "/app/demo-server-all.jar")
-
-    // nginx configuration
+    // Update and install packages
     runCommand("apt-get update")
     runCommand("apt-get -y install nginx")
+    runCommand("apt-get install -y supervisor")
+
+    // Configure supervisor which allows multiple processes to run
+    runCommand("mkdir -p /var/log/supervisor")
+    copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
+
+    // Configure nginx and Demo client
     exposePort 3000
     // create the user nginx runs as, matches user in nginx.config
     runCommand("adduser --disabled-password nginx")
-
     copyFile("src/config/client/nginx.conf", "/etc/nginx")
     copyFile("build/webapp/html", "/usr/share/nginx/html")
     copyFile("build/webapp/test-keys/server.crt", "/etc/ssl/certs")
     copyFile("build/webapp/test-keys/server.key", "/etc/ssl")
 
-    // Install supervisor to allow mutliple processes to run
-    runCommand("apt-get install -y supervisor")
-    runCommand("mkdir -p /var/log/supervisor")
-    
-    copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
+    // API & Worker combined binary
+    copyFile("build/libs/demo-server-${project.version}-all.jar", "/app/demo-server-all.jar")
 
     defaultCommand("/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf")
 }
