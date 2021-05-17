@@ -19,7 +19,10 @@ Current contributors include:
 	<img class="logo-image" src="./images/logo-apple.png">
 	<img class="logo-image" src="./images/logo-facebook.png">
 	<img class="logo-image" src="./images/logo-google.png">
-	<img class="logo-image" src="./images/logo-microsoft.png">
+	
+</div>
+<div class="contributors-container">
+    <img class="logo-image" src="./images/logo-microsoft.png">
     <img class="logo-image" src="./images/logo-smugmug.png">
 	<img class="logo-image" src="./images/logo-twitter.png">
 </div>
