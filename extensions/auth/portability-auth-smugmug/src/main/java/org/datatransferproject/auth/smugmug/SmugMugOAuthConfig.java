@@ -16,17 +16,22 @@
 
 package org.datatransferproject.auth.smugmug;
 
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
-import com.google.api.client.auth.oauth.OAuthSigner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
+import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 
 /**
  * Class that supplies SmugMug-specific OAuth1 info
- * See https://smugmug.atlassian.net/wiki/spaces/API/pages/689052/OAuth
+ * See https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
  */
 public class SmugMugOAuthConfig implements OAuth1Config {
+
+  private static final String ACCESS = "Access";
+  private static final String PERMISSIONS = "Permissions";
 
   @Override
   public String getServiceName() {
@@ -49,17 +54,28 @@ public class SmugMugOAuthConfig implements OAuth1Config {
   }
 
   @Override
-  public Map<String, String> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", "Read");
+  public List<String> getExportTypes() {
+    return ImmutableList.of("PHOTOS");
   }
 
   @Override
-  public Map<String, String> getImportScopes() {
-    return ImmutableMap.of("PHOTOS", "Add");
+  public List<String> getImportTypes() {
+    return ImmutableList.of("PHOTOS");
   }
 
-  @Override
-  public String getScopeParameterName() {
-    return "Permissions";
+  public Map<String, String> getAdditionalUrlParameters(
+      String dataType, AuthMode mode, OAuth1Step step) {
+    if (dataType.equals("PHOTOS")) {
+      if (step == OAuth1Step.AUTHORIZATION) {
+        if (mode == AuthMode.EXPORT) {
+          return ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Read");
+        } else {
+          return ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Add");
+        }
+      }
+    }
+
+    // default
+    return Collections.emptyMap();
   }
 }

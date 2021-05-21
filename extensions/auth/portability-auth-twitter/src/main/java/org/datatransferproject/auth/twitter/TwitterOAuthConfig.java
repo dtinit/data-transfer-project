@@ -16,11 +16,13 @@
 
 package org.datatransferproject.auth.twitter;
 
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
-import com.google.api.client.auth.oauth.OAuthSigner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
+import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 
 /**
  * Class that supplies Twitter-specific OAuth1 info
@@ -28,6 +30,8 @@ import org.datatransferproject.auth.OAuth1Config;
  * and https://developer.twitter.com/en/docs/basics/authentication/api-reference
  */
 public class TwitterOAuthConfig implements OAuth1Config {
+
+  private static final String X_AUTH_ACCESS_TYPE = "x_auth_access_type";
 
   @Override
   public String getServiceName() {
@@ -50,23 +54,28 @@ public class TwitterOAuthConfig implements OAuth1Config {
   }
 
   @Override
-  public Map<String, String> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", "read");
+  public List<String> getExportTypes() {
+    return ImmutableList.of("PHOTOS");
   }
 
   @Override
-  public Map<String, String> getImportScopes() {
-    return ImmutableMap.of("PHOTOS", "write");
+  public List<String> getImportTypes() {
+    return ImmutableList.of("PHOTOS");
   }
 
-  @Override
-  public String getScopeParameterName() {
-    // Wanted during request token phase
-    return "x_auth_access_type";
-  }
+  public Map<String, String> getAdditionalUrlParameters(
+      String dataType, AuthMode mode, OAuth1Step step) {
+    if (dataType.equals("PHOTOS")) {
+      if (step == OAuth1Step.REQUEST_TOKEN) {
+        if (mode == AuthMode.EXPORT) {
+          return ImmutableMap.of(X_AUTH_ACCESS_TYPE, "read");
+        } else {
+          return ImmutableMap.of(X_AUTH_ACCESS_TYPE, "write");
+        }
+      }
+    }
 
-  @Override
-  public OAuth1Step whenAddScopes() {
-    return OAuth1Step.REQUEST_TOKEN;
+    // default
+    return Collections.emptyMap();
   }
 }
