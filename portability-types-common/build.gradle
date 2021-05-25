@@ -16,8 +16,8 @@
 
 
 plugins {
-    id 'maven-publish'
-    id 'io.spring.bintray'
+    id 'maven'
+    id 'signing'
 }
 dependencies {
     compile("com.google.auto.value:auto-value:${autoValueVersion}")
