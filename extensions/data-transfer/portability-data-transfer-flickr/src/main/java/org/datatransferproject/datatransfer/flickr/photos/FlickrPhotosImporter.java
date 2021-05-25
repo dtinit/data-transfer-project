@@ -31,12 +31,14 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.RateLimiter;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -213,7 +215,15 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
-    BufferedInputStream inStream = imageStreamProvider.get(photo.getFetchableUrl());
+    InputStream inStream;
+    if (photo.isInTempStore()) {
+      final InputStreamWrapper streamWrapper =
+          jobStore.getStream(jobId, photo.getFetchableUrl());
+      inStream = streamWrapper.getStream();
+    } else {
+      inStream = imageStreamProvider.get(photo.getFetchableUrl());
+    }
+
     // TODO: do we want to keep COPY_PREFIX?  I think not
     String photoTitle =
         Strings.isNullOrEmpty(photo.getTitle()) ? "" : COPY_PREFIX + photo.getTitle();
