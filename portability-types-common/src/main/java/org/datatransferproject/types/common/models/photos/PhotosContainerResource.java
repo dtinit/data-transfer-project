@@ -18,23 +18,20 @@ package org.datatransferproject.types.common.models.photos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.TransmogrificationConfig;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-
-import java.util.Collection;
-import java.util.Objects;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Iterator;
-import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Objects;
+import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.common.models.TransmogrificationConfig;
 
 /** A Wrapper for all the possible objects that can be returned by a photos exporter. */
 @JsonTypeName("PhotosContainerResource")
@@ -49,8 +46,8 @@ public class PhotosContainerResource extends ContainerResource {
 
   @JsonCreator
   public PhotosContainerResource(
-      @JsonProperty("albums") Collection<PhotoAlbum> albums,
-      @JsonProperty("photos") Collection<PhotoModel> photos) {
+          @JsonProperty("albums") Collection<PhotoAlbum> albums,
+          @JsonProperty("photos") Collection<PhotoModel> photos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.photos = photos == null ? ImmutableList.of() : photos;
   }
@@ -66,9 +63,9 @@ public class PhotosContainerResource extends ContainerResource {
   @Override
   public Map<String, Integer> getCounts() {
     return new ImmutableMap.Builder<String, Integer>()
-        .put(PHOTOS_COUNT_DATA_NAME, photos.size())
-        .put(ALBUMS_COUNT_DATA_NAME, albums.size())
-        .build();
+            .put(PHOTOS_COUNT_DATA_NAME, photos.size())
+            .put(ALBUMS_COUNT_DATA_NAME, albums.size())
+            .build();
   }
 
   @Override
@@ -95,9 +92,9 @@ public class PhotosContainerResource extends ContainerResource {
   private void transmogrifyAlbums(TransmogrificationConfig config) {
     ensureRootAlbum(config.getAlbumAllowRootPhotos());
     ensureAlbumSize(config.getAlbumMaxSize());
-    ensureCleanAlbumNames(config.getAlbumNameForbiddenCharacters(), 
-      config.getAlbumNameReplacementCharacter(),
-      config.getAlbumNameMaxLength());
+    ensureCleanAlbumNames(config.getAlbumNameForbiddenCharacters(),
+            config.getAlbumNameReplacementCharacter(),
+            config.getAlbumNameMaxLength());
   }
 
   // Splits albumns that are too large into albums that are smaller than {maxSize}.
@@ -148,9 +145,9 @@ public class PhotosContainerResource extends ContainerResource {
       return;
     }
     PhotoAlbum rootAlbum = new PhotoAlbum(
-        ROOT_ALBUM,
-        ROOT_ALBUM,
-        "A copy of your transferred photos that were not in any album"
+            ROOT_ALBUM,
+            ROOT_ALBUM,
+            "A copy of your transferred photos that were not in any album"
     );
     boolean usedRootAlbum = false;
 
@@ -178,9 +175,9 @@ public class PhotosContainerResource extends ContainerResource {
   // limiting max title length or removing forbidden characters, etc.
   private void transmogrifyPhotos(TransmogrificationConfig config) {
     ensureCleanPhotoTitles(
-      config.getPhotoTitleForbiddenCharacters(),
-      config.getPhotoTitleReplacementCharater(), 
-      config.getPhotoTitleMaxLength());
+            config.getPhotoTitleForbiddenCharacters(),
+            config.getPhotoTitleReplacementCharater(),
+            config.getPhotoTitleMaxLength());
   }
 
   // Replaces forbidden characters and makes sure that the title is not too long
@@ -190,5 +187,12 @@ public class PhotosContainerResource extends ContainerResource {
     }
   }
 
-
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+            .add("albums", getAlbums())
+            .add("photos", getPhotos())
+            .add("counts", getCounts())
+            .toString();
+  }
 }
