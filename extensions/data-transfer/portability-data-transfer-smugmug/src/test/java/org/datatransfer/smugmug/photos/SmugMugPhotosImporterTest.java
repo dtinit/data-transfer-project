@@ -59,6 +59,13 @@ public class SmugMugPhotosImporterTest {
   private Monitor monitor = mock(Monitor.class);
   private SmugMugInterface smugMugInterface = mock(SmugMugInterface.class);
 
+  private SmugMugTransmogrificationConfig config =
+      new SmugMugTransmogrificationConfig() {
+        public int getAlbumMaxSize() {
+          return 2;
+        }
+      };
+
   @Test
   public void importStoresAlbumInJobStore() throws Exception {
     // setup test objects
@@ -104,12 +111,12 @@ public class SmugMugPhotosImporterTest {
         new SmugMugAlbum(
             "date",
             photoAlbum1.getDescription(),
-            photoAlbum1.getName(),
+            "Copy of " + photoAlbum1.getName(),
             "privacy",
             "albumUri1",
             "urlname",
             "weburi");
-    String overflowAlbumName = smugMugAlbum1.getName() + " (1)";
+    String overflowAlbumName = "Copy of " + smugMugAlbum1.getName() + " (1)";
     SmugMugAlbum smugMugAlbum2 =
         new SmugMugAlbum(
             "date",
@@ -136,13 +143,6 @@ public class SmugMugPhotosImporterTest {
             new ImageInfo("imageUri", "albumImageUri", "statusImageReplaceUri", "url"));
     when(smugMugInterface.uploadImage(any(), any(), any())).thenReturn(smugMugUploadImageResponse);
     when(smugMugInterface.getImageAsStream(any())).thenReturn(bufferedInputStream);
-
-    SmugMugTransmogrificationConfig config =
-        new SmugMugTransmogrificationConfig() {
-          public int getAlbumMaxSize() {
-            return 2;
-          }
-        };
 
     // Run test
     SmugMugPhotosImporter importer =
@@ -213,5 +213,42 @@ public class SmugMugPhotosImporterTest {
                     SmugMugPhotoTempData.class)
                 .toString())
         .isEqualTo(tempData2.toString());
+  }
+
+  @Test
+  public void importEmptyAlbumName() throws Exception{
+    UUID jobId = UUID.randomUUID();
+    PhotoAlbum photoAlbum = new PhotoAlbum("albumid", "", "albumDescription");
+    PhotosContainerResource photosContainerResource =
+        new PhotosContainerResource(Collections.singletonList(photoAlbum), ImmutableList.of());
+
+    SmugMugAlbum smugMugAlbum =
+        new SmugMugAlbum(
+            "date",
+            photoAlbum.getDescription(),
+            "Untitled Album",
+            "privacy",
+            "albumUri1",
+            "urlname",
+            "weburi");
+    SmugMugAlbumResponse mockAlbumResponse =
+        new SmugMugAlbumResponse(smugMugAlbum.getUri(), "Locator", "LocatorType", smugMugAlbum);
+    when(smugMugInterface.createAlbum(eq(smugMugAlbum.getName()))).thenReturn(mockAlbumResponse);
+
+    // Run test
+    SmugMugPhotosImporter importer =
+        new SmugMugPhotosImporter(
+            smugMugInterface,
+            config,
+            jobStore,
+            new AppCredentials("key", "secret"),
+            mock(ObjectMapper.class),
+            monitor);
+    ImportResult result =
+        importer.importItem(
+            jobId, EXECUTOR, new TokenSecretAuthData("token", "secret"), photosContainerResource);
+
+    // Verify
+    verify(smugMugInterface, atLeastOnce()).createAlbum(ArgumentCaptor.forClass(String.class).capture());
   }
 }

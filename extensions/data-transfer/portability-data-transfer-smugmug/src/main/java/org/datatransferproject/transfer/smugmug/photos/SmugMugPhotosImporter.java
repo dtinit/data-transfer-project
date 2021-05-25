@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
@@ -40,12 +41,13 @@ import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
+  private static final String DEFAULT_ALBUM_NAME = "Untitled Album";
+  private static final String COPY_PREFIX = "Copy of ";
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
   private final ObjectMapper mapper;
   private final Monitor monitor;
   private final SmugMugTransmogrificationConfig transmogrificationConfig;
-
   private final SmugMugInterface smugMugInterface;
 
   public SmugMugPhotosImporter(
@@ -107,13 +109,15 @@ public class SmugMugPhotosImporter
   @VisibleForTesting
   String importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
       throws IOException {
-    SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(inputAlbum.getName());
+    String albumName =
+        Strings.isNullOrEmpty(inputAlbum.getName())
+            ? DEFAULT_ALBUM_NAME
+            : COPY_PREFIX + inputAlbum.getName();
+
+    SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(albumName);
     SmugMugPhotoTempData tempData =
         new SmugMugPhotoTempData(
-            inputAlbum.getId(),
-            inputAlbum.getName(),
-            inputAlbum.getDescription(),
-            albumResponse.getUri());
+            inputAlbum.getId(), albumName, inputAlbum.getDescription(), albumResponse.getUri());
     jobStore.create(jobId, getTempDataId(inputAlbum.getId()), tempData);
     return albumResponse.getUri();
   }
