@@ -33,7 +33,7 @@ public class JobHooksLoader {
             });
     return jobHooks.isEmpty()
         ? new DefaultJobHooks()
-        : new MultiplexJobHooks((JobHooks[]) jobHooks.toArray());
+        : new MultiplexJobHooks(jobHooks.toArray(new JobHooks[0]));
   }
 
   private JobHooksLoader() {}
