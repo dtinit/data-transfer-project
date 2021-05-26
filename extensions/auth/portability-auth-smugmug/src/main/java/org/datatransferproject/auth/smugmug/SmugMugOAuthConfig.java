@@ -65,14 +65,11 @@ public class SmugMugOAuthConfig implements OAuth1Config {
 
   public Map<String, String> getAdditionalUrlParameters(
       String dataType, AuthMode mode, OAuth1Step step) {
-    if (dataType.equals("PHOTOS")) {
-      if (step == OAuth1Step.AUTHORIZATION) {
-        if (mode == AuthMode.EXPORT) {
-          return ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Read");
-        } else {
-          return ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Add");
-        }
-      }
+
+    if (dataType.equals("PHOTOS") && step == OAuth1Step.AUTHORIZATION) {
+      return (mode == AuthMode.EXPORT)
+          ? ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Read")
+          : ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Add");
     }
 
     // default

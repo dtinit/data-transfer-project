@@ -65,14 +65,11 @@ public class TwitterOAuthConfig implements OAuth1Config {
 
   public Map<String, String> getAdditionalUrlParameters(
       String dataType, AuthMode mode, OAuth1Step step) {
-    if (dataType.equals("PHOTOS")) {
-      if (step == OAuth1Step.REQUEST_TOKEN) {
-        if (mode == AuthMode.EXPORT) {
-          return ImmutableMap.of(X_AUTH_ACCESS_TYPE, "read");
-        } else {
-          return ImmutableMap.of(X_AUTH_ACCESS_TYPE, "write");
-        }
-      }
+
+    if (dataType.equals("PHOTOS") && step == OAuth1Step.REQUEST_TOKEN) {
+      return (mode == AuthMode.EXPORT)
+          ? ImmutableMap.of(X_AUTH_ACCESS_TYPE, "read")
+          : ImmutableMap.of(X_AUTH_ACCESS_TYPE, "write");
     }
 
     // default

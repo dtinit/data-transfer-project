@@ -64,14 +64,11 @@ public class FlickrOAuthConfig implements OAuth1Config {
 
   public Map<String, String> getAdditionalUrlParameters(
       String dataType, AuthMode mode, OAuth1Step step) {
-    if (dataType.equals("PHOTOS")) {
-      if (step == OAuth1Step.AUTHORIZATION) {
-        if (mode == AuthMode.EXPORT) {
-          return ImmutableMap.of(PERMS, "read");
-        } else {
-          return ImmutableMap.of(PERMS, "write");
-        }
-      }
+
+    if (dataType.equals("PHOTOS") && step == OAuth1Step.AUTHORIZATION) {
+      return (mode == AuthMode.EXPORT)
+          ? ImmutableMap.of(PERMS, "read")
+          : ImmutableMap.of(PERMS, "write");
     }
 
     // default
