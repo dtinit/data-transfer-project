@@ -92,8 +92,7 @@ public class SmugMugInterface {
   SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
-    String niceName = "Copy-of-" + cleanName(albumName);
-    json.put("NiceName", niceName);
+    json.put("NiceName", cleanName(albumName));
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
     json.put("Title", "Copy of " + albumName);
