@@ -23,6 +23,7 @@ import com.google.api.client.auth.oauth.OAuthGetTemporaryToken;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.auth.OAuth1Config.OAuth1Step;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
@@ -33,8 +34,6 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
-import java.io.IOException;
-
 /** General implementation of an {@link AuthDataGenerator} for OAuth1. */
 public class OAuth1DataGenerator implements AuthDataGenerator {
 
@@ -42,7 +41,8 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
 
   private final OAuth1Config config;
   private final Monitor monitor;
-  private final String scope;
+  private final String dataType;
+  private final AuthMode mode;
   // TODO: handle dynamic updates of client ids and secrets #597
   private final String clientId;
   private final String clientSecret;
@@ -62,10 +62,8 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     this.clientId = appCredentials.getKey();
     this.clientSecret = appCredentials.getSecret();
     this.httpTransport = httpTransport;
-    this.scope =
-        mode == AuthMode.EXPORT
-            ? config.getExportScopes().get(datatype)
-            : config.getImportScopes().get(datatype);
+    this.dataType = datatype;
+    this.mode = mode;
   }
 
   @Override
@@ -78,9 +76,10 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     tempTokenRequest.transport = httpTransport;
     tempTokenRequest.consumerKey = clientId;
     tempTokenRequest.signer = config.getRequestTokenSigner(clientSecret);
-    if (config.whenAddScopes() == OAuth1Step.REQUEST_TOKEN) {
-      tempTokenRequest.set(config.getScopeParameterName(), scope);
-    }
+    config
+        .getAdditionalUrlParameters(dataType, mode, OAuth1Step.REQUEST_TOKEN)
+        .forEach(tempTokenRequest::set);
+
     TokenSecretAuthData authData;
     try {
       // get request token
@@ -94,9 +93,10 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
     OAuthAuthorizeTemporaryTokenUrl authorizeUrl =
         new OAuthAuthorizeTemporaryTokenUrl(config.getAuthorizationUrl());
     authorizeUrl.temporaryToken = authData.getToken();
-    if (config.whenAddScopes() == OAuth1Step.AUTHORIZATION) {
-      authorizeUrl.set(config.getScopeParameterName(), scope);
-    }
+    config
+        .getAdditionalUrlParameters(dataType, mode, OAuth1Step.AUTHORIZATION)
+        .forEach(authorizeUrl::set);
+
     String url = authorizeUrl.build();
 
     return new AuthFlowConfiguration(url, getTokenUrl(), AuthProtocol.OAUTH_1, authData);
@@ -140,11 +140,5 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
         "Config is missing authorization url");
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(config.getAccessTokenUrl()), "Config is missing access token url");
-
-    // This decision is not OAuth spec, but part of an effort to prevent accidental scope omission
-    Preconditions.checkArgument(
-        config.getExportScopes() != null, "Config is missing export scopes");
-    Preconditions.checkArgument(
-        config.getImportScopes() != null, "Config is missing import scopes");
   }
 }
