@@ -19,5 +19,5 @@ dependencies {
     compile project(':portability-spi-transfer')
 
     compile("com.squareup.okhttp3:okhttp:${okHttpVersion}")
-
+    compile("com.google.api-client:google-api-client:${googleApiClient}")
 }

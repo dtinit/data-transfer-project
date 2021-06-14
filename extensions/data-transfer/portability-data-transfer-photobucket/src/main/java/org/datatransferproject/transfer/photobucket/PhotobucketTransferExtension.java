@@ -1,5 +1,7 @@
 package org.datatransferproject.transfer.photobucket;
 
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
@@ -10,6 +12,7 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import com.google.common.base.Preconditions;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.photobucket.client.PhotobucketCredentialsFactory;
 import org.datatransferproject.transfer.photobucket.photos.PhotobucketPhotosExporter;
 import org.datatransferproject.transfer.photobucket.photos.PhotobucketPhotosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -68,9 +71,13 @@ public class PhotobucketTransferExtension implements TransferExtension {
 
     OkHttpClient httpClient = context.getService(OkHttpClient.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
+    HttpTransport httpTransport = context.getService(HttpTransport.class);
+    JsonFactory jsonFactory = context.getService(JsonFactory.class);
+    PhotobucketCredentialsFactory credentialsFactory =
+        new PhotobucketCredentialsFactory(httpTransport, jsonFactory, credentials);
 
-    importer = new PhotobucketPhotosImporter(credentials, monitor, httpClient, jobStore);
-    exporter = new PhotobucketPhotosExporter(credentials, monitor);
+    importer = new PhotobucketPhotosImporter(credentialsFactory, monitor, httpClient, jobStore);
+    exporter = new PhotobucketPhotosExporter(credentialsFactory, monitor);
     initialized = true;
   }
 }

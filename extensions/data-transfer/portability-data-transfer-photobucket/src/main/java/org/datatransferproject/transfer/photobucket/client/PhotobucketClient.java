@@ -1,5 +1,6 @@
 package org.datatransferproject.transfer.photobucket.client;
 
+import com.google.api.client.auth.oauth2.Credential;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -8,24 +9,23 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.data.PhotobucketAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.auth.AuthData;
 
 import java.io.IOException;
 import java.util.UUID;
 
-import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.GQL_URL;
+import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
 public class PhotobucketClient {
   private final String bearer;
-  private OkHttpClient httpClient;
+  private final OkHttpClient httpClient;
   private final TemporaryPerJobDataStore jobStore;
   private final UUID jobId;
   private String pbRootAlbumId;
 
   public PhotobucketClient(
-      UUID jobId, AuthData authData, OkHttpClient httpClient, TemporaryPerJobDataStore jobStore) {
+          UUID jobId, Credential credential, OkHttpClient httpClient, TemporaryPerJobDataStore jobStore) {
     this.jobId = jobId;
-    this.bearer = "Bearer " + authData.getToken();
+    this.bearer = "Bearer " + credential.getAccessToken();
     this.httpClient = httpClient;
     this.jobStore = jobStore;
   }
@@ -42,8 +42,8 @@ public class PhotobucketClient {
     Request.Builder createAlbumRequestBuilder = new Request.Builder().url(GQL_URL);
     // add authorization headers
     createAlbumRequestBuilder
-        .header("Authorization", "Bearer " + bearer)
-        .header("X-Correlation-Id", jobId.toString());
+        .header(AUTHORIZATION_HEADER, bearer)
+        .header(CORRELATION_ID_HEADER, jobId.toString());
     // create GQL query as string value for post request
     String query = createGQLViaRestMutation(photoAlbum, namePrefix);
     FormBody.Builder bodyBuilder = new FormBody.Builder().add("query", query);
