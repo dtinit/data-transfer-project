@@ -112,7 +112,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
 
     if (data.getAlbums() != null) {
-      storeAlbumbs(jobId, data.getAlbums());
+      storeAlbums(jobId, data.getAlbums());
     }
 
     if (data.getPhotos() != null) {
@@ -138,7 +138,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
 
   // Store any album data in the cache because Flickr only allows you to create an album with a
   // photo in it, so we have to wait for the first photo to create the album
-  private void storeAlbumbs(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
+  private void storeAlbums(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
     for (PhotoAlbum album : albums) {
       jobStore.create(
           jobId,
