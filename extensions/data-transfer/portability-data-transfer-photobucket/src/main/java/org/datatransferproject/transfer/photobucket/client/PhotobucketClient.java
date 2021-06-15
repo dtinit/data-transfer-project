@@ -141,7 +141,7 @@ public class PhotobucketClient {
       }
     } else {
       // throw error in case upload was not successful
-      // todo: add retry logic
+      // TODO: add retry logic
       throw new IOException(
           String.format(
               "Wrong status code=[%s] provided by REST for jobId=[%s]",
@@ -189,7 +189,7 @@ public class PhotobucketClient {
 
   /**
    * Create album either under pbRoot album (in case if we create top album) or under top album
-   * todo: add description while album creation, not supported for now within the same call
+   * TODO: add description while album creation, not supported for now within the same call
    */
   private String createAlbumGQLViaRestMutation(PhotoAlbum photoAlbum, String prefix)
       throws Exception {
