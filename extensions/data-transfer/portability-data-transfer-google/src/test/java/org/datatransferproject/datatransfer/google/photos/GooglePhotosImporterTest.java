@@ -116,7 +116,7 @@ public class GooglePhotosImporterTest {
     // Check results
     ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
     Mockito.verify(googlePhotosInterface).createAlbum(albumArgumentCaptor.capture());
-    assertEquals(albumArgumentCaptor.getValue().getTitle(), "Copy of " + albumName);
+    assertEquals(albumArgumentCaptor.getValue().getTitle(), albumName);
     assertNull(albumArgumentCaptor.getValue().getId());
   }
 
