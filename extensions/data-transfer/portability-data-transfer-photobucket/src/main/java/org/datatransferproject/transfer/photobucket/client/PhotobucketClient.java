@@ -120,13 +120,28 @@ public class PhotobucketClient {
       // title/description update
       if (uploadImageResponse.body() != null) {
         // get imageId from provided response
-        String imageId = objectMapper.readValue(uploadImageResponse.body().string(), UploadMediaResponse.class).id;
-        // todo: add metadata via gql
-      }
+        String imageId =
+            objectMapper.readValue(uploadImageResponse.body().string(), UploadMediaResponse.class)
+                .id;
+        // update metadata gql query
+        String query =
+            String.format(
+                "mutation updateImageDTP { updateImage( imageId: \"%s\", title: \"%s\", description: \"%s\")}",
+                imageId, photoModel.getTitle(), photoModel.getDescription());
 
+        // do not verify update metadata response
+        Function<Response, ProcessingResult> bodyTransformF =
+            response -> new ProcessingResult(imageId);
+
+        // newer fail in case of error
+        Function<Void, Boolean> conditionalExceptionF = v -> true;
+
+        // add metadata via gql
+        performGQLRequest(query, bodyTransformF, conditionalExceptionF, null);
+      }
     } else {
       // throw error in case upload was not successful
-      // todo: add retry policy
+      // todo: add retry logic
       throw new IOException(
           String.format(
               "Wrong status code=[%s] provided by REST for jobId=[%s]",
@@ -181,7 +196,7 @@ public class PhotobucketClient {
     String pbParentId = getParentPBAlbumId(photoAlbum.getId());
 
     return String.format(
-        "mutation createAlbum {  createAlbum(title: \"%s\", parentAlbumId: \"%s\"){ id }}",
+        "mutation createAlbumDTP {  createAlbum(title: \"%s\", parentAlbumId: \"%s\"){ id }}",
         prefix + photoAlbum.getName(), pbParentId);
   }
 
@@ -214,7 +229,7 @@ public class PhotobucketClient {
   private String getPbRootAlbumId() throws Exception {
     // request if pbRootAlbumId was not requested yet
     if (pbRootAlbumId == null) {
-      String query = "query getRootAlbumId { getProfile { defaultAlbum } }";
+      String query = "query getRootAlbumIdDTP { getProfile { defaultAlbum } }";
       Function<Response, ProcessingResult> bodyTransformF =
           response -> {
             try {
