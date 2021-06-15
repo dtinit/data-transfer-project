@@ -1,5 +1,22 @@
+/*
+ * Copyright 2021 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.transfer.photobucket.photos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
 import okhttp3.OkHttpClient;
@@ -25,17 +42,21 @@ public class PhotobucketPhotosImporter implements Importer<TokensAndUrlAuthData,
   private final OkHttpClient httpClient;
   private final TemporaryPerJobDataStore jobStore;
   private final PhotobucketCredentialsFactory credentialsFactory;
+  private final ObjectMapper objectMapper;
 
   public PhotobucketPhotosImporter(
           PhotobucketCredentialsFactory credentialsFactory,
       Monitor monitor,
       OkHttpClient httpClient,
-      TemporaryPerJobDataStore jobStore) {
+      TemporaryPerJobDataStore jobStore,
+          ObjectMapper objectMapper
+          ) {
     monitor.debug(() -> "Starting PhotobucketPhotosImporter initialization");
     this.monitor = monitor;
     this.httpClient = httpClient;
     this.jobStore = jobStore;
     this.credentialsFactory = credentialsFactory;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -49,7 +70,7 @@ public class PhotobucketPhotosImporter implements Importer<TokensAndUrlAuthData,
         data.getAlbums() != null || data.getPhotos() != null,
         String.format("Error: There is no data to import for jobId=[%s]", jobId));
     Credential credential = credentialsFactory.createCredential(authData);
-    PhotobucketClient photobucketClient = new PhotobucketClient(jobId, credential, httpClient, jobStore);
+    PhotobucketClient photobucketClient = new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
 
     // create empty album in root where all data structure is going to be saved
     monitor.debug(() -> String.format("Creating top level album for jobId=[%s]", jobId));

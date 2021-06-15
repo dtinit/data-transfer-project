@@ -16,16 +16,31 @@
 
 package org.datatransferproject.transfer.photobucket.data;
 
-import org.datatransferproject.types.common.models.DataModel;
+public class ProcessingResult {
+  Boolean success = true;
+  Exception exception;
+  String result;
 
-public class PhotobucketAlbum extends DataModel {
-  private final String photobucketAlbumId;
-
-  public PhotobucketAlbum(String photobucketAlbumId) {
-    this.photobucketAlbumId = photobucketAlbumId;
+  public ProcessingResult(Exception exception) {
+    this.success = false;
+    this.exception = exception;
   }
 
-  public String getPbId() {
-    return photobucketAlbumId;
+  public ProcessingResult(String result) {
+    this.result = result;
+  }
+
+  public Boolean wasSuccessful() {
+    return success;
+  }
+
+  public String extractOrThrow() throws Exception {
+    if (wasSuccessful() && result != null) {
+      return result;
+    } else if (exception != null) {
+      throw exception;
+    } else {
+      throw new Exception("Null value provided");
+    }
   }
 }
