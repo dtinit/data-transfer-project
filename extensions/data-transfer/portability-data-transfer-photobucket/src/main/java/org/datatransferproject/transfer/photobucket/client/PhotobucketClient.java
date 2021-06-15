@@ -26,6 +26,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.data.PhotobucketAlbum;
 import org.datatransferproject.transfer.photobucket.data.response.gql.PhotobucketGQLResponse;
 import org.datatransferproject.transfer.photobucket.data.ProcessingResult;
+import org.datatransferproject.transfer.photobucket.data.response.rest.UploadMediaResponse;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 
@@ -66,7 +67,7 @@ public class PhotobucketClient {
   public void createAlbum(PhotoAlbum photoAlbum, String namePrefix) throws Exception {
     try {
       // check if album was not created before
-      jobStore.findData(jobId, photoAlbum.getId(), PhotobucketAlbum.class);
+      getPBAlbumId(photoAlbum.getId());
     } catch (IOException ioException) {
       // if album was not created
       // generate gql query for getting pb album id via rest call
@@ -99,7 +100,39 @@ public class PhotobucketClient {
     }
   }
 
-  public void uploadPhoto(PhotoModel photoModel) {}
+  public void uploadPhoto(PhotoModel photoModel) throws IOException {
+    // upload media file via url
+    // get pbAlbumId based on provided albumId
+    String pbAlbumId = getPBAlbumId(photoModel.getAlbumId());
+    // add query parameters
+    String url =
+        String.format("%s?url=%s&albumId=%s", UPLOAD_URL, photoModel.getFetchableUrl(), pbAlbumId);
+    Request.Builder uploadRequestBuilder = new Request.Builder().url(url);
+    // add authorization headers
+    uploadRequestBuilder
+        .header(AUTHORIZATION_HEADER, bearer)
+        .header(CORRELATION_ID_HEADER, jobId.toString());
+    // POST with empty body request
+    uploadRequestBuilder.post(new FormBody.Builder().build());
+    Response uploadImageResponse = httpClient.newCall(uploadRequestBuilder.build()).execute();
+    if (uploadImageResponse.code() == 201) {
+      // note: if 201 code was provided, but response value is empty, do not fail upload, just skip
+      // title/description update
+      if (uploadImageResponse.body() != null) {
+        // get imageId from provided response
+        String imageId = objectMapper.readValue(uploadImageResponse.body().string(), UploadMediaResponse.class).id;
+        // todo: add metadata via gql
+      }
+
+    } else {
+      // throw error in case upload was not successful
+      // todo: add retry policy
+      throw new IOException(
+          String.format(
+              "Wrong status code=[%s] provided by REST for jobId=[%s]",
+              uploadImageResponse.code(), jobId));
+    }
+  }
 
   private ProcessingResult performGQLRequest(
       String query,
@@ -139,7 +172,12 @@ public class PhotobucketClient {
     }
   }
 
-  private String createAlbumGQLViaRestMutation(PhotoAlbum photoAlbum, String prefix) throws Exception {
+  /**
+   * Create album either under pbRoot album (in case if we create top album) or under top album
+   * todo: add description while album creation, not supported for now within the same call
+   */
+  private String createAlbumGQLViaRestMutation(PhotoAlbum photoAlbum, String prefix)
+      throws Exception {
     String pbParentId = getParentPBAlbumId(photoAlbum.getId());
 
     return String.format(
@@ -153,12 +191,16 @@ public class PhotobucketClient {
       return getPbRootAlbumId();
     } else {
       try {
-        return jobStore.findData(jobId, albumId, PhotobucketAlbum.class).getPbId();
+        return getPBAlbumId(albumId);
       } catch (Exception e) {
         // in case if pbAlbumId not found for current album, migrate photos to the top level album
-        return jobStore.findData(jobId, jobId.toString(), PhotobucketAlbum.class).getPbId();
+        return getPBAlbumId(jobId.toString());
       }
     }
+  }
+
+  private String getPBAlbumId(String albumId) throws IOException {
+    return jobStore.findData(jobId, albumId, PhotobucketAlbum.class).getPbId();
   }
 
   private PhotobucketGQLResponse parseGQLResponse(Response response) throws IOException {

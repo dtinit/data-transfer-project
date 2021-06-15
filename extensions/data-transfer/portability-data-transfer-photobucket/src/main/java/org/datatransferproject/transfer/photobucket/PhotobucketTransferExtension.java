@@ -94,7 +94,9 @@ public class PhotobucketTransferExtension implements TransferExtension {
     PhotobucketCredentialsFactory credentialsFactory =
         new PhotobucketCredentialsFactory(httpTransport, jsonFactory, credentials);
 
-    importer = new PhotobucketPhotosImporter(credentialsFactory, monitor, httpClient, jobStore, objectMapper);
+    importer =
+        new PhotobucketPhotosImporter(
+            credentialsFactory, monitor, httpClient, jobStore, objectMapper);
     exporter = new PhotobucketPhotosExporter(credentialsFactory, monitor);
     initialized = true;
   }
