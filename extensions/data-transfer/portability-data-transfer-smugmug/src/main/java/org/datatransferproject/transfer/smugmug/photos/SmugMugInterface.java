@@ -175,7 +175,10 @@ public class SmugMugInterface {
     } else {
       fullUrl = url;
     }
-    OAuthRequest request = new OAuthRequest(Verb.GET, fullUrl + "?_accept=application%2Fjson");
+
+    fullUrl += (url.contains("?") ? "&" : "?") + "_accept=application%2Fjson";
+
+    OAuthRequest request = new OAuthRequest(Verb.GET, fullUrl);
     oAuthService.signRequest(accessToken, request);
     final Response response = request.send();
 
