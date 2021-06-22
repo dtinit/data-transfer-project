@@ -59,6 +59,7 @@ include ':extensions:data-transfer:portability-data-transfer-mastodon'
 include ':extensions:auth:portability-auth-microsoft', ':extensions:auth:portability-auth-harness-microsoft'
 include ':extensions:data-transfer:portability-data-transfer-microsoft'
 // Photobucket
+include ':extensions:auth:portability-auth-photobucket'
 include ':extensions:data-transfer:portability-data-transfer-photobucket'
 // Remember The Milk
 include ':extensions:auth:portability-auth-rememberthemilk'

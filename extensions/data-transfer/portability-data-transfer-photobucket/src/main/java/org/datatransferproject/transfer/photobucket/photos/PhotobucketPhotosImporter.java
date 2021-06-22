@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.photobucket.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
@@ -30,13 +31,13 @@ import org.datatransferproject.transfer.photobucket.client.PhotobucketCredential
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.auth.*;
 
 import java.util.UUID;
 
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
-public class PhotobucketPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class PhotobucketPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
   private final Monitor monitor;
   private final OkHttpClient httpClient;
@@ -44,13 +45,13 @@ public class PhotobucketPhotosImporter implements Importer<TokensAndUrlAuthData,
   private final PhotobucketCredentialsFactory credentialsFactory;
   private final ObjectMapper objectMapper;
 
+  @VisibleForTesting
   public PhotobucketPhotosImporter(
-          PhotobucketCredentialsFactory credentialsFactory,
+      PhotobucketCredentialsFactory credentialsFactory,
       Monitor monitor,
       OkHttpClient httpClient,
       TemporaryPerJobDataStore jobStore,
-          ObjectMapper objectMapper
-          ) {
+      ObjectMapper objectMapper) {
     monitor.debug(() -> "Starting PhotobucketPhotosImporter initialization");
     this.monitor = monitor;
     this.httpClient = httpClient;
@@ -61,16 +62,22 @@ public class PhotobucketPhotosImporter implements Importer<TokensAndUrlAuthData,
 
   @Override
   public ImportResult importItem(
-          UUID jobId,
-          IdempotentImportExecutor idempotentExecutor,
-          TokensAndUrlAuthData authData,
-          PhotosContainerResource data)
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      AuthData authData,
+      PhotosContainerResource data)
       throws Exception {
+
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getPhotos() != null,
         String.format("Error: There is no data to import for jobId=[%s]", jobId));
-    Credential credential = credentialsFactory.createCredential(authData);
-    PhotobucketClient photobucketClient = new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
+    if (!(authData instanceof TokensAndUrlAuthData)) {
+      throw new IllegalArgumentException("Wrong token instance");
+    }
+
+    Credential credential = credentialsFactory.createCredential((TokensAndUrlAuthData) authData);
+    PhotobucketClient photobucketClient =
+        new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
 
     // create empty album in root where all data structure is going to be saved
     monitor.debug(() -> String.format("Creating top level album for jobId=[%s]", jobId));
