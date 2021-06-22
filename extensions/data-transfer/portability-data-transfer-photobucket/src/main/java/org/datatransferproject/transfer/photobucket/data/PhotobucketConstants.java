@@ -17,9 +17,10 @@
 package org.datatransferproject.transfer.photobucket.data;
 
 public final class PhotobucketConstants {
+  public static final String ENVIRONMENT = "https://app.photobucket.com";
   // Keys
-  public static final String PB_KEY = "PB_KEY";
-  public static final String PB_SECRET = "PB_SECRET";
+  public static final String PHOTOBUCKET_KEY = "PHOTOBUCKET_KEY";
+  public static final String PHOTOBUCKET_SECRET = "PHOTOBUCKET_SECRET";
   public static final String PB_SERVICE_ID = "Photobucket";
 
   // Titles and prefixes
@@ -27,12 +28,18 @@ public final class PhotobucketConstants {
   public static final String ALBUM_TITLE_PREFIX = "Copy of ";
 
   // Clients
-  public static final long ACCESS_TOKEN_EXPIRE_TIME_IN_SECONDS = 3600L;
-  public static final String GQL_URL = "https://app.photobucket.com/api/graphql";
-  public static final String UPLOAD_URL = "https://app.photobucket.com/api/upload_by_url";
+  public static final long ACCESS_TOKEN_EXPIRE_TIME_IN_SECONDS = 60 * 60 * 24 * 7L;
+  public static final String GQL_URL = ENVIRONMENT + "/api/graphql";
+  public static final String UPLOAD_BY_URL_URL = ENVIRONMENT + "/api/upload_by_url";
+  public static final String UPLOAD_URL = ENVIRONMENT + "/api/uploadMobile";
+  public static final String USER_STATS_URL = ENVIRONMENT + "/me";
 
   // Headers
   public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
   public static final String AUTHORIZATION_HEADER = "Authorization";
+  public static final String REFERER_HEADER = "Referer";
+  public static final String ORIGIN_HEADER = "Origin";
+  public static final String REFERER_HEADER_VALUE = ENVIRONMENT;
+  public static final String ORIGIN_HEADER_VALUE = REFERER_HEADER_VALUE;
 
 }

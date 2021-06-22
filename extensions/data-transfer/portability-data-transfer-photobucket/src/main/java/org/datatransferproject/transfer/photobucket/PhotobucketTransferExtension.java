@@ -16,6 +16,7 @@
 
 package org.datatransferproject.transfer.photobucket;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -74,19 +75,20 @@ public class PhotobucketTransferExtension implements TransferExtension {
 
     try {
       credentials =
-          context.getService(AppCredentialStore.class).getAppCredentials(PB_KEY, PB_SECRET);
+          context.getService(AppCredentialStore.class).getAppCredentials(PHOTOBUCKET_KEY, PHOTOBUCKET_SECRET);
     } catch (Exception e) {
       monitor.info(
           () ->
               format(
                   "Unable to retrieve Photobucket AppCredentials. Did you set %s and %s?",
-                  PB_KEY, PB_SECRET),
+                      PHOTOBUCKET_KEY, PHOTOBUCKET_SECRET),
           e);
       initialized = false;
       return;
     }
 
     ObjectMapper objectMapper = context.getTypeManager().getMapper();
+    objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     OkHttpClient httpClient = context.getService(OkHttpClient.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);

@@ -18,11 +18,9 @@ package org.datatransferproject.transfer.photobucket.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.data.PhotobucketAlbum;
 import org.datatransferproject.transfer.photobucket.data.response.gql.PhotobucketGQLResponse;
 import org.datatransferproject.transfer.photobucket.data.ProcessingResult;
@@ -30,6 +28,7 @@ import org.datatransferproject.transfer.photobucket.data.response.rest.UploadMed
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.function.Function;
@@ -68,10 +67,10 @@ public class PhotobucketClient {
     try {
       // check if album was not created before
       getPBAlbumId(photoAlbum.getId());
-    } catch (IOException ioException) {
+    } catch (Exception exception) {
       // if album was not created
       // generate gql query for getting pb album id via rest call
-      String query = createAlbumGQLViaRestMutation(photoAlbum, namePrefix);
+      RequestBody requestBody = createAlbumGQLViaRestMutation(photoAlbum, namePrefix);
       // get pbAlbumId and save it into job store
       Function<Response, ProcessingResult> bodyTransformF =
           response -> {
@@ -94,40 +93,68 @@ public class PhotobucketClient {
       ProcessingResult fallbackResult =
           isTopLevelAlbumF.apply(null) ? null : new ProcessingResult("");
 
+      System.out.println("Creating album " + photoAlbum.getName());
       ProcessingResult result =
-          performGQLRequest(query, bodyTransformF, isTopLevelAlbumF, fallbackResult);
+          performGQLRequest(requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
       result.extractOrThrow();
     }
   }
 
   public void uploadPhoto(PhotoModel photoModel) throws IOException {
-    // upload media file via url
+    RequestBody uploadRequestBody;
+    String url;
     // get pbAlbumId based on provided albumId
     String pbAlbumId = getPBAlbumId(photoModel.getAlbumId());
-    // add query parameters
-    String url =
-        String.format("%s?url=%s&albumId=%s", UPLOAD_URL, photoModel.getFetchableUrl(), pbAlbumId);
+    if (photoModel.isInTempStore()) {
+      // stream file
+      BufferedInputStream inputStream =
+          new BufferedInputStream(
+              jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream());
+      uploadRequestBody =
+          new InputStreamRequestBody(MediaType.parse(photoModel.getMediaType()), inputStream);
+      url = String.format("%s?albumId=%s&name=%s", UPLOAD_URL, pbAlbumId, photoModel.getTitle());
+    } else if (photoModel.getFetchableUrl() != null) {
+      // upload media file via url
+      // add query parameters
+      url =
+          String.format(
+              "%s?url=%s&albumId=%s", UPLOAD_BY_URL_URL, photoModel.getFetchableUrl(), pbAlbumId);
+      uploadRequestBody = new FormBody.Builder().build();
+    } else {
+      throw new IllegalStateException(
+          "Unable to get input stream for image " + photoModel.getTitle());
+    }
+
+    if (isUserOveStorage(uploadRequestBody.contentLength())) {
+      throw new IllegalStateException("User reached his storage limits");
+    }
+
     Request.Builder uploadRequestBuilder = new Request.Builder().url(url);
     // add authorization headers
     uploadRequestBuilder
         .header(AUTHORIZATION_HEADER, bearer)
         .header(CORRELATION_ID_HEADER, jobId.toString());
     // POST with empty body request
-    uploadRequestBuilder.post(new FormBody.Builder().build());
+    uploadRequestBuilder.post(uploadRequestBody);
     Response uploadImageResponse = httpClient.newCall(uploadRequestBuilder.build()).execute();
     if (uploadImageResponse.code() == 201) {
       // note: if 201 code was provided, but response value is empty, do not fail upload, just skip
       // title/description update
-      if (uploadImageResponse.body() != null) {
+      if (uploadImageResponse.body() != null
+          && photoModel.getDescription() != null
+          && !photoModel.getDescription().isEmpty()) {
+        String description = photoModel.getDescription().replace("\"", "").replace("\n", " ");
         // get imageId from provided response
         String imageId =
             objectMapper.readValue(uploadImageResponse.body().string(), UploadMediaResponse.class)
                 .id;
         // update metadata gql query
-        String query =
-            String.format(
-                "mutation updateImageDTP { updateImage( imageId: \"%s\", title: \"%s\", description: \"%s\")}",
-                imageId, photoModel.getTitle(), photoModel.getDescription());
+        RequestBody requestBody =
+            RequestBody.create(
+                MediaType.parse("application/json"),
+                String.format(
+                    "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
+                    imageId, photoModel.getTitle(), description));
 
         // do not verify update metadata response
         Function<Response, ProcessingResult> bodyTransformF =
@@ -136,21 +163,25 @@ public class PhotobucketClient {
         // newer fail in case of error
         Function<Void, Boolean> conditionalExceptionF = v -> true;
 
-        // add metadata via gql
-        performGQLRequest(query, bodyTransformF, conditionalExceptionF, null);
+        try {
+          // add metadata via gql
+          performGQLRequest(requestBody, bodyTransformF, conditionalExceptionF, null);
+        } catch (Exception ignored) {
+          System.out.println(
+              "Photo update wasn't successful: " + photoModel.getTitle() + " " + description);
+        }
       }
     } else {
       // throw error in case upload was not successful
-      // TODO: add retry logic
       throw new IOException(
           String.format(
-              "Wrong status code=[%s] provided by REST for jobId=[%s]",
-              uploadImageResponse.code(), jobId));
+              "Wrong status code=[%s], message=[%s] provided by REST for jobId=[%s]",
+              uploadImageResponse.code(), uploadImageResponse.message(), jobId));
     }
   }
 
   private ProcessingResult performGQLRequest(
-      String query,
+      RequestBody requestBody,
       Function<Response, ProcessingResult> responseTransformF,
       Function<Void, Boolean> conditionalExceptionF,
       ProcessingResult fallbackResult)
@@ -161,16 +192,17 @@ public class PhotobucketClient {
     // add authorization headers
     gqlRequestBuilder
         .header(AUTHORIZATION_HEADER, bearer)
-        .header(CORRELATION_ID_HEADER, jobId.toString());
-    FormBody.Builder bodyBuilder = new FormBody.Builder().add("query", query);
-    gqlRequestBuilder.post(bodyBuilder.build());
-    // create album
-    Response createAlbumResponse = httpClient.newCall(gqlRequestBuilder.build()).execute();
+        .header(CORRELATION_ID_HEADER, jobId.toString())
+        .header(REFERER_HEADER, REFERER_HEADER_VALUE)
+        .header(ORIGIN_HEADER, ORIGIN_HEADER_VALUE);
+    gqlRequestBuilder.post(requestBody);
+    // post request
+    Response response = httpClient.newCall(gqlRequestBuilder.build()).execute();
     // gql server always provides 200 response code. If not, interrupt job
-    if (createAlbumResponse.code() == 200) {
+    if (response.code() == 200) {
       try {
         // apply transformation function to the response
-        return responseTransformF.apply(createAlbumResponse);
+        return responseTransformF.apply(response);
       } catch (Exception e) {
         // throw error only for given rules
         if (conditionalExceptionF.apply(null)) {
@@ -183,7 +215,7 @@ public class PhotobucketClient {
       throw new IOException(
           String.format(
               "Wrong status code=[%s] provided by GQL server for jobId=[%s]",
-              createAlbumResponse.code(), jobId));
+              response.code(), jobId));
     }
   }
 
@@ -191,13 +223,15 @@ public class PhotobucketClient {
    * Create album either under pbRoot album (in case if we create top album) or under top album
    * TODO: add description while album creation, not supported for now within the same call
    */
-  private String createAlbumGQLViaRestMutation(PhotoAlbum photoAlbum, String prefix)
+  private RequestBody createAlbumGQLViaRestMutation(PhotoAlbum photoAlbum, String prefix)
       throws Exception {
     String pbParentId = getParentPBAlbumId(photoAlbum.getId());
 
-    return String.format(
-        "mutation createAlbumDTP {  createAlbum(title: \"%s\", parentAlbumId: \"%s\"){ id }}",
-        prefix + photoAlbum.getName(), pbParentId);
+    String jsonString =
+        String.format(
+            "{\"query\": \"mutation createAlbumDTP($title: String!, $parentAlbumId: String!){ createAlbum(title: $title, parentAlbumId: $parentAlbumId){ id }}\", \"variables\": {\"title\": \"%s\", \"parentAlbumId\": \"%s\"}}",
+            prefix + photoAlbum.getName(), pbParentId);
+    return RequestBody.create(MediaType.parse("application/json"), jsonString);
   }
 
   private String getParentPBAlbumId(String albumId) throws Exception {
@@ -214,7 +248,7 @@ public class PhotobucketClient {
     }
   }
 
-  private String getPBAlbumId(String albumId) throws IOException {
+  private String getPBAlbumId(String albumId) throws IOException, NullPointerException {
     return jobStore.findData(jobId, albumId, PhotobucketAlbum.class).getPbId();
   }
 
@@ -229,7 +263,10 @@ public class PhotobucketClient {
   private String getPbRootAlbumId() throws Exception {
     // request if pbRootAlbumId was not requested yet
     if (pbRootAlbumId == null) {
-      String query = "query getRootAlbumIdDTP { getProfile { defaultAlbum } }";
+      RequestBody requestBody =
+          RequestBody.create(
+              MediaType.parse("application/json"),
+              "{\"query\": \"query getRootAlbumIdDTP{ getProfile{ defaultAlbum }}\"}");
       Function<Response, ProcessingResult> bodyTransformF =
           response -> {
             try {
@@ -245,12 +282,24 @@ public class PhotobucketClient {
       Function<Void, Boolean> conditionalExceptionF = v -> true;
 
       // fallback result is null, as unable to proceed without root
+      System.out.println("Getting root album");
+
       ProcessingResult result =
-          performGQLRequest(query, bodyTransformF, conditionalExceptionF, null);
+          performGQLRequest(requestBody, bodyTransformF, conditionalExceptionF, null);
       return result.extractOrThrow();
 
     } else {
       return pbRootAlbumId;
     }
+  }
+
+  // TODO: get data from microservices
+  private Boolean isUserOveStorage(long contentLength) {
+    return false;
+  }
+
+  // TODO: get upload date and date taken if possible
+  private String getUploadDate(PhotoModel photoModel, BufferedInputStream inputStream) {
+    return null;
   }
 }
