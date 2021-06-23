@@ -20,6 +20,7 @@ dependencies {
     compile project(':portability-spi-transfer')
 
     compile("commons-io:commons-io:2.6")
+    compile("org.apache.commons:commons-imaging:1.0-alpha1")
     compile("com.squareup.okhttp3:okhttp:${okHttpVersion}")
     compile("com.google.api-client:google-api-client:${googleApiClient}")
 }

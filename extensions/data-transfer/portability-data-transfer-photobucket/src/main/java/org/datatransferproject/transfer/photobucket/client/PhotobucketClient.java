@@ -19,6 +19,12 @@ package org.datatransferproject.transfer.photobucket.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import okhttp3.*;
+import org.apache.commons.imaging.Imaging;
+import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
+import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
+import org.apache.commons.io.IOUtils;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.data.PhotobucketAlbum;
@@ -30,6 +36,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -42,6 +49,8 @@ public class PhotobucketClient {
   private final UUID jobId;
   private String pbRootAlbumId;
   private final ObjectMapper objectMapper;
+  private final SimpleDateFormat simpleDateFormat =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
   public PhotobucketClient(
       UUID jobId,
@@ -113,12 +122,24 @@ public class PhotobucketClient {
       uploadRequestBody =
           new InputStreamRequestBody(MediaType.parse(photoModel.getMediaType()), inputStream);
       url = String.format("%s?albumId=%s&name=%s", UPLOAD_URL, pbAlbumId, photoModel.getTitle());
+      String maybeUploadDate = extractUploadDate(photoModel);
+      // extract upload date either from provided metadata or from exif
+      if (maybeUploadDate != null) {
+        url = url + String.format("&uploadDate=%s", simpleDateFormat.format(maybeUploadDate));
+      }
     } else if (photoModel.getFetchableUrl() != null) {
       // upload media file via url
       // add query parameters
       url =
           String.format(
               "%s?url=%s&albumId=%s", UPLOAD_BY_URL_URL, photoModel.getFetchableUrl(), pbAlbumId);
+      // set upload date based on provided metadata
+      if (photoModel.getUploadedTime() != null) {
+        url =
+            url
+                + String.format(
+                    "&uploadDate=%s", simpleDateFormat.format(photoModel.getUploadedTime()));
+      }
       uploadRequestBody = new FormBody.Builder().build();
     } else {
       throw new IllegalStateException(
@@ -128,6 +149,8 @@ public class PhotobucketClient {
     if (isUserOveStorage(uploadRequestBody.contentLength())) {
       throw new IllegalStateException("User reached his storage limits");
     }
+
+    System.out.println("Upload url: " + url);
 
     Request.Builder uploadRequestBuilder = new Request.Builder().url(url);
     // add authorization headers
@@ -298,8 +321,52 @@ public class PhotobucketClient {
     return false;
   }
 
-  // TODO: get upload date and date taken if possible
-  private String getUploadDate(PhotoModel photoModel, BufferedInputStream inputStream) {
-    return null;
+  /**
+   * @return normalized upload date, or null, based either on uploadDate PhotoModel field or on exif
+   *     data
+   */
+  private String extractUploadDate(PhotoModel photoModel) {
+    if (photoModel.getUploadedTime() != null) {
+      System.out.println("Date is provided, transforming " + photoModel.getUploadedTime());
+      return simpleDateFormat.format(photoModel.getUploadedTime());
+    } else {
+      try {
+        final byte[] bytes =
+            IOUtils.toByteArray(
+                new BufferedInputStream(
+                    jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream()));
+        final ImageMetadata metadata = Imaging.getMetadata(bytes);
+
+        if (metadata == null) {
+          System.out.println("Metadata is null");
+          return null;
+        }
+
+        final JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
+
+        final TiffImageMetadata exif = jpegMetadata.getExif();
+
+        if (exif == null) {
+          System.out.println("Exif is null");
+          return null;
+        }
+
+        String[] values = exif.getFieldValue(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL);
+
+        if (values == null || values.length == 0) {
+          values = exif.getFieldValue(ExifTagConstants.EXIF_TAG_DATE_TIME_DIGITIZED);
+        }
+
+        if (values == null || values.length == 0) {
+          System.out.println("Date in exif is null");
+          return null;
+        }
+
+        return simpleDateFormat.format(simpleDateFormat.parse(values[0]));
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return null;
+      }
+    }
   }
 }
