@@ -17,7 +17,7 @@
 package org.datatransferproject.transfer.photobucket.data;
 
 public final class PhotobucketConstants {
-  public static final String ENVIRONMENT = "https://app.photobucket.com";
+  public static final String ENVIRONMENT = "https://stage.photobucket.com";
   // Keys
   public static final String PHOTOBUCKET_KEY = "PHOTOBUCKET_KEY";
   public static final String PHOTOBUCKET_SECRET = "PHOTOBUCKET_SECRET";
