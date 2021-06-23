@@ -32,7 +32,7 @@ public final class PhotobucketConstants {
   public static final String GQL_URL = ENVIRONMENT + "/api/graphql";
   public static final String UPLOAD_BY_URL_URL = ENVIRONMENT + "/api/upload_by_url";
   public static final String UPLOAD_URL = ENVIRONMENT + "/api/uploadMobile";
-  public static final String USER_STATS_URL = ENVIRONMENT + "/me";
+  public static final String USER_STATS_URL =  "https://auth.stage.photobucket.com/me";
 
   // Headers
   public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";

@@ -27,10 +27,12 @@ import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
-import org.datatransferproject.transfer.photobucket.data.PhotobucketAlbum;
-import org.datatransferproject.transfer.photobucket.data.response.gql.PhotobucketGQLResponse;
-import org.datatransferproject.transfer.photobucket.data.ProcessingResult;
-import org.datatransferproject.transfer.photobucket.data.response.rest.UploadMediaResponse;
+import org.datatransferproject.transfer.photobucket.client.helper.OkHttpClientWrapper;
+import org.datatransferproject.transfer.photobucket.model.PhotobucketAlbum;
+import org.datatransferproject.transfer.photobucket.model.response.gql.PhotobucketGQLResponse;
+import org.datatransferproject.transfer.photobucket.model.ProcessingResult;
+import org.datatransferproject.transfer.photobucket.model.response.rest.UploadMediaResponse;
+import org.datatransferproject.transfer.photobucket.model.response.rest.UserStatsResponse;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 
@@ -43,14 +45,13 @@ import java.util.function.Function;
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
 public class PhotobucketClient {
-  private final String bearer;
-  private final OkHttpClient httpClient;
   private final TemporaryPerJobDataStore jobStore;
   private final UUID jobId;
   private String pbRootAlbumId;
   private final ObjectMapper objectMapper;
   private final SimpleDateFormat simpleDateFormat =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+  private final OkHttpClientWrapper okHttpClientWrapper;
 
   public PhotobucketClient(
       UUID jobId,
@@ -59,10 +60,9 @@ public class PhotobucketClient {
       TemporaryPerJobDataStore jobStore,
       ObjectMapper objectMapper) {
     this.jobId = jobId;
-    this.bearer = "Bearer " + credential.getAccessToken();
-    this.httpClient = httpClient;
     this.jobStore = jobStore;
     this.objectMapper = objectMapper;
+    this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient);
   }
 
   public void createTopLevelAlbum(String name) throws Exception {
@@ -104,12 +104,13 @@ public class PhotobucketClient {
 
       System.out.println("Creating album " + photoAlbum.getName());
       ProcessingResult result =
-          performGQLRequest(requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
+          okHttpClientWrapper.performGQLRequest(
+              requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
       result.extractOrThrow();
     }
   }
 
-  public void uploadPhoto(PhotoModel photoModel) throws IOException {
+  public void uploadPhoto(PhotoModel photoModel) throws Exception {
     RequestBody uploadRequestBody;
     String url;
     // get pbAlbumId based on provided albumId
@@ -152,94 +153,62 @@ public class PhotobucketClient {
 
     System.out.println("Upload url: " + url);
 
-    Request.Builder uploadRequestBuilder = new Request.Builder().url(url);
-    // add authorization headers
-    uploadRequestBuilder
-        .header(AUTHORIZATION_HEADER, bearer)
-        .header(CORRELATION_ID_HEADER, jobId.toString());
-    // POST with empty body request
-    uploadRequestBuilder.post(uploadRequestBody);
-    Response uploadImageResponse = httpClient.newCall(uploadRequestBuilder.build()).execute();
-    if (uploadImageResponse.code() == 201) {
-      // note: if 201 code was provided, but response value is empty, do not fail upload, just skip
-      // title/description update
-      if (uploadImageResponse.body() != null
-          && photoModel.getDescription() != null
-          && !photoModel.getDescription().isEmpty()) {
-        String description = photoModel.getDescription().replace("\"", "").replace("\n", " ");
-        // get imageId from provided response
-        String imageId =
-            objectMapper.readValue(uploadImageResponse.body().string(), UploadMediaResponse.class)
-                .id;
-        // update metadata gql query
-        RequestBody requestBody =
-            RequestBody.create(
-                MediaType.parse("application/json"),
-                String.format(
-                    "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
-                    imageId, photoModel.getTitle(), description));
+    Function<Response, ProcessingResult> uploadResponseTransformationF =
+        uploadImageResponse -> {
+          // note: if 201 code was provided, but response value is empty, do not fail upload, just
+          // skip
+          // title/description update
+          if (uploadImageResponse.body() != null
+              && photoModel.getDescription() != null
+              && !photoModel.getDescription().isEmpty()) {
+            String description = photoModel.getDescription().replace("\"", "").replace("\n", " ");
+            // get imageId from provided response
+            String imageId;
+            try {
+              imageId =
+                  objectMapper.readValue(
+                          uploadImageResponse.body().string(), UploadMediaResponse.class)
+                      .id;
+            } catch (IOException ioException) {
+              return new ProcessingResult(
+                  "Partial success: image was uploaded, but metadata wasn't updated - body parsing exception");
+            }
+            // update metadata gql query
+            RequestBody updateMetadataRequestBody =
+                RequestBody.create(
+                    MediaType.parse("application/json"),
+                    String.format(
+                        "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
+                        imageId, photoModel.getTitle(), description));
 
-        // do not verify update metadata response
-        Function<Response, ProcessingResult> bodyTransformF =
-            response -> new ProcessingResult(imageId);
+            // do not verify update metadata response
+            Function<Response, ProcessingResult> updateMetadataTransformationF =
+                response -> new ProcessingResult(imageId);
 
-        // newer fail in case of error
-        Function<Void, Boolean> conditionalExceptionF = v -> true;
+            // newer fail in case of error
+            Function<Void, Boolean> conditionalExceptionF = v -> true;
 
-        try {
-          // add metadata via gql
-          performGQLRequest(requestBody, bodyTransformF, conditionalExceptionF, null);
-        } catch (Exception ignored) {
-          System.out.println(
-              "Photo update wasn't successful: " + photoModel.getTitle() + " " + description);
-        }
-      }
-    } else {
-      // throw error in case upload was not successful
-      throw new IOException(
-          String.format(
-              "Wrong status code=[%s], message=[%s] provided by REST for jobId=[%s]",
-              uploadImageResponse.code(), uploadImageResponse.message(), jobId));
-    }
-  }
+            try {
+              // add metadata via gql
+              return okHttpClientWrapper.performGQLRequest(
+                  updateMetadataRequestBody,
+                  updateMetadataTransformationF,
+                  conditionalExceptionF,
+                  null);
+            } catch (Exception ignored) {
+              System.out.println(
+                  "Photo update wasn't successful: " + photoModel.getTitle() + " " + description);
+              return new ProcessingResult(
+                  "Partial success: image was uploaded, but metadata wasn't updated - gql call failed");
+            }
+          } else {
+            return new ProcessingResult(
+                "Partial success: image was uploaded, but metadata wasn't updated - body was empty");
+          }
+        };
 
-  private ProcessingResult performGQLRequest(
-      RequestBody requestBody,
-      Function<Response, ProcessingResult> responseTransformF,
-      Function<Void, Boolean> conditionalExceptionF,
-      ProcessingResult fallbackResult)
-      throws IOException {
-
-    // create builder for graphQL request
-    Request.Builder gqlRequestBuilder = new Request.Builder().url(GQL_URL);
-    // add authorization headers
-    gqlRequestBuilder
-        .header(AUTHORIZATION_HEADER, bearer)
-        .header(CORRELATION_ID_HEADER, jobId.toString())
-        .header(REFERER_HEADER, REFERER_HEADER_VALUE)
-        .header(ORIGIN_HEADER, ORIGIN_HEADER_VALUE);
-    gqlRequestBuilder.post(requestBody);
-    // post request
-    Response response = httpClient.newCall(gqlRequestBuilder.build()).execute();
-    // gql server always provides 200 response code. If not, interrupt job
-    if (response.code() == 200) {
-      try {
-        // apply transformation function to the response
-        return responseTransformF.apply(response);
-      } catch (Exception e) {
-        // throw error only for given rules
-        if (conditionalExceptionF.apply(null)) {
-          throw e;
-        } else {
-          return fallbackResult;
-        }
-      }
-    } else {
-      throw new IOException(
-          String.format(
-              "Wrong status code=[%s] provided by GQL server for jobId=[%s]",
-              response.code(), jobId));
-    }
+    okHttpClientWrapper.performRESTPostRequest(
+        url, uploadRequestBody, uploadResponseTransformationF);
   }
 
   /**
@@ -308,7 +277,8 @@ public class PhotobucketClient {
       System.out.println("Getting root album");
 
       ProcessingResult result =
-          performGQLRequest(requestBody, bodyTransformF, conditionalExceptionF, null);
+          okHttpClientWrapper.performGQLRequest(
+              requestBody, bodyTransformF, conditionalExceptionF, null);
       return result.extractOrThrow();
 
     } else {
@@ -316,9 +286,21 @@ public class PhotobucketClient {
     }
   }
 
-  // TODO: get data from microservices
-  private Boolean isUserOveStorage(long contentLength) {
-    return false;
+  private Boolean isUserOveStorage(long contentLength) throws Exception {
+    // make request and extract response body string
+    Function<Response, ProcessingResult> bodyTransformF =
+        response -> {
+          try {
+            return new ProcessingResult(response.body().string());
+          } catch (NullPointerException | IOException e) {
+            return new ProcessingResult(e);
+          }
+        };
+
+    String requestResultBodyStr =
+        okHttpClientWrapper.performRESTGetRequest(USER_STATS_URL, bodyTransformF).extractOrThrow();
+    UserStatsResponse stats = objectMapper.readValue(requestResultBodyStr, UserStatsResponse.class);
+    return !((stats.availableSpace - contentLength >= 0) && (stats.availableImages - 1 >= 0));
   }
 
   /**

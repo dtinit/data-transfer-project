@@ -91,11 +91,11 @@ public class PhotobucketPhotosImporter implements Importer<AuthData, PhotosConta
     }
 
     // import photos
-    monitor.debug(() -> String.format("Starting images import  for jobId=[%s]", jobId));
+    monitor.debug(() -> String.format("Starting images import for jobId=[%s]", jobId));
     for (PhotoModel photo : data.getPhotos()) {
       photobucketClient.uploadPhoto(photo);
     }
-    monitor.debug(() -> String.format("Import complete,  for jobId=[%s]", jobId));
+    monitor.debug(() -> String.format("Import complete, for jobId=[%s]", jobId));
 
     return new ImportResult(ImportResult.ResultType.OK);
   }

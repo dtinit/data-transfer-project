@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.photobucket.data;
+package org.datatransferproject.transfer.photobucket.model;
 
 public class ProcessingResult {
   Boolean success = true;

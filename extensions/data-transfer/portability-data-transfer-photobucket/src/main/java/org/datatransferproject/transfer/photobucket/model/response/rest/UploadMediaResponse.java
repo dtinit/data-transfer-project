@@ -1,4 +1,4 @@
-package org.datatransferproject.transfer.photobucket.data.response.rest;
+package org.datatransferproject.transfer.photobucket.model.response.rest;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
