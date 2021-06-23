@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.photobucket.data.response.gql;
+package org.datatransferproject.transfer.photobucket.model.response.gql;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

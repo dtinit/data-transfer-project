@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.photobucket.data;
+package org.datatransferproject.transfer.photobucket.model;
 
 import org.datatransferproject.types.common.models.DataModel;
 
