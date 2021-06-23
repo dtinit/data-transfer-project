@@ -29,6 +29,10 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.client.helper.OkHttpClientWrapper;
 import org.datatransferproject.transfer.photobucket.model.PhotobucketAlbum;
+import org.datatransferproject.transfer.photobucket.model.error.AlbumImportException;
+import org.datatransferproject.transfer.photobucket.model.error.GraphQLException;
+import org.datatransferproject.transfer.photobucket.model.error.OverlimitException;
+import org.datatransferproject.transfer.photobucket.model.error.ResponseParsingException;
 import org.datatransferproject.transfer.photobucket.model.response.gql.PhotobucketGQLResponse;
 import org.datatransferproject.transfer.photobucket.model.ProcessingResult;
 import org.datatransferproject.transfer.photobucket.model.response.rest.UploadMediaResponse;
@@ -89,8 +93,8 @@ public class PhotobucketClient {
               // add photobucket albumId to the internal store, to match photos with proper albums
               jobStore.create(jobId, photoAlbum.getId(), new PhotobucketAlbum(pbAlbumId));
               return new ProcessingResult(pbAlbumId);
-            } catch (IOException e) {
-              return new ProcessingResult(e);
+            } catch (IOException | GraphQLException e) {
+              return new ProcessingResult(new AlbumImportException("Album was not created"));
             }
           };
 
@@ -102,7 +106,6 @@ public class PhotobucketClient {
       ProcessingResult fallbackResult =
           isTopLevelAlbumF.apply(null) ? null : new ProcessingResult("");
 
-      System.out.println("Creating album " + photoAlbum.getName());
       ProcessingResult result =
           okHttpClientWrapper.performGQLRequest(
               requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
@@ -148,10 +151,8 @@ public class PhotobucketClient {
     }
 
     if (isUserOveStorage(uploadRequestBody.contentLength())) {
-      throw new IllegalStateException("User reached his storage limits");
+      throw new OverlimitException();
     }
-
-    System.out.println("Upload url: " + url);
 
     Function<Response, ProcessingResult> uploadResponseTransformationF =
         uploadImageResponse -> {
@@ -196,8 +197,6 @@ public class PhotobucketClient {
                   conditionalExceptionF,
                   null);
             } catch (Exception ignored) {
-              System.out.println(
-                  "Photo update wasn't successful: " + photoModel.getTitle() + " " + description);
               return new ProcessingResult(
                   "Partial success: image was uploaded, but metadata wasn't updated - gql call failed");
             }
@@ -244,11 +243,12 @@ public class PhotobucketClient {
     return jobStore.findData(jobId, albumId, PhotobucketAlbum.class).getPbId();
   }
 
-  private PhotobucketGQLResponse parseGQLResponse(Response response) throws IOException {
+  private PhotobucketGQLResponse parseGQLResponse(Response response)
+      throws GraphQLException, IOException {
     if (response.body() != null) {
       return objectMapper.readValue(response.body().string(), PhotobucketGQLResponse.class);
     } else {
-      throw new IOException("Empty response body was provided by GQL server");
+      throw new GraphQLException("Empty response body was provided by GQL server");
     }
   }
 
@@ -265,8 +265,10 @@ public class PhotobucketClient {
               // get photobucket pbRootAlbumId from response
               pbRootAlbumId = parseGQLResponse(response).getRootAlbumId();
               return new ProcessingResult(pbRootAlbumId);
-            } catch (IOException e) {
-              return new ProcessingResult(e);
+            } catch (Exception e) {
+              return new ProcessingResult(
+                  new ResponseParsingException(
+                      "Unable to process GQL response to get root album id"));
             }
           };
 
@@ -274,8 +276,6 @@ public class PhotobucketClient {
       Function<Void, Boolean> conditionalExceptionF = v -> true;
 
       // fallback result is null, as unable to proceed without root
-      System.out.println("Getting root album");
-
       ProcessingResult result =
           okHttpClientWrapper.performGQLRequest(
               requestBody, bodyTransformF, conditionalExceptionF, null);
@@ -293,7 +293,8 @@ public class PhotobucketClient {
           try {
             return new ProcessingResult(response.body().string());
           } catch (NullPointerException | IOException e) {
-            return new ProcessingResult(e);
+            return new ProcessingResult(
+                new ResponseParsingException("Unable to process REST response to get user stats"));
           }
         };
 
@@ -309,7 +310,6 @@ public class PhotobucketClient {
    */
   private String extractUploadDate(PhotoModel photoModel) {
     if (photoModel.getUploadedTime() != null) {
-      System.out.println("Date is provided, transforming " + photoModel.getUploadedTime());
       return simpleDateFormat.format(photoModel.getUploadedTime());
     } else {
       try {
@@ -320,7 +320,6 @@ public class PhotobucketClient {
         final ImageMetadata metadata = Imaging.getMetadata(bytes);
 
         if (metadata == null) {
-          System.out.println("Metadata is null");
           return null;
         }
 
@@ -329,7 +328,6 @@ public class PhotobucketClient {
         final TiffImageMetadata exif = jpegMetadata.getExif();
 
         if (exif == null) {
-          System.out.println("Exif is null");
           return null;
         }
 
@@ -340,13 +338,11 @@ public class PhotobucketClient {
         }
 
         if (values == null || values.length == 0) {
-          System.out.println("Date in exif is null");
           return null;
         }
 
         return simpleDateFormat.format(simpleDateFormat.parse(values[0]));
       } catch (Exception e) {
-        System.out.println(e.getMessage());
         return null;
       }
     }

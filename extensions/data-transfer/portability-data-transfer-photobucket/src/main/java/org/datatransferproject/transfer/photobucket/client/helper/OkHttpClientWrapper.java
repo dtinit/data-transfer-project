@@ -3,6 +3,8 @@ package org.datatransferproject.transfer.photobucket.client.helper;
 import com.google.api.client.auth.oauth2.Credential;
 import okhttp3.*;
 import org.datatransferproject.transfer.photobucket.model.ProcessingResult;
+import org.datatransferproject.transfer.photobucket.model.error.WrongStatusCodeException;
+import org.datatransferproject.transfer.photobucket.model.error.WrongStatusCodeRetriableException;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -26,7 +28,7 @@ public class OkHttpClientWrapper {
       Function<Response, ProcessingResult> responseTransformF,
       Function<Void, Boolean> conditionalExceptionF,
       ProcessingResult fallbackResult)
-      throws IOException {
+      throws Exception {
 
     // create builder for graphQL request
     Request.Builder gqlRequestBuilder = new Request.Builder().url(GQL_URL);
@@ -52,8 +54,10 @@ public class OkHttpClientWrapper {
           return fallbackResult;
         }
       }
+    } else if (response.code() >= 500) {
+      throw new WrongStatusCodeRetriableException("GQL server provided response code >= 500.");
     } else {
-      throw new IOException(
+      throw new WrongStatusCodeException(
           String.format(
               "Wrong status code=[%s] provided by GQL server for jobId=[%s]",
               response.code(), jobId));
@@ -61,13 +65,13 @@ public class OkHttpClientWrapper {
   }
 
   public ProcessingResult performRESTGetRequest(
-      String url, Function<Response, ProcessingResult> responseTransformF) throws IOException {
+      String url, Function<Response, ProcessingResult> responseTransformF) throws Exception {
     return performRESTRequest(url, null, "get", 200, responseTransformF);
   }
 
   public ProcessingResult performRESTPostRequest(
       String url, RequestBody requestBody, Function<Response, ProcessingResult> responseTransformF)
-      throws IOException {
+      throws Exception {
     return performRESTRequest(url, requestBody, "post", 201, responseTransformF);
   }
 
@@ -77,7 +81,7 @@ public class OkHttpClientWrapper {
       String method,
       int code,
       Function<Response, ProcessingResult> responseTransformF)
-      throws IOException {
+      throws Exception {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(url);
     // add authorization headers
     uploadRequestBuilder
@@ -91,9 +95,11 @@ public class OkHttpClientWrapper {
     Response uploadImageResponse = httpClient.newCall(uploadRequestBuilder.build()).execute();
     if (uploadImageResponse.code() == code) {
       return responseTransformF.apply(uploadImageResponse);
+    } else if (uploadImageResponse.code() >= 500) {
+      throw new WrongStatusCodeRetriableException("REST server provided response code >= 500.");
     } else {
       // throw error in case upload was not successful
-      throw new IOException(
+      throw new WrongStatusCodeException(
           String.format(
               "Wrong status code=[%s], message=[%s] provided by REST for jobId=[%s]",
               uploadImageResponse.code(), uploadImageResponse.message(), jobId));
