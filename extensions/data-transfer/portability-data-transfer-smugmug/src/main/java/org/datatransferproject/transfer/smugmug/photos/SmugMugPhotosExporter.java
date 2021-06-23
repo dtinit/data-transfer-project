@@ -248,6 +248,8 @@ public class SmugMugPhotosExporter
         return "image/jpeg";
       case "PNG":
         return "image/png";
+      case "GIF":
+        return "image/gif";
       default:
         throw new IllegalArgumentException("Don't know how to map: " + smugMugformat);
     }
