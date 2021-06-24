@@ -5,10 +5,11 @@ This folder contains the extension implementation for [Photobucket](https://phot
 ## Data Supported
 
 - Photos import
+- Videos import
 
 ## Current State
 
-- Does not support exports.
+- Does not support photo/video export.
 
 ## Keys & Auth
 
@@ -16,8 +17,16 @@ This folder contains the extension implementation for [Photobucket](https://phot
 
 ## Maintained By
 
-The Photobucket extension was created and is maintained by
-[Photobucket developers](https://photobucket.com).
+The Photobucket extensions were created and is maintained by
+[Photobucket](https://photobucket.com) and [DigitallyInspired](https://di.uk) developers.
+
+## Environments
+
+By default, both data-transfer and auth extensions use Photobucket stage (sandbox) environment. To switch to the prod environment, please update these variables:
+- [ENVIRONMENT_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/data-transfer/portability-data-transfer-photobucket/src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L20)
+- [USER_STATS_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/data-transfer/portability-data-transfer-photobucket/src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L36)
+- [PB_AUTH_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L32)
+- [PB_TOKEN_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L33)
 
 ## Errors and exceptions
 
@@ -34,3 +43,4 @@ The Photobucket extension was created and is maintained by
 | ResponseParsingException          | Unable to process GQL response to get root album id | Parsing error, retry won't help | |
 | ResponseParsingException          | Unable to process REST response to get user stats | Parsing error, retry won't help | |
 | AlbumImportException              | Album was not created | Thrown in case of BE failure when unable to create album | Critical only while top level album creation. If any other album was not created, images will migrate to top level album |
+| MediaFileIsTooLargeException      | [%media_title%] media file is too large, unable to import" | File is too big. Current limit for video file is 500mb, for image - 50mb | Need to consider whether we need to migrate rest of content or not. For now import will be stopped |
