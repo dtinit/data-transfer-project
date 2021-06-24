@@ -16,17 +16,21 @@
 
 package org.datatransferproject.auth.flickr;
 
-import com.google.api.client.auth.oauth.OAuthHmacSigner;
-import com.google.api.client.auth.oauth.OAuthSigner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
+import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 
 /**
  * Class that supplies Flickr-specific OAuth1 info
  * See https://www.flickr.com/services/api/auth.oauth.html
  */
 public class FlickrOAuthConfig implements OAuth1Config {
+
+  private static final String PERMS = "perms";
 
   @Override
   public String getServiceName() {
@@ -49,17 +53,25 @@ public class FlickrOAuthConfig implements OAuth1Config {
   }
 
   @Override
-  public Map<String, String> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", "read");
+  public List<String> getExportTypes() {
+    return ImmutableList.of("PHOTOS");
   }
 
   @Override
-  public Map<String, String> getImportScopes() {
-    return ImmutableMap.of("PHOTOS", "write");
+  public List<String> getImportTypes() {
+    return ImmutableList.of("PHOTOS");
   }
 
-  @Override
-  public String getScopeParameterName() {
-    return "perms";
+  public Map<String, String> getAdditionalUrlParameters(
+      String dataType, AuthMode mode, OAuth1Step step) {
+
+    if (dataType.equals("PHOTOS") && step == OAuth1Step.AUTHORIZATION) {
+      return (mode == AuthMode.EXPORT)
+          ? ImmutableMap.of(PERMS, "read")
+          : ImmutableMap.of(PERMS, "write");
+    }
+
+    // default
+    return Collections.emptyMap();
   }
 }
