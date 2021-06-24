@@ -40,7 +40,7 @@ import java.util.UUID;
 
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
-public class PhotobucketVideosImporter implements Importer<AuthData, VideosContainerResource> {
+public class PhotobucketVideosImporter implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   private final Monitor monitor;
   private final OkHttpClient httpClient;
@@ -67,18 +67,18 @@ public class PhotobucketVideosImporter implements Importer<AuthData, VideosConta
   public ImportResult importItem(
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      AuthData authData,
+      TokensAndUrlAuthData authData,
       VideosContainerResource data)
       throws Exception {
 
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getVideos() != null,
         String.format("Error: There is no data to import for jobId=[%s]", jobId));
-    if (!(authData instanceof TokensAndUrlAuthData)) {
+    if (authData == null) {
       throw new IllegalArgumentException("Wrong token instance");
     }
 
-    Credential credential = credentialsFactory.createCredential((TokensAndUrlAuthData) authData);
+    Credential credential = credentialsFactory.createCredential(authData);
     PhotobucketClient photobucketClient =
         new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
 
