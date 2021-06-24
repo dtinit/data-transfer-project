@@ -29,7 +29,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class PhotobucketOAuthConfig implements OAuth2Config {
   private static final String PB_SERVICE_ID = "Photobucket";
-  private static final Pattern AUTH_TOKEN_PATTERN = Pattern.compile(".*\"access_token\":\"([\\w.]+)*\".*");
+  private static final Pattern AUTH_TOKEN_PATTERN =
+      Pattern.compile(".*\"access_token\":\"([\\w.]+)*\".*");
 
   @Override
   public String getServiceName() {
@@ -49,7 +50,8 @@ public class PhotobucketOAuthConfig implements OAuth2Config {
   @Override
   public Map<String, Set<String>> getExportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
-        .put("PHOTOS", ImmutableSet.of("files.import"))
+        .put("PHOTOS", ImmutableSet.of("create.media"))
+        .put("VIDEOS", ImmutableSet.of("create.media"))
         .build();
   }
 
@@ -57,6 +59,7 @@ public class PhotobucketOAuthConfig implements OAuth2Config {
   public Map<String, Set<String>> getImportScopes() {
     return ImmutableMap.<String, Set<String>>builder()
         .put("PHOTOS", ImmutableSet.of("create.media"))
+        .put("VIDEOS", ImmutableSet.of("create.media"))
         .build();
   }
 

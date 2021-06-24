@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.photobucket.photos;
+package org.datatransferproject.transfer.photobucket.videos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
@@ -30,14 +30,17 @@ import org.datatransferproject.transfer.photobucket.client.PhotobucketClient;
 import org.datatransferproject.transfer.photobucket.client.PhotobucketCredentialsFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.types.transfer.auth.*;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
+import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.util.UUID;
 
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
-public class PhotobucketPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
+public class PhotobucketVideosImporter implements Importer<AuthData, VideosContainerResource> {
 
   private final Monitor monitor;
   private final OkHttpClient httpClient;
@@ -46,13 +49,13 @@ public class PhotobucketPhotosImporter implements Importer<AuthData, PhotosConta
   private final ObjectMapper objectMapper;
 
   @VisibleForTesting
-  public PhotobucketPhotosImporter(
+  public PhotobucketVideosImporter(
       PhotobucketCredentialsFactory credentialsFactory,
       Monitor monitor,
       OkHttpClient httpClient,
       TemporaryPerJobDataStore jobStore,
       ObjectMapper objectMapper) {
-    monitor.debug(() -> "Starting PhotobucketPhotosImporter initialization");
+    monitor.debug(() -> "Starting PhotobucketVideosImporter initialization");
     this.monitor = monitor;
     this.httpClient = httpClient;
     this.jobStore = jobStore;
@@ -65,11 +68,11 @@ public class PhotobucketPhotosImporter implements Importer<AuthData, PhotosConta
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       AuthData authData,
-      PhotosContainerResource data)
+      VideosContainerResource data)
       throws Exception {
 
     Preconditions.checkArgument(
-        data.getAlbums() != null || data.getPhotos() != null,
+        data.getAlbums() != null || data.getVideos() != null,
         String.format("Error: There is no data to import for jobId=[%s]", jobId));
     if (!(authData instanceof TokensAndUrlAuthData)) {
       throw new IllegalArgumentException("Wrong token instance");
@@ -80,22 +83,22 @@ public class PhotobucketPhotosImporter implements Importer<AuthData, PhotosConta
         new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
 
     // create empty album in root where all data structure is going to be saved
-    monitor.debug(() -> String.format("Creating top level image album for jobId=[%s]", jobId));
+    monitor.debug(() -> String.format("Creating top level video album for jobId=[%s]", jobId));
 
-    photobucketClient.createTopLevelAlbum(MAIN_PHOTO_ALBUM_TITLE);
+    photobucketClient.createTopLevelAlbum(MAIN_VIDEO_ALBUM_TITLE);
 
     // import albums
-    monitor.debug(() -> String.format("Starting image albums import for jobId=[%s]", jobId));
-    for (PhotoAlbum album : data.getAlbums()) {
+    monitor.debug(() -> String.format("Starting video albums import for jobId=[%s]", jobId));
+    for (VideoAlbum album : data.getAlbums()) {
       photobucketClient.createAlbum(album, ALBUM_TITLE_PREFIX);
     }
 
     // import photos
-    monitor.debug(() -> String.format("Starting images import for jobId=[%s]", jobId));
-    for (PhotoModel photo : data.getPhotos()) {
-      photobucketClient.uploadPhoto(photo);
+    monitor.debug(() -> String.format("Starting videos import for jobId=[%s]", jobId));
+    for (VideoObject video : data.getVideos()) {
+      photobucketClient.uploadVideo(video);
     }
-    monitor.debug(() -> String.format("Image import complete, for jobId=[%s]", jobId));
+    monitor.debug(() -> String.format("Video import complete, for jobId=[%s]", jobId));
 
     return new ImportResult(ImportResult.ResultType.OK);
   }

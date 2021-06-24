@@ -16,8 +16,8 @@
 
 package org.datatransferproject.transfer.photobucket.model.error;
 
-public class WrongStatusCodeRetriableException extends Exception {
-  public WrongStatusCodeRetriableException(String message) {
-    super(message);
+public class MediaFileIsTooLargeException extends Exception {
+  public MediaFileIsTooLargeException(String title) {
+    super(String.format("[%s] media file is too large, unable to import", title));
   }
 }
