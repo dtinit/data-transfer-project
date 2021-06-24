@@ -28,20 +28,23 @@ import org.apache.commons.io.IOUtils;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.client.helper.OkHttpClientWrapper;
+import org.datatransferproject.transfer.photobucket.model.MediaModel;
 import org.datatransferproject.transfer.photobucket.model.PhotobucketAlbum;
-import org.datatransferproject.transfer.photobucket.model.error.AlbumImportException;
-import org.datatransferproject.transfer.photobucket.model.error.GraphQLException;
-import org.datatransferproject.transfer.photobucket.model.error.OverlimitException;
-import org.datatransferproject.transfer.photobucket.model.error.ResponseParsingException;
+import org.datatransferproject.transfer.photobucket.model.error.*;
 import org.datatransferproject.transfer.photobucket.model.response.gql.PhotobucketGQLResponse;
 import org.datatransferproject.transfer.photobucket.model.ProcessingResult;
 import org.datatransferproject.transfer.photobucket.model.response.rest.UploadMediaResponse;
 import org.datatransferproject.transfer.photobucket.model.response.rest.UserStatsResponse;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.videos.VideoObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.UUID;
 import java.util.function.Function;
@@ -74,6 +77,12 @@ public class PhotobucketClient {
     // we will migrate them into this top level album to avoid data loss
     PhotoAlbum photoAlbum = new PhotoAlbum(jobId.toString(), name, "");
     createAlbum(photoAlbum, "");
+  }
+
+  public void createAlbum(VideoAlbum videoAlbum, String namePrefix) throws Exception {
+    createAlbum(
+        new PhotoAlbum(videoAlbum.getId(), videoAlbum.getName(), videoAlbum.getDescription()),
+        namePrefix);
   }
 
   public void createAlbum(PhotoAlbum photoAlbum, String namePrefix) throws Exception {
@@ -113,45 +122,94 @@ public class PhotobucketClient {
     }
   }
 
+  public void uploadVideo(VideoObject videoModel) throws Exception {
+    System.out.println("Importing " + videoModel.getName());
+    System.out.println("Format " + videoModel.getEncodingFormat());
+    System.out.println("Link " + videoModel.getContentUrl().toString());
+    System.out.println("AlbumId " + videoModel.getAlbumId());
+    String albumId = videoModel.getAlbumId() == null ? jobId.toString() : videoModel.getAlbumId();
+    MediaModel mediaModel =
+        new MediaModel(
+            videoModel.getName(),
+            videoModel.getContentUrl().toString(),
+            videoModel.getDescription(),
+            videoModel.getEncodingFormat(),
+            albumId,
+            videoModel.isInTempStore(),
+            null);
+    uploadMedia(mediaModel, MAX_VIDEO_SIZE_IN_BYTES);
+  }
+
   public void uploadPhoto(PhotoModel photoModel) throws Exception {
+    MediaModel mediaModel =
+        new MediaModel(
+            photoModel.getTitle(),
+            photoModel.getFetchableUrl(),
+            photoModel.getDescription(),
+            photoModel.getMediaType(),
+            photoModel.getAlbumId(),
+            photoModel.isInTempStore(),
+            photoModel.getUploadedTime());
+    uploadMedia(mediaModel, MAX_IMAGE_SIZE_IN_BYTES);
+  }
+
+  private String encodeQueryParam(String queryParam) throws UnsupportedEncodingException {
+    return URLEncoder.encode(queryParam, StandardCharsets.UTF_8.toString());
+  }
+
+  private void uploadMedia(MediaModel mediaModel, long maxFileSizeInBytes) throws Exception {
     RequestBody uploadRequestBody;
     String url;
     // get pbAlbumId based on provided albumId
-    String pbAlbumId = getPBAlbumId(photoModel.getAlbumId());
-    if (photoModel.isInTempStore()) {
+    String pbAlbumId = getPBAlbumId(mediaModel.getAlbumId());
+    if (mediaModel.isInTempStore()) {
       // stream file
       BufferedInputStream inputStream =
           new BufferedInputStream(
-              jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream());
+              jobStore.getStream(jobId, mediaModel.getFetchableUrl()).getStream());
       uploadRequestBody =
-          new InputStreamRequestBody(MediaType.parse(photoModel.getMediaType()), inputStream);
-      url = String.format("%s?albumId=%s&name=%s", UPLOAD_URL, pbAlbumId, photoModel.getTitle());
-      String maybeUploadDate = extractUploadDate(photoModel);
+          new InputStreamRequestBody(MediaType.parse(mediaModel.getMediaType()), inputStream);
+      url =
+          String.format(
+              "%s?albumId=%s&name=%s",
+              UPLOAD_URL, encodeQueryParam(pbAlbumId), encodeQueryParam(mediaModel.getTitle()));
+      String maybeUploadDate = extractUploadDate(mediaModel);
       // extract upload date either from provided metadata or from exif
       if (maybeUploadDate != null) {
-        url = url + String.format("&uploadDate=%s", simpleDateFormat.format(maybeUploadDate));
+        url =
+            url
+                + String.format(
+                    "&uploadDate=%s", encodeQueryParam(simpleDateFormat.format(maybeUploadDate)));
       }
-    } else if (photoModel.getFetchableUrl() != null) {
+    } else if (mediaModel.getFetchableUrl() != null) {
       // upload media file via url
       // add query parameters
       url =
           String.format(
-              "%s?url=%s&albumId=%s", UPLOAD_BY_URL_URL, photoModel.getFetchableUrl(), pbAlbumId);
+              "%s?url=%s&albumId=%s",
+              UPLOAD_BY_URL_URL,
+              encodeQueryParam(mediaModel.getFetchableUrl()),
+              encodeQueryParam(pbAlbumId));
       // set upload date based on provided metadata
-      if (photoModel.getUploadedTime() != null) {
+      if (mediaModel.getUploadedTime() != null) {
         url =
             url
                 + String.format(
-                    "&uploadDate=%s", simpleDateFormat.format(photoModel.getUploadedTime()));
+                    "&uploadDate=%s",
+                    encodeQueryParam(simpleDateFormat.format(mediaModel.getUploadedTime())));
       }
       uploadRequestBody = new FormBody.Builder().build();
     } else {
       throw new IllegalStateException(
-          "Unable to get input stream for image " + photoModel.getTitle());
+          "Unable to get input stream for image " + mediaModel.getTitle());
     }
 
     if (isUserOveStorage(uploadRequestBody.contentLength())) {
       throw new OverlimitException();
+    }
+
+    if (uploadRequestBody.contentLength() > maxFileSizeInBytes) {
+      throw new MediaFileIsTooLargeException(mediaModel.getTitle());
     }
 
     Function<Response, ProcessingResult> uploadResponseTransformationF =
@@ -160,9 +218,9 @@ public class PhotobucketClient {
           // skip
           // title/description update
           if (uploadImageResponse.body() != null
-              && photoModel.getDescription() != null
-              && !photoModel.getDescription().isEmpty()) {
-            String description = photoModel.getDescription().replace("\"", "").replace("\n", " ");
+              && mediaModel.getDescription() != null
+              && !mediaModel.getDescription().isEmpty()) {
+            String description = mediaModel.getDescription().replace("\"", "").replace("\n", " ");
             // get imageId from provided response
             String imageId;
             try {
@@ -180,7 +238,7 @@ public class PhotobucketClient {
                     MediaType.parse("application/json"),
                     String.format(
                         "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
-                        imageId, photoModel.getTitle(), description));
+                        imageId, mediaModel.getTitle(), description));
 
             // do not verify update metadata response
             Function<Response, ProcessingResult> updateMetadataTransformationF =
@@ -308,15 +366,15 @@ public class PhotobucketClient {
    * @return normalized upload date, or null, based either on uploadDate PhotoModel field or on exif
    *     data
    */
-  private String extractUploadDate(PhotoModel photoModel) {
-    if (photoModel.getUploadedTime() != null) {
-      return simpleDateFormat.format(photoModel.getUploadedTime());
+  private String extractUploadDate(MediaModel mediaModel) {
+    if (mediaModel.getUploadedTime() != null) {
+      return simpleDateFormat.format(mediaModel.getUploadedTime());
     } else {
       try {
         final byte[] bytes =
             IOUtils.toByteArray(
                 new BufferedInputStream(
-                    jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream()));
+                    jobStore.getStream(jobId, mediaModel.getFetchableUrl()).getStream()));
         final ImageMetadata metadata = Imaging.getMetadata(bytes);
 
         if (metadata == null) {

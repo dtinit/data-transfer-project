@@ -24,15 +24,16 @@ public final class PhotobucketConstants {
   public static final String PB_SERVICE_ID = "Photobucket";
 
   // Titles and prefixes
-  public static final String MAIN_ALBUM_TITLE = "Imported media";
+  // TODO: use the same top level album for both, photos and videos. Need change on back end api layer.
+  public static final String MAIN_PHOTO_ALBUM_TITLE = "Imported photos";
+  public static final String MAIN_VIDEO_ALBUM_TITLE = "Imported videos";
   public static final String ALBUM_TITLE_PREFIX = "Copy of ";
 
   // Clients
-  public static final long ACCESS_TOKEN_EXPIRE_TIME_IN_SECONDS = 60 * 60 * 24 * 7L;
   public static final String GQL_URL = ENVIRONMENT + "/api/graphql";
   public static final String UPLOAD_BY_URL_URL = ENVIRONMENT + "/api/upload_by_url";
   public static final String UPLOAD_URL = ENVIRONMENT + "/api/uploadMobile";
-  public static final String USER_STATS_URL =  "https://auth.stage.photobucket.com/me";
+  public static final String USER_STATS_URL = "https://auth.stage.photobucket.com/me";
 
   // Headers
   public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
@@ -42,4 +43,8 @@ public final class PhotobucketConstants {
   public static final String REFERER_HEADER_VALUE = ENVIRONMENT;
   public static final String ORIGIN_HEADER_VALUE = REFERER_HEADER_VALUE;
 
+  // Limits
+  public static final long ACCESS_TOKEN_EXPIRE_TIME_IN_SECONDS = 60 * 60 * 24 * 7L;
+  public static final long MAX_IMAGE_SIZE_IN_BYTES = 50 * 1024 * 1024L;
+  public static final long MAX_VIDEO_SIZE_IN_BYTES = 500 * 1024 * 1024L;
 }

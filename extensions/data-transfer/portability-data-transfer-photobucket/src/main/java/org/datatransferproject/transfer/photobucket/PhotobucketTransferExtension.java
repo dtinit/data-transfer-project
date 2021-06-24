@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
@@ -31,17 +32,21 @@ import com.google.common.base.Preconditions;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.photobucket.client.PhotobucketCredentialsFactory;
-import org.datatransferproject.transfer.photobucket.photos.PhotobucketPhotosExporter;
 import org.datatransferproject.transfer.photobucket.photos.PhotobucketPhotosImporter;
+import org.datatransferproject.transfer.photobucket.videos.PhotobucketVideosImporter;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 import static java.lang.String.format;
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
 public class PhotobucketTransferExtension implements TransferExtension {
-  private static final ImmutableList<String> SUPPORTED_SERVICES = ImmutableList.of("PHOTOS");
-  private PhotobucketPhotosExporter exporter;
-  private PhotobucketPhotosImporter importer;
+  private static final String PHOTOS = "PHOTOS";
+  private static final String VIDEOS = "VIDEOS";
+  private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
+      ImmutableList.of(PHOTOS, VIDEOS);
+  private static final ImmutableList<String> SUPPORTED_VIDEOS_SERVICES = ImmutableList.of();
+  private ImmutableMap<String, Importer> importerMap;
+  private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
 
   @Override
@@ -52,15 +57,15 @@ public class PhotobucketTransferExtension implements TransferExtension {
   @Override
   public Exporter<?, ?> getExporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
-    return exporter;
+    Preconditions.checkArgument(SUPPORTED_VIDEOS_SERVICES.contains(transferDataType));
+    return exporterMap.get(transferDataType);
   }
 
   @Override
   public Importer<?, ?> getImporter(String transferDataType) {
     Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
-    return importer;
+    Preconditions.checkArgument(SUPPORTED_IMPORT_SERVICES.contains(transferDataType));
+    return importerMap.get(transferDataType);
   }
 
   @Override
@@ -75,13 +80,15 @@ public class PhotobucketTransferExtension implements TransferExtension {
 
     try {
       credentials =
-          context.getService(AppCredentialStore.class).getAppCredentials(PHOTOBUCKET_KEY, PHOTOBUCKET_SECRET);
+          context
+              .getService(AppCredentialStore.class)
+              .getAppCredentials(PHOTOBUCKET_KEY, PHOTOBUCKET_SECRET);
     } catch (Exception e) {
       monitor.info(
           () ->
               format(
                   "Unable to retrieve Photobucket AppCredentials. Did you set %s and %s?",
-                      PHOTOBUCKET_KEY, PHOTOBUCKET_SECRET),
+                  PHOTOBUCKET_KEY, PHOTOBUCKET_SECRET),
           e);
       initialized = false;
       return;
@@ -96,10 +103,19 @@ public class PhotobucketTransferExtension implements TransferExtension {
     PhotobucketCredentialsFactory credentialsFactory =
         new PhotobucketCredentialsFactory(httpTransport, jsonFactory, credentials);
 
-    importer =
+    ImmutableMap.Builder<String, Importer> importBuilder = ImmutableMap.builder();
+    importBuilder.put(
+        PHOTOS,
         new PhotobucketPhotosImporter(
-            credentialsFactory, monitor, httpClient, jobStore, objectMapper);
-    exporter = new PhotobucketPhotosExporter(credentialsFactory, monitor);
+            credentialsFactory, monitor, httpClient, jobStore, objectMapper));
+    importBuilder.put(
+        VIDEOS,
+        new PhotobucketVideosImporter(
+            credentialsFactory, monitor, httpClient, jobStore, objectMapper));
+    importerMap = importBuilder.build();
+    ImmutableMap.Builder<String, Exporter> exportBuilder = ImmutableMap.builder();
+    exporterMap = exportBuilder.build();
+
     initialized = true;
   }
 }
