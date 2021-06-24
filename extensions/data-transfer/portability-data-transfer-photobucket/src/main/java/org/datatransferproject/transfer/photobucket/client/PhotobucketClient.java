@@ -123,10 +123,6 @@ public class PhotobucketClient {
   }
 
   public void uploadVideo(VideoObject videoModel) throws Exception {
-    System.out.println("Importing " + videoModel.getName());
-    System.out.println("Format " + videoModel.getEncodingFormat());
-    System.out.println("Link " + videoModel.getContentUrl().toString());
-    System.out.println("AlbumId " + videoModel.getAlbumId());
     String albumId = videoModel.getAlbumId() == null ? jobId.toString() : videoModel.getAlbumId();
     MediaModel mediaModel =
         new MediaModel(
