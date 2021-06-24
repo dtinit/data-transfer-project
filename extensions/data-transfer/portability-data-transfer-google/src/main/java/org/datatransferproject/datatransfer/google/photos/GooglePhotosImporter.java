@@ -177,8 +177,7 @@ public class GooglePhotosImporter
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    String copyOf = getOrCreateStringDictionary(jobId).get(BaseMultilingualString.CopyOf);
-    String title = MessageFormat.format(copyOf, Strings.nullToEmpty(inputAlbum.getName()));
+    String title = Strings.nullToEmpty(inputAlbum.getName());
 
     // Album titles are restricted to 500 characters
     // https://developers.google.com/photos/library/guides/manage-albums#creating-new-album
@@ -321,8 +320,7 @@ public class GooglePhotosImporter
     if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
       description = "";
     } else {
-      String copyOf = getOrCreateStringDictionary(jobId).get(BaseMultilingualString.CopyOf);
-      description = MessageFormat.format(copyOf, inputPhoto.getDescription());
+      description = inputPhoto.getDescription();
       // Descriptions are restricted to 1000 characters
       // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
       if (description.length() > 1000) {
