@@ -17,7 +17,7 @@
 package org.datatransferproject.transfer.photobucket.data;
 
 public final class PhotobucketConstants {
-  public static final String ENVIRONMENT = "https://stage.photobucket.com";
+  private static final String ENVIRONMENT_URL = "https://stage.photobucket.com";
   // Keys
   public static final String PHOTOBUCKET_KEY = "PHOTOBUCKET_KEY";
   public static final String PHOTOBUCKET_SECRET = "PHOTOBUCKET_SECRET";
@@ -30,9 +30,9 @@ public final class PhotobucketConstants {
   public static final String ALBUM_TITLE_PREFIX = "Copy of ";
 
   // Clients
-  public static final String GQL_URL = ENVIRONMENT + "/api/graphql";
-  public static final String UPLOAD_BY_URL_URL = ENVIRONMENT + "/api/upload_by_url";
-  public static final String UPLOAD_URL = ENVIRONMENT + "/api/uploadMobile";
+  public static final String GQL_URL = ENVIRONMENT_URL + "/api/graphql";
+  public static final String UPLOAD_BY_URL_URL = ENVIRONMENT_URL + "/api/upload_by_url";
+  public static final String UPLOAD_URL = ENVIRONMENT_URL + "/api/uploadMobile";
   public static final String USER_STATS_URL = "https://auth.stage.photobucket.com/me";
 
   // Headers
@@ -40,7 +40,7 @@ public final class PhotobucketConstants {
   public static final String AUTHORIZATION_HEADER = "Authorization";
   public static final String REFERER_HEADER = "Referer";
   public static final String ORIGIN_HEADER = "Origin";
-  public static final String REFERER_HEADER_VALUE = ENVIRONMENT;
+  public static final String REFERER_HEADER_VALUE = ENVIRONMENT_URL;
   public static final String ORIGIN_HEADER_VALUE = REFERER_HEADER_VALUE;
 
   // Limits
