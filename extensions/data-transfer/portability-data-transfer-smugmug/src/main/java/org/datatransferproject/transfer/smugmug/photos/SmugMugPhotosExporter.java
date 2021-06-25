@@ -201,6 +201,10 @@ public class SmugMugPhotosExporter
             : albumImageList.getAlbumImages();
 
     for (SmugMugImage albumImage : images) {
+      if (!albumImage.isPhoto()) {
+        continue;
+      }
+
       String title = albumImage.getTitle();
       if (Strings.isNullOrEmpty(title)) {
         title = albumImage.getFileName();
