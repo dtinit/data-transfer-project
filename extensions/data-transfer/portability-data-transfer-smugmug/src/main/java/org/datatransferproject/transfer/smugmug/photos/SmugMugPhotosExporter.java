@@ -52,7 +52,6 @@ public class SmugMugPhotosExporter
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String PHOTO_TOKEN_PREFIX = "photo:";
-  static final String PRIVATE_ALBUM = "Private";
 
   private final AppCredentials appCredentials;
   private final ObjectMapper mapper;
@@ -145,10 +144,8 @@ public class SmugMugPhotosExporter
     // Build album list
     List<PhotoAlbum> albumsList = new ArrayList<>();
     for (SmugMugAlbum album : albumsResponse.getAlbums()) {
-      if (!album.getPrivacy().equals(PRIVATE_ALBUM)) {
-        albumsList.add(new PhotoAlbum(album.getWebUri(), album.getName(), album.getDescription()));
-        continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
-      }
+      albumsList.add(new PhotoAlbum(album.getUri(), album.getName(), album.getDescription()));
+      continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
     }
     PhotosContainerResource resource = new PhotosContainerResource(albumsList, null);
 
@@ -212,7 +209,6 @@ public class SmugMugPhotosExporter
       PhotoModel model =
           new PhotoModel(
               title,
-              // TODO: sign the archived uri to get private photos to work.
               albumImage.getArchivedUri(),
               albumImage.getCaption(),
               getMimeType(albumImage.getFormat()),
