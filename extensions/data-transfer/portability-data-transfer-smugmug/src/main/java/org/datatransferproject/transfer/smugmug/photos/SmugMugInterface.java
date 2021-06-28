@@ -95,7 +95,7 @@ public class SmugMugInterface {
     json.put("NiceName", cleanName(albumName));
     // Allow conflicting names to be changed
     json.put("AutoRename", "true");
-    json.put("Title", "Copy of " + albumName);
+    json.put("Title", albumName);
     // All imported content is private by default.
     json.put("Privacy", "Private");
 

@@ -111,12 +111,12 @@ public class SmugMugPhotosImporterTest {
         new SmugMugAlbum(
             "date",
             photoAlbum1.getDescription(),
-            "Copy of " + photoAlbum1.getName(),
+            photoAlbum1.getName(),
             "privacy",
             "albumUri1",
             "urlname",
             "weburi");
-    String overflowAlbumName = "Copy of " + smugMugAlbum1.getName() + " (1)";
+    String overflowAlbumName = smugMugAlbum1.getName() + " (1)";
     SmugMugAlbum smugMugAlbum2 =
         new SmugMugAlbum(
             "date",
