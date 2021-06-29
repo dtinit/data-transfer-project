@@ -40,7 +40,8 @@ import java.util.UUID;
 
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
-public class PhotobucketVideosImporter implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
+public class PhotobucketVideosImporter
+    implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   private final Monitor monitor;
   private final OkHttpClient httpClient;
@@ -80,7 +81,7 @@ public class PhotobucketVideosImporter implements Importer<TokensAndUrlAuthData,
 
     Credential credential = credentialsFactory.createCredential(authData);
     PhotobucketClient photobucketClient =
-        new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
+        new PhotobucketClient(jobId, monitor, credential, httpClient, jobStore, objectMapper);
 
     // create empty album in root where all data structure is going to be saved
     monitor.debug(() -> String.format("Creating top level video album for jobId=[%s]", jobId));
@@ -90,13 +91,19 @@ public class PhotobucketVideosImporter implements Importer<TokensAndUrlAuthData,
     // import albums
     monitor.debug(() -> String.format("Starting video albums import for jobId=[%s]", jobId));
     for (VideoAlbum album : data.getAlbums()) {
-      photobucketClient.createAlbum(album, ALBUM_TITLE_PREFIX);
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          album.getId(),
+          album.getName(),
+          () -> photobucketClient.createAlbum(album, ALBUM_TITLE_PREFIX));
     }
 
     // import photos
     monitor.debug(() -> String.format("Starting videos import for jobId=[%s]", jobId));
     for (VideoObject video : data.getVideos()) {
-      photobucketClient.uploadVideo(video);
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          video.getAlbumId() + "-" + video.getDataId(),
+          video.getName(),
+          () -> photobucketClient.uploadVideo(video).wasSuccessful());
     }
     monitor.debug(() -> String.format("Video import complete, for jobId=[%s]", jobId));
 

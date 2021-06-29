@@ -78,7 +78,7 @@ public class PhotobucketPhotosImporter
 
     Credential credential = credentialsFactory.createCredential(authData);
     PhotobucketClient photobucketClient =
-        new PhotobucketClient(jobId, credential, httpClient, jobStore, objectMapper);
+        new PhotobucketClient(jobId, monitor, credential, httpClient, jobStore, objectMapper);
 
     // create empty album in root where all data structure is going to be saved
     monitor.debug(() -> String.format("Creating top level image album for jobId=[%s]", jobId));
@@ -88,13 +88,19 @@ public class PhotobucketPhotosImporter
     // import albums
     monitor.debug(() -> String.format("Starting image albums import for jobId=[%s]", jobId));
     for (PhotoAlbum album : data.getAlbums()) {
-      photobucketClient.createAlbum(album, ALBUM_TITLE_PREFIX);
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          album.getId(),
+          album.getName(),
+          () -> photobucketClient.createAlbum(album, ALBUM_TITLE_PREFIX));
     }
 
     // import photos
     monitor.debug(() -> String.format("Starting images import for jobId=[%s]", jobId));
     for (PhotoModel photo : data.getPhotos()) {
-      photobucketClient.uploadPhoto(photo);
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          photo.getAlbumId() + "-" + photo.getDataId(),
+          photo.getTitle(),
+          () -> photobucketClient.uploadPhoto(photo).wasSuccessful());
     }
     monitor.debug(() -> String.format("Image import complete, for jobId=[%s]", jobId));
 

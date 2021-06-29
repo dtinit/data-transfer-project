@@ -25,6 +25,7 @@ import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.client.helper.OkHttpClientWrapper;
@@ -59,15 +60,18 @@ public class PhotobucketClient {
   private final SimpleDateFormat simpleDateFormat =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
   private final OkHttpClientWrapper okHttpClientWrapper;
+  private final Monitor monitor;
 
   public PhotobucketClient(
       UUID jobId,
+      Monitor monitor,
       Credential credential,
       OkHttpClient httpClient,
       TemporaryPerJobDataStore jobStore,
       ObjectMapper objectMapper) {
     this.jobId = jobId;
     this.jobStore = jobStore;
+    this.monitor = monitor;
     this.objectMapper = objectMapper;
     this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient);
   }
@@ -79,16 +83,16 @@ public class PhotobucketClient {
     createAlbum(photoAlbum, "");
   }
 
-  public void createAlbum(VideoAlbum videoAlbum, String namePrefix) throws Exception {
-    createAlbum(
+  public String createAlbum(VideoAlbum videoAlbum, String namePrefix) throws Exception {
+    return createAlbum(
         new PhotoAlbum(videoAlbum.getId(), videoAlbum.getName(), videoAlbum.getDescription()),
         namePrefix);
   }
 
-  public void createAlbum(PhotoAlbum photoAlbum, String namePrefix) throws Exception {
+  public String createAlbum(PhotoAlbum photoAlbum, String namePrefix) throws Exception {
     try {
       // check if album was not created before
-      getPBAlbumId(photoAlbum.getId());
+      return getPBAlbumId(photoAlbum.getId());
     } catch (Exception exception) {
       // if album was not created
       // generate gql query for getting pb album id via rest call
@@ -118,11 +122,11 @@ public class PhotobucketClient {
       ProcessingResult result =
           okHttpClientWrapper.performGQLRequest(
               requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
-      result.extractOrThrow();
+      return result.extractOrThrow();
     }
   }
 
-  public void uploadVideo(VideoObject videoModel) throws Exception {
+  public ProcessingResult uploadVideo(VideoObject videoModel) throws Exception {
     String albumId = videoModel.getAlbumId() == null ? jobId.toString() : videoModel.getAlbumId();
     MediaModel mediaModel =
         new MediaModel(
@@ -133,10 +137,10 @@ public class PhotobucketClient {
             albumId,
             videoModel.isInTempStore(),
             null);
-    uploadMedia(mediaModel, MAX_VIDEO_SIZE_IN_BYTES);
+    return uploadMedia(mediaModel, MAX_VIDEO_SIZE_IN_BYTES);
   }
 
-  public void uploadPhoto(PhotoModel photoModel) throws Exception {
+  public ProcessingResult uploadPhoto(PhotoModel photoModel) throws Exception {
     MediaModel mediaModel =
         new MediaModel(
             photoModel.getTitle(),
@@ -146,14 +150,15 @@ public class PhotobucketClient {
             photoModel.getAlbumId(),
             photoModel.isInTempStore(),
             photoModel.getUploadedTime());
-    uploadMedia(mediaModel, MAX_IMAGE_SIZE_IN_BYTES);
+    return uploadMedia(mediaModel, MAX_IMAGE_SIZE_IN_BYTES);
   }
 
   private String encodeQueryParam(String queryParam) throws UnsupportedEncodingException {
     return URLEncoder.encode(queryParam, StandardCharsets.UTF_8.toString());
   }
 
-  private void uploadMedia(MediaModel mediaModel, long maxFileSizeInBytes) throws Exception {
+  private ProcessingResult uploadMedia(MediaModel mediaModel, long maxFileSizeInBytes)
+      throws Exception {
     RequestBody uploadRequestBody;
     String url;
     // get pbAlbumId based on provided albumId
@@ -172,10 +177,7 @@ public class PhotobucketClient {
       String maybeUploadDate = extractUploadDate(mediaModel);
       // extract upload date either from provided metadata or from exif
       if (maybeUploadDate != null) {
-        url =
-            url
-                + String.format(
-                    "&uploadDate=%s", encodeQueryParam(simpleDateFormat.format(maybeUploadDate)));
+        url = url + String.format("&uploadDate=%s", encodeQueryParam(maybeUploadDate));
       }
     } else if (mediaModel.getFetchableUrl() != null) {
       // upload media file via url
@@ -260,7 +262,7 @@ public class PhotobucketClient {
           }
         };
 
-    okHttpClientWrapper.performRESTPostRequest(
+    return okHttpClientWrapper.performRESTPostRequest(
         url, uploadRequestBody, uploadResponseTransformationF);
   }
 
@@ -397,6 +399,7 @@ public class PhotobucketClient {
 
         return simpleDateFormat.format(simpleDateFormat.parse(values[0]));
       } catch (Exception e) {
+        monitor.debug(() -> ("Unable to fetch media upload date from EXIF data"));
         return null;
       }
     }
