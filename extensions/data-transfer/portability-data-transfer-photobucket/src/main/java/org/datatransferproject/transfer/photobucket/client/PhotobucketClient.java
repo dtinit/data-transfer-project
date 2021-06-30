@@ -27,6 +27,8 @@ import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.transfer.photobucket.client.helper.ExceptionTransformer;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.client.helper.OkHttpClientWrapper;
 import org.datatransferproject.transfer.photobucket.model.MediaModel;
@@ -76,57 +78,65 @@ public class PhotobucketClient {
     this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient);
   }
 
-  public void createTopLevelAlbum(String name) throws Exception {
+  public void createTopLevelAlbum(String name) throws CopyExceptionWithFailureReason {
     // in case if albumId was not found while migrating photos,
     // we will migrate them into this top level album to avoid data loss
     PhotoAlbum photoAlbum = new PhotoAlbum(jobId.toString(), name, "");
     createAlbum(photoAlbum, "");
   }
 
-  public String createAlbum(VideoAlbum videoAlbum, String namePrefix) throws Exception {
+  public String createAlbum(VideoAlbum videoAlbum, String namePrefix)
+      throws CopyExceptionWithFailureReason {
     return createAlbum(
         new PhotoAlbum(videoAlbum.getId(), videoAlbum.getName(), videoAlbum.getDescription()),
         namePrefix);
   }
 
-  public String createAlbum(PhotoAlbum photoAlbum, String namePrefix) throws Exception {
+  public String createAlbum(PhotoAlbum photoAlbum, String namePrefix)
+      throws CopyExceptionWithFailureReason {
     try {
       // check if album was not created before
       return getPBAlbumId(photoAlbum.getId());
     } catch (Exception exception) {
-      // if album was not created
-      // generate gql query for getting pb album id via rest call
-      RequestBody requestBody = createAlbumGQLViaRestMutation(photoAlbum, namePrefix);
-      // get pbAlbumId and save it into job store
-      Function<Response, ProcessingResult> bodyTransformF =
-          response -> {
-            try {
-              // get photobucket albumId from response
-              String pbAlbumId = parseGQLResponse(response).getCreatedAlbumId();
-              // add photobucket albumId to the internal store, to match photos with proper albums
-              jobStore.create(jobId, photoAlbum.getId(), new PhotobucketAlbum(pbAlbumId));
-              return new ProcessingResult(pbAlbumId);
-            } catch (IOException | GraphQLException e) {
-              return new ProcessingResult(new AlbumImportException("Album was not created"));
-            }
-          };
+      try {
+        // if album was not created
+        // generate gql query for getting pb album id via rest call
+        RequestBody requestBody = createAlbumGQLViaRestMutation(photoAlbum, namePrefix);
+        // get pbAlbumId and save it into job store
+        Function<Response, ProcessingResult> bodyTransformF =
+            response -> {
+              try {
+                // get photobucket albumId from response
+                String pbAlbumId = parseGQLResponse(response).getCreatedAlbumId();
+                // add photobucket albumId to the internal store, to match photos with proper albums
+                jobStore.create(jobId, photoAlbum.getId(), new PhotobucketAlbum(pbAlbumId));
+                return new ProcessingResult(pbAlbumId);
+              } catch (IOException | GraphQLException e) {
+                return new ProcessingResult(new AlbumImportException("Album was not created"));
+              }
+            };
 
-      // throw exception only if failed for top level album
-      Function<Void, Boolean> isTopLevelAlbumF = v -> photoAlbum.getId().equals(jobId.toString());
+        // throw exception only if failed for top level album
+        Function<Void, Boolean> isTopLevelAlbumF = v -> photoAlbum.getId().equals(jobId.toString());
 
-      // fallback result in case if query execution/result parsing failed. In case if it's top level
-      // album, we need to provide null to throw an exception. If it's usual album we can proceed.
-      ProcessingResult fallbackResult =
-          isTopLevelAlbumF.apply(null) ? null : new ProcessingResult("");
+        // fallback result in case if query execution/result parsing failed. In case if it's top
+        // level
+        // album, we need to provide null to throw an exception. If it's usual album we can proceed.
+        ProcessingResult fallbackResult =
+            isTopLevelAlbumF.apply(null) ? null : new ProcessingResult("");
 
-      ProcessingResult result =
-          okHttpClientWrapper.performGQLRequest(
-              requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
-      return result.extractOrThrow();
+        ProcessingResult result =
+            okHttpClientWrapper.performGQLRequest(
+                requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
+        return result.extractOrThrow();
+      } catch (Exception e) {
+        throw ExceptionTransformer.transformException(e);
+      }
     }
   }
 
-  public ProcessingResult uploadVideo(VideoObject videoModel) throws Exception {
+  public ProcessingResult uploadVideo(VideoObject videoModel)
+      throws CopyExceptionWithFailureReason {
     String albumId = videoModel.getAlbumId() == null ? jobId.toString() : videoModel.getAlbumId();
     MediaModel mediaModel =
         new MediaModel(
@@ -140,7 +150,7 @@ public class PhotobucketClient {
     return uploadMedia(mediaModel, MAX_VIDEO_SIZE_IN_BYTES);
   }
 
-  public ProcessingResult uploadPhoto(PhotoModel photoModel) throws Exception {
+  public ProcessingResult uploadPhoto(PhotoModel photoModel) throws CopyExceptionWithFailureReason {
     MediaModel mediaModel =
         new MediaModel(
             photoModel.getTitle(),
@@ -158,112 +168,116 @@ public class PhotobucketClient {
   }
 
   private ProcessingResult uploadMedia(MediaModel mediaModel, long maxFileSizeInBytes)
-      throws Exception {
-    RequestBody uploadRequestBody;
-    String url;
-    // get pbAlbumId based on provided albumId
-    String pbAlbumId = getPBAlbumId(mediaModel.getAlbumId());
-    if (mediaModel.isInTempStore()) {
-      // stream file
-      BufferedInputStream inputStream =
-          new BufferedInputStream(
-              jobStore.getStream(jobId, mediaModel.getFetchableUrl()).getStream());
-      uploadRequestBody =
-          new InputStreamRequestBody(MediaType.parse(mediaModel.getMediaType()), inputStream);
-      url =
-          String.format(
-              "%s?albumId=%s&name=%s",
-              UPLOAD_URL, encodeQueryParam(pbAlbumId), encodeQueryParam(mediaModel.getTitle()));
-      String maybeUploadDate = extractUploadDate(mediaModel);
-      // extract upload date either from provided metadata or from exif
-      if (maybeUploadDate != null) {
-        url = url + String.format("&uploadDate=%s", encodeQueryParam(maybeUploadDate));
-      }
-    } else if (mediaModel.getFetchableUrl() != null) {
-      // upload media file via url
-      // add query parameters
-      url =
-          String.format(
-              "%s?url=%s&albumId=%s",
-              UPLOAD_BY_URL_URL,
-              encodeQueryParam(mediaModel.getFetchableUrl()),
-              encodeQueryParam(pbAlbumId));
-      // set upload date based on provided metadata
-      if (mediaModel.getUploadedTime() != null) {
+      throws CopyExceptionWithFailureReason {
+    try {
+      RequestBody uploadRequestBody;
+      String url;
+      // get pbAlbumId based on provided albumId
+      String pbAlbumId = getPBAlbumId(mediaModel.getAlbumId());
+      if (mediaModel.isInTempStore()) {
+        // stream file
+        BufferedInputStream inputStream =
+            new BufferedInputStream(
+                jobStore.getStream(jobId, mediaModel.getFetchableUrl()).getStream());
+        uploadRequestBody =
+            new InputStreamRequestBody(MediaType.parse(mediaModel.getMediaType()), inputStream);
         url =
-            url
-                + String.format(
-                    "&uploadDate=%s",
-                    encodeQueryParam(simpleDateFormat.format(mediaModel.getUploadedTime())));
+            String.format(
+                "%s?albumId=%s&name=%s",
+                UPLOAD_URL, encodeQueryParam(pbAlbumId), encodeQueryParam(mediaModel.getTitle()));
+        String maybeUploadDate = extractUploadDate(mediaModel);
+        // extract upload date either from provided metadata or from exif
+        if (maybeUploadDate != null) {
+          url = url + String.format("&uploadDate=%s", encodeQueryParam(maybeUploadDate));
+        }
+      } else if (mediaModel.getFetchableUrl() != null) {
+        // upload media file via url
+        // add query parameters
+        url =
+            String.format(
+                "%s?url=%s&albumId=%s",
+                UPLOAD_BY_URL_URL,
+                encodeQueryParam(mediaModel.getFetchableUrl()),
+                encodeQueryParam(pbAlbumId));
+        // set upload date based on provided metadata
+        if (mediaModel.getUploadedTime() != null) {
+          url =
+              url
+                  + String.format(
+                      "&uploadDate=%s",
+                      encodeQueryParam(simpleDateFormat.format(mediaModel.getUploadedTime())));
+        }
+        uploadRequestBody = new FormBody.Builder().build();
+      } else {
+        throw new IllegalStateException(
+            "Unable to get input stream for image " + mediaModel.getTitle());
       }
-      uploadRequestBody = new FormBody.Builder().build();
-    } else {
-      throw new IllegalStateException(
-          "Unable to get input stream for image " + mediaModel.getTitle());
-    }
 
-    if (isUserOveStorage(uploadRequestBody.contentLength())) {
-      throw new OverlimitException();
-    }
+      if (isUserOveStorage(uploadRequestBody.contentLength())) {
+        throw new OverlimitException();
+      }
 
-    if (uploadRequestBody.contentLength() > maxFileSizeInBytes) {
-      throw new MediaFileIsTooLargeException(mediaModel.getTitle());
-    }
+      if (uploadRequestBody.contentLength() > maxFileSizeInBytes) {
+        throw new MediaFileIsTooLargeException(mediaModel.getTitle());
+      }
 
-    Function<Response, ProcessingResult> uploadResponseTransformationF =
-        uploadImageResponse -> {
-          // note: if 201 code was provided, but response value is empty, do not fail upload, just
-          // skip
-          // title/description update
-          if (uploadImageResponse.body() != null
-              && mediaModel.getDescription() != null
-              && !mediaModel.getDescription().isEmpty()) {
-            String description = mediaModel.getDescription().replace("\"", "").replace("\n", " ");
-            // get imageId from provided response
-            String imageId;
-            try {
-              imageId =
-                  objectMapper.readValue(
-                          uploadImageResponse.body().string(), UploadMediaResponse.class)
-                      .id;
-            } catch (IOException ioException) {
+      Function<Response, ProcessingResult> uploadResponseTransformationF =
+          uploadImageResponse -> {
+            // note: if 201 code was provided, but response value is empty, do not fail upload, just
+            // skip
+            // title/description update
+            if (uploadImageResponse.body() != null
+                && mediaModel.getDescription() != null
+                && !mediaModel.getDescription().isEmpty()) {
+              String description = mediaModel.getDescription().replace("\"", "").replace("\n", " ");
+              // get imageId from provided response
+              String imageId;
+              try {
+                imageId =
+                    objectMapper.readValue(
+                            uploadImageResponse.body().string(), UploadMediaResponse.class)
+                        .id;
+              } catch (IOException ioException) {
+                return new ProcessingResult(
+                    "Partial success: image was uploaded, but metadata wasn't updated - body parsing exception");
+              }
+              // update metadata gql query
+              RequestBody updateMetadataRequestBody =
+                  RequestBody.create(
+                      MediaType.parse("application/json"),
+                      String.format(
+                          "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
+                          imageId, mediaModel.getTitle(), description));
+
+              // do not verify update metadata response
+              Function<Response, ProcessingResult> updateMetadataTransformationF =
+                  response -> new ProcessingResult(imageId);
+
+              // newer fail in case of error
+              Function<Void, Boolean> conditionalExceptionF = v -> true;
+
+              try {
+                // add metadata via gql
+                return okHttpClientWrapper.performGQLRequest(
+                    updateMetadataRequestBody,
+                    updateMetadataTransformationF,
+                    conditionalExceptionF,
+                    null);
+              } catch (Exception ignored) {
+                return new ProcessingResult(
+                    "Partial success: image was uploaded, but metadata wasn't updated - gql call failed");
+              }
+            } else {
               return new ProcessingResult(
-                  "Partial success: image was uploaded, but metadata wasn't updated - body parsing exception");
+                  "Partial success: image was uploaded, but metadata wasn't updated - body was empty");
             }
-            // update metadata gql query
-            RequestBody updateMetadataRequestBody =
-                RequestBody.create(
-                    MediaType.parse("application/json"),
-                    String.format(
-                        "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
-                        imageId, mediaModel.getTitle(), description));
+          };
 
-            // do not verify update metadata response
-            Function<Response, ProcessingResult> updateMetadataTransformationF =
-                response -> new ProcessingResult(imageId);
-
-            // newer fail in case of error
-            Function<Void, Boolean> conditionalExceptionF = v -> true;
-
-            try {
-              // add metadata via gql
-              return okHttpClientWrapper.performGQLRequest(
-                  updateMetadataRequestBody,
-                  updateMetadataTransformationF,
-                  conditionalExceptionF,
-                  null);
-            } catch (Exception ignored) {
-              return new ProcessingResult(
-                  "Partial success: image was uploaded, but metadata wasn't updated - gql call failed");
-            }
-          } else {
-            return new ProcessingResult(
-                "Partial success: image was uploaded, but metadata wasn't updated - body was empty");
-          }
-        };
-
-    return okHttpClientWrapper.performRESTPostRequest(
-        url, uploadRequestBody, uploadResponseTransformationF);
+      return okHttpClientWrapper.performRESTPostRequest(
+          url, uploadRequestBody, uploadResponseTransformationF);
+    } catch (Exception e) {
+      throw ExceptionTransformer.transformException(e);
+    }
   }
 
   /**
