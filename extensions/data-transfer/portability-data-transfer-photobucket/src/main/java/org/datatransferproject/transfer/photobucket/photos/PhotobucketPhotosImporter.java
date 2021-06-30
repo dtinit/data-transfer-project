@@ -68,7 +68,6 @@ public class PhotobucketPhotosImporter
       TokensAndUrlAuthData authData,
       PhotosContainerResource data)
       throws Exception {
-
     Preconditions.checkArgument(
         data.getAlbums() != null || data.getPhotos() != null,
         String.format("Error: There is no data to import for jobId=[%s]", jobId));
