@@ -32,7 +32,7 @@ By default, both data-transfer and auth extensions use Photobucket stage (sandbo
 
 | Exception                      | Failure reason                    | Message       | Explanation   | Notes        |
 | -------------------------------| --------------------------------- | ------------- | ------------- |------------- |
-| CopyExceptionWithFailureReason | OverlimitException                | User reached his limits, unable to proceed with data import.  | Critical, unable to migrate content as user reached its limits on PB side| |
+| DestinationMemoryFullException | OverlimitException                | User reached his limits, unable to proceed with data import.  | Critical, unable to migrate content as user reached its limits on PB side| |
 | PhotobucketException           | IllegalStateException             | Unable to get input stream for image %image_title%  | No valid stream was provided, unable to import particular image file | Need to consider whether we need to migrate rest of content or not. For now import will be stopped |
 | PhotobucketException           | GraphQLException                  | Empty response body was provided by GQL server | Back end issue, no valid response was provided. Retry can be applied. | |
 | PhotobucketException           | MethodNotImplementedException     | PhotobucketPhotosExporter is not implemented yet, unable to export data. | Data export if not supported | |
