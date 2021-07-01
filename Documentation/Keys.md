@@ -24,14 +24,15 @@ API keys usually are just the OAuth App Key and Secret for your app.  But DTP su
 arbitrary authorization mechanism, and so the exact form the key is dependent on the
 authorization technology each providers uses.
 
+ - [Facebook](../extensions/data-transfer/portability-data-transfer-facebook#keys--auth)
  - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys--auth)
  - [Google](../extensions/data-transfer/portability-data-transfer-google#keys--auth)
+ - [Imgur](../extensions/data-transfer/portability-data-transfer-imgur#keys--auth)
  - [Instagram](../extensions/data-transfer/portability-data-transfer-instagram#keys--auth)
  - [Microsoft](../extensions/data-transfer/portability-data-transfer-microsoft#keys--auth)
  - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys--auth)
  - [SmugMug](../extensions/data-transfer/portability-data-transfer-smugmug#keys--auth)
  - [Twitter](../extensions/data-transfer/portability-data-transfer-twitter#keys--auth)
- - [Imgur](../extensions/data-transfer/portability-data-transfer-imgur#keys--auth)
 
 
 ## Deploying Keys
