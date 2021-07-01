@@ -26,7 +26,7 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import com.google.common.base.Preconditions;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -97,7 +97,7 @@ public class PhotobucketTransferExtension implements TransferExtension {
     ObjectMapper objectMapper = context.getTypeManager().getMapper();
     objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     OkHttpClient httpClient = context.getService(OkHttpClient.class);
-    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
+    JobStore jobStore = context.getService(JobStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
     PhotobucketCredentialsFactory credentialsFactory =
