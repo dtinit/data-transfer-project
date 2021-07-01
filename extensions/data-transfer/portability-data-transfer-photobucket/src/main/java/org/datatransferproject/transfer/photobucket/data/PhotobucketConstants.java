@@ -25,8 +25,8 @@ public final class PhotobucketConstants {
 
   // Titles and prefixes
   // TODO: use the same top level album for both, photos and videos. Need change on back end api layer.
-  public static final String MAIN_PHOTO_ALBUM_TITLE = "Imported photos";
-  public static final String MAIN_VIDEO_ALBUM_TITLE = "Imported videos";
+  public static final String MAIN_PHOTO_ALBUM_TITLE_SUFFIX = " photos";
+  public static final String MAIN_VIDEO_ALBUM_TITLE_SUFFIX = " videos";
   public static final String ALBUM_TITLE_PREFIX = "Copy of ";
 
   // Clients

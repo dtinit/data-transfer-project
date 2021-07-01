@@ -22,7 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -42,7 +42,7 @@ public class PhotobucketPhotosImporter
 
   private final Monitor monitor;
   private final OkHttpClient httpClient;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final PhotobucketCredentialsFactory credentialsFactory;
   private final ObjectMapper objectMapper;
 
@@ -51,7 +51,7 @@ public class PhotobucketPhotosImporter
       PhotobucketCredentialsFactory credentialsFactory,
       Monitor monitor,
       OkHttpClient httpClient,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       ObjectMapper objectMapper) {
     monitor.debug(() -> "Starting PhotobucketPhotosImporter initialization");
     this.monitor = monitor;
@@ -82,7 +82,8 @@ public class PhotobucketPhotosImporter
     // create empty album in root where all data structure is going to be saved
     monitor.debug(() -> String.format("Creating top level image album for jobId=[%s]", jobId));
 
-    photobucketClient.createTopLevelAlbum(MAIN_PHOTO_ALBUM_TITLE);
+    String topLevelTitle = jobStore.findJob(jobId).exportService() + MAIN_PHOTO_ALBUM_TITLE_SUFFIX;
+    photobucketClient.createTopLevelAlbum(topLevelTitle);
 
     // import albums
     monitor.debug(() -> String.format("Starting image albums import for jobId=[%s]", jobId));
