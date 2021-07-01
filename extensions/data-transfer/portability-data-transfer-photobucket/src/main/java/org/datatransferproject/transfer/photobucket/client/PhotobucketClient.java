@@ -78,11 +78,11 @@ public class PhotobucketClient {
     this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient);
   }
 
-  public void createTopLevelAlbum(String name) throws CopyExceptionWithFailureReason {
+  public String createTopLevelAlbum(String name) throws CopyExceptionWithFailureReason {
     // in case if albumId was not found while migrating photos,
     // we will migrate them into this top level album to avoid data loss
     PhotoAlbum photoAlbum = new PhotoAlbum(jobId.toString(), name, "");
-    createAlbum(photoAlbum, "");
+    return createAlbum(photoAlbum, "");
   }
 
   public String createAlbum(VideoAlbum videoAlbum, String namePrefix)
