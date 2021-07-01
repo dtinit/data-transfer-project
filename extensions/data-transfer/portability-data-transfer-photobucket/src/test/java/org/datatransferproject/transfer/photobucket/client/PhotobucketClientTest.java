@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.ALBUM_TITLE_PREFIX;
-import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.MAIN_PHOTO_ALBUM_TITLE;
+import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.MAIN_PHOTO_ALBUM_TITLE_SUFFIX;
 import static org.mockito.Mockito.*;
 
 public class PhotobucketClientTest {
@@ -129,7 +129,7 @@ public class PhotobucketClientTest {
             jobStore,
             objectMapper);
     // get root id and create top level album
-    Assert.assertEquals(TOP_ALBUM_PB_ID, pbClient.createTopLevelAlbum(MAIN_PHOTO_ALBUM_TITLE));
+    Assert.assertEquals(TOP_ALBUM_PB_ID, pbClient.createTopLevelAlbum(MAIN_PHOTO_ALBUM_TITLE_SUFFIX));
     // create nested album under top level
     Assert.assertEquals(NESTED_ALBUM_PB_ID, pbClient.createAlbum(nestedAlbum, ALBUM_TITLE_PREFIX));
     // verify user stats, upload by url, update metadata
