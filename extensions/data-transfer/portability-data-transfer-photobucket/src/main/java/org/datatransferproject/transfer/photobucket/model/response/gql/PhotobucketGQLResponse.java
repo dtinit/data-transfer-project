@@ -31,7 +31,7 @@ public class PhotobucketGQLResponse {
   public String getCreatedAlbumId() throws IOException {
     if (data != null && data.createAlbum != null && data.createAlbum.id != null) {
       return data.createAlbum.id;
-    } else if (!errors.isEmpty()) {
+    } else if (!errors.isEmpty() && errors.get(0) != null) {
       Error error = errors.get(0);
       throw new IOException(error.name + ": " + error.message);
     } else {
@@ -42,7 +42,7 @@ public class PhotobucketGQLResponse {
   public String getRootAlbumId() throws IOException {
     if (data != null && data.getProfile != null && data.getProfile.defaultAlbum != null) {
       return data.getProfile.defaultAlbum;
-    } else if (!errors.isEmpty()) {
+    } else if (!errors.isEmpty() && errors.get(0) != null) {
       Error error = errors.get(0);
       throw new IOException(error.name + ": " + error.message);
     } else {
