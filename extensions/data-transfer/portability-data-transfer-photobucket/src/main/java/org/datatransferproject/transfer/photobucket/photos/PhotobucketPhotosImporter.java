@@ -76,7 +76,8 @@ public class PhotobucketPhotosImporter
     }
 
     Credential credential = credentialsFactory.createCredential(authData);
-    String requester = jobStore.findJob(jobId).exportService();
+    String requester =
+        jobStore.findJob(jobId) != null ? jobStore.findJob(jobId).exportService() : "DTP";
     PhotobucketClient photobucketClient =
         new PhotobucketClient(
             jobId, monitor, credential, httpClient, jobStore, objectMapper, requester);
@@ -85,7 +86,10 @@ public class PhotobucketPhotosImporter
     monitor.debug(() -> String.format("Creating top level image album for jobId=[%s]", jobId));
 
     String topLevelTitle = jobStore.findJob(jobId).exportService() + MAIN_PHOTO_ALBUM_TITLE_SUFFIX;
-    photobucketClient.createTopLevelAlbum(topLevelTitle);
+    idempotentExecutor.executeAndSwallowIOExceptions(
+        jobId.toString(),
+        topLevelTitle,
+        () -> photobucketClient.createTopLevelAlbum(topLevelTitle));
 
     // import albums
     monitor.debug(() -> String.format("Starting image albums import for jobId=[%s]", jobId));
