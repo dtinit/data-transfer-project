@@ -29,7 +29,7 @@ public class PhotobucketGQLResponse {
   public ArrayList<Error> errors;
 
   public String getCreatedAlbumId() throws IOException {
-    if (data != null && data.createAlbum != null) {
+    if (data != null && data.createAlbum != null && data.createAlbum.id != null) {
       return data.createAlbum.id;
     } else if (!errors.isEmpty()) {
       Error error = errors.get(0);
@@ -40,7 +40,7 @@ public class PhotobucketGQLResponse {
   }
 
   public String getRootAlbumId() throws IOException {
-    if (data != null && data.getProfile != null) {
+    if (data != null && data.getProfile != null && data.getProfile.defaultAlbum != null) {
       return data.getProfile.defaultAlbum;
     } else if (!errors.isEmpty()) {
       Error error = errors.get(0);
