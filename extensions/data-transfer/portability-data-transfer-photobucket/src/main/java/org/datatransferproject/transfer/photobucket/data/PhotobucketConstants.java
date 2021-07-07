@@ -18,6 +18,10 @@ package org.datatransferproject.transfer.photobucket.data;
 
 public final class PhotobucketConstants {
   private static final String ENVIRONMENT_URL = "https://stage.photobucket.com";
+
+  // Configs
+  public static boolean IS_OVER_STORAGE_VERIFICATION_ENABLED = false;
+
   // Keys
   public static final String PHOTOBUCKET_KEY = "PHOTOBUCKET_KEY";
   public static final String PHOTOBUCKET_SECRET = "PHOTOBUCKET_SECRET";
@@ -38,10 +42,7 @@ public final class PhotobucketConstants {
   // Headers
   public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
   public static final String AUTHORIZATION_HEADER = "Authorization";
-  public static final String REFERER_HEADER = "Referer";
-  public static final String ORIGIN_HEADER = "Origin";
-  public static final String REFERER_HEADER_VALUE = ENVIRONMENT_URL;
-  public static final String ORIGIN_HEADER_VALUE = REFERER_HEADER_VALUE;
+  public static final String REQUESTER_HEADER = "X-Forwarded-Requester";
 
   // Limits
   public static final long ACCESS_TOKEN_EXPIRE_TIME_IN_SECONDS = 60 * 60 * 24 * 7L;

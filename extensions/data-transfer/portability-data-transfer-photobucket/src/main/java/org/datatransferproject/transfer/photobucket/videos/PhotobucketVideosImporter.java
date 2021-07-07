@@ -76,13 +76,15 @@ public class PhotobucketVideosImporter
     }
 
     Credential credential = credentialsFactory.createCredential(authData);
+    String requester = jobStore.findJob(jobId).exportService();
     PhotobucketClient photobucketClient =
-        new PhotobucketClient(jobId, monitor, credential, httpClient, jobStore, objectMapper);
+        new PhotobucketClient(
+            jobId, monitor, credential, httpClient, jobStore, objectMapper, requester);
 
     // create empty album in root where all data structure is going to be saved
     monitor.debug(() -> String.format("Creating top level video album for jobId=[%s]", jobId));
 
-    String topLevelTitle = jobStore.findJob(jobId).exportService() + MAIN_VIDEO_ALBUM_TITLE_SUFFIX;
+    String topLevelTitle = requester + MAIN_VIDEO_ALBUM_TITLE_SUFFIX;
     photobucketClient.createTopLevelAlbum(topLevelTitle);
 
     // import albums

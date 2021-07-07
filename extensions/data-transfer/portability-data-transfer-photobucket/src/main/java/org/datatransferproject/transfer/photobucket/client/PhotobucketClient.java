@@ -26,7 +26,7 @@ import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.transfer.photobucket.client.helper.ExceptionTransformer;
 import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
@@ -55,7 +55,7 @@ import java.util.function.Function;
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
 
 public class PhotobucketClient {
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final UUID jobId;
   private String pbRootAlbumId;
   private final ObjectMapper objectMapper;
@@ -69,13 +69,17 @@ public class PhotobucketClient {
       Monitor monitor,
       Credential credential,
       OkHttpClient httpClient,
-      TemporaryPerJobDataStore jobStore,
-      ObjectMapper objectMapper) {
+      JobStore jobStore,
+      ObjectMapper objectMapper,
+      String requester
+  ) {
     this.jobId = jobId;
     this.jobStore = jobStore;
     this.monitor = monitor;
     this.objectMapper = objectMapper;
-    this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient);
+    this.okHttpClientWrapper =
+        new OkHttpClientWrapper(
+            jobId, credential, httpClient, requester);
   }
 
   public String createTopLevelAlbum(String name) throws CopyExceptionWithFailureReason {
@@ -357,21 +361,28 @@ public class PhotobucketClient {
   }
 
   private Boolean isUserOveStorage(long contentLength) throws Exception {
-    // make request and extract response body string
-    Function<Response, ProcessingResult> bodyTransformF =
-        response -> {
-          try {
-            return new ProcessingResult(response.body().string());
-          } catch (NullPointerException | IOException e) {
-            return new ProcessingResult(
-                new ResponseParsingException("Unable to process REST response to get user stats"));
-          }
-        };
+    // temporary disabled as new DTP users will ve moved to trial plan
+    if (IS_OVER_STORAGE_VERIFICATION_ENABLED) {
+      // make request and extract response body string
+      Function<Response, ProcessingResult> bodyTransformF =
+          response -> {
+            try {
+              return new ProcessingResult(response.body().string());
+            } catch (NullPointerException | IOException e) {
+              return new ProcessingResult(
+                  new ResponseParsingException(
+                      "Unable to process REST response to get user stats"));
+            }
+          };
 
-    String requestResultBodyStr =
-        okHttpClientWrapper.performRESTGetRequest(USER_STATS_URL, bodyTransformF).extractOrThrow();
-    UserStatsResponse stats = objectMapper.readValue(requestResultBodyStr, UserStatsResponse.class);
-    return !((stats.availableSpace - contentLength >= 0) && (stats.availableImages - 1 >= 0));
+      String requestResultBodyStr =
+          okHttpClientWrapper
+              .performRESTGetRequest(USER_STATS_URL, bodyTransformF)
+              .extractOrThrow();
+      UserStatsResponse stats =
+          objectMapper.readValue(requestResultBodyStr, UserStatsResponse.class);
+      return !((stats.availableSpace - contentLength >= 0) && (stats.availableImages - 1 >= 0));
+    } else return false;
   }
 
   /**
