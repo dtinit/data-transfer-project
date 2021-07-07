@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.datatransferproject.transfer.photobucket.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,7 +25,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.transfer.photobucket.data.PhotobucketConstants;
 import org.datatransferproject.transfer.photobucket.model.ProcessingResult;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -30,7 +47,7 @@ import static org.mockito.Mockito.*;
 public class PhotobucketClientTest {
   private final Monitor monitor = mock(Monitor.class);
   private final UUID jobId = UUID.randomUUID();
-  private final TemporaryPerJobDataStore jobStore = new LocalJobStore();
+  private final JobStore jobStore = new LocalJobStore();
   private final OkHttpClient httpClient = mock(OkHttpClient.class);
   private final ObjectMapper objectMapper = new ObjectMapper();
   HttpTransport httpTransport = mock(HttpTransport.class);
@@ -41,12 +58,13 @@ public class PhotobucketClientTest {
 
   @Test
   public void testCreateAlbumStructureAndUploadPhoto() throws Exception {
-
+    PhotobucketConstants.IS_OVER_STORAGE_VERIFICATION_ENABLED = true;
     String EXTERNAl_NESTED_ALBUM_ID = UUID.randomUUID().toString();
     String ROOT_ALBUM_PB_ID = UUID.randomUUID().toString();
     String TOP_ALBUM_PB_ID = UUID.randomUUID().toString();
     String NESTED_ALBUM_PB_ID = UUID.randomUUID().toString();
     String IMAGE_PB_ID = UUID.randomUUID().toString();
+    String REQUESTER = "Test run";
     PhotoAlbum nestedAlbum =
         new PhotoAlbum(
             EXTERNAl_NESTED_ALBUM_ID, "Some album under top level album", "Album description");
@@ -127,9 +145,11 @@ public class PhotobucketClientTest {
             photobucketCredentialsFactory.createCredential(tokensAndUrlAuthData),
             httpClient,
             jobStore,
-            objectMapper);
+            objectMapper,
+            REQUESTER);
     // get root id and create top level album
-    Assert.assertEquals(TOP_ALBUM_PB_ID, pbClient.createTopLevelAlbum(MAIN_PHOTO_ALBUM_TITLE_SUFFIX));
+    Assert.assertEquals(
+        TOP_ALBUM_PB_ID, pbClient.createTopLevelAlbum(MAIN_PHOTO_ALBUM_TITLE_SUFFIX));
     // create nested album under top level
     Assert.assertEquals(NESTED_ALBUM_PB_ID, pbClient.createAlbum(nestedAlbum, ALBUM_TITLE_PREFIX));
     // verify user stats, upload by url, update metadata

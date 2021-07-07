@@ -31,11 +31,14 @@ public class OkHttpClientWrapper {
   private final String bearer;
   private final OkHttpClient httpClient;
   private final UUID jobId;
+  private final String requester;
 
-  public OkHttpClientWrapper(UUID jobId, Credential credential, OkHttpClient httpClient) {
+  public OkHttpClientWrapper(
+      UUID jobId, Credential credential, OkHttpClient httpClient, String requester) {
     this.bearer = "Bearer " + credential.getAccessToken();
     this.httpClient = httpClient;
     this.jobId = jobId;
+    this.requester = requester;
   }
 
   public ProcessingResult performGQLRequest(
@@ -51,8 +54,7 @@ public class OkHttpClientWrapper {
     gqlRequestBuilder
         .header(AUTHORIZATION_HEADER, bearer)
         .header(CORRELATION_ID_HEADER, jobId.toString())
-        .header(REFERER_HEADER, REFERER_HEADER_VALUE)
-        .header(ORIGIN_HEADER, ORIGIN_HEADER_VALUE);
+        .header(REQUESTER_HEADER, requester);
     gqlRequestBuilder.post(requestBody);
     // post request
     Response response = httpClient.newCall(gqlRequestBuilder.build()).execute();
@@ -101,7 +103,8 @@ public class OkHttpClientWrapper {
     // add authorization headers
     uploadRequestBuilder
         .header(AUTHORIZATION_HEADER, bearer)
-        .header(CORRELATION_ID_HEADER, jobId.toString());
+        .header(CORRELATION_ID_HEADER, jobId.toString())
+        .header(REQUESTER_HEADER, requester);
     if (method.equals("post")) {
       uploadRequestBuilder.post(requestBody);
     } else {
