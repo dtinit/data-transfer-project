@@ -22,11 +22,11 @@ The Photobucket extensions were created and is maintained by
 
 ## Environments
 
-By default, both data-transfer and auth extensions use Photobucket stage (sandbox) environment. To switch to the prod environment, please update these variables:
-- [ENVIRONMENT_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/data-transfer/portability-data-transfer-photobucket/src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L20)
-- [USER_STATS_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/data-transfer/portability-data-transfer-photobucket/src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L36)
-- [PB_AUTH_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L32)
-- [PB_TOKEN_URL](https://github.com/vasylshche/data-transfer-project/blob/26504ffa5bca27ee28d4dbcd7359c65fc663da96/extensions/auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L33)
+By default, both data-transfer and auth extensions use Photobucket prod environment. To switch to the stage environment, please update these variables:
+- [ENVIRONMENT_URL](extensions/data-transfer/portability-data-transfer-photobucket/src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L20)
+- [USER_STATS_URL](extensions/data-transfer/portability-data-transfer-photobucket/src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L36)
+- [PB_AUTH_URL](extensions/auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L32)
+- [PB_TOKEN_URL](extensions/auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L33)
 
 ## Errors and exceptions
 

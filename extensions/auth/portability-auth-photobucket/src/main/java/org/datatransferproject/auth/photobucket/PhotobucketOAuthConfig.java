@@ -29,8 +29,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class PhotobucketOAuthConfig implements OAuth2Config {
   private static final String PB_SERVICE_ID = "Photobucket";
-  private static final String PB_AUTH_URL = "https://auth.stage.photobucket.com/oauth/authorize";
-  private static final String PB_TOKEN_URL = "https://auth.stage.photobucket.com/oauth/token";
+  private static final String PB_AUTH_URL = "https://auth.photobucket.com/oauth/authorize";
+  private static final String PB_TOKEN_URL = "https://auth.photobucket.com/oauth/token";
 
   private static final Pattern AUTH_TOKEN_PATTERN =
       Pattern.compile(".*\"access_token\":\"([\\w.]+)*\".*");
