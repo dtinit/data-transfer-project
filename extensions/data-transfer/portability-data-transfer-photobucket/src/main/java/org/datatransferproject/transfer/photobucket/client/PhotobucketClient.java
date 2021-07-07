@@ -71,15 +71,12 @@ public class PhotobucketClient {
       OkHttpClient httpClient,
       JobStore jobStore,
       ObjectMapper objectMapper,
-      String requester
-  ) {
+      String requester) {
     this.jobId = jobId;
     this.jobStore = jobStore;
     this.monitor = monitor;
     this.objectMapper = objectMapper;
-    this.okHttpClientWrapper =
-        new OkHttpClientWrapper(
-            jobId, credential, httpClient, requester);
+    this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient, requester);
   }
 
   public String createTopLevelAlbum(String name) throws CopyExceptionWithFailureReason {
@@ -116,7 +113,8 @@ public class PhotobucketClient {
                 jobStore.create(jobId, photoAlbum.getId(), new PhotobucketAlbum(pbAlbumId));
                 return new ProcessingResult(pbAlbumId);
               } catch (IOException | GraphQLException e) {
-                return new ProcessingResult(new AlbumImportException("Album was not created"));
+                return new ProcessingResult(
+                    new AlbumImportException("Album was not created: " + e.getMessage()));
               }
             };
 
@@ -342,7 +340,7 @@ public class PhotobucketClient {
             } catch (Exception e) {
               return new ProcessingResult(
                   new ResponseParsingException(
-                      "Unable to process GQL response to get root album id"));
+                      "Unable to process GQL response to get root album id: " + e.getMessage()));
             }
           };
 
