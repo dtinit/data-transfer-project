@@ -29,7 +29,7 @@ public class PhotobucketGQLResponse {
   public ArrayList<Error> errors;
 
   public String getCreatedAlbumId() throws IOException {
-    if (data != null) {
+    if (data != null && data.createAlbum != null) {
       return data.createAlbum.id;
     } else if (!errors.isEmpty()) {
       Error error = errors.get(0);
@@ -40,7 +40,7 @@ public class PhotobucketGQLResponse {
   }
 
   public String getRootAlbumId() throws IOException {
-    if (data != null) {
+    if (data != null && data.getProfile != null) {
       return data.getProfile.defaultAlbum;
     } else if (!errors.isEmpty()) {
       Error error = errors.get(0);
@@ -49,7 +49,6 @@ public class PhotobucketGQLResponse {
       throw new IOException("Neither data nor error were provided, unable to get root album id");
     }
   }
-
 }
 
 class Data {
