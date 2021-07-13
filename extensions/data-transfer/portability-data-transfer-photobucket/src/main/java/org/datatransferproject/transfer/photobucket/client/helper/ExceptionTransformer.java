@@ -16,16 +16,36 @@
 
 package org.datatransferproject.transfer.photobucket.client.helper;
 
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
-import org.datatransferproject.transfer.photobucket.model.error.OverlimitException;
-import org.datatransferproject.transfer.photobucket.model.error.PhotobucketException;
+import org.datatransferproject.transfer.photobucket.model.error.*;
 
 public class ExceptionTransformer {
+  private final Monitor monitor;
+
+  public ExceptionTransformer(Monitor monitor) {
+    this.monitor = monitor;
+  }
+
   // Exception mapper, to transform PB exceptions to open source exceptions
-  public static CopyExceptionWithFailureReason transformException(Exception e) {
-    if (e instanceof OverlimitException)
-      return new DestinationMemoryFullException(e.getMessage(), e);
-    else return new PhotobucketException(e.getMessage(), e);
+  public CopyExceptionWithFailureReason transformException(Exception e) {
+    monitor.severe(e::getMessage);
+
+    if (e instanceof OverlimitException) {
+      return new DestinationMemoryFullException(
+          "Photobucket storage is full. Please check your plan limits.", e);
+    } else if (e instanceof AlbumImportException) {
+      return new PhotobucketException("Unable to transfer album data. Please try again later.", e);
+    } else if (e instanceof MediaFileIsTooLargeException) {
+      return new PhotobucketException("Unable tp transfer media file - file is too large.", e);
+    } else if (e instanceof ResponseParsingException || e instanceof GraphQLException) {
+      return new PhotobucketException(
+          "Unable to process Photobucket response. Please try again later.", e);
+    } else if (e instanceof WrongStatusCodeException
+        || e instanceof WrongStatusCodeRetriableException) {
+      return new PhotobucketException(
+          "Wrong status code provided by Photobucket. Please try again later.", e);
+    } else return new PhotobucketException(e.getMessage(), e);
   }
 }

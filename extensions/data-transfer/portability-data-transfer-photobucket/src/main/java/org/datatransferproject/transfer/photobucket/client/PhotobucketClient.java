@@ -63,6 +63,7 @@ public class PhotobucketClient {
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
   private final OkHttpClientWrapper okHttpClientWrapper;
   private final Monitor monitor;
+  private final ExceptionTransformer exceptionTransformer;
 
   public PhotobucketClient(
       UUID jobId,
@@ -77,6 +78,7 @@ public class PhotobucketClient {
     this.monitor = monitor;
     this.objectMapper = objectMapper;
     this.okHttpClientWrapper = new OkHttpClientWrapper(jobId, credential, httpClient, requester);
+    this.exceptionTransformer = new ExceptionTransformer(monitor);
   }
 
   public String createTopLevelAlbum(String name) throws CopyExceptionWithFailureReason {
@@ -132,7 +134,7 @@ public class PhotobucketClient {
                 requestBody, bodyTransformF, isTopLevelAlbumF, fallbackResult);
         return result.extractOrThrow();
       } catch (Exception e) {
-        throw ExceptionTransformer.transformException(e);
+        throw exceptionTransformer.transformException(e);
       }
     }
   }
@@ -278,7 +280,7 @@ public class PhotobucketClient {
       return okHttpClientWrapper.performRESTPostRequest(
           url, uploadRequestBody, uploadResponseTransformationF);
     } catch (Exception e) {
-      throw ExceptionTransformer.transformException(e);
+      throw exceptionTransformer.transformException(e);
     }
   }
 
