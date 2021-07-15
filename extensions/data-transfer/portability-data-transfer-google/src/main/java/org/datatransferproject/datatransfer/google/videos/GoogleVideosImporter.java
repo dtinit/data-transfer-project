@@ -82,9 +82,6 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class GoogleVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
-  // TODO: internationalize copy prefix
-  private static final String COPY_PREFIX = "Copy of ";
-
   private final ImageStreamProvider videoStreamProvider;
   private Monitor monitor;
   private final AppCredentials appCredentials;
@@ -174,12 +171,7 @@ public class GoogleVideosImporter
   }
 
   private VideoObject transformVideoName(VideoObject video) {
-    String filename;
-    if (Strings.isNullOrEmpty(video.getName())) {
-      filename = "untitled";
-    } else {
-      filename = COPY_PREFIX + video.getName();
-    }
+    String filename = Strings.isNullOrEmpty(video.getName()) ? "untitled": video.getName();
     video.setName(filename);
     return video;
   }

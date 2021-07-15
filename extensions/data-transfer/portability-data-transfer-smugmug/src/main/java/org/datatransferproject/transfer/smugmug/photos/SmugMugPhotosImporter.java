@@ -42,7 +42,6 @@ public class SmugMugPhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
   private static final String DEFAULT_ALBUM_NAME = "Untitled Album";
-  private static final String COPY_PREFIX = "Copy of ";
   private final TemporaryPerJobDataStore jobStore;
   private final AppCredentials appCredentials;
   private final ObjectMapper mapper;
@@ -112,7 +111,7 @@ public class SmugMugPhotosImporter
     String albumName =
         Strings.isNullOrEmpty(inputAlbum.getName())
             ? DEFAULT_ALBUM_NAME
-            : COPY_PREFIX + inputAlbum.getName();
+            : inputAlbum.getName();
 
     SmugMugAlbumResponse albumResponse = smugMugInterface.createAlbum(albumName);
     SmugMugPhotoTempData tempData =

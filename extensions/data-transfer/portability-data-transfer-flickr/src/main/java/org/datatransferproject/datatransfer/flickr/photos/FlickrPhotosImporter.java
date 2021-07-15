@@ -52,7 +52,6 @@ import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfi
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
-  @VisibleForTesting static final String COPY_PREFIX = "Copy of - ";
   @VisibleForTesting static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
 
   private final TemporaryPerJobDataStore jobStore;
@@ -202,9 +201,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         oldAlbumId,
         album.getName(),
         () -> {
-          // TODO: make COPY_PREFIX configurable.
           String albumName =
-              Strings.isNullOrEmpty(album.getName()) ? "untitled" : COPY_PREFIX + album.getName();
+              Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
           String albumDescription = cleanString(album.getDescription());
 
           perUserRateLimiter.acquire();
@@ -224,9 +222,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       inStream = imageStreamProvider.get(photo.getFetchableUrl());
     }
 
-    // TODO: do we want to keep COPY_PREFIX?  I think not
     String photoTitle =
-        Strings.isNullOrEmpty(photo.getTitle()) ? "" : COPY_PREFIX + photo.getTitle();
+        Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
     String photoDescription = cleanString(photo.getDescription());
 
     UploadMetaData uploadMetaData =

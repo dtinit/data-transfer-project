@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
 
 public class GoogleVideosExporterTest {
 
-  private String VIDEO_URI = "video uri";
+  private String VIDEO_URI = "videouri";
   private String VIDEO_ID = "video id";
   private String VIDEO_TOKEN = "video_token";
 
