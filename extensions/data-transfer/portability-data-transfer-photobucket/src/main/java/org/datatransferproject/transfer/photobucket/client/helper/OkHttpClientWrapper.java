@@ -23,6 +23,7 @@ import org.datatransferproject.transfer.photobucket.model.error.WrongStatusCodeE
 import org.datatransferproject.transfer.photobucket.model.error.WrongStatusCodeRetriableException;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.datatransferproject.transfer.photobucket.data.PhotobucketConstants.*;
@@ -36,9 +37,26 @@ public class OkHttpClientWrapper {
   public OkHttpClientWrapper(
       UUID jobId, Credential credential, OkHttpClient httpClient, String requester) {
     this.bearer = "Bearer " + credential.getAccessToken();
-    this.httpClient = httpClient;
+    this.httpClient =
+        httpClient
+            .newBuilder()
+            .writeTimeout(WRITE_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+            .connectTimeout(CONNECTION_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+            .build();
     this.jobId = jobId;
     this.requester = requester;
+  }
+
+  private Request.Builder getBuilder(String url) {
+    Request.Builder requestBuilder = new Request.Builder().url(url);
+    // add authorization headers
+    requestBuilder
+        .header(AUTHORIZATION_HEADER, bearer)
+        .header(CORRELATION_ID_HEADER, jobId.toString())
+        .header(REQUESTER_HEADER, requester);
+
+    return requestBuilder;
   }
 
   public ProcessingResult performGQLRequest(
@@ -49,12 +67,7 @@ public class OkHttpClientWrapper {
       throws Exception {
 
     // create builder for graphQL request
-    Request.Builder gqlRequestBuilder = new Request.Builder().url(GQL_URL);
-    // add authorization headers
-    gqlRequestBuilder
-        .header(AUTHORIZATION_HEADER, bearer)
-        .header(CORRELATION_ID_HEADER, jobId.toString())
-        .header(REQUESTER_HEADER, requester);
+    Request.Builder gqlRequestBuilder = getBuilder(GQL_URL);
     gqlRequestBuilder.post(requestBody);
     // post request
     Response response = httpClient.newCall(gqlRequestBuilder.build()).execute();
@@ -99,12 +112,7 @@ public class OkHttpClientWrapper {
       int code,
       Function<Response, ProcessingResult> responseTransformF)
       throws Exception {
-    Request.Builder uploadRequestBuilder = new Request.Builder().url(url);
-    // add authorization headers
-    uploadRequestBuilder
-        .header(AUTHORIZATION_HEADER, bearer)
-        .header(CORRELATION_ID_HEADER, jobId.toString())
-        .header(REQUESTER_HEADER, requester);
+    Request.Builder uploadRequestBuilder = getBuilder(url);
     if (method.equals("post")) {
       uploadRequestBuilder.post(requestBody);
     } else {
