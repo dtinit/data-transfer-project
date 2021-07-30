@@ -49,4 +49,9 @@ public final class PhotobucketConstants {
   public static final long ACCESS_TOKEN_EXPIRE_TIME_IN_SECONDS = 60 * 60 * 24 * 7L;
   public static final long MAX_IMAGE_SIZE_IN_BYTES = 50 * 1024 * 1024L;
   public static final long MAX_VIDEO_SIZE_IN_BYTES = 500 * 1024 * 1024L;
+
+  // Timeouts
+  public static final long CONNECTION_TIMEOUT_IN_SECONDS = 10;
+  public static final long WRITE_TIMEOUT_IN_SECONDS = 60 * 2;
+  public static final long READ_TIMEOUT_IN_SECONDS = 60 * 2;
 }
