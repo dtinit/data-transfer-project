@@ -52,6 +52,6 @@ public final class PhotobucketConstants {
 
   // Timeouts
   public static final long CONNECTION_TIMEOUT_IN_SECONDS = 10;
-  public static final long WRITE_TIMEOUT_IN_SECONDS = 60 * 2;
-  public static final long READ_TIMEOUT_IN_SECONDS = 60 * 2;
+  public static final long WRITE_TIMEOUT_IN_SECONDS = 60 * 10;
+  public static final long READ_TIMEOUT_IN_SECONDS = 60 * 10;
 }
