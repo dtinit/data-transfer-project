@@ -27,7 +27,7 @@ public class MediaContainerResource extends ContainerResource {
   private static final String ROOT_ALBUM = "Transferred Photos";
   private final Collection<PhotoModel> photos;
   private final Collection<VideoObject> videos;
-  private Collection<MediaAlbum> albums;
+  private final Collection<MediaAlbum> albums;
 
   @JsonCreator
   public MediaContainerResource(
@@ -189,5 +189,10 @@ public class MediaContainerResource extends ContainerResource {
         .add("videos", getVideos())
         .add("counts", getCounts())
         .toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getAlbums(), getPhotos(), getVideos());
   }
 }
