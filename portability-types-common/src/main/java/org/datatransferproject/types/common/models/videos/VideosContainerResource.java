@@ -30,12 +30,12 @@ public class VideosContainerResource extends ContainerResource {
   private static final String ALBUMS_COUNT_DATA_NAME = "albumsCount";
 
   private final Collection<VideoAlbum> albums;
-  private final Collection<VideoObject> videos;
+  private final Collection<VideoModel> videos;
 
   @JsonCreator
   public VideosContainerResource(
       @JsonProperty("albums") Collection<VideoAlbum> albums,
-      @JsonProperty("videos") Collection<VideoObject> videos) {
+      @JsonProperty("videos") Collection<VideoModel> videos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.videos = videos == null ? ImmutableList.of() : videos;
   }
@@ -44,7 +44,7 @@ public class VideosContainerResource extends ContainerResource {
     return albums;
   }
 
-  public Collection<VideoObject> getVideos() {
+  public Collection<VideoModel> getVideos() {
     return videos;
   }
 

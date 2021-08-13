@@ -18,7 +18,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.After;
@@ -93,9 +93,9 @@ public class KoofrVideosImporterTest {
             new VideoAlbum("id1", "Album 1", "This is a fake album"),
             new VideoAlbum("id2", "", description1001));
 
-    Collection<VideoObject> videos =
+    Collection<VideoModel> videos =
         ImmutableList.of(
-            new VideoObject(
+            new VideoModel(
                 "video1.mp4",
                 server.url("/1.mp4").toString(),
                 "A video 1",
@@ -103,7 +103,7 @@ public class KoofrVideosImporterTest {
                 "video1",
                 "id1",
                 false),
-            new VideoObject(
+            new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
                 "A video 2",
@@ -111,7 +111,7 @@ public class KoofrVideosImporterTest {
                 "video2",
                 "id1",
                 false),
-            new VideoObject(
+            new VideoModel(
                 "video3.mp4",
                 server.url("/3.mp4").toString(),
                 description1001,
@@ -165,9 +165,9 @@ public class KoofrVideosImporterTest {
     UUID jobId = UUID.randomUUID();
     Collection<VideoAlbum> albums = ImmutableList.of();
 
-    Collection<VideoObject> videos =
+    Collection<VideoModel> videos =
         ImmutableList.of(
-            new VideoObject(
+            new VideoModel(
                 "video1.mp4",
                 server.url("/1.mp4").toString(),
                 "A video 1",
@@ -175,7 +175,7 @@ public class KoofrVideosImporterTest {
                 "video1",
                 null,
                 false),
-            new VideoObject(
+            new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
                 "A video 2",

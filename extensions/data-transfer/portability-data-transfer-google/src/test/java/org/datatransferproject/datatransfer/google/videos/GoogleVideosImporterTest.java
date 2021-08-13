@@ -41,7 +41,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -114,7 +114,7 @@ public class GoogleVideosImporterTest {
     long length =
         googleVideosImporter.importVideoBatch(
             Lists.newArrayList(
-                new VideoObject(
+                new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
                     VIDEO_DESCRIPTION,
@@ -122,7 +122,7 @@ public class GoogleVideosImporterTest {
                     VIDEO_ID,
                     null,
                     false),
-                new VideoObject(
+                new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
                     VIDEO_DESCRIPTION,
@@ -171,7 +171,7 @@ public class GoogleVideosImporterTest {
     long length =
         googleVideosImporter.importVideoBatch(
             Lists.newArrayList(
-                new VideoObject(
+                new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
                     VIDEO_DESCRIPTION,
@@ -179,7 +179,7 @@ public class GoogleVideosImporterTest {
                     VIDEO_ID,
                     null,
                     false),
-                new VideoObject(
+                new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
                     VIDEO_DESCRIPTION,
@@ -211,7 +211,7 @@ public class GoogleVideosImporterTest {
     long length =
         googleVideosImporter.importVideoBatch(
             Lists.newArrayList(
-                new VideoObject(
+                new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
                     VIDEO_DESCRIPTION,
@@ -240,12 +240,12 @@ public class GoogleVideosImporterTest {
             + "QPP2vKFFED90jUvbqkhesYYGvrvSq0t12LoMTFqkckRbxj7tODIUco9FFf9U5MQV40q6jgrKup19BSR9NUI58Y0GpI5ZqPgSaNhoJ5V"
             + "vsPhjrywUo6s9oOnolihQYq6lXZzwhESS8diG34oFLEwq9msSsrRtUSjgH50mNGogOlgEtbaFlMgXstzOWtUk2CwFEHZ9Y2qv123456"
             + "7890";
-    final VideoObject videoObject =
-        new VideoObject(
+    final VideoModel videoModel =
+        new VideoModel(
             VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false);
 
     String uploadToken = "token";
-    NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoObject, uploadToken);
+    NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoModel, uploadToken);
     assertFalse(
         "Expected the length of the description to be truncated to 1000 chars.",
         (newMediaItemResult.getDescription().length() > 1000));

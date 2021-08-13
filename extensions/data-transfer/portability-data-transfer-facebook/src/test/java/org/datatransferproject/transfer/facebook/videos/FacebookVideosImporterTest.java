@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import com.restfb.FacebookClient;
 import com.restfb.Parameter;
 import com.restfb.types.GraphResponse;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -40,7 +40,7 @@ public class FacebookVideosImporterTest {
   public void testImportSingleVideo() {
     importer.importSingleVideo(
         client,
-        new VideoObject(
+        new VideoModel(
             "title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false));
 
     Parameter[] params = {
