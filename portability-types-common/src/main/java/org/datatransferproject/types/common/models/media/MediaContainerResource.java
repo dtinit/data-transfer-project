@@ -17,7 +17,7 @@ import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.common.models.videos.VideoObject;
 
 @JsonTypeName("MediaContainerResource")
 public class MediaContainerResource extends ContainerResource {
@@ -26,14 +26,14 @@ public class MediaContainerResource extends ContainerResource {
   public static final String VIDEOS_COUNT_DATA_NAME = "videosCount";
   private static final String ROOT_ALBUM = "Transferred Photos";
   private final Collection<PhotoModel> photos;
-  private final Collection<VideoModel> videos;
+  private final Collection<VideoObject> videos;
   private Collection<MediaAlbum> albums;
 
   @JsonCreator
   public MediaContainerResource(
       @JsonProperty("albums") Collection<MediaAlbum> albums,
       @JsonProperty("photos") Collection<PhotoModel> photos,
-      @JsonProperty("videos") Collection<VideoModel> videos) {
+      @JsonProperty("videos") Collection<VideoObject> videos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.photos = photos == null ? ImmutableList.of() : photos;
     this.videos = photos == null ? ImmutableList.of() : videos;
@@ -47,7 +47,7 @@ public class MediaContainerResource extends ContainerResource {
     return photos;
   }
 
-  public Collection<VideoModel> getVideos() {
+  public Collection<VideoObject> getVideos() {
     return videos;
   }
 
@@ -94,7 +94,7 @@ public class MediaContainerResource extends ContainerResource {
           config.getPhotoTitleMaxLength());
     }
 
-    for (VideoModel video : videos) {
+    for (VideoObject video : videos) {
       video.cleanName(
           config.getPhotoTitleForbiddenCharacters(),
           config.getPhotoTitleReplacementCharacter(),
@@ -122,9 +122,7 @@ public class MediaContainerResource extends ContainerResource {
     for (PhotoModel photo : photos) {
       albumGroups.put(photo.getAlbumId(), photo);
     }
-    for (VideoModel video : videos) {
-      albumGroups.put(video.getAlbumId(), video);
-    }
+
     // Go through groups, splitting up anything that's too big
     for (Entry<String, Collection<PhotoModel>> entry : albumGroups.asMap().entrySet()) {
       if (entry.getValue().size() > maxSize) {
@@ -171,7 +169,7 @@ public class MediaContainerResource extends ContainerResource {
       }
     }
 
-    for (VideoModel video : videos) {
+    for (VideoObject video : videos) {
       if (video.getAlbumId() == null) {
         video.reassignToAlbum(rootAlbum.getId());
         usedRootAlbum = true;
