@@ -85,6 +85,13 @@ public class VideoObject extends MediaObject {
             Objects.equal(getAlbumId(), that.getAlbumId());
   }
 
+  // Assign this video to a different album. Used in cases where an album is too large and
+  // needs to be divided into smaller albums, the videos will each get reassigned to new
+  // albumnIds.
+  public void reassignToAlbum(String newAlbum){
+    this.albumId = newAlbum;
+  }
+
   @Override
   public int hashCode() {
     return this.dataId.hashCode();

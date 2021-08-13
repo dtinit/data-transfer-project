@@ -87,17 +87,33 @@ public class MediaContainerResource extends ContainerResource {
         config.getAlbumNameMaxLength());
   }
 
-  // Splits albumns that are too large into albums that are smaller than {maxSize}.
+  // Coerce the photos of the transfer using the specification provided, e.g.
+  // limiting max title length or removing forbidden characters, etc.
+  private void transmogrifyPhotos(TransmogrificationConfig config) {
+    // Replaces forbidden characters and makes sure that the title is not too long
+    for (PhotoModel photo : photos) {
+      photo.cleanTitle(
+          config.getPhotoTitleForbiddenCharacters(),
+          config.getPhotoTitleReplacementCharater(),
+          config.getPhotoTitleMaxLength());
+    }
+  }
+
+  // Splits albums that are too large into albums that are smaller than {maxSize}.
   // A value of maxSize=-1 signals that there is no maximum
   void ensureAlbumSize(int maxSize) {
     if (maxSize == -1) {
       // No max size; no need to go through that code.
       return;
     }
-    // Group photos by albumId
+
+    // Group photos and videos by albumId
     Multimap<String, PhotoModel> albumGroups = ArrayListMultimap.create();
     for (PhotoModel photo : photos) {
       albumGroups.put(photo.getAlbumId(), photo);
+    }
+    for (VideoModel video : videos) {
+      albumGroups.put(video.getAlbumId(), video);
     }
     // Go through groups, splitting up anything that's too big
     for (Entry<String, Collection<PhotoModel>> entry : albumGroups.asMap().entrySet()) {
@@ -120,10 +136,8 @@ public class MediaContainerResource extends ContainerResource {
           }
 
           // Replace original album in state
-          List<MediaAlbum> albums_ = new ArrayList<>(albums);
-          albums_.remove(album);
-          albums_.addAll(newAlbums);
-          this.albums = albums_;
+          albums.remove(album);
+          albums.addAll(newAlbums);
         }
       }
     }
@@ -137,7 +151,7 @@ public class MediaContainerResource extends ContainerResource {
     }
     MediaAlbum rootAlbum =
         new MediaAlbum(
-            ROOT_ALBUM, ROOT_ALBUM, "A copy of your transferred photos that were not in any album");
+            ROOT_ALBUM, ROOT_ALBUM, "A copy of your transferred media that were not in any album");
     boolean usedRootAlbum = false;
 
     for (PhotoModel photo : photos) {
@@ -146,10 +160,16 @@ public class MediaContainerResource extends ContainerResource {
         usedRootAlbum = true;
       }
     }
+
+    for (VideoModel video : videos) {
+      if (video.getAlbumId() == null) {
+        video.reassignToAlbum(rootAlbum.getId());
+        usedRootAlbum = true;
+      }
+    }
+
     if (usedRootAlbum) {
-      List<MediaAlbum> albums_ = new ArrayList<>(albums);
-      albums_.add(rootAlbum);
-      this.albums = albums_;
+      albums.add(rootAlbum);
     }
   }
 
@@ -158,23 +178,6 @@ public class MediaContainerResource extends ContainerResource {
       String forbiddenTitleCharacters, char replacementCharacter, int maxTitleLength) {
     for (MediaAlbum album : albums) {
       album.cleanName(forbiddenTitleCharacters, replacementCharacter, maxTitleLength);
-    }
-  }
-
-  // Coerce the photos of the transfer using the specification provided, e.g.
-  // limiting max title length or removing forbidden characters, etc.
-  private void transmogrifyPhotos(TransmogrificationConfig config) {
-    ensureCleanPhotoTitles(
-        config.getPhotoTitleForbiddenCharacters(),
-        config.getPhotoTitleReplacementCharater(),
-        config.getPhotoTitleMaxLength());
-  }
-
-  // Replaces forbidden characters and makes sure that the title is not too long
-  void ensureCleanPhotoTitles(
-      String forbiddenTitleCharacters, char replacementCharacter, int maxTitleLength) {
-    for (PhotoModel photo : photos) {
-      photo.cleanTitle(forbiddenTitleCharacters, replacementCharacter, maxTitleLength);
     }
   }
 
