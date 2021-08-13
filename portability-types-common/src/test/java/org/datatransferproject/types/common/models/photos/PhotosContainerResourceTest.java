@@ -335,7 +335,7 @@ public class PhotosContainerResourceTest {
             return ":!";
         }
 
-        public char getPhotoTitleReplacementCharater() {
+        public char getPhotoTitleReplacementCharacter() {
             return '?';
         }
     };

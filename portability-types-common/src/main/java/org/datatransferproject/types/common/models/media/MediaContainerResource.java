@@ -8,7 +8,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -94,9 +93,13 @@ public class MediaContainerResource extends ContainerResource {
     for (PhotoModel photo : photos) {
       photo.cleanTitle(
           config.getPhotoTitleForbiddenCharacters(),
-          config.getPhotoTitleReplacementCharater(),
+          config.getPhotoTitleReplacementCharacter(),
           config.getPhotoTitleMaxLength());
     }
+  }
+
+  private void transmogrifyVideos(TransmogrificationConfig config) {
+
   }
 
   // Splits albums that are too large into albums that are smaller than {maxSize}.
