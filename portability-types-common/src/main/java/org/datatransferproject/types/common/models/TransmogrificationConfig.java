@@ -15,6 +15,22 @@ public class TransmogrificationConfig {
   private static final boolean ALBUM_ALLOW_ROOT_PHOTOS = true;
   private static final int ALBUM_MAX_SIZE = -1;
 
+  private static final String VIDEO_TITLE_FORBIDDEN_CHARACTERS = "";
+  private static final char VIDEO_TITLE_REPLACEMENT_CHARACTER = '_';
+  private static final int VIDEO_TITLE_MAX_LENGTH = -1;
+
+  public static String getVideoTitleForbiddenCharacters() {
+    return VIDEO_TITLE_FORBIDDEN_CHARACTERS;
+  }
+
+  public static char getVideoTitleReplacementCharacter() {
+    return VIDEO_TITLE_REPLACEMENT_CHARACTER;
+  }
+
+  public static int getVideoTitleMaxLength() {
+    return VIDEO_TITLE_MAX_LENGTH;
+  }
+
   public String getPhotoTitleForbiddenCharacters() {
     return PHOTO_TITLE_FORBIDDEN_CHARACTERS;
   }
