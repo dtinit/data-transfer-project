@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.MediaObject;
 
 public class VideoObject extends MediaObject {
@@ -91,6 +92,21 @@ public class VideoObject extends MediaObject {
   public void reassignToAlbum(String newAlbum){
     this.albumId = newAlbum;
   }
+
+  // remove all forbidden characters
+  public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
+    String name = getName().chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
+        .map(Object::toString)
+        .collect(Collectors.joining("")).trim();
+    if (maxLength <= 0) {
+      return;
+    }
+
+    setName(name.substring(0, Math.min(maxLength, name.length())).trim());
+  }
+
 
   @Override
   public int hashCode() {

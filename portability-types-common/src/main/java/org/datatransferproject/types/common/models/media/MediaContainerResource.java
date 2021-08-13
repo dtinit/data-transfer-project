@@ -72,7 +72,7 @@ public class MediaContainerResource extends ContainerResource {
 
   public void transmogrify(TransmogrificationConfig config) {
     transmogrifyAlbums(config);
-    transmogrifyPhotos(config);
+    transmogrifyTitles(config);
   }
 
   // Coerce the albums of the transfer using the specification provided, e.g.
@@ -80,15 +80,12 @@ public class MediaContainerResource extends ContainerResource {
   private void transmogrifyAlbums(TransmogrificationConfig config) {
     ensureRootAlbum(config.getAlbumAllowRootPhotos());
     ensureAlbumSize(config.getAlbumMaxSize());
-    ensureCleanAlbumNames(
-        config.getAlbumNameForbiddenCharacters(),
-        config.getAlbumNameReplacementCharacter(),
-        config.getAlbumNameMaxLength());
+    transmogrifyTitles(config);
   }
 
   // Coerce the photos of the transfer using the specification provided, e.g.
   // limiting max title length or removing forbidden characters, etc.
-  private void transmogrifyPhotos(TransmogrificationConfig config) {
+  private void transmogrifyTitles(TransmogrificationConfig config) {
     // Replaces forbidden characters and makes sure that the title is not too long
     for (PhotoModel photo : photos) {
       photo.cleanTitle(
@@ -96,10 +93,20 @@ public class MediaContainerResource extends ContainerResource {
           config.getPhotoTitleReplacementCharacter(),
           config.getPhotoTitleMaxLength());
     }
-  }
 
-  private void transmogrifyVideos(TransmogrificationConfig config) {
+    for (VideoModel video : videos) {
+      video.cleanName(
+          config.getPhotoTitleForbiddenCharacters(),
+          config.getPhotoTitleReplacementCharacter(),
+          config.getPhotoTitleMaxLength());
+    }
 
+    for (MediaAlbum album : albums) {
+      album.cleanName(
+          config.getPhotoTitleForbiddenCharacters(),
+          config.getPhotoTitleReplacementCharacter(),
+          config.getPhotoTitleMaxLength());
+    }
   }
 
   // Splits albums that are too large into albums that are smaller than {maxSize}.
@@ -173,14 +180,6 @@ public class MediaContainerResource extends ContainerResource {
 
     if (usedRootAlbum) {
       albums.add(rootAlbum);
-    }
-  }
-
-  // Replaces forbidden characters and makes sure that the name is not too long
-  void ensureCleanAlbumNames(
-      String forbiddenTitleCharacters, char replacementCharacter, int maxTitleLength) {
-    for (MediaAlbum album : albums) {
-      album.cleanName(forbiddenTitleCharacters, replacementCharacter, maxTitleLength);
     }
   }
 
