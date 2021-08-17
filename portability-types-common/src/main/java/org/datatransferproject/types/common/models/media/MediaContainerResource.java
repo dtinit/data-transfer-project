@@ -4,15 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
@@ -79,8 +74,13 @@ public class MediaContainerResource extends ContainerResource {
   // limiting max album size or grouping un-collected photos into a root album.
   private void transmogrifyAlbums(TransmogrificationConfig config) {
     ensureRootAlbum(config.getAlbumAllowRootPhotos());
-    ensureAlbumSize(config.getAlbumMaxSize());
     transmogrifyTitles(config);
+
+    // TODO(#1000): This splitting code isn't entirely correct since it assumes all the album items
+    //  are present in this resource, when they could be split up it also assumes that all the
+    //  albums that the images correspond to are also in this resource which may not be the case
+    //  so in the meantime, i'm removing this code and it can be added in in the future.
+    //  ensureAlbumSize(config.getAlbumMaxSize());
   }
 
   // Coerce the photos of the transfer using the specification provided, e.g.
@@ -106,48 +106,6 @@ public class MediaContainerResource extends ContainerResource {
           config.getPhotoTitleForbiddenCharacters(),
           config.getPhotoTitleReplacementCharacter(),
           config.getPhotoTitleMaxLength());
-    }
-  }
-
-  // Splits albums that are too large into albums that are smaller than {maxSize}.
-  // A value of maxSize=-1 signals that there is no maximum
-  void ensureAlbumSize(int maxSize) {
-    if (maxSize == -1) {
-      // No max size; no need to go through that code.
-      return;
-    }
-
-    // Group photos and videos by albumId
-    Multimap<String, PhotoModel> albumGroups = ArrayListMultimap.create();
-    for (PhotoModel photo : photos) {
-      albumGroups.put(photo.getAlbumId(), photo);
-    }
-
-    // Go through groups, splitting up anything that's too big
-    for (Entry<String, Collection<PhotoModel>> entry : albumGroups.asMap().entrySet()) {
-      if (entry.getValue().size() > maxSize) {
-        for (MediaAlbum album : albums) {
-          if (album.getId() != entry.getKey()) {
-            continue;
-          }
-          // Create new partial album objects and reassign photos to those albums
-          List<MediaAlbum> newAlbums =
-              album.split(-Math.floorDiv(-entry.getValue().size(), maxSize));
-          Iterator<PhotoModel> remainingPhotos = entry.getValue().iterator();
-          for (MediaAlbum newAlbum : newAlbums) {
-            for (int i = 0; i < maxSize; i++) {
-              remainingPhotos.next().reassignToAlbum(newAlbum.getId());
-              if (!remainingPhotos.hasNext()) {
-                break;
-              }
-            }
-          }
-
-          // Replace original album in state
-          albums.remove(album);
-          albums.addAll(newAlbums);
-        }
-      }
     }
   }
 

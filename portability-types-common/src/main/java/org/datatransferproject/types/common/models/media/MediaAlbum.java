@@ -58,26 +58,7 @@ public class MediaAlbum {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id);
-  }
-
-  // Generates MediaAlbum objects that represent fragments of this one.
-  // Used in cases where an album from the originating service is larger than the allowable size
-  // in the destination service.
-  // If an album "MyAlbum" is split into 3, the results will be "MyAlbum (1/3)", etc.
-  public List<MediaAlbum> split(int numberOfNewAlbums){
-    List<MediaAlbum> newAlbums = new ArrayList<>();
-    for(int i = 1; i <= numberOfNewAlbums; i++){
-      newAlbums.add(
-          new MediaAlbum(
-              String.format("%s-pt%d", id, i),
-              String.format("%s (%d/%d)", id, i, numberOfNewAlbums),
-              description
-          )
-      );
-    }
-    return newAlbums;
   }
 
   // This allows us to make album names palatable, removing unpalatable characters and
