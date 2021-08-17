@@ -66,16 +66,9 @@ public class MediaContainerResource extends ContainerResource {
   }
 
   public void transmogrify(TransmogrificationConfig config) {
-    transmogrifyAlbums(config);
-    transmogrifyTitles(config);
-  }
-
-  // Coerce the albums of the transfer using the specification provided, e.g.
-  // limiting max album size or grouping un-collected photos into a root album.
-  private void transmogrifyAlbums(TransmogrificationConfig config) {
     ensureRootAlbum(config.getAlbumAllowRootPhotos());
     transmogrifyTitles(config);
-
+    
     // TODO(#1000): This splitting code isn't entirely correct since it assumes all the album items
     //  are present in this resource, when they could be split up it also assumes that all the
     //  albums that the images correspond to are also in this resource which may not be the case
