@@ -30,7 +30,7 @@ import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -71,17 +71,17 @@ public class KoofrVideosImporter
           album.getId(), album.getName(), () -> createAlbumFolder(album, koofrClient));
     }
 
-    for (VideoObject videoObject : resource.getVideos()) {
+    for (VideoModel videoModel : resource.getVideos()) {
       String id;
-      if (videoObject.getAlbumId() == null) {
-        id = videoObject.getDataId();
+      if (videoModel.getAlbumId() == null) {
+        id = videoModel.getDataId();
       } else {
-        id = videoObject.getAlbumId() + "-" + videoObject.getDataId();
+        id = videoModel.getAlbumId() + "-" + videoModel.getDataId();
       }
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           id,
-          videoObject.getName(),
-          () -> importSingleVideo(videoObject, jobId, idempotentImportExecutor, koofrClient));
+          videoModel.getName(),
+          () -> importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient));
     }
     return ImportResult.OK;
   }
@@ -107,7 +107,7 @@ public class KoofrVideosImporter
   }
 
   private String importSingleVideo(
-      VideoObject video,
+      VideoModel video,
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       KoofrClient koofrClient)

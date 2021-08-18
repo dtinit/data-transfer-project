@@ -23,14 +23,14 @@ import com.google.common.base.Objects;
 import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.MediaObject;
 
-public class VideoObject extends MediaObject {
+public class VideoModel extends MediaObject {
 
   private String dataId;
   private String albumId;
   private boolean inTempStore;
 
   @JsonCreator
-  public VideoObject(
+  public VideoModel(
           @JsonProperty("name") String name,
           @JsonProperty("contentUrl") String contentUrl,
           @JsonProperty("description") String description,
@@ -77,7 +77,7 @@ public class VideoObject extends MediaObject {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    VideoObject that = (VideoObject) o;
+    VideoModel that = (VideoModel) o;
     return Objects.equal(getName(), that.getName()) &&
             Objects.equal(getContentUrl(), that.getContentUrl()) &&
             Objects.equal(getDescription(), that.getDescription()) &&

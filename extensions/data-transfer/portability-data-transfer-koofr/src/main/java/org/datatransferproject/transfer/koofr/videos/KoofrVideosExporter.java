@@ -29,7 +29,7 @@ import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.transfer.koofr.common.KoofrMediaExport;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -58,7 +58,7 @@ public class KoofrVideosExporter
       export.export();
 
       List<VideoAlbum> exportAlbums = export.getVideoAlbums();
-      List<VideoObject> exportVideos = export.getVideos();
+      List<VideoModel> exportVideos = export.getVideos();
 
       VideosContainerResource containerResource =
           new VideosContainerResource(exportAlbums, exportVideos);

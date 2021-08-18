@@ -27,7 +27,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
@@ -62,7 +62,7 @@ public class BackblazeVideosImporter
     BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(monitor, authData);
 
     if (data.getVideos() != null && data.getVideos().size() > 0) {
-      for (VideoObject video : data.getVideos()) {
+      for (VideoModel video : data.getVideos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
             video.getDataId(), video.getName(), () -> importSingleVideo(b2Client, video));
       }
@@ -71,7 +71,7 @@ public class BackblazeVideosImporter
     return ImportResult.OK;
   }
 
-  private String importSingleVideo(BackblazeDataTransferClient b2Client, VideoObject video)
+  private String importSingleVideo(BackblazeDataTransferClient b2Client, VideoModel video)
       throws IOException {
     InputStream videoFileStream =
         imageStreamProvider.getConnection(video.getContentUrl().toString()).getInputStream();
