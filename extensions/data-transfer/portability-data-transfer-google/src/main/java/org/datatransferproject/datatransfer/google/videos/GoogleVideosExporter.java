@@ -31,7 +31,7 @@ import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -89,7 +89,7 @@ public class GoogleVideosExporter
     VideosContainerResource containerResource = null;
     GoogleMediaItem[] mediaItems = mediaItemSearchResponse.getMediaItems();
     if (mediaItems != null && mediaItems.length > 0) {
-      List<VideoObject> videos = convertVideosList(mediaItems);
+      List<VideoModel> videos = convertVideosList(mediaItems);
       containerResource = new VideosContainerResource(null, videos);
     }
 
@@ -101,8 +101,8 @@ public class GoogleVideosExporter
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  private List<VideoObject> convertVideosList(GoogleMediaItem[] mediaItems) {
-    List<VideoObject> videos = new ArrayList<>(mediaItems.length);
+  private List<VideoModel> convertVideosList(GoogleMediaItem[] mediaItems) {
+    List<VideoModel> videos = new ArrayList<>(mediaItems.length);
 
     for (GoogleMediaItem mediaItem : mediaItems) {
       if (mediaItem.getMediaMetadata().getVideo() != null) {
@@ -113,10 +113,10 @@ public class GoogleVideosExporter
     return videos;
   }
 
-  private VideoObject convertToVideoObject(GoogleMediaItem mediaItem) {
+  private VideoModel convertToVideoObject(GoogleMediaItem mediaItem) {
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
 
-    return new VideoObject(
+    return new VideoModel(
             "", // TODO: no title?
             //            dv = download video otherwise you only get a thumbnail
             mediaItem.getBaseUrl() + "=dv",

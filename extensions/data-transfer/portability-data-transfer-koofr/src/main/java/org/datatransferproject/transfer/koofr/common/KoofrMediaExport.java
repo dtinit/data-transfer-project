@@ -11,7 +11,7 @@ import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 
 public class KoofrMediaExport {
 
@@ -97,11 +97,11 @@ public class KoofrMediaExport {
     return exportAlbums;
   }
 
-  public List<VideoObject> getVideos() throws IOException, InvalidTokenException {
-    ArrayList<VideoObject> exportVideos = new ArrayList<>();
+  public List<VideoModel> getVideos() throws IOException, InvalidTokenException {
+    ArrayList<VideoModel> exportVideos = new ArrayList<>();
 
     for (VideoObjectContainer container : videos) {
-      VideoObject video = container.videoObject;
+      VideoModel video = container.videoModel;
 
       String fetchableUrl = getFetchableUrl(container.fullPath);
 
@@ -110,7 +110,7 @@ public class KoofrMediaExport {
       }
 
       exportVideos.add(
-          new VideoObject(
+          new VideoModel(
               video.getName(),
               fetchableUrl,
               video.getDescription(),
@@ -198,8 +198,8 @@ public class KoofrMediaExport {
     albumsWithVideos.add(albumId);
 
     VideoObjectContainer container = new VideoObjectContainer();
-    container.videoObject =
-        new VideoObject(name, "", description, contentType, videoId, albumId, false);
+    container.videoModel =
+        new VideoModel(name, "", description, contentType, videoId, albumId, false);
     container.fullPath = fullPath;
 
     videos.add(container);
@@ -247,7 +247,7 @@ public class KoofrMediaExport {
   }
 
   public static class VideoObjectContainer {
-    VideoObject videoObject;
+    VideoModel videoModel;
     String fullPath;
   }
 }

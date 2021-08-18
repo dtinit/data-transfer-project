@@ -26,11 +26,10 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 
 import java.io.IOException;
 import java.net.URI;
@@ -102,7 +101,7 @@ public class GoogleVideosExporterTest {
     assertThat(paginationToken.getToken()).isEqualTo(VIDEO_TOKEN);
 
     // Check videos field of container
-    Collection<VideoObject> actualVideos = result.getExportedData().getVideos();
+    Collection<VideoModel> actualVideos = result.getExportedData().getVideos();
 
     URI video_uri_object = null;
     try {
@@ -111,10 +110,10 @@ public class GoogleVideosExporterTest {
       e.printStackTrace();
     }
 
-    assertThat(actualVideos.stream().map(VideoObject::getContentUrl).collect(Collectors.toList()))
+    assertThat(actualVideos.stream().map(VideoModel::getContentUrl).collect(Collectors.toList()))
             .containsExactly(video_uri_object);
     // Since albums are not supported atm, this should be null
-    assertThat(actualVideos.stream().map(VideoObject::getAlbumId).collect(Collectors.toList()))
+    assertThat(actualVideos.stream().map(VideoModel::getAlbumId).collect(Collectors.toList()))
             .containsExactly((Object) null);
   }
 

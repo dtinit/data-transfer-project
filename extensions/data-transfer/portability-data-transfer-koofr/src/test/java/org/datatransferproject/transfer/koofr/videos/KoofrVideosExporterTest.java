@@ -16,7 +16,7 @@ import org.datatransferproject.transfer.koofr.common.Fixtures;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
@@ -71,9 +71,9 @@ public class KoofrVideosExporterTest {
             new VideoAlbum("/Videos", "Videos", null));
     assertEquals(expectedAlbums, exportedData.getAlbums());
 
-    List<VideoObject> expectedVideos =
+    List<VideoModel> expectedVideos =
         ImmutableList.of(
-            new VideoObject(
+            new VideoModel(
                 "Video 1.mp4",
                 "https://app-1.koofr.net/content/files/get/Video+1.mp4?base=TESTBASE",
                 null,
@@ -81,7 +81,7 @@ public class KoofrVideosExporterTest {
                 "/Album 2 :heart:/Video 1.mp4",
                 "/Album 2 :heart:",
                 false),
-            new VideoObject(
+            new VideoModel(
                 "Video 2.mp4",
                 "https://app-1.koofr.net/content/files/get/Video+2.mp4?base=TESTBASE",
                 "Video 3 description",

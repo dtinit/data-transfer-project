@@ -28,7 +28,7 @@ import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.types.common.ExportInformation;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -79,7 +79,7 @@ public class FacebookVideosExporterTest {
     VideosContainerResource exportedData = result.getExportedData();
     assertEquals(1, exportedData.getVideos().size());
     assertEquals(
-        new VideoObject(
+        new VideoModel(
             VIDEO_ID + ".mp4", VIDEO_SOURCE, VIDEO_NAME, "video/mp4", VIDEO_ID, null, false),
         exportedData.getVideos().toArray()[0]);
   }
