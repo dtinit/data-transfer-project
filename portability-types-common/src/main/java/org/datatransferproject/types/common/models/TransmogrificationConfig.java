@@ -5,6 +5,7 @@ package org.datatransferproject.types.common.models;
     These defaults represent no-chnage transmogrifications.  
 */
 public class TransmogrificationConfig {
+    // this is a quick test change
     private static final String    PHOTO_TITLE_FORBIDDEN_CHARACTERS    = "";
     private static final char      PHOTO_TITLE_REPLACEMENT_CHARACTER   = '_';
     private static final int       PHOTO_TITLE_MAX_LENGTH              = -1;
