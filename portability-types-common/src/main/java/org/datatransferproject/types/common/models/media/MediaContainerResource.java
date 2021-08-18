@@ -12,7 +12,7 @@ import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 
 @JsonTypeName("MediaContainerResource")
 public class MediaContainerResource extends ContainerResource {
@@ -21,14 +21,14 @@ public class MediaContainerResource extends ContainerResource {
   public static final String VIDEOS_COUNT_DATA_NAME = "videosCount";
   private static final String ROOT_ALBUM = "Transferred Photos";
   private final Collection<PhotoModel> photos;
-  private final Collection<VideoObject> videos;
+  private final Collection<VideoModel> videos;
   private final Collection<MediaAlbum> albums;
 
   @JsonCreator
   public MediaContainerResource(
       @JsonProperty("albums") Collection<MediaAlbum> albums,
       @JsonProperty("photos") Collection<PhotoModel> photos,
-      @JsonProperty("videos") Collection<VideoObject> videos) {
+      @JsonProperty("videos") Collection<VideoModel> videos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.photos = photos == null ? ImmutableList.of() : photos;
     this.videos = photos == null ? ImmutableList.of() : videos;
@@ -42,7 +42,7 @@ public class MediaContainerResource extends ContainerResource {
     return photos;
   }
 
-  public Collection<VideoObject> getVideos() {
+  public Collection<VideoModel> getVideos() {
     return videos;
   }
 
@@ -87,7 +87,7 @@ public class MediaContainerResource extends ContainerResource {
           config.getPhotoTitleMaxLength());
     }
 
-    for (VideoObject video : videos) {
+    for (VideoModel video : videos) {
       video.cleanName(
           config.getPhotoTitleForbiddenCharacters(),
           config.getPhotoTitleReplacementCharacter(),
@@ -120,7 +120,7 @@ public class MediaContainerResource extends ContainerResource {
       }
     }
 
-    for (VideoObject video : videos) {
+    for (VideoModel video : videos) {
       if (video.getAlbumId() == null) {
         video.reassignToAlbum(rootAlbum.getId());
         usedRootAlbum = true;
