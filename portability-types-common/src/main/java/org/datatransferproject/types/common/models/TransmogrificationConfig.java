@@ -19,15 +19,15 @@ public class TransmogrificationConfig {
   private static final char VIDEO_TITLE_REPLACEMENT_CHARACTER = '_';
   private static final int VIDEO_TITLE_MAX_LENGTH = -1;
 
-  public static String getVideoTitleForbiddenCharacters() {
+  public String getVideoTitleForbiddenCharacters() {
     return VIDEO_TITLE_FORBIDDEN_CHARACTERS;
   }
 
-  public static char getVideoTitleReplacementCharacter() {
+  public char getVideoTitleReplacementCharacter() {
     return VIDEO_TITLE_REPLACEMENT_CHARACTER;
   }
 
-  public static int getVideoTitleMaxLength() {
+  public int getVideoTitleMaxLength() {
     return VIDEO_TITLE_MAX_LENGTH;
   }
 

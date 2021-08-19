@@ -68,7 +68,7 @@ public class MediaContainerResource extends ContainerResource {
   public void transmogrify(TransmogrificationConfig config) {
     ensureRootAlbum(config.getAlbumAllowRootPhotos());
     transmogrifyTitles(config);
-    
+
     // TODO(#1000): This splitting code isn't entirely correct since it assumes all the album items
     //  are present in this resource, when they could be split up it also assumes that all the
     //  albums that the images correspond to are also in this resource which may not be the case
@@ -89,16 +89,16 @@ public class MediaContainerResource extends ContainerResource {
 
     for (VideoModel video : videos) {
       video.cleanName(
-          config.getPhotoTitleForbiddenCharacters(),
-          config.getPhotoTitleReplacementCharacter(),
-          config.getPhotoTitleMaxLength());
+          config.getVideoTitleForbiddenCharacters(),
+          config.getVideoTitleReplacementCharacter(),
+          config.getVideoTitleMaxLength());
     }
 
     for (MediaAlbum album : albums) {
       album.cleanName(
-          config.getPhotoTitleForbiddenCharacters(),
-          config.getPhotoTitleReplacementCharacter(),
-          config.getPhotoTitleMaxLength());
+          config.getAlbumNameForbiddenCharacters(),
+          config.getAlbumNameReplacementCharacter(),
+          config.getAlbumNameMaxLength());
     }
   }
 
