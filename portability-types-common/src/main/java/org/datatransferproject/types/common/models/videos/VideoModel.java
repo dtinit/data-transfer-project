@@ -100,7 +100,9 @@ public class VideoModel extends MediaObject {
         .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
         .map(Object::toString)
         .collect(Collectors.joining("")).trim();
+
     if (maxLength <= 0) {
+      setName(name.trim());
       return;
     }
 
