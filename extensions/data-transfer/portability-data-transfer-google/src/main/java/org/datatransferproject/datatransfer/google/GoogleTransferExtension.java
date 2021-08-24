@@ -18,6 +18,7 @@ import org.datatransferproject.datatransfer.google.drive.DriveImporter;
 import org.datatransferproject.datatransfer.google.gplus.GooglePlusExporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailExporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailImporter;
+import org.datatransferproject.datatransfer.google.media.GoogleMediaExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosImporter;
 import org.datatransferproject.datatransfer.google.tasks.GoogleTasksExporter;
@@ -40,7 +41,15 @@ public class GoogleTransferExtension implements TransferExtension {
   // TODO: centralized place, or enum type for these
   private static final ImmutableList<String> SUPPORTED_SERVICES =
       ImmutableList.of(
-          "BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS", "VIDEOS");
+          "BLOBS",
+          "CALENDAR",
+          "CONTACTS",
+          "MAIL",
+          "PHOTOS",
+          "SOCIAL-POSTS",
+          "TASKS",
+          "VIDEOS",
+          "MEDIA");
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
   private boolean initialized = false;
@@ -122,6 +131,8 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put(
         "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
     exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory, jsonFactory));
+    exporterBuilder.put(
+        "MEDIA", new GoogleMediaExporter(credentialFactory, jobStore, jsonFactory, monitor));
 
     exporterMap = exporterBuilder.build();
 
