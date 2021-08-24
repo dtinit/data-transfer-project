@@ -359,7 +359,7 @@ public class GooglePhotosExporter
     return photos;
   }
 
-  private PhotoModel convertToPhotoModel(Optional<String> albumId, GoogleMediaItem mediaItem) {
+  public static PhotoModel convertToPhotoModel(Optional<String> albumId, GoogleMediaItem mediaItem) {
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
 
     return new PhotoModel(

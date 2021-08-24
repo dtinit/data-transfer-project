@@ -37,7 +37,9 @@ import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
+import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -117,6 +119,12 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       // in that container instead of the whole user library
       return exportPhotosContainer(
           (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
+    } else if (exportInformation.get().getContainerResource() instanceof MediaContainerResource) {
+      // if ExportInformation is a media container, this is a request to only export the contents
+      // in that container instead of the whole user library (this is to support backwards
+      // compatibility with the GooglePhotosExporter)
+      return exportMediaContainer(
+          (MediaContainerResource) exportInformation.get().getContainerResource(), authData);
     }
 
     /*
@@ -146,6 +154,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     if (!containerResourcePresent
         && paginationDataPresent
         && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
+      // were still listing out all of the albums since we have pagination data
       return exportAlbums(authData, Optional.of(paginationToken), jobId);
     } else {
       return exportPhotos(
@@ -297,8 +306,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     MediaContainerResource containerResource = null;
     GoogleMediaItem[] mediaItems = mediaItemSearchResponse.getMediaItems();
     if (mediaItems != null && mediaItems.length > 0) {
-      List<PhotoModel> photos = convertPhotosList(albumId, mediaItems, jobId);
-      containerResource = new MediaContainerResource(null, photos, null);
+      containerResource = convertMediaListToResource(albumId, mediaItems, jobId);
     }
 
     ResultType resultType = ResultType.CONTINUE;
@@ -362,9 +370,10 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     return paginationToken;
   }
 
-  private List<PhotoModel> convertPhotosList(
+  private MediaContainerResource convertMediaListToResource(
       Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
+    List<VideoModel> videos = new ArrayList<>(mediaItems.length);
 
     TempPhotosData tempPhotosData = null;
     InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
@@ -374,37 +383,30 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     }
 
     for (GoogleMediaItem mediaItem : mediaItems) {
+      boolean shouldUpload = albumId.isPresent();
+
+      if (tempPhotosData != null) {
+        shouldUpload = shouldUpload || !tempPhotosData.isContainedPhotoId(mediaItem.getId());
+      }
+
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
-        // TODO: address videos
-        boolean shouldUpload = albumId.isPresent();
-
-        if (tempPhotosData != null) {
-          shouldUpload = shouldUpload || !tempPhotosData.isContainedPhotoId(mediaItem.getId());
-        }
-
         if (shouldUpload) {
-          PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
+          PhotoModel photoModel = GooglePhotosExporter.convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
           monitor.debug(
               () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
         }
+      } else if (mediaItem.getMediaMetadata().getVideo() != null) {
+        if (shouldUpload) {
+          VideoModel videoModel = GoogleVideosExporter.convertToVideoModel(albumId, mediaItem);
+          videos.add(videoModel);
+          monitor.debug(
+              () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
+        }
       }
     }
-    return photos;
-  }
-
-  private PhotoModel convertToPhotoModel(Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
-
-    return new PhotoModel(
-        mediaItem.getFilename(),
-        mediaItem.getBaseUrl() + "=d",
-        mediaItem.getDescription(),
-        mediaItem.getMimeType(),
-        mediaItem.getId(),
-        albumId.orElse(null),
-        false);
+    return new MediaContainerResource(null, photos, videos);
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
