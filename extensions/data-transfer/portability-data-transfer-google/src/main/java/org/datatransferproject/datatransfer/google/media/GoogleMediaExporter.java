@@ -183,7 +183,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(convertToPhotoModel(Optional.empty(), googleMediaItem));
+      photosBuilder.add(GooglePhotosExporter.convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
     MediaContainerResource mediaContainerResource =
@@ -213,7 +213,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(convertToPhotoModel(Optional.empty(), googleMediaItem));
+      photosBuilder.add(GooglePhotosExporter.convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
     // TODO: go through the videos in the MediaContainerResource, look them up and add them to the
